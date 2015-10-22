@@ -21,7 +21,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -270,8 +269,8 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          return cacheManagers.get(index).getCache(cacheName);
       }
 
-      public Collection<EmbeddedCacheManager> cacheManagers() {
-         return Collections.unmodifiableCollection(cacheManagers);
+      public List<EmbeddedCacheManager> cacheManagers() {
+         return Collections.unmodifiableList(cacheManagers);
       }
    }
 

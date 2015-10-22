@@ -1,6 +1,6 @@
 
 SYNOPSIS
-    site [ --status | --online | --offline | --push | --cancelpush | --cancelreceive | --pushstatus | --clearpushstatus | --sendingsite ] [ cachename.sitename ]
+    site [ --status | --online | --offline | --push | --cancelpush | --cancelreceive | --pushstatus | --clearpushstatus | --sendingsite | --onlineall | --offlineall | --pushall | --cancelpushall ] [ cachename.sitename ]
     
 DESCRIPTION 
     Inspects or changes the status of sites for X-Site replication

@@ -144,6 +144,30 @@ public class CacheContainerResource extends SimpleResourceDefinition {
     static final OperationDefinition CLI_INTERPRETER = new SimpleOperationDefinitionBuilder("cli-interpreter", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
            .build();
 
+   static final SimpleAttributeDefinition SITE_NAME =
+         new SimpleAttributeDefinitionBuilder("site-name", ModelType.STRING, false)
+               .build();
+
+   static final OperationDefinition BACKUP_TAKE_SITE_OFFLINE =
+         new SimpleOperationDefinitionBuilder("take-site-offline", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+               .setParameters(SITE_NAME)
+               .build();
+
+   static final OperationDefinition BACKUP_BRING_SITE_ONLINE =
+         new SimpleOperationDefinitionBuilder("bring-site-online", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+               .setParameters(SITE_NAME)
+               .build();
+
+   static final OperationDefinition BACKUP_PUSH_STATE =
+         new SimpleOperationDefinitionBuilder("push-state", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+               .setParameters(SITE_NAME)
+               .build();
+
+   static final OperationDefinition BACKUP_CANCEL_PUSH_STATE =
+         new SimpleOperationDefinitionBuilder("cancel-push-state", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+               .setParameters(SITE_NAME)
+               .build();
+
     private final ResolvePathHandler resolvePathHandler;
     private final boolean runtimeRegistration;
     public CacheContainerResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
@@ -180,6 +204,10 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(UPLOAD_PROTO, UploadProtoFileOperationHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(REGISTER_PROTO, RegisterProtoSchemasOperationHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(CLI_INTERPRETER, CliInterpreterHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(BACKUP_TAKE_SITE_OFFLINE, CacheContainerCommands.BackupTakeSiteOfflineCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(BACKUP_BRING_SITE_ONLINE, CacheContainerCommands.BackupBringSiteOnlineCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(BACKUP_PUSH_STATE, CacheContainerCommands.BackupPushStateCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(BACKUP_CANCEL_PUSH_STATE, CacheContainerCommands.BackupCancelPushStateCommand.INSTANCE);
     }
 
     @Override
