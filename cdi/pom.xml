@@ -1,270 +1,48 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-   <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-   <parent>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-parent</artifactId>
       <version>8.1.0-SNAPSHOT</version>
-      <relativePath>../parent/pom.xml</relativePath>
-   </parent>
+        <relativePath>../parent/pom.xml</relativePath>
+    </parent>
 
-   <artifactId>infinispan-cdi</artifactId>
-   <packaging>bundle</packaging>
-   <name>Infinispan CDI support</name>
-   <description>Infinispan CDI support module</description>
+    <artifactId>infinispan-cdi-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>Infinispan CDI support parent</name>
 
-   <developers>
-      <developer>
-         <name>Pete Muir</name>
-         <email>pete DOT muir AT jboss DOT org</email>
-         <organization>Red Hat, Inc.</organization>
-         <url>http://in.relation.to/Bloggers/Pete</url>
-      </developer>
-      <developer>
-         <name>Kevin Pollet</name>
-         <email>kevin DOT pollet AT serli DOT com</email>
-         <organization>SERLI</organization>
-         <url>http://www.serli.com</url>
-      </developer>
-   </developers>
+    <developers>
+        <developer>
+            <name>Pete Muir</name>
+            <email>pete DOT muir AT jboss DOT org</email>
+            <organization>Red Hat, Inc.</organization>
+            <url>http://in.relation.to/Bloggers/Pete</url>
+        </developer>
+        <developer>
+            <name>Kevin Pollet</name>
+            <email>kevin DOT pollet AT serli DOT com</email>
+            <organization>SERLI</organization>
+            <url>http://www.serli.com</url>
+        </developer>
+    </developers>
 
-   <dependencies>
-      <dependency>
-         <groupId>javax.enterprise</groupId>
-         <artifactId>cdi-api</artifactId>
-         <scope>provided</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <optional>true</optional>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-client-hotrod</artifactId>
-         <optional>true</optional>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-query-dsl</artifactId>
-         <optional>true</optional>
-      </dependency>
+    <modules>
+        <module>common</module>
+        <module>embedded</module>
+        <module>remote</module>
+    </modules>
 
-      
-      <dependency>
-         <groupId>org.jboss.logging</groupId>
-         <artifactId>jboss-logging</artifactId>
-      </dependency>
+    <profiles>
+        <profile>
+            <id>smoke</id>
+            <properties>
+                <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
+            </properties>
+        </profile>
+    </profiles>
 
-      
-      <dependency>
-         <groupId>org.testng</groupId>
-         <artifactId>testng</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-client-hotrod</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-core</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-hotrod</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-hotrod</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.arquillian.testng</groupId>
-         <artifactId>arquillian-testng-container</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.shrinkwrap.resolver</groupId>
-         <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>javax.cache</groupId>
-         <artifactId>cache-api</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.arquillian.container</groupId>
-         <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.weld</groupId>
-         <artifactId>weld-core</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.spec</groupId>
-         <artifactId>jboss-javaee-7.0</artifactId>
-         <type>pom</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.logmanager</groupId>
-         <artifactId>jboss-logmanager</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.logging.log4j</groupId>
-         <artifactId>log4j-slf4j-impl</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.kohsuke.metainf-services</groupId>
-         <artifactId>metainf-services</artifactId>
-         <optional>true</optional>
-      </dependency>
-   </dependencies>
-   <build>
-      <resources>
-         <resource>
-            <directory>${project.basedir}/src/main/resources</directory>
-         </resource>
-      </resources>
-      <plugins>
-         
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-               <reuseForks>true</reuseForks>
-               <forkCount>1</forkCount>
-               <parallel>none</parallel>
-               <groups>${defaultTestGroup}</groups>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.scala-tools</groupId>
-            <artifactId>maven-scala-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>generate-blueprint</id>
-                  <phase>prepare-package</phase>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <configuration>
-               <instructions>
-                  <Export-Package>
-                     ${project.groupId}.cdi.*;version=${project.version};-split-package:=error
-                  </Export-Package>
-                  <Include-Resource>
-                     {maven-resources},
-                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
-                  </Include-Resource>
-               </instructions>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-               <archive>
-                  <manifest>
-                     <mainClass>org.infinispan.cdi.util.Version</mainClass>
-                  </manifest>
-               </archive>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.jboss.maven.plugins</groupId>
-            <artifactId>maven-injection-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>inject-project-version</id>
-                  <phase>compile</phase>
-                  <goals>
-                     <goal>bytecode</goal>
-                  </goals>
-               </execution>
-            </executions>
-            <configuration>
-               <bytecodeInjections>
-                  <bytecodeInjection>
-                     <expression>${project.version}</expression>
-                     <targetMembers>
-                        <methodBodyReturn>
-                           <className>org.infinispan.cdi.util.Version</className>
-                           <methodName>getVersion</methodName>
-                        </methodBodyReturn>
-                     </targetMembers>
-                  </bytecodeInjection>
-               </bytecodeInjections>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-             <artifactId>maven-invoker-plugin</artifactId>
-             <version>${version.maven.invoker}</version>
-             <configuration>
-                <addTestClassPath>true</addTestClassPath>
-                <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-                <pomIncludes>
-                   <pomInclude>*/pom.xml</pomInclude>
-                </pomIncludes>
-                <postBuildHookScript>verify</postBuildHookScript>
-                <streamLogs>true</streamLogs>
-                <goals>
-                   <goal>clean</goal>
-                   <goal>package</goal>
-                </goals>
-                <properties>
-                   
-                   <maven.test.skip.exec>${maven.test.skip.exec}</maven.test.skip.exec>
-                   <skipTests>${skipTests}</skipTests>
-                   
-                   
-                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
-                </properties>
-             </configuration>
-             <executions>
-                <execution>
-                   <id>integration-test</id>
-                   <goals>
-                      <goal>install</goal>
-                      <goal>run</goal>
-                   </goals>
-                </execution>
-             </executions>
-         </plugin>
-      </plugins>
-   </build>
-   <profiles>
-      <profile>
-         <id>smoke</id>
-         <properties>
-            
-            <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
-         </properties>
-      </profile>
-   </profiles>
 </project>

@@ -22,12 +22,12 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cdi</artifactId>
+         <artifactId>infinispan-cdi-embedded</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cdi</artifactId>
+         <artifactId>infinispan-cdi-embedded</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
