@@ -96,7 +96,7 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
 
    @Override
    public void setCacheRebalancingEnabled(String cacheName, boolean enabled) throws Exception {
-      setCacheRebalancingEnabled(cacheName, enabled);
+      delegate.setCacheRebalancingEnabled(cacheName, enabled);
    }
 
    @Override
