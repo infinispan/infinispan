@@ -47,14 +47,8 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cdi</artifactId>
+         <artifactId>infinispan-cdi-remote</artifactId>
          <optional>${uberjar.deps.optional}</optional>
-         <exclusions>
-            <exclusion>
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-core</artifactId>
-            </exclusion>
-         </exclusions>
       </dependency>
 
       <dependency>

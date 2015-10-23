@@ -66,7 +66,9 @@
       <module>demos/gridfs-webdav</module>
       <module>demos/nearcache</module>
       <module>demos/nearcache-client</module>
-      <module>cdi</module>
+      <module>cdi/common</module>
+      <module>cdi/embedded</module>
+      <module>cdi/remote</module>
       <module>server/integration</module>
       <module>jcache</module>
       <module>as-modules/embedded</module>

@@ -32,11 +32,6 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cdi</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <scope>test</scope>
       </dependency>

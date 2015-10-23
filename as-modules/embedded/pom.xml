@@ -50,7 +50,7 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cdi</artifactId>
+         <artifactId>infinispan-cdi-embedded</artifactId>
       </dependency>
 
       <dependency>

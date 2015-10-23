@@ -64,7 +64,7 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cdi</artifactId>
+         <artifactId>infinispan-cdi-embedded</artifactId>
          <optional>${uberjar.deps.optional}</optional>
          <exclusions>
             <exclusion>
@@ -180,7 +180,7 @@
                      </artifactSet>
                      <filters>
                         <filter>
-                           <artifact>org.infinispan:infinispan-cdi</artifact>
+                           <artifact>org.infinispan:infinispan-cdi-embedded</artifact>
                            <excludes>
                               <exclude>META-INF/beans.xml</exclude>
                            </excludes>

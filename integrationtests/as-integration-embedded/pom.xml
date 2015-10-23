@@ -16,7 +16,7 @@
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cdi</artifactId>
+         <artifactId>infinispan-cdi-embedded</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

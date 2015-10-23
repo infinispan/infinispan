@@ -142,7 +142,12 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cdi</artifactId>
+            <artifactId>infinispan-cdi-embedded</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cdi-remote</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>

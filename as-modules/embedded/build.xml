@@ -64,7 +64,7 @@
         </module-def>
 
         <module-def name="org.infinispan.cdi" slot="${infinispan.slot}">
-            <maven-resource group="org.infinispan" artifact="infinispan-cdi" />
+            <maven-resource group="org.infinispan" artifact="infinispan-cdi-embedded" />
         </module-def>
 
         <module-def name="org.infinispan.client.hotrod" slot="${infinispan.slot}">
