@@ -850,5 +850,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to start rebalance for cache %s", id = 230)
    void rebalanceStartError(String cacheName, @Cause Throwable cause);
+
+   @Message(value = "Unable to broadcast invalidation messages", id = 231)
+   RuntimeException unableToBroadcastInvalidation(@Cause Throwable e);
 }
 
