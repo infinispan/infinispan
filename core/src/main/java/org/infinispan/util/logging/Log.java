@@ -1364,4 +1364,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "This configuration is not supported for simple cache", id = 381)
    CacheConfigurationException notSupportedInSimpleCache();
+
+   @Message(value = "Unable to broadcast invalidation messages", id = 384)
+   RuntimeException unableToBroadcastInvalidation(@Cause Throwable e);
+
 }
