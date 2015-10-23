@@ -1371,4 +1371,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The eviction max-entries attribute has been deprecated. Please use the size attribute instead", id = 383)
    void evictionMaxEntriesDeprecated();
+
+   @Message(value = "Unable to broadcast invalidation messages", id = 384)
+   RuntimeException unableToBroadcastInvalidation(@Cause Throwable e);
+
 }
