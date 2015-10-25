@@ -160,7 +160,7 @@ The autoCommit feature can be managed through configuration:
 ----
 
 <local-cache name="transactional">
-  <transaction mode="NON_XA" autoCommit="true"/>
+  <transaction mode="NON_XA" auto-commit="true"/>
 </local-cache>
 
 ----
