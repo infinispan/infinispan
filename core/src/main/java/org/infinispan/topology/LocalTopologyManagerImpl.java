@@ -169,6 +169,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    // called by the coordinator
    @Override
    public ManagerStatusResponse handleStatusRequest(int viewId) {
+      try {
+         // As long as we have an older view, we can still process topologies from the old coordinator
+         waitForView(viewId);
+      } catch (InterruptedException e) {
+         // Shutting down, send back an empty status
+         Thread.currentThread().interrupt();
+         return new ManagerStatusResponse(Collections.<String, CacheStatusResponse>emptyMap(), true);
+      }
+
       Map<String, CacheStatusResponse> caches = new HashMap<String, CacheStatusResponse>();
       synchronized (runningCaches) {
          for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
