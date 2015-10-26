@@ -14,7 +14,7 @@
    <name>Infinispan</name>
    <description>Infinispan Data Grid</description>
    <packaging>pom</packaging>
-   
+
    <modules>
       <module>bom</module>
       <module>checkstyle</module>
@@ -82,11 +82,12 @@
       <module>integrationtests/security-it</module>
       <module>integrationtests/security-manager-it</module>
       <module>integrationtests/osgi</module>
+      <module>integrationtests/cdi-weld-se-it</module>
       <module>integrationtests/all-embedded-it</module>
       <module>integrationtests/all-embedded-query-it</module>
       <module>integrationtests/all-remote-it</module>
    </modules>
-   
+
    <profiles>
      <profile>
         <id>distribution</id>
