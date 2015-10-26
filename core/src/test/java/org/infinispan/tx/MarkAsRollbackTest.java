@@ -47,14 +47,14 @@ public class MarkAsRollbackTest extends SingleCacheManagerTest {
          cache.put("k", "v");
          assert false : "Should have throw an illegal state exception";
       } catch (IllegalStateException expected) {
-
+         log.trace("Got the expected exception", expected);
       }
       try {
          tm.commit();
          assert false : "Should have rolled back";
       }
       catch (RollbackException expected) {
-
+         log.trace("Got the expected exception", expected);
       }
 
       assert tm.getTransaction() == null : "There should be no transaction in scope anymore!";

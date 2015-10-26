@@ -1,11 +1,12 @@
 package org.infinispan.stream.impl.tx;
 
-import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
 import org.infinispan.stream.impl.TerminalOperation;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.AbstractDelegatingMap;
 
 import java.util.Collection;
@@ -25,10 +26,10 @@ import java.util.function.Predicate;
  */
 public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
    private final ClusterStreamManager<K> manager;
-   private final LocalTxInvocationContext ctx;
+   private final TxInvocationContext<LocalTransaction> ctx;
    private final ConsistentHash hash;
 
-   public TxClusterStreamManager(ClusterStreamManager<K> manager, LocalTxInvocationContext ctx, ConsistentHash hash) {
+   public TxClusterStreamManager(ClusterStreamManager<K> manager, TxInvocationContext<LocalTransaction> ctx, ConsistentHash hash) {
       this.manager = manager;
       this.ctx = ctx;
       this.hash = hash;
@@ -95,12 +96,12 @@ public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
       private final Map<Integer, Set<K>> map;
       private final Map<Integer, Set<K>> ctxMap;
 
-      private TxExcludedKeys(Map<Integer, Set<K>> map, LocalTxInvocationContext ctx, ConsistentHash hash) {
+      private TxExcludedKeys(Map<Integer, Set<K>> map, TxInvocationContext<LocalTransaction> ctx, ConsistentHash hash) {
          this.map = map;
          this.ctxMap = contextToMap(ctx, hash);
       }
 
-      Map<Integer, Set<K>> contextToMap(LocalTxInvocationContext ctx, ConsistentHash hash) {
+      Map<Integer, Set<K>> contextToMap(TxInvocationContext<LocalTransaction> ctx, ConsistentHash hash) {
          Map<Integer, Set<K>> contextMap = new HashMap<>();
          ctx.getLookedUpEntries().forEach((k, v) -> {
             Integer segment = hash.getSegment(k);

@@ -19,6 +19,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.WriteSkewException;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -158,7 +159,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
    private Object markTxForRollbackAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {
       if (ctx.isOriginLocal() && ctx.isInTxScope()) {
-         Transaction transaction = tm.getTransaction();
+         Transaction transaction = ((TxInvocationContext<AbstractCacheTransaction>) ctx).getTransaction();
          if (transaction != null && isValidRunningTx(transaction)) {
             transaction.setRollbackOnly();
          }
@@ -180,9 +181,12 @@ public class InvocationContextInterceptor extends CommandInterceptor {
       if (!ctx.isInTxScope())
          return false;
 
-      if (ctx.isOriginLocal())
-         return txTable.containsLocalTx(tm.getTransaction());
-      else
-         return txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction());
+      TxInvocationContext txContext = (TxInvocationContext) ctx;
+      if (ctx.isOriginLocal()) {
+         return txTable.containsLocalTx(txContext.getTransaction());
+//         return txTable.containsLocalTx(tm.getTransaction());
+      } else {
+         return txTable.containRemoteTx(txContext.getGlobalTransaction());
+      }
    }
 }

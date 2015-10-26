@@ -18,6 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * from which other components may be accessed.  Further, lifecycle should be implemented by overriding {@link #start()}
  * and {@link #stop()} as defined in this class.
  *
+ * @deprecated Since 8.1, use {@link BaseCustomSequentialInterceptor} instead.
  * @author Manik Surtani
  * @since 5.1
  */

@@ -1,0 +1,47 @@
+package org.infinispan.interceptors.sequential;
+
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromResponse;
+
+/**
+ * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are
+ * versioned.
+ *
+ * @author Manik Surtani
+ * @author Dan Berindei
+ * @since 8.1
+ */
+public class VersionedDistributionInterceptor extends TxDistributionInterceptor {
+
+   private static final Log log = LogFactory.getLog(VersionedDistributionInterceptor.class);
+
+   @Override
+   protected void prepareOnAffectedNodes(TxInvocationContext<LocalTransaction> ctx, PrepareCommand command,
+         Collection<Address> recipients) throws Throwable {
+      // Perform the RPC
+      try {
+         Map<Address, Response> resps =
+               rpcManager.invokeRemotely(recipients, command, createPrepareRpcOptions());
+         checkTxCommandResponses(resps, command, ctx, recipients);
+
+         // Now store newly generated versions from lock owners for use during the commit phase.
+         CacheTransaction ct = ctx.getCacheTransaction();
+         for (Response r : resps.values())
+            readVersionsFromResponse(r, ct);
+      } finally {
+         transactionRemotelyPrepared(ctx);
+      }
+   }
+}

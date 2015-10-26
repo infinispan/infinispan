@@ -1,5 +1,6 @@
 package org.infinispan.context.impl;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
@@ -8,6 +9,7 @@ import org.infinispan.remoting.transport.Address;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This context is a non-context for operations such as eviction which are not related
@@ -18,7 +20,7 @@ import java.util.Set;
 public final class ImmutableContext implements InvocationContext {
    
    public static final ImmutableContext INSTANCE = new ImmutableContext();
-   
+
    private ImmutableContext() {
       //don't create multiple instances
    }
@@ -113,5 +115,29 @@ public final class ImmutableContext implements InvocationContext {
    @Override
    public boolean isEntryRemovedInContext(Object key) {
       return false;
+   }
+
+   @Override
+   public VisitableCommand getCommand() {
+      return null;
+   }
+
+   @Override
+   public void onReturn(ReturnHandler returnHandler) {
+   }
+
+   @Override
+   public CompletableFuture<Object> shortCircuit(Object returnValue) {
+      return null;
+   }
+
+   @Override
+   public Object forkInvocation(VisitableCommand newCommand, ReturnHandler returnHandler) {
+      return null;
+   }
+
+   @Override
+   public CompletableFuture<Object> execute(VisitableCommand command) {
+      return null;
    }
 }

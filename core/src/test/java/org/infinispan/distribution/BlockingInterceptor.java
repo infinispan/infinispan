@@ -26,6 +26,7 @@ public class BlockingInterceptor extends CommandInterceptor {
    private final Class<? extends VisitableCommand> commandClass;
    private final boolean blockAfter;
    private final boolean originLocalOnly;
+   private volatile boolean blocking;
 
    public BlockingInterceptor(CyclicBarrier barrier, Class<? extends VisitableCommand> commandClass,
          boolean blockAfter, boolean originLocalOnly) {
@@ -33,11 +34,12 @@ public class BlockingInterceptor extends CommandInterceptor {
       this.commandClass = commandClass;
       this.blockAfter = blockAfter;
       this.originLocalOnly = originLocalOnly;
+      this.blocking = true;
    }
 
    private void blockIfNeeded(InvocationContext ctx, VisitableCommand command) throws BrokenBarrierException, InterruptedException {
       if (commandClass.isInstance(command) && (!originLocalOnly || ctx.isOriginLocal())) {
-         if (firstBlocked.compareAndSet(false, true)) {
+         if (blocking && firstBlocked.compareAndSet(false, true)) {
             try {
                log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
                // The first arrive and await is to sync with main thread
@@ -66,5 +68,9 @@ public class BlockingInterceptor extends CommandInterceptor {
             blockIfNeeded(ctx, command);
          }
       }
+   }
+
+   public void stopBlocking() {
+      blocking = false;
    }
 }

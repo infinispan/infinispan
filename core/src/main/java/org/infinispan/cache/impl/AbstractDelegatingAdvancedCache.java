@@ -14,7 +14,9 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -63,6 +65,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public void addInterceptor(CommandInterceptor i, int position) {
       cache.addInterceptor(i, position);
+   }
+
+   @Override
+   public SequentialInterceptorChain getSequentialInterceptorChain() {
+      return cache.getSequentialInterceptorChain();
    }
 
    @Override

@@ -2,7 +2,7 @@ package org.infinispan.stream.impl.tx;
 
 import org.infinispan.CacheStream;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
@@ -12,6 +12,7 @@ import org.infinispan.stream.impl.DistributedCacheStream;
 import org.infinispan.stream.impl.DistributedDoubleCacheStream;
 import org.infinispan.stream.impl.DistributedIntCacheStream;
 import org.infinispan.stream.impl.DistributedLongCacheStream;
+import org.infinispan.transaction.impl.LocalTransaction;
 
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -29,12 +30,15 @@ import java.util.stream.Stream;
  */
 public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
    private final Address localAddress;
-   private final LocalTxInvocationContext ctx;
+   private final TxInvocationContext<LocalTransaction> ctx;
    private final ConsistentHash hash;
 
    public <K, V> TxDistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
-           Supplier<CacheStream<CacheEntry<K, V>>> supplier, TxClusterStreamManager<?> csm, boolean includeLoader,
-           int distributedBatchSize, Executor executor, ComponentRegistry registry, LocalTxInvocationContext ctx) {
+                                          Supplier<CacheStream<CacheEntry<K, V>>> supplier,
+                                          TxClusterStreamManager<?> csm, boolean includeLoader,
+                                          int distributedBatchSize, Executor executor,
+                                          ComponentRegistry registry,
+                                          TxInvocationContext<LocalTransaction> ctx) {
       super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor, registry);
       this.localAddress = localAddress;
       this.hash = dm.getConsistentHash();
@@ -44,7 +48,7 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
    public <K, V> TxDistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
            Supplier<CacheStream<CacheEntry<K, V>>> supplier, TxClusterStreamManager<?> csm, boolean includeLoader,
            int distributedBatchSize, Executor executor, ComponentRegistry registry,
-           Function<? super CacheEntry<K, V>, R> function, LocalTxInvocationContext ctx) {
+           Function<? super CacheEntry<K, V>, R> function, TxInvocationContext<LocalTransaction> ctx) {
       super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor, registry, function);
       this.localAddress = localAddress;
       this.hash = dm.getConsistentHash();
@@ -52,7 +56,7 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
    }
 
    TxDistributedCacheStream(AbstractCacheStream other, Address localAddress, ConsistentHash hash,
-           LocalTxInvocationContext ctx) {
+                            TxInvocationContext<LocalTransaction> ctx) {
       super(other);
       this.localAddress = localAddress;
       this.hash = hash;

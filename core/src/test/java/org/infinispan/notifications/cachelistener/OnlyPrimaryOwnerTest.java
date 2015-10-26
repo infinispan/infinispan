@@ -61,7 +61,7 @@ public class OnlyPrimaryOwnerTest {
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
+      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance(), null);
    }
 
    private static class MockCDL implements ClusteringDependentLogic {

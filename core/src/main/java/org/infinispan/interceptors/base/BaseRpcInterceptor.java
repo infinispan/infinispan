@@ -3,7 +3,6 @@ package org.infinispan.interceptors.base;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.Flag;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -28,8 +27,9 @@ import java.util.Set;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 8.1, use {@link org.infinispan.interceptors.sequential.BaseRpcInterceptor} instead.
  */
+@Deprecated
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected RpcManager rpcManager;
@@ -37,7 +37,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    protected boolean defaultSynchronous;
 
    @Inject
-   public void inject(RpcManager rpcManager, StateConsumer stateConsumer) {
+   public void inject(RpcManager rpcManager) {
       this.rpcManager = rpcManager;
    }
 
@@ -69,19 +69,19 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       }
 
       // Skip the remote invocation if this is a state transfer transaction
-      LocalTxInvocationContext localCtx = (LocalTxInvocationContext) ctx;
-      if (localCtx.getCacheTransaction().getStateTransferFlag() == Flag.PUT_FOR_STATE_TRANSFER) {
+      LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
+      if (localTx.getStateTransferFlag() == Flag.PUT_FOR_STATE_TRANSFER) {
          return false;
       }
 
       // just testing for empty modifications isn't enough - the Lock API may acquire locks on keys but won't
       // register a Modification.  See ISPN-711.
-      boolean shouldInvokeRemotely = ctx.hasModifications() || !localCtx.getRemoteLocksAcquired().isEmpty() ||
-         localCtx.getCacheTransaction().getTopologyId() != rpcManager.getTopologyId();
+      boolean shouldInvokeRemotely = ctx.hasModifications() || !localTx.getRemoteLocksAcquired().isEmpty() ||
+         localTx.getTopologyId() != rpcManager.getTopologyId();
 
       if (getLog().isTraceEnabled()) {
          getLog().tracef("Should invoke remotely? %b. hasModifications=%b, hasRemoteLocksAcquired=%b",
-               shouldInvokeRemotely, ctx.hasModifications(), !localCtx.getRemoteLocksAcquired().isEmpty());
+               shouldInvokeRemotely, ctx.hasModifications(), !localTx.getRemoteLocksAcquired().isEmpty());
       }
 
       return shouldInvokeRemotely;

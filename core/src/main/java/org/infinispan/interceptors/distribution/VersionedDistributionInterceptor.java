@@ -1,10 +1,11 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -18,29 +19,12 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromRe
  * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
  *
  * @author Manik Surtani
- * @since 5.1
+ * @deprecated Since 8.1, use {@link org.infinispan.interceptors.sequential.VersionedDistributionInterceptor} instead.
  */
+@Deprecated
 public class VersionedDistributionInterceptor extends TxDistributionInterceptor {
-
-   private static final Log log = LogFactory.getLog(VersionedDistributionInterceptor.class);
-
    @Override
-   protected Log getLog() {
-      return log;
-   }
-
-   @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
-      // Perform the RPC
-      try {
-         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, createPrepareRpcOptions());
-         checkTxCommandResponses(resps, command, (LocalTxInvocationContext) ctx, recipients);
-
-         // Now store newly generated versions from lock owners for use during the commit phase.
-         CacheTransaction ct = ctx.getCacheTransaction();
-         for (Response r : resps.values()) readVersionsFromResponse(r, ct);
-      } finally {
-         transactionRemotelyPrepared(ctx);
-      }
+   public Class<? extends SequentialInterceptor> getSequentialInterceptor() {
+      return org.infinispan.interceptors.sequential.VersionedDistributionInterceptor.class;
    }
 }

@@ -176,12 +176,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
 
-      ensureAccessPermissions(masterCacheNode.getAdvancedCache());
-      ensureProperCacheState(masterCacheNode.getAdvancedCache());
-      ensureFullCache(masterCacheNode.getAdvancedCache());
-
       this.cache = masterCacheNode.getAdvancedCache();
       ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(cache);
+
+      ensureAccessPermissions(cache);
+      ensureProperCacheState(cache);
+      ensureFullCache(registry);
+
 
       this.rpc = SecurityActions.getCacheRpcManager(cache);
       this.invoker = registry.getComponent(InterceptorChain.class);
@@ -659,9 +660,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new IllegalStateException("Invalid cache state " + cache.getStatus());
    }
 
-   private void ensureFullCache(AdvancedCache<?, ?> advancedCache) {
-      List<CommandInterceptor> interceptorChain = SecurityActions.getInterceptorChain(advancedCache);
-      if (interceptorChain == null || interceptorChain.isEmpty()) {
+   private void ensureFullCache(ComponentRegistry registry) {
+      InterceptorChain interceptorChain = registry.getComponent(InterceptorChain.class);
+      if (interceptorChain == null) {
          throw log.distributedExecutorsNotSupported();
       }
    }

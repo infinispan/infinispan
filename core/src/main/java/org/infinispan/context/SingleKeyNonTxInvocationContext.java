@@ -3,6 +3,8 @@ package org.infinispan.context;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.impl.BaseSequentialInvocationContext;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -14,7 +16,7 @@ import java.util.Set;
  * @author Sanne Grinovero
  * @since 5.1
  */
-public final class SingleKeyNonTxInvocationContext implements InvocationContext {
+public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocationContext implements InvocationContext {
 
    /**
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.
@@ -35,7 +37,9 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    private Object lockOwner;
 
-   public SingleKeyNonTxInvocationContext(final Address origin, final Equivalence<Object> keyEquivalence) {
+   public SingleKeyNonTxInvocationContext(final Address origin, final Equivalence<Object> keyEquivalence,
+                                          SequentialInterceptorChain interceptorChain) {
+      super(interceptorChain);
       this.origin = origin;
       this.keyEquivalence = keyEquivalence;
    }
@@ -153,15 +157,6 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    public boolean isEntryRemovedInContext(final Object key) {
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
-   }
-
-   @Override
-   public SingleKeyNonTxInvocationContext clone() {
-      try {
-         return (SingleKeyNonTxInvocationContext) super.clone();
-      } catch (CloneNotSupportedException e) {
-         throw new IllegalStateException("Impossible!");
-      }
    }
 
    public void resetState() {

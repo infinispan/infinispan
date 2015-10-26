@@ -452,6 +452,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          }
       });
 
+      log.trace("Waiting for command to block");
       beforeCommitCache1Barrier.await(10, SECONDS);
 
       // Remove blocking interceptor now since we have blocked
@@ -473,6 +474,11 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       TestingUtil.waitForRehashToComplete(primaryOwnerCache, nonOwnerCache);
 
       // Now let the update go through
+      log.trace("Letting the command go through");
+      beforeCommitCache1Barrier.await(10, SECONDS);
+
+      // The command will be retried with the old interceptor chain, so it will block again
+      beforeCommitCache1Barrier.await(10, SECONDS);
       beforeCommitCache1Barrier.await(10, SECONDS);
 
       // Run the update now that we are in the middle of a rebalance

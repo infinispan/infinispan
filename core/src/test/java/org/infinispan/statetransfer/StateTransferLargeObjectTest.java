@@ -6,7 +6,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -35,7 +34,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
    private Cache<Integer, BigObject> c1;
    private Cache<Integer, BigObject> c2;
    private Cache<Integer, BigObject> c3;
-   private Map<Integer, BigObject> cache;
+   private Map<Integer, BigObject> expected;
 
    private final Random rnd = new Random();
 
@@ -55,34 +54,21 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
       c3 = cache(3);
       waitForClusterToForm();
       log.debug("Rehash is complete!");
-      cache = new HashMap<Integer, BigObject>();
+      expected = new HashMap<Integer, BigObject>();
    }
 
    public void testForFailure() {
       final int num = 1000;
       for (int i = 0; i < num; i++) {
          BigObject bigObject = createBigObject(i, "prefix");
-         cache.put(i, bigObject);
+         expected.put(i, bigObject);
          c0.put(i, bigObject);
       }
 
-      for (int i = 0; i < num; i++) {
-         assertTrue(c0.get(i) instanceof BigObject);
-         assertTrue(c1.get(i) instanceof BigObject);
-         assertTrue(c2.get(i) instanceof BigObject);
-         assertTrue(c3.get(i) instanceof BigObject);
-      }
-
-      log.info("Before stopping a cache!");
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            log.debug("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
-            c3.stop();
-            c3.getCacheManager().stop();
-            log.debug("Cache stopped async!");
-         }
-      });
+      log.debug("About to stop " + c3.getAdvancedCache().getRpcManager().getAddress());
+      c3.stop();
+      c3.getCacheManager().stop();
+      log.debug("Cache stopped async!");
 
       for (int i = 0; i < num; i++) {
          log.debug("----Running a get on " + i);
@@ -102,7 +88,7 @@ public class StateTransferLargeObjectTest extends MultipleCacheManagersTest {
    private void assertValue(int i, Object o) {
       assertNotNull(o);
       assertTrue(o instanceof BigObject);
-      assertEquals(o, cache.get(i));
+      assertEquals(o, expected.get(i));
    }
 
    private BigObject createBigObject(int num, String prefix) {

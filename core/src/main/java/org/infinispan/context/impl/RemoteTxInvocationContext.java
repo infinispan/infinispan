@@ -1,5 +1,6 @@
 package org.infinispan.context.impl;
 
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.transaction.impl.RemoteTransaction;
 
 import javax.transaction.Transaction;
@@ -14,8 +15,9 @@ import javax.transaction.Transaction;
  */
 public class RemoteTxInvocationContext extends AbstractTxInvocationContext<RemoteTransaction> {
 
-   public RemoteTxInvocationContext(RemoteTransaction cacheTransaction) {
-      super(cacheTransaction, cacheTransaction.getGlobalTransaction().getAddress());
+   public RemoteTxInvocationContext(RemoteTransaction cacheTransaction,
+                                    SequentialInterceptorChain interceptorChain) {
+      super(cacheTransaction, cacheTransaction.getGlobalTransaction().getAddress(), interceptorChain);
    }
 
    @Override

@@ -3,7 +3,7 @@ package org.infinispan.stats.impl;
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.interceptors.CacheMgmtInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.stats.Stats;
 
 /**
@@ -31,9 +31,8 @@ public class StatsImpl implements Stats {
    final CacheMgmtInterceptor mgmtInterceptor;
    final Stats source;
 
-   public StatsImpl(InterceptorChain chain) {
-      mgmtInterceptor = (CacheMgmtInterceptor) chain
-            .getInterceptorsWhichExtend(CacheMgmtInterceptor.class).get(0);
+   public StatsImpl(SequentialInterceptorChain chain) {
+      mgmtInterceptor = (CacheMgmtInterceptor) chain.findInterceptorExtending(CacheMgmtInterceptor.class);
       source = null;
 
       if (mgmtInterceptor.getStatisticsEnabled()) {

@@ -44,7 +44,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public abstract class CommandInterceptor extends AbstractVisitor {
+public abstract class CommandInterceptor extends AbstractVisitor implements AnyInterceptor {
 
    private CommandInterceptor next;
 
@@ -113,16 +113,19 @@ public abstract class CommandInterceptor extends AbstractVisitor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   /**
+    * @deprecated Since 8.1
+    */
+   @Deprecated
    protected final long getLockAcquisitionTimeout(LocalFlagAffectedCommand command, boolean skipLocking) {
-      if (!skipLocking)
-         return command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
-               0 : cacheConfiguration.locking().lockAcquisitionTimeout();
-
       return -1;
    }
 
-   protected final boolean hasSkipLocking(LocalFlagAffectedCommand command) {
-      return command.hasFlag(Flag.SKIP_LOCKING);
+   /**
+    * @deprecated Since 8.1
+    */
+   protected boolean hasSkipLocking(LocalFlagAffectedCommand command) {
+      return false;
    }
 
    protected <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, LocalFlagAffectedCommand command) {
@@ -132,5 +135,12 @@ public abstract class CommandInterceptor extends AbstractVisitor {
       } else {
          return cache;
       }
+   }
+
+   /**
+    * @return The {@link SequentialInterceptor} replacing this interceptor.
+    */
+   public Class<? extends SequentialInterceptor> getSequentialInterceptor() {
+      return null;
    }
 }

@@ -3,6 +3,7 @@ package org.infinispan.context.impl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -12,12 +13,13 @@ import org.infinispan.remoting.transport.Address;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public abstract class AbstractInvocationContext implements InvocationContext {
+public abstract class AbstractInvocationContext extends BaseSequentialInvocationContext implements InvocationContext {
    private final Address origin;
    // Class loader associated with this invocation which supports AdvancedCache.with() functionality
    private ClassLoader classLoader;
 
-   protected AbstractInvocationContext(Address origin) {
+   protected AbstractInvocationContext(Address origin, SequentialInterceptorChain interceptorChain) {
+      super(interceptorChain);
       this.origin = origin;
    }
 
@@ -34,15 +36,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    @Override
    public boolean hasLockedKey(Object key) {
       return getLockedKeys().contains(key);
-   }
-
-   @Override
-   public AbstractInvocationContext clone() {
-      try {
-         return (AbstractInvocationContext) super.clone();
-      } catch (CloneNotSupportedException e) {
-         throw new IllegalStateException("Impossible!");
-      }
    }
 
    @Override

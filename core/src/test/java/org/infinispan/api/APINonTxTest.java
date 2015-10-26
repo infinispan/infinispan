@@ -70,7 +70,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assert cache.values().contains(value);
    }
 
-      public void testStopClearsData() throws Exception {
+   public void testStopClearsData() throws Exception {
       String key = "key", value = "value";
       int size = 0;
       cache.put(key, value);

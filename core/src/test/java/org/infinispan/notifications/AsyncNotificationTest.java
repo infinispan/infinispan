@@ -32,14 +32,11 @@ public class AsyncNotificationTest extends AbstractInfinispanTest {
    }
 
    public void testAsyncNotification() throws InterruptedException {
-      CountDownLatch latch = new CountDownLatch(2);
-      AbstractListener syncListener = new SyncListener(latch);
+      CountDownLatch latch = new CountDownLatch(1);
       AbstractListener asyncListener = new AsyncListener(latch);
-      c.addListener(syncListener);
       c.addListener(asyncListener);
       c.put("k", "v");
       latch.await();
-      assert syncListener.caller == Thread.currentThread();
       assert asyncListener.caller != Thread.currentThread();
    }
 
@@ -49,21 +46,6 @@ public class AsyncNotificationTest extends AbstractInfinispanTest {
 
       protected AbstractListener(CountDownLatch latch) {
          this.latch = latch;
-      }
-   }
-
-   @Listener(sync = true)
-   public static class SyncListener extends AbstractListener {
-      public SyncListener(CountDownLatch latch) {
-         super(latch);
-      }
-
-      @CacheEntryCreated
-      public void handle(CacheEntryCreatedEvent e) {
-         if (e.isPre()) {
-            caller = Thread.currentThread();
-            latch.countDown();
-         }
       }
    }
 
@@ -78,8 +60,8 @@ public class AsyncNotificationTest extends AbstractInfinispanTest {
          if (e.isPre()) {
             caller = Thread.currentThread();
             latch.countDown();
+            throw new RuntimeException("Ignore");
          }
       }
    }
-
 }

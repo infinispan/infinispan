@@ -5,8 +5,8 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
-import org.infinispan.commons.configuration.attributes.SimpleInstanceAttributeCopier;
 import org.infinispan.commons.util.Util;
+import org.infinispan.interceptors.base.AnyInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
@@ -16,7 +16,7 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
    /**
     * Positional placing of a new custom interceptor
     */
-   public static enum Position {
+   public enum Position {
       /**
        * Specifies that the new interceptor is placed first in the chain.
        */
@@ -35,7 +35,7 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
    public static final AttributeDefinition<Position> POSITION = AttributeDefinition.builder("position", Position.OTHER_THAN_FIRST_OR_LAST).immutable().build();
    public static final AttributeDefinition<Class> AFTER = AttributeDefinition.builder("after", null, Class.class).immutable().build();
    public static final AttributeDefinition<Class> BEFORE = AttributeDefinition.builder("before", null, Class.class).immutable().build();
-   public static final AttributeDefinition<CommandInterceptor> INTERCEPTOR = AttributeDefinition.builder("interceptor", null, CommandInterceptor.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<AnyInterceptor> INTERCEPTOR = AttributeDefinition.builder("interceptor", null, AnyInterceptor.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<Class> INTERCEPTOR_CLASS = AttributeDefinition.builder("interceptorClass", null, Class.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX = AttributeDefinition.builder("index", -1).immutable().build();
 
@@ -46,7 +46,7 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
    private final Attribute<Position> position;
    private final Attribute<Class> after;
    private final Attribute<Class> before;
-   private final Attribute<CommandInterceptor> interceptor;
+   private final Attribute<AnyInterceptor> interceptor;
    private final Attribute<Class> interceptorClass;
    private final Attribute<Integer> index;
 
@@ -61,18 +61,26 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
    }
 
    @SuppressWarnings("unchecked")
-   public Class<? extends CommandInterceptor> after() {
+   public Class<? extends AnyInterceptor> after() {
       return after.get();
    }
 
    @SuppressWarnings("unchecked")
-   public Class<? extends CommandInterceptor> before() {
+   public Class<? extends AnyInterceptor> before() {
       return before.get();
    }
 
    public CommandInterceptor interceptor() {
       if (interceptor.isNull()) {
          return (CommandInterceptor) Util.getInstance(interceptorClass.get());
+      } else {
+         return (CommandInterceptor) interceptor.get();
+      }
+   }
+
+   public AnyInterceptor anyInterceptor() {
+      if (interceptor.isNull()) {
+         return (AnyInterceptor) Util.getInstance(interceptorClass.get());
       } else {
          return interceptor.get();
       }

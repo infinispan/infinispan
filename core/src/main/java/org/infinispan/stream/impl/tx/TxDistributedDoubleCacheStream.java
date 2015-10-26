@@ -1,7 +1,7 @@
 package org.infinispan.stream.impl.tx;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.AbstractCacheStream;
@@ -9,6 +9,7 @@ import org.infinispan.stream.impl.DistributedCacheStream;
 import org.infinispan.stream.impl.DistributedDoubleCacheStream;
 import org.infinispan.stream.impl.DistributedIntCacheStream;
 import org.infinispan.stream.impl.DistributedLongCacheStream;
+import org.infinispan.transaction.impl.LocalTransaction;
 
 import java.util.Set;
 import java.util.function.Supplier;
@@ -21,11 +22,11 @@ import java.util.stream.Stream;
  */
 public class TxDistributedDoubleCacheStream extends DistributedDoubleCacheStream {
    private final Address localAddress;
-   private final LocalTxInvocationContext ctx;
+   private final TxInvocationContext<LocalTransaction> ctx;
    private final ConsistentHash hash;
 
    TxDistributedDoubleCacheStream(AbstractCacheStream stream, Address localAddress, ConsistentHash hash,
-           LocalTxInvocationContext ctx) {
+                                  TxInvocationContext<LocalTransaction> ctx) {
       super(stream);
       this.localAddress = localAddress;
       this.hash = hash;

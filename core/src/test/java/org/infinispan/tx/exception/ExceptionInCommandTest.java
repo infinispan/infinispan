@@ -47,8 +47,6 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
       tm(0).begin();
 
       MyDelta d = new MyDelta();
-      d.setCreator();
-
       cache(0).put("k", d);
 
       tm(0).commit();
@@ -56,12 +54,10 @@ public class ExceptionInCommandTest extends MultipleCacheManagersTest {
    }
 
    private static class MyDelta implements Delta , Serializable {
-      transient Thread creator;
-
-      public void setCreator() {creator = Thread.currentThread();}
+      transient boolean isOriginLocal = true;
 
       public DeltaAware merge(DeltaAware d) {
-         if (creator != Thread.currentThread())
+         if (!isOriginLocal)
             throw new RuntimeException("Induced!");
          return new AtomicHashMap();
       }
