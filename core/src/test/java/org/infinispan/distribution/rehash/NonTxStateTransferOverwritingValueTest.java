@@ -152,6 +152,8 @@ public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManager
 
       // Wait for the entry to be wrapped on cache1
       beforeCommitCache1Barrier.await(10, TimeUnit.SECONDS);
+      // Stop blocking, otherwise we'll block the state transfer put commands as well
+      blockingInterceptor1.suspend(true);
 
       // Allow the state to be applied on cache1 (writing the old value for our entry)
       blockingRpcManager0.stopBlocking();
