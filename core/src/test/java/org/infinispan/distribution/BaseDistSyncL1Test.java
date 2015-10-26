@@ -59,23 +59,27 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       return builder;
    }
 
-   protected void addBlockingInterceptorBeforeTx(Cache<?, ?> cache, final CyclicBarrier barrier,
+   protected BlockingInterceptor addBlockingInterceptorBeforeTx(Cache<?, ?> cache,
+         final CyclicBarrier barrier,
                                                  Class<? extends VisitableCommand> commandClass) {
-      addBlockingInterceptorBeforeTx(cache, barrier, commandClass, true);
+      return addBlockingInterceptorBeforeTx(cache, barrier, commandClass, true);
    }
 
-   protected void addBlockingInterceptorBeforeTx(Cache<?, ?> cache, final CyclicBarrier barrier,
+   protected BlockingInterceptor addBlockingInterceptorBeforeTx(Cache<?, ?> cache,
+         final CyclicBarrier barrier,
                                                  Class<? extends VisitableCommand> commandClass,
                                                  boolean blockAfterCommand) {
-      addBlockingInterceptor(cache, barrier, commandClass, getDistributionInterceptorClass(), blockAfterCommand);
+      return addBlockingInterceptor(cache, barrier, commandClass, getDistributionInterceptorClass(),
+            blockAfterCommand);
    }
 
-   protected void addBlockingInterceptor(Cache<?, ?> cache, final CyclicBarrier barrier,
+   protected BlockingInterceptor addBlockingInterceptor(Cache<?, ?> cache, final CyclicBarrier barrier,
                                          Class<? extends VisitableCommand> commandClass,
                                          Class<? extends CommandInterceptor> interceptorPosition,
                                          boolean blockAfterCommand) {
-      cache.getAdvancedCache().addInterceptorBefore(new BlockingInterceptor(barrier, commandClass, blockAfterCommand, false),
-                                                    interceptorPosition);
+      BlockingInterceptor bi = new BlockingInterceptor(barrier, commandClass, blockAfterCommand, false);
+      cache.getAdvancedCache().addInterceptorBefore(bi, interceptorPosition);
+      return bi;
    }
 
    protected abstract Class<? extends CommandInterceptor> getDistributionInterceptorClass();
@@ -256,8 +260,9 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       CyclicBarrier nonOwnerGetBarrier = new CyclicBarrier(2);
       // We want to block after it retrieves the value from remote owner so the L1 value will be invalidated
-      addBlockingInterceptor(nonOwnerCache, nonOwnerGetBarrier, GetKeyValueCommand.class,
-                             getDistributionInterceptorClass(), true);
+      BlockingInterceptor blockingInterceptor =
+            addBlockingInterceptor(nonOwnerCache, nonOwnerGetBarrier, GetKeyValueCommand.class,
+                  getDistributionInterceptorClass(), true);
 
       try {
 
@@ -270,6 +275,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          // Wait for the get to register L1 before it has sent remote
          nonOwnerGetBarrier.await(10, TimeUnit.SECONDS);
+         blockingInterceptor.suspend(true);
 
          // Now force the L1 sync to be blown away by an update
          ownerCache.put(key, secondValue);
