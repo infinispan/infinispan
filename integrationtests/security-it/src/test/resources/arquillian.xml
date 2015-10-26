@@ -13,7 +13,7 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
-            <property name="jbossHome">${basedir}/target/testnode/wildfly-${version.wildfly}</property>
+            <property name="jbossHome">${basedir}/target/testnode/wildfly-${version.org.wildfly}</property>
             <!--Needed for security domain configuration-->
             <property name="serverConfig">standalone.xml</property>
             <property name="javaVmArguments">
@@ -28,7 +28,7 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
-            <property name="jbossHome">${basedir}/target/node0/wildfly-${version.wildfly}</property>
+            <property name="jbossHome">${basedir}/target/node0/wildfly-${version.org.wildfly}</property>
             <!-- Needed for security domain configuration -->
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">-Djboss.node.name=node0
@@ -48,7 +48,7 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
-            <property name="jbossHome">${basedir}/target/node1/wildfly-${version.wildfly}</property>
+            <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">-Djboss.node.name=node1 
                                              -Djboss.socket.binding.port-offset=200 
@@ -67,7 +67,7 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
-            <property name="jbossHome">${basedir}/target/node1/wildfly-${version.wildfly}</property>
+            <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">-Djboss.node.name=node1 
                                              -Djboss.socket.binding.port-offset=200 
@@ -85,7 +85,7 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
-            <property name="jbossHome">${basedir}/target/node0/wildfly-${version.wildfly}</property>
+            <property name="jbossHome">${basedir}/target/node0/wildfly-${version.org.wildfly}</property>
             <!-- Needed for security domain configuration -->
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">-Djboss.node.name=node0
@@ -104,7 +104,7 @@
             <property name="executionType">REMOTE</property>
          </protocol>
          <configuration>
-            <property name="jbossHome">${basedir}/target/node1/wildfly-${version.wildfly}</property>
+            <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">-Djboss.node.name=node1 
                                              -Djboss.socket.binding.port-offset=200 

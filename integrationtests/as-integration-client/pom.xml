@@ -129,7 +129,7 @@
                                 <artifactItem>
                                     <groupId>org.wildfly</groupId>
                                     <artifactId>wildfly-dist</artifactId>
-                                    <version>${version.wildfly}</version>
+                                    <version>${version.org.wildfly}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}</outputDirectory>
@@ -140,7 +140,7 @@
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/wildfly-${version.wildfly}/modules</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/wildfly-${version.org.wildfly}/modules</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -159,7 +159,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.build.directory}/wildfly-${version.wildfly}</outputDirectory>
+                            <outputDirectory>${project.build.directory}/wildfly-${version.org.wildfly}</outputDirectory>
                             <overwrite>true</overwrite>
                             <resources>
                                 <resource>

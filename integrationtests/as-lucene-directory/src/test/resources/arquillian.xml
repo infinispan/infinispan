@@ -9,7 +9,7 @@
     <group qualifier="Grid" default="true">
         <container qualifier="container.active-1" default="true">
             <configuration>
-                <property name="jbossHome">${basedir}/target/node1/wildfly-${version.wildfly}</property>
+                <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
                 <!-- Needed for JMS tests -->
                 <property name="serverConfig">standalone-full-testqueues.xml</property>
                 <property name="javaVmArguments">-Xmx512m -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -XX:+IgnoreUnrecognizedVMOptions</property>
@@ -20,7 +20,7 @@
         <!-- Copy of the above, except a port offset is applied and running from a different copy -->
         <container qualifier="container.active-2">
             <configuration>
-                <property name="jbossHome">${basedir}/target/node2/wildfly-${version.wildfly}</property>
+                <property name="jbossHome">${basedir}/target/node2/wildfly-${version.org.wildfly}</property>
                 <!-- Needed for JMS tests -->
                 <property name="serverConfig">standalone-full-testqueues.xml</property>
                 <property name="javaVmArguments">-Djboss.socket.binding.port-offset=10000 -Xmx512m -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -XX:+IgnoreUnrecognizedVMOptions</property>
