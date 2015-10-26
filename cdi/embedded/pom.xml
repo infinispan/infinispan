@@ -106,39 +106,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-invoker-plugin</artifactId>
-                <version>${version.maven.invoker}</version>
-                <configuration>
-                    <addTestClassPath>true</addTestClassPath>
-                    <projectsDirectory>src/cdi-weld-se-it</projectsDirectory>
-                    <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-                    <pomIncludes>
-                        <pomInclude>pom.xml</pomInclude>
-                    </pomIncludes>
-                    <postBuildHookScript>verify</postBuildHookScript>
-                    <streamLogs>true</streamLogs>
-                    <goals>
-                        <goal>clean</goal>
-                        <goal>package</goal>
-                    </goals>
-                    <properties>
-                        <maven.test.skip.exec>${maven.test.skip.exec}</maven.test.skip.exec>
-                        <skipTests>${skipTests}</skipTests>
-                        <log4j.configuration>${log4j.configuration}</log4j.configuration>
-                    </properties>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>run-weld-se-with-installed-artifacts</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
                 <executions>
