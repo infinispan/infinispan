@@ -29,11 +29,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.kohsuke.metainf-services</groupId>
-            <artifactId>metainf-services</artifactId>
-            <optional>true</optional>
-        </dependency>
 
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -135,8 +130,8 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>integration-test</id>
-                        <phase>integration-test</phase>
+                        <id>run-weld-se-with-installed-artifacts</id>
+                        <phase>install</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>

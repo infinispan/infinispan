@@ -5,7 +5,6 @@ import org.infinispan.cdi.util.ContextualLifecycle;
 import org.infinispan.cdi.util.Reflections;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.kohsuke.MetaInfServices;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
@@ -18,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@MetaInfServices
 public class InfinispanExtensionRemote implements Extension {
    private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
 

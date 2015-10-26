@@ -1,7 +1,5 @@
 package org.infinispan.cdi.util;
 
-import org.kohsuke.MetaInfServices;
-
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.AfterDeploymentValidation;
@@ -40,7 +38,6 @@ import java.util.logging.Logger;
  * This is the only way to guarantee to get the right
  * BeanManager in more complex Container scenarios.</p>
  */
-@MetaInfServices
 public class BeanManagerProvider implements Extension
 {
     private static final Logger  LOG = Logger.getLogger(BeanManagerProvider.class.getName());
