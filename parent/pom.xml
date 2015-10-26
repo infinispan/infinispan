@@ -172,10 +172,12 @@
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.13.Final</version.weld>
       
-      <version.wildfly>10.0.0.CR2</version.wildfly>
-      <version.wildfly.arquillian>1.0.0.Final</version.wildfly.arquillian>
-      <version.wildfly.core>2.0.0.CR1</version.wildfly.core>
-      <version.wildfly.maven.plugin>1.1.0.Alpha3</version.wildfly.maven.plugin>
+      <version.org.wildfly>10.0.0.CR4</version.org.wildfly>
+      <version.org.wildfly.core>2.0.0.CR8</version.org.wildfly.core>
+      <version.org.wildfly.arquillian>1.0.1.Final</version.org.wildfly.arquillian>
+      <version.org.wildfly.build-tools>1.1.0.CR2</version.org.wildfly.build-tools>
+      <version.org.wildfly.maven-plugin>1.1.0.Alpha4</version.org.wildfly.maven-plugin>
+      
       <version.javassist>3.18.1-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
@@ -547,13 +549,13 @@
          <dependency>
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
-            <version>${version.wildfly.arquillian}</version>
+            <version>${version.org.wildfly.arquillian}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller</artifactId>
-            <version>${version.wildfly.core}</version>
+            <version>${version.org.wildfly.core}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
@@ -894,7 +896,7 @@
          <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-core-testsuite-shared</artifactId>
-            <version>${version.wildfly.core}</version>
+            <version>${version.org.wildfly.core}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1399,7 +1401,7 @@
              <plugin>
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
-                <version>${version.wildfly.maven.plugin}</version>
+                <version>${version.org.wildfly.maven-plugin}</version>
              </plugin>
          </plugins>
       </pluginManagement>

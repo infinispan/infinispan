@@ -168,7 +168,7 @@
                         <artifactItem>
                            <groupId>org.wildfly</groupId>
                            <artifactId>wildfly-dist</artifactId>
-                           <version>${version.wildfly}</version>
+                           <version>${version.org.wildfly}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
                            <outputDirectory>${project.build.directory}/node1</outputDirectory>
@@ -176,7 +176,7 @@
                         <artifactItem>
                            <groupId>org.wildfly</groupId>
                            <artifactId>wildfly-dist</artifactId>
-                           <version>${version.wildfly}</version>
+                           <version>${version.org.wildfly}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
                            <outputDirectory>${project.build.directory}/node2</outputDirectory>
@@ -187,7 +187,7 @@
                            <version>${project.version}</version>
                            <type>zip</type>
                            <overWrite>true</overWrite>
-                           <outputDirectory>${project.build.directory}/node1/wildfly-${version.wildfly}/modules</outputDirectory>
+                           <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
                         </artifactItem>
                         <artifactItem>
                            <groupId>org.infinispan</groupId>
@@ -195,7 +195,7 @@
                            <version>${project.version}</version>
                            <type>zip</type>
                            <overWrite>false</overWrite>
-                           <outputDirectory>${project.build.directory}/node2/wildfly-${version.wildfly}/modules</outputDirectory>
+                           <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
                         </artifactItem>
                      </artifactItems>
                   </configuration>
@@ -214,7 +214,7 @@
                      <goal>copy-resources</goal>
                   </goals>
                   <configuration>
-                     <outputDirectory>${project.build.directory}/node1/wildfly-${version.wildfly}</outputDirectory>
+                     <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}</outputDirectory>
                      <overwrite>true</overwrite>
                      <resources>
                          <resource>
@@ -230,7 +230,7 @@
                      <goal>copy-resources</goal>
                   </goals>
                   <configuration>
-                     <outputDirectory>${project.build.directory}/node2/wildfly-${version.wildfly}</outputDirectory>
+                     <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}</outputDirectory>
                          <overwrite>true</overwrite>
                           <resources>
                               <resource>
