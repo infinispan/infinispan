@@ -2,6 +2,7 @@ package org.infinispan.cdi;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.util.BeanBuilder;
 import org.infinispan.cdi.util.Beans;
 import org.infinispan.cdi.util.ContextualLifecycle;
@@ -10,14 +11,12 @@ import org.infinispan.cdi.util.DefaultLiteral;
 import org.infinispan.cdi.util.Reflections;
 import org.infinispan.cdi.util.defaultbean.DefaultBean;
 import org.infinispan.cdi.util.defaultbean.DefaultBeanHolder;
-import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.util.defaultbean.Installed;
 import org.infinispan.cdi.util.logging.EmbeddedLog;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.kohsuke.MetaInfServices;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
@@ -40,7 +39,6 @@ import java.util.Set;
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@MetaInfServices
 public class InfinispanExtensionEmbedded implements Extension {
    private static final EmbeddedLog LOG = LogFactory.getLog(InfinispanExtensionEmbedded.class, EmbeddedLog.class);
 

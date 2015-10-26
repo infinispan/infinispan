@@ -3,7 +3,6 @@ package org.infinispan.cdi;
 import org.infinispan.Cache;
 import org.infinispan.cdi.util.CDIHelper;
 import org.infinispan.distexec.spi.DistributedTaskLifecycle;
-import org.kohsuke.MetaInfServices;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -11,9 +10,7 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
 import java.util.concurrent.Callable;
 
-@MetaInfServices
-public class DelegatingDistributedTaskLifecycle implements
-         DistributedTaskLifecycle {
+public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecycle {
    private final DistributedTaskLifecycle delegate;
 
    public DelegatingDistributedTaskLifecycle() {

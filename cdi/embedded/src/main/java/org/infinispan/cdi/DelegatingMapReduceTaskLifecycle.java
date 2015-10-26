@@ -5,14 +5,12 @@ import org.infinispan.cdi.util.CDIHelper;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle;
-import org.kohsuke.MetaInfServices;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
 
-@MetaInfServices
 public class DelegatingMapReduceTaskLifecycle implements MapReduceTaskLifecycle {
 
    private final MapReduceTaskLifecycle delegate;
