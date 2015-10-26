@@ -46,7 +46,8 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
                                                   final boolean replace, final Object key, final String originalValue,
                                                   final String nonOwnerValue, String updateValue) throws InterruptedException, ExecutionException, TimeoutException, BrokenBarrierException {
       CyclicBarrier barrier = new CyclicBarrier(2);
-      addBlockingInterceptorBeforeTx(nonOwnerCache, barrier, replace ? ReplaceCommand.class : PutKeyValueCommand.class);
+      BlockingInterceptor blockingInterceptor = addBlockingInterceptorBeforeTx(nonOwnerCache, barrier,
+            replace ? ReplaceCommand.class : PutKeyValueCommand.class);
 
       try {
          Future<String> future = fork(new Callable<String>() {
@@ -67,6 +68,9 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
          // Now wait for the put/replace to return and block it for now
          barrier.await(5, TimeUnit.SECONDS);
+
+         // Stop blocking new commands as we check that a put returns the correct previous value
+         blockingInterceptor.suspend(true);
 
          // Owner should have the new value
          assertEquals(nonOwnerValue, ownerCache.put(key, updateValue));

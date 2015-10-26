@@ -73,12 +73,22 @@ public class NonTxOriginatorBecomingPrimaryOwnerTest extends MultipleCacheManage
             }
          });
 
-         // After the put command passed through EntryWrappingInterceptor, kill cache1
+         // Wait for the put command to pass through EntryWrappingInterceptor
          distInterceptorBarrier.await(10, TimeUnit.SECONDS);
+
+         // Stop blocking new commands, to allow state transfer to finish
+         blockingInterceptor.suspend(true);
+
+         // Kill cache1
          cache1.stop();
 
-         // Wait for the new topology to be installed and unblock the command
+         // Wait for the new topology to be installed
          TestingUtil.waitForRehashToComplete(cache0, cache2);
+
+         // Resume blocking new commands
+         blockingInterceptor.suspend(false);
+
+         // Unblock the command
          distInterceptorBarrier.await(10, TimeUnit.SECONDS);
 
          // StateTransferInterceptor retries the command, and it should block again in BlockingInterceptor.

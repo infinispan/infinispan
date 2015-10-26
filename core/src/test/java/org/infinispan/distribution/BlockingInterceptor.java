@@ -22,10 +22,10 @@ public class BlockingInterceptor extends CommandInterceptor {
    private static final Log log = LogFactory.getLog(BlockingInterceptor.class);
 
    private final CyclicBarrier barrier;
-   private final AtomicBoolean firstBlocked = new AtomicBoolean();
    private final Class<? extends VisitableCommand> commandClass;
    private final boolean blockAfter;
    private final boolean originLocalOnly;
+   private final AtomicBoolean suspended = new AtomicBoolean();
 
    public BlockingInterceptor(CyclicBarrier barrier, Class<? extends VisitableCommand> commandClass,
          boolean blockAfter, boolean originLocalOnly) {
@@ -35,22 +35,24 @@ public class BlockingInterceptor extends CommandInterceptor {
       this.originLocalOnly = originLocalOnly;
    }
 
+   public void suspend(boolean s) {
+      this.suspended.set(s);
+   }
+
    private void blockIfNeeded(InvocationContext ctx, VisitableCommand command) throws BrokenBarrierException, InterruptedException {
-      if (commandClass.isInstance(command) && (!originLocalOnly || ctx.isOriginLocal())) {
-         if (firstBlocked.compareAndSet(false, true)) {
-            try {
-               log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
-               // The first arrive and await is to sync with main thread
-               barrier.await();
-               // Now we actually block until main thread lets us go
-               barrier.await();
-               log.tracef("Command completed blocking completion of %s", command);
-            } finally {
-               firstBlocked.set(false);
-            }
-         } else {
-            log.trace("Command arrived but already found a blocker");
-         }
+      if (suspended.get()) {
+         log.tracef("Suspended, not blocking command %s", command);
+         return;
+      }
+      if (commandClass.equals(command.getClass()) && (!originLocalOnly || ctx.isOriginLocal())) {
+         log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
+         // The first arrive and await is to sync with main thread
+         barrier.await();
+         // Now we actually block until main thread lets us go
+         barrier.await();
+         log.tracef("Command completed blocking completion of %s", command);
+      } else {
+         log.trace("Command arrived but already found a blocker");
       }
    }
 
