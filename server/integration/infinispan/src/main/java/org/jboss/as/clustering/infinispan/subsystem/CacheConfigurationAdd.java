@@ -520,12 +520,9 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 if (BackupSiteConfigurationResource.ENABLED.resolveModelAttribute(context, site).asBoolean()) {
                     sitesBuilder.addInUseBackupSite(siteName);
                 }
-                if (site.hasDefined(ModelKeys.TAKE_OFFLINE)) {
-                    ModelNode takeOfflineModel = site.get(ModelKeys.TAKE_OFFLINE);
-                    backupConfigurationBuilder.takeOffline()
-                          .afterFailures(BackupSiteConfigurationResource.TAKE_OFFLINE_AFTER_FAILURES.resolveModelAttribute(context, takeOfflineModel).asInt())
-                          .minTimeToWait(BackupSiteConfigurationResource.TAKE_OFFLINE_MIN_WAIT.resolveModelAttribute(context, takeOfflineModel).asLong());
-                }
+                backupConfigurationBuilder.takeOffline()
+                        .afterFailures(BackupSiteConfigurationResource.TAKE_OFFLINE_AFTER_FAILURES.resolveModelAttribute(context, site).asInt())
+                        .minTimeToWait(BackupSiteConfigurationResource.TAKE_OFFLINE_MIN_WAIT.resolveModelAttribute(context, site).asLong());
                 if (site.hasDefined(ModelKeys.STATE_TRANSFER) && site.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME).isDefined()) {
                     ModelNode stateTransferModel = site.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME);
                     backupConfigurationBuilder.stateTransfer()
