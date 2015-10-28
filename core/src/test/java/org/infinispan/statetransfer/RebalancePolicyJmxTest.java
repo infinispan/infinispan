@@ -108,7 +108,6 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       log.debugf("Rebalancing with nodes %s %s %s %s", address(0), address(1), address(2), address(3));
       mBeanServer.setAttribute(ltmName0, new Attribute(REBALANCING_ENABLED, true));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName0, REBALANCING_ENABLED));
-      assertEquals(RebalancingStatus.IN_PROGRESS.toString(), stm0.getRebalancingStatus());
       // Duplicate request to enable rebalancing - should be ignored
       mBeanServer.setAttribute(ltmName0, new Attribute(REBALANCING_ENABLED, true));
 
