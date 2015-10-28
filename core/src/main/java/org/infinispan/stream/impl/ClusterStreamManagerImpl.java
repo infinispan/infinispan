@@ -3,6 +3,7 @@ package org.infinispan.stream.impl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.responses.Response;
@@ -14,6 +15,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -244,20 +246,23 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    }
 
    private Map<Address, Set<Integer>> determineTargets(ConsistentHash ch, Set<Integer> segments) {
+      if (segments == null) {
+         segments = new ReplicatedConsistentHash.RangeSet(ch.getNumSegments());
+      }
       // This has to be a concurrent hash map in case if a node completes operation while we are still iterating
       // over the map and submitting to others
       Map<Address, Set<Integer>> targets = new ConcurrentHashMap<>();
-      List<Address> addresses = ch.getMembers();
-      for (Address address : addresses) {
-         if (address.equals(localAddress)) {
+      for (Integer segment : segments) {
+         Address owner = ch.locatePrimaryOwnerForSegment(segment);
+         if (owner.equals(localAddress)) {
             continue;
          }
-         // TODO: we should add a new primary segments for all owners method
-         Set<Integer> theirSegments = ch.getPrimarySegmentsForOwner(address);
-         if (segments != null && theirSegments.retainAll(segments) && theirSegments.isEmpty()) {
-            continue;
+         Set<Integer> targetSegments = targets.get(owner);
+         if (targetSegments == null) {
+            targetSegments = new HashSet<>();
+            targets.put(owner, targetSegments);
          }
-         targets.put(address, theirSegments);
+         targetSegments.add(segment);
       }
       return targets;
    }
