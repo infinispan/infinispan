@@ -92,9 +92,11 @@ public class ClusteredCacheConfigurationIT {
                 .getPort());
         final MemcachedClient mc2 = new MemcachedClient(server2.getMemcachedEndpoint().getInetAddress().getHostName(), server2.getMemcachedEndpoint()
                 .getPort());
-        mc1.set("k1", "v1");
-        assertNotNull(mc1.get("k1"));
-        String value = mc2.get("k1");
+        // Because the ReplicatedConsistentHashFactory is deterministic, we know server2 is always the primary owner
+        // If server1 was the primary owner, we would not find the value on server2.
+        mc2.set("k1", "v1");
+        assertNotNull(mc2.get("k1"));
+        String value = mc1.get("k1");
         if (value == null) {
             eventually(new ITestUtils.Condition() {
                 @Override
@@ -105,11 +107,11 @@ public class ClusteredCacheConfigurationIT {
         } else {
             // we were unlucky - we did the put right before the flush, and did the get right after it
             // this means that the next interval window starts now and we can do another check
-            mc1.set("k2", "v2");
-            assertNotNull(mc1.get("k2"));
-            assertNull(mc2.get("k2"));
-            sleepForSecs(3.0);
+            mc2.set("k2", "v2");
             assertNotNull(mc2.get("k2"));
+            assertNull(mc1.get("k2"));
+            sleepForSecs(3.0);
+            assertNotNull(mc1.get("k2"));
         }
     }
 
