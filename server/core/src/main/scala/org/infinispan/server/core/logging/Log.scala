@@ -90,4 +90,6 @@ trait Log {
    def logErrorEncodingMessage(msg: Any, t: Throwable) = log.errorEncodingMessage(msg, t)
 
    def logErrorUnexpectedMessage(msg: Any) = log.errorUnexpectedMessage(msg)
+
+   def logMergedMemberCantBeFound(member: String) = log.mergedMemberCantBeFound(member)
 }

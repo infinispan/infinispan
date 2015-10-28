@@ -76,7 +76,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    public static class PartitionDescriptor {
       int[] nodes;
 
-      PartitionDescriptor(int... nodes) {
+      public PartitionDescriptor(int... nodes) {
          this.nodes = nodes;
       }
 
@@ -89,7 +89,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
    }
 
-   class Partition {
+   public class Partition {
 
       private final List<Address> allMembers;
       List<Channel> channels = new ArrayList<>();

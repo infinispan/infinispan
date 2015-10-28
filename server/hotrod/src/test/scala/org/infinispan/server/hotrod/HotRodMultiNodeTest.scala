@@ -23,11 +23,14 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createCacheManagers() {
       for (i <- 0 until nodeCount) {
-         val cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())
+         val cm = createCacheManager()
          cacheManagers.add(cm)
       }
       defineCaches(cacheName)
    }
+
+   protected def createCacheManager(): EmbeddedCacheManager =
+      TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())
 
    protected def defineCaches(cacheName: String): Unit = {
       cacheManagers.foreach(cm => cm.defineConfiguration(cacheName, createCacheConfig.build()))

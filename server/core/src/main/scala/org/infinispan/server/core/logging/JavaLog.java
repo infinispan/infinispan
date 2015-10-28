@@ -109,4 +109,8 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Request to encode unexpected message %s", id = 5024)
    void errorUnexpectedMessage(Object msg);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Merged member '%s' can't be found and so can't be added to topology. This node should be restarted to join topology.", id = 5025)
+   void mergedMemberCantBeFound(String member);
+
 }
