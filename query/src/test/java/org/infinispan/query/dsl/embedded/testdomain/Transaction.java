@@ -31,4 +31,8 @@ public interface Transaction {
    boolean isDebit();
 
    void setDebit(boolean isDebit);
+
+   boolean isValid();
+
+   void setValid(boolean isValid);
 }

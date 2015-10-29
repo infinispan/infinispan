@@ -13,4 +13,8 @@ public interface Address {
    String getPostCode();
 
    void setPostCode(String postCode);
+
+   int getNumber();
+
+   void setNumber(int number);
 }
