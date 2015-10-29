@@ -10,7 +10,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
@@ -63,7 +62,7 @@ public final class QueryFacadeImpl implements QueryFacade {
          long startOffset = request.getStartOffset() == null ? -1 : request.getStartOffset();
          int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
          Map<String, Object> namedParameters = getNamedParameters(request);
-         Query q = queryEngine.buildQuery(null, request.getJpqlString(), namedParameters, startOffset, maxResults);
+         BaseQuery q = queryEngine.buildQuery(null, request.getJpqlString(), namedParameters, startOffset, maxResults);
 
          QueryResponse response = makeResponse(q);
          return ProtobufUtil.toByteArray(serCtx, response);
@@ -84,10 +83,10 @@ public final class QueryFacadeImpl implements QueryFacade {
       return params;
    }
 
-   private QueryResponse makeResponse(Query q) {
+   private QueryResponse makeResponse(BaseQuery q) {
       List<?> list = q.list();
       int numResults = list.size();
-      String[] projection = ((BaseQuery) q).getProjection();
+      String[] projection = q.getProjection();
       int projSize = projection != null ? projection.length : 0;
       List<WrappedMessage> results = new ArrayList<WrappedMessage>(projSize == 0 ? numResults : numResults * projSize);
 
@@ -96,8 +95,8 @@ public final class QueryFacadeImpl implements QueryFacade {
             results.add(new WrappedMessage(o));
          } else {
             Object[] row = (Object[]) o;
-            for (int j = 0; j < projSize; j++) {
-               results.add(new WrappedMessage(row[j]));
+            for (int i = 0; i < projSize; i++) {
+               results.add(new WrappedMessage(row[i]));
             }
          }
       }
