@@ -53,35 +53,37 @@ public final class RemoteQuery extends BaseQuery {
    private List<Object> executeQuery() {
       checkParameters();
 
-      List<Object> results;
-
       QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
       QueryResponse response = op.execute();
       totalResults = (int) response.getTotalResults();
-      if (response.getProjectionSize() > 0) {
-         results = new ArrayList<Object>(response.getResults().size() / response.getProjectionSize());
-         Iterator<WrappedMessage> it = response.getResults().iterator();
+      return unwrapResults(response.getProjectionSize(), response.getResults());
+   }
+
+   private List<Object> unwrapResults(int projectionSize, List<WrappedMessage> results) {
+      List<Object> unwrappedResults;
+      if (projectionSize > 0) {
+         unwrappedResults = new ArrayList<Object>(results.size() / projectionSize);
+         Iterator<WrappedMessage> it = results.iterator();
          while (it.hasNext()) {
-            Object[] row = new Object[response.getProjectionSize()];
-            for (int i = 0; i < response.getProjectionSize(); i++) {
+            Object[] row = new Object[projectionSize];
+            for (int i = 0; i < row.length; i++) {
                row[i] = it.next().getValue();
             }
-            results.add(row);
+            unwrappedResults.add(row);
          }
       } else {
-         results = new ArrayList<Object>(response.getResults().size());
-         for (WrappedMessage r : response.getResults()) {
+         unwrappedResults = new ArrayList<Object>(results.size());
+         for (WrappedMessage r : results) {
             try {
                byte[] bytes = (byte[]) r.getValue();
                Object o = ProtobufUtil.fromWrappedByteArray(serializationContext, bytes);
-               results.add(o);
+               unwrappedResults.add(o);
             } catch (IOException e) {
                throw new HotRodClientException(e);
             }
          }
       }
-
-      return results;
+      return unwrappedResults;
    }
 
    private void checkParameters() {
