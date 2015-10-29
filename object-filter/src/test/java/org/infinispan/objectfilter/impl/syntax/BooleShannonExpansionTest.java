@@ -38,10 +38,15 @@ public class BooleShannonExpansionTest {
             String last = propertyPath.get(propertyPath.size() - 1);
             return !last.equals("number") && !last.equals("license");
          }
+
+         @Override
+         public boolean isStored(List<String> propertyPath) {
+            return isIndexed(propertyPath);
+         }
       });
 
       expr = booleShannonExpansion.expand(expr);
-      String jpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), expr, parsingResult.getSortFields());
+      String jpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
       assertEquals(expectedExprStr, expr.toString());
       assertEquals(expectedJpa, jpaOut);
    }

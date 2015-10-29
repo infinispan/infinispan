@@ -32,12 +32,12 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
                     MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
-                    String queryString, Map<String, Object> namedParameters, BooleanExpr query, String[] projections, SortField[] sortFields) {
+                    String queryString, Map<String, Object> namedParameters, BooleanExpr query, String[] projections, Class<?>[] projectionTypes, SortField[] sortFields) {
       this.matcher = matcher;
 
       //todo [anistor] we need an efficient single-filter registry
       FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = new FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, false);
-      filterSubscription = filterRegistry.addFilter(queryString, namedParameters, query, projections, sortFields, emptyCallback, null);
+      filterSubscription = filterRegistry.addFilter(queryString, namedParameters, query, projections, projectionTypes, sortFields, emptyCallback, null);
       root = filterRegistry.getPredicateIndex().getRoot();
    }
 
@@ -49,6 +49,11 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
    @Override
    public String[] getProjection() {
       return filterSubscription.getProjection();
+   }
+
+   @Override
+   public Class<?>[] getProjectionTypes() {
+      return filterSubscription.getProjectionTypes();
    }
 
    @Override
