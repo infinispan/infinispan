@@ -257,4 +257,25 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[0]);
       assertEquals(1L, list.get(0)[1]);
    }
+
+   /**
+    * This test is overridden because dates need special handling for protobuf (being actually emulated as long
+    * timestamps).
+    */
+   @Override
+   public void testDuplicateDateProjection() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("id", "date", "date")
+            .having("description").eq("Hotel")
+            .toBuilder().build();
+      List<Object[]> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(3, list.get(0).length);
+      assertEquals(3, list.get(0)[0]);
+      assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[1]);
+      assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[2]);
+   }
 }

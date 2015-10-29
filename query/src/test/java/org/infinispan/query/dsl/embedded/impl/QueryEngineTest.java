@@ -128,6 +128,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       transaction0.setAmount(1800);
       transaction0.setDate(makeDate("2012-09-07"));
       transaction0.setDebit(false);
+      transaction0.setValid(true);
 
       Transaction transaction1 = new TransactionHS();
       transaction1.setId(1);
@@ -136,6 +137,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       transaction1.setAmount(1500);
       transaction1.setDate(makeDate("2013-01-05"));
       transaction1.setDebit(true);
+      transaction1.setValid(true);
 
       Transaction transaction2 = new TransactionHS();
       transaction2.setId(2);
@@ -144,6 +146,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       transaction2.setAmount(23);
       transaction2.setDate(makeDate("2013-01-09"));
       transaction2.setDebit(true);
+      transaction2.setValid(true);
 
       Transaction transaction3 = new TransactionHS();
       transaction3.setId(3);
@@ -152,6 +155,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       transaction3.setAmount(45);
       transaction3.setDate(makeDate("2013-02-27"));
       transaction3.setDebit(true);
+      transaction3.setValid(true);
 
       Transaction transaction4 = new TransactionHS();
       transaction4.setId(4);
@@ -160,6 +164,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       transaction4.setAmount(95);
       transaction4.setDate(makeDate("2013-01-31"));
       transaction4.setDebit(true);
+      transaction4.setValid(true);
 
       Transaction transaction5 = new TransactionHS();
       transaction5.setId(5);
@@ -168,6 +173,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       transaction5.setAmount(5);
       transaction5.setDate(makeDate("2013-01-01"));
       transaction5.setDebit(true);
+      transaction5.setValid(true);
 
       // persist and index the test objects
       // we put all of them in the same cache for the sake of simplicity
@@ -192,6 +198,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
          transaction.setAmount(100 + i);
          transaction.setDate(makeDate("2013-08-20"));
          transaction.setDebit(true);
+         transaction.setValid(true);
          cache(0).put("transaction_" + transaction.getId(), transaction);
       }
 
@@ -237,12 +244,26 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       assertEquals(1, list.get(1).length);
    }
 
-   public void testDuplicatesAcceptedInSelect() {
-      Query q = qe.buildQuery(null, "select name, name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name, name", null, -1, -1);
+   public void testDuplicatesAcceptedInSelect1() {
+      Query q = qe.buildQuery(null, "select name, name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name", null, -1, -1);
       List<Object[]> list = q.list();
       assertEquals(2, list.size());
       assertEquals(2, list.get(0).length);
       assertEquals(2, list.get(1).length);
+   }
+
+   public void testDuplicatesAcceptedInSelect2() {
+      Query q = qe.buildQuery(null, "select max(name), max(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).length);
+   }
+
+   public void testDuplicatesAcceptedInSelect3() {
+      Query q = qe.buildQuery(null, "select min(name), max(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).length);
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
