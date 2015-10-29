@@ -111,6 +111,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       transaction0.setAmount(1800);
       transaction0.setDate(makeDate("2012-09-07"));
       transaction0.setDebit(false);
+      transaction0.setValid(true);
 
       Transaction transaction1 = getModelFactory().makeTransaction();
       transaction1.setId(1);
@@ -119,6 +120,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       transaction1.setAmount(1500);
       transaction1.setDate(makeDate("2013-01-05"));
       transaction1.setDebit(true);
+      transaction1.setValid(true);
 
       Transaction transaction2 = getModelFactory().makeTransaction();
       transaction2.setId(2);
@@ -127,6 +129,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       transaction2.setAmount(23);
       transaction2.setDate(makeDate("2013-01-09"));
       transaction2.setDebit(true);
+      transaction2.setValid(true);
 
       Transaction transaction3 = getModelFactory().makeTransaction();
       transaction3.setId(3);
@@ -135,6 +138,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       transaction3.setAmount(45);
       transaction3.setDate(makeDate("2013-02-27"));
       transaction3.setDebit(true);
+      transaction3.setValid(true);
 
       Transaction transaction4 = getModelFactory().makeTransaction();
       transaction4.setId(4);
@@ -143,6 +147,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       transaction4.setAmount(95);
       transaction4.setDate(makeDate("2013-01-31"));
       transaction4.setDebit(true);
+      transaction4.setValid(true);
 
       Transaction transaction5 = getModelFactory().makeTransaction();
       transaction5.setId(5);
@@ -151,6 +156,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       transaction5.setAmount(5);
       transaction5.setDate(makeDate("2013-01-01"));
       transaction5.setDebit(true);
+      transaction5.setValid(true);
 
       // persist and index the test objects
       // we put all of them in the same cache for the sake of simplicity
@@ -175,6 +181,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
          transaction.setAmount(100 + i);
          transaction.setDate(makeDate("2013-08-20"));
          transaction.setDebit(true);
+         transaction.setValid(true);
          getCacheForWrite().put("transaction_" + transaction.getId(), transaction);
       }
 
@@ -1850,7 +1857,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
-   public void testGroupBy() throws Exception {
+   public void testGroupBy1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2107,7 +2114,6 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(makeDate("2013-02-27"), list.get(0)[0]);
    }
 
-   @Ignore("https://issues.jboss.org/browse/ISPN-5791")
    @Test
    public void testDateGrouping2() throws Exception {
       QueryFactory qf = getQueryFactory();
@@ -2180,6 +2186,126 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       q.setParameter("param1", "John");
 
       q.list();
+   }
+
+   @Test
+   public void testNotIndexedProjection() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("id", "isValid")
+            .having("id").gte(98)
+            .toBuilder()
+            .orderBy("id")
+            .build();
+      List<Object[]> list = q.list();
+
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(98, list.get(0)[0]);
+      assertEquals(true, list.get(0)[1]);
+      assertEquals(2, list.get(1).length);
+      assertEquals(99, list.get(1)[0]);
+      assertEquals(true, list.get(1)[1]);
+   }
+
+   @Test
+   public void testNotStoredProjection() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("id", "description")
+            .having("id").gte(98)
+            .toBuilder()
+            .orderBy("id")
+            .build();
+      List<Object[]> list = q.list();
+
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(98, list.get(0)[0]);
+      assertEquals("Expensive shoes 48", list.get(0)[1]);
+      assertEquals(2, list.get(1).length);
+      assertEquals(99, list.get(1)[0]);
+      assertEquals("Expensive shoes 49", list.get(1)[1]);
+   }
+
+   @Test
+   public void testNotIndexedOrderBy() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("id", "isValid")
+            .having("id").gte(98)
+            .toBuilder()
+            .orderBy("isValid")
+            .orderBy("id")
+            .build();
+      List<Object[]> list = q.list();
+
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(98, list.get(0)[0]);
+      assertEquals(true, list.get(0)[1]);
+      assertEquals(2, list.get(1).length);
+      assertEquals(99, list.get(1)[0]);
+      assertEquals(true, list.get(1)[1]);
+   }
+
+   @Test
+   public void testNotStoredOrderBy() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("id", "description")
+            .having("id").gte(98)
+            .toBuilder()
+            .orderBy("description")
+            .orderBy("id")
+            .build();
+      List<Object[]> list = q.list();
+
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(98, list.get(0)[0]);
+      assertEquals("Expensive shoes 48", list.get(0)[1]);
+      assertEquals(2, list.get(1).length);
+      assertEquals(99, list.get(1)[0]);
+      assertEquals("Expensive shoes 49", list.get(1)[1]);
+   }
+
+   @Test
+   public void testDuplicateDateProjection() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("id", "date", "date")
+            .having("description").eq("Hotel")
+            .toBuilder().build();
+      List<Object[]> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(3, list.get(0).length);
+      assertEquals(3, list.get(0)[0]);
+      assertEquals(makeDate("2013-02-27"), list.get(0)[1]);
+      assertEquals(makeDate("2013-02-27"), list.get(0)[2]);
+   }
+
+   @Test
+   public void testDuplicateBooleanProjection() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("id", "isDebit", "isDebit")
+            .having("description").eq("Hotel")
+            .toBuilder().build();
+      List<Object[]> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(3, list.get(0).length);
+      assertEquals(3, list.get(0)[0]);
+      assertEquals(true, list.get(0)[1]);
+      assertEquals(true, list.get(0)[2]);
    }
 
    private static ModelFactory getModelFactory() {
