@@ -5,6 +5,8 @@ import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -19,6 +21,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.WriteSkewException;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -27,6 +30,8 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -121,7 +126,8 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                   } else if (th instanceof OutdatedTopologyException) {
                      log.outdatedTopology(th);
                   } else {
-                     log.executionError(th);
+                     Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
+                     log.executionError(command.getClass().getSimpleName(), affectedKeys, th);
                   }
                   if (ctx.isInTxScope() && ctx.isOriginLocal()) {
                      if (trace) log.trace("Transaction marked for rollback as exception was received.");
@@ -137,6 +143,17 @@ public class InvocationContextInterceptor extends CommandInterceptor {
       } finally {
          invocationContextContainer.clearThreadLocal();
       }
+   }
+
+   private Collection<Object> extractWrittenKeys(InvocationContext ctx, VisitableCommand command) {
+      if (command instanceof WriteCommand) {
+         return ((WriteCommand) command).getAffectedKeys();
+      } else if (command instanceof LockControlCommand) {
+         return Collections.emptyList();
+      } else if (command instanceof TransactionBoundaryCommand) {
+         return ((TxInvocationContext<AbstractCacheTransaction>) ctx).getAffectedKeys();
+      }
+      return Collections.emptyList();
    }
 
    private String getCacheNamePrefix() {
