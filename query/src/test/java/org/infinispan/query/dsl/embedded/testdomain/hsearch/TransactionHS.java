@@ -23,14 +23,14 @@ public class TransactionHS implements Transaction, Serializable {
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int id;
 
-   @Field(store = Store.YES, analyze = Analyze.NO)
+   @Field(store = Store.NO, analyze = Analyze.NO)
    private String description;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int accountId;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
-   @DateBridge(encoding=EncodingType.STRING, resolution=Resolution.MILLISECOND)
+   @DateBridge(encoding = EncodingType.STRING, resolution = Resolution.MILLISECOND)
    private Date date;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
@@ -40,52 +40,77 @@ public class TransactionHS implements Transaction, Serializable {
    @Field(store = Store.YES, analyze = Analyze.NO)
    private boolean isDebit;
 
+   // not indexed!
+   private boolean isValid;
+
+   @Override
    public int getId() {
       return id;
    }
 
+   @Override
    public void setId(int id) {
       this.id = id;
    }
 
+   @Override
    public String getDescription() {
       return description;
    }
 
+   @Override
    public void setDescription(String description) {
       this.description = description;
    }
 
+   @Override
    public int getAccountId() {
       return accountId;
    }
 
+   @Override
    public void setAccountId(int accountId) {
       this.accountId = accountId;
    }
 
+   @Override
    public Date getDate() {
       return date;
    }
 
+   @Override
    public void setDate(Date date) {
       this.date = date;
    }
 
+   @Override
    public double getAmount() {
       return amount;
    }
 
+   @Override
    public void setAmount(double amount) {
       this.amount = amount;
    }
 
+   @Override
    public boolean isDebit() {
       return isDebit;
    }
 
+   @Override
    public void setDebit(boolean isDebit) {
       this.isDebit = isDebit;
+   }
+
+   @Override
+   public boolean isValid() {
+      return isValid;
+   }
+
+   @Override
+   public void setValid(boolean isValid) {
+      this.isValid = isValid;
    }
 
    @Override
@@ -99,6 +124,7 @@ public class TransactionHS implements Transaction, Serializable {
       if (Double.compare(other.amount, amount) != 0) return false;
       if (id != other.id) return false;
       if (isDebit != other.isDebit) return false;
+      if (isValid != other.isValid) return false;
       if (date != null ? !date.equals(other.date) : other.date != null) return false;
       if (description != null ? !description.equals(other.description) : other.description != null) return false;
 
@@ -116,6 +142,7 @@ public class TransactionHS implements Transaction, Serializable {
       temp = Double.doubleToLongBits(amount);
       result = 31 * result + (int) (temp ^ (temp >>> 32));
       result = 31 * result + (isDebit ? 1 : 0);
+      result = 31 * result + (isValid ? 1 : 0);
       return result;
    }
 
@@ -128,6 +155,7 @@ public class TransactionHS implements Transaction, Serializable {
             ", date=" + date +
             ", amount=" + amount +
             ", isDebit=" + isDebit +
+            ", isValid=" + isValid +
             '}';
    }
 }
