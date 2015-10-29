@@ -266,6 +266,18 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       assertEquals(2, list.get(0).length);
    }
 
+   public void testDuplicatesAcceptedInOrderBy1() {
+      Query q = qe.buildQuery(null, "from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS order by age, age", null, -1, -1);
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   public void testDuplicatesAcceptedInOrderBy2() {
+      Query q = qe.buildQuery(null, "from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS order by age, name, age", null, -1, -1);
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testMissingAggregateInSelect() {
       Query q = qe.buildQuery(null, "select age from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name", null, -1, -1);
@@ -384,8 +396,6 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       q.list();
    }
 
-   //TODO [anistor] unriddle the mystery of the null string token in a numeric field
-   @Test(enabled = false)
    public void testAggregateNulls() {
       Query q = qe.buildQuery(null,
                               "select name, sum(age), avg(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS " +

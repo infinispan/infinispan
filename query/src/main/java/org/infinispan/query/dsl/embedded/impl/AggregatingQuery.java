@@ -18,23 +18,26 @@ import java.util.Map;
  */
 final class AggregatingQuery extends HybridQuery {
 
-   private final int[] groupFieldPositions;
+   /**
+    * The number of columns at the beginning of the row that are used as group key.
+    */
+   private final int noOfGroupingColumns;
 
    private final FieldAccumulator[] accumulators;
 
    AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
-                    int[] groupFieldPositions, FieldAccumulator[] accumulators,
+                    int noOfGroupingColumns, FieldAccumulator[] accumulators,
                     ObjectFilter objectFilter,
                     long startOffset, int maxResults,
                     Query baseQuery) {
       super(queryFactory, cache, jpaQuery, namedParameters, objectFilter, startOffset, maxResults, baseQuery);
-      this.groupFieldPositions = groupFieldPositions;
+      this.noOfGroupingColumns = noOfGroupingColumns;
       this.accumulators = accumulators;
    }
 
    @Override
    protected Iterator<?> getBaseIterator() {
-      Grouper grouper = new Grouper(groupFieldPositions, accumulators);
+      Grouper grouper = new Grouper(noOfGroupingColumns, accumulators);
       List<Object[]> list = baseQuery.list();
       for (Object[] row : list) {
          grouper.addRow(row);
@@ -47,7 +50,7 @@ final class AggregatingQuery extends HybridQuery {
       return "AggregatingQuery{" +
             "jpaQuery=" + jpaQuery +
             ", namedParameters=" + namedParameters +
-            ", groupFieldPositions=" + Arrays.toString(groupFieldPositions) +
+            ", noOfGroupingColumns=" + noOfGroupingColumns +
             ", accumulators=" + Arrays.toString(accumulators) +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +

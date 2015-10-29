@@ -24,6 +24,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
@@ -50,7 +51,7 @@ final class RemoteQueryEngine extends QueryEngine {
    private static final FieldBridge INT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.INT_FIELD_BRIDGE, QueryFacadeImpl.NULL_TOKEN_CODEC);
 
    private static final FieldBridge STRING_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), QueryFacadeImpl.NULL_TOKEN_CODEC);
- 
+
    private final boolean isCompatMode;
 
    private final SerializationContext serCtx;
@@ -74,6 +75,35 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
+   protected RowProcessor makeTypeConversionRowProcessor(Class<?>[] projectedTypes) {
+      // Protobuf's booleans are indexed as integers, so we need to convert them.
+      // Collect here the positions of all Boolean projections.
+      int[] pos = new int[projectedTypes.length];
+      int len = 0;
+      for (int i = 0; i < projectedTypes.length; i++) {
+         if (projectedTypes[i] == Boolean.class) {
+            pos[len++] = i;
+         }
+      }
+      if (len == 0) {
+         return null;
+      }
+      final int[] cols = len < pos.length ? Arrays.copyOf(pos, len) : pos;
+      return new RowProcessor() {
+         @Override
+         public Object[] process(Object[] row) {
+            for (int i : cols) {
+               if (row[i] != null) {
+                  // the Boolean column is actually encoded as an Integer, so we convert it
+                  row[i] = ((Integer) row[i]) != 0;
+               }
+            }
+            return row;
+         }
+      };
+   }
+
+   @Override
    protected org.apache.lucene.search.Query makeTypeQuery(org.apache.lucene.search.Query query, String targetEntityName) {
       if (isCompatMode) {
          return query;
@@ -87,7 +117,7 @@ final class RemoteQueryEngine extends QueryEngine {
    @Override
    protected JPAFilterAndConverter createFilter(String jpaQuery, Map<String, Object> namedParameters) {
       return searchManager != null && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
-               new JPAFilterAndConverter(jpaQuery, namedParameters, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
+            new JPAFilterAndConverter(jpaQuery, namedParameters, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
    }
 
    @Override
@@ -97,7 +127,7 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
-   protected LuceneProcessingChain makeProcessingChain(Map<String, Object> namedParameters) {
+   protected LuceneProcessingChain makeParsingProcessingChain(Map<String, Object> namedParameters) {
       LuceneProcessingChain processingChain;
       if (isCompatMode) {
          final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {

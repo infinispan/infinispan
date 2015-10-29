@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax;
 
+import org.infinispan.objectfilter.PropertyPath;
 import org.infinispan.objectfilter.SortField;
 
 /**
@@ -18,8 +19,29 @@ public final class JPATreePrinter {
       return sb.toString();
    }
 
-   public static String printTree(String fromEntityTypeName, BooleanExpr whereClause, SortField[] orderBy) {
+   public static String printTree(String fromEntityTypeName, PropertyPath[] projection, BooleanExpr whereClause, SortField[] orderBy) {
       StringBuilder sb = new StringBuilder();
+
+      if (projection != null && projection.length != 0) {
+         sb.append("SELECT ");
+         boolean isFirst = true;
+         for (PropertyPath p : projection) {
+            if (isFirst) {
+               isFirst = false;
+            } else {
+               sb.append(", ");
+            }
+            if (p.getAggregationType() != null) {
+               sb.append(p.getAggregationType().name()).append('(');
+            }
+            sb.append(p.asStringPath());
+            if (p.getAggregationType() != null) {
+               sb.append(')');
+            }
+         }
+         sb.append(' ');
+      }
+
       sb.append("FROM ").append(fromEntityTypeName);
       sb.append(printTree(whereClause));
       if (orderBy != null && orderBy.length != 0) {

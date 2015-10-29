@@ -17,12 +17,7 @@ import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.BaseMatcher;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.RowMatcher;
-import org.infinispan.objectfilter.impl.aggregation.AvgAccumulator;
-import org.infinispan.objectfilter.impl.aggregation.CountAccumulator;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.objectfilter.impl.aggregation.MaxAccumulator;
-import org.infinispan.objectfilter.impl.aggregation.MinAccumulator;
-import org.infinispan.objectfilter.impl.aggregation.SumAccumulator;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.hql.RowPropertyHelper;
@@ -40,7 +35,6 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -112,28 +106,31 @@ public class QueryEngine {
       LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata>();
 
       ObjectPropertyHelper<?> propertyHelper = getFirstPhaseMatcher().getPropertyHelper();
-      LinkedHashSet<Integer> groupFieldPositions = new LinkedHashSet<Integer>();
       if (parsingResult.getGroupBy() != null) {
          for (PropertyPath p : parsingResult.getGroupBy()) {
+            if (p.getAggregationType() != null) {
+               throw new IllegalStateException("Cannot have aggregate functions in GROUP BY clause");  // should not really be possible because this was validated during parsing
+            }
             // Duplicates in 'group by' are accepted and silently discarded. This behaviour is similar to SQL.
             if (!columns.containsKey(p)) {
                Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), p.getPath());
                int idx = columns.size();
                columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
-               groupFieldPositions.add(idx);
             }
          }
       }
-      for (PropertyPath p : parsingResult.getProjectedPaths()) {
+      final int noOfGroupingColumns = columns.size();
+      for (int i = 0; i < parsingResult.getProjectedPaths().length; i++) {
+         PropertyPath p = parsingResult.getProjectedPaths()[i];
          RowPropertyHelper.ColumnMetadata c = columns.get(p);
          if (p.getAggregationType() == null) {
             // this must be an already processed 'group by' field, or else it's an invalid query
-            if (c == null || !groupFieldPositions.contains(c.getColumnIndex())) {
+            if (c == null || c.getColumnIndex() >= noOfGroupingColumns) {
                throw new ParsingException("The expression '" + p + "' must be part of an aggregate function or it should be included in the GROUP BY clause");
             }
          }
          if (c == null) {
-            Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), p.getPath());
+            Class<?> propertyType = parsingResult.getProjectedTypes()[i];
             int idx = columns.size();
             columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
          }
@@ -144,7 +141,7 @@ public class QueryEngine {
             RowPropertyHelper.ColumnMetadata c = columns.get(p);
             if (p.getAggregationType() == null) {
                // this must be an already processed 'group by' field, or else it's an invalid query
-               if (c == null || !groupFieldPositions.contains(c.getColumnIndex())) {
+               if (c == null || c.getColumnIndex() >= noOfGroupingColumns) {
                   throw new ParsingException("The expression '" + p + "' must be part of an aggregate function or it should be included in the GROUP BY clause");
                }
             }
@@ -167,17 +164,38 @@ public class QueryEngine {
          }
       }
 
+      // validity of query is established at this point, no more checks needed
+
+      LinkedHashMap<String, Integer> inColumns = new LinkedHashMap<String, Integer>();
+      List<FieldAccumulator> accumulators = new LinkedList<FieldAccumulator>();
+      RowPropertyHelper.ColumnMetadata[] _columns = new RowPropertyHelper.ColumnMetadata[columns.size()];
+      for (PropertyPath p : columns.keySet()) {
+         RowPropertyHelper.ColumnMetadata c = columns.get(p);
+         _columns[c.getColumnIndex()] = c;
+         String asStringPath = p.asStringPath();
+         Integer inIdx = inColumns.get(asStringPath);
+         if (inIdx == null) {
+            inIdx = inColumns.size();
+            inColumns.put(asStringPath, inIdx);
+         }
+         if (p.getAggregationType() != null) {
+            FieldAccumulator acc = FieldAccumulator.makeAccumulator(p.getAggregationType(), inIdx, c.getColumnIndex(), c.getPropertyType());
+            accumulators.add(acc);
+         }
+      }
+      FieldAccumulator[] _accumulators = accumulators.toArray(new FieldAccumulator[accumulators.size()]);
+
       StringBuilder firstPhaseQuery = new StringBuilder();
       firstPhaseQuery.append("SELECT ");
       {
          boolean isFirst = true;
-         for (PropertyPath c : columns.keySet()) {
+         for (String p : inColumns.keySet()) {
             if (isFirst) {
                isFirst = false;
             } else {
                firstPhaseQuery.append(", ");
             }
-            firstPhaseQuery.append(JPAQueryGenerator.DEFAULT_ALIAS).append('.').append(c.asStringPath());
+            firstPhaseQuery.append(JPAQueryGenerator.DEFAULT_ALIAS).append('.').append(p);
          }
       }
       firstPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(JPAQueryGenerator.DEFAULT_ALIAS);
@@ -194,14 +212,12 @@ public class QueryEngine {
       StringBuilder secondPhaseQuery = new StringBuilder();
       secondPhaseQuery.append("SELECT ");
       {
-         boolean isFirst = true;
-         for (PropertyPath p : parsingResult.getProjectedPaths()) {
-            if (isFirst) {
-               isFirst = false;
-            } else {
+         for (int i = 0; i < parsingResult.getProjectedPaths().length; i++) {
+            PropertyPath p = parsingResult.getProjectedPaths()[i];
+            RowPropertyHelper.ColumnMetadata c = columns.get(p);
+            if (i != 0) {
                secondPhaseQuery.append(", ");
             }
-            RowPropertyHelper.ColumnMetadata c = columns.get(p);
             secondPhaseQuery.append(c.getColumnName());
          }
       }
@@ -223,58 +239,21 @@ public class QueryEngine {
          }
       }
 
-      List<FieldAccumulator> accumulators = new LinkedList<FieldAccumulator>();
-      RowPropertyHelper.ColumnMetadata[] _columns = new RowPropertyHelper.ColumnMetadata[columns.size()];
-      for (PropertyPath p : columns.keySet()) {
-         RowPropertyHelper.ColumnMetadata c = columns.get(p);
-         _columns[c.getColumnIndex()] = c;
-         if (p.getAggregationType() != null) {
-            switch (p.getAggregationType()) {
-               case SUM:
-                  accumulators.add(new SumAccumulator(c.getColumnIndex(), c.getPropertyType()));
-                  break;
-               case AVG:
-                  accumulators.add(new AvgAccumulator(c.getColumnIndex(), c.getPropertyType()));
-                  break;
-               case MIN:
-                  accumulators.add(new MinAccumulator(c.getColumnIndex(), c.getPropertyType()));
-                  break;
-               case MAX:
-                  accumulators.add(new MaxAccumulator(c.getColumnIndex(), c.getPropertyType()));
-                  break;
-               case COUNT:
-                  accumulators.add(new CountAccumulator(c.getColumnIndex()));
-                  break;
-               default:
-                  throw new IllegalStateException("Aggregation " + p.getAggregationType().name() + " is not supported");
-            }
-         } else {
-            groupFieldPositions.add(c.getColumnIndex());
-         }
-      }
-
-      int[] _groupFieldPositions = new int[groupFieldPositions.size()];
-      int i = 0;
-      for (Integer pos : groupFieldPositions) {
-         _groupFieldPositions[i++] = pos;
-      }
-      FieldAccumulator[] _accumulators = accumulators.toArray(new FieldAccumulator[accumulators.size()]);
-
       // first phase: gather rows matching the 'where' clause
       String firstPhaseQueryStr = firstPhaseQuery.toString();
       Query baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr, namedParameters));
 
-      // second phase: grouping, aggregation, 'having' clause filtering, sorting and paging
+      // second phase: grouping, aggregation, 'having' clause filtering, sorting and pagination
       String secondPhaseQueryStr = secondPhaseQuery.toString();
       return new AggregatingQuery(queryFactory, cache, secondPhaseQueryStr, namedParameters,
-            _groupFieldPositions, _accumulators,
+            noOfGroupingColumns, _accumulators,
             getObjectFilter(new RowMatcher(_columns), secondPhaseQueryStr, namedParameters),
             startOffset, maxResults, baseQuery);
    }
 
    /**
     * Swaps all occurrences of PropertyPaths in given expression tree with new PropertyPaths according to the mapping
-    * found in {@code colums} map.
+    * found in {@code columns} map.
     */
    private BooleanExpr swapVariables(final BooleanExpr expr, final String targetEntityName,
                                      final LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns) {
@@ -345,11 +324,7 @@ public class QueryEngine {
             RowPropertyHelper.ColumnMetadata c = columns.get(p);
             if (c == null) {
                Class<?> propertyType = propertyHelper.getPrimitivePropertyType(targetEntityName, aggregationExpr.getPropertyPath());
-               if (aggregationExpr.getAggregationType() == PropertyPath.AggregationType.AVG) {
-                  propertyType = Double.class;
-               } else if (aggregationExpr.getAggregationType() == PropertyPath.AggregationType.COUNT) {
-                  propertyType = Long.class;
-               }
+               propertyType = FieldAccumulator.getOutputType(aggregationExpr.getAggregationType(), propertyType);
                int idx = columns.size();
                c = new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType);
                columns.put(p, c);
@@ -363,7 +338,7 @@ public class QueryEngine {
    private BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters,
                                               long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
       if (parsingResult.hasGroupingOrAggregations()) {
-         throw new IllegalArgumentException("The query must not use grouping or aggregation"); // may happen only due to programming error
+         throw new IllegalArgumentException("The query must not use grouping or aggregation"); // may happen only due to internal programming error
       }
 
       BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
@@ -372,28 +347,121 @@ public class QueryEngine {
          return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
       }
       if (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE || searchManager == null) {
+         // fully non-indexed execution because the filter matches everything or there is no indexing at all
          return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
-      BooleShannonExpansion bse = new BooleShannonExpansion(MAX_EXPANSION_COFACTORS, getIndexedFieldProvider(parsingResult));
+      BooleShannonExpansion.IndexedFieldProvider indexedFieldProvider = getIndexedFieldProvider(parsingResult);
+
+      boolean allProjectionsAreStored = true;
+      LinkedHashMap<String, List<Integer>> projectionsMap = null;
+      if (parsingResult.getProjectedPaths() != null) {
+         projectionsMap = new LinkedHashMap<String, List<Integer>>();
+         for (int i = 0; i < parsingResult.getProjectedPaths().length; i++) {
+            PropertyPath p = parsingResult.getProjectedPaths()[i];
+            List<Integer> idx = projectionsMap.get(p.asStringPath());
+            if (idx == null) {
+               idx = new ArrayList<Integer>();
+               projectionsMap.put(p.asStringPath(), idx);
+               if (!indexedFieldProvider.isStored(p.getPath())) {
+                  allProjectionsAreStored = false;
+               }
+            }
+            idx.add(i);
+         }
+      }
+
+      boolean allSortFieldsAreStored = true;
+      SortField[] sortFields = parsingResult.getSortFields();
+      if (sortFields != null) {
+         // deduplicate sort fields
+         LinkedHashMap<String, SortField> sortFieldMap = new LinkedHashMap<String, SortField>();
+         for (SortField sf : sortFields) {
+            PropertyPath p = sf.getPath();
+            String asStringPath = p.asStringPath();
+            if (!sortFieldMap.containsKey(asStringPath)) {
+               sortFieldMap.put(asStringPath, sf);
+               if (!indexedFieldProvider.isStored(p.getPath())) {
+                  allSortFieldsAreStored = false;
+               }
+            }
+         }
+         sortFields = sortFieldMap.values().toArray(new SortField[sortFieldMap.size()]);
+      }
+
+      BooleShannonExpansion bse = new BooleShannonExpansion(MAX_EXPANSION_COFACTORS, indexedFieldProvider);
       BooleanExpr expansion = bse.expand(normalizedWhereClause);
 
       if (expansion == normalizedWhereClause) {  // identity comparison is intended here!
-         // everything is indexed, so go the Lucene way
-         //todo [anistor] we should be able to generate the lucene query ourselves rather than depend on hibernate-hql-lucene to do it
-         return new EmbeddedLuceneQuery(this, queryFactory, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
+         // all involved fields are indexed, so go the Lucene way
+         if (allSortFieldsAreStored) {
+            if (allProjectionsAreStored) {
+               // all projections are stored, so we can execute the query entirely against the index, and we can also sort using the index
+               RowProcessor rowProcessor = null;
+               if (parsingResult.getProjectedPaths() != null) {
+                  if (projectionsMap.size() != parsingResult.getProjectedPaths().length) {
+                     // but some projections are duplicated ...
+                     Class<?>[] projectedTypes = new Class<?>[projectionsMap.size()];
+                     final int[] map = new int[parsingResult.getProjectedPaths().length];
+                     int j = 0;
+                     for (List<Integer> idx : projectionsMap.values()) {
+                        int i = idx.get(0);
+                        projectedTypes[j] = parsingResult.getProjectedTypes()[i];
+                        for (int k : idx) {
+                           map[k] = j;
+                        }
+                        j++;
+                     }
+
+                     rowProcessor = new RowProcessor() {
+
+                        final RowProcessor delegate = makeTypeConversionRowProcessor(projectedTypes);
+
+                        @Override
+                        public Object[] process(Object[] inRow) {
+                           if (delegate != null) {
+                              inRow = delegate.process(inRow);
+                           }
+                           Object[] outRow = new Object[map.length];
+                           for (int i = 0; i < map.length; i++) {
+                              outRow[i] = inRow[map[i]];
+                           }
+                           return outRow;
+                        }
+                     };
+                  } else {
+                     rowProcessor = makeTypeConversionRowProcessor(parsingResult.getProjectedTypes());
+                  }
+               }
+               return new EmbeddedLuceneQuery(this, queryFactory, jpqlString, namedParameters, parsingResult.getProjections(), rowProcessor, startOffset, maxResults);
+            } else {
+               String indexQueryStr = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, normalizedWhereClause, sortFields);
+               Query indexQuery = new EmbeddedLuceneQuery(this, queryFactory, indexQueryStr, namedParameters, null, null, startOffset, maxResults);
+               String projectionQueryStr = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null);
+               return new HybridQuery(queryFactory, cache, projectionQueryStr, null, getObjectFilter(getSecondPhaseMatcher(), projectionQueryStr, null), -1, -1, indexQuery);
+            }
+         } else {
+            // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
+            String indexQueryStr = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, normalizedWhereClause, null);
+            Query indexQuery = new EmbeddedLuceneQuery(this, queryFactory, indexQueryStr, namedParameters, null, null, -1, -1);
+            String projectionQueryStr = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, sortFields);
+            return new HybridQuery(queryFactory, cache, projectionQueryStr, null, getObjectFilter(getSecondPhaseMatcher(), projectionQueryStr, null), startOffset, maxResults, indexQuery);
+         }
       }
 
       if (expansion == ConstantBooleanExpr.TRUE) {
-         // expansion leads to a full non-indexed query
+         // expansion leads to a full non-indexed query or the expansion is too long/complex
          return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
       // some fields are indexed, run a hybrid query
-      String expandedJpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), expansion, null);
-      Query expandedQuery = new EmbeddedLuceneQuery(this, queryFactory, expandedJpaOut, namedParameters, parsingResult.getProjections(), -1, -1);
-      return new HybridQuery(queryFactory, cache, jpqlString, namedParameters, getObjectFilter(getSecondPhaseMatcher(), jpqlString, namedParameters),
-            startOffset, maxResults, expandedQuery);
+      String expandedQueryStr = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expansion, null);
+      Query expandedQuery = new EmbeddedLuceneQuery(this, queryFactory, expandedQueryStr, namedParameters, null, null, -1, -1);
+      return new HybridQuery(queryFactory, cache, jpqlString, namedParameters, getObjectFilter(getSecondPhaseMatcher(), jpqlString, namedParameters), startOffset, maxResults, expandedQuery);
+   }
+
+   protected RowProcessor makeTypeConversionRowProcessor(Class<?>[] projectedTypes) {
+      return null;
    }
 
    protected BaseMatcher getFirstPhaseMatcher() {
@@ -500,16 +568,16 @@ public class QueryEngine {
          KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, LuceneQueryParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
-            parsingResult = queryParser.parseQuery(jpqlString, makeProcessingChain(namedParameters));
+            parsingResult = queryParser.parseQuery(jpqlString, makeParsingProcessingChain(namedParameters));
             queryCache.put(queryCacheKey, parsingResult);
          }
       } else {
-         parsingResult = queryParser.parseQuery(jpqlString, makeProcessingChain(namedParameters));
+         parsingResult = queryParser.parseQuery(jpqlString, makeParsingProcessingChain(namedParameters));
       }
       return parsingResult;
    }
 
-   protected LuceneProcessingChain makeProcessingChain(Map<String, Object> namedParameters) {
+   protected LuceneProcessingChain makeParsingProcessingChain(Map<String, Object> namedParameters) {
       final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
          @Override
          public Class<?> getClassFromName(String entityName) {

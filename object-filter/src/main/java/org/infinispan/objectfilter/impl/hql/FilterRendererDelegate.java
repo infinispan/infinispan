@@ -32,6 +32,8 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    private List<PropertyPath> projections;
 
+   private List<Class<?>> projectedTypes;
+
    public FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
                                  SingleEntityQueryBuilder<BooleanExpr> builder, SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder, Map<String, Object> namedParameters) {
       super(propertyHelper, entityNamesResolver, builder, namedParameters);
@@ -72,12 +74,18 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
       if (status == Status.DEFINING_SELECT) {
          if (projections == null) {
             projections = new ArrayList<PropertyPath>(5);
+            projectedTypes = new ArrayList<Class<?>>(5);
          }
+         PropertyPath projection;
          if (propertyPath.getNodes().size() == 1 && propertyPath.getNodes().get(0).isAlias()) {
-            projections.add(new PropertyPath(null, "__HSearch_This")); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
+            projection = new PropertyPath(null, "__HSearch_This"); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
          } else {
-            projections.add(makePropertyPath(propertyPath));
+            projection = makePropertyPath(propertyPath);
          }
+         projections.add(projection);
+         Class<?> propertyType = propertyHelper.getPrimitivePropertyType(targetTypeName, projection.getPath());
+         projectedTypes.add(propertyType);
+
       } else {
          this.propertyPath = propertyPath;
       }
@@ -92,6 +100,10 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    @Override
    public FilterParsingResult<TypeMetadata> getResult() {
-      return new FilterParsingResult<TypeMetadata>(builder, havingBuilder, targetTypeName, targetEntityMetadata, projections, groupBy, sortFields);
+      return new FilterParsingResult<TypeMetadata>(builder, havingBuilder,
+            targetTypeName, targetEntityMetadata,
+            projections, projectedTypes,
+            groupBy,
+            sortFields);
    }
 }
