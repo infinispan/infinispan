@@ -10,21 +10,36 @@ public class AddressPB implements Address {
 
    private String street;
    private String postCode;
+   private int number;
 
+   @Override
    public String getStreet() {
       return street;
    }
 
+   @Override
    public void setStreet(String street) {
       this.street = street;
    }
 
+   @Override
    public String getPostCode() {
       return postCode;
    }
 
+   @Override
    public void setPostCode(String postCode) {
       this.postCode = postCode;
+   }
+
+   @Override
+   public int getNumber() {
+      return number;
+   }
+
+   @Override
+   public void setNumber(int number) {
+      this.number = number;
    }
 
    @Override
@@ -32,6 +47,7 @@ public class AddressPB implements Address {
       return "AddressPB{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
+            ", number='" + number + '\'' +
             '}';
    }
 }
