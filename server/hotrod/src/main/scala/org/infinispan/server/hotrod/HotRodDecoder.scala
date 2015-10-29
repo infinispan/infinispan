@@ -197,7 +197,7 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
       writeResponse(ctx.channel, decodeCtx.decoder.customReadValue(this, decodeCtx.header, decodeCtx, buffer, decodeCtx.cache))
 
    def createStatsResponse: Response =
-      decodeCtx.decoder.createStatsResponse(decodeCtx.header, decodeCtx.cache.getStats, transport)
+      decodeCtx.decoder.createStatsResponse(decodeCtx, transport)
 
    private def wrapSecurity(block: => Unit) = {
       if (secure) Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
