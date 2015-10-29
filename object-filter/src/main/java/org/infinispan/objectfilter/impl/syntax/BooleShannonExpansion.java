@@ -24,6 +24,8 @@ public final class BooleShannonExpansion {
    public interface IndexedFieldProvider {
 
       boolean isIndexed(List<String> propertyPath);
+
+      boolean isStored(List<String> propertyPath);
    }
 
    private final IndexedFieldProvider indexedFieldProvider;

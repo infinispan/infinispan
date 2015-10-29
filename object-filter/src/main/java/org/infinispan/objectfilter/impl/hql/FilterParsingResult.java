@@ -47,18 +47,26 @@ public final class FilterParsingResult<TypeMetadata> {
    private final String targetEntityName;
    private final TypeMetadata targetEntityMetadata;
    private final PropertyPath[] projectedPaths;
+   private final Class<?>[] projectedTypes;
    private final PropertyPath[] groupBy;
    private final SortField[] sortFields;
 
    FilterParsingResult(SingleEntityQueryBuilder<BooleanExpr> whereBuilder,
                        SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder,
                        String targetEntityName, TypeMetadata targetEntityMetadata,
-                       List<PropertyPath> projectedPaths, List<PropertyPath> groupBy, List<SortField> sortFields) {
+                       List<PropertyPath> projectedPaths,
+                       List<Class<?>> projectedTypes,
+                       List<PropertyPath> groupBy,
+                       List<SortField> sortFields) {
       this.whereBuilder = whereBuilder;
       this.havingBuilder = havingBuilder;
       this.targetEntityName = targetEntityName;
       this.targetEntityMetadata = targetEntityMetadata;
+      if (projectedPaths != null && (projectedTypes == null || projectedTypes.size() != projectedPaths.size()) || projectedPaths == null && projectedTypes != null) {
+         throw new IllegalArgumentException("projectedPaths and projectedTypes sizes must match");
+      }
       this.projectedPaths = projectedPaths == null ? null : projectedPaths.toArray(new PropertyPath[projectedPaths.size()]);
+      this.projectedTypes = projectedTypes == null ? null : projectedTypes.toArray(new Class<?>[projectedTypes.size()]);
       this.groupBy = groupBy == null ? null : groupBy.toArray(new PropertyPath[groupBy.size()]);
       this.sortFields = sortFields == null ? null : sortFields.toArray(new SortField[sortFields.size()]);
    }
@@ -106,7 +114,7 @@ public final class FilterParsingResult<TypeMetadata> {
          return null;
       }
       String[] projections = new String[projectedPaths.length];
-      for (int i = 0; i< projectedPaths.length; i++) {
+      for (int i = 0; i < projectedPaths.length; i++) {
          projections[i] = projectedPaths[i].asStringPath();
       }
       return projections;
@@ -114,6 +122,10 @@ public final class FilterParsingResult<TypeMetadata> {
 
    public PropertyPath[] getProjectedPaths() {
       return projectedPaths;
+   }
+
+   public Class<?>[] getProjectedTypes() {
+      return projectedTypes;
    }
 
    public boolean hasGroupingOrAggregations() {
@@ -149,10 +161,11 @@ public final class FilterParsingResult<TypeMetadata> {
    @Override
    public String toString() {
       return "FilterParsingResult [" +
-              "targetEntityName=" + targetEntityName
+            "targetEntityName=" + targetEntityName
             + ", whereClause=" + getWhereClause()
             + ", havingClause=" + getHavingClause()
             + ", projectedPaths=" + Arrays.toString(projectedPaths)
+            + ", projectedTypes=" + Arrays.toString(projectedTypes)
             + ", groupBy=" + Arrays.toString(groupBy)
             + ", sortFields=" + Arrays.toString(sortFields)
             + "]";

@@ -11,10 +11,10 @@ package org.infinispan.objectfilter.impl.aggregation;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class AvgAccumulator extends FieldAccumulator {
+final class AvgAccumulator extends FieldAccumulator {
 
-   public AvgAccumulator(int pos, Class<?> fieldType) {
-      super(pos);
+   public AvgAccumulator(int inPos, int outPos, Class<?> fieldType) {
+      super(inPos, outPos);
       if (!Number.class.isAssignableFrom(fieldType)) {
          throw new IllegalStateException("Aggregation AVG cannot be applied to property of type " + fieldType.getName());
       }
@@ -22,25 +22,19 @@ public final class AvgAccumulator extends FieldAccumulator {
 
    @Override
    public void init(Object[] accRow) {
-      Number value = (Number) accRow[pos];
-      DoubleAvg doubleAvg = new DoubleAvg();
-      accRow[pos] = doubleAvg;
-      if (value != null) {
-         doubleAvg.update(value.doubleValue());
-      }
+      accRow[outPos] = new DoubleAvg();
    }
 
    @Override
    public void update(Object[] srcRow, Object[] accRow) {
-      Number value = (Number) srcRow[pos];
+      Number value = (Number) srcRow[inPos];
       if (value != null) {
-         DoubleAvg doubleAvg = (DoubleAvg) accRow[pos];
-         doubleAvg.update(value.doubleValue());
+         ((DoubleAvg) accRow[outPos]).update(value.doubleValue());
       }
    }
 
    @Override
    public void finish(Object[] accRow) {
-      accRow[pos] = ((DoubleAvg) accRow[pos]).getValue();
+      accRow[outPos] = ((DoubleAvg) accRow[outPos]).getValue();
    }
 }

@@ -22,6 +22,8 @@ public interface ObjectFilter {
     */
    String[] getProjection();
 
+   Class<?>[] getProjectionTypes();
+
    /**
     * The array of sort specifications if defined, or {@code null} otherwise.
     */

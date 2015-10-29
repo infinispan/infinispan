@@ -8,10 +8,10 @@ package org.infinispan.objectfilter.impl.aggregation;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class MaxAccumulator extends FieldAccumulator {
+final class MaxAccumulator extends FieldAccumulator {
 
-   public MaxAccumulator(int pos, Class<?> fieldType) {
-      super(pos);
+   public MaxAccumulator(int inPos, int outPos, Class<?> fieldType) {
+      super(inPos, outPos);
       if (!Comparable.class.isAssignableFrom(fieldType)) {
          throw new IllegalStateException("Aggregation MAX cannot be applied to property of type " + fieldType.getName());
       }
@@ -19,11 +19,11 @@ public final class MaxAccumulator extends FieldAccumulator {
 
    @Override
    public void update(Object[] srcRow, Object[] accRow) {
-      Comparable value = (Comparable) srcRow[pos];
+      Comparable value = (Comparable) srcRow[inPos];
       if (value != null) {
-         Comparable max = (Comparable) accRow[pos];
+         Comparable max = (Comparable) accRow[outPos];
          if (max == null || max.compareTo(value) < 0) {
-            accRow[pos] = value;
+            accRow[outPos] = value;
          }
       }
    }

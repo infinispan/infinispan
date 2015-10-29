@@ -98,6 +98,11 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
             }
 
             @Override
+            public Class<?>[] getProjectionTypes() {
+               return null;
+            }
+
+            @Override
             public SortField[] getSortFields() {
                return null;
             }
@@ -136,6 +141,11 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
             }
 
             @Override
+            public Class<?>[] getProjectionTypes() {
+               return null;
+            }
+
+            @Override
             public SortField[] getSortFields() {
                return null;
             }
@@ -161,7 +171,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       }
 
       return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, namedParameters,
-            parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields());
+            parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields());
    }
 
    @Override
@@ -194,7 +204,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
             filtersByTypeName.put(parsingResult.getTargetEntityName(), filterRegistry);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
-         return filterRegistry.addFilter(jpaQuery, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields(), callback, eventType);
+         return filterRegistry.addFilter(jpaQuery, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), callback, eventType);
       } finally {
          write.unlock();
       }
