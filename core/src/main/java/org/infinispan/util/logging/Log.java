@@ -542,8 +542,8 @@ public interface Log extends BasicLogger {
    void unableToLockToInvalidate(Object key, Address address);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Execution error", id = 136)
-   void executionError(@Cause Throwable t);
+   @Message(value = "Error executing command %s, writing keys %s", id = 136)
+   void executionError(String commandType, Collection<?> affectedKeys, @Cause Throwable t);
 
    @LogMessage(level = INFO)
    @Message(value = "Failed invalidating remote cache", id = 137)
