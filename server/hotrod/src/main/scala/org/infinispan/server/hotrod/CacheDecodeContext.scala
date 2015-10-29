@@ -245,6 +245,8 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
 
    def createMultiGetResponse(pairs: Map[Bytes, CacheEntry[Bytes, Bytes]]): AnyRef = null
 
+   def getCacheRegistry(cacheName: String): ComponentRegistry =
+      server.getCacheRegistry(cacheName)
 }
 
 case class ExpirationParam(duration: Long, unit: TimeUnitValue) {

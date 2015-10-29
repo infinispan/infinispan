@@ -18,7 +18,7 @@ import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.server.hotrod.HotRodOperation._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.logging.Log
-import org.infinispan.stats.Stats
+import org.infinispan.stats.ClusterCacheStats
 import org.infinispan.util.concurrent.TimeoutException
 import scala.annotation.switch
 import scala.collection.JavaConverters._
@@ -490,7 +490,8 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
      }
    }
 
-   override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): StatsResponse = {
+   override def createStatsResponse(ctx: CacheDecodeContext, t: NettyTransport): StatsResponse = {
+      val cacheStats = ctx.cache.getStats
       val stats = mutable.Map.empty[String, String]
       stats += ("timeSinceStart" -> cacheStats.getTimeSinceStart.toString)
       stats += ("currentNumberOfEntries" -> cacheStats.getCurrentNumberOfEntries.toString)
@@ -503,6 +504,21 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       stats += ("removeMisses" -> cacheStats.getRemoveMisses.toString)
       stats += ("totalBytesRead" -> t.getTotalBytesRead)
       stats += ("totalBytesWritten" -> t.getTotalBytesWritten)
+
+
+      val h = ctx.header
+      if (!Constants.isVersionPre24(h.version)) {
+         val registry = ctx.getCacheRegistry(h.cacheName)
+         Option(registry.getComponent(classOf[ClusterCacheStats])).foreach(clusterCacheStats => {
+            stats += ("globalCurrentNumberOfEntries" -> clusterCacheStats.getCurrentNumberOfEntries.toString)
+            stats += ("globalStores" -> clusterCacheStats.getStores.toString)
+            stats += ("globalRetrievals" -> clusterCacheStats.getRetrievals.toString)
+            stats += ("globalHits" -> clusterCacheStats.getHits.toString)
+            stats += ("globalMisses" -> clusterCacheStats.getMisses.toString)
+            stats += ("globalRemoveHits" -> clusterCacheStats.getRemoveHits.toString)
+            stats += ("globalRemoveMisses" -> clusterCacheStats.getRemoveMisses.toString)
+         })
+      }
       new StatsResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
          immutable.Map[String, String]() ++ stats, h.topologyId)
    }

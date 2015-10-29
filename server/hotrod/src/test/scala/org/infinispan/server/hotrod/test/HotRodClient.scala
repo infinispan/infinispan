@@ -339,8 +339,18 @@ private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object
                writeRangedBytes(op.key, buffer) // key length + key
                if (op.value != null) {
                   if (op.code != 0x0D) { // If it's not removeIfUnmodified...
-                     writeUnsignedInt(op.lifespan, buffer) // lifespan
-                     writeUnsignedInt(op.maxIdle, buffer) // maxIdle
+                     if (protocolVersion >= 22) {
+                        if (op.lifespan > 0 || op.maxIdle > 0) {
+                           buffer.writeByte(0) // seconds for both
+                           writeUnsignedInt(op.lifespan, buffer) // lifespan
+                           writeUnsignedInt(op.maxIdle, buffer) // maxIdle
+                        } else {
+                           buffer.writeByte(0x88)
+                        }
+                     } else {
+                        writeUnsignedInt(op.lifespan, buffer) // lifespan
+                        writeUnsignedInt(op.maxIdle, buffer) // maxIdle
+                     }
                   }
                   if (op.code == 0x09 || op.code == 0x0D) {
                      buffer.writeLong(op.dataVersion)

@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -23,7 +24,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @since 4.1
  */
 @Test(groups = "functional", testName = "client.hotrod.HotRodStatisticsTest")
-public class HotRodStatisticsTest {
+public class HotRodStatisticsTest extends AbstractInfinispanTest {
 
    private HotRodServer hotrodServer;
    private CacheContainer cacheContainer;

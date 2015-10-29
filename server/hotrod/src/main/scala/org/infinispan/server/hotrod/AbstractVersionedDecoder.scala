@@ -8,7 +8,6 @@ import io.netty.channel.ChannelHandlerContext
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.server.core.transport.NettyTransport
-import org.infinispan.stats.Stats
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.
@@ -74,7 +73,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create a response for the stats command.
     */
-   def createStatsResponse(header: HotRodHeader, stats: Stats, t: NettyTransport): StatsResponse
+   def createStatsResponse(hrCtx: CacheDecodeContext, t: NettyTransport): StatsResponse
 
    /**
     * Create an error response based on the Throwable instance received.

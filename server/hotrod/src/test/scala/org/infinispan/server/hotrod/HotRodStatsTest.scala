@@ -13,7 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Test(groups = Array("functional"), testName = "server.hotrod.FunctionalTest")
+@Test(groups = Array("functional"), testName = "server.hotrod.HotRodStatsTest")
 class HotRodStatsTest extends HotRodSingleNodeTest {
 
    override def createTestCacheManager: EmbeddedCacheManager = {

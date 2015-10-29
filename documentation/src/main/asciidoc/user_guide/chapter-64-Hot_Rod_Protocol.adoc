@@ -1722,6 +1722,25 @@ Response format:
 |... continues until entry count is reached ||
 |==============================================================================
 
+. Stats:
+
+Statistics returned by previous Hot Rod protocol versions were local to the node
+where the Hot Rod operation had been called. Starting with 2.4, new statistics
+have been added which provide global counts for the statistics returned
+previously. If the Hot Rod is running in local mode, these statistics are not
+returned:
+
+[options="header"]
+|===============
+|Name|Explanation
+| globalCurrentNumberOfEntries |Number of entries currently across the Hot Rod cluster.
+| globalStores |Total number of put operations across the Hot Rod cluster.
+| globalRetrievals |Total number of get operations across the Hot Rod cluster.
+| globalHits |Total number of get hits across the Hot Rod cluster.
+| globalMisses |Total number of get misses across the Hot Rod cluster.
+| globalRemoveHits |Total number of removal hits across the Hot Rod cluster.
+| globalRemoveMisses |Total number of removal misses across the Hot Rod cluster.
+|===============
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
