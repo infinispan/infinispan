@@ -13,12 +13,12 @@ import java.math.BigInteger;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class SumAccumulator extends FieldAccumulator {
+final class SumAccumulator extends FieldAccumulator {
 
    private final Class<? extends Number> fieldType;
 
-   public SumAccumulator(int pos, Class<?> fieldType) {
-      super(pos);
+   public SumAccumulator(int inPos, int outPos, Class<?> fieldType) {
+      super(inPos, outPos);
       if (!Number.class.isAssignableFrom(fieldType)) {
          throw new IllegalStateException("Aggregation SUM cannot be applied to property of type " + fieldType.getName());
       }
@@ -27,56 +27,57 @@ public final class SumAccumulator extends FieldAccumulator {
 
    @Override
    public void init(Object[] accRow) {
-      Number value = (Number) accRow[pos];
-      if (value != null) {
-         if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
-            accRow[pos] = value.longValue();
-         } else if (fieldType == Double.class || fieldType == Float.class) {
-            DoubleSum doubleSum = new DoubleSum();
-            accRow[pos] = doubleSum;
-            doubleSum.update(value.doubleValue());
-         } else {
-            accRow[pos] = value;
-         }
+      if (fieldType == Double.class || fieldType == Float.class) {
+         accRow[outPos] = new DoubleSum();
       }
    }
 
    @Override
    public void update(Object[] srcRow, Object[] accRow) {
-      Number value = (Number) srcRow[pos];
+      Number value = (Number) srcRow[inPos];
       if (value != null) {
          if (fieldType == Double.class || fieldType == Float.class) {
-            DoubleSum doubleSum = (DoubleSum) accRow[pos];
-            if (doubleSum == null) {
-               doubleSum = new DoubleSum();
-               accRow[pos] = doubleSum;
-            }
-            doubleSum.update(value.doubleValue());
-            return;
+            ((DoubleSum) accRow[outPos]).update(value.doubleValue());
          } else if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
             value = value.longValue();
-         }
-         Number sum = (Number) accRow[pos];
-         if (sum != null) {
-            if (fieldType == Long.class) {
-               value = sum.longValue() + value.longValue();
-            } else if (fieldType == BigInteger.class) {
-               value = ((BigInteger) sum).add((BigInteger) value);
-            } else if (fieldType == BigDecimal.class) {
-               value = ((BigDecimal) sum).add((BigDecimal) value);
-            } else {
-               // byte, short, int
-               value = sum.intValue() + value.intValue();
+            Number sum = (Number) accRow[outPos];
+            if (sum != null) {
+               if (fieldType == Long.class) {
+                  value = sum.longValue() + value.longValue();
+               } else if (fieldType == BigInteger.class) {
+                  value = ((BigInteger) sum).add((BigInteger) value);
+               } else if (fieldType == BigDecimal.class) {
+                  value = ((BigDecimal) sum).add((BigDecimal) value);
+               } else {
+                  // byte, short, int
+                  value = sum.intValue() + value.intValue();
+               }
             }
+            accRow[outPos] = value;
          }
-         accRow[pos] = value;
       }
    }
 
    @Override
    public void finish(Object[] accRow) {
       if (fieldType == Double.class || fieldType == Float.class) {
-         accRow[pos] = ((DoubleSum) accRow[pos]).getValue();
+         accRow[outPos] = ((DoubleSum) accRow[outPos]).getValue();
       }
+   }
+
+   /**
+    * Determine the output type of this accumulator.
+    */
+   static Class<?> getOutputType(Class<?> fieldType) {
+      if (!Number.class.isAssignableFrom(fieldType)) {
+         throw new IllegalStateException("Aggregation SUM cannot be applied to property of type " + fieldType.getName());
+      }
+      if (fieldType == Double.class || fieldType == Float.class) {
+         return Double.class;
+      }
+      if (fieldType == Long.class || fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
+         return Long.class;
+      }
+      return fieldType;
    }
 }

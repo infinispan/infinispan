@@ -45,4 +45,28 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
       }
       return false;
    }
+
+   @Override
+   public boolean isStored(List<String> propertyPath) {
+      Descriptor md = messageDescriptor;
+      int i = 0;
+      for (String p : propertyPath) {
+         i++;
+         FieldDescriptor field = md.findFieldByName(p);
+         if (field == null) {
+            break;
+         }
+         if (field.getJavaType() == JavaType.MESSAGE) {
+            md = field.getMessageType();
+         } else {
+            if (i == propertyPath.size()) {
+               IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+               return indexingMetadata == null || indexingMetadata.isFieldStored(field.getNumber());
+            } else {
+               break;
+            }
+         }
+      }
+      return false;
+   }
 }

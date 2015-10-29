@@ -39,6 +39,8 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private final String[] projection;
 
+   private final Class<?>[] projectionTypes;
+
    private final List<List<AttributeId>> translatedProjection;
 
    private final SortField[] sortFields;
@@ -51,7 +53,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    protected FilterSubscriptionImpl(String queryString, Map<String, Object> namedParameters,
                                     boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
-                                    String[] projection, List<List<AttributeId>> translatedProjection,
+                                    String[] projection, Class<?>[] projectionTypes, List<List<AttributeId>> translatedProjection,
                                     SortField[] sortFields, List<List<AttributeId>> translatedSortProjection,
                                     Object[] eventTypes) {
       this.queryString = queryString;
@@ -61,6 +63,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
       this.beTree = beTree;
       this.callback = callback;
       this.projection = projection;
+      this.projectionTypes = projectionTypes;
       this.sortFields = sortFields;
       this.translatedProjection = translatedProjection;
       this.translatedSortProjection = translatedSortProjection;
@@ -100,6 +103,10 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
    @Override
    public String[] getProjection() {
       return projection;
+   }
+
+   public Class<?>[] getProjectionTypes() {
+      return projectionTypes;
    }
 
    @Override
