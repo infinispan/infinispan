@@ -40,7 +40,8 @@ import java.util.Set;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class InfinispanExtensionEmbedded implements Extension {
-   private static final EmbeddedLog LOG = LogFactory.getLog(InfinispanExtensionEmbedded.class, EmbeddedLog.class);
+
+   private static final EmbeddedLog logger = LogFactory.getLog(InfinispanExtensionEmbedded.class, EmbeddedLog.class);
 
    private final Set<ConfigurationHolder> configurations;
 
@@ -159,10 +160,10 @@ public class InfinispanExtensionEmbedded implements Extension {
                   if (!cacheName.trim().isEmpty()) {
                      if (cacheConfiguration != null) {
                         cacheManager.defineConfiguration(cacheName, cacheConfiguration);
-                        LOG.cacheConfigurationDefined(cacheName, cacheManager);
+                        logger.cacheConfigurationDefined(cacheName, cacheManager);
                      } else if (!cacheManager.getCacheNames().contains(cacheName)) {
                         cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultCacheConfiguration());
-                        LOG.cacheConfigurationDefined(cacheName, cacheManager);
+                        logger.cacheConfigurationDefined(cacheName, cacheManager);
                      }
                   }
 
