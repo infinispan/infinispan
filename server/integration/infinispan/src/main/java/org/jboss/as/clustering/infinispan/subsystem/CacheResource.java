@@ -247,6 +247,9 @@ public class CacheResource extends SimpleResourceDefinition {
         for (AttributeDefinition attr : CACHE_ATTRIBUTES) {
             resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartWriteHandler);
         }
+        if (runtimeRegistration) {
+            CacheMetricsHandler.INSTANCE.registerCommonMetrics(resourceRegistration);
+        }
     }
 
     @Override
