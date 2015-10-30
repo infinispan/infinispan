@@ -66,7 +66,6 @@ public class SharedCacheResource extends ClusteredCacheResource {
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
         if (runtimeRegistration) {
-            CacheMetricsHandler.INSTANCE.registerCommonMetrics(resourceRegistration);
             resourceRegistration.registerReadWriteAttribute(CACHE_AVAILABILITY, CacheAvailabilityAttributeHandler.INSTANCE, CacheAvailabilityAttributeHandler.INSTANCE);
             resourceRegistration.registerReadWriteAttribute(CACHE_REBALANCE, CacheRebalanceAttributeHandler.INSTANCE, CacheRebalanceAttributeHandler.INSTANCE);
             resourceRegistration.registerReadWriteAttribute(CACHE_REBALANCING_STATUS, CacheRebalancingStatusAttributeHandler.INSTANCE, CacheRebalancingStatusAttributeHandler.INSTANCE);
