@@ -159,6 +159,9 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
         for (AttributeDefinition attr : CACHE_ATTRIBUTES) {
             resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartWriteHandler);
         }
+        if (runtimeRegistration) {
+            CacheMetricsHandler.INSTANCE.registerCommonMetrics(resourceRegistration);
+        }
     }
 
     @Override
