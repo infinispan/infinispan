@@ -527,7 +527,7 @@ AutoCloseable writeFunctionCloseHandler = woMap.listeners().onWrite(written -> {
    // `written` is a ReadEntryView of the written entry
    System.out.printf("Written: %s%n", written.get());
 });
-AutoCloseable writeCloseHanlder = woMap.listeners.add(new WriteListener<String, String>() {
+AutoCloseable writeCloseHanlder = woMap.listeners().add(new WriteListener<String, String>() {
    @Override
    public void onWrite(ReadEntryView<K, V> written) {
       System.out.printf("Written: %s%n", written.get());
