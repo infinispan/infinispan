@@ -3,6 +3,10 @@ package org.infinispan.server.hotrod
 import logging.Log
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.filter.{ParamKeyValueFilterConverterFactory, KeyValueFilterConverterFactory}
+import org.infinispan.notifications.Listener
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
 import org.infinispan.notifications.cachelistener.filter.{CacheEventFilterConverterFactory, CacheEventConverterFactory, CacheEventFilterFactory}
 import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
 import org.infinispan.manager.EmbeddedCacheManager
@@ -148,6 +152,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       // any further cache calls, so negative acknowledgment can cause issues.
       addressCache.getAdvancedCache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.GUARANTEED_DELIVERY)
               .put(clusterAddress, address)
+      addressCache.addListener(new ReAddMyAddressListener(addressCache, clusterAddress, address));
    }
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
@@ -291,6 +296,27 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       if (clientListenerRegistry != null) clientListenerRegistry.stop()
       super.stop
    }
+
+   @Listener(sync = false)
+   class ReAddMyAddressListener(addressCache: AddressCache, clusterAddress: Address, address: ServerAddress) {
+      // We rely on the fact that even with partition handling disabled, the data in the minority
+      // partition is wiped on a merge.
+      // We also listen for removal events, in case we receive (and apply) the other partition's remove
+      // command after the merge.
+      @CacheEntryInvalidated @CacheEntryRemoved
+      def addressRemoved(event: CacheEntryEvent[Address, ServerAddress]): Unit = {
+         if (event.isPre)
+            return
+
+         if (event.getKey.equals(clusterAddress)) {
+            // Our address just got invalidated out of the cache, most likely because of a merge
+            // Put it back asynchronously, so we don't block the topology update
+            log.debugf("Re-adding %s to the topology cache", clusterAddress)
+            addressCache.put(clusterAddress, address)
+         }
+      }
+   }
+
 }
 
 object HotRodServer {

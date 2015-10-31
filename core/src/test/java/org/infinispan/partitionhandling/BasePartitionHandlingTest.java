@@ -39,8 +39,6 @@ import static org.testng.Assert.fail;
 
 @Test(groups = "functional", testName = "partitionhandling.BasePartitionHandlingTest")
 public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
-
-
    private static Log log = LogFactory.getLog(BasePartitionHandlingTest.class);
 
    private final AtomicInteger viewId = new AtomicInteger(5);
@@ -76,7 +74,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    public static class PartitionDescriptor {
       int[] nodes;
 
-      PartitionDescriptor(int... nodes) {
+      public PartitionDescriptor(int... nodes) {
          this.nodes = nodes;
       }
 
@@ -89,7 +87,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
    }
 
-   class Partition {
+   public class Partition {
 
       private final List<Address> allMembers;
       List<Channel> channels = new ArrayList<>();
