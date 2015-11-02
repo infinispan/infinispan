@@ -7,6 +7,13 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 
 This guide walks you through the process of upgrading Infinispan.
 
+
+== Upgrading from 8.x to 8.1
+=== Packaging changes
+==== CDI module split
+CDI module (GroupId:ArtifactId `org.infinispan:infinispan-cdi`) has been split into `org.infinispan:infinispan-cdi-embedded` and `org.infinispan:infinispan-cdi-remote`. Please make sure that you use proper artifact.
+
+
 == Upgrading from 7.x to 8.0
 === Configuration changes
 ==== Removal of Async Marshalling
