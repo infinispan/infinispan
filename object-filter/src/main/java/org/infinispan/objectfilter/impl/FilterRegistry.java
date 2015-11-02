@@ -3,8 +3,6 @@ package org.infinispan.objectfilter.impl;
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.SortField;
-import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
-import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.PredicateIndex;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETreeMaker;
@@ -52,28 +50,8 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       return predicateIndex;
    }
 
-   public int getNumFilters() {
-      return filterSubscriptions.size();
-   }
-
-   /**
-    * Executes the registered filters and notifies each one of them whether it was satisfied or not by the given
-    * instance.
-    *
-    * @param ctx
-    */
-   public void match(MatcherEvalContext<?, AttributeMetadata, AttributeId> ctx) {
-      // try to match
-      ctx.process(predicateIndex.getRoot());
-
-      // notify subscribers
-      for (FilterSubscriptionImpl s : filterSubscriptions) {
-         FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(s);
-         if (filterEvalContext.isMatching()) {
-            // check if event type is matching
-            s.getCallback().onFilterResult(ctx.getUserContext(), ctx.getInstance(), ctx.getEventType(), filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
-         }
-      }
+   public List<FilterSubscriptionImpl> getFilterSubscriptions() {
+      return filterSubscriptions;
    }
 
    public FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> addFilter(String queryString, Map<String, Object> namedParameters, BooleanExpr query, String[] projection, Class<?>[] projectionTypes, SortField[] sortFields, FilterCallback callback, Object[] eventTypes) {
@@ -116,8 +94,8 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
          }
       }
 
-      query = booleanFilterNormalizer.normalize(query);
-      BETree beTree = treeMaker.make(query);
+      BooleanExpr normalizedQuery = booleanFilterNormalizer.normalize(query);
+      BETree beTree = treeMaker.make(normalizedQuery);
 
       FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(queryString, namedParameters, useIntervals, metadataAdapter, beTree, callback, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, eventTypes);
       filterSubscription.registerProjection(predicateIndex);

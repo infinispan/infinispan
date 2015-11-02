@@ -148,6 +148,12 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
+   public void testNoOpFilter4() throws Exception {
+      String queryString = "select name from org.infinispan.objectfilter.test.model.Person";  // this should match ALL
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
    public void testSimpleAttribute1() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John'";
       assertTrue(match(queryString, createPerson1()));
