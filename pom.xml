@@ -57,6 +57,9 @@
       <module>osgi</module>
       <module>spring/spring</module>
       <module>spring/spring4</module>
+      <module>spring/spring4/spring4-common</module>
+      <module>spring/spring4/spring4-embedded</module>
+      <module>spring/spring4/spring4-remote</module>
       <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
       <module>scripting</module>
