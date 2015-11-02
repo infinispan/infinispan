@@ -12,24 +12,27 @@ import java.util.Arrays;
  */
 public final class FilterEvalContext {
 
+   private static final int[] FALSE_TREE = {BETree.EXPR_FALSE};
+
    public final BETree beTree;
 
    public final int[] treeCounters;
 
    public final MatcherEvalContext<?, ?, ?> matcherContext;
 
-   public final Object[] projection;
+   private final Object[] projection;
 
-   public final Comparable[] sortProjection;
+   private final Comparable[] sortProjection;
 
    public FilterEvalContext(MatcherEvalContext<?, ?, ?> matcherContext, FilterSubscriptionImpl filterSubscription) {
       this.matcherContext = matcherContext;
       this.beTree = filterSubscription.getBETree();
+      // check if event type is matching
       if (checkEventType(matcherContext.getEventType(), filterSubscription.getEventTypes())) {
          int[] childCounters = beTree.getChildCounters();
          this.treeCounters = Arrays.copyOf(childCounters, childCounters.length);
       } else {
-         this.treeCounters = new int[]{BETree.EXPR_FALSE};
+         this.treeCounters = FALSE_TREE;
          for (BENode node : beTree.getNodes()) {
             node.suspendSubscription(this);
          }
@@ -46,7 +49,7 @@ public final class FilterEvalContext {
          return false;
       }
       for (Object t : eventTypes) {
-         if (t.equals(eventType)) {
+         if (eventType.equals(t)) {
             return true;
          }
       }

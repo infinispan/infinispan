@@ -2,8 +2,10 @@ package org.infinispan.objectfilter.impl.predicateindex;
 
 import org.infinispan.objectfilter.impl.FilterRegistry;
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,14 +20,12 @@ import java.util.Map;
  */
 public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
 
-   private FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry;
+   protected AttributeNode<AttributeMetadata, AttributeId> rootNode;
 
    /**
     * Current node during traversal of the attribute tree.
     */
    protected AttributeNode<AttributeMetadata, AttributeId> currentNode;
-
-   private final Map<Predicate<?>, Counter> suspendedSubscriptionCounts = new HashMap<Predicate<?>, Counter>();
 
    private final Object userContext;
 
@@ -39,6 +39,10 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
     * Each filter subscription has its own evaluation context, created on demand.
     */
    private FilterEvalContext[] filterContexts;
+
+   private List<FilterSubscriptionImpl> filterSubscriptions;
+
+   private Map<Predicate<?>, Counter> suspendedSubscriptionCounts;
 
    protected MatcherEvalContext(Object userContext, Object instance, Object eventType) {
       this.userContext = userContext;
@@ -64,8 +68,10 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    }
 
    public void initMultiFilterContext(FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry) {
-      this.filterRegistry = filterRegistry;
-      filterContexts = new FilterEvalContext[filterRegistry.getNumFilters()];
+      rootNode = filterRegistry.getPredicateIndex().getRoot();
+      suspendedSubscriptionCounts = new HashMap<Predicate<?>, Counter>();
+      filterSubscriptions = filterRegistry.getFilterSubscriptions();
+      filterContexts = new FilterEvalContext[filterSubscriptions.size()];
    }
 
    public FilterEvalContext initSingleFilterContext(FilterSubscriptionImpl filterSubscription) {
@@ -111,13 +117,33 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       return counter == null ? 0 : counter.value;
    }
 
-   public void match() {
-      filterRegistry.match(this);
+   public AttributeNode<AttributeMetadata, AttributeId> getRootNode() {
+      return rootNode;
    }
 
    public void process(AttributeNode<AttributeMetadata, AttributeId> node) {
       currentNode = node;
       processAttributes(currentNode, instance);
+      if (filterContexts != null) {
+         notifySubscribers();
+      }
+   }
+
+   private void notifySubscribers() {
+      for (int i = 0; i < filterContexts.length; i++) {
+         FilterEvalContext filterEvalContext = filterContexts[i];
+         FilterSubscriptionImpl s = filterSubscriptions.get(i);
+         if (filterEvalContext == null) {
+            if (s.getBETree().getChildCounters()[0] == BETree.EXPR_TRUE) {
+               filterEvalContext = new FilterEvalContext(this, s);
+            } else {
+               continue;
+            }
+         }
+         if (filterEvalContext.isMatching()) {
+            s.getCallback().onFilterResult(userContext, instance, eventType, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
+         }
+      }
    }
 
    protected abstract void processAttributes(AttributeNode<AttributeMetadata, AttributeId> node, Object instance);

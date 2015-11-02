@@ -69,7 +69,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
    @Override
    public FilterResult filter(Object instance) {
       if (instance == null) {
-         throw new IllegalArgumentException("argument cannot be null");
+         throw new IllegalArgumentException("instance cannot be null");
       }
 
       MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, instance, filterSubscription.getMetadataAdapter(), null);

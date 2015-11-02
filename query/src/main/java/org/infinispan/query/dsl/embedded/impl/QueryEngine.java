@@ -401,7 +401,7 @@ public class QueryEngine {
                if (parsingResult.getProjectedPaths() != null) {
                   if (projectionsMap.size() != parsingResult.getProjectedPaths().length) {
                      // but some projections are duplicated ...
-                     Class<?>[] projectedTypes = new Class<?>[projectionsMap.size()];
+                     final Class<?>[] projectedTypes = new Class<?>[projectionsMap.size()];
                      final int[] map = new int[parsingResult.getProjectedPaths().length];
                      int j = 0;
                      for (List<Integer> idx : projectionsMap.values()) {
