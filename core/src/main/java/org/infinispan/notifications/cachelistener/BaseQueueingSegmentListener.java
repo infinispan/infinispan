@@ -1,5 +1,8 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.util.logging.Log;
@@ -29,7 +32,11 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
    protected final Log log = LogFactory.getLog(getClass());
 
    protected final AtomicBoolean completed = new AtomicBoolean(false);
-   protected final ConcurrentMap<K, Object> notifiedKeys = new ConcurrentHashMap<>();
+   protected final ConcurrentMap<K, Object> notifiedKeys;
+
+   protected BaseQueueingSegmentListener(Equivalence<? super K> keyEquivalence) {
+      this.notifiedKeys = new EquivalentConcurrentHashMapV8<>(keyEquivalence, AnyEquivalence.getInstance());
+   }
 
    @Override
    public Object markKeyAsProcessing(K key) {

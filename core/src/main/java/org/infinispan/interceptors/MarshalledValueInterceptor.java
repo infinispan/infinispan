@@ -232,7 +232,7 @@ public class MarshalledValueInterceptor<K, V> extends CommandInterceptor {
 
    protected <R> R processRetVal(R retVal, InvocationContext ctx) {
       if (retVal instanceof MarshalledValue) {
-         if (ctx.isOriginLocal()) {
+         if (ctx == null || ctx.isOriginLocal()) {
             if (trace) log.tracef("Return is a marshall value, so extract instance from: %s", retVal);
             retVal = (R) ((MarshalledValue) retVal).get();
          }
@@ -258,7 +258,9 @@ public class MarshalledValueInterceptor<K, V> extends CommandInterceptor {
       return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
          @Override
          public CloseableIterator<CacheEntry<K, V>> iterator() {
-            return new CloseableIteratorMapper<>(super.iterator(), e -> unwrapEntry(e, ctx));
+            // We pass a null ctx, since this is always local invocation - if it was remote it would use
+            // DistributionBulkInterceptor
+            return new CloseableIteratorMapper<>(super.iterator(), e -> unwrapEntry(e, null));
          }
 
          @Override
@@ -279,7 +281,9 @@ public class MarshalledValueInterceptor<K, V> extends CommandInterceptor {
 
          @Override
          public CloseableIterator<K> iterator() {
-            return new CloseableIteratorMapper<>(super.iterator(), e -> processRetVal(e, ctx));
+            // We pass a null ctx, since this is always local invocation - if it was remote it would use
+            // DistributionBulkInterceptor
+            return new CloseableIteratorMapper<>(super.iterator(), e -> processRetVal(e, null));
          }
 
          @Override

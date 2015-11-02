@@ -105,6 +105,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(cacheMode);
+      when(config.dataContainer().keyEquivalence()).thenReturn(AnyEquivalence.getInstance());
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
 
       Answer answer = i -> Mockito.mock((Class) i.getArguments()[0]);
