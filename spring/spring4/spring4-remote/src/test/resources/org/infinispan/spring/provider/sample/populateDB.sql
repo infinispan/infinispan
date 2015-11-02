@@ -1,0 +1,10 @@
+INSERT INTO books VALUES (1, '12-678-555', 'Homer', 'Iliad');
+INSERT INTO books VALUES (2, '12-678-897', 'Joyce, James', 'Finnegans Wake');
+INSERT INTO books VALUES (3, '13-956-645', 'Sterne, Laurence', 'Tristam Shandy');
+INSERT INTO books VALUES (4, '15-765-111', 'Proust, Marcel', 'A la recherche du temps perdu');
+INSERT INTO books VALUES (5, '29-567-555', 'Shakespeare, William', 'King Lear');
+INSERT INTO books VALUES (6, '28-223-349', 'Pullman, Philip', 'His Dark Materials');
+INSERT INTO books VALUES (7, '66-666-666', 'Milton, John', 'Paradise Lost');
+INSERT INTO books VALUES (8, '78-678-671', 'Heidegger, Martin', 'Sein und Zeit');
+INSERT INTO books VALUES (9, '09-009-009', 'Montaigne, Miguel de', 'Essays');
+INSERT INTO books VALUES (10, '78-763-555', 'Stephenson, Neal', 'The Baroque Cycle');

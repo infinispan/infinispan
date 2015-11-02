@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -9,41 +11,35 @@
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>infinispan-spring4</artifactId>
-    <packaging>bundle</packaging>
+    <artifactId>infinispan-spring4-parent</artifactId>
+    <name>Infinispan Spring support</name>
+    <packaging>pom</packaging>
 
-    <name>Infinispan Spring 4 Integration</name>
     <description>
-        
-                 The Infinispan Spring Integration project provides Spring
-                 integration for Infinispan, a high performance distributed cache.
-                 Its primary features are
+        The Infinispan Spring Integration project provides Spring
+        integration for Infinispan, a high performance distributed cache.
+        Its primary features are
 
-                  * An implementation of org.springframework.cache.CacheManager,
-                    Spring's central caching abstraction, backed by Infinispan's
-                    EmbeddedCacheManager. To be used if your Spring-powered
-                    application and Infinispan are colocated, i.e. running within
-                    the same VM.
-                  * An implementation of org.springframework.cache.CacheManager
-                    backed by Infinispan's RemoteCacheManager. To bes used if your
-                    Spring-powered application accesses Infinispan remotely, i.e.
-                    over the network.
-                  * An implementation of org.springframework.cache.CacheManager
-                    backed by a CacheContainer reference. To be used if your Spring-
-                    powered application needs access to a CacheContainer defined
-                    outside the application (e.g. retrieved from JNDI)
-                  * Spring namespace support allowing shortcut definitions for all the
-                    components above
+        * An implementation of org.springframework.cache.CacheManager,
+        Spring's central caching abstraction, backed by Infinispan's
+        EmbeddedCacheManager. To be used if your Spring-powered
+        application and Infinispan are colocated, i.e. running within
+        the same VM.
+        * An implementation of org.springframework.cache.CacheManager
+        backed by Infinispan's RemoteCacheManager. To bes used if your
+        Spring-powered application accesses Infinispan remotely, i.e.
+        over the network.
+        * An implementation of org.springframework.cache.CacheManager
+        backed by a CacheContainer reference. To be used if your Spring-
+        powered application needs access to a CacheContainer defined
+        outside the application (e.g. retrieved from JNDI)
+        * Spring namespace support allowing shortcut definitions for all the
+        components above
 
-                 In addition, Infinispan Spring Integration offers various FactoryBeans
-                 for facilitating creation of Infinispan core classes - Cache, CacheManager,
-                 ... - within a Spring context.
-        
+        In addition, Infinispan Spring Integration offers various FactoryBeans
+        for facilitating creation of Infinispan core classes - Cache, CacheManager,
+        ... - within a Spring context.
     </description>
-
-    <properties>
-        <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-    </properties>
 
     <developers>
         <developer>
@@ -92,167 +88,10 @@
         </dependencies>
     </dependencyManagement>
 
-    <dependencies>
-        
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-core</artifactId>
-        </dependency>
-        
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-client-hotrod</artifactId>
-            <scope>compile</scope>
-            <optional>true</optional>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.avro</groupId>
-                    <artifactId>avro</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        
-        <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <scope>runtime</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-jcl</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jgroups</groupId>
-            <artifactId>jgroups</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling-osgi</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-core</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-client-hotrod</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-server-hotrod</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-server-hotrod</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context-support</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-dbcp</groupId>
-            <artifactId>commons-dbcp</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.cache</groupId>
-            <artifactId>cache-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjweaver</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <resources>
-           <resource>
-              <directory>${project.basedir}/src/main/resources</directory>
-              <filtering>false</filtering>
-              <includes>
-                 <include>**/infinispan-spring-${infinispan.core.schema.version}.xsd</include>
-              </includes>
-           </resource>
-           <resource>
-              <directory>${project.basedir}/src/main/resources</directory>
-              <filtering>false</filtering>
-              <includes>
-                 <include>**/*</include>
-              </includes>
-              <excludes>
-                 <exclude>**/infinispan-spring-*.xsd</exclude>
-              </excludes>
-           </resource>
-        </resources>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <configuration>
-                    <instructions>
-                        <Export-Package>
-                            ${project.groupId}.spring.*;version=${project.version};-split-package:=error
-                        </Export-Package>
-                    </instructions>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <modules>
+        <module>spring4-common</module>
+        <module>spring4-embedded</module>
+        <module>spring4-remote</module>
+    </modules>
 
 </project>
