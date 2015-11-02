@@ -318,10 +318,9 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
            TypeConverter<Object, Object, Object, Object> converter, InternalEntryFactory entryFactory) {
       K newKey = (K) converter.unboxKey(entry.getKey());
       V newValue = (V) converter.unboxValue(entry.getValue());
-      if (newKey != entry.getKey()) {
+      // If either value changed then make a copy
+      if (newKey != entry.getKey() || newValue != entry.getValue()) {
          return entryFactory.create(newKey, newValue, entry.getMetadata());
-      } else {
-         entry.setValue(newValue);
       }
       return entry;
    }

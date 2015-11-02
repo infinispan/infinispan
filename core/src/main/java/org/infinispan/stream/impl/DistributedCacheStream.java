@@ -5,6 +5,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -496,7 +497,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       }
       KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(segmentInfoCH,
               iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
-              listenerNotifier);
+              listenerNotifier, keyEquivalence);
       Thread thread = Thread.currentThread();
       executor.execute(() -> {
          try {

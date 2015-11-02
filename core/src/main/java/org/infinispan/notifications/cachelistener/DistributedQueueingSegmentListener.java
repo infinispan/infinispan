@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
@@ -31,11 +32,13 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    private Stream<Integer> justCompletedSegments = Stream.empty();
 
-   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager) {
+   public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager,
+           Equivalence<? super K> keyEquivalence) {
+      super(keyEquivalence);
       this.entryFactory = entryFactory;
       this.distributionManager = distributionManager;
       // we assume the # of segments won't change between different consistent hashes
-      this.queues = new AtomicReferenceArray(distributionManager.getReadConsistentHash().getNumSegments());
+      this.queues = new AtomicReferenceArray<>(distributionManager.getReadConsistentHash().getNumSegments());
       for (int i = 0; i < queues.length(); ++i) {
          Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue = new ConcurrentLinkedQueue<>();
          queues.set(i, queue);

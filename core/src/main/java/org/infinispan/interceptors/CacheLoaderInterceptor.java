@@ -32,7 +32,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.equivalence.AnyServerEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
@@ -49,6 +49,7 @@ import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.KeyFilter;
@@ -90,6 +91,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private GroupManager groupManager;
    private ExecutorService executorService;
    private Cache<K, V> cache;
+   private Equivalence<? super K> keyEquivalence;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -113,6 +115,11 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       this.groupManager = groupManager;
       this.executorService = persistenceExecutor;
       this.cache = cache;
+   }
+
+   @Start
+   public void start() {
+      this.keyEquivalence = cache.getCacheConfiguration().dataContainer().keyEquivalence();
    }
 
    @Override
@@ -213,9 +220,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          @Override
          public CloseableIterator<CacheEntry<K, V>> iterator() {
             CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
-            // TODO: can we use data container equivalence?
             Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
-                    new AnyServerEquivalence());
+                    keyEquivalence);
             // TODO: how to handle concurrent activation....
             return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                     // TODO: how to pass in key filter...
@@ -279,9 +285,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          @Override
          public CloseableIterator<K> iterator() {
             CloseableIterator<K> iterator = Closeables.iterator(keySet.stream());
-            // TODO: can we use data container equivalence?
             Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
-                    new AnyServerEquivalence());
+                    keyEquivalence);
             // TODO: how to handle concurrent activation....
             return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                     new SupplierFunction<>(new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,

@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -25,7 +26,8 @@ class QueueingAllSegmentListener<K, V> extends BaseQueueingSegmentListener<K, V,
          new ConcurrentLinkedQueue<>();
    protected final InternalEntryFactory entryFactory;
 
-   QueueingAllSegmentListener(InternalEntryFactory entryFactory) {
+   QueueingAllSegmentListener(InternalEntryFactory entryFactory, Equivalence<? super K> keyEquivalence) {
+      super(keyEquivalence);
       this.entryFactory = entryFactory;
    }
 

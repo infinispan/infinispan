@@ -3,6 +3,9 @@ package org.infinispan.stream.impl;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentHashSet;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -57,6 +60,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    protected final Executor executor;
    protected final ComponentRegistry registry;
    protected final PartitionHandlingManager partition;
+   protected final Equivalence keyEquivalence;
 
    protected Runnable closeRunnable = null;
 
@@ -94,6 +98,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       this.executor = executor;
       this.registry = registry;
       this.partition = registry.getComponent(PartitionHandlingManager.class);
+      keyEquivalence = registry.getComponent(Configuration.class).dataContainer().keyEquivalence();
       intermediateOperations = new ArrayDeque<>();
    }
 
@@ -108,6 +113,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       this.executor = other.executor;
       this.registry = other.registry;
       this.partition = other.partition;
+      this.keyEquivalence = other.keyEquivalence;
 
       this.closeRunnable = other.closeRunnable;
 
@@ -351,7 +357,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
 
       ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
       KeyTrackingConsumer<Object, Object> results = new KeyTrackingConsumer<>(segmentInfoCH, (c) -> {},
-              c -> c, null);
+              c -> c, null, keyEquivalence);
       Set<Integer> segmentsToProcess = segmentsToFilter == null ?
               new ReplicatedConsistentHash.RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
       do {
@@ -473,7 +479,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       final DistributedCacheStream.SegmentListenerNotifier listenerNotifier;
 
       KeyTrackingConsumer(ConsistentHash ch, Consumer<V> consumer, Function<CacheEntry<K, Object>, V> valueFunction,
-              DistributedCacheStream.SegmentListenerNotifier completedSegments) {
+              DistributedCacheStream.SegmentListenerNotifier completedSegments, Equivalence<? super K> keyEquivalence) {
          this.ch = ch;
          this.consumer = consumer;
          this.valueFunction = valueFunction;
@@ -483,7 +489,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          this.referenceArray = new AtomicReferenceArray<>(ch.getNumSegments());
          for (int i = 0; i < referenceArray.length(); ++i) {
             // We only allow 1 request per id
-            referenceArray.set(i, new HashSet<>());
+            referenceArray.set(i, new EquivalentHashSet<>(keyEquivalence));
          }
       }
 

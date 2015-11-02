@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.compat.TypeConverter;
@@ -130,6 +131,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    private InternalEntryFactory entryFactory;
    private ClusterEventManager<K, V> eventManager;
    private ComponentRegistry componentRegistry;
+   private Equivalence<? super K> keyEquivalence;
 
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<Object, UUID>();
 
@@ -182,6 +184,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       this.distributionManager = distributionManager;
       this.entryFactory = entryFactory;
       this.eventManager = eventManager;
+
+      this.keyEquivalence = config.dataContainer().keyEquivalence();
    }
 
    @Override
@@ -1012,9 +1016,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                QueueingSegmentListener handler = segmentHandler.get(identifier);
                if (handler == null) {
                   if (config.clustering().cacheMode().isDistributed()) {
-                     handler = new DistributedQueueingSegmentListener(entryFactory, distributionManager);
+                     handler = new DistributedQueueingSegmentListener(entryFactory, distributionManager, keyEquivalence);
                   } else {
-                     handler = new QueueingAllSegmentListener(entryFactory);
+                     handler = new QueueingAllSegmentListener(entryFactory, keyEquivalence);
                   }
                   QueueingSegmentListener currentQueue = segmentHandler.putIfAbsent(identifier, handler);
                   if (currentQueue != null) {
