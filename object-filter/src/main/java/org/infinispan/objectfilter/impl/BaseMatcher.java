@@ -53,14 +53,15 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public void match(Object userContext, Object instance, Object eventType) {
       if (instance == null) {
-         throw new IllegalArgumentException("argument cannot be null");
+         throw new IllegalArgumentException("instance cannot be null");
       }
 
       read.lock();
       try {
          MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startMultiTypeContext(userContext, instance, eventType);
          if (ctx != null) {
-            ctx.match();
+            // try to match
+            ctx.process(ctx.getRootNode());
          }
       } finally {
          read.unlock();
@@ -115,7 +116,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
             @Override
             public FilterResult filter(Object instance) {
                if (instance == null) {
-                  throw new IllegalArgumentException("argument cannot be null");
+                  throw new IllegalArgumentException("instance cannot be null");
                }
                return null;
             }
@@ -158,7 +159,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
             @Override
             public FilterResult filter(Object instance) {
                if (instance == null) {
-                  throw new IllegalArgumentException("argument cannot be null");
+                  throw new IllegalArgumentException("instance cannot be null");
                }
                MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = startSingleTypeContext(null, instance, metadataAdapter, null);
                if (matcherEvalContext != null) {
@@ -183,7 +184,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return registerFilter(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), callback);
+      return registerFilter(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), callback, eventType);
    }
 
    @Override
@@ -231,7 +232,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
          } else {
             throw new IllegalStateException("Reached illegal state");
          }
-         if (filterRegistry.getNumFilters() == 0) {
+         if (filterRegistry.getFilterSubscriptions().isEmpty()) {
             filtersByTypeName.remove(filterRegistry.getMetadataAdapter().getTypeName());
             filtersByType.remove(filterRegistry.getMetadataAdapter().getTypeMetadata());
          }
