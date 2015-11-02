@@ -1,4 +1,4 @@
-package org.infinispan.query.continuous;
+package org.infinispan.query.continuous.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -6,7 +6,6 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
@@ -104,7 +103,7 @@ public final class JPAContinuousQueryCacheEventFilterConverter<K, V> extends Abs
 
    @Override
    public String toString() {
-      return "JPAQCCacheEventFilterConverter{jpaQuery='" + jpaQuery + "'}";
+      return "JPAContinuousQueryCacheEventFilterConverter{jpaQuery='" + jpaQuery + "'}";
    }
 
    @Override

@@ -8,6 +8,8 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.continuous.impl.ContinuousQueryResult;
+import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
