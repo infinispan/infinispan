@@ -24,11 +24,12 @@ class CrashedMemberDetectorTest extends SingleCacheManagerTest {
 
    def testDetectCrashedMembers() {
       val cache = cacheManager.getCache[Address, ServerAddress]()
+      val backup = cacheManager.getCache[Address, ServerAddress]("backup")
       cache.put(new TestAddress(1), new ServerAddress("a", 123))
       cache.put(new TestAddress(2), new ServerAddress("b", 456))
       cache.put(new TestAddress(3), new ServerAddress("c", 789))
 
-      val detector = new CrashedMemberDetectorListener(cache, null)
+      val detector = new CrashedMemberDetectorListener(cache, backup, null)
 
       val oldMembers = new ArrayList[Address]()
       oldMembers.add(new TestAddress(1))
@@ -46,6 +47,8 @@ class CrashedMemberDetectorTest extends SingleCacheManagerTest {
 
       assertTrue(cache.containsKey(new TestAddress(1)))
       assertTrue(cache.containsKey(new TestAddress(2)))
+      assertFalse(cache.containsKey(new TestAddress(3)))
+      assertTrue(backup.containsKey(new TestAddress(3)))
    }
 
 }

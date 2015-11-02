@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod
 
+import java.util.concurrent.TimeUnit
+
 import logging.Log
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.filter.{ParamKeyValueFilterConverterFactory, KeyValueFilterConverterFactory}
@@ -80,11 +82,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
       isClustered = cacheManager.getCacheManagerConfiguration.transport().transport() != null
       if (isClustered) {
-         defineTopologyCacheConfig(cacheManager)
+         val backupAddressCacheName = constructBackupAddressCacheName()
+         defineTopologyCacheConfig(cacheManager, backupAddressCacheName)
          if (isDebugEnabled)
             debug("Externally facing address is %s:%d", configuration.proxyHost, configuration.proxyPort)
 
-         addSelfToTopologyView(cacheManager)
+         addSelfToTopologyView(cacheManager, backupAddressCacheName)
       }
 
       queryFacades = loadQueryFacades()
@@ -96,6 +99,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       loadFilterConverterFactories(classOf[CacheEventFilterConverterFactory])(addCacheEventFilterConverterFactory)
       loadFilterConverterFactories(classOf[CacheEventConverterFactory])(addCacheEventConverterFactory)
       loadFilterConverterFactories(classOf[KeyValueFilterConverterFactory[Any,Any,Any]])(addKeyValueFilterConverterFactory)
+   }
+
+   private def constructBackupAddressCacheName(): String = {
+      if (configuration.name().length > 0) HotRodServer.BACKUP_TOPOLOGY_CACHE_NAME_PREFIX + "_" + configuration.name()
+      else HotRodServer.BACKUP_TOPOLOGY_CACHE_NAME_PREFIX
    }
 
    private def loadFilterConverterFactories[T](c: Class[T])(action: (String, T) => Any) = ServiceFinder.load(c).foreach { factory =>
@@ -137,11 +145,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          throw log.invalidIsolationLevel(isolationLevel)
    }
 
-   private def addSelfToTopologyView(cacheManager: EmbeddedCacheManager) {
+   private def addSelfToTopologyView(cacheManager: EmbeddedCacheManager, backupAddressCacheName: String) {
       addressCache = cacheManager.getCache(configuration.topologyCacheName)
+      val backupAddressCache: AddressCache = cacheManager.getCache(backupAddressCacheName)
       clusterAddress = cacheManager.getAddress
       address = new ServerAddress(configuration.proxyHost, configuration.proxyPort)
-      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
+      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, backupAddressCache, this))
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
       // Guaranteed delivery required since if data is lost, there won't be
@@ -150,11 +159,14 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
               .put(clusterAddress, address)
    }
 
-   private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
+   private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager, backupAddressCacheName: String) {
       val internalCacheRegistry = cacheManager.getGlobalComponentRegistry.getComponent(classOf[InternalCacheRegistry])
       internalCacheRegistry.registerInternalCache(configuration.topologyCacheName,
-          createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build(),
-          EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE))
+         createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build(),
+         EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE))
+      internalCacheRegistry.registerInternalCache(backupAddressCacheName,
+         createBackupTopologyCacheConfig().build(),
+         EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE))
    }
 
    protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
@@ -179,6 +191,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          builder.persistence().addClusterLoader().remoteCallTimeout(configuration.topologyReplTimeout)
       }
 
+      builder
+   }
+
+   protected def createBackupTopologyCacheConfig(): ConfigurationBuilder = {
+      val builder = new ConfigurationBuilder().simpleCache(true)
+      builder.expiration().lifespan(1, TimeUnit.DAYS)
       builder
    }
 
@@ -295,4 +313,5 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
 object HotRodServer {
    val DEFAULT_TOPOLOGY_ID = -1
+   val BACKUP_TOPOLOGY_CACHE_NAME_PREFIX: String = "___backupHotRodTopologyCache"
 }
