@@ -22,7 +22,7 @@ import org.infinispan.objectfilter.impl.FilterResultImpl;
 import org.kohsuke.MetaInfServices;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -54,16 +54,17 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
 
    @Override
    public void stop() {
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryActivated.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryCreated.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryInvalidated.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryLoaded.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryModified.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryPassivated.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryRemoved.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryVisited.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntriesEvicted.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryExpired.class).removeAll(filteringInvocations.values());
+      Collection<FilteringListenerInvocation<?, ?>> invocations = filteringInvocations.values();
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryActivated.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryCreated.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryInvalidated.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryLoaded.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryModified.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryPassivated.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryRemoved.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryVisited.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntriesEvicted.class).removeAll(invocations);
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryExpired.class).removeAll(invocations);
       filteringInvocations.clear();
    }
 
@@ -174,23 +175,11 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
          if (invocations == null) {
             return null;
          }
-         DelegatingCacheEntryListenerInvocation[] invocationsArray = invocations.toArray(new DelegatingCacheEntryListenerInvocation[invocations.size()]);
+         DelegatingCacheEntryListenerInvocation<K, V>[] invocationsArray = invocations.toArray(new DelegatingCacheEntryListenerInvocation[invocations.size()]);
          for (DelegatingCacheEntryListenerInvocation di : invocationsArray) {
             ((DelegatingCacheEntryListenerInvocationImpl) di).callback = this;
          }
          return invocationsArray;
-      }
-
-      private <T> T[] concatArrays(T[] first, T[] second) {
-         if (first == null) {
-            return second;
-         }
-         if (second == null) {
-            return first;
-         }
-         T[] result = Arrays.copyOf(first, first.length + second.length);
-         System.arraycopy(second, 0, result, first.length, second.length);
-         return result;
       }
 
       void unregister() {
