@@ -1,4 +1,4 @@
-package org.infinispan.query.continuous;
+package org.infinispan.query.continuous.impl;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
