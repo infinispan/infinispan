@@ -1375,4 +1375,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to broadcast invalidation messages", id = 384)
    RuntimeException unableToBroadcastInvalidation(@Cause Throwable e);
 
+   @LogMessage(level = WARN)
+   @Message(value = "The data container class configuration has been deprecated.  This has no current replacement", id = 385)
+   void dataContainerConfigurationDeprecated();
+
 }

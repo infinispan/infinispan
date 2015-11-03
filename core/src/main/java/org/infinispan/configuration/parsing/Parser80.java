@@ -1199,6 +1199,7 @@ public class Parser80 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case CLASS:
+               log.dataContainerConfigurationDeprecated();
                builder.dataContainer().dataContainer(Util.<DataContainer>getInstance(value, holder.getClassLoader()));
                break;
             case KEY_EQUIVALENCE:

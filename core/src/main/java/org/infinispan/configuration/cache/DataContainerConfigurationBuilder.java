@@ -33,6 +33,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * Specify the data container in use
     * @param dataContainer
     * @return
+    * @deprecated data container is no longer to exposed via configuration at a later point
     */
    public DataContainerConfigurationBuilder dataContainer(DataContainer dataContainer) {
       attributes.attribute(DATA_CONTAINER).set(dataContainer);

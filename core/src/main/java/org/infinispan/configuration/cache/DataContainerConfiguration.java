@@ -43,6 +43,7 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
     * Data container implementation in use
     *
     * @return
+    * @deprecated data container is no longer to exposed via configuration at a later point
     */
    public DataContainer dataContainer() {
       return dataContainer.get();
