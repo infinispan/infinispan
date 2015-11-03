@@ -14,7 +14,8 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
- * Created by wburns on 10/9/15.
+ * Stream supplier that is to be used when the underlying stream is composed by {@link CacheEntry} instances.  This
+ * supplier will do the proper filtering by key based on the CacheEntry key.
  */
 public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>> {
    private static final Log log = LogFactory.getLog(EntryStreamSupplier.class);

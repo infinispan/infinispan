@@ -41,7 +41,7 @@ public abstract class AbstractDelegatingKeyCacheSet<K, V> extends AbstractDelega
       return getStream(true);
    }
 
-   private CacheStream<K> getStream(boolean parallel) {
+   protected CacheStream<K> getStream(boolean parallel) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       CloseableSpliterator<K> closeableSpliterator = spliterator();
       CacheStream<K> stream = new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,

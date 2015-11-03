@@ -258,8 +258,9 @@ public class MarshalledValueInterceptor<K, V> extends CommandInterceptor {
       return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
          @Override
          public CloseableIterator<CacheEntry<K, V>> iterator() {
-            // We pass a null ctx, since this is always local invocation - if it was remote it would use
-            // DistributionBulkInterceptor
+            // We pass a null ctx, since we always want this value unwrapped.  If iterator was invoked locally, it would
+            // behave the same, however for a remote invocation which is usually part of a stream invocation we have
+            // to have the actual unmarshalled value to perform the intermediate operations upon.
             return new CloseableIteratorMapper<>(super.iterator(), e -> unwrapEntry(e, null));
          }
 
