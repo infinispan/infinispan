@@ -1016,6 +1016,7 @@
     <xs:attribute name="class" type="xs:string">
       <xs:annotation>
         <xs:documentation>
+          DEPRECATED: this is to be removed in a future release
           Fully qualified class name of the data container to use
         </xs:documentation>
       </xs:annotation>
