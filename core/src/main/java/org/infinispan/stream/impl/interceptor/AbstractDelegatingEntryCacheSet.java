@@ -41,7 +41,7 @@ public abstract class AbstractDelegatingEntryCacheSet<K, V> extends AbstractDele
       return getStream(true);
    }
 
-   private CacheStream<CacheEntry<K, V>> getStream(boolean parallel) {
+   protected CacheStream<CacheEntry<K, V>> getStream(boolean parallel) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = spliterator();
       CacheStream<CacheEntry<K, V>> stream = new LocalCacheStream<>(new EntryStreamSupplier<>(cache, dm != null ?

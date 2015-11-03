@@ -15,7 +15,8 @@ import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 
 /**
- * Created by wburns on 10/9/15.
+ * Stream supplier that is to be used when the underlying stream is composed by key instances.  This supplier will do
+ * the proper filtering by assuming each element is the key itself.
  */
 public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<K> {
    private static final Log log = LogFactory.getLog(KeyStreamSupplier.class);

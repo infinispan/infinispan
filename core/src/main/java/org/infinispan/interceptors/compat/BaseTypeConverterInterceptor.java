@@ -16,6 +16,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -27,6 +28,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.stream.impl.AbstractDelegatingCacheStream;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
@@ -36,6 +38,7 @@ import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -252,66 +255,80 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
    }
 
    @Override
-   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
-      CacheSet<K> set = (CacheSet<K>) super.visitKeySetCommand(ctx, command);
+   public CacheSet<K> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+         CacheSet<K> set = (CacheSet<K>) super.visitKeySetCommand(ctx, command);
 
-      return new AbstractDelegatingKeyCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
+         return new AbstractDelegatingKeyCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
 
-         @Override
-         public CloseableIterator<K> iterator() {
-            return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
-         }
+            @Override
+            public CloseableIterator<K> iterator() {
+               return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
+            }
 
-         @Override
-         public CloseableSpliterator<K> spliterator() {
-            return new IteratorAsSpliterator.Builder<>(iterator())
-                    .setEstimateRemaining(super.spliterator().estimateSize())
-                    .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
-                    .get();
-         }
+            @Override
+            public CloseableSpliterator<K> spliterator() {
+               return new IteratorAsSpliterator.Builder<>(iterator())
+                       .setEstimateRemaining(super.spliterator().estimateSize())
+                       .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                       .get();
+            }
 
-         @Override
-         public CacheStream<K> stream() {
-            return (CacheStream<K>) super.stream().map(k -> (K) converter.unboxKey(k));
-         }
-
-         @Override
-         public CacheStream<K> parallelStream() {
-            return (CacheStream<K>) super.parallelStream().map(k -> (K) converter.unboxKey(k));
-         }
-      };
+            protected CacheStream<K> getStream(boolean parallel) {
+               DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+               // Note the stream has to deal with the boxed values - so we can't use our spliterator as it already
+               // unboxes them
+               CloseableSpliterator<K> closeableSpliterator = super.spliterator();
+               CacheStream<K> stream = new LocalCacheStream<>(new KeyStreamSupplier<>(cache,
+                       dm != null ? dm.getConsistentHash() : null,
+                       () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
+                       cache.getAdvancedCache().getComponentRegistry());
+               // We rely on the fact that on close returns the same instance
+               stream.onClose(() -> closeableSpliterator.close());
+               return new TypeConverterStream(stream, converter, entryFactory);
+            }
+         };
+      }
+      return (CacheSet<K>) invokeNextInterceptor(ctx, command);
    }
 
    @Override
    public CacheSet<CacheEntry<K, V>> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
-      CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) super.visitEntrySetCommand(ctx, command);
+      if (ctx.isOriginLocal()) {
+         TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+         CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) super.visitEntrySetCommand(ctx, command);
 
-      return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
-         @Override
-         public CloseableIterator<CacheEntry<K, V>> iterator() {
-            return new TypeConverterIterator<>(super.iterator(), converter, entryFactory);
-         }
+         return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
+            @Override
+            public CloseableIterator<CacheEntry<K, V>> iterator() {
+               return new TypeConverterIterator<>(super.iterator(), converter, entryFactory);
+            }
 
-         @Override
-         public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-            return new IteratorAsSpliterator.Builder<>(iterator())
-                    .setEstimateRemaining(super.spliterator().estimateSize())
-                    .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
-                    .get();
-         }
+            @Override
+            public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+               return new IteratorAsSpliterator.Builder<>(iterator())
+                       .setEstimateRemaining(super.spliterator().estimateSize())
+                       .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                       .get();
+            }
 
-         @Override
-         public CacheStream<CacheEntry<K, V>> stream() {
-            return (CacheStream<CacheEntry<K, V>>) super.stream().map(e -> convert(e, converter, entryFactory));
-         }
-
-         @Override
-         public CacheStream<CacheEntry<K, V>> parallelStream() {
-            return (CacheStream<CacheEntry<K, V>>) super.parallelStream().map(e -> convert(e, converter, entryFactory));
-         }
-      };
+            protected CacheStream<CacheEntry<K, V>> getStream(boolean parallel) {
+               DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+               // Note the stream has to deal with the boxed values - so we can't use our spliterator as it already
+               // unboxes them
+               CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = super.spliterator();
+               CacheStream<CacheEntry<K, V>> stream = new LocalCacheStream<>(new EntryStreamSupplier<>(cache,
+                       dm != null ? dm.getConsistentHash() : null,
+                       () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
+                       cache.getAdvancedCache().getComponentRegistry());
+               // We rely on the fact that on close returns the same instance
+               stream.onClose(() -> closeableSpliterator.close());
+               return new TypeConverterStream(stream, converter, entryFactory);
+            }
+         };
+      }
+      return (CacheSet<CacheEntry<K, V>>) invokeNextInterceptor(ctx, command);
    }
 
    private static <K, V> CacheEntry<K, V> convert(CacheEntry<K, V> entry,
