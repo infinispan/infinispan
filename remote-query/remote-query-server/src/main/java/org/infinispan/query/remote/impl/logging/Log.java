@@ -23,4 +23,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "An exception has occurred during query execution", id = 18003)
    CacheException errorExecutingQuery(@Cause Throwable cause);
+
+   @Message(value = "Querying is not enabled on cache %s", id = 18004)
+   CacheException queryingNotEnabled(String cacheName);
 }

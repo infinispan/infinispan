@@ -29,6 +29,8 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.security.AuthorizationManager;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.KeyValuePair;
 
 import java.security.PrivilegedAction;
@@ -46,6 +48,8 @@ import java.util.Map;
 public class QueryEngine {
 
    private static final int MAX_EXPANSION_COFACTORS = 16;
+
+   private final AuthorizationManager authorizationManager;
 
    protected final AdvancedCache<?, ?> cache;
 
@@ -73,9 +77,14 @@ public class QueryEngine {
       this.queryCache = ComponentRegistryUtils.getQueryCache(cache);
       this.searchManager = searchManager;
       searchFactory = searchManager != null ? searchManager.unwrap(SearchIntegrator.class) : null;
+      authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
    }
 
    public BaseQuery buildQuery(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+      if (authorizationManager != null) {
+         authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
+      }
+
       checkParameters(namedParameters);
 
       FilterParsingResult<?> parsingResult = parse(jpqlString, namedParameters);

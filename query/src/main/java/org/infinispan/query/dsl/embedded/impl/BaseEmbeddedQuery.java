@@ -5,8 +5,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
-import org.infinispan.security.AuthorizationManager;
-import org.infinispan.security.AuthorizationPermission;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,14 +44,6 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
                                String[] projection, long startOffset, int maxResults) {
       super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
-      ensureAccessPermissions(cache);
-   }
-
-   private void ensureAccessPermissions(AdvancedCache<?, ?> cache) {
-      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
-      if (authorizationManager != null) {
-         authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
-      }
    }
 
    @Override

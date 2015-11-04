@@ -4,12 +4,9 @@ import org.hibernate.search.engine.impl.nullencoding.KeywordBasedNullCodec;
 import org.hibernate.search.engine.impl.nullencoding.NullMarkerCodec;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
@@ -49,19 +46,19 @@ public final class QueryFacadeImpl implements QueryFacade {
 
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
-      try {
-         SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
-         QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
+      RemoteQueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryEngine.class);
+      if (queryEngine == null) {
+         throw log.queryingNotEnabled(cache.getName());
+      }
 
-         Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
-         boolean isIndexed = cacheConfiguration.indexing().index().isEnabled();
-         boolean isCompatMode = cacheConfiguration.compatibility().enabled();
-         SearchManager searchManager = isIndexed ? Search.getSearchManager(cache) : null;  // this also checks access permissions
-         RemoteQueryEngine queryEngine = new RemoteQueryEngine(cache, searchManager, isCompatMode, serCtx);
+      SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+      try {
+         QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
 
          long startOffset = request.getStartOffset() == null ? -1 : request.getStartOffset();
          int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
          Map<String, Object> namedParameters = getNamedParameters(request);
+
          BaseQuery q = queryEngine.buildQuery(null, request.getJpqlString(), namedParameters, startOffset, maxResults);
 
          QueryResponse response = makeResponse(q);

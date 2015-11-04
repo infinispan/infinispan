@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
@@ -8,6 +10,7 @@ import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
@@ -21,6 +24,9 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.impl.filter.JPAContinuousQueryProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.JPAProtobufCacheEventFilterConverter;
@@ -28,6 +34,7 @@ import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.impl.indexing.RemoteValueWrapperInterceptor;
 import org.infinispan.query.remote.impl.logging.Log;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -104,7 +111,8 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-      if (!cacheName.equals(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME)) {
+      InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      if (!icr.isInternalCache(cacheName)) {
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
 
          // ensure the protobuf metadata cache is created
@@ -145,7 +153,6 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
          }
          if (ic != null) {
             cr.registerComponent(wrapperInterceptor, RemoteValueWrapperInterceptor.class);
-            cr.registerComponent(wrapperInterceptor, wrapperInterceptor.getClass().getName(), true);
          }
          cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
       }
@@ -154,24 +161,30 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
       Configuration configuration = cr.getComponent(Configuration.class);
-      boolean remoteValueWrappingEnabled = configuration.indexing().index().isEnabled() && !configuration.compatibility().enabled();
-      if (!remoteValueWrappingEnabled) {
-         if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
-            throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
+      boolean isIndexed = configuration.indexing().index().isEnabled();
+      boolean isCompatMode = configuration.compatibility().enabled();
+      boolean remoteValueWrappingEnabled = isIndexed && !isCompatMode;
+      if (remoteValueWrappingEnabled) {
+         if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
+            throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
          }
-         return;
+      } else if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
+         throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
       }
-      if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
-         throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
+
+      InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      if (!icr.isInternalCache(cacheName)) {
+         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache().withFlags(Flag.OPERATION_HOTROD);
+         SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+         SearchManager searchManager = isIndexed ? Search.getSearchManager(cache) : null;
+         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, searchManager, isCompatMode, serCtx);
+         cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
       }
    }
 
    private boolean verifyChainContainsRemoteValueWrapperInterceptor(ComponentRegistry cr) {
       InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
-      if (interceptorChain == null) {
-         return false;
-      }
-      return interceptorChain.containsInterceptorType(RemoteValueWrapperInterceptor.class, true);
+      return interceptorChain != null && interceptorChain.containsInterceptorType(RemoteValueWrapperInterceptor.class, true);
    }
 
    @Override

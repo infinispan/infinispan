@@ -210,7 +210,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
             getKeyMetadata(h, k, cache)
          case QueryRequest =>
             val query = readRangedBytes(buffer)
-            val result = server.getQueryFacades.head.query(cache, query)
+            val result = server.query(cache, query)
             new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                h.topologyId, result)
       }
