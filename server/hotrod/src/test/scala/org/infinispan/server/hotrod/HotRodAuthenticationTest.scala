@@ -27,6 +27,7 @@ import org.testng.annotations.AfterClass
 import java.security.AccessController
 import java.security.PrivilegedAction
 import java.security.Security
+import org.junit.rules.ExpectedException
 
 /**
  * Hot Rod server authentication test.
@@ -42,15 +43,15 @@ class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       val ssap = new SimpleServerAuthenticationProvider
       ssap.addUser("user", "realm", "password".toCharArray(), null)
       val builder = new HotRodServerConfigurationBuilder
-      builder.authentication().enable().addAllowedMech("CRAM-MD5").serverAuthenticationProvider(ssap).serverName("localhost")
+      builder.authentication().enable().addAllowedMech("CRAM-MD5").serverAuthenticationProvider(ssap).serverName("localhost").addMechProperty(Sasl.POLICY_NOANONYMOUS, "true")
       startHotRodServer(cacheManager, UniquePortThreadLocal.get.intValue, 0, builder)
    }
 
-   @Test(enabled=false)
    def testAuthMechList(m: Method) {
       val a = client.authMechList
       assertEquals(a.mechs.size, 1)
       assertTrue(a.mechs.contains("CRAM-MD5"))
+      assertEquals(1, server.getDecoder.transport.acceptedChannels.size())
    }
 
    def testAuth(m: Method) {
@@ -58,6 +59,18 @@ class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       val sc = Sasl.createSaslClient(Array("CRAM-MD5"), null, "hotrod", "localhost", props, new TestCallbackHandler("user", "realm", "password".toCharArray()))
       val res = client.auth(sc)
       assertTrue(res.complete)
+      assertEquals(1, server.getDecoder.transport.acceptedChannels.size())
+   }
+   
+   def testUnauthorizedOpCloseConnection(m: Method) {
+      // Ensure the transport is clean
+      server.getDecoder.transport.stop()
+      server.getDecoder.transport.start()
+      try {
+        client.assertPutFail(m)
+      } finally {
+        assertEquals(0, server.getDecoder.transport.acceptedChannels.size())
+      }
    }
 
 }

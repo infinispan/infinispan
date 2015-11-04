@@ -81,4 +81,7 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Factory '%s' not found in server", id = 6016)
    IllegalStateException missingKeyValueFilterConverterFactory(String name);
 
+   @Message(value = "Unauthorized operation", id = 6017)
+   SecurityException unauthorizedOperation();
+
 }

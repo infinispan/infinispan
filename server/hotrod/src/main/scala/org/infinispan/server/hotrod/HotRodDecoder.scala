@@ -5,7 +5,6 @@ import java.lang.StringBuilder
 import java.security.PrivilegedExceptionAction
 import javax.security.auth.Subject
 import javax.security.sasl.SaslServer
-
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel._
 import io.netty.handler.codec.ReplayingDecoder
@@ -19,6 +18,8 @@ import org.infinispan.server.core.logging.Log
 import org.infinispan.server.core.security.AuthorizingCallbackHandler
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.core.transport._
+import javax.security.sasl.Sasl
+import java.security.PrivilegedActionException
 
 /**
  * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
@@ -30,8 +31,9 @@ import org.infinispan.server.core.transport._
  */
 class HotRodDecoder(cacheManager: EmbeddedCacheManager, val transport: NettyTransport, server: HotRodServer)
 extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHandler with ServerConstants with Constants with Log {
-
-   val secure = server.getConfiguration.authentication().enabled()
+   val authenticationConfig = server.getConfiguration.authentication()
+   val secure = authenticationConfig.enabled()
+   val requireAuthentication = secure && authenticationConfig.mechProperties().containsKey(Sasl.POLICY_NOANONYMOUS) && authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS).equals("true");
 
    private val decodeCtx = new CacheDecodeContext(server)
 
@@ -51,6 +53,12 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
             }
          }
       } catch {
+         case e: SecurityException =>
+            val (serverException, isClientError) = decodeCtx.createServerException(e, in)
+            ctx.pipeline.fireExceptionCaught(serverException).close()
+         case e: PrivilegedActionException =>
+            val (serverException, isClientError) = decodeCtx.createServerException(e, in)
+            ctx.pipeline.fireExceptionCaught(serverException).close()
          case e: Exception =>
             val (serverException, isClientError) = decodeCtx.createServerException(e, in)
             // If decode returns an exception, decode won't be called again so,
@@ -164,13 +172,16 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
             case ver if Constants.isVersion2x(ver) => Decoder2x
             case _ => throw new UnknownVersionException("Unknown version:" + version, version, messageId)
          }
-         val endOfOp = decoder.readHeader(buffer, version, messageId, header)
+         val endOfOp = decoder.readHeader(buffer, version, messageId, header, requireAuthentication && subject==ANONYMOUS)
          decodeCtx.decoder = decoder
          if (decodeCtx.isTrace) trace("Decoded header %s", header)
          decodeCtx.isError = false
          Some(endOfOp)
       } catch {
          case e: HotRodUnknownOperationException =>
+            decodeCtx.isError = true
+            throw e
+         case e: SecurityException =>
             decodeCtx.isError = true
             throw e
          case e: Exception =>

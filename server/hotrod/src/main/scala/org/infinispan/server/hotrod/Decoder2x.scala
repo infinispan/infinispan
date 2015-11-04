@@ -58,7 +58,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    type SuitableHeader = HotRodHeader
    private val isTrace = isTraceEnabled
 
-   override def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader): Boolean = {
+   override def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader, requireAuth: Boolean): Boolean = {
       val streamOp = buffer.readUnsignedByte
       val (op, endOfOp) = (streamOp: @switch) match {
          case 0x01 => (PutRequest, false)
@@ -92,6 +92,12 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             "Unknown operation: " + streamOp, version, messageId)
       }
       if (isTrace) trace("Operation code: %d has been matched to %s", streamOp, op)
+      if (requireAuth) {
+        op match {
+          case PingRequest | AuthMechListRequest | AuthRequest => ;
+          case _ => throw log.unauthorizedOperation
+        }
+      }
 
       val cacheName = readString(buffer)
       val flag = readUnsignedInt(buffer)
