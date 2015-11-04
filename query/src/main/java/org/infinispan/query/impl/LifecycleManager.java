@@ -51,6 +51,7 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.query.continuous.impl.ContinuousQueryResult;
 import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
@@ -91,21 +92,22 @@ public class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-      cr.registerComponent(new ReflectionMatcher(null), ReflectionMatcher.class);
+      InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      if (!icr.isInternalCache(cacheName)) {
+         cr.registerComponent(new ReflectionMatcher(null), ReflectionMatcher.class);
 
-      if (cfg.indexing().index().isEnabled()) {
-         log.registeringQueryInterceptor();
-         SearchIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
-         createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
-         EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-         addCacheDependencyIfNeeded(cacheName, cacheManager, cfg.indexing().properties());
+         if (cfg.indexing().index().isEnabled()) {
+            log.registeringQueryInterceptor();
+            SearchIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
+            createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
+            EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
+            addCacheDependencyIfNeeded(cacheName, cacheManager, cfg.indexing().properties());
+         }
       }
    }
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, Properties properties) {
-      if (!ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME.equals(cacheStarting)) {
-         cacheManager.addCacheDependency(cacheStarting, ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
-      }
+      cacheManager.addCacheDependency(cacheStarting, ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
       if (hasInfinispanDirectory(properties) && !DEFAULT_CACHES.contains(cacheStarting)) {
          String metadataCacheName = getMetadataCacheName(properties);
          String lockingCacheName = getLockingCacheName(properties);
@@ -187,11 +189,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       registerQueryMBeans(cache.getAdvancedCache(), cr, cacheName);
    }
 
-   private void registerQueryMBeans(AdvancedCache cache,
-         ComponentRegistry cr, String cacheName) {
+   private void registerQueryMBeans(AdvancedCache cache, ComponentRegistry cr, String cacheName) {
       Configuration cfg = cache.getCacheConfiguration();
-      SearchIntegrator sf = getSearchFactory(
-            cfg.indexing().properties(), cr);
+      SearchIntegrator sf = getSearchFactory(cfg.indexing().properties(), cr);
 
       // Resolve MBean server instance
       GlobalConfiguration globalCfg =
@@ -221,8 +221,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
             .toManageableComponentMetadata();
       try {
          // TODO: MassIndexer should be some kind of query cache component?
-         DistributedExecutorMassIndexer maxIndexer = new DistributedExecutorMassIndexer(cache, sf);
-         ResourceDMBean mbean = new ResourceDMBean(maxIndexer, massIndexerCompMetadata);
+         DistributedExecutorMassIndexer massIndexer = new DistributedExecutorMassIndexer(cache, sf);
+         ResourceDMBean mbean = new ResourceDMBean(massIndexer, massIndexerCompMetadata);
          ObjectName massIndexerObjName = new ObjectName(jmxDomain + ":"
                + queryGroupName + ",component=" + massIndexerCompMetadata.getJmxObjectName());
          JmxUtil.registerMBean(mbean, massIndexerObjName, mbeanServer);
@@ -237,10 +237,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
       InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
-      if (interceptorChain == null) {
-         return false;
-      }
-      return interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
+      return interceptorChain != null && interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
    private SearchIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr) {
@@ -250,7 +247,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          searchFactory = (SearchIntegrator) component;
       }
       //defend against multiple initialization:
-      if (searchFactory==null) {
+      if (searchFactory == null) {
          GlobalComponentRegistry globalComponentRegistry = cr.getGlobalComponentRegistry();
          EmbeddedCacheManager uninitializedCacheManager = globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
          indexingProperties = addProgrammaticMappings(indexingProperties, cr);
@@ -332,7 +329,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       QueryCache queryCache = new QueryCache();
       gcr.registerComponent(queryCache, QueryCache.class);
 
-      Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
+      Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.JPA_FILTER_AND_CONVERTER, new JPAFilterAndConverter.JPAFilterAndConverterExternalizer());
       externalizerMap.put(ExternalizerIds.JPA_FILTER_RESULT, new JPAFilterAndConverter.FilterResultExternalizer());
       externalizerMap.put(ExternalizerIds.JPA_CACHE_EVENT_FILTER_CONVERTER, new JPACacheEventFilterConverter.Externalizer());
