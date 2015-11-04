@@ -105,6 +105,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
    private Lock minTopologyRecalculationLock;
    protected boolean clustered = false;
+   protected volatile boolean running = false;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
@@ -182,6 +183,8 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             }, interval, interval, TimeUnit.MILLISECONDS);
          }
       }
+
+      running = true;
    }
 
    @Override
@@ -206,6 +209,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    @Stop
    @SuppressWarnings("unused")
    private void stop() {
+      running = false;
       cacheManagerNotifier.removeListener(this);
       if (executorService != null)
          executorService.shutdownNow();
@@ -377,6 +381,12 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       RemoteTransaction remoteTransaction = remoteTransactions.get(globalTx);
       if (remoteTransaction != null)
          return remoteTransaction;
+
+      if (!running) {
+         // Assume that we wouldn't get this far if the cache was already stopped
+         throw log.cacheIsStopping(cacheName);
+      }
+
       remoteTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
             : txFactory.newRemoteTransaction(modifications, globalTx, topologyId);
       RemoteTransaction existing = remoteTransactions.putIfAbsent(globalTx, remoteTransaction);
@@ -400,6 +410,10 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, boolean implicitTransaction) {
       LocalTransaction current = localTransactions.get(transaction);
       if (current == null) {
+         if (!running) {
+            // Assume that we wouldn't get this far if the cache was already stopped
+            throw log.cacheIsStopping(cacheName);
+         }
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
          current = txFactory.newLocalTransaction(transaction, tx, implicitTransaction, currentTopologyId);
