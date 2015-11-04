@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
+import org.infinispan.AdvancedCache
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.filter.{ParamKeyValueFilterConverterFactory, KeyValueFilterConverterFactory}
 import org.infinispan.notifications.Listener
@@ -62,7 +63,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    def getMarshaller = marshaller
 
-   def getQueryFacades: Seq[QueryFacade] = queryFacades
+   def query(cache: AdvancedCache[Array[Byte], Array[Byte]], query: Array[Byte]): Array[Byte] = {
+      queryFacades.head.query(cache, query)
+   }
 
    def getClientListenerRegistry: ClientListenerRegistry = clientListenerRegistry
 
