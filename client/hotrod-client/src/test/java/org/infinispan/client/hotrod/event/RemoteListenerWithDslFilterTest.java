@@ -7,6 +7,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
@@ -158,8 +159,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       remoteCache.removeClientListener(listener);
    }
 
-   @ClientListener(filterFactoryName = ClientEvents.QUERY_DSL_FILTER_FACTORY_NAME,
-         converterFactoryName = ClientEvents.QUERY_DSL_FILTER_FACTORY_NAME,
+   @ClientListener(filterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
+         converterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
    public static class ClientEntryListener {
 

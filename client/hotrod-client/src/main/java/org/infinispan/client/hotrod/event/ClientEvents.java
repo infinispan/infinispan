@@ -50,7 +50,7 @@ public class ClientEvents {
     * {@link org.infinispan.client.hotrod.annotation.ClientListener#useRawData} = true and {@link
     * org.infinispan.client.hotrod.annotation.ClientListener#filterFactoryName} and {@link
     * org.infinispan.client.hotrod.annotation.ClientListener#converterFactoryName} are equal to {@link
-    * ClientEvents#QUERY_DSL_FILTER_FACTORY_NAME}
+    * Filters#QUERY_DSL_FILTER_FACTORY_NAME}
     *
     * @param remoteCache the remote cache to attach the listener
     * @param listener    the listener instance
@@ -61,11 +61,11 @@ public class ClientEvents {
       if (!l.useRawData()) {
          throw new IllegalArgumentException("The client listener must use raw data");
       }
-      if (!l.filterFactoryName().equals(QUERY_DSL_FILTER_FACTORY_NAME)) {
-         throw new IllegalArgumentException("The client listener must use the '" + QUERY_DSL_FILTER_FACTORY_NAME + "' filter factory");
+      if (!l.filterFactoryName().equals(Filters.QUERY_DSL_FILTER_FACTORY_NAME)) {
+         throw new IllegalArgumentException("The client listener must use the '" + Filters.QUERY_DSL_FILTER_FACTORY_NAME + "' filter factory");
       }
-      if (!l.converterFactoryName().equals(QUERY_DSL_FILTER_FACTORY_NAME)) {
-         throw new IllegalArgumentException("The client listener must use the '" + QUERY_DSL_FILTER_FACTORY_NAME + "' converter factory");
+      if (!l.converterFactoryName().equals(Filters.QUERY_DSL_FILTER_FACTORY_NAME)) {
+         throw new IllegalArgumentException("The client listener must use the '" + Filters.QUERY_DSL_FILTER_FACTORY_NAME + "' converter factory");
       }
       Object[] factoryParams = makeFactoryParams(query);
       remoteCache.addClientListener(listener, factoryParams, null);
@@ -87,8 +87,8 @@ public class ClientEvents {
       return eventListener;
    }
 
-   @ClientListener(filterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
-         converterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
+   @ClientListener(filterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
+         converterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
    private static final class ClientEntryListener {
 
