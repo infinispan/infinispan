@@ -88,10 +88,4 @@
         </dependencies>
     </dependencyManagement>
 
-    <modules>
-        <module>spring4-common</module>
-        <module>spring4-embedded</module>
-        <module>spring4-remote</module>
-    </modules>
-
 </project>
