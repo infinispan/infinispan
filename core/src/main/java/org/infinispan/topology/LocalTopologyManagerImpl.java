@@ -9,6 +9,9 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.globalstate.GlobalStateManager;
+import org.infinispan.globalstate.GlobalStateProvider;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -21,6 +24,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -46,7 +50,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  * @since 5.2
  */
 @MBean(objectName = "LocalTopologyManager", description = "Controls the cache membership and state transfer")
-public class LocalTopologyManagerImpl implements LocalTopologyManager {
+public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalStateProvider {
    private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -54,6 +58,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private ExecutorService asyncTransportExecutor;
    private GlobalComponentRegistry gcr;
    private TimeService timeService;
+   private GlobalStateManager globalStateManager;
 
    private final WithinThreadExecutor withinThreadExecutor = new WithinThreadExecutor();
 
@@ -62,24 +67,34 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private final Map<String, LocalCacheStatus> runningCaches =
          Collections.synchronizedMap(new HashMap<String, LocalCacheStatus>());
    private volatile boolean running;
-
+   private PersistentUUID persistentUUID;
 
    @Inject
    public void inject(Transport transport,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                      GlobalComponentRegistry gcr, TimeService timeService) {
+                      GlobalComponentRegistry gcr, TimeService timeService, GlobalStateManager globalStateManager) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.gcr = gcr;
       this.timeService = timeService;
+      if (globalStateManager != null) {
+         this.globalStateManager = globalStateManager;
+         globalStateManager.registerStateProvider(this);
+      }
    }
 
-   // Arbitrary value, only need to start after JGroupsTransport
+   // Arbitrary value, only need to start after the (optional) GlobalStateManager and JGroupsTransport
    @Start(priority = 100)
    public void start() {
       if (trace) {
          log.tracef("Starting LocalTopologyManager on %s", transport.getAddress());
       }
+      if (persistentUUID == null) {
+         persistentUUID = PersistentUUID.randomUUID();
+         if (globalStateManager != null)
+            globalStateManager.writeGlobalState();
+      }
+      JGroupsAddressCache.putAddressPersistentUUID(transport.getAddress(), persistentUUID);
       running = true;
    }
 
@@ -640,6 +655,21 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private int getGlobalTimeout() {
       // TODO Rename setting to something like globalRpcTimeout
       return (int) gcr.getGlobalConfiguration().transport().distributedSyncTimeout();
+   }
+
+   @Override
+   public void prepareForPersist(ScopedPersistentState state) {
+      state.setProperty("uuid", persistentUUID.toString());
+   }
+
+   @Override
+   public void prepareForRestore(ScopedPersistentState state) {
+      persistentUUID = PersistentUUID.fromString(state.getProperty("uuid"));
+   }
+
+   @Override
+   public PersistentUUID getPersistentUUID() {
+      return persistentUUID;
    }
 }
 
