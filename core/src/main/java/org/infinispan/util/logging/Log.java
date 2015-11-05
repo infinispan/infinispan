@@ -1380,5 +1380,22 @@ public interface Log extends BasicLogger {
    @Message(value = "The data container class configuration has been deprecated.  This has no current replacement", id = 385)
    void dataContainerConfigurationDeprecated();
 
+   @Message(value = "Failed to read persisted state from file %s. Aborting.", id = 386)
+   CacheConfigurationException failedReadingPersistentState(@Cause IOException e, File stateFile);
+
+   @Message(value = "Failed to write state to file %s.", id = 387)
+   CacheConfigurationException failedWritingGlobalState(@Cause IOException e, File stateFile);
+
+   @Message(value = "The state file %s is not writable. Aborting.", id = 388)
+   CacheConfigurationException nonWritableStateFile(File stateFile);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Loaded global state, version=%s timestamp=%s", id = 389)
+   void globalStateLoad(String version, String timestamp);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Persisted state, version=%s timestamp=%s", id = 390)
+   void globalStateWrite(String version, String timestamp);
+
 }
 

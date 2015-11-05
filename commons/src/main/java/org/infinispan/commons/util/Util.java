@@ -699,6 +699,10 @@ public final class Util {
          .append(HEX_VALUES.charAt((b & 0x0F)));
    }
 
+   private static void addSingleHexByte(StringBuilder buf, byte b) {
+      buf.append(HEX_VALUES.charAt(b & 0x0F));
+   }
+
    public static Double constructDouble(Class<?> type, Object o) {
       if (type.equals(Long.class) || type.equals(long.class))
          return Double.valueOf((Long) o);
@@ -806,6 +810,104 @@ public final class Util {
         offset += array.length;
       }
       return result;
-    }
+   }
 
+   public static String unicodeEscapeString(String s) {
+      int len = s.length();
+      StringBuilder out = new StringBuilder(len * 2);
+
+      for (int x = 0; x < len; x++) {
+         char aChar = s.charAt(x);
+         if ((aChar > 61) && (aChar < 127)) {
+            if (aChar == '\\') {
+               out.append('\\');
+               out.append('\\');
+               continue;
+            }
+            out.append(aChar);
+            continue;
+         }
+         switch (aChar) {
+         case ' ':
+            if (x == 0)
+               out.append('\\');
+            out.append(' ');
+            break;
+         case '\t':
+            out.append('\\');
+            out.append('t');
+            break;
+         case '\n':
+            out.append('\\');
+            out.append('n');
+            break;
+         case '\r':
+            out.append('\\');
+            out.append('r');
+            break;
+         case '\f':
+            out.append('\\');
+            out.append('f');
+            break;
+         case '=':
+         case ':':
+         case '#':
+         case '!':
+            out.append('\\');
+            out.append(aChar);
+            break;
+         default:
+            if ((aChar < 0x0020) || (aChar > 0x007e)) {
+               out.append('\\');
+               out.append('u');
+               addSingleHexByte(out, (byte)((aChar >> 12) & 0xF));
+               addSingleHexByte(out, (byte)((aChar >> 8) & 0xF));
+               addSingleHexByte(out, (byte)((aChar >> 4) & 0xF));
+               addSingleHexByte(out, (byte)(aChar & 0xF));
+            } else {
+               out.append(aChar);
+            }
+         }
+      }
+      return out.toString();
+   }
+
+   public static String unicodeUnescapeString(String s) {
+      int len = s.length();
+      StringBuilder out = new StringBuilder(len);
+
+      for (int x = 0; x < len; x++) {
+         char ch = s.charAt(x);
+         if (ch == '\\') {
+            ch = s.charAt(++x);
+            if (ch == 'u') {
+               int value = 0;
+               for (int i = 0; i < 4; i++) {
+                  ch = s.charAt(++x);
+                  if (ch >= '0' && ch <= '9') {
+                     value = (value << 4) + ch - '0';
+                  } else if (ch >= 'a' && ch <= 'f') {
+                     value = (value << 4) + 10 + ch - 'a';
+                  } else if (ch >= 'A' && ch <= 'F') {
+                     value = (value << 4) + 10 + ch - 'A';
+                  } else throw new IllegalArgumentException("Malformed \\uxxxx encoding.");
+               }
+               out.append((char) value);
+            } else {
+               if (ch == 't')
+                  ch = '\t';
+               else if (ch == 'r')
+                  ch = '\r';
+               else if (ch == 'n')
+                  ch = '\n';
+               else if (ch == 'f')
+                  ch = '\f';
+               out.append(ch);
+            }
+         } else {
+            out.append(ch);
+         }
+      }
+      return out.toString();
+   }
 }
