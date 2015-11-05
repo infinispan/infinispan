@@ -23,7 +23,7 @@ public class TransactionHS implements Transaction, Serializable {
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int id;
 
-   @Field(store = Store.NO, analyze = Analyze.NO)
+   @Field(store = Store.NO, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private String description;
 
    @Field(store = Store.YES, analyze = Analyze.NO)

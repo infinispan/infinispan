@@ -139,7 +139,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Transaction transaction5 = getModelFactory().makeTransaction();
       transaction5.setId(5);
-      transaction5.setDescription("Popcorn");
+      transaction5.setDescription("-Popcorn");
       transaction5.setAccountId(2);
       transaction5.setAmount(5);
       transaction5.setDate(makeDate("2013-01-01"));
@@ -453,6 +453,20 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       for (Transaction t : list) {
          assertTrue(t.getAmount() <= 1500);
       }
+   }
+
+   // This tests against https://hibernate.atlassian.net/browse/HSEARCH-2030
+   public void testLteOnFieldWithNullToken() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      // all the transactions that happened in January 2013
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .having("description").lte("-Popcorn")
+            .toBuilder().build();
+
+      List<Transaction> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("-Popcorn", list.get(0).getDescription());
    }
 
    public void testAnd1() throws Exception {
