@@ -30,12 +30,6 @@
         </developer>
     </developers>
 
-    <modules>
-        <module>common</module>
-        <module>embedded</module>
-        <module>remote</module>
-    </modules>
-
     <profiles>
         <profile>
             <id>smoke</id>
