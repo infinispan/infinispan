@@ -25,7 +25,7 @@ public class TransactionHS implements Transaction, Serializable {
    @SortableField
    private int id;
 
-   @Field(store = Store.NO, analyze = Analyze.NO)
+   @Field(store = Store.NO, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    @SortableField
    private String description;
 
