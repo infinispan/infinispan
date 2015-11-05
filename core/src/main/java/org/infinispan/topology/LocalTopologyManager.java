@@ -117,4 +117,10 @@ public interface LocalTopologyManager {
     * Updates the availability state of a cache (for the entire cluster).
     */
    void setCacheAvailability(String cacheName, AvailabilityMode availabilityMode) throws Exception;
+
+   /**
+    * Returns the local UUID of this node. If global state persistence is enabled, this UUID will be saved and reused
+    * across restarts
+    */
+   PersistentUUID getPersistentUUID();
 }

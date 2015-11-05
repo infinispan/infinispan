@@ -10,6 +10,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
+import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.topology.RebalancingStatus;
 
@@ -146,4 +147,10 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    protected void beforeConfirmRebalance(String cacheName, int topologyId, Throwable throwable) {
       //no-op by default
    }
+
+   @Override
+   public PersistentUUID getPersistentUUID() {
+      return delegate.getPersistentUUID();
+   }
+
 }
