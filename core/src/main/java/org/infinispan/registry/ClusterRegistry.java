@@ -32,7 +32,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mircea Markus
  * @since 6.0
+ * @deprecated functionality replaced by {@link InternalCacheRegistry}
  */
+@Deprecated
 @Scope(Scopes.GLOBAL)
 public interface ClusterRegistry<S, K, V> {
 
