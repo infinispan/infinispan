@@ -81,9 +81,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    private static void configurationCheck81(EmbeddedCacheManager cm) {
       configurationCheck80(cm);
       GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
-      assertTrue(globalConfiguration.statePersistence().enabled());
-      assertEquals("persistentPath", globalConfiguration.statePersistence().persistentLocation());
-      assertEquals("tmpPath", globalConfiguration.statePersistence().temporaryLocation());
+      assertTrue(globalConfiguration.globalState().enabled());
+      assertEquals("persistentPath", globalConfiguration.globalState().persistentLocation());
+      assertEquals("tmpPath", globalConfiguration.globalState().temporaryLocation());
    }
 
    private static void configurationCheck80(EmbeddedCacheManager cm) {

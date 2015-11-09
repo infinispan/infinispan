@@ -245,7 +245,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       security.read(template.security());
       serialization.read(template.serialization());
       shutdown.read(template.shutdown());
-      globalState.read(template.statePersistence());
+      globalState.read(template.globalState());
       transport.read(template.transport());
       site.read(template.sites());
       return this;
