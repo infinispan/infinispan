@@ -91,7 +91,7 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-spring4-commons</artifactId>
+         <artifactId>infinispan-spring4-common</artifactId>
       </dependency>
 
       <dependency>
