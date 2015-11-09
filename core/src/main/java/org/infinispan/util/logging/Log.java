@@ -1397,5 +1397,16 @@ public interface Log extends BasicLogger {
    @Message(value = "Persisted state, version=%s timestamp=%s", id = 390)
    void globalStateWrite(String version, String timestamp);
 
+   @Message(value = "Recovery not supported with non transactional cache", id = 391)
+   CacheConfigurationException recoveryNotSupportedWithNonTxCache();
+
+   @Message(value = "Recovery not supported with Synchronization", id = 392)
+   CacheConfigurationException recoveryNotSupportedWithSynchronization();
+
+   @Message(value = "Recovery not supported with Asynchronous %s cache mode", id = 393)
+   CacheConfigurationException recoveryNotSupportedWithAsync(String cacheMode);
+
+   @Message(value = "Recovery not supported with asynchronous commit phase", id = 394)
+   CacheConfigurationException recoveryNotSupportedWithAsyncCommit();
 }
 
