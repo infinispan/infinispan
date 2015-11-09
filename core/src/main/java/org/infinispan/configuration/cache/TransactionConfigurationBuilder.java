@@ -260,6 +260,15 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
+    * See {@link #transactionProtocol(TransactionProtocol)}.
+    *
+    * @return the current configured {@link TransactionProtocol}.
+    */
+   public TransactionProtocol transactionProtocol() {
+      return attributes.attribute(TRANSACTION_PROTOCOL).get();
+   }
+
+   /**
     * @return are transactional notifications (
     *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered} and
     *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}) triggered?
@@ -286,10 +295,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
          //total order only supports replicated and distributed mode
          if(!clustering().cacheMode().isReplicated() && !clustering().cacheMode().isDistributed()) {
             throw log.invalidCacheModeForTotalOrder(clustering().cacheMode().friendlyCacheModeString());
-         }
-
-         if (recovery.create().enabled()) {
-            throw log.unavailableTotalOrderWithTxRecovery();
          }
 
          if (lockingMode() != LockingMode.OPTIMISTIC) {

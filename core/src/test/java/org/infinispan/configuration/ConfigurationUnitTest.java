@@ -35,6 +35,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "configuration.ConfigurationUnitTest")
@@ -363,6 +364,52 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             cm.getCache();
+         }
+      });
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Recovery not supported with non transactional cache")
+   public void testInvalidRecoveryWithNonTransactional() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      builder.transaction().useSynchronization(false);
+      builder.transaction().recovery().enable();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() {
+            cm.getCache();
+         }
+      });
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Recovery not supported with Synchronization")
+   public void testInvalidRecoveryWithSynchronization() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      builder.transaction().useSynchronization(true);
+      builder.transaction().recovery().enable();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() {
+            cm.getCache();
+         }
+      });
+   }
+
+   public void testValidRecoveryConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      builder.transaction().useSynchronization(false);
+      builder.transaction().recovery().enable();
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() {
+            AssertJUnit.assertTrue(cm.getCache().getCacheConfiguration().transaction().recovery().enabled());
          }
       });
    }
