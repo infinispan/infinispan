@@ -42,7 +42,7 @@ public class GlobalConfiguration {
    private final GlobalSecurityConfiguration security;
    private final SerializationConfiguration serialization;
    private final ShutdownConfiguration shutdown;
-   private final GlobalStateConfiguration statePersistence;
+   private final GlobalStateConfiguration globalState;
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;
    private final WeakReference<ClassLoader> cl;
@@ -62,7 +62,7 @@ public class GlobalConfiguration {
          GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, GlobalSecurityConfiguration security,
          SerializationConfiguration serialization, ShutdownConfiguration shutdown,
-         GlobalStateConfiguration statePersistence,
+         GlobalStateConfiguration globalState,
          List<?> modules, SiteConfiguration site,ClassLoader cl) {
       this.evictionThreadPool = evictionThreadPool;
       this.listenerThreadPool = listenerThreadPool;
@@ -75,7 +75,7 @@ public class GlobalConfiguration {
       this.security = security;
       this.serialization = serialization;
       this.shutdown = shutdown;
-      this.statePersistence = statePersistence;
+      this.globalState = globalState;
       Map<Class<?>, Object> moduleMap = new HashMap<Class<?>, Object>();
       for(Object module : modules) {
          moduleMap.put(module.getClass(), module);
@@ -185,8 +185,8 @@ public class GlobalConfiguration {
       return shutdown;
    }
 
-   public GlobalStateConfiguration statePersistence() {
-      return statePersistence;
+   public GlobalStateConfiguration globalState() {
+      return globalState;
    }
 
    @SuppressWarnings("unchecked")
@@ -222,7 +222,7 @@ public class GlobalConfiguration {
             ", security=" + security +
             ", serialization=" + serialization +
             ", shutdown=" + shutdown +
-            ", statePersistence=" + statePersistence +
+            ", globalState=" + globalState +
             ", modules=" + modules +
             ", site=" + site +
             ", cl=" + cl +
