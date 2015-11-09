@@ -110,6 +110,11 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
    }
 
    @Override
+   public FilterConditionContext equal(Object value) {
+      return eq(value);
+   }
+
+   @Override
    public FilterConditionContext lt(Object value) {
       setOperatorAndArgument(new LtOperator(this, value));
       return this;

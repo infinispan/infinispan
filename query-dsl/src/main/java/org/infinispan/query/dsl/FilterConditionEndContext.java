@@ -96,6 +96,11 @@ public interface FilterConditionEndContext {
    FilterConditionContext eq(Object value);
 
    /**
+    * Alias for {@link #eq(Object)}
+    */
+   FilterConditionContext equal(Object value);
+
+   /**
     * Checks that the left argument is less than the given value.
     *
     * @param value the value to compare with
