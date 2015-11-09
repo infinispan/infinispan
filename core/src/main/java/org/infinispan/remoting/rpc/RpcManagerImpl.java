@@ -199,7 +199,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          throwable = throwable.getCause();
       }
       if (throwable instanceof CacheException) {
-         log.tracef("Replication exception", throwable);
+         log.tracef(throwable, "Replication exception");
          throw ((CacheException) throwable);
       } else {
          log.unexpectedErrorReplicating(throwable);
