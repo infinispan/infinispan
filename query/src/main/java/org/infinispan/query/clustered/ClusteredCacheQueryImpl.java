@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
@@ -23,7 +22,6 @@ import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.commons.util.Util;
 
 /**
  * A extension of CacheQueryImpl used for distributed queries.
