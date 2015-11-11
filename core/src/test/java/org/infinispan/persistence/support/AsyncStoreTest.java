@@ -84,8 +84,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             @Override
             public Object get(Object key) {
                Object result = super.get(key);
-               for (int i = 0; i < 10; i++)
-                  Thread.yield();
+               TestingUtil.sleepThread(0);
                return result;
             }
          };
@@ -146,7 +145,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       createStore();
 
       final int number = 10;
-      final int loops = 5000;
+      final int loops = 2000;
       String key = "testRepeatedPutRemove-k-";
       String value = "testRepeatedPutRemove-v-";
 
@@ -183,7 +182,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       createStore();
 
       final int number = 10;
-      final int loops = 5000;
+      final int loops = 2000;
       String key = "testRepeatedPutClearPut-k-";
       String value = "testRepeatedPutClearPut-v-";
       String value2 = "testRepeatedPutClearPut-v[2]-";
