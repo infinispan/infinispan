@@ -334,20 +334,24 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    private static abstract class BaseTransactionInfo implements TransactionInfo {
       private final GlobalTransaction globalTransaction;
-      private final List<Address> affectedNodes;
+      private final Collection<Address> affectedNodes;
       private final Collection<Object> lockedKeys;
 
       protected BaseTransactionInfo(GlobalTransaction globalTransaction, Collection<Address> affectedNodes, Collection<Object> lockedKeys) {
          this.globalTransaction = globalTransaction;
          this.lockedKeys = lockedKeys;
-         this.affectedNodes = new ArrayList<>(affectedNodes);
+         this.affectedNodes = affectedNodes;
       }
 
       @Override
       public final List<Address> getCommitNodes(CacheTopology stableTopology) {
-         List<Address> commitNodes = new ArrayList<>(affectedNodes);
-         commitNodes.retainAll(stableTopology.getActualMembers());
-         return commitNodes;
+         if (affectedNodes == null) {
+            return null;
+         } else {
+            List<Address> commitNodes = new ArrayList<>(affectedNodes);
+            commitNodes.retainAll(stableTopology.getActualMembers());
+            return commitNodes;
+         }
       }
 
       @Override
