@@ -13,6 +13,8 @@ import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.ClusterSwitchStatus;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -41,9 +43,11 @@ public interface TransportFactory {
     * @deprecated Only called for Hot Rod 1.x protocol.
     */
    @Deprecated
-   void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace, byte[] cacheName);
+   void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace,
+      byte[] cacheName, AtomicInteger topologyId);
 
-   void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion, byte[] cacheName);
+   void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
+      byte[] cacheName, AtomicInteger topologyId);
 
    ConsistentHash getConsistentHash(byte[] cacheName);
 
@@ -67,10 +71,17 @@ public interface TransportFactory {
 
    void reset(byte[] cacheName);
 
-   boolean trySwitchCluster(byte[] cacheName);
+   AtomicInteger createTopologyId(byte[] cacheName);
+
+   int getTopologyId(byte[] cacheName);
+
+   ClusterSwitchStatus trySwitchCluster(String failedClusterName, byte[] cacheName);
 
    Marshaller getMarshaller();
 
    boolean switchToCluster(String clusterName);
 
+   String getCurrentClusterName();
+
+   int getTopologyAge();
 }

@@ -26,6 +26,7 @@ public class CacheTopologyInfoImpl implements CacheTopologyInfo {
       return numSegments;
    }
 
+   @Override
    public Integer getTopologyId() {
       return topologyId;
    }

@@ -53,8 +53,8 @@ public interface Log extends BasicLogger {
    void errorFromServer(String message);
 
    @LogMessage(level = INFO)
-   @Message(value = "%s sent new topology view (id=%d) containing %d addresses: %s", id = 4006)
-   void newTopology(SocketAddress address, int viewId, int topologySize, Set<SocketAddress> topology);
+   @Message(value = "%s sent new topology view (id=%d, age=%d) containing %d addresses: %s", id = 4006)
+   void newTopology(SocketAddress address, int viewId, int age, int topologySize, Set<SocketAddress> topology);
 
    @LogMessage(level = ERROR)
    @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)

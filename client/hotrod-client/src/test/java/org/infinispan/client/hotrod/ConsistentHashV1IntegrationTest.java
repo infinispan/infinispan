@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.retry.DistributionRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
@@ -132,9 +133,10 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
    }
 
    public void testCorrectBalancingOfKeysAfterNodeKill() {
-      final AtomicInteger clientTopologyId = TestingUtil.extractField(remoteCacheManager, "defaultCacheTopologyId");
+      //final AtomicInteger clientTopologyId = TestingUtil.extractField(remoteCacheManager, "defaultCacheTopologyId");
+      TcpTransportFactory transportFactory = TestingUtil.extractField(remoteCacheManager, "transportFactory");
 
-      final int topologyIdBeforeJoin = clientTopologyId.get();
+      final int topologyIdBeforeJoin = transportFactory.getTopologyId(new byte[]{});
       log.tracef("Starting test with client topology id %d", topologyIdBeforeJoin);
       EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(buildConfiguration());
       HotRodServer hotRodServer5 = HotRodClientTestingUtil.startHotRodServer(cm5);
@@ -143,11 +145,12 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            log.tracef("Client topology id is %d, waiting for it to become %d", clientTopologyId.get(),
+            int topologyId = transportFactory.getTopologyId(new byte[]{});
+            log.tracef("Client topology id is %d, waiting for it to become %d", topologyId,
                   topologyIdBeforeJoin + 2);
             // The put operation will update the client topology (if necessary)
             remoteCache.put("k", "v");
-            return clientTopologyId.get() >= topologyIdBeforeJoin + 2;
+            return topologyId >= topologyIdBeforeJoin + 2;
          }
       });
 
@@ -164,11 +167,12 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            log.tracef("Client topology id is %d, waiting for it to become %d", clientTopologyId.get(),
+            int topologyId = transportFactory.getTopologyId(new byte[]{});
+            log.tracef("Client topology id is %d, waiting for it to become %d", topologyId,
                   topologyIdBeforeJoin + 4);
             // The put operation will update the client topology (if necessary)
             remoteCache.put("k", "v");
-            return clientTopologyId.get() >= topologyIdBeforeJoin + 4;
+            return topologyId >= topologyIdBeforeJoin + 4;
          }
       });
 

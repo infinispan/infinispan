@@ -39,11 +39,11 @@ public final class TopologyInfo {
    private Collection<SocketAddress> servers = new ArrayList<>();
    private Map<byte[], ConsistentHash> consistentHashes = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
    private Map<byte[], Integer> segmentsByCache = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
-   private volatile AtomicInteger topologyId;
+   private Map<byte[], AtomicInteger> topologyIds = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    public TopologyInfo(AtomicInteger topologyId, Collection<SocketAddress> servers, Configuration configuration) {
-      this.topologyId = topologyId;
+      this.topologyIds.put(new byte[0], topologyId);
       this.servers = servers;
       hashFactory.init(configuration);
    }
@@ -65,7 +65,8 @@ public final class TopologyInfo {
       return servers;
    }
 
-   public void updateTopology(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace, byte[] cacheName) {
+   public void updateTopology(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace,
+         byte[] cacheName, AtomicInteger topologyId) {
       ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
       if (hash == null) {
          log.noHasHFunctionConfigured(hashFunctionVersion);
@@ -73,10 +74,11 @@ public final class TopologyInfo {
          hash.init(servers2Hash, numKeyOwners, hashSpace);
       }
       consistentHashes.put(cacheName, hash);
-
+      topologyIds.put(cacheName, topologyId);
    }
 
-   public void updateTopology(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion, byte[] cacheName) {
+   public void updateTopology(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
+         byte[] cacheName, AtomicInteger topologyId) {
       if (hashFunctionVersion > 0) {
          SegmentConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
          if (hash == null) {
@@ -87,12 +89,12 @@ public final class TopologyInfo {
          consistentHashes.put(cacheName, hash);
       }
       segmentsByCache.put(cacheName, numSegments);
-
+      topologyIds.put(cacheName, topologyId);
    }
 
    public Optional<SocketAddress> getHashAwareServer(byte[] key, byte[] cacheName) {
       Optional<SocketAddress> server = Optional.empty();
-      if (isTopologyValid()) {
+      if (isTopologyValid(cacheName)) {
          ConsistentHash consistentHash = consistentHashes.get(cacheName);
          if (consistentHash != null) {
             server = Optional.of(consistentHash.getServer(key));
@@ -106,8 +108,13 @@ public final class TopologyInfo {
       return Optional.empty();
    }
 
-   private boolean isTopologyValid() {
-      return topologyId.get() != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
+   public boolean isTopologyValid(byte[] cacheName) {
+      Integer id = topologyIds.get(cacheName).get();
+      Boolean valid = id != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
+      if (log.isTraceEnabled())
+         log.tracef("Is topology id (%s) valid? %b", id, valid);
+
+      return valid;
    }
 
    public void updateServers(Collection<SocketAddress> updatedServers) {
@@ -122,12 +129,29 @@ public final class TopologyInfo {
       return hashFactory;
    }
 
-   public void setTopologyId(int topologyId) {
-      this.topologyId.set(topologyId);
+   public AtomicInteger createTopologyId(byte[] cacheName, int topologyId) {
+      AtomicInteger id = new AtomicInteger(topologyId);
+      this.topologyIds.put(cacheName, id);
+      return id;
+   }
+
+   public void setTopologyId(byte[] cacheName, int topologyId) {
+      AtomicInteger id = this.topologyIds.get(cacheName);
+      id.set(topologyId);
+   }
+
+   public void setAllTopologyIds(int newTopologyId) {
+      for (AtomicInteger topologyId : topologyIds.values())
+         topologyId.set(newTopologyId);
+   }
+
+   public int getTopologyId(byte[] cacheName)  {
+      return topologyIds.get(cacheName).get();
    }
 
    public CacheTopologyInfo getCacheTopologyInfo(byte[] cacheName) {
-      return new CacheTopologyInfoImpl(getSegmentsByServer(cacheName), segmentsByCache.get(cacheName), topologyId.get());
+      return new CacheTopologyInfoImpl(getSegmentsByServer(cacheName), segmentsByCache.get(cacheName),
+         topologyIds.get(cacheName).get());
    }
 
 }

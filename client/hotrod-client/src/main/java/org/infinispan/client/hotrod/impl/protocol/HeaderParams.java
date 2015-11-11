@@ -20,6 +20,7 @@ public class HeaderParams {
    byte txMarker;
    AtomicInteger topologyId;
    long messageId;
+   int topologyAge;
 
    public HeaderParams opCode(short opCode) {
       this.opCode = opCode;
@@ -54,6 +55,11 @@ public class HeaderParams {
 
    public HeaderParams messageId(long messageId) {
       this.messageId = messageId;
+      return this;
+   }
+
+   public HeaderParams topologyAge(int topologyAge) {
+      this.topologyAge = topologyAge;
       return this;
    }
 

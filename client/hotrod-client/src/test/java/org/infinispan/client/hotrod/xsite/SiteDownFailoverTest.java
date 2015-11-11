@@ -10,7 +10,7 @@ import java.util.Optional;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
-@Test(groups = "functional", testName = "xsite.SiteDownFailoverTest")
+@Test(groups = "functional", testName = "client.hotrod.xsite.SiteDownFailoverTest")
 public class SiteDownFailoverTest extends AbstractHotRodSiteFailoverTest {
 
    public void testFailoverAfterSiteShutdown() {

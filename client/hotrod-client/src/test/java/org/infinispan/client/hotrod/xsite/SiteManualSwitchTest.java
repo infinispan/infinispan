@@ -10,7 +10,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-@Test(groups = "functional", testName = "xsite.SiteDownFailoverTest")
+@Test(groups = "functional", testName = "client.hotrod.xsite.SiteDownFailoverTest")
 public class SiteManualSwitchTest extends AbstractHotRodSiteFailoverTest {
 
    @Override

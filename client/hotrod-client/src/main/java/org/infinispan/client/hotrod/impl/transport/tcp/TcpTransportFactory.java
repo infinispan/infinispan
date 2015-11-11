@@ -76,8 +76,13 @@ public class TcpTransportFactory implements TransportFactory {
    @GuardedBy("lock")
    private volatile TopologyInfo topologyInfo;
 
-   private volatile int clustersViewed = 0;
+   private volatile String currentClusterName;
    private List<ClusterInfo> clusters = new ArrayList<>();
+   // Topology age provides a way to avoid concurrent cluster view changes,
+   // affecting a cluster switch. After a cluster switch, the topology age is
+   // increased and so any old requests that might have received topology
+   // updates won't be allowed to apply since they refer to older views.
+   private final AtomicInteger topologyAge = new AtomicInteger(0);
 
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
@@ -102,6 +107,7 @@ public class TcpTransportFactory implements TransportFactory {
             });
             clusters.add(new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers));
          }
+         currentClusterName = DEFAULT_CLUSTER_NAME;
          topologyInfo = new TopologyInfo(defaultCacheTopologyId, Collections.unmodifiableCollection(servers), configuration);
          tcpNoDelay = configuration.tcpNoDelay();
          tcpKeepAlive = configuration.tcpKeepAlive();
@@ -136,10 +142,10 @@ public class TcpTransportFactory implements TransportFactory {
          createAndPreparePool(poolFactory);
          balancers = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
          addBalancer(RemoteCacheManager.cacheNameBytes());
-      }
 
-      if (configuration.pingOnStartup())
-         pingServers();
+         if (configuration.pingOnStartup())
+            pingServersIgnoreException();
+      }
    }
 
    private FailoverRequestBalancingStrategy addBalancer(byte[] cacheName) {
@@ -160,7 +166,7 @@ public class TcpTransportFactory implements TransportFactory {
       return balancer;
    }
 
-   private void pingServers() {
+   private void pingServersIgnoreException() {
       GenericKeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       Collection<SocketAddress> servers = topologyInfo.getServers();
       for (SocketAddress addr : servers) {
@@ -174,7 +180,7 @@ public class TcpTransportFactory implements TransportFactory {
             // exceptions from nodes that might not be up any more.
             if (log.isTraceEnabled())
                log.tracef(e, "Ignoring exception pinging configured servers %s to establish a connection",
-                     servers);
+                  servers);
          }
       }
    }
@@ -212,16 +218,19 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace, byte[] cacheName) {
+   public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash,
+         int numKeyOwners, short hashFunctionVersion, int hashSpace,
+         byte[] cacheName, AtomicInteger topologyId) {
       synchronized (lock) {
-         topologyInfo.updateTopology(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName);
+         topologyInfo.updateTopology(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);
       }
    }
 
    @Override
-   public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion, byte[] cacheName) {
+   public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
+         byte[] cacheName, AtomicInteger topologyId) {
       synchronized (lock) {
-         topologyInfo.updateTopology(segmentOwners, numSegments, hashFunctionVersion, cacheName);
+         topologyInfo.updateTopology(segmentOwners, numSegments, hashFunctionVersion, cacheName, topologyId);
       }
    }
 
@@ -388,8 +397,6 @@ public class TcpTransportFactory implements TransportFactory {
       KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       try {
          TcpTransport tcpTransport = pool.borrowObject(server);
-         // If transport was successfully retrieved, reset viewed clusters
-         clustersViewed = 0;
          return tcpTransport;
       } catch (Exception e) {
          String message = "Could not fetch transport";
@@ -451,33 +458,106 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void reset(byte[] cacheName) {
       updateServers(initialServers, cacheName, true);
-      topologyInfo.setTopologyId(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
+      topologyInfo.setTopologyId(cacheName, HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
    }
 
    @Override
-   public boolean trySwitchCluster(byte[] cacheName) {
-      if (clusters.isEmpty()) {
-         log.debugf("No alternative clusters configured, so can't switch cluster");
-         return false;
+   public AtomicInteger createTopologyId(byte[] cacheName) {
+      synchronized (lock) {
+         return topologyInfo.createTopologyId(cacheName, -1);
       }
+   }
 
-      if (clustersViewed >= clusters.size()) {
-         log.debugf("All cluster addresses viewed (number=%d) and none worked: %s", clustersViewed, clusters);
-         return false;
+   @Override
+   public int getTopologyId(byte[] cacheName) {
+      synchronized (lock) {
+         return topologyInfo.getTopologyId(cacheName);
       }
+   }
 
-      ClusterInfo cluster = clusters.get(clustersViewed++);
-      updateServers(cluster.clusterAddresses, cacheName, true);
-      topologyInfo.setTopologyId(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+   @Override
+   public ClusterSwitchStatus trySwitchCluster(String failedClusterName, byte[] cacheName) {
+      synchronized (lock) {
+         if (log.isTraceEnabled())
+            log.tracef("Trying to switch cluster away from '%s'", failedClusterName);
 
-      if (log.isInfoEnabled()) {
-         if (!cluster.clusterName.equals(DEFAULT_CLUSTER_NAME))
-            log.switchedToCluster(cluster.clusterName);
-         else
-            log.switchedBackToMainCluster();
+         if (clusters.isEmpty()) {
+            log.debugf("No alternative clusters configured, so can't switch cluster");
+            return ClusterSwitchStatus.NOT_SWITCHED;
+         }
+
+         String currentClusterName = this.currentClusterName;
+         if (!isSwitchedClusterNotAvailable(failedClusterName, currentClusterName)) {
+            log.debugf("Cluster already switched from failed cluster `%s` to `%s`, try again",
+               failedClusterName, currentClusterName);
+            return ClusterSwitchStatus.IN_PROGRESS;
+         }
+
+         // Switch cluster if there has not been a topology id cluster switch reset recently,
+         if (topologyInfo.isTopologyValid(cacheName)) {
+               if (log.isTraceEnabled())
+               log.tracef("Switching clusters, failed cluster is '%s' and current cluster name is '%s'",
+                  failedClusterName, currentClusterName);
+
+            List<ClusterInfo> candidateClusters = new ArrayList<>();
+            for (ClusterInfo cluster : clusters) {
+               String clusterName = cluster.clusterName;
+               if (!clusterName.equals(failedClusterName))
+                  candidateClusters.add(cluster);
+            }
+
+            for (int i = 0; i < candidateClusters.size(); i++) {
+               ClusterInfo cluster = candidateClusters.get(i % candidateClusters.size());
+               boolean alive = checkServersAlive(cluster.clusterAddresses);
+               if (alive) {
+                  topologyAge.incrementAndGet();
+                  Collection<SocketAddress> servers = updateTopologyInfo(cluster.clusterAddresses, true);
+                  if (!servers.isEmpty()) {
+                     FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
+                     balancer.setServers(servers);
+                  }
+
+                  topologyInfo.setTopologyId(cacheName, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+                  //clustersViewed++; // Increase number of clusters viewed
+                  this.currentClusterName = cluster.clusterName;
+
+                  if (log.isInfoEnabled()) {
+                     if (!cluster.clusterName.equals(DEFAULT_CLUSTER_NAME))
+                        log.switchedToCluster(cluster.clusterName);
+                     else
+                        log.switchedBackToMainCluster();
+                  }
+
+                  return ClusterSwitchStatus.SWITCHED;
+               }
+            }
+
+            log.debugf("All cluster addresses viewed and none worked: %s", clusters);
+            return ClusterSwitchStatus.NOT_SWITCHED;
+         }
+
+         return ClusterSwitchStatus.IN_PROGRESS;
       }
+   }
 
+   public boolean checkServersAlive(Collection<SocketAddress> servers) {
+      for (SocketAddress server : servers) {
+         try {
+            connectionPool.addObject(server);
+         } catch (Exception e) {
+            log.tracef(e, "Error checking whether this server is alive: %s", server);
+            return false;
+         }
+      }
       return true;
+   }
+
+   private boolean isSwitchedClusterNotAvailable(String failedClusterName, String currentClusterName) {
+      return currentClusterName.equals(failedClusterName);
+   }
+
+   public enum ClusterSwitchStatus {
+      NOT_SWITCHED, SWITCHED, IN_PROGRESS;
    }
 
    @Override
@@ -494,7 +574,7 @@ public class TcpTransportFactory implements TransportFactory {
       Collection<SocketAddress> addresses = findClusterInfo(clusterName);
       if (!addresses.isEmpty()) {
          updateServers(addresses, true);
-         topologyInfo.setTopologyId(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+         topologyInfo.setAllTopologyIds(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
 
          if (log.isInfoEnabled()) {
             if (!clusterName.equals(DEFAULT_CLUSTER_NAME))
@@ -507,6 +587,16 @@ public class TcpTransportFactory implements TransportFactory {
       }
 
       return false;
+   }
+
+   @Override
+   public String getCurrentClusterName() {
+      return currentClusterName;
+   }
+
+   @Override
+   public int getTopologyAge() {
+      return topologyAge.get();
    }
 
    private Collection<SocketAddress> findClusterInfo(String clusterName) {

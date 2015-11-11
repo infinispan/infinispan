@@ -22,4 +22,5 @@ public interface CacheTopologyInfo {
     */
    Map<SocketAddress, Set<Integer>> getSegmentsPerServer();
 
+   Integer getTopologyId();
 }

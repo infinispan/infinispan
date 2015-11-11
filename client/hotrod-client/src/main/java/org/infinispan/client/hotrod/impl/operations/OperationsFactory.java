@@ -47,12 +47,14 @@ public class OperationsFactory implements HotRodConstants {
    private final String cacheName;
 
    public OperationsFactory(TransportFactory transportFactory, String cacheName,
-                            AtomicInteger topologyId, boolean forceReturnValue, Codec codec,
+                            boolean forceReturnValue, Codec codec,
                             ClientListenerNotifier listenerNotifier) {
       this.transportFactory = transportFactory;
       this.cacheNameBytes = RemoteCacheManager.cacheNameBytes(cacheName);
       this.cacheName = cacheName;
-      this.topologyId = topologyId;
+      this.topologyId = transportFactory != null
+         ? transportFactory.createTopologyId(cacheNameBytes)
+         : new AtomicInteger(-1);
       this.forceReturnValue = forceReturnValue;
       this.codec = codec;
       this.listenerNotifier = listenerNotifier;

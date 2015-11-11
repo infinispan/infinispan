@@ -45,7 +45,8 @@ public abstract class HotRodOperation implements HotRodConstants {
       HeaderParams params = new HeaderParams()
             .opCode(operationCode).cacheName(cacheName).flags(flags)
             .clientIntel(CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE)
-            .topologyId(topologyId).txMarker(NO_TX);
+            .topologyId(topologyId).txMarker(NO_TX)
+            .topologyAge(transport.getTransportFactory().getTopologyAge());
       return codec.writeHeader(transport, params);
    }
 

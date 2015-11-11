@@ -580,7 +580,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
-            startRemoteCache(rcc, defaultCacheTopologyId);
+            startRemoteCache(rcc);
          }
       }
 
@@ -649,8 +649,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
          if (!cacheName2RemoteCache.containsKey(key)) {
             RemoteCacheImpl<K, V> result = createRemoteCache(cacheName);
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? configuration.forceReturnValues() : forceReturnValueOverride);
-            AtomicInteger topologyId = cacheName.isEmpty() ? defaultCacheTopologyId : new AtomicInteger(-1);
-            startRemoteCache(rcc, topologyId);
+            startRemoteCache(rcc);
             if (configuration.pingOnStartup()) {
                // If ping not successful assume that the cache does not exist
                // Default cache is always started, so don't do for it
@@ -696,10 +695,10 @@ public class RemoteCacheManager implements BasicCacheContainer {
       return cache.ping();
    }
 
-   private void startRemoteCache(RemoteCacheHolder remoteCacheHolder, AtomicInteger topologyId) {
+   private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache;
       OperationsFactory operationsFactory = new OperationsFactory(
-            transportFactory, remoteCache.getName(), topologyId, remoteCacheHolder.forceReturnValue,
+            transportFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue,
             codec, listenerNotifier);
       remoteCache.init(marshaller, asyncExecutorService, operationsFactory, configuration.keySizeEstimate(), configuration.valueSizeEstimate());
    }

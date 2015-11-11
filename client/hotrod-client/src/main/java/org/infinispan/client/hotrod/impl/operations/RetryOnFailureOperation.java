@@ -9,6 +9,8 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.ClusterSwitchStatus;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -46,6 +48,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
       Set<SocketAddress> failedServers = null;
       while (shouldRetry(retryCount)) {
          Transport transport = null;
+         String currentClusterName = transportFactory.getCurrentClusterName();
          try {
             // Transport retrieval should be retried
             transport = getTransport(retryCount, failedServers);
@@ -56,14 +59,14 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
             // Invalidate transport since this exception means that this
             // instance is no longer usable and should be destroyed.
             invalidateTransport(transport, address);
-            retryCount = logTransportErrorAndThrowExceptionIfNeeded(retryCount, te);
+            retryCount = logTransportErrorAndThrowExceptionIfNeeded(retryCount, currentClusterName, te);
          } catch (RemoteIllegalLifecycleStateException e) {
             SocketAddress address = e.getServerAddress();
             failedServers = updateFailedServers(address, failedServers);
             // Invalidate transport since this exception means that this
             // instance is no longer usable and should be destroyed.
             invalidateTransport(transport, address);
-            retryCount = logTransportErrorAndThrowExceptionIfNeeded(retryCount, e);
+            retryCount = logTransportErrorAndThrowExceptionIfNeeded(retryCount, currentClusterName, e);
          } catch (RemoteNodeSuspectException e) {
             // Do not invalidate transport because this exception is caused
             // as a result of a server finding out that another node has
@@ -104,20 +107,29 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
       return retryCount <= transportFactory.getMaxRetries();
    }
 
-   protected int logTransportErrorAndThrowExceptionIfNeeded(int i, HotRodClientException e) {
+   protected int logTransportErrorAndThrowExceptionIfNeeded(int i, String failedClusterName, HotRodClientException e) {
       String message = "Exception encountered. Retry %d out of %d";
       if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
-         if (transportFactory.trySwitchCluster(cacheName)){
-            triedCompleteRestart = true;
-            return -1; // reset retry count
-         }  else if (!triedCompleteRestart) {
-            log.debug("Cluster might have completely shut down, try resetting transport layer and topology id", e);
-            transportFactory.reset(cacheName);
-            triedCompleteRestart = true;
-            return -1; // reset retry count
-         } else {
-            log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(), e);
-            throw e;
+         ClusterSwitchStatus status = transportFactory.trySwitchCluster(failedClusterName, cacheName);
+         switch (status) {
+            case SWITCHED:
+               triedCompleteRestart = true;
+               return -1; // reset retry count
+            case NOT_SWITCHED:
+               if (!triedCompleteRestart) {
+                  log.debug("Cluster might have completely shut down, try resetting transport layer and topology id", e);
+                  transportFactory.reset(cacheName);
+                  triedCompleteRestart = true;
+                  return -1; // reset retry count
+               } else {
+                  log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(), e);
+                  throw e;
+               }
+            case IN_PROGRESS:
+               log.trace("Cluster switch in progress, retry operation without increasing retry count");
+               return i - 1;
+            default:
+               throw new IllegalStateException("Unknown cluster switch status: " + status);
          }
       } else {
          log.tracef(e, message, i, transportFactory.getMaxRetries());

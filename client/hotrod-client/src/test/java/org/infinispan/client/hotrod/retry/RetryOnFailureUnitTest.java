@@ -7,6 +7,8 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.ClusterSwitchStatus;
 import org.mockito.Mockito;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -53,6 +55,7 @@ public class RetryOnFailureUnitTest {
    private void doRetryTest(int maxRetry, boolean failOnTransport) {
       TransportFactory mockTransport = Mockito.mock(TransportFactory.class);
       Mockito.when(mockTransport.getMaxRetries()).thenReturn(maxRetry);
+      Mockito.when(mockTransport.trySwitchCluster(Mockito.anyObject(), Mockito.anyObject())).thenReturn(ClusterSwitchStatus.NOT_SWITCHED);
       MockOperation mockOperation = new MockOperation(mockTransport, failOnTransport);
       try {
          mockOperation.execute();

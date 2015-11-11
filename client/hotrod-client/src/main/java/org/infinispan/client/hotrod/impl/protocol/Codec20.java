@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
@@ -12,6 +13,7 @@ import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
@@ -101,11 +103,12 @@ public class Codec20 implements Codec, HotRodConstants {
       int joinedFlags = HeaderParams.joinFlags(params.flags);
       transport.writeVInt(joinedFlags);
       transport.writeByte(params.clientIntel);
-      transport.writeVInt(params.topologyId.get());
+      int topologyId = params.topologyId.get();
+      transport.writeVInt(topologyId);
 
       if (trace)
-         getLog().tracef("Wrote header for messageId=%d to %s. Operation code: %#04x. Flags: %#x",
-            params.messageId, transport, params.opCode, joinedFlags);
+         getLog().tracef("Wrote header for messageId=%d to %s. Operation code: %#04x. Flags: %#x. Topology id: %s",
+            params.messageId, transport, params.opCode, joinedFlags, topologyId);
 
       return params;
    }
@@ -376,13 +379,12 @@ public class Codec20 implements Codec, HotRodConstants {
    protected void readNewTopologyIfPresent(Transport transport, HeaderParams params) {
       short topologyChangeByte = transport.readByte();
       if (topologyChangeByte == 1)
-         readNewTopologyAndHash(transport, params.topologyId, params.cacheName);
+         readNewTopologyAndHash(transport, params);
    }
 
-   protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId, byte[] cacheName) {
+   protected void readNewTopologyAndHash(Transport transport, HeaderParams params) {
       final Log localLog = getLog();
       int newTopologyId = transport.readVInt();
-      topologyId.set(newTopologyId);
 
       int clusterSize = transport.readVInt();
       SocketAddress[] addresses = new SocketAddress[clusterSize];
@@ -406,21 +408,32 @@ public class Codec20 implements Codec, HotRodConstants {
          }
       }
 
-      List<SocketAddress> addressList = Arrays.asList(addresses);
-      if (localLog.isInfoEnabled()) {
-         localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId,
+      TransportFactory transportFactory = transport.getTransportFactory();
+      int currentTopology = transportFactory.getTopologyId(params.cacheName);
+      int topologyAge = transportFactory.getTopologyAge();
+      if (params.topologyAge == topologyAge && currentTopology != newTopologyId) {
+         params.topologyId.set(newTopologyId);
+         List<SocketAddress> addressList = Arrays.asList(addresses);
+         if (localLog.isInfoEnabled()) {
+            localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId, topologyAge,
                addresses.length, new HashSet<SocketAddress>(addressList));
-      }
-      transport.getTransportFactory().updateServers(addressList, cacheName, false);
-      if (hashFunctionVersion == 0) {
-         if (trace)
-            localLog.trace("Not using a consistent hash function (hash function version == 0).");
-      } else {
-         if (trace)
-            localLog.tracef("Updating client hash function with %s number of segments", numSegments);
+         }
+         transportFactory.updateServers(addressList, params.cacheName, false);
+         if (hashFunctionVersion == 0) {
+            if (trace)
+               localLog.trace("Not using a consistent hash function (hash function version == 0).");
+         } else {
+            if (trace)
+               localLog.tracef("Updating client hash function with %s number of segments", numSegments);
 
+         }
+         transportFactory.updateHashFunction(segmentOwners,
+            numSegments, hashFunctionVersion, params.cacheName, params.topologyId);
+      } else {
+         if (log.isTraceEnabled())
+            log.tracef("Outdated topology received (topology id = %s, topology age = %s), so ignoring it: %s",
+               newTopologyId, topologyAge, addresses);
       }
-      transport.getTransportFactory().updateHashFunction(segmentOwners, numSegments, hashFunctionVersion, cacheName);
    }
 
 }

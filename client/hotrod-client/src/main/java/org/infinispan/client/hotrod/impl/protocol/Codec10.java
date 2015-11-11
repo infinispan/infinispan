@@ -245,8 +245,9 @@ public class Codec10 implements Codec {
             hashFunctionVersion, hashSpace, clusterSize);
 
       Set<SocketAddress> socketAddresses = servers2Hash.keySet();
+      int topologyAge = transport.getTransportFactory().getTopologyAge();
       if (localLog.isInfoEnabled()) {
-         localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId,
+         localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId, topologyAge,
                socketAddresses.size(), socketAddresses);
       }
       transport.getTransportFactory().updateServers(socketAddresses, cacheName, false);
@@ -254,7 +255,7 @@ public class Codec10 implements Codec {
          localLog.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
          transport.getTransportFactory().updateHashFunction(
-               servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName);
+               servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);
       }
    }
 
