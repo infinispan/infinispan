@@ -76,6 +76,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
          registerComponent(this, ComponentRegistry.class);
          registerComponent(configuration, Configuration.class);
          registerComponent(new BootstrapFactory(cache, configuration, this), BootstrapFactory.class);
+         bootstrapComponents();
 
          // register any module-specific command initializers
          // Modules are on the same classloader as Infinispan
@@ -297,6 +298,13 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     */
    public PerCacheInboundInvocationHandler getPerCacheInboundInvocationHandler() {
       return inboundInvocationHandler;
+   }
+
+   /**
+    * Invoked after {@link BootstrapFactory} is registered but before any {@link ModuleCommandInitializer}.
+    * This is a good place to register components that don't have any dependency.
+    */
+   protected void bootstrapComponents() {
    }
 
    /**
