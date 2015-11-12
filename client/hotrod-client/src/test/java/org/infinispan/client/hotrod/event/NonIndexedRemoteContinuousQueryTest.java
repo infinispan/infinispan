@@ -16,6 +16,9 @@ public class NonIndexedRemoteContinuousQueryTest extends RemoteContinuousQueryTe
 
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
-      return hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      ConfigurationBuilder cfgBuilder =
+            hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      cfgBuilder.expiration().disableReaper();
+      return cfgBuilder;
    }
 }
