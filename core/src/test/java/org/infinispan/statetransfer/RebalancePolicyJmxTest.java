@@ -152,12 +152,12 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       String domain3 = manager(2).getCacheManagerConfiguration().globalJmxStatistics().domain();
       ObjectName ltmName3 = TestingUtil.getCacheManagerObjectName(domain3, "DefaultCacheManager", "LocalTopologyManager");
       mBeanServer.setAttribute(ltmName2, new Attribute(REBALANCING_ENABLED, true));
-      assertEquals(RebalancingStatus.IN_PROGRESS.toString(), stm2.getRebalancingStatus());
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName2, REBALANCING_ENABLED));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName3, REBALANCING_ENABLED));
 
       // Check that the CH is now balanced (and every segment has 2 copies)
       TestingUtil.waitForRehashToComplete(cache(2), cache(3));
+      assertEquals(RebalancingStatus.COMPLETE.toString(), stm2.getRebalancingStatus());
       assertNull(stm2.getCacheTopology().getPendingCH());
       ch = stm2.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
