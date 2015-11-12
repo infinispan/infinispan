@@ -151,10 +151,13 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Override
    public boolean isTransactionPartiallyCommitted(GlobalTransaction globalTransaction) {
       TransactionInfo transactionInfo = partialTransactions.get(globalTransaction);
+      // If we are going to commit, we can't release the resources yet
+      boolean partiallyCommitted = transactionInfo != null && !transactionInfo.isRolledBack();
       if (trace) {
-         log.tracef("Can release resources for transaction %s. Transaction info=%s", globalTransaction, transactionInfo);
+         log.tracef("Can release resources for transaction %s? %s. Transaction info=%s", globalTransaction,
+               !partiallyCommitted, transactionInfo);
       }
-      return transactionInfo != null && !transactionInfo.isRolledBack(); //if we are going to commit, we can't release the resources yet
+      return partiallyCommitted;
    }
 
    @Override
@@ -194,10 +197,6 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
               rpcManager.getDefaultRpcOptions(true))
               .whenComplete((responseMap, throwable) -> {
                  final GlobalTransaction globalTransaction = transactionInfo.getGlobalTransaction();
-                 if (trace) {
-                    log.tracef("Future done for transaction %s", globalTransaction);
-                 }
-
                  if (throwable != null) {
                     if (trace) {
                        log.tracef(throwable, "Exception for transaction %s. Retry later.", globalTransaction);
