@@ -208,7 +208,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    private void validateSimpleCacheConfiguration() {
-      if ((transaction.transactionMode() != null && transaction.transactionMode().isTransactional())
+      if (clustering().cacheMode().isClustered()
+            || (transaction.transactionMode() != null && transaction.transactionMode().isTransactional())
             || !customInterceptors.create().interceptors().isEmpty()
             || !persistence.stores().isEmpty()
             || invocationBatching.isEnabled()

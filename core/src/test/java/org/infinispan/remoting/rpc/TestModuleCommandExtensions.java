@@ -1,11 +1,13 @@
 package org.infinispan.remoting.rpc;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.factories.annotations.Inject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +66,11 @@ public class TestModuleCommandExtensions implements ModuleCommandExtensions {
    @Override
    public ModuleCommandInitializer getModuleCommandInitializer() {
       return new ModuleCommandInitializer() {
+         @Inject
+         public void injectDependencies(Cache cache) {
+            // test that everything works when we inject the cache, see ISPN-5957
+         }
+
          @Override
          public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {
             // nothing to do here
