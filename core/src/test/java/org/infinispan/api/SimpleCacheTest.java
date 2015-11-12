@@ -1,9 +1,11 @@
 package org.infinispan.api;
 
+import org.infinispan.Cache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.CustomInterceptorConfigTest;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.distexec.DefaultExecutorService;
@@ -14,6 +16,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -76,5 +79,15 @@ public class SimpleCacheTest extends APINonTxTest {
    @Test(expectedExceptions = CacheConfigurationException.class)
    public void testCompatibility() {
       new ConfigurationBuilder().simpleCache(true).compatibility().enabled(true).build();
+   }
+
+   public void testStatistics() {
+      Configuration cfg = new ConfigurationBuilder().simpleCache(true).jmxStatistics().enabled(true).build();
+      String name = "statsCache";
+      cacheManager.defineConfiguration(name, cfg);
+      Cache<Object, Object> cache = cacheManager.getCache(name);
+      assertEquals(0L, cache.getAdvancedCache().getStats().getStores());
+      cache.put("key", "value");
+      assertEquals(1L, cache.getAdvancedCache().getStats().getStores());
    }
 }

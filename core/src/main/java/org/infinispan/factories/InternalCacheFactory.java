@@ -88,20 +88,24 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       this.configuration = configuration;
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
          @Override
+         protected void bootstrapComponents() {
+            if (statisticsAvailable) {
+               registerComponent(new StatsCollector.Factory(), StatsCollector.Factory.class);
+            }
+            registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
+            registerComponent(new PassivationManagerStub(), PassivationManager.class);
+            registerComponent(new ActivationManagerStub(), ActivationManager.class);
+            registerComponent(new PersistenceManagerStub(), PersistenceManager.class);
+         }
+
+         @Override
          public void cacheComponents() {
             cacheMarshaler = getOrCreateComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
             getOrCreateComponent(ExpirationManager.class);
          }
       };
 
-      if (statisticsAvailable) {
-         componentRegistry.registerComponent(new StatsCollector.Factory(), StatsCollector.Factory.class);
-      }
       componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
-      componentRegistry.registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
-      componentRegistry.registerComponent(new PassivationManagerStub(), PassivationManager.class);
-      componentRegistry.registerComponent(new ActivationManagerStub(), ActivationManager.class);
-      componentRegistry.registerComponent(new PersistenceManagerStub(), PersistenceManager.class);
       componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
       componentRegistry.registerComponent(cache, Cache.class.getName(), true);
       return cache;
