@@ -16,9 +16,15 @@ import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 
 /**
@@ -71,24 +77,42 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
       NoopEventListener listener = new NoopEventListener();
       remoteCache.addClientListener(listener);
 
-      assertEquals(0, listener.created);
+      expectElementsInQueue(listener.createEvents, 0);
 
       remoteCache.put("user_" + user1.getId(), user1);
 
       assertEquals(1, remoteCache.size());
-      assertEquals(1, listener.created);
+      expectElementsInQueue(listener.createEvents, 1);
 
       remoteCache.removeClientListener(listener);
+   }
+
+   private void expectElementsInQueue(BlockingQueue<?> queue, int numElements) {
+      for (int i = 0; i < numElements; i++) {
+         try {
+            Object e = queue.poll(5, TimeUnit.SECONDS);
+            assertNotNull("Queue was empty!", e);
+         } catch (InterruptedException e) {
+            throw new AssertionError("Interrupted while waiting for condition", e);
+         }
+      }
+      try {
+         // no more elements expected here
+         Object e = queue.poll(5, TimeUnit.SECONDS);
+         assertNull("No more elements expected in queue!", e);
+      } catch (InterruptedException e) {
+         throw new AssertionError("Interrupted while waiting for condition", e);
+      }
    }
 
    @ClientListener
    public static class NoopEventListener {
 
-      int created = 0;
+      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<ClientCacheEntryCreatedEvent>();
 
       @ClientCacheEntryCreated
       public void handleCreatedEvent(ClientCacheEntryCreatedEvent<?> e) {
-         created++;
+         createEvents.add(e);
       }
    }
 }
