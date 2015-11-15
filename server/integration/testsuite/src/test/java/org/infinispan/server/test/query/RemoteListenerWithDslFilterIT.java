@@ -29,13 +29,16 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * Basic test for query DSL based remote event filters.
@@ -115,7 +118,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
-      assertEquals(3, listener.createEvents.size());
+      expectElementsInQueue(listener.createEvents, 3);
 
       user3.setAge(40);
       remoteCache.put(user1.getId(), user1);
@@ -123,9 +126,27 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
       remoteCache.put(user3.getId(), user3);
 
       assertEquals(3, remoteCache.size());
-      assertEquals(2, listener.modifyEvents.size());
+      expectElementsInQueue(listener.modifyEvents, 2);
 
       remoteCache.removeClientListener(listener);
+   }
+
+   private void expectElementsInQueue(BlockingQueue<?> queue, int numElements) {
+      for (int i = 0; i < numElements; i++) {
+         try {
+            Object e = queue.poll(5, TimeUnit.SECONDS);
+            assertNotNull("Queue was empty!", e);
+         } catch (InterruptedException e) {
+            throw new AssertionError("Interrupted while waiting for condition", e);
+         }
+      }
+      try {
+         // no more elements expected here
+         Object e = queue.poll(5, TimeUnit.SECONDS);
+         assertNull("No more elements expected in queue!", e);
+      } catch (InterruptedException e) {
+         throw new AssertionError("Interrupted while waiting for condition", e);
+      }
    }
 
    @ClientListener(filterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
@@ -135,9 +156,9 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
 
       private final Log log = LogFactory.getLog(getClass());
 
-      public final List<FilterResult> createEvents = new ArrayList<FilterResult>();
+      public final BlockingQueue<FilterResult> createEvents = new LinkedBlockingQueue<FilterResult>();
 
-      public final List<FilterResult> modifyEvents = new ArrayList<FilterResult>();
+      public final BlockingQueue<FilterResult> modifyEvents = new LinkedBlockingQueue<FilterResult>();
 
       private final SerializationContext serializationContext;
 
