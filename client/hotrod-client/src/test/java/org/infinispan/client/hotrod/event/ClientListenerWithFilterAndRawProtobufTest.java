@@ -22,12 +22,14 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 
 /**
@@ -87,15 +89,21 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
       remoteCache.put("user_1", user1);
 
       assertEquals(3, remoteCache.keySet().size());
-      assertEquals(2, listener.createEvents.size());
-      assertEquals("string_key_1", listener.createEvents.get(0).getKey());
-      assertEquals("user_1", listener.createEvents.get(1).getKey());
+
+      ClientCacheEntryCreatedEvent e = listener.createEvents.poll(5, TimeUnit.SECONDS);
+      assertEquals("string_key_1", e.getKey());
+
+      e = listener.createEvents.poll(5, TimeUnit.SECONDS);
+      assertEquals("user_1", e.getKey());
+
+      e = listener.createEvents.poll(5, TimeUnit.SECONDS);
+      assertNull("No more elements expected in queue!", e);
    }
 
    @ClientListener(filterFactoryName = "custom-filter-factory", useRawData = true)
    public static class ClientEntryListener {
 
-      public List<ClientCacheEntryCreatedEvent> createEvents = new ArrayList<>();
+      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<ClientCacheEntryCreatedEvent>();
 
       @ClientCacheEntryCreated
       @SuppressWarnings("unused")
