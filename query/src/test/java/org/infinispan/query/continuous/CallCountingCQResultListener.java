@@ -4,13 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 
- * {@link ContinuousQueryResultListener} which counts number of calls for each key.
- * 
+ *
+ * {@link ContinuousQueryListener} which counts number of calls for each key.
+ *
  * @author vjuranek
  * @since 8.0
  */
-public class CallCountingCQResultListener<K, V> implements ContinuousQueryResultListener<K, V> {
+public class CallCountingCQResultListener<K, V> implements ContinuousQueryListener<K, V> {
 
    private final Map<K, Integer> joined = new HashMap<K, Integer>();
    private final Map<K, Integer> left = new HashMap<K, Integer>();
