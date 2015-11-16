@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -30,12 +30,12 @@ import org.junit.runner.RunWith;
  */
 @Category(Queries.class)
 @RunWith(Arquillian.class)
-public class ContinuousQueryIT extends RemoteQueryBaseIT {
+public class RemoteContinuousQueryIT extends RemoteQueryBaseIT {
 
    @InfinispanResource("remote-query-1")
    protected RemoteInfinispanServer server;
 
-   public ContinuousQueryIT() {
+   public RemoteContinuousQueryIT() {
       super("clustered", "localtestcache");
    }
 
@@ -54,8 +54,8 @@ public class ContinuousQueryIT extends RemoteQueryBaseIT {
       QueryFactory<Query> qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(User.class).having("name").eq("user1").and().having("age").gt(20).toBuilder().build();
 
-      final BlockingQueue<Object> joined = new ArrayBlockingQueue<Object>(10);
-      final BlockingQueue<Object> left = new ArrayBlockingQueue<Object>(10);
+      final BlockingQueue<Object> joined = new LinkedBlockingQueue<Object>();
+      final BlockingQueue<Object> left = new LinkedBlockingQueue<Object>();
       ContinuousQueryListener listener = new ContinuousQueryListener() {
          @Override
          public void resultJoining(Object key, Object value) {
@@ -106,7 +106,7 @@ public class ContinuousQueryIT extends RemoteQueryBaseIT {
       return user;
    }
 
-   private void expectElementsInQueue(BlockingQueue<Object> queue, int numElements) {
+   private void expectElementsInQueue(BlockingQueue<?> queue, int numElements) {
       for (int i = 0; i < numElements; i++) {
          try {
             Object e = queue.poll(5, TimeUnit.SECONDS);
