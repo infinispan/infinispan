@@ -23,8 +23,8 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -119,8 +119,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
             .build()
             .setParameter("ageParam", 32);
 
-      final BlockingQueue<Object> joined = new ArrayBlockingQueue<Object>(50);
-      final BlockingQueue<Object> left = new ArrayBlockingQueue<Object>(50);
+      final BlockingQueue<Object> joined = new LinkedBlockingQueue<Object>();
+      final BlockingQueue<Object> left = new LinkedBlockingQueue<Object>();
 
       ContinuousQueryListener listener = new ContinuousQueryListener() {
 
@@ -182,7 +182,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       expectElementsInQueue(left, 0);
    }
 
-   private void expectElementsInQueue(BlockingQueue<Object> queue, int numElements) {
+   private void expectElementsInQueue(BlockingQueue<?> queue, int numElements) {
       for (int i = 0; i < numElements; i++) {
          try {
             Object e = queue.poll(5, TimeUnit.SECONDS);
