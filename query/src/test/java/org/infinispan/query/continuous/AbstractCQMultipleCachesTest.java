@@ -55,12 +55,20 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
    }
    
    public void testContinuousQueryMultipleCaches() {
+      for (int i = 0; i < 2; i++) {
+         Person value = new Person();
+         value.setName("John");
+         value.setAge(22);
+         cache(i).put(i, value);
+      }
+
       CallCountingCQResultListener<Object, Object> listener = createContinuousQuery();
       final Map<Object, Integer> joined = listener.getJoined();
       final Map<Object, Integer> left = listener.getLeft();
       
-      assertEquals(0, joined.size());
+      assertEquals(2, joined.size());
       assertEquals(0, left.size());
+      joined.clear();
 
       for (int i = 0; i < 2; i++) {
          Person value = new Person();
@@ -70,7 +78,8 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
       }
 
       assertEquals(0, joined.size());
-      assertEquals(0, left.size());
+      assertEquals(2, left.size());
+      left.clear();
 
       for (int i = 0; i < 10; i++) {
          Person value = new Person();
@@ -94,7 +103,6 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
          assertEquals(1, left.get(i).intValue());
       }
       left.clear();
-
    }
    
    public void testCQCacheLeavesAndJoins() {
