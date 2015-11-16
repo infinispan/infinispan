@@ -53,7 +53,7 @@ public final class ContinuousQuery<K, V> {
       return new JPAContinuousQueryCacheEventFilterConverter<K, V>(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
    }
 
-   @Listener(observation = Listener.Observation.POST)
+   @Listener(clustered = true, includeCurrentState = true, observation = Listener.Observation.POST)
    public static class EntryListener<K, V> {
 
       private final ContinuousQueryResultListener<K, V> listener;
