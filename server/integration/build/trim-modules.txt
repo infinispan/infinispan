@@ -3,6 +3,7 @@ javax/faces/**
 org/apache/cxf/**
 org/apache/qpid/**
 org/apache/santuario/**
+org/apache/velocity/**
 org/jberet/**
 org/jboss/ws/**
 org/picketlink/**
