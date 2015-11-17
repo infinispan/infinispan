@@ -360,6 +360,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
    }
 
+   /**
+    * Configure event data. Currently used for 'created', 'modified', 'removed', 'invalidated' events.
+    */
    private void configureEvent(EventImpl<K, V> e, K key, V value, Metadata metadata, boolean pre, InvocationContext ctx,
                                FlagAffectedCommand command, V previousValue, Metadata previousMetadata) {
       if (typeConverter != null) {
@@ -382,6 +385,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       setTx(ctx, e);
    }
 
+   /**
+    * Configure event data. Currently used for 'activated', 'loaded', 'visited' events.
+    */
    private void configureEvent(EventImpl<K, V> e, K key, V value, boolean pre, InvocationContext ctx) {
       if (typeConverter != null) {
          key = (K) typeConverter.unboxKey(key);
@@ -395,6 +401,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       setTx(ctx, e);
    }
 
+   /**
+    * Configure event data. Currently used for 'expired' events.
+    */
    private void configureEvent(EventImpl<K, V> e, K key, V value, Metadata metadata) {
       if (typeConverter != null) {
          key = (K) typeConverter.unboxKey(key);
