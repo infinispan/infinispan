@@ -133,7 +133,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       cache().removeListener(listener);
    }
 
-   @Listener(includeCurrentState = true, observation = Listener.Observation.POST)
+   @Listener(observation = Listener.Observation.POST)
    public static class EntryListener {
 
       // this is where we accumulate matches
