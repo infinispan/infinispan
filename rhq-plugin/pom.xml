@@ -63,19 +63,11 @@
          <scope>provided</scope>
       </dependency>
 
-      
-      <dependency>
-         <groupId>commons-collections</groupId>
-         <artifactId>commons-collections</artifactId>
-         <scope>provided</scope>
-      </dependency>
-
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging</artifactId>
          <scope>provided</scope>
       </dependency>
-      
       
       <dependency>
          <groupId>${project.groupId}</groupId>

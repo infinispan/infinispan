@@ -29,4 +29,4 @@ org/jboss/resteasy/resteasy-multipart-provider/**
 org/jboss/resteasy/resteasy-spring/**
 org/jboss/resteasy/resteasy-validator-provider-11/**
 org/jboss/resteasy/resteasy-yaml-provider/**
-
+org/apache/commons/collections/main/**
