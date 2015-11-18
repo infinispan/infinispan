@@ -46,7 +46,6 @@
                   <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-                  <infinispan.unsafe.allow_jdk8_chm>true</infinispan.unsafe.allow_jdk8_chm>
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
