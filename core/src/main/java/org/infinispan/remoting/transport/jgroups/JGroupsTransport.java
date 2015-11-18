@@ -27,6 +27,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -560,7 +561,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                if (singleRecipient) singleJGAddress = toJGroupsAddress(others.get(0));
             }
             if (skipRpc) {
-               return CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+               return CompletableFutures.returnEmptyMap();
             }
 
             if (singleRecipient) {
@@ -573,12 +574,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
             }
          } else {
-            return CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+            return CompletableFutures.returnEmptyMap();
          }
       }
 
       if (mode.isAsynchronous()) {
-         return CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+         return CompletableFutures.returnEmptyMap();
       }
 
       if (singleResponseFuture != null) {

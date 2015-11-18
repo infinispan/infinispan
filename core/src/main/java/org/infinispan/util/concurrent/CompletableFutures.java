@@ -1,5 +1,6 @@
 package org.infinispan.util.concurrent;
 
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.concurrent.CompletableFuture;
@@ -8,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Map;
+
 /**
  * Utility methods connecting {@link CompletableFuture} futures and our {@link NotifyingNotifiableFuture} futures.
  *
@@ -15,6 +18,13 @@ import static java.util.Objects.requireNonNull;
  * @since 8.0
  */
 public class CompletableFutures {
+
+   private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+
+   public static <K,V> CompletableFuture<Map<K, V>> returnEmptyMap() {
+      return (CompletableFuture<Map<K, V>>) completedEmptyMapFuture;
+   }
+
    public static <T> void connect(NotifyingNotifiableFuture<T> sink, CompletableFuture<T> source) {
       CompletableFuture<T> compoundSource = source.whenComplete((value, throwable) -> {
          if (throwable == null) {
