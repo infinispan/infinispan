@@ -128,7 +128,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
             log.tracef("Using replication queue for command [%s]", rpc);
          }
          replicationQueue.add(rpc);
-         return CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+         return CompletableFutures.returnEmptyMap();
       }
       if (!configuration.clustering().cacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
