@@ -12,11 +12,12 @@ import javax.enterprise.context.ApplicationScoped;
 
 /**
  * Default {@link javax.cache.annotation.CacheKeyGenerator} implementation.
- * By default all key parameters of the intercepted method compose the
+ * By default all key parameters including the intercepted method and class names compose the
  * {@link javax.cache.annotation.CacheKey}.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  * @author Galder Zamarreño
+ * @author <a href="mailto:daniel@pfeifer.io">Daniel Pfeifer</a>
  */
 @ApplicationScoped
 public class DefaultCacheKeyGenerator implements CacheKeyGenerator {
@@ -26,7 +27,12 @@ public class DefaultCacheKeyGenerator implements CacheKeyGenerator {
       assertNotNull(cacheKeyInvocationContext, "cacheKeyInvocationContext parameter must not be null");
 
       final CacheInvocationParameter[] keyParameters = cacheKeyInvocationContext.getKeyParameters();
-      final Object[] keyValues = new Object[keyParameters.length];
+      final Object[] keyValues = new Object[keyParameters.length + 2]; // make space for class- and method-name 
+
+      final String methodName = cacheKeyInvocationContext.getMethod().getName();
+      final String className = cacheKeyInvocationContext.getMethod().getDeclaringClass().getSimpleName(); 
+      keyValues[keyValues.length - 1] = methodName;
+      keyValues[keyValues.length - 2] = className;
 
       for (int i = 0 ; i < keyParameters.length ; i++) {
          keyValues[i] = keyParameters[i].getValue();
