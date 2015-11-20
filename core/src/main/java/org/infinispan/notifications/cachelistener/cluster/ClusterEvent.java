@@ -42,7 +42,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
 
    public static <K, V>ClusterEvent<K, V> fromEvent(CacheEntryEvent<K, V> event) {
       if (event instanceof ClusterEvent) {
-         return (ClusterEvent)event;
+         return (ClusterEvent<K, V>) event;
       }
       V oldValue = null;
       Type eventType = event.getType();
