@@ -81,6 +81,5 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
               throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
            }
         }
-        context.stepCompleted();
     }
 }

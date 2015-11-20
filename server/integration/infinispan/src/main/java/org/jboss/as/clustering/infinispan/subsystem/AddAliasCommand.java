@@ -76,7 +76,6 @@ public class AddAliasCommand implements OperationStepHandler {
                 }
             }, OperationContext.Stage.RUNTIME);
         }
-        context.stepCompleted();
     }
 
     /**

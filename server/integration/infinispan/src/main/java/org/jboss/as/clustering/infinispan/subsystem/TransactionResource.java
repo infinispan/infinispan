@@ -55,22 +55,22 @@ public class TransactionResource extends CacheChildResource {
     // operations
     static final OperationDefinition RESET_TX_STATISTICS =
             new SimpleOperationDefinitionBuilder("reset-transaction-statistics", new InfinispanResourceDescriptionResolver("transaction"))
-                .build();
+                .setRuntimeOnly().build();
     static final OperationDefinition LIST_IN_DOUBT_TRANSACTIONS =
             new SimpleOperationDefinitionBuilder("list-in-doubt-transactions", new InfinispanResourceDescriptionResolver("transaction"))
-                .build();
+                .setRuntimeOnly().build();
     static final OperationDefinition TRANSACTION_FORCE_COMMIT =
             new SimpleOperationDefinitionBuilder("force-commit-transaction", new InfinispanResourceDescriptionResolver("transaction.recovery"))
                 .addParameter(TX_INTERNAL_ID)
-                .build();
+                .setRuntimeOnly().build();
     static final OperationDefinition TRANSACTION_FORCE_ROLLBACK =
             new SimpleOperationDefinitionBuilder("force-rollback-transaction", new InfinispanResourceDescriptionResolver("transaction.recovery"))
                 .addParameter(TX_INTERNAL_ID)
-                .build();
+                .setRuntimeOnly().build();
     static final OperationDefinition TRANSACTION_FORGET =
             new SimpleOperationDefinitionBuilder("forget-transaction", new InfinispanResourceDescriptionResolver("transaction.recovery"))
                 .addParameter(TX_INTERNAL_ID)
-                .build();
+                .setRuntimeOnly().build();
 
     public TransactionResource(CacheResource cacheResource) {
         super(PATH, ModelKeys.TRANSACTION, cacheResource, ATTRIBUTES);

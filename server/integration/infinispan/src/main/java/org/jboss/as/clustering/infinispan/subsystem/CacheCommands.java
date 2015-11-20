@@ -34,6 +34,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.server.infinispan.SecurityActions;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
@@ -42,10 +43,12 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.PathElement;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.Map;
 
 import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
@@ -58,14 +61,11 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
  */
 public abstract class CacheCommands implements OperationStepHandler {
 
-    final int pathOffset;
-
-    CacheCommands(int pathOffset) {
-        this.pathOffset = pathOffset;
+    CacheCommands() {
     }
 
     /**
-     * An attribute write handler which performs special processing for ALIAS attributes.
+     * An attribute write handler which performs cache operations
      *
      * @param context the operation context
      * @param operation the operation being executed
@@ -74,21 +74,27 @@ public abstract class CacheCommands implements OperationStepHandler {
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
-        final String cacheContainerName = address.getElement(address.size() - 2 - pathOffset).getValue();
-        final String cacheName = address.getElement(address.size() - 1 - pathOffset).getValue();
-        final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheServiceName.CACHE.getServiceName(cacheContainerName, cacheName));
-        Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
+        ListIterator<PathElement> iterator = address.iterator();
+        PathElement element = iterator.next();
+        while (!element.getValue().equals(InfinispanSubsystem.SUBSYSTEM_NAME)) {
+            element = iterator.next();
+        }
+        final String cacheContainerName = iterator.next().getValue();
+        final String cacheName = iterator.next().getValue();
+        if (context.isNormalServer()) {
+            final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheServiceName.CACHE.getServiceName(cacheContainerName, cacheName));
+            Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
 
-        ModelNode operationResult = null;
-        try {
-            operationResult = invokeCommand(cache, operation);
-        } catch (Exception e) {
-            throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
+            ModelNode operationResult = null;
+            try {
+                operationResult = invokeCommand(cache, operation);
+            } catch (Exception e) {
+                throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
+            }
+            if (operationResult != null) {
+                context.getResult().set(operationResult);
+            }
         }
-        if (operationResult != null) {
-            context.getResult().set(operationResult);
-        }
-        context.stepCompleted();
     }
 
     protected abstract ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception;
@@ -97,7 +103,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         public static final ResetCacheStatisticsCommand INSTANCE = new ResetCacheStatisticsCommand();
 
         public ResetCacheStatisticsCommand() {
-            super(0);
         }
 
         @Override
@@ -111,7 +116,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         public static final ClearCacheCommand INSTANCE = new ClearCacheCommand();
 
         public ClearCacheCommand() {
-            super(0);
         }
 
         @Override
@@ -125,7 +129,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         public static final FlushCacheCommand INSTANCE = new FlushCacheCommand();
 
         public FlushCacheCommand() {
-            super(0);
         }
 
         @Override
@@ -139,7 +142,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         public static final StartCacheCommand INSTANCE = new StartCacheCommand();
 
         public StartCacheCommand() {
-            super(0);
         }
 
         @Override
@@ -153,7 +155,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         public static final StopCacheCommand INSTANCE = new StopCacheCommand();
 
         public StopCacheCommand() {
-            super(0);
         }
 
         @Override
@@ -167,7 +168,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         public static final ResetTxStatisticsCommand INSTANCE = new ResetTxStatisticsCommand();
 
         public ResetTxStatisticsCommand() {
-            super(0);
         }
 
         @Override
@@ -181,7 +181,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         public static final ResetInvalidationStatisticsCommand INSTANCE = new ResetInvalidationStatisticsCommand();
 
         public ResetInvalidationStatisticsCommand() {
-            super(0);
         }
 
         @Override
@@ -195,7 +194,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         public static final ResetActivationStatisticsCommand INSTANCE = new ResetActivationStatisticsCommand();
 
         public ResetActivationStatisticsCommand() {
-            super(0);
         }
 
         @Override
@@ -208,10 +206,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class ResetPassivationStatisticsCommand extends CacheCommands {
         public static final ResetPassivationStatisticsCommand INSTANCE = new ResetPassivationStatisticsCommand();
 
-        public ResetPassivationStatisticsCommand() {
-            super(0);
-        }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             SecurityActions.resetStatistics(cache.getAdvancedCache(), PassivationManager.class);
@@ -221,10 +215,6 @@ public abstract class CacheCommands implements OperationStepHandler {
 
     public static class ResetRpcManagerStatisticsCommand extends CacheCommands {
         public static final ResetRpcManagerStatisticsCommand INSTANCE = new ResetRpcManagerStatisticsCommand();
-
-        public ResetRpcManagerStatisticsCommand() {
-            super(0);
-        }
 
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
@@ -239,10 +229,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class ResetCacheLoaderStatisticsCommand extends CacheCommands {
         public static final ResetCacheLoaderStatisticsCommand INSTANCE = new ResetCacheLoaderStatisticsCommand();
 
-        public ResetCacheLoaderStatisticsCommand() {
-            super(0);
-        }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             SecurityActions.resetStatistics(cache.getAdvancedCache(), CacheWriterInterceptor.class);
@@ -253,10 +239,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class TransactionListInDoubtCommand extends CacheCommands {
         public static final TransactionListInDoubtCommand INSTANCE = new TransactionListInDoubtCommand();
 
-        public TransactionListInDoubtCommand() {
-            super(1);
-        }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             RecoveryAdminOperations recoveryAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(RecoveryAdminOperations.class);
@@ -266,10 +248,6 @@ public abstract class CacheCommands implements OperationStepHandler {
 
     public static class TransactionForceCommitCommand extends CacheCommands {
         public static final TransactionForceCommitCommand INSTANCE = new TransactionForceCommitCommand();
-
-        public TransactionForceCommitCommand() {
-            super(1);
-        }
 
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
@@ -282,10 +260,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class TransactionForceRollbackCommand extends CacheCommands {
         public static final TransactionForceRollbackCommand INSTANCE = new TransactionForceRollbackCommand();
 
-        public TransactionForceRollbackCommand() {
-            super(1);
-        }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             long internalId = operation.require(ModelKeys.TX_INTERNAL_ID).asLong();
@@ -297,10 +271,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class TransactionForgetCommand extends CacheCommands {
         public static final TransactionForgetCommand INSTANCE = new TransactionForgetCommand();
 
-        public TransactionForgetCommand() {
-            super(1);
-        }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             long internalId = operation.require(ModelKeys.TX_INTERNAL_ID).asLong();
@@ -311,10 +281,6 @@ public abstract class CacheCommands implements OperationStepHandler {
 
     public static class BackupBringSiteOnlineCommand extends CacheCommands {
         public static final BackupBringSiteOnlineCommand INSTANCE = new BackupBringSiteOnlineCommand();
-
-        public BackupBringSiteOnlineCommand() {
-            super(1);
-        }
 
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
@@ -328,11 +294,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class BackupTakeSiteOfflineCommand extends CacheCommands {
         public static final BackupTakeSiteOfflineCommand INSTANCE = new BackupTakeSiteOfflineCommand();
 
-        public BackupTakeSiteOfflineCommand() {
-            super(1);
-        }
-
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
@@ -345,10 +306,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class BackupSiteStatusCommand extends CacheCommands {
         public static final BackupSiteStatusCommand INSTANCE = new BackupSiteStatusCommand();
 
-        public BackupSiteStatusCommand() {
-            super(1);
-        }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
@@ -360,10 +317,6 @@ public abstract class CacheCommands implements OperationStepHandler {
 
     public static class SynchronizeDataCommand extends CacheCommands {
         public static final SynchronizeDataCommand INSTANCE = new SynchronizeDataCommand();
-
-        public SynchronizeDataCommand() {
-            super(0);
-        }
 
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
@@ -379,10 +332,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class RecordGlobalKeySetCommand extends CacheCommands {
         public static final RecordGlobalKeySetCommand INSTANCE = new RecordGlobalKeySetCommand();
 
-        public RecordGlobalKeySetCommand() {
-            super(0);
-        }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             ComponentRegistry registry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
@@ -396,10 +345,6 @@ public abstract class CacheCommands implements OperationStepHandler {
 
     public static class DisconnectSourceCommand extends CacheCommands {
         public static final DisconnectSourceCommand INSTANCE = new DisconnectSourceCommand();
-
-        public DisconnectSourceCommand() {
-            super(0);
-        }
 
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
@@ -415,10 +360,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class BackupPushStateCommand extends CacheCommands {
         public static final BackupPushStateCommand INSTANCE = new BackupPushStateCommand();
 
-        public BackupPushStateCommand() {
-         super(1);
-      }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
@@ -430,10 +371,6 @@ public abstract class CacheCommands implements OperationStepHandler {
 
     public static class BackupCancelPushStateCommand extends CacheCommands {
         public static final BackupCancelPushStateCommand INSTANCE = new BackupCancelPushStateCommand();
-
-        public BackupCancelPushStateCommand() {
-         super(1);
-      }
 
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
@@ -447,10 +384,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class BackupCancelReceiveStateCommand extends CacheCommands {
         public static final BackupCancelReceiveStateCommand INSTANCE = new BackupCancelReceiveStateCommand();
 
-        public BackupCancelReceiveStateCommand() {
-         super(1);
-      }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
@@ -463,10 +396,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class BackupPushStateStatusCommand extends CacheCommands {
         public static final BackupPushStateStatusCommand INSTANCE = new BackupPushStateStatusCommand();
 
-        public BackupPushStateStatusCommand() {
-         super(1);
-      }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             XSiteAdminOperations xsiteAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
@@ -476,10 +405,6 @@ public abstract class CacheCommands implements OperationStepHandler {
 
     public static class BackupGetSendingSiteCommand extends CacheCommands {
         public static final BackupGetSendingSiteCommand INSTANCE = new BackupGetSendingSiteCommand();
-
-        public BackupGetSendingSiteCommand() {
-         super(1);
-      }
 
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
@@ -491,10 +416,6 @@ public abstract class CacheCommands implements OperationStepHandler {
     public static class BackupClearPushStatusCommand extends CacheCommands {
         public static final BackupClearPushStatusCommand INSTANCE = new BackupClearPushStatusCommand();
 
-        public BackupClearPushStatusCommand() {
-         super(1);
-      }
-
         @Override
         protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
             XSiteAdminOperations xsiteAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
@@ -504,21 +425,18 @@ public abstract class CacheCommands implements OperationStepHandler {
     }
 
     public static class MassReindexCommand extends CacheCommands {
-       public static final MassReindexCommand INSTANCE = new MassReindexCommand();
+        public static final MassReindexCommand INSTANCE = new MassReindexCommand();
 
-       public MassReindexCommand() {
-           super(0);
-       }
 
-       @Override
-       protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
-           SearchManager searchManager = SecurityActions.getSearchManager(cache.getAdvancedCache());
-           if (searchManager != null) {
-               searchManager.getMassIndexer().start();
-           }
-           return null;
-       }
-   }
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
+            SearchManager searchManager = SecurityActions.getSearchManager(cache.getAdvancedCache());
+            if (searchManager != null) {
+                searchManager.getMassIndexer().start();
+            }
+            return null;
+        }
+    }
 
     private static ModelNode toOperationResult(String s) {
         ModelNode result = new ModelNode();
