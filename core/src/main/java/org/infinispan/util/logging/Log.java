@@ -1412,5 +1412,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Transaction notifications are disabled.  This prevents cluster listeners from working properly!", id = 395)
    void transactionNotificationsDisabled();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Received unsolicited state from node %s for segment %d of cache %s", id = 396)
+   void ignoringUnsolicitedState(Address node, int segment, String cacheName);
 }
 

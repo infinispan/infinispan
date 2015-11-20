@@ -404,8 +404,9 @@ public class StateConsumerImpl implements StateConsumer {
          // when we lose membership (e.g. because there was a merge, the local partition was in degraded mode
          // and the other partition was available) or when L1 is enabled.
          Set<Integer> removedSegments;
-         boolean wasMember = previousWriteCh != null ? previousWriteCh.getMembers().contains(rpcManager.getAddress()) : false;
-         if (isMember || (!isMember && wasMember)) {
+         boolean wasMember =
+               previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
+         if (isMember || wasMember) {
             removedSegments = new HashSet<>(newWriteCh.getNumSegments());
             for (int i = 0; i < newWriteCh.getNumSegments(); i++) {
                removedSegments.add(i);
@@ -554,7 +555,9 @@ public class StateConsumerImpl implements StateConsumer {
 
          inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk());
       } else {
-         log.warnf("Received unsolicited state from node %s for segment %d of cache %s", sender, stateChunk.getSegmentId(), cacheName);
+         if (cache.getStatus().allowInvocations()) {
+            log.ignoringUnsolicitedState(sender, stateChunk.getSegmentId(), cacheName);
+         }
       }
    }
 
@@ -564,11 +567,11 @@ public class StateConsumerImpl implements StateConsumer {
 
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
       EnumSet<Flag> flags = EnumSet.of(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK, SKIP_XSITE_BACKUP);
+      boolean transactional = transactionManager != null;
       for (InternalCacheEntry e : cacheEntries) {
          try {
             InvocationContext ctx;
-            if (transactionManager != null) {
-               // cache is transactional
+            if (transactional) {
                transactionManager.begin();
                ctx = icf.createInvocationContext(transactionManager.getTransaction(), true);
                ((TxInvocationContext) ctx).getCacheTransaction().setStateTransferFlag(PUT_FOR_STATE_TRANSFER);
@@ -594,11 +597,11 @@ public class StateConsumerImpl implements StateConsumer {
             }
          } finally {
             try {
-               if (transactionManager != null && transactionManager.getTransaction() != null) {
+               if (transactional && transactionManager.getTransaction() != null) {
                   transactionManager.rollback();
                }
             } catch (SystemException e1) {
-               log.errorRollingBack(e1);
+               // Ignore
             }
          }
       }
@@ -885,7 +888,7 @@ public class StateConsumerImpl implements StateConsumer {
                inboundTransfer.cancelSegments(cancelledSegments);
                if (inboundTransfer.isCancelled()) {
                   removeTransfer(inboundTransfer);
-               };
+               }
             }
          }
       }
