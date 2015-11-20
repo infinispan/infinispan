@@ -121,6 +121,20 @@ public abstract class CacheCommands implements OperationStepHandler {
         }
     }
 
+    public static class FlushCacheCommand extends CacheCommands {
+        public static final FlushCacheCommand INSTANCE = new FlushCacheCommand();
+
+        public FlushCacheCommand() {
+            super(0);
+        }
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
+            SecurityActions.flushCache(cache.getAdvancedCache());
+            return null;
+        }
+    }
+
     public static class StartCacheCommand extends CacheCommands {
         public static final StartCacheCommand INSTANCE = new StartCacheCommand();
 
