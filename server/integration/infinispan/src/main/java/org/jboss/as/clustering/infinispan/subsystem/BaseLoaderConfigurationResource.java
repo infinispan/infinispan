@@ -79,7 +79,7 @@ public class BaseLoaderConfigurationResource extends CacheConfigurationChildReso
          new SimpleOperationDefinitionBuilder(
                "reset-loader-statistics",
                new InfinispanResourceDescriptionResolver(ModelKeys.LOADER)
-         ).build();
+         ).setRuntimeOnly().build();
 
     public BaseLoaderConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource cacheResource, AttributeDefinition[] attributes) {
         super(path, resourceKey, cacheResource, Util.arrayConcat(BASE_LOADER_ATTRIBUTES, attributes));

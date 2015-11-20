@@ -135,13 +135,16 @@ public class CacheContainerResource extends SimpleResourceDefinition {
 
     static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", new InfinispanResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAMES, PROTO_URLS)
+           .setRuntimeOnly()
            .build();
 
     static final OperationDefinition REGISTER_PROTO = new SimpleOperationDefinitionBuilder("register-proto-schemas", new InfinispanResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAMES, PROTO_CONTENTS)
+           .setRuntimeOnly()
            .build();
 
     static final OperationDefinition CLI_INTERPRETER = new SimpleOperationDefinitionBuilder("cli-interpreter", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+            .setRuntimeOnly()
            .build();
 
    static final SimpleAttributeDefinition SITE_NAME =
@@ -151,21 +154,25 @@ public class CacheContainerResource extends SimpleResourceDefinition {
    static final OperationDefinition BACKUP_TAKE_SITE_OFFLINE =
          new SimpleOperationDefinitionBuilder("take-site-offline", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
                .setParameters(SITE_NAME)
+               .setRuntimeOnly()
                .build();
 
    static final OperationDefinition BACKUP_BRING_SITE_ONLINE =
          new SimpleOperationDefinitionBuilder("bring-site-online", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
                .setParameters(SITE_NAME)
+               .setRuntimeOnly()
                .build();
 
    static final OperationDefinition BACKUP_PUSH_STATE =
          new SimpleOperationDefinitionBuilder("push-state", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
                .setParameters(SITE_NAME)
+               .setRuntimeOnly()
                .build();
 
    static final OperationDefinition BACKUP_CANCEL_PUSH_STATE =
          new SimpleOperationDefinitionBuilder("cancel-push-state", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
                .setParameters(SITE_NAME)
+               .setRuntimeOnly()
                .build();
 
     private final ResolvePathHandler resolvePathHandler;
