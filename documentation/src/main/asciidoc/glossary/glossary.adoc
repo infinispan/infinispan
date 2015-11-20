@@ -8,14 +8,14 @@ Infinispan's link:$$../user_guide/user_guide.html$$[User Guide],
 link:$$../getting_started/getting_started.html$$[Getting Started Guide], link:$$../faqs/faqs.html$$[FAQs],
 etc.
 
-=== 2-phase commit
+== 2-phase commit
 2-phase commit protocol (2PC) is a consensus protocol used for atomically
 commit or rollback distributed transactions.
 
 .More resources
 * link:$$http://en.wikipedia.org/wiki/Two-phase_commit_protocol$$[Wikipedia article] 
 
-=== Atomicity, Consistency, Isolation, Durability (ACID)
+== Atomicity, Consistency, Isolation, Durability (ACID)
 According to link:http://en.wikipedia.org/wiki/ACID[Wikipedia], ACID (Atomicity,
 Consistency, Isolation, Durability) is a set of properties that guarantee
 that database transactions are processed reliably. In the context of databases,
@@ -27,7 +27,7 @@ transaction.
 .More resources
 * link:http://en.wikipedia.org/wiki/ACID[Wikipedia]
 
-=== Basically Available, Soft-state, Eventually-consistent (BASE)
+== Basically Available, Soft-state, Eventually-consistent (BASE)
 BASE, also known as link:$$http://en.wikipedia.org/wiki/Eventual_consistency$$[Eventual Consistency],
 is seen as the polar opposite of _ACID_, properties seen as desirable in
 traditional database systems. 
@@ -47,7 +47,7 @@ on link:$$http://queue.acm.org/index.cfm$$[ACM] compares BASE versus ACID.
 * An link:$$http://www.infoq.com/presentations/Riak-Core$$[excellent talk] on
 eventual consistency and BASE in Riak is also available on InfoQ. 
 
-=== Consistency, Availability and Partition-tolerance (CAP) Theorem
+== Consistency, Availability and Partition-tolerance (CAP) Theorem
 Made famous by link:$$http://en.wikipedia.org/wiki/Eric_Brewer_(computer_scientist)$$[Eric Brewer]
 at UC Berkeley, this is a theorem of distributed computing that can be
 simplified to state that one can only practically build a distributed system
@@ -71,7 +71,7 @@ link:$$http://www.julianbrowne.com/article/viewer/brewers-cap-theorem$$[this doc
 * A more recent article by Eric Brewer himself appears on InfoQ 
 link:$$http://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed$$[a modern analysis of the theorem] . 
 
-=== Consistent Hash
+== Consistent Hash
 A technique of mapping keys to servers such that, given a stable cluster
 topology, any server in the cluster can locate where a given key is mapped
 to with minimal computational complexity.
@@ -84,7 +84,7 @@ This makes it extremely efficient to use.
 
 * link:http://en.wikipedia.org/wiki/Consistent_hashing[Wikipedia]
 
-=== Data grid
+== Data grid
 A data grid is a cluster of (typically commodity) servers, normally residing on
 a single local-area network, connected to each other using IP based networking.
 Data grids behave as a single resource, exposing the aggregate storage capacity
@@ -104,11 +104,11 @@ Infinispan also makes use of TCP and optionally UDP network protocols, and can
 be configured to make use of IP multicast for efficiency if supported by the
 network.
 
-=== Deadlock
+== Deadlock
 A deadlock is a situation in which two or more competing actions are each
 waiting for the other to finish, and thus neither ever does.
 
-=== Distributed Hash Table (DHT)
+== Distributed Hash Table (DHT)
 A distributed hash table (DHT) is a class of a decentralized distributed system 
 that provides a lookup service similar to a hash table; +(key, value)+ pairs
 are stored in a DHT, and any participating node can efficiently retrieve the
@@ -118,7 +118,7 @@ in the set of participants causes a minimal amount of disruption. This allows a
 DHT to scale to extremely large numbers of nodes and to handle continual node
 arrivals, departures, and failures.
 
-=== Externalizer
+== Externalizer
 An _Externalizer_ is a class that knows how to marshall a given object type to
 a byte array, and how to unmarshall the contents of a byte array into an 
 instance of the object type. Externalizers are effectively an Infinispan
@@ -131,7 +131,7 @@ than standard Java serialization.
 .More resources
 * link:../user_guide/user_guide.html#_plugging_infinispan_with_user_defined_externalizers[Plug your own Externalizer implementation] into Infinispan 
 
-=== Hot Rod
+== Hot Rod
 _Hot Rod_ is the name of Infinispan's custom TCP client/server protocol which
 was created in order to overcome the deficiencies of other client/server
 protocols such as Memcached. HotRod, as opposed to other protocols, has the
@@ -151,7 +151,7 @@ consistent hash as the servers.
 * link:../user_guide/user_guide.html#_using_hot_rod_server[Starting a Hot Rod server] 
 * link:http://www.infinispan.org/hotrod-clients/[Hot Rod client libraries] 
 
-=== In-memory data grid
+== In-memory data grid
 An in-memory data grid (IMDG) is a special type of data grid. In an IMDG, each
 server uses its main system memory (RAM) as primary storage for data (as
 opposed to disk-based storage). This allows for much greater concurrency, as
@@ -168,7 +168,7 @@ The tradeoff is capacity. Disk-based grids, due to the far greater capacity of
 hard disks, exhibit two (or even three) orders of magnitude greater capacity for
 the same hardware cost.
 
-=== Isolation level
+== Isolation level
 Isolation is a property that defines how/when the changes made by one operation
 become visible to other concurrent operations. Isolation is one of the _ACID_
 properties.
@@ -176,7 +176,7 @@ properties.
 Infinispan ships with +REPEATABLE_READ+ and +READ_COMMITTED+ isolation levels,
 the latter being the default.
 
-=== JTA synchronization
+== JTA synchronization
 A link:$$http://docs.oracle.com/javaee/6/api/javax/transaction/Synchronization.html$$[Synchronization]
 is a listener which receives events relating to the transaction lifecycle. A
 +Synchronization+ implementor receives two events, _before completion_ and
@@ -184,7 +184,7 @@ _after completion_ . Synchronizations are useful when certain activities are
 required in the case of a transaction completion; a common usage for a
 Synchronization is to flush an application's caches. 
 
-=== Livelock
+== Livelock
 A livelock is similar to a deadlock, except that the states of the processes
 involved in the livelock constantly change with regard to one another, none
 progressing. 
@@ -194,7 +194,7 @@ corridor, and each tries to be polite by moving aside to let the other pass,
 but they end up swaying from side to side without making any progress because
 they both repeatedly move the same way at the same time.
 
-=== Memcached
+== Memcached
 Memcached is an in-memory caching system, often used to speed-up
 database-driven websites. Memcached also defines a text based,
 client/server, caching protocol, known as the Memcached protocol
@@ -207,7 +207,7 @@ in original Memcached systems.
 * link:../user_guide/user_guide.html#_using_infinispan_memcached_server[Infinispan's Memcached Server]
 * link:http://memcached.org[The memcached website]
 
-=== Multiversion Concurrency Control (MVCC)
+== Multiversion Concurrency Control (MVCC)
 Multiversion concurrency control is a concurrency control method commonly used
 by database management systems to provide concurrent access to the database
 and in programming languages to implement transactional memory.
@@ -215,12 +215,12 @@ and in programming languages to implement transactional memory.
 .More resources
 * link:http://en.wikipedia.org/wiki/Multiversion_concurrency_control[Wikipedia]
 
-=== Near Cache
+== Near Cache
 A technique for caching data in the client when communicating with a remote
 cache, for example, over the _Hot Rod_ protocol.  This technique helps
 minimize remote calls to retrieve data.
 
-=== Network partition
+== Network partition
 Network partitions happens when multiple parts of a cluster become separated
 due to some type of network failure, whether permanent or temporary.  Often
 temporary failures heal spontaneously, within a few seconds or at most minutes,
@@ -237,7 +237,7 @@ biological condition of the same name.
 For more detailed discussion, see
 link:$$http://codahale.com/you-cant-sacrifice-partition-tolerance/$$[this blog post]. 
 
-=== NoSQL
+== NoSQL
 A NoSQL database provides a mechanism for storage and retrieval of data that
 employs less constrained consistency models than traditional relational
 databases. Motivations for this approach include simplicity of design,
@@ -247,7 +247,7 @@ appending operations, with the goal being significant performance benefits in
 terms of latency and throughput. NoSQL databases are finding significant and
 growing industry use in big data and real-time web applications.
 
-=== Optimistic locking
+== Optimistic locking
 Optimistic locking is a concurrency control method that assumes that multiple
 transactions can complete without affecting each other, and that therefore
 transactions can proceed without locking the data resources that they affect.
@@ -255,7 +255,7 @@ Before committing, each transaction verifies that no other transaction has
 modified its data. If the check reveals conflicting modifications, the
 committing transaction rolls back.
 
-=== Pessimistic locking
+== Pessimistic locking
 A lock is used when multiple threads need to access data concurrently. This 
 prevents data from being corrupted or invalidated when multiple threads try to
 modify the same item of data. Any single thread can only modify data to which
@@ -264,7 +264,7 @@ lock is released.  However, pessimistic locking isn't ideal from a throughput
 perspective, as locking is expensive and serializing writes may not be desired.
 _Optimistic locking_ is often seen as a preferred alternative in many cases.
 
-=== READ COMMITTED
+== READ COMMITTED
 +READ_COMMITTED+ is one of two isolation levels the Infinispan's locking
 infrastructure provides (the other is +REPEATABLE_READ+). Isolation levels
 link:$$http://en.wikipedia.org/wiki/Isolation_level#READ_COMMITTED$$[have their origins]
@@ -286,12 +286,12 @@ This issue is avoided with +REPETEABLE_READ+ isolation level.
 
 By default, Infinispan uses +READ_COMMITTED+ as isolation level.
 
-=== Relational Database Management System (RDBMS)
+== Relational Database Management System (RDBMS)
 A relational database management system (RDBMS) is a database management system
  that is based on the relational model. Many popular databases currently in use
 are based on the relational database model.
 
-=== REPEATABLE READ
+== REPEATABLE READ
 +REPEATABLE_READ+ is one of two isolation levels the Infinispan's locking
 infrastructure provides (the other is +READ_COMMITTED+). Isolation levels 
 link:$$http://en.wikipedia.org/wiki/Isolation_level#REPEATABLE_READ$$[have their origins]
@@ -309,7 +309,7 @@ non-blocking reads. Infinispan provides +REPEATABLE_READ+ semantics by keeping
 the previous value whenever an entry is modified. This allows Infinispan to
 retrieve the previous value if a second read happens within the same transaction. 
 
-=== Representational State Transfer (ReST)
+== Representational State Transfer (ReST)
 ReST is a software architectural style that promotes accessing resources via a
 uniform generic interface. HTTP is an implementation of this architecture, and
 generally when ReST is mentioned, it refers to ReST over HTTP protocol. When
@@ -322,10 +322,10 @@ Infinispan's ReST server offers a ReSTful API based on these HTTP methods, and
 .More resources
 * link:../user_guide/user_guide.html#_infinispan_rest_server[The Infinispan REST Server]
 
-=== Split brain
+== Split brain
 A colloquial term for a _network partition_.  See _network partition_ for more details. 
 
-=== Structured Query Language (SQL)
+== Structured Query Language (SQL)
 SQL is a special-purpose programming language designed for managing data held 
 in a relational database management system (RDBMS).  Originally based upon
 relational algebra and tuple relational calculus, SQL consists of a data
@@ -333,7 +333,7 @@ definition language and a data manipulation language. The scope of SQL includes
 data insert, query, update and delete, schema creation and modification, and
 data access control.
 
-=== Write-behind
+== Write-behind
 _Write-behind_ is a cache store update mode. When this mode is used, updates to
 the cache are asynchronously written to the cache store. Normally this means
 that updates to the cache store are not performed in the client thread. 
@@ -343,7 +343,7 @@ An alternative cache store update mode is _write-through_.
 .More resources
 * link:../user_guide/user_guide.html#_write_through_and_write_behind_caching[Infinispan User guide] 
 
-=== Write skew
+== Write skew
 In a write skew anomaly, two transactions (T1 and T2) concurrently read an
 overlapping data set (e.g. values V1 and V2), concurrently make disjoint
 updates (e.g. T1 updates V1, T2 updates V2), and finally concurrently commit,
@@ -356,7 +356,7 @@ anomalies.
 Infinispan can detect write skews and can be configured to roll back
 transactions when write skews are detected.
 
-=== Write-through
+== Write-through
 _Write-through_ is a cache store update mode. When this mode is used, clients
 update a cache entry, e.g. via a +Cache.put()+ invocation, the call will not
 return until Infinispan has updated the underlying cache store. Normally this
@@ -367,7 +367,7 @@ An alternative mode in which cache stores can be updated is _write-behind_.
 .More resources
 * link:../user_guide/user_guide.html#_write_through_and_write_behind_caching[Infinispan User guide] 
 
-=== XA resource
+== XA resource
 An XA resource is a participant in an XA transaction (also known as a
 link:$$http://en.wikipedia.org/wiki/X/Open_XA$$[distributed transaction]). For
 example, given a distributed transaction that operates over a database and
