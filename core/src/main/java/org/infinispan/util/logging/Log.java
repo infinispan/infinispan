@@ -1408,5 +1408,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Recovery not supported with asynchronous commit phase", id = 394)
    CacheConfigurationException recoveryNotSupportedWithAsyncCommit();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Received unsolicited state from node %s for segment %d of cache %s", id = 395)
+   void ignoringUnsolicitedState(Address node, int segment, String cacheName);
 }
 
