@@ -32,6 +32,7 @@ import org.infinispan.security.actions.GetCacheManagerStatusAction;
 import org.infinispan.security.actions.GetCacheRpcManagerAction;
 import org.infinispan.security.actions.GetCacheStatusAction;
 import org.infinispan.server.infinispan.actions.ClearCacheAction;
+import org.infinispan.server.infinispan.actions.FlushCacheAction;
 import org.infinispan.server.infinispan.actions.GetCacheVersionAction;
 import org.infinispan.server.infinispan.actions.GetCreatedCacheCountAction;
 import org.infinispan.server.infinispan.actions.GetDefinedCacheCountAction;
@@ -230,6 +231,12 @@ public final class SecurityActions {
 
     public static Void clearCache(AdvancedCache<?, ?> cache) {
         ClearCacheAction action = new ClearCacheAction(cache);
+        doPrivileged(action);
+        return null;
+    }
+
+    public static Void flushCache(AdvancedCache<?, ?> cache) {
+        FlushCacheAction action = new FlushCacheAction(cache);
         doPrivileged(action);
         return null;
     }
