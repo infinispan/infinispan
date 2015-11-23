@@ -10,7 +10,7 @@
         <module name="javax.transaction.api"/>
         <module name="org.jgroups" slot="${slot}"/>
         <module name="org.infinispan" slot="${slot}"/>
-        <module name="org.infinispan.cdi" slot="${slot}" services="import" />
+        <module name="org.infinispan.cdi.embedded" slot="${slot}" services="import" />
         <module name="org.infinispan.jcache.commons" slot="${slot}" />
         <module name="org.jboss.logging"/>
     </dependencies>

@@ -63,7 +63,7 @@
             <maven-resource group="org.infinispan" artifact="infinispan-cachestore-jpa" />
         </module-def>
 
-        <module-def name="org.infinispan.cdi" slot="${infinispan.slot}">
+        <module-def name="org.infinispan.cdi.embedded" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-cdi-embedded" />
         </module-def>
 
