@@ -16,6 +16,8 @@ CDI module (GroupId:ArtifactId `org.infinispan:infinispan-cdi`) has been split i
 ==== Spring module split
 Spring module (GroupId:ArtifactId `org.infinispan:infinispan-spring4`) has been split into `org.infinispan:infinispan-spring4-embedded` and `org.infinispan:infinispan-spring4-remote`. Please make sure that you use proper artifact.
 
+=== Spring 3 support is deprecated
+Spring 3 support (GroupId:ArtifactId `org.infinispan:infinispan-spring`) is deprecated. Please consider migrating into Spring 4 support.
 
 == Upgrading from 7.x to 8.0
 === Configuration changes
