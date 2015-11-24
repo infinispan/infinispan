@@ -192,15 +192,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static void encodeDeliverMode(Message request, DeliverOrder deliverOrder) {
       switch (deliverOrder) {
          case TOTAL:
-            request.setFlag(Message.Flag.OOB);
-            request.clearFlag(Message.Flag.NO_TOTAL_ORDER);
+            request.setFlag(Message.Flag.OOB.value());
             break;
          case PER_SENDER:
-            request.clearFlag(Message.Flag.OOB);
-            request.setFlag(Message.Flag.NO_TOTAL_ORDER);
+            request.setFlag(Message.Flag.NO_TOTAL_ORDER.value());
             break;
          case NONE:
-            request.setFlag(Message.Flag.OOB, Message.Flag.NO_TOTAL_ORDER);
+            request.setFlag((short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value()));
             break;
       }
    }
@@ -225,14 +223,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       encodeDeliverMode(msg, deliverOrder);
       //some issues with the new bundler. put back the DONT_BUNDLE flag.
       if (deliverOrder == DeliverOrder.NONE || mode != ResponseMode.GET_NONE) {
-         msg.setFlag(Message.Flag.DONT_BUNDLE);
+         msg.setFlag(Message.Flag.DONT_BUNDLE.value());
       }
       // Only the commands in total order must be received by the originator.
       if (deliverOrder != DeliverOrder.TOTAL) {
-         msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
+         msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK.value());
       }
       if (rsvp) {
-         msg.setFlag(Message.Flag.RSVP);
+         msg.setFlag(Message.Flag.RSVP.value());
       }
 
       if (recipient != null) msg.setDest(recipient);
