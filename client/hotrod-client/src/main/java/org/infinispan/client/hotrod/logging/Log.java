@@ -229,4 +229,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Duplicate failover cluster %s has been specified", id = 4057)
    CacheConfigurationException duplicateClusterDefinition(String siteName);
+
+   @Message(value = "The client listener must use raw data when it uses a query as a filter: %s", id = 4058)
+   IncorrectClientListenerException clientListenerMustUseRawData(String className);
+
+   @Message(value = "The client listener must use the '%s' filter/converter factory", id = 4059)
+   IncorrectClientListenerException clientListenerMustUseDesignatedFilterConverterFactory(String filterConverterFactoryName);
 }

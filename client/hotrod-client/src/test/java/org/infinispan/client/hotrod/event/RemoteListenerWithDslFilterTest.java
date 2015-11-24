@@ -7,6 +7,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
@@ -160,6 +161,64 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       expectElementsInQueue(listener.modifyEvents, 2);
 
       remoteCache.removeClientListener(listener);
+   }
+
+   /**
+    * Using grouping and aggregation with event filters is not allowed.
+    */
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   public void testDisallowGroupingAndAggregation() {
+      Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
+            .having("age").gte(20)
+            .toBuilder().select(Expression.max("age"))
+            .build();
+
+      ClientEntryListener listener = new ClientEntryListener(ProtoStreamMarshaller.getSerializationContext(client(0)));
+      ClientEvents.addClientQueryListener(remoteCache, listener, query);
+   }
+
+   /**
+    * Using non-raw listeners should throw an exception.
+    */
+   @Test(expectedExceptions = IncorrectClientListenerException.class, expectedExceptionsMessageRegExp = "ISPN004058:.*")
+   public void testRequireRawDataListener() {
+      Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
+            .having("age").gte(20)
+            .toBuilder()
+            .build();
+
+      @ClientListener(filterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
+            converterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
+            useRawData = false, includeCurrentState = true)
+      class DummyListener {
+         @ClientCacheEntryCreated
+         public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) {
+         }
+      }
+
+      ClientEvents.addClientQueryListener(remoteCache, new DummyListener(), query);
+   }
+
+   /**
+    * Using non-raw listeners should throw an exception.
+    */
+   @Test(expectedExceptions = IncorrectClientListenerException.class, expectedExceptionsMessageRegExp = "ISPN004059:.*")
+   public void testRequireQueryDslFilterFactoryNameForListener() {
+      Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
+            .having("age").gte(20)
+            .toBuilder()
+            .build();
+
+      @ClientListener(filterFactoryName = "some-filter-factory-name",
+            converterFactoryName = "some-filter-factory-name",
+            useRawData = true, includeCurrentState = true)
+      class DummyListener {
+         @ClientCacheEntryCreated
+         public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) {
+         }
+      }
+
+      ClientEvents.addClientQueryListener(remoteCache, new DummyListener(), query);
    }
 
    private void expectElementsInQueue(BlockingQueue<?> queue, int numElements) {

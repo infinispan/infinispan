@@ -7,7 +7,10 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.filter.Filters;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
@@ -18,6 +21,8 @@ import java.io.IOException;
 import static org.infinispan.client.hotrod.filter.Filters.*;
 
 public class ClientEvents {
+
+   private static final Log log = LogFactory.getLog(ClientEvents.class, Log.class);
 
    /**
     * The name of the factory used for query DSL based filters and converters. This factory is provided internally by
@@ -57,15 +62,18 @@ public class ClientEvents {
     * @param query       the query to be used for filtering and conversion (if projections are used)
     */
    public static void addClientQueryListener(RemoteCache<?, ?> remoteCache, Object listener, Query query) {
-      ClientListener l = listener.getClass().getAnnotation(ClientListener.class);
+      ClientListener l = ReflectionUtil.getAnnotation(listener.getClass(), ClientListener.class);
+      if (l == null) {
+         throw log.missingClientListenerAnnotation(listener.getClass().getName());
+      }
       if (!l.useRawData()) {
-         throw new IllegalArgumentException("The client listener must use raw data");
+         throw log.clientListenerMustUseRawData(listener.getClass().getName());
       }
       if (!l.filterFactoryName().equals(Filters.QUERY_DSL_FILTER_FACTORY_NAME)) {
-         throw new IllegalArgumentException("The client listener must use the '" + Filters.QUERY_DSL_FILTER_FACTORY_NAME + "' filter factory");
+         throw log.clientListenerMustUseDesignatedFilterConverterFactory(Filters.QUERY_DSL_FILTER_FACTORY_NAME);
       }
       if (!l.converterFactoryName().equals(Filters.QUERY_DSL_FILTER_FACTORY_NAME)) {
-         throw new IllegalArgumentException("The client listener must use the '" + Filters.QUERY_DSL_FILTER_FACTORY_NAME + "' converter factory");
+         throw log.clientListenerMustUseDesignatedFilterConverterFactory(Filters.QUERY_DSL_FILTER_FACTORY_NAME);
       }
       Object[] factoryParams = makeFactoryParams(query);
       remoteCache.addClientListener(listener, factoryParams, null);
