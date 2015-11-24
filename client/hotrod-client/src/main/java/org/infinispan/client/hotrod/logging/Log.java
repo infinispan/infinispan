@@ -201,4 +201,38 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "No consistent hash is available in the client, starting iteration using the configured request balancing strategy", id = 4049)
    void noConsistentHashAvailable();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Switched to cluster '%s'", id = 4050)
+   void switchedToCluster(String clusterName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Switched back to main cluster", id = 4051)
+   void switchedBackToMainCluster();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Manually switched to cluster '%s'", id = 4052)
+   void manuallySwitchedToCluster(String clusterName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Manually switched back to main cluster", id = 4053)
+   void manuallySwitchedBackToMainCluster();
+
+   @Message(value = "Name of the failover cluster needs to be specified", id = 4054)
+   CacheConfigurationException missingClusterNameDefinition();
+
+   @Message(value = "Host needs to be specified in server definition of failover cluster", id = 4055)
+   CacheConfigurationException missingHostDefinition();
+
+   @Message(value = "At least one server address needs to be specified for failover cluster %s", id = 4056)
+   CacheConfigurationException missingClusterServersDefinition(String siteName);
+
+   @Message(value = "Duplicate failover cluster %s has been specified", id = 4057)
+   CacheConfigurationException duplicateClusterDefinition(String siteName);
+
+   @Message(value = "The client listener must use raw data when it uses a query as a filter: %s", id = 4058)
+   IncorrectClientListenerException clientListenerMustUseRawData(String className);
+
+   @Message(value = "The client listener must use the '%s' filter/converter factory", id = 4059)
+   IncorrectClientListenerException clientListenerMustUseDesignatedFilterConverterFactory(String filterConverterFactoryName);
 }
