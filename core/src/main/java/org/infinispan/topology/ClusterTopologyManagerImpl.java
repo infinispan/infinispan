@@ -447,16 +447,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             // but didn't get a response back yet
             if (cacheTopology != null) {
                topologyList.add(cacheTopology);
-            }
 
-            // Add all the members of the topology that have sent responses first
-            // If we only added the sender, we could end up with a different member order
-            for (Address member : cacheTopology.getMembers()) {
-               if (statusResponses.containsKey(member)) {
-                  cacheStatusMap.get(cacheName).addMember(member);
-               }
+                // Add all the members of the topology that have sent responses first
+                // If we only added the sender, we could end up with a different member order
+                for (Address member : cacheTopology.getMembers()) {
+                   if (statusResponses.containsKey(member)) {
+                      cacheStatusMap.get(cacheName).addMember(member);
+                   }
+                }
             }
-
             // This node may have joined, and still not be in the current or pending CH
             // because the old coordinator didn't manage to start the rebalance before shutting down
             cacheStatusMap.get(cacheName).addMember(sender);
@@ -628,3 +627,4 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 }
+
