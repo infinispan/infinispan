@@ -202,7 +202,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
       CompletableFuture<Map<Address, Response>> future = invokeRemotelyAsync(recipients, rpc, options);
       try {
-         return future.get();
+         return CompletableFutures.await(future);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException("Thread interrupted while invoking RPC", e);
