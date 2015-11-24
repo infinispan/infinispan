@@ -15,8 +15,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -162,9 +162,9 @@ public class StoredIndexTest {
     */
    @AfterClass
    public static void removeFileSystemStoredIndexes() throws IOException {
-      File targetDir = TestConstants.getTargetDir(StoredIndexTest.class);
-      FileHelper.delete(new File(targetDir, "LuceneIndexesData"));
-      FileHelper.delete(new File(targetDir, "LuceneIndexesMetaData"));
+      Path targetDir = TestConstants.getTargetDir(StoredIndexTest.class);
+      FileHelper.delete(targetDir.resolve("LuceneIndexesData"));
+      FileHelper.delete(targetDir.resolve("LuceneIndexesMetaData"));
    }
 
 }
