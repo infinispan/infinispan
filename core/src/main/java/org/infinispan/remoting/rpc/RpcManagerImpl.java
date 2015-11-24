@@ -16,7 +16,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -134,14 +133,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
 
       // Set the topology id of the command, in case we don't have it yet
-      if (rpc instanceof TopologyAffectedCommand) {
-         TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rpc;
-         if (topologyAffectedCommand.getTopologyId() == -1) {
-            int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
-            if (trace) log.tracef("Topology id missing on command %s, setting it to %d", rpc, currentTopologyId);
-            topologyAffectedCommand.setTopologyId(currentTopologyId);
-         }
-      }
+      setTopologyId(rpc);
 
       CacheRpcCommand cacheRpc =
             rpc instanceof CacheRpcCommand ? (CacheRpcCommand) rpc : cf.buildSingleRpcCommand(rpc);
@@ -176,7 +168,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
          if (statisticsEnabled) replicationFailures.incrementAndGet();
          return rethrowAsCacheException(e);
       }
-      CompletableFuture<Map<Address, Response>> result = invocation.handle((responseMap, throwable) -> {
+      return invocation.handle((responseMap, throwable) -> {
          if (statisticsEnabled) {
             long timeTaken = timeService.timeDuration(startTimeNanos, TimeUnit.MILLISECONDS);
             totalReplicationTime.getAndAdd(timeTaken);
@@ -191,7 +183,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
             return rethrowAsCacheException(throwable);
          }
       });
-      return result;
    }
 
    protected <T> T rethrowAsCacheException(Throwable throwable) {
@@ -237,14 +228,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       for (Map.Entry<Address, ReplicableCommand> entry : rpcs.entrySet()) {
          ReplicableCommand rpc = entry.getValue();
          // Set the topology id of the command, in case we don't have it yet
-         if (rpc instanceof TopologyAffectedCommand) {
-            TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rpc;
-            if (topologyAffectedCommand.getTopologyId() == -1) {
-               int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
-               if (trace) log.tracef("Topology id missing on command %s, setting it to %d", rpc, currentTopologyId);
-               topologyAffectedCommand.setTopologyId(currentTopologyId);
-            }
-         }
+         setTopologyId(rpc);
          if (!(rpc instanceof CacheRpcCommand)) {
             rpc = cf.buildSingleRpcCommand(rpc);
             // we can't modify the map during iteration
@@ -309,8 +293,17 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       return t;
    }
 
-   private ResponseMode getResponseMode(boolean sync) {
-      return sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS;
+   private void setTopologyId(ReplicableCommand command) {
+      if (command instanceof TopologyAffectedCommand) {
+         TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) command;
+         if (topologyAffectedCommand.getTopologyId() == -1) {
+            int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+            if (trace) {
+               log.tracef("Topology id missing on command %s, setting it to %d", command, currentTopologyId);
+            }
+            topologyAffectedCommand.setTopologyId(currentTopologyId);
+         }
+      }
    }
 
    // -------------------------------------------- JMX information -----------------------------------------------
