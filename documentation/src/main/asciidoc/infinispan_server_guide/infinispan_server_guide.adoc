@@ -113,6 +113,49 @@ In a managed domain the end user cannot directly launch a server process from th
 
 The Host Controller synthesizes the server's configuration by combining elements from the domain wide configuration (from +domain.xml+) and the host-specific configuration (from +host.xml+).
 
+==== Connecting remotely via JMX to server in Domain mode
+Sometimes you want to monitor Infinispan MBeans via JMX in Domain mode. Infinispan MBeans (like cache statistics etc.) are not exposed by the host controller, you
+have to connect directly to the server. To do that, you have to perform following steps in domain.xml:
+
+* uncomment <remoting-connector> in jmx subsystem:
+[source,xml]
+----
+
+<subsystem xmlns="urn:jboss:domain:jmx:1.3">
+    ...
+    <remoting-connector use-management-endpoint="false"/>
+</subsystem>
+
+----
+
+* add <connector> to remoting subsystem and comment out (or remove) the default http-connector:
+[source,xml]
+----
+
+<subsystem xmlns="urn:jboss:domain:remoting:3.0">
+    ...
+    <!-- <http-connector name="http-remoting-connector" connector-ref="default" security-realm="ApplicationRealm"/> -->
+    <connector name="remoting-connector" socket-binding="remoting" security-realm="ApplicationRealm"/>
+</subsystem>
+
+----
+
+* add remoting <socket-binding> with desired port:
+[source,xml]
+----
+
+<socket-binding-groups>
+    <socket-binding-group name="clustered-sockets" default-interface="public">
+        ...
+        <socket-binding name="remoting" port="4447"/>
+    </socket-binding-group>
+</socket-binding-groups>
+
+----
+
+Now, you should be able to connect remotely to the Infinispan server (e.g. via JConsole) using the URL
++service:jmx:remote://localhost:4447+.
+
 == Example configurations 
 The server distribution also provides a set of example configuration files in the docs/examples/configs (mostly using standalone mode) which illustrate a variety of possible configurations and use-cases. 
 To use them, just copy them to the standalone/configuration directory and start the server using the following syntax: 
