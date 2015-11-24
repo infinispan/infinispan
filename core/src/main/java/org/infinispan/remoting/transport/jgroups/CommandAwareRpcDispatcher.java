@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport.jgroups;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -35,7 +36,9 @@ import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +58,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
+   public static final int STAGGER_DELAY_MILLIS = 5;
 
    private final InboundInvocationHandler handler;
    private final ScheduledExecutorService timeoutExecutor;
@@ -96,13 +100,27 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    /**
     * @param recipients Must <b>not</b> contain self.
     */
-   public RspListFuture invokeRemoteCommands(List<Address> recipients, ReplicableCommand command,
+   public CompletableFuture<RspList<Response>> invokeRemoteCommands(List<Address> recipients, ReplicableCommand command,
                                                        ResponseMode mode, long timeout, RspFilter filter,
                                                        DeliverOrder deliverOrder) {
-      RspListFuture future;
+      CompletableFuture<RspList<Response>> future;
       try {
-         future = processCalls(command, recipients == null, timeout, filter, recipients,
-               mode, deliverOrder, req_marshaller);
+         if (recipients != null && mode == ResponseMode.GET_FIRST) {
+            future = new CompletableFuture<>();
+            // We populate the RspList ahead of time to avoid additional synchronization afterwards
+            RspList<Response> rsps = new RspList<>();
+            for (Address recipient : recipients) {
+               rsps.put(recipient, new Rsp<>(recipient));
+            }
+            processCallsStaggered(command, filter, recipients, mode, deliverOrder, req_marshaller, future, 0,
+                  rsps);
+            if (!future.isDone()) {
+               timeoutExecutor.schedule(() -> future.complete(rsps), timeout, TimeUnit.MILLISECONDS);
+            }
+         } else {
+            future = processCalls(command, recipients == null, timeout, filter, recipients, mode, deliverOrder,
+                  req_marshaller);
+         }
          return future;
       } catch (Exception e) {
          return rethrowAsCacheException(e);
@@ -272,6 +290,66 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return retval;
    }
 
+   private void processCallsStaggered(ReplicableCommand command, RspFilter filter, List<Address> dests,
+         ResponseMode mode, DeliverOrder deliverOrder, Marshaller marshaller,
+         CompletableFuture<RspList<Response>> theFuture, int destIndex, RspList<Response> rsps)
+         throws Exception {
+      if (destIndex == dests.size())
+         return;
+
+      CompletableFuture<Void> triggerNextFuture = new CompletableFuture<>();
+      CompletableFuture<Rsp<Response>> subFuture =
+            processSingleCall(command, -1, dests.get(destIndex), mode, deliverOrder, marshaller);
+      if (subFuture != null) {
+         subFuture.whenComplete((rsp, throwable) -> {
+            if (throwable != null) {
+               // We should never get here, any remote exception will be in the Rsp
+               theFuture.completeExceptionally(throwable);
+            }
+            Rsp<Response> futureRsp = rsps.get(rsp.getSender());
+            if (rsp.hasException()) {
+               futureRsp.setException(rsp.getException());
+            } else {
+               futureRsp.setValue(rsp.getValue());
+            }
+            if (filter.isAcceptable(rsp.getValue(), rsp.getSender())) {
+               // We got an acceptable response
+               theFuture.complete(rsps);
+            } else {
+               boolean missingResponses = false;
+               for (Rsp<Response> rsp1 : rsps) {
+                  if (!rsp1.wasReceived()) {
+                     missingResponses = true;
+                     break;
+                  }
+               }
+               if (!missingResponses) {
+                  // This was the last response, need to complete the future
+                  theFuture.complete(rsps);
+               } else {
+                  // The response was not acceptable, complete the timeout future to start the next request
+                  triggerNextFuture.complete(null);
+               }
+            }
+         });
+      }
+      if (subFuture != null && !subFuture.isDone()) {
+         timeoutExecutor
+               .schedule(() -> triggerNextFuture.complete(null), STAGGER_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+      }
+      triggerNextFuture.thenAccept(ignored -> {
+         if (theFuture.isDone()) {
+            return;
+         }
+         try {
+            processCallsStaggered(command, filter, dests, mode, deliverOrder, marshaller, theFuture,
+                  destIndex + 1, rsps);
+         } catch (Exception e) {
+            // We should never get here, any remote exception will be in the Rsp
+            theFuture.completeExceptionally(e);
+         }
+      });
+   }
 
    private RspListFuture processCalls(ReplicableCommand command, boolean broadcast, long timeout,
                                       RspFilter filter, List<Address> dests, ResponseMode mode,

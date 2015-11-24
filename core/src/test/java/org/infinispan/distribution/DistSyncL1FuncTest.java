@@ -358,9 +358,13 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
          assertIsInL1(nonOwnerCache, key);
 
-         // Just let the backup get return now
-         backupGetBarrier.await(10, TimeUnit.SECONDS);
-         backupGetBarrier.await(10, TimeUnit.SECONDS);
+         // Let the backup get return now
+         try {
+            backupGetBarrier.await(5, TimeUnit.SECONDS);
+            backupGetBarrier.await(5, TimeUnit.SECONDS);
+         } catch (TimeoutException e) {
+            // A timeout is expected if the backup never gets the request (because of the staggered get)
+         }
 
          // Finally let the put complete
          ownerPutBarrier.await(10, TimeUnit.SECONDS);
