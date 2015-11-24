@@ -5,7 +5,7 @@ DIR=`dirname $0`
 
 for LOG_FILE in `find . -name "*.log*"` ; do
     CAT=cat
-    if [ "${FILE##*.}" == "gz" ] ; then
+    if [ "${LOG_FILE##*.}" == "gz" ] ; then
       CAT=zcat
     fi
     FAILED_TESTS=`$CAT $LOG_FILE | perl -ne '/Test .*\(.*\.(.*)\) (failed|skipped)\./ && print "$1\n";' | sort -u`
