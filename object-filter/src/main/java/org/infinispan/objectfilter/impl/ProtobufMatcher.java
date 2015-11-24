@@ -36,8 +36,8 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    }
 
    @Override
-   protected ProtobufMatcherEvalContext startMultiTypeContext(Object userContext, Object instance, Object eventType) {
-      ProtobufMatcherEvalContext context = new ProtobufMatcherEvalContext(userContext, instance, eventType, wrappedMessageDescriptor, serializationContext);
+   protected ProtobufMatcherEvalContext startMultiTypeContext(Object userContext, Object eventType, Object instance) {
+      ProtobufMatcherEvalContext context = new ProtobufMatcherEvalContext(userContext, eventType, instance, wrappedMessageDescriptor, serializationContext);
       if (context.getEntityType() != null) {
          FilterRegistry<Descriptor, FieldDescriptor, Integer> filterRegistry = getFilterRegistryForType(context.getEntityType());
          if (filterRegistry != null) {
@@ -49,8 +49,8 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    }
 
    @Override
-   protected ProtobufMatcherEvalContext startSingleTypeContext(Object userContext, Object instance, MetadataAdapter<Descriptor, FieldDescriptor, Integer> metadataAdapter, Object eventType) {
-      ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(userContext, instance, eventType, wrappedMessageDescriptor, serializationContext);
+   protected ProtobufMatcherEvalContext startSingleTypeContext(Object userContext, Object eventType, Object instance, MetadataAdapter<Descriptor, FieldDescriptor, Integer> metadataAdapter) {
+      ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(userContext, eventType, instance, wrappedMessageDescriptor, serializationContext);
       return ctx.getEntityType() != null && ctx.getEntityType().getFullName().equals(metadataAdapter.getTypeName()) ? ctx : null;
    }
 

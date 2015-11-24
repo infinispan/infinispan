@@ -26,6 +26,9 @@ public final class ProtobufValueWrapper {
    private int hashCode = 0;
 
    public ProtobufValueWrapper(byte[] binary) {
+      if (binary == null) {
+         throw new IllegalArgumentException("argument cannot be null");
+      }
       this.binary = binary;
    }
 
@@ -59,8 +62,8 @@ public final class ProtobufValueWrapper {
 
       @Override
       public void writeObject(ObjectOutput output, ProtobufValueWrapper protobufValueWrapper) throws IOException {
-         UnsignedNumeric.writeUnsignedInt(output, protobufValueWrapper.getBinary().length);
-         output.write(protobufValueWrapper.getBinary());
+         UnsignedNumeric.writeUnsignedInt(output, protobufValueWrapper.binary.length);
+         output.write(protobufValueWrapper.binary);
       }
 
       @Override

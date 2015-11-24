@@ -13,8 +13,13 @@ public final class JPATreePrinter {
 
    public static String printTree(BooleanExpr whereClause) {
       StringBuilder sb = new StringBuilder();
-      if (whereClause != null && whereClause != ConstantBooleanExpr.TRUE) {
-         sb.append(" WHERE ").append(whereClause.toJpaString());
+      if (whereClause != null) {
+         if (whereClause == ConstantBooleanExpr.FALSE) {
+            throw new IllegalArgumentException("The WHERE clause must not be a contradiction");
+         }
+         if (whereClause != ConstantBooleanExpr.TRUE) {
+            sb.append(" WHERE ").append(whereClause.toJpaString());
+         }
       }
       return sb.toString();
    }

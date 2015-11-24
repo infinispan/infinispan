@@ -46,9 +46,13 @@ public class BooleShannonExpansionTest {
       });
 
       expr = booleShannonExpansion.expand(expr);
-      String jpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
-      assertEquals(expectedExprStr, expr.toString());
-      assertEquals(expectedJpa, jpaOut);
+      if (expectedExprStr != null) {
+         assertEquals(expectedExprStr, expr.toString());
+      }
+      if (expectedJpa != null) {
+         String jpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
+         assertEquals(expectedJpa, jpaOut);
+      }
    }
 
    @Test
@@ -72,7 +76,7 @@ public class BooleShannonExpansionTest {
       assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
                                "p.name = 'A' and p.name > 'A'",
                          "CONST_FALSE",
-                         "FROM org.infinispan.objectfilter.test.model.Person WHERE FALSE");
+                         null);
    }
 
    @Test

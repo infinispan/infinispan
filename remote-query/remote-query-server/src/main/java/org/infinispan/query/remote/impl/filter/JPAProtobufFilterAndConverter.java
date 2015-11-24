@@ -1,9 +1,9 @@
 package org.infinispan.query.remote.impl.filter;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
@@ -29,10 +29,8 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
 
    private boolean usesValueWrapper;
 
-   @Override
-   public void injectDependencies(Cache cache) {
-      super.injectDependencies(cache);
-      Configuration cfg = cache.getCacheConfiguration();
+   @Inject
+   protected void injectDependencies(Configuration cfg) {
       usesValueWrapper = cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled();
    }
 
@@ -43,7 +41,6 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
    @Override
    public ObjectFilter.FilterResult filterAndConvert(Object key, Object value, Metadata metadata) {
       if (value == null) {
-         // this is a 'pre' invocation, ignore it
          return null;
       }
       if (usesValueWrapper) {
