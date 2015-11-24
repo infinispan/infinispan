@@ -1,24 +1,21 @@
 package org.infinispan.query.remote.impl.filter;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.embedded.impl.QueryCache;
+import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
-import org.infinispan.util.KeyValuePair;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -32,108 +29,41 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends AbstractCacheEventFilterConverter<Object, Object, byte[]> {
+public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends JPAContinuousQueryCacheEventFilterConverter<Object, Object, byte[]> {
 
-   /**
-    * The JPA query to execute.
-    */
-   private final String jpaQuery;
-
-   private final Map<String, Object> namedParameters;
-
-   /**
-    * The implementation class of the Matcher component to lookup and use.
-    */
-   private final Class<? extends Matcher> matcherImplClass;
-
-   private transient SerializationContext serCtx;
-
-   /**
-    * Optional cache for query objects.
-    */
-   private transient QueryCache queryCache;
-
-   /**
-    * The Matcher, acquired via dependency injection.
-    */
-   private transient Matcher matcher;
-
-   /**
-    * The ObjectFilter is created lazily.
-    */
-   private transient ObjectFilter objectFilter;
+   private SerializationContext serCtx;
 
    private boolean usesValueWrapper;
 
-   public JPAContinuousQueryProtobufCacheEventFilterConverter(String jpaQuery,  Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
-      if (jpaQuery == null || matcherImplClass == null) {
-         throw new IllegalArgumentException("Arguments cannot be null");
-      }
-      this.jpaQuery = jpaQuery;
-      this.namedParameters = namedParameters;
-      this.matcherImplClass = matcherImplClass;
+   public JPAContinuousQueryProtobufCacheEventFilterConverter(String jpaQuery, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+      super(jpaQuery, namedParameters, matcherImplClass);
    }
 
    @Inject
-   protected void injectDependencies(Cache cache) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
-      queryCache = cache.getCacheManager().getGlobalComponentRegistry().getComponent(QueryCache.class);
-      matcher = cache.getAdvancedCache().getComponentRegistry().getComponent(matcherImplClass);
-      if (matcher == null) {
-         throw new CacheException("Expected component not found in registry: " + matcherImplClass.getName());
-      }
-      Configuration cfg = cache.getCacheConfiguration();
+   protected void injectDependencies(EmbeddedCacheManager cacheManager, Configuration cfg) {
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
       usesValueWrapper = cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled();
-   }
-
-   private ObjectFilter getObjectFilter() {
-      if (objectFilter == null) {
-         // if parameters are present caching cannot be currently performed due to internal implementation limitations
-         if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
-            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpaQuery, matcherImplClass);
-            ObjectFilter objectFilter = queryCache.get(queryCacheKey);
-            if (objectFilter == null) {
-               objectFilter = matcher.getObjectFilter(jpaQuery, namedParameters);
-               queryCache.put(queryCacheKey, objectFilter);
-            }
-            this.objectFilter = objectFilter;
-         } else {
-            objectFilter = matcher.getObjectFilter(jpaQuery, namedParameters);
-         }
-      }
-      return objectFilter;
-   }
-
-   private ObjectFilter.FilterResult filterAndConvert(Object value) {
-      if (value == null) {
-         return null;
-      }
-      return getObjectFilter().filter(value);
    }
 
    @Override
    public byte[] filterAndConvert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
       if (usesValueWrapper) {
-         if (oldValue instanceof ProtobufValueWrapper) {
-            oldValue = ((ProtobufValueWrapper) oldValue).getBinary();
-         }
-         if (newValue instanceof ProtobufValueWrapper) {
-            newValue = ((ProtobufValueWrapper) newValue).getBinary();
-         }
+         oldValue = oldValue != null ? ((ProtobufValueWrapper) oldValue).getBinary() : null;
+         newValue = newValue != null ? ((ProtobufValueWrapper) newValue).getBinary() : null;
       }
 
-      if (eventType.isExpired()) {  // expired events have the expired value as newValue
-         oldValue = newValue;
+      if (eventType.isExpired()) {
+         oldValue = newValue;   // expired events have the expired value as newValue
          newValue = null;
       }
 
-      ObjectFilter.FilterResult f1 = filterAndConvert(oldValue);
-      ObjectFilter.FilterResult f2 = filterAndConvert(newValue);
+      ObjectFilter objectFilter = getObjectFilter();
+      ObjectFilter.FilterResult f1 = oldValue == null ? null : objectFilter.filter(oldValue);
+      ObjectFilter.FilterResult f2 = newValue == null ? null : objectFilter.filter(newValue);
       ContinuousQueryResult result;
       if (f1 == null && f2 != null) {
          result = new ContinuousQueryResult(true, (byte[]) key, (byte[]) newValue);
-      }
-      else if (f1 != null && f2 == null) {
+      } else if (f1 != null && f2 == null) {
          result = new ContinuousQueryResult(false, (byte[]) key, null);
       } else {
          return null;
@@ -143,6 +73,11 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
+   }
+
+   @Override
+   public String toString() {
+      return "JPAContinuousQueryProtobufCacheEventFilterConverter{jpaQuery='" + jpaQuery + "'}";
    }
 
    public static final class Externalizer extends AbstractExternalizer<JPAContinuousQueryProtobufCacheEventFilterConverter> {

@@ -1,13 +1,14 @@
 package org.infinispan.query.continuous.impl;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
@@ -26,34 +27,35 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class JPAContinuousQueryCacheEventFilterConverter<K, V> extends AbstractCacheEventFilterConverter<K, V, ContinuousQueryResult<V>> {
-
-   /**
-    * Optional cache for query objects.
-    */
-   private QueryCache queryCache;
+public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C>
+      implements IndexedFilter<K, V, C> {
 
    /**
     * The JPA query to execute.
     */
-   private final String jpaQuery;
+   protected final String jpaQuery;
 
-   private final Map<String, Object> namedParameters;
+   protected final Map<String, Object> namedParameters;
 
    /**
     * The implementation class of the Matcher component to lookup and use.
     */
-   private final Class<? extends Matcher> matcherImplClass;
+   protected final Class<? extends Matcher> matcherImplClass;
+
+   /**
+    * Optional cache for query objects.
+    */
+   protected QueryCache queryCache;
 
    /**
     * The Matcher, acquired via dependency injection.
     */
-   private Matcher matcher;
+   protected Matcher matcher;
 
    /**
     * The ObjectFilter is created lazily.
     */
-   private ObjectFilter objectFilter;
+   protected ObjectFilter objectFilter;
 
    public JPAContinuousQueryCacheEventFilterConverter(String jpaQuery, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
       if (jpaQuery == null || matcherImplClass == null) {
@@ -64,19 +66,31 @@ public final class JPAContinuousQueryCacheEventFilterConverter<K, V> extends Abs
       this.matcherImplClass = matcherImplClass;
    }
 
+   public Matcher getMatcher() {
+      return matcher;
+   }
+
+   public String getJPAQuery() {
+      return jpaQuery;
+   }
+
+   public Map<String, Object> getNamedParameters() {
+      return namedParameters;
+   }
+
    /**
     * Acquires a Matcher instance from the ComponentRegistry of the given Cache object.
     */
    @Inject
-   public void injectDependencies(Cache cache) {
-      this.queryCache = cache.getCacheManager().getGlobalComponentRegistry().getComponent(QueryCache.class);
-      matcher = cache.getAdvancedCache().getComponentRegistry().getComponent(matcherImplClass);
+   protected void injectDependencies(ComponentRegistry componentRegistry) {
+      queryCache = componentRegistry.getComponent(QueryCache.class);
+      matcher = componentRegistry.getComponent(matcherImplClass);
       if (matcher == null) {
          throw new CacheException("Expected component not found in registry: " + matcherImplClass.getName());
       }
    }
 
-   private ObjectFilter getObjectFilter() {
+   protected ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
          // if parameters are present caching cannot be currently performed due to internal implementation limitations
          if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
@@ -94,36 +108,35 @@ public final class JPAContinuousQueryCacheEventFilterConverter<K, V> extends Abs
       return objectFilter;
    }
 
-   private ObjectFilter.FilterResult filterAndConvert(V value) {
-      if (value == null) {
-         return null;
+   @Override
+   public C filterAndConvert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
+      if (eventType.isExpired()) {
+         oldValue = newValue;   // expired events have the expired value as newValue
+         newValue = null;
       }
-      return getObjectFilter().filter(value);
+
+      ObjectFilter objectFilter = getObjectFilter();
+      ObjectFilter.FilterResult f1 = oldValue == null ? null : objectFilter.filter(oldValue);
+      ObjectFilter.FilterResult f2 = newValue == null ? null : objectFilter.filter(newValue);
+
+      if (f2 != null && eventType.isExpired()) {  // expired events return expired value as newValue
+         return (C) new ContinuousQueryResult<V>(false, null);
+      }
+
+      if (f1 == null && f2 != null) {
+         return (C) new ContinuousQueryResult<V>(true, newValue);
+      }
+
+      if (f1 != null && f2 == null) {
+         return (C) new ContinuousQueryResult<V>(false, null);
+      }
+
+      return null;
    }
 
    @Override
    public String toString() {
       return "JPAContinuousQueryCacheEventFilterConverter{jpaQuery='" + jpaQuery + "'}";
-   }
-
-   @Override
-   public ContinuousQueryResult<V> filterAndConvert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
-      ObjectFilter.FilterResult f1 = filterAndConvert(oldValue);
-      ObjectFilter.FilterResult f2 = filterAndConvert(newValue);
-
-      if (f2 != null && eventType.isExpired()) {  // expired events return expired value as newValue
-         return new ContinuousQueryResult<V>(false, null);
-      }
-      
-      if (f1 == null && f2 != null) {
-         return new ContinuousQueryResult<V>(true, newValue);
-      }
-
-      if (f1 != null && f2 == null) {
-         return new ContinuousQueryResult<V>(false, null);
-      }
-
-      return null;
    }
 
    public static final class Externalizer extends AbstractExternalizer<JPAContinuousQueryCacheEventFilterConverter> {

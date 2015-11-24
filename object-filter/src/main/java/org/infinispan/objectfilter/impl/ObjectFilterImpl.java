@@ -25,7 +25,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    private static final FilterCallback emptyCallback = new FilterCallback() {
       @Override
-      public void onFilterResult(Object userContext, Object instance, Object eventType, Object[] projection, Comparable[] sortProjection) {
+      public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
          // do nothing
       }
    };
@@ -72,7 +72,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          throw new IllegalArgumentException("instance cannot be null");
       }
 
-      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, instance, filterSubscription.getMetadataAdapter(), null);
+      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, null, instance, filterSubscription.getMetadataAdapter());
       if (matcherEvalContext != null) {
          FilterEvalContext filterEvalContext = matcherEvalContext.initSingleFilterContext(filterSubscription);
          matcherEvalContext.process(root);
