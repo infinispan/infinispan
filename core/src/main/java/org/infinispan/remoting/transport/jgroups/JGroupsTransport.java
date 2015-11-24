@@ -502,7 +502,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       CompletableFuture<Map<Address, Response>> future = invokeRemotelyAsync(recipients, rpcCommand, mode,
             timeout, responseFilter, deliverOrder, anycast);
       try {
-         return future.get();
+         //no need to set a timeout for the future. The rpc invocation is guaranteed to complete within the timeout milliseconds
+         return CompletableFutures.await(future);
       } catch (ExecutionException e) {
          throw Util.rewrapAsCacheException(e.getCause());
       }
@@ -682,7 +683,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          return InfinispanCollections.emptyMap();
 
       CompletableFuture<Void> bigFuture = CompletableFuture.allOf(futures);
-      bigFuture.get();
+      CompletableFutures.await(bigFuture);
 
       List<Rsp<Response>> rsps = new ArrayList<>();
       for (SingleResponseFuture future : futures) {

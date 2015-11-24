@@ -24,6 +24,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -373,7 +374,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       final Map<Address, Response> responseMap = new HashMap<>();
       responseMap.put(rpcManager.getAddress(), localFuture.get());
       //noinspection unchecked
-      responseMap.putAll(remoteFuture.get());
+      responseMap.putAll(CompletableFutures.await(remoteFuture));
       return responseMap;
    }
 

@@ -5,6 +5,7 @@ import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class CompletableFutures {
 
    private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+   public static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
 
    public static <K,V> CompletableFuture<Map<K, V>> returnEmptyMap() {
       return completedEmptyMapFuture;
@@ -75,6 +77,23 @@ public class CompletableFutures {
          return true;
       } catch (java.util.concurrent.TimeoutException e) {
          return false;
+      }
+   }
+
+   /**
+    * Wait for a long time until the {@link CompletableFuture} is completed.
+    *
+    * @param future the {@link CompletableFuture}.
+    * @param <T>    the return type.
+    * @return the result value.
+    * @throws ExecutionException   if the {@link CompletableFuture} completed exceptionally.
+    * @throws InterruptedException if the current thread was interrupted while waiting.
+    */
+   public static <T> T await(CompletableFuture<T> future) throws ExecutionException, InterruptedException {
+      try {
+         return Objects.requireNonNull(future, "Completable Future must be non-null.").get(BIG_DELAY_NANOS, TimeUnit.NANOSECONDS);
+      } catch (java.util.concurrent.TimeoutException e) {
+         throw new IllegalStateException("This should never happen!", e);
       }
    }
 }
