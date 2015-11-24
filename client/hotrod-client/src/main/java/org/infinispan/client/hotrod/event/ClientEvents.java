@@ -6,25 +6,34 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.filter.Filters;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 
 import java.io.IOException;
-import java.util.Map;
+
+import static org.infinispan.client.hotrod.filter.Filters.*;
 
 public class ClientEvents {
+
+   private static final Log log = LogFactory.getLog(ClientEvents.class, Log.class);
 
    /**
     * The name of the factory used for query DSL based filters and converters. This factory is provided internally by
     * the server.
+    * @deprecated Use constants from {@link Filters}
     */
-   public static final String QUERY_DSL_FILTER_FACTORY_NAME = "query-dsl-filter-converter-factory";
+   @Deprecated
+   public static final String QUERY_DSL_FILTER_FACTORY_NAME = Filters.QUERY_DSL_FILTER_FACTORY_NAME;
 
-   public static final String CONTINUOUS_QUERY_FILTER_FACTORY_NAME = "continuous-query-filter-converter-factory";
+   @Deprecated
+   public static final String CONTINUOUS_QUERY_FILTER_FACTORY_NAME = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME;
 
    private static final ClientCacheFailoverEvent FAILOVER_EVENT_SINGLETON = new ClientCacheFailoverEvent() {
       @Override
@@ -46,22 +55,25 @@ public class ClientEvents {
     * {@link org.infinispan.client.hotrod.annotation.ClientListener#useRawData} = true and {@link
     * org.infinispan.client.hotrod.annotation.ClientListener#filterFactoryName} and {@link
     * org.infinispan.client.hotrod.annotation.ClientListener#converterFactoryName} are equal to {@link
-    * ClientEvents#QUERY_DSL_FILTER_FACTORY_NAME}
+    * Filters#QUERY_DSL_FILTER_FACTORY_NAME}
     *
     * @param remoteCache the remote cache to attach the listener
     * @param listener    the listener instance
     * @param query       the query to be used for filtering and conversion (if projections are used)
     */
    public static void addClientQueryListener(RemoteCache<?, ?> remoteCache, Object listener, Query query) {
-      ClientListener l = listener.getClass().getAnnotation(ClientListener.class);
+      ClientListener l = ReflectionUtil.getAnnotation(listener.getClass(), ClientListener.class);
+      if (l == null) {
+         throw log.missingClientListenerAnnotation(listener.getClass().getName());
+      }
       if (!l.useRawData()) {
-         throw new IllegalArgumentException("The client listener must use raw data");
+         throw log.clientListenerMustUseRawData(listener.getClass().getName());
       }
-      if (!l.filterFactoryName().equals(QUERY_DSL_FILTER_FACTORY_NAME)) {
-         throw new IllegalArgumentException("The client listener must use the '" + QUERY_DSL_FILTER_FACTORY_NAME + "' filter factory");
+      if (!l.filterFactoryName().equals(Filters.QUERY_DSL_FILTER_FACTORY_NAME)) {
+         throw log.clientListenerMustUseDesignatedFilterConverterFactory(Filters.QUERY_DSL_FILTER_FACTORY_NAME);
       }
-      if (!l.converterFactoryName().equals(QUERY_DSL_FILTER_FACTORY_NAME)) {
-         throw new IllegalArgumentException("The client listener must use the '" + QUERY_DSL_FILTER_FACTORY_NAME + "' converter factory");
+      if (!l.converterFactoryName().equals(Filters.QUERY_DSL_FILTER_FACTORY_NAME)) {
+         throw log.clientListenerMustUseDesignatedFilterConverterFactory(Filters.QUERY_DSL_FILTER_FACTORY_NAME);
       }
       Object[] factoryParams = makeFactoryParams(query);
       remoteCache.addClientListener(listener, factoryParams, null);
@@ -83,24 +95,8 @@ public class ClientEvents {
       return eventListener;
    }
 
-   private static Object[] makeFactoryParams(Query query) {
-      BaseQuery baseQuery = (BaseQuery) query;
-      Map<String, Object> namedParameters = baseQuery.getNamedParameters();
-      if (namedParameters == null) {
-         return new Object[]{baseQuery.getJPAQuery()};
-      }
-      Object[] factoryParams = new Object[1 + namedParameters.size() * 2];
-      factoryParams[0] = baseQuery.getJPAQuery();
-      int i = 1;
-      for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
-         factoryParams[i++] = e.getKey();
-         factoryParams[i++] = e.getValue();
-      }
-      return factoryParams;
-   }
-
-   @ClientListener(filterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
-         converterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
+   @ClientListener(filterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
+         converterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
    private static final class ClientEntryListener {
 
