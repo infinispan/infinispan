@@ -33,11 +33,12 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
    public boolean isAcceptable(Response response, Address address) {
       if (targets.contains(address)) {
          missingResponses--;
-         if (response instanceof SuccessfulResponse) validResponses++;
+         if (response instanceof SuccessfulResponse) {
+            validResponses++;
+            return true;
+         }
       }
-
-      // always return true to make sure a response is logged by the JGroups RpcDispatcher.
-      return true;
+      return false;
    }
 
    @Override

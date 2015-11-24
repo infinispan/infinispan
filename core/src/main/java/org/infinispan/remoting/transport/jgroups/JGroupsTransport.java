@@ -51,6 +51,7 @@ import org.jgroups.protocols.tom.TOA;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.Rsp;
+import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
 
 import javax.management.MBeanServer;
@@ -540,7 +541,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       int membersSize = localMembers.size();
       boolean broadcast = jgAddressList == null || recipients.size() == membersSize;
       if (membersSize < 3 || (jgAddressList != null && jgAddressList.size() < 2)) broadcast = false;
-      RspListFuture rspListFuture = null;
+      CompletableFuture<RspList<Response>> rspListFuture = null;
       SingleResponseFuture singleResponseFuture = null;
       org.jgroups.Address singleJGAddress = null;
 
@@ -736,9 +737,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       switch (mode) {
          case ASYNCHRONOUS:
             return org.jgroups.blocks.ResponseMode.GET_NONE;
+         case WAIT_FOR_VALID_RESPONSE:
+            return org.jgroups.blocks.ResponseMode.GET_FIRST;
          case SYNCHRONOUS:
          case SYNCHRONOUS_IGNORE_LEAVERS:
-         case WAIT_FOR_VALID_RESPONSE:
             return org.jgroups.blocks.ResponseMode.GET_ALL;
       }
       throw new CacheException("Unknown response mode " + mode);
