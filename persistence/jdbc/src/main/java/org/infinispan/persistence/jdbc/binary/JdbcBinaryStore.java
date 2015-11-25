@@ -62,6 +62,7 @@ import org.infinispan.util.logging.LogFactory;
 public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(JdbcBinaryStore.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private static final int BATCH_SIZE = 100; // TODO: make configurable
 
@@ -181,7 +182,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       ResultSet rs = null;
       try {
          String sql = tableManipulation.getLoadNonExpiredAllRowsSql();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Running sql %s", sql);
          }
          conn = connectionFactory.getConnection();
@@ -240,7 +241,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          int result = ps.executeUpdate();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Successfully removed %d rows.", result);
          }
       } catch (SQLException ex) {
@@ -279,7 +280,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          while (rs.next()) {
             Integer bucketId = rs.getInt(2);
             if (immediateLockForWriting(bucketId)) {
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Adding bucket keyed %s for purging.", bucketId);
                }
                InputStream binaryStream = rs.getBinaryStream(1);
@@ -292,7 +293,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
                   expiredBuckets = new ArrayList<Bucket>(BATCH_SIZE);
                }
             } else {
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Could not acquire write lock for %s, this won't be purged even though it has expired elements", bucketId);
                }
             }
@@ -462,7 +463,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       try {
          String sql = tableManipulation.getInsertRowSql();
          ByteBuffer byteBuffer = JdbcUtil.marshall(ctx.getMarshaller(), bucket.getStoredEntries());
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Running insertBucket. Sql: '%s', on bucket: %s stored value size is %d bytes", sql, bucket, byteBuffer.getLength());
          }
          conn = connectionFactory.getConnection();
@@ -479,7 +480,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          throw new PersistenceException(String.format(
                "Sql failure while inserting bucket: %s", bucket), ex);
       } catch (InterruptedException ie) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("Interrupted while marshalling to insert a bucket");
          }
          Thread.currentThread().interrupt();
@@ -494,7 +495,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       PreparedStatement ps = null;
       try {
          String sql = tableManipulation.getUpdateRowSql();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Running updateBucket. Sql: '%s', on bucket: %s", sql, bucket);
          }
          conn = connectionFactory.getConnection();
@@ -512,7 +513,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          throw new PersistenceException(String.format(
                "Sql failure while updating bucket: %s", bucket), e);
       } catch (InterruptedException ie) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("Interrupted while marshalling to update a bucket");
          }
          Thread.currentThread().interrupt();
@@ -528,7 +529,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       ResultSet rs = null;
       try {
          String sql = tableManipulation.getSelectRowSql();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Running loadBucket. Sql: '%s', on key: %s", sql, bucketId);
          }
          conn = connectionFactory.getConnection();

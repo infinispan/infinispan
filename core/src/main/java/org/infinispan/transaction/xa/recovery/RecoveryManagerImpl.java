@@ -44,6 +44,7 @@ import java.util.concurrent.ConcurrentMap;
 public class RecoveryManagerImpl implements RecoveryManager {
 
    private static final Log log = LogFactory.getLog(RecoveryManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private volatile RpcManager rpcManager;
    private volatile CommandsFactory commandFactory;
@@ -105,7 +106,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
             Response thisResponse = rEntry.getValue();
             if (isSuccessful(thisResponse)) {
                List<Xid> responseValue = (List<Xid>) ((SuccessfulResponse) thisResponse).getResponseValue();
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Received Xid lists %s from node %s", responseValue, rEntry.getKey());
                }
                iterator.add(responseValue);
@@ -325,7 +326,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       boolean remotePrepared = remoteTransaction != null && remoteTransaction.isPrepared();
       boolean result = inDoubtTransactions.get(new RecoveryInfoKey(xid, cacheName)) != null //if it is in doubt must be prepared
             || txTable.getLocalPreparedXids().contains(xid) || remotePrepared;
-      if (log.isTraceEnabled()) log.tracef("Is tx %s prepared? %s", xid, result);
+      if (trace) log.tracef("Is tx %s prepared? %s", xid, result);
       return result;
    }
 
@@ -340,7 +341,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    private Map<Address, Response> getAllPreparedTxFromCluster() {
       GetInDoubtTransactionsCommand command = commandFactory.buildGetInDoubtTransactionsCommand();
       Map<Address, Response> addressResponseMap = rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true));
-      if (log.isTraceEnabled()) log.tracef("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
+      if (trace) log.tracef("getAllPreparedTxFromCluster received from cluster: %s", addressResponseMap);
       return addressResponseMap;
    }
 

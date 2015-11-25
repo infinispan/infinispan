@@ -843,7 +843,7 @@ class IndexNode {
                   if (offset < 0) return null;
                   node = new IndexNode(segment, offset, length);
                   reference = new SoftReference<IndexNode>(node);
-                  if (log.isTraceEnabled()) {
+                  if (trace) {
                      log.trace("Loaded inner node from " + offset + " - " + length);
                   }
                }

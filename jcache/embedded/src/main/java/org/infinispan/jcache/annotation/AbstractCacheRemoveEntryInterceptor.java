@@ -26,6 +26,7 @@ import org.infinispan.jcache.logging.Log;
  * @author Galder Zamarreño
  */
 public abstract class AbstractCacheRemoveEntryInterceptor implements Serializable {
+   protected final boolean trace = getLog().isTraceEnabled();
 
    private static final long serialVersionUID = -9079291622309963969L;
 
@@ -38,7 +39,7 @@ public abstract class AbstractCacheRemoveEntryInterceptor implements Serializabl
    }
 
    public Object cacheRemoveEntry(InvocationContext invocationContext) throws Exception {
-      if (getLog().isTraceEnabled()) {
+      if (trace) {
          getLog().tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
       }
 
@@ -50,7 +51,7 @@ public abstract class AbstractCacheRemoveEntryInterceptor implements Serializabl
 
       if (!cacheRemoveEntry.afterInvocation()) {
          cache.remove(cacheKey);
-         if (getLog().isTraceEnabled()) {
+         if (trace) {
             getLog().tracef("Remove entry with key '%s' in cache '%s' before method invocation", cacheKey, cache.getName());
          }
       }
@@ -59,7 +60,7 @@ public abstract class AbstractCacheRemoveEntryInterceptor implements Serializabl
 
       if (cacheRemoveEntry.afterInvocation()) {
          cache.remove(cacheKey);
-         if (getLog().isTraceEnabled()) {
+         if (trace) {
             getLog().tracef("Remove entry with key '%s' in cache '%s' after method invocation", cacheKey, cache.getName());
          }
       }

@@ -21,6 +21,7 @@ import java.util.Collection;
 public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements RecoveryAwareTransaction {
 
    private static final Log log = LogFactory.getLog(RecoveryAwareRemoteTransaction.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private boolean prepared;
 
@@ -60,7 +61,7 @@ public class RecoveryAwareRemoteTransaction extends RemoteTransaction implements
     */
    public void computeOrphan(Collection<Address> currentMembers) {
       if (!currentMembers.contains(getGlobalTransaction().getAddress())) {
-         if (log.isTraceEnabled()) log.tracef("This transaction's originator has left the cluster: %s", getGlobalTransaction());
+         if (trace) log.tracef("This transaction's originator has left the cluster: %s", getGlobalTransaction());
          isOrphan = true;
       }
    }

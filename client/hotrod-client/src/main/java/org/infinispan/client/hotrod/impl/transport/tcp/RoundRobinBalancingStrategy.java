@@ -18,6 +18,7 @@ import java.util.Set;
 public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStrategy {
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private int index = 0;
 
@@ -30,7 +31,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
       if (index >= this.servers.length) {
          index = 0;
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("New server list is: " + Arrays.toString(this.servers));
       }
    }
@@ -40,7 +41,6 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
     */
    @Override
    public SocketAddress nextServer(Set<SocketAddress> failedServers) {
-      boolean isTraceEnabled = log.isTraceEnabled();
       for (int i = 0;; ++i) {
          SocketAddress server = getServerByIndex(index++);
          // don't allow index to overflow and have a negative value
@@ -48,7 +48,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
             index = 0;
 
          if (failedServers == null || !failedServers.contains(server) || i >= failedServers.size()) {
-            if (isTraceEnabled) {
+            if (trace) {
                if (failedServers == null)
                   log.tracef("Selected %s from %s", server, Arrays.toString(servers));
                else
@@ -74,7 +74,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
 
    private SocketAddress getServerByIndex(int pos) {
       SocketAddress server = servers[pos];
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Returning server: %s", server);
       }
       return server;

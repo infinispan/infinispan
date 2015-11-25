@@ -223,7 +223,7 @@ public class Codec20 implements Codec, HotRodConstants {
       Marshaller marshaller = transport.getTransportFactory().getMarshaller();
       if (HotRodConstants.hasPrevious(status)) {
          byte[] bytes = transport.readArray();
-         if (log.isTraceEnabled()) log.tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
+         if (trace) getLog().tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
          //0-length response means null
          return bytes.length == 0 ? null : MarshallerUtil.bytes2obj(marshaller, bytes, status);
       } else {
@@ -324,8 +324,7 @@ public class Codec20 implements Codec, HotRodConstants {
 
    protected void checkForErrorsInResponseStatus(Transport transport, HeaderParams params, short status) {
       final Log localLog = getLog();
-      boolean isTrace = localLog.isTraceEnabled();
-      if (isTrace) localLog.tracef("Received operation status: %#x", status);
+      if (trace) localLog.tracef("Received operation status: %#x", status);
 
       String msgFromServer;
       try {
@@ -338,7 +337,7 @@ public class Codec20 implements Codec, HotRodConstants {
             case HotRodConstants.UNKNOWN_VERSION_STATUS: {
                // If error, the body of the message just contains a message
                msgFromServer = transport.readString();
-               if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
+               if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && trace) {
                   localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
                } else {
                   localLog.errorFromServer(msgFromServer);
@@ -351,7 +350,7 @@ public class Codec20 implements Codec, HotRodConstants {
             case HotRodConstants.NODE_SUSPECTED:
                // Handle both Infinispan's and JGroups' suspicions
                msgFromServer = transport.readString();
-               if (isTrace)
+               if (trace)
                   localLog.tracef("A remote node was suspected while executing messageId=%d. " +
                         "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
 
@@ -430,7 +429,7 @@ public class Codec20 implements Codec, HotRodConstants {
          transportFactory.updateHashFunction(segmentOwners,
             numSegments, hashFunctionVersion, params.cacheName, params.topologyId);
       } else {
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef("Outdated topology received (topology id = %s, topology age = %s), so ignoring it: %s",
                newTopologyId, topologyAge, addresses);
       }

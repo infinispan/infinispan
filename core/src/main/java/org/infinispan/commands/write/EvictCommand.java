@@ -21,6 +21,7 @@ import java.util.Set;
 public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    private static final Log log = LogFactory.getLog(EvictCommand.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final InternalEntryFactory factory;
 
@@ -51,7 +52,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
       // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
       // with non-null values, so we should do the same here as an ugly workaround.
       if (!isPre) {
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef("Notify eviction listeners for key=%s", key);
 
          notifier.notifyCacheEntriesEvicted(Collections.singleton(factory.create(key, value, previousMetadata)), ctx,

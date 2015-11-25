@@ -137,6 +137,7 @@ import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 @Scope(Scopes.GLOBAL)
 public class ExternalizerTable implements ObjectTable {
    private static final Log log = LogFactory.getLog(ExternalizerTable.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    /**
     * Contains mapping of classes to their corresponding externalizer classes via ExternalizerAdapter instances.
@@ -173,7 +174,7 @@ public class ExternalizerTable implements ObjectTable {
       loadInternalMarshallables();
       loadForeignMarshallables(gcr.getGlobalConfiguration());
       started = true;
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Constant object table was started and contains these externalizer readers: %s", readers);
          log.tracef("The externalizer writers collection contains: %s", writers);
       }
@@ -218,7 +219,7 @@ public class ExternalizerTable implements ObjectTable {
                throw log.cannotResolveExternalizerReader(gcr.getStatus(), readerIndex);
             }
          } else {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Unknown type. Input stream has %s to read", input.available());
                log.tracef("Check contents of read externalizers: %s", readers);
             }
@@ -437,7 +438,7 @@ public class ExternalizerTable implements ObjectTable {
          throw log.duplicateExternalizerIdFound(
                adapter.id, typeClass, prevReader.externalizer.getClass().getName(), readerIndex);
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Loaded externalizer %s for %s with id %s and reader index %s",
                    adapter.externalizer.getClass().getName(), typeClass, adapter.id, readerIndex);
 

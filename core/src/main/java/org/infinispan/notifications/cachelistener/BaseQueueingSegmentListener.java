@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implements QueueingSegmentListener<K, V, E> {
    protected final Log log = LogFactory.getLog(getClass());
+   protected boolean trace = log.isTraceEnabled();
 
    protected final AtomicBoolean completed = new AtomicBoolean(false);
    protected final ConcurrentMap<K, Object> notifiedKeys;
@@ -44,7 +45,7 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
       // of taking the last one
       Object value = notifiedKeys.put(key, NOTIFIED);
       if (value != null) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Processing key %s as a concurrent update occurred with value %s", key, value);
          }
       }

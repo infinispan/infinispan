@@ -74,6 +74,7 @@ import org.infinispan.util.logging.LogFactory;
 public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(JdbcStringBasedStore.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private JdbcStringBasedStoreConfiguration configuration;
 
@@ -109,7 +110,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
                e.getClass().getName());
          throw new IllegalStateException("This should not happen.", e);
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Using key2StringMapper: %s", key2StringMapper.getClass().getName());
       }
       if (configuration.preload()) {
@@ -153,7 +154,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       try {
          connection = connectionFactory.getConnection();
          String sql = tableManipulation.getSelectIdRowSql();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
          ps = connection.prepareStatement(sql);
@@ -166,7 +167,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          }
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
-         if (log.isTraceEnabled()) {
+         if (trace) {
              log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
          ps = connection.prepareStatement(sql);
@@ -176,7 +177,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          log.sqlFailureStoringKey(keyStr, ex);
          throw new PersistenceException(String.format("Error while storing string key to database; key: '%s'", keyStr), ex);
       } catch (InterruptedException e) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("Interrupted while marshalling to store");
          }
          Thread.currentThread().interrupt();
@@ -228,7 +229,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       String keyStr = key2Str(key);
       try {
          String sql = tableManipulation.getDeleteRowSql();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Running sql '%s' on %s", sql, keyStr);
          }
          connection = connectionFactory.getConnection();
@@ -253,7 +254,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          int result = ps.executeUpdate();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Successfully removed %d rows.", result);
          }
       } catch (SQLException ex) {
@@ -280,7 +281,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
                ps = conn.prepareStatement(sql);
                ps.setLong(1, ctx.getTimeService().wallClockTime());
                int result = ps.executeUpdate();
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Successfully purged %d rows.", result);
                }
             } catch (SQLException ex) {
@@ -322,7 +323,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
             ResultSet rs = null;
             try {
                String sql = tableManipulation.getLoadNonExpiredAllRowsSql();
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Running sql %s", sql);
                }
                conn = connectionFactory.getConnection();

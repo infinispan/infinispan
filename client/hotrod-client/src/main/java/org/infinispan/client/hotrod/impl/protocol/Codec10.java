@@ -35,6 +35,7 @@ import org.infinispan.commons.util.Util;
 public class Codec10 implements Codec {
 
    private static final Log log = LogFactory.getLog(Codec10.class, Log.class);
+   protected final boolean trace = getLog().isTraceEnabled();
 
    static final AtomicLong MSG_ID = new AtomicLong();
 
@@ -52,10 +53,10 @@ public class Codec10 implements Codec {
    @Override
    public void writeExpirationParams(Transport transport, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       if (!CodecUtils.isIntCompatible(lifespan)) {
-         log.warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+         getLog().warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
       }
       if (!CodecUtils.isIntCompatible(maxIdle)) {
-         log.warn("MaxIdle value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+         getLog().warn("MaxIdle value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
       }
       int lifespanSeconds = CodecUtils.toSeconds(lifespan, lifespanTimeUnit);
       int maxIdleSeconds = CodecUtils.toSeconds(maxIdle, maxIdleTimeUnit);
@@ -83,7 +84,7 @@ public class Codec10 implements Codec {
       transport.writeVInt(params.topologyId.get());
       //todo change once TX support is added
       transport.writeByte(params.txMarker);
-      getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
+      if (trace) getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
          params.messageId, params.opCode, flagInt);
       return params;
    }
@@ -92,11 +93,10 @@ public class Codec10 implements Codec {
    public short readHeader(Transport transport, HeaderParams params) {
       short magic = transport.readByte();
       final Log localLog = getLog();
-      boolean isTrace = localLog.isTraceEnabled();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          String message = "Invalid magic number. Expected %#x and received %#x";
          localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
-         if (isTrace)
+         if (trace)
             localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
@@ -106,11 +106,12 @@ public class Codec10 implements Codec {
       if (receivedMessageId != params.messageId && receivedMessageId != 0) {
          String message = "Invalid message id. Expected %d and received %d";
          localLog.invalidMessageId(params.messageId, receivedMessageId);
-         if (isTrace)
+         if (trace)
             localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
          throw new InvalidResponseException(String.format(message, params.messageId, receivedMessageId));
       }
-      localLog.tracef("Received response for message id: %d", receivedMessageId);
+      if (trace)
+         localLog.tracef("Received response for message id: %d", receivedMessageId);
 
       short receivedOpCode = transport.readByte();
       // Read both the status and new topology (if present),
@@ -129,7 +130,7 @@ public class Codec10 implements Codec {
                "Invalid response operation. Expected %#x and received %#x",
                params.opRespCode, receivedOpCode));
       }
-      localLog.tracef("Received operation code is: %#04x", receivedOpCode);
+      if (trace) localLog.tracef("Received operation code is: %#04x", receivedOpCode);
 
       return status;
    }
@@ -149,7 +150,7 @@ public class Codec10 implements Codec {
       Marshaller marshaller = transport.getTransportFactory().getMarshaller();
       if (hasForceReturn(flags)) {
          byte[] bytes = transport.readArray();
-         if (log.isTraceEnabled()) log.tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
+         if (trace) getLog().tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
          //0-length response means null
          return bytes.length == 0 ? null : MarshallerUtil.bytes2obj(marshaller, bytes, status);
       } else {
@@ -177,8 +178,7 @@ public class Codec10 implements Codec {
 
    protected void checkForErrorsInResponseStatus(Transport transport, HeaderParams params, short status) {
       final Log localLog = getLog();
-      boolean isTrace = localLog.isTraceEnabled();
-      if (isTrace) localLog.tracef("Received operation status: %#x", status);
+      if (trace) localLog.tracef("Received operation status: %#x", status);
 
       try {
          switch (status) {
@@ -190,12 +190,12 @@ public class Codec10 implements Codec {
             case HotRodConstants.UNKNOWN_VERSION_STATUS: {
                // If error, the body of the message just contains a message
                String msgFromServer = transport.readString();
-               if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
+               if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && trace) {
                   localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
                } if (msgFromServer.contains("SuspectException")
                      || msgFromServer.contains("SuspectedException")) {
                   // Handle both Infinispan's and JGroups' suspicions
-                  if (isTrace)
+                  if (trace)
                      localLog.tracef("A remote node was suspected while executing messageId=%d. " +
                         "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
                   // TODO: This will be better handled with its own status id in version 2 of protocol
@@ -262,7 +262,7 @@ public class Codec10 implements Codec {
    protected Map<SocketAddress, Set<Integer>> computeNewHashes(Transport transport,
          Log localLog, int newTopologyId, int numKeyOwners,
          short hashFunctionVersion, int hashSpace, int clusterSize) {
-      if (localLog.isTraceEnabled()) {
+      if (trace) {
          localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                        "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
                  newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize);
@@ -274,7 +274,7 @@ public class Codec10 implements Codec {
          String host = transport.readString();
          int port = transport.readUnsignedShort();
          int hashCode = transport.read4ByteInt();
-         localLog.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
+         if (trace) localLog.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
          SocketAddress address = new InetSocketAddress(host, port);
          Set<Integer> hashes = servers2Hash.get(address);
          if (hashes == null) {
@@ -282,7 +282,7 @@ public class Codec10 implements Codec {
             servers2Hash.put(address, hashes);
          }
          hashes.add(hashCode);
-         localLog.tracef("Hash code is: %d", hashCode);
+         if (trace) localLog.tracef("Hash code is: %d", hashCode);
       }
       return servers2Hash;
    }

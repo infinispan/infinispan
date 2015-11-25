@@ -26,6 +26,7 @@ import java.util.Collection;
 public class TotalOrderVersionedDistributionInterceptor extends VersionedDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedDistributionInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
@@ -48,7 +49,7 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
 
    @Override
    protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Total Order Anycast transaction %s with Total Order", command.getGlobalTransaction().globalId());
       }
 

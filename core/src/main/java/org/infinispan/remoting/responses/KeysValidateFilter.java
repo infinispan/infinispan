@@ -22,6 +22,7 @@ import java.util.Set;
 public class KeysValidateFilter implements TimeoutValidationResponseFilter {
 
    private static final Log log = LogFactory.getLog(KeysValidateFilter.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final Address localAddress;
    private final Set<Object> keysAwaitingValidation;
    private boolean selfDelivered;
@@ -41,13 +42,13 @@ public class KeysValidateFilter implements TimeoutValidationResponseFilter {
          Object retVal = ((SuccessfulResponse) response).getResponseValue();
          if (retVal instanceof Collection<?>) {
             keysAwaitingValidation.removeAll((Collection<?>) retVal);
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Received keys validated: %s. Awaiting validation of %s. Self Delivered? %s",
                           retVal, keysAwaitingValidation, selfDelivered);
             }
          } else if (retVal instanceof EntryVersionsMap) {
             keysAwaitingValidation.removeAll(((EntryVersionsMap) retVal).keySet());
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Received keys validated: %s. Awaiting validation of %s. Self Delivered? %s",
                           ((EntryVersionsMap) retVal).keySet(), keysAwaitingValidation, selfDelivered);
             }

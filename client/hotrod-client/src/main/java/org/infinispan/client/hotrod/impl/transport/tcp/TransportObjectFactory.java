@@ -17,6 +17,7 @@ public class TransportObjectFactory
       extends BaseKeyedPoolableObjectFactory<SocketAddress, TcpTransport> {
 
    private static final Log log = LogFactory.getLog(TransportObjectFactory.class);
+   private static final boolean trace = log.isTraceEnabled();
    protected final TcpTransportFactory tcpTransportFactory;
    protected final AtomicInteger defaultCacheTopologyId;
    protected final boolean pingOnStartup;
@@ -34,11 +35,9 @@ public class TransportObjectFactory
    @Override
    public TcpTransport makeObject(SocketAddress address) throws Exception {
       TcpTransport tcpTransport = new TcpTransport(address, tcpTransportFactory);
-      if (log.isTraceEnabled()) {
-         log.tracef("Created tcp transport: %s", tcpTransport);
-      }
+      if (trace) log.tracef("Created tcp transport: %s", tcpTransport);
       if (pingOnStartup && !firstPingExecuted) {
-         log.trace("Executing first ping!");
+         if (trace) log.trace("Executing first ping!");
          firstPingExecuted = true;
 
          // Don't ignore exceptions from ping() command, since
@@ -60,35 +59,29 @@ public class TransportObjectFactory
    public boolean validateObject(SocketAddress address, TcpTransport transport) {
       try {
          boolean valid = ping(transport, defaultCacheTopologyId) == PingOperation.PingResult.SUCCESS;
-         log.tracef("Is connection %s valid? %s", transport, valid);
+         if (trace) log.tracef("Is connection %s valid? %s", transport, valid);
          return valid;
       } catch (Throwable e) {
-         log.tracef(e, "Error validating the connection %s. Marking it as invalid.", transport);
+         if (trace) log.tracef(e, "Error validating the connection %s. Marking it as invalid.", transport);
          return false;
       }
    }
 
    @Override
    public void destroyObject(SocketAddress address, TcpTransport transport) throws Exception {
-      if (log.isTraceEnabled()) {
-         log.tracef("About to destroy tcp transport: %s", transport);
-      }
+      if (trace) log.tracef("About to destroy tcp transport: %s", transport);
       transport.destroy();
    }
 
    @Override
    public void activateObject(SocketAddress address, TcpTransport transport) throws Exception {
       super.activateObject(address, transport);
-      if (log.isTraceEnabled()) {
-         log.tracef("Fetching from pool: %s", transport);
-      }
+      if (trace) log.tracef("Fetching from pool: %s", transport);
    }
 
    @Override
    public void passivateObject(SocketAddress address, TcpTransport transport) throws Exception {
       super.passivateObject(address, transport);
-      if (log.isTraceEnabled()) {
-         log.tracef("Returning to pool: %s", transport);
-      }
+      if (trace) log.tracef("Returning to pool: %s", transport);
    }
 }

@@ -13,6 +13,7 @@ import org.infinispan.util.logging.LogFactory;
 final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
 
    private static final Log log = LogFactory.getLog(EmbeddedQueryBuilder.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final QueryEngine queryEngine;
 
@@ -25,7 +26,7 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
    public Query build() {
       JPAQueryGenerator generator = new JPAQueryGenerator();
       String jpqlString = accept(generator);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("JPQL string : %s", jpqlString);
       }
       return new DelegatingQuery(queryEngine, queryFactory, jpqlString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);

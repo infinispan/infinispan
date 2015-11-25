@@ -21,6 +21,7 @@ import java.util.Set;
 public class JmxUtil {
 
    private static final Log log = LogFactory.getLog(JmxUtil.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    /**
     * Looks up the {@link javax.management.MBeanServer} instance based on the
@@ -102,7 +103,7 @@ public class JmxUtil {
          Set<ObjectInstance> mbeans = mBeanServer.queryMBeans(filterObjName, null);
          for (ObjectInstance mbean : mbeans) {
             ObjectName name = mbean.getObjectName();
-            if (log.isTraceEnabled())
+            if (trace)
                log.trace("Unregistering mbean with name: " + name);
             mBeanServer.unregisterMBean(name);
          }

@@ -650,7 +650,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       final boolean l1Invalidation = command instanceof InvalidateL1Command;
 
       if (entry.isChanged()) {
-         log.tracef("About to commit entry %s", entry);
+         if (trace) log.tracef("About to commit entry %s", entry);
          commitContextEntry(entry, ctx, command, metadata, stateTransferFlag, l1Invalidation);
 
          return true;

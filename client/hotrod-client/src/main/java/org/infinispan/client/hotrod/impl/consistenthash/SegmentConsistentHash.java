@@ -23,6 +23,7 @@ import static java.util.Arrays.stream;
 public final class SegmentConsistentHash implements ConsistentHash {
 
    private static final Log log = LogFactory.getLog(SegmentConsistentHash.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Hash hash = MurmurHash3.getInstance();
    private SocketAddress[][] segmentOwners;
@@ -43,7 +44,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
    @Override
    public SocketAddress getServer(byte[] key) {
       int segmentId = getSegment(key);
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Find server in segment id %s for key %s", segmentId, Util.toHexString(key));
 
       return segmentOwners[segmentId][0];

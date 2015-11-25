@@ -52,6 +52,7 @@ import org.infinispan.commons.util.Util;
 public class TcpTransportFactory implements TransportFactory {
 
    private static final Log log = LogFactory.getLog(TcpTransportFactory.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
 
    /**
@@ -178,7 +179,7 @@ public class TcpTransportFactory implements TransportFactory {
             // Ping's objective is to retrieve a potentially newer
             // version of the Hot Rod cluster topology, so ignore
             // exceptions from nodes that might not be up any more.
-            if (log.isTraceEnabled())
+            if (trace)
                log.tracef(e, "Ignoring exception pinging configured servers %s to establish a connection",
                   servers);
          }
@@ -248,7 +249,7 @@ public class TcpTransportFactory implements TransportFactory {
       FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
 
       SocketAddress server = balancer.nextServer(failedServers);
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Using the balancer for determining the server: %s", server);
 
       return server;
@@ -282,7 +283,7 @@ public class TcpTransportFactory implements TransportFactory {
       TcpTransport tcpTransport = (TcpTransport) transport;
       if (!tcpTransport.isValid()) {
          try {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Dropping connection as it is no longer valid: %s", tcpTransport);
             }
             pool.invalidateObject(tcpTransport.getServerAddress(), tcpTransport);
@@ -340,7 +341,7 @@ public class TcpTransportFactory implements TransportFactory {
       addedServers.removeAll(servers);
       Set<SocketAddress> failedServers = new HashSet<>(servers);
       failedServers.removeAll(newServers);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Current list: %s", servers);
          log.tracef("New list: %s", newServers);
          log.tracef("Added servers: %s", addedServers);
@@ -385,7 +386,7 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    private void logConnectionInfo(SocketAddress server) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
          log.tracef("For server %s: active = %d; idle = %d",
                server, pool.getNumActive(server), pool.getNumIdle(server));
@@ -478,7 +479,7 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public ClusterSwitchStatus trySwitchCluster(String failedClusterName, byte[] cacheName) {
       synchronized (lock) {
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef("Trying to switch cluster away from '%s'", failedClusterName);
 
          if (clusters.isEmpty()) {
@@ -495,7 +496,7 @@ public class TcpTransportFactory implements TransportFactory {
 
          // Switch cluster if there has not been a topology id cluster switch reset recently,
          if (topologyInfo.isTopologyValid(cacheName)) {
-               if (log.isTraceEnabled())
+               if (trace)
                log.tracef("Switching clusters, failed cluster is '%s' and current cluster name is '%s'",
                   failedClusterName, currentClusterName);
 

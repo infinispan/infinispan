@@ -23,6 +23,7 @@ import java.util.Arrays;
 public class TableManipulation implements Cloneable {
 
    private static final Log log = LogFactory.getLog(TableManipulation.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public static final int DEFAULT_FETCH_SIZE = 100;
 
@@ -85,7 +86,7 @@ public class TableManipulation implements Cloneable {
          rs = metaData.getTables(null, schemaPattern, tableName.getName(), new String[] {"TABLE"});
          return rs.next();
       } catch (SQLException e) {
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef(e, "SQLException occurs while checking the table %s", tableName);
          return false;
       } finally {
@@ -100,7 +101,7 @@ public class TableManipulation implements Cloneable {
             + " NOT NULL, " + config.dataColumnName() + " " + config.dataColumnType() + ", "
             + config.timestampColumnName() + " " + config.timestampColumnType() +
             ", PRIMARY KEY (" + config.idColumnName() + "))";
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Creating table with following DDL: '%s'.", createTableDdl);
       }
       executeUpdateSql(conn, createTableDdl);
@@ -133,7 +134,7 @@ public class TableManipulation implements Cloneable {
       String dropTableDdl = "DROP TABLE " + getTableName();
       String clearTable = "DELETE FROM " + getTableName();
       executeUpdateSql(conn, clearTable);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Dropping table with following DDL '%s'", dropTableDdl);
       }
       executeUpdateSql(conn, dropTableDdl);

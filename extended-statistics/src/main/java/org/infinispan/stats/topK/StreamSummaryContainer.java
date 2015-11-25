@@ -27,6 +27,7 @@ public class StreamSummaryContainer {
 
    private static final int MAX_CAPACITY = 100000;
    private static final Log log = LogFactory.getLog(StreamSummaryContainer.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final String cacheName;
    private final String address;
    private final AtomicBoolean flushing;
@@ -239,7 +240,7 @@ public class StreamSummaryContainer {
    }
 
    private void syncOffer(final Stat stat, Object key) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Offer key=%s to stat=%s in %s", key, stat, this);
       }
       topKeyWrapper.get(stat).offer(key);
@@ -291,7 +292,7 @@ public class StreamSummaryContainer {
          for (Counter<Object> counter : counterList) {
             map.put(counter.getItem(), counter.getCount());
          }
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef(this + " top-k is " + map);
          }
          return map;

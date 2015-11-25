@@ -35,6 +35,7 @@ import java.util.Collection;
 public class TotalOrderInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
    private TransactionTable transactionTable;
    private TotalOrderManager totalOrderManager;
    private ClusteringDependentLogic clusteringDependentLogic;
@@ -87,7 +88,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
                }
 
 
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
                }
 
@@ -132,7 +133,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
 
    private Object visitSecondPhaseCommand(TxInvocationContext context, AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
       GlobalTransaction gtx = command.getGlobalTransaction();
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Second phase command received. Commit?=%s Transaction=%s, Local=%s", commit, gtx.globalId(),
                     context.isOriginLocal());
       }

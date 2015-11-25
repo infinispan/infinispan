@@ -30,6 +30,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
  */
 public class SaslTransportObjectFactory extends TransportObjectFactory {
    private static final Log log = LogFactory.getLog(SaslTransportObjectFactory.class);
+   private static final boolean trace = log.isTraceEnabled();
    private static final byte[] EMPTY_BYTES = new byte[0];
    private static final String AUTH_INT = "auth-int";
    private static final String AUTH_CONF = "auth-conf";
@@ -44,7 +45,7 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    @Override
    public TcpTransport makeObject(SocketAddress address) throws Exception {
       TcpTransport tcpTransport = new TcpTransport(address, tcpTransportFactory);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Created tcp transport: %s", tcpTransport);
       }
 
@@ -71,7 +72,7 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
                configuration.serverName(), configuration.saslProperties(), configuration.callbackHandler());
       }
 
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Authenticating using mech: %s", configuration.saslMechanism());
       }
       byte response[] = saslClient.hasInitialResponse() ? evaluateChallenge(saslClient, EMPTY_BYTES) : EMPTY_BYTES;

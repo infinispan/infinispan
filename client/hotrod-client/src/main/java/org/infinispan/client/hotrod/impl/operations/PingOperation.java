@@ -23,6 +23,7 @@ import org.jboss.logging.BasicLogger;
 public class PingOperation extends HotRodOperation {
 
    private static final BasicLogger log = BasicLogFactory.getLog(PingOperation.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Transport transport;
 
@@ -43,12 +44,12 @@ public class PingOperation extends HotRodOperation {
 
          short respStatus = readHeaderAndValidate(transport, params);
          if (HotRodConstants.isSuccess(respStatus)) {
-            if (log.isTraceEnabled())
+            if (trace)
                log.tracef("Successfully validated transport: %s", transport);
             return PingResult.SUCCESS;
          } else {
             String hexStatus = Integer.toHexString(respStatus);
-            if (log.isTraceEnabled())
+            if (trace)
                log.tracef("Unknown response status: %s", hexStatus);
 
             throw new InvalidResponseException(

@@ -46,6 +46,7 @@ import org.jgroups.util.Buffer;
  */
 public class ExtendedStatisticRpcManager implements RpcManager {
    private static final Log log = LogFactory.getLog(ExtendedStatisticRpcManager.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final RpcManager actual;
    private final CacheStatisticManager cacheStatisticManager;
    private final RpcDispatcher.Marshaller marshaller;
@@ -184,13 +185,13 @@ public class ExtendedStatisticRpcManager implements RpcManager {
          commandSizeStat = CLUSTERED_GET_COMMAND_SIZE;
          globalTransaction = ((ClusteredGetCommand) command).getGlobalTransaction();
       } else {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Does not update stats for command %s. The command is not needed", command);
          }
          return;
       }
 
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Update stats for command %s. Is sync? %s. Duration stat is %s, counter stats is %s, " +
                           "recipient size stat is %s", command, sync, durationStat, counterStat, recipientSizeStat);
       }

@@ -554,7 +554,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       Response response;
       if (transport.isCoordinator()) {
          try {
-            if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
+            if (trace) log.tracef("Attempting to execute command on self: %s", command);
             gcr.wireDependencies(command);
             response = (Response) command.perform(null);
          } catch (Throwable t) {
@@ -581,7 +581,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          asyncTransportExecutor.execute(new Runnable() {
             @Override
             public void run() {
-               if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
+               if (trace) log.tracef("Attempting to execute command on self: %s", command);
                gcr.wireDependencies(command);
                try {
                   command.perform(null);
@@ -632,7 +632,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       gcr.wireDependencies(command);
       Response localResponse;
       try {
-         if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
+         if (trace) log.tracef("Attempting to execute command on self: %s", command);
          localResponse = (Response) command.perform(null);
       } catch (Throwable throwable) {
          throw new Exception(throwable);

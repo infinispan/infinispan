@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedValue<V>> {
 
    private static final Log log = LogFactory.getLog(GetWithVersionOperation.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public GetWithVersionOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
@@ -40,7 +41,7 @@ public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedVa
          result = null;
       } else if (HotRodConstants.isSuccess(status)) {
          long version = transport.readLong();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Received version: %d", version);
          }
          V value = codec.readUnmarshallByteArray(transport, status);

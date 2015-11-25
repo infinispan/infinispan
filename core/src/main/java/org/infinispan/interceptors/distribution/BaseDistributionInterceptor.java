@@ -312,7 +312,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (!ctx.isOriginLocal()) {
          if (primaryOwner.equals(rpcManager.getAddress())) {
             if (!command.isSuccessful()) {
-               log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
+               if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
                return localResult;
             }
             List<Address> recipients = cdl.getOwners(command.getKey());
@@ -330,11 +330,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       } else {
          if (primaryOwner.equals(rpcManager.getAddress())) {
             if (!command.isSuccessful()) {
-               log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", command);
+               if (trace) log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", command);
                return localResult;
             }
             List<Address> recipients = cdl.getOwners(command.getKey());
-            log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",
+            if (trace) log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",
                   recipients);
             // check if a single owner has been configured and the target for the key is the local address
             boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
@@ -351,7 +351,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }
             return localResult;
          } else {
-            log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
+            if (trace) log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
             boolean isSyncForwarding = isSync || command.isReturnValueExpected();
 
             Map<Address, Response> addressResponseMap;
@@ -407,7 +407,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
       Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
       if (fromPrimaryOwner == null) {
-         log.tracef("Primary owner %s returned null", primaryOwner);
+         if (trace) log.tracef("Primary owner %s returned null", primaryOwner);
          return null;
       }
       if (fromPrimaryOwner.isSuccessful()) {
@@ -636,7 +636,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       Object key = command.getKey();
       ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
       boolean shouldFetchFromRemote = !isValueAvailableLocally(ch, key);
-      if (!shouldFetchFromRemote && getLog().isTraceEnabled()) {
+      if (!shouldFetchFromRemote && trace) {
          getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
       }
       return shouldFetchFromRemote;

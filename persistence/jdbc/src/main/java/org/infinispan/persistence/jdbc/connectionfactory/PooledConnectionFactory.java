@@ -30,6 +30,7 @@ import com.mchange.v2.c3p0.DataSources;
 public class PooledConnectionFactory extends ConnectionFactory {
 
    private static final Log log = LogFactory.getLog(PooledConnectionFactory.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
    private ComboPooledDataSource pooledDataSource;
 
    @Override
@@ -59,7 +60,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
       pooledDataSource.setJdbcUrl(pooledConfiguration.connectionUrl());
       pooledDataSource.setUser(pooledConfiguration.username());
       pooledDataSource.setPassword(pooledConfiguration.password());
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Started connection factory with config: %s", config);
       }
    }
@@ -112,7 +113,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
    }
 
    private void logBefore(boolean checkout) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          String operation = checkout ? "checkout" : "release";
          try {
             log.tracef("DataSource before %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",
@@ -124,7 +125,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
    }
 
    private void logAfter(Connection connection, boolean checkout)  {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          String operation = checkout ? "checkout" : "release";
          try {
             log.tracef("DataSource after %s (NumBusyConnectionsAllUsers) : %d, (NumConnectionsAllUsers) : %d",

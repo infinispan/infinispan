@@ -33,6 +33,7 @@ import java.util.UUID;
  */
 public class ClusterListenerReplicateCallable<K, V> implements DistributedCallable<K, V, Void> {
    private static final Log log = LogFactory.getLog(ClusterListenerReplicateCallable.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private transient EmbeddedCacheManager cacheManager;
    private transient CacheNotifier cacheNotifier;
@@ -101,23 +102,23 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                   if (!cacheManager.getMembers().contains(origin)) {
                      cacheNotifier.removeListener(listener);
                      cacheManagerNotifier.removeListener(listener);
-                     if (log.isTraceEnabled()) {
+                     if (trace) {
                         log.tracef("Removing local cluster listener for remote cluster listener that was just registered, as the origin %s went away concurrently", origin);
                      }
-                  } else if (log.isTraceEnabled()) {
+                  } else if (trace) {
                      log.tracef("Registered local cluster listener for remote cluster listener from origin %s with id %s",
                                 origin, identifier);
                   }
-               } else if (log.isTraceEnabled()) {
+               } else if (trace) {
                   log.tracef("Local cluster listener from origin %s with id %s was already installed, ignoring",
                              origin, identifier);
                }
             }
-         } else if (log.isTraceEnabled()) {
+         } else if (trace) {
             log.tracef("Not registering local cluster listener for remote cluster listener from origin %s, as the origin went away",
                        origin);
          }
-      } else if (log.isTraceEnabled()) {
+      } else if (trace) {
          log.trace("Not registering local cluster listener as we are the node who registered the cluster listener");
       }
       return null;

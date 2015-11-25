@@ -26,6 +26,7 @@ import java.util.UUID;
 public class ClusterEventCallable<K, V> implements DistributedCallable<K, V, Void> {
 
    private static final Log log = LogFactory.getLog(ClusterEventCallable.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private transient ClusterCacheNotifier clusterCacheNotifier;
 
@@ -43,7 +44,7 @@ public class ClusterEventCallable<K, V> implements DistributedCallable<K, V, Voi
 
    @Override
    public Void call() throws Exception {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Received cluster event(s) %s, notifying cluster listener with id %s", events, identifier);
       }
       clusterCacheNotifier.notifyClusterListeners(events, identifier);

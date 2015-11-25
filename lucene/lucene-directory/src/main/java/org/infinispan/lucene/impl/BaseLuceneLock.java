@@ -23,6 +23,7 @@ import org.infinispan.util.logging.LogFactory;
 class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
 
    private static final Log log = LogFactory.getLog(BaseLuceneLock.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<Object, Object> noCacheStoreCache;
    private final String lockName;
@@ -40,13 +41,13 @@ class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
    public boolean obtain() {
       Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Lock: %s acquired for index: %s", lockName, indexName);
          }
          // we own the lock:
          return true;
       } else {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Lock: %s not acquired for index: %s, was taken already.", lockName, indexName);
          }
          return false;
@@ -58,7 +59,7 @@ class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
     */
    public void clearLock() {
       Object previousValue = noCacheStoreCache.remove(keyOfLock);
-      if (previousValue!=null && log.isTraceEnabled()) {
+      if (previousValue!=null && trace) {
          log.tracef("Lock removed for index: %s", indexName);
       }
    }

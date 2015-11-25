@@ -45,6 +45,7 @@ import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteCacheImpl.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private Marshaller marshaller;
    private final String name;
@@ -55,7 +56,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private int estimateValueSize;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Creating remote cache: %s", name);
       }
       this.name = name;
@@ -218,7 +219,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
       applyDefaultExpirationFlags(lifespan, maxIdleTime);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("About to putAll entries (%s) lifespan:%d (%s), maxIdle:%d (%s)", map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       }
       Map<byte[], byte[]> byteMap = new HashMap<>();
@@ -287,7 +288,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
       applyDefaultExpirationFlags(lifespan, maxIdleTime);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, lifespan, maxIdleTime);
       }
       PutOperation<V> op = operationsFactory.newPutKeyValueOperation(obj2bytes(key, true), obj2bytes(value, false), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
@@ -474,7 +475,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       byte[] keyBytes = obj2bytes(key, true);
       GetOperation<V> gco = operationsFactory.newGetKeyOperation(keyBytes);
       V result = gco.execute();
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("For key(%s) returning %s", key, result);
       }
       return result;
@@ -483,7 +484,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public Map<K, V> getAll(Set<? extends K> keys) {
       assertRemoteCacheManagerIsStarted();
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("About to getAll entries (%s)", keys);
       }
       Set<byte[]> byteKeys = new HashSet<>(keys.size());

@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentMap;
 public final class CacheStatisticManager {
 
    private static final Log log = LogFactory.getLog(CacheStatisticManager.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
    /**
     * collects statistic for a remote transaction
     */
@@ -170,12 +171,12 @@ public final class CacheStatisticManager {
       if (local) {
          //Not overriding the InitialValue method leads me to have "null" at the first invocation of get()
          TransactionStatistics lts = createTransactionStatisticIfAbsent(globalTransaction, true);
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Local transaction statistic is already initialized: %s", lts);
          }
       } else {
          TransactionStatistics rts = createTransactionStatisticIfAbsent(globalTransaction, false);
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Using the remote transaction statistic %s for transaction %s", rts, globalTransaction);
          }
       }
@@ -251,7 +252,7 @@ public final class CacheStatisticManager {
 
    private TransactionStatistics removeTransactionStatistic(GlobalTransaction globalTransaction, boolean local) {
       if (globalTransaction != null) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Removing %s statistic for %s", local ? "local" : "remote", globalTransaction.globalId());
          }
          return local ? localTransactionStatistics.remove(globalTransaction) :
@@ -272,14 +273,14 @@ public final class CacheStatisticManager {
       }
 
       if (local) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Creating local statistic for %s", globalTransaction.globalId());
          }
          LocalTransactionStatistics lts = new LocalTransactionStatistics(isOptimisticLocking, timeService);
          TransactionStatistics existing = localTransactionStatistics.putIfAbsent(globalTransaction, lts);
          return existing == null ? lts : existing;
       } else {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Creating remote statistic for %s", globalTransaction.globalId());
          }
          RemoteTransactionStatistics rts = new RemoteTransactionStatistics(timeService);

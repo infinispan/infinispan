@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements Versioned {
 
    private static final Log log = LogFactory.getLog(ClusteredRepeatableReadEntry.class);
+   private static final boolean trace = log.isTraceEnabled();
    private static final AtomicReference<Boolean> ignored = new AtomicReference<>();
 
    public ClusteredRepeatableReadEntry(Object key, Object value, Metadata metadata) {
@@ -34,7 +35,7 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
                                         TxInvocationContext ctx, EntryVersion versionSeen,
                                         VersionGenerator versionGenerator, TimeService timeService) {
       if (versionSeen == null) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", key);
          }
          //version seen is null when the entry was not read. In this case, the write skew is not needed.
@@ -44,12 +45,12 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
       InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, persistenceManager, getKey(),
                                                                            ctx, timeService, ignored);
       if (ice == null) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("No entry for key %s found in data container" , key);
          }
          prevVersion = ctx.getCacheTransaction().getLookedUpRemoteVersion(key);
          if (prevVersion == null) {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("No looked up remote version for key %s found in context" , key);
             }
             //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
@@ -60,14 +61,14 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
          if (prevVersion == null)
             throw new IllegalStateException("Entries cannot have null versions!");
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Is going to compare versions %s and %s for key %s.", prevVersion, versionSeen, key);
       }
 
       //in this case, the transaction read some value and the data container has a value stored.
       //version seen and previous version are not null. Simple version comparation.
       InequalVersionComparisonResult result = prevVersion.compareTo(versionSeen);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Comparing versions %s and %s for key %s: %s", prevVersion, versionSeen, key, result);
       }
       return InequalVersionComparisonResult.AFTER != result;

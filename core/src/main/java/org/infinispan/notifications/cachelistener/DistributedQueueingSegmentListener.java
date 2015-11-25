@@ -13,7 +13,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -101,7 +100,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    private void completeSegment(int segment) {
       Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue = queues.get(segment);
       if (queue != null) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Completed segment %s", segment);
          }
          for (KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>> event : queue) {

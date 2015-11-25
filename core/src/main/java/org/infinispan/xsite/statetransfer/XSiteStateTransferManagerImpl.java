@@ -57,6 +57,7 @@ import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlComman
 public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager {
 
    private static final Log log = LogFactory.getLog(XSiteStateTransferManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
    private final ConcurrentMap<String, XSiteStateTransferCollector> siteCollector;
    private final ConcurrentMap<String, String> status;
@@ -169,7 +170,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    @Override
    public void cancelPushState(String siteName) throws Throwable {
       if (!siteCollector.containsKey(siteName)) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Tried to cancel push state to '%s' but it does not exist.", siteName);
          }
          return;

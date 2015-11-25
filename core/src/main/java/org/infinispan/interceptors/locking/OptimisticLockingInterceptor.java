@@ -33,6 +33,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private boolean needToMarkReads;
 
    private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    protected Log getLog() {
@@ -139,12 +140,12 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private void performLocalWriteSkewCheck(TxInvocationContext ctx, Object key) {
       CacheEntry ce = ctx.lookupEntry(key);
       if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Performing local write skew check for key %s", key);
          }
          ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
       } else {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("*Not* performing local write skew check for key %s", key);
          }
       }

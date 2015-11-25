@@ -16,9 +16,10 @@ import scala.collection.JavaConversions._
  * @author Galder Zamarreño
  */
 object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
+   val isTrace = isTraceEnabled
 
    override def writeEvent(e: Event, buf: ByteBuf) {
-      if (isTraceEnabled)
+      if (isTrace)
          log.tracef("Write event %s", e)
 
       buf.writeByte(MAGIC_RES.byteValue)
@@ -75,7 +76,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                writeHashTopologyUpdate(h, cacheTopology, buf)
          }
          case None =>
-            trace("Write topology response header with no change")
+            if (isTrace) trace("Write topology response header with no change")
             buf.writeByte(0)
       }
    }
@@ -98,7 +99,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          logNoMembersInTopology()
          buffer.writeByte(0) // Topology not changed
       } else {
-         trace("Write topology change response header %s", t)
+         if (isTrace) trace("Write topology change response header %s", t)
          buffer.writeByte(1) // Topology changed
          writeUnsignedInt(t.topologyId, buffer)
          writeUnsignedInt(topologyMap.size, buffer)
@@ -110,7 +111,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
    }
 
    private def writeEmptyHashInfo(t: AbstractTopologyResponse, buffer: ByteBuf) {
-      trace("Return limited hash distribution aware header because the client %s doesn't ", t)
+      if (isTrace) trace("Return limited hash distribution aware header because the client %s doesn't ", t)
       buffer.writeByte(0) // Hash Function Version
       writeUnsignedInt(t.numSegments, buffer)
    }
@@ -122,7 +123,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          ch.getMembers.contains(addr)
       }
 
-      if (isTraceEnabled) {
+      if (isTrace) {
          trace(s"Topology cache contains: ${h.serverEndpointsMap}")
          trace(s"After read consistent hash filter, members are: $members")
       }
@@ -131,7 +132,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          logNoMembersInHashTopology(ch, h.serverEndpointsMap.toString())
          buf.writeByte(0) // Topology not changed
       } else {
-         trace("Write hash distribution change response header %s", h)
+         if (isTrace) trace("Write hash distribution change response header %s", h)
          buf.writeByte(1) // Topology changed
          writeUnsignedInt(h.topologyId, buf) // Topology ID
 
@@ -272,12 +273,12 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                writeRangedBytes(g.data.get, buf)
             }
          case g: BulkGetResponse =>
-            log.trace("About to respond to bulk get request")
+            if (isTrace) log.trace("About to respond to bulk get request")
             if (g.status == Success) {
                val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
                var iterator = asScalaIterator(cache.entrySet.iterator)
                if (g.count != 0) {
-                  trace("About to write (max) %d messages to the client", g.count)
+                  if (isTrace) trace("About to write (max) %d messages to the client", g.count)
                   iterator = iterator.take(g.count)
                }
                for (entry <- iterator) {
@@ -288,7 +289,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                buf.writeByte(0) // Done
             }
          case g: BulkGetKeysResponse =>
-            log.trace("About to respond to bulk get keys request")
+            if (isTrace) log.trace("About to respond to bulk get keys request")
             if (g.status == Success) {
                val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
                val keys = BulkUtil.getAllKeys(cache, g.scope)
@@ -300,7 +301,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                buf.writeByte(0) // Done
             }
          case g: GetAllResponse =>
-           if (isTraceEnabled)
+           if (isTrace)
              log.trace("About to respond to getAll request")
            if (g.status == Success) {
              writeUnsignedInt(g.entries.size, buf)

@@ -36,6 +36,7 @@ import static org.infinispan.rhq.RhqUtil.constructNumericMeasure;
  */
 public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent> {
    private static final Log log = LogFactory.getLog(CacheComponent.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private static final String STATUS_ATTRIBUTE_NAME = "CacheStatus";
    private static final List<String> AVAILABILITY_ATTRIBUTE = Collections.singletonList(STATUS_ATTRIBUTE_NAME);
@@ -50,7 +51,7 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
    public void start(ResourceContext<CacheManagerComponent> context) {
       this.cacheManagerName = context.getParentResourceComponent().getResourceContext().getResourceKey();
       this.cacheName = context.getResourceKey();
-      if (log.isTraceEnabled())
+      if (trace)
          log.trace("Start cache component for cache manager "+cacheManagerName+" with cache key "+cacheName);
       super.start(context);
    }
@@ -196,7 +197,7 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
 
    private EmsBean queryBean(EmsConnection conn, String componentName) throws Exception {
       String pattern = getSingleComponentPattern(cacheManagerName, cacheName, componentName);
-      if (log.isTraceEnabled()) log.trace("Pattern to query is " + pattern);
+      if (trace) log.trace("Pattern to query is " + pattern);
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
       for (EmsBean bean : beans) {

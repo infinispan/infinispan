@@ -27,6 +27,7 @@ import javax.transaction.xa.XAException;
 public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements Synchronization {
 
    private static final Log log = LogFactory.getLog(SynchronizationAdapter.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final LocalTransaction localTransaction;
 
@@ -50,7 +51,7 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
 
    @Override
    public void afterCompletion(int status) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("afterCompletion(%s) called for %s.", status, localTransaction);
       }
       boolean isOnePhase;

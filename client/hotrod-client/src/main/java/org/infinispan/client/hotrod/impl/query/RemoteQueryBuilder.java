@@ -14,6 +14,7 @@ import org.infinispan.query.dsl.impl.BaseQueryBuilder;
 final class RemoteQueryBuilder extends BaseQueryBuilder<Query> {
 
    private static final Log log = LogFactory.getLog(RemoteQueryBuilder.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final RemoteCacheImpl cache;
    private final SerializationContext serializationContext;
@@ -28,7 +29,7 @@ final class RemoteQueryBuilder extends BaseQueryBuilder<Query> {
    public Query build() {
       RemoteJPAQueryGenerator generator = new RemoteJPAQueryGenerator(serializationContext);
       String jpqlString = accept(generator);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("JPQL string : %s", jpqlString);
       }
       return new RemoteQuery(queryFactory, cache, serializationContext, jpqlString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
