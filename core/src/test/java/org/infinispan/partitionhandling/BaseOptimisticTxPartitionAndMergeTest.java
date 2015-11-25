@@ -73,7 +73,7 @@ public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartit
 
       checkLocksDuringPartition(splitMode, keyInfo, discard);
 
-      mergeCluster();
+      mergeCluster(OPTIMISTIC_TX_CACHE_NAME);
       finalAsserts(OPTIMISTIC_TX_CACHE_NAME, keyInfo, txFail ? INITIAL_VALUE : FINAL_VALUE);
    }
 }

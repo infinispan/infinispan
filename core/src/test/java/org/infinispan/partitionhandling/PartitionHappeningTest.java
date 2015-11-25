@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "partitionhandling.PartitionHappeningTest")
 public class PartitionHappeningTest extends BasePartitionHandlingTest {
@@ -79,34 +80,10 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
       assertEquals(cache(3).get("k"), "v2");
 
       partition(0).merge(partition(1));
-
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return clusterAndChFormed(0, 4);
-         }
-      });
-
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return clusterAndChFormed(1, 4);
-         }
-      });
-
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return clusterAndChFormed(2, 4);
-         }
-      });
-
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return clusterAndChFormed(3, 4);
-         }
-      });
+      assertTrue(clusterAndChFormed(0, 4));
+      assertTrue(clusterAndChFormed(1, 4));
+      assertTrue(clusterAndChFormed(2, 4));
+      assertTrue(clusterAndChFormed(3, 4));
    }
 
    public boolean clusterAndChFormed(int cacheIndex, int memberCount) {
