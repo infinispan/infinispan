@@ -42,7 +42,13 @@ import org.jboss.dmr.ModelType;
  * @since 7.0
  */
 public class CacheContainerAuthorizationResource extends SimpleResourceDefinition {
-
+   
+    static final SimpleAttributeDefinition AUDIT_LOGGER = new SimpleAttributeDefinitionBuilder(ModelKeys.AUDIT_LOGGER, ModelType.STRING, true)
+        .setXmlName(Attribute.AUDIT_LOGGER.getLocalName())
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+        .build()
+    ;
+   
     static final SimpleAttributeDefinition MAPPER = new SimpleAttributeDefinitionBuilder(ModelKeys.MAPPER, ModelType.STRING, true)
         .setXmlName(Attribute.MAPPER.getLocalName())
         .setAllowExpression(true)
@@ -50,7 +56,7 @@ public class CacheContainerAuthorizationResource extends SimpleResourceDefinitio
         .build()
     ;
 
-    static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { MAPPER };
+    static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { AUDIT_LOGGER, MAPPER };
 
     CacheContainerAuthorizationResource() {
         super(PathElement.pathElement(ModelKeys.AUTHORIZATION), new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);

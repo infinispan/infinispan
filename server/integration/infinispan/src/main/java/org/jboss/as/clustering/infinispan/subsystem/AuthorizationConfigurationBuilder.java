@@ -15,10 +15,15 @@ import org.jboss.msc.value.Value;
  */
 public class AuthorizationConfigurationBuilder implements Value<AuthorizationConfiguration>, AuthorizationConfiguration {
     private String principalMapper;
+    private String auditLogger;
     private Map<String, List<String>> roles = new HashMap<>();
 
     public void setPrincipalMapper(String principalMapper) {
         this.principalMapper = principalMapper;
+    }
+    
+    public void setAuditLogger(String auditLogger) {
+       this.auditLogger = auditLogger;
     }
 
     public void setRoles(Map<String, List<String>> roles) {
@@ -30,6 +35,10 @@ public class AuthorizationConfigurationBuilder implements Value<AuthorizationCon
         return principalMapper;
     }
 
+    public String getAuditLogger(){
+       return auditLogger;
+    }
+    
     @Override
     public Map<String, List<String>> getRoles() {
         return roles;

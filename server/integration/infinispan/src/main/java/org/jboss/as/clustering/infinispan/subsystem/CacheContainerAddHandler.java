@@ -137,6 +137,9 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
                 ModelNode authzModel = securityModel.get(ModelKeys.AUTHORIZATION, ModelKeys.AUTHORIZATION_NAME);
 
                 authorizationConfig = configBuilder.setAuthorization();
+                if (authzModel.hasDefined(ModelKeys.AUDIT_LOGGER)) {
+                   authorizationConfig.setAuditLogger(ModelNodes.asString(CacheContainerAuthorizationResource.AUDIT_LOGGER.resolveModelAttribute(context, authzModel)));
+                }
                 authorizationConfig.setPrincipalMapper(ModelNodes.asString(CacheContainerAuthorizationResource.MAPPER.resolveModelAttribute(context, authzModel)));
 
                 for(ModelNode roleNode : authzModel.get(ModelKeys.ROLE).asList()) {
