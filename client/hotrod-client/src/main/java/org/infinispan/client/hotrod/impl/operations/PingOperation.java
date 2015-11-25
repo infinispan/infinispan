@@ -32,7 +32,7 @@ public class PingOperation extends HotRodOperation {
    }
 
    public PingOperation(Codec codec, AtomicInteger topologyId, Transport transport, byte[] cacheName) {
-      super(codec, null, cacheName, topologyId);
+      super(codec, 0, cacheName, topologyId);
       this.transport = transport;
    }
 

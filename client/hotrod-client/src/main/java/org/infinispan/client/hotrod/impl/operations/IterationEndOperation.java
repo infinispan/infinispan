@@ -18,7 +18,7 @@ public class IterationEndOperation extends HotRodOperation {
    private final TransportFactory transportFactory;
    private final Transport transport;
 
-   protected IterationEndOperation(Codec codec, Flag[] flags, byte[] cacheName, AtomicInteger topologyId,
+   protected IterationEndOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
                                    String iterationId, TransportFactory transportFactory, Transport transport) {
       super(codec, flags, cacheName, topologyId);
       this.iterationId = iterationId;

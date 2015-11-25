@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
@@ -31,7 +30,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
    private final RemoteQuery remoteQuery;
 
    public QueryOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId,
-                         Flag[] flags, RemoteQuery remoteQuery) {
+                         int flags, RemoteQuery remoteQuery) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.remoteQuery = remoteQuery;
    }

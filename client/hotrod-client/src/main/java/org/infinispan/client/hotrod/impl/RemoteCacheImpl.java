@@ -218,7 +218,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      applyDefaultExpirationFlags(lifespan, maxIdleTime);
       if (trace) {
          log.tracef("About to putAll entries (%s) lifespan:%d (%s), maxIdle:%d (%s)", map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       }
@@ -287,7 +286,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      applyDefaultExpirationFlags(lifespan, maxIdleTime);
       if (trace) {
          log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, lifespan, maxIdleTime);
       }
@@ -299,7 +297,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      applyDefaultExpirationFlags(lifespan, maxIdleTime);
       PutIfAbsentOperation<V> op = operationsFactory.newPutIfAbsentOperation(obj2bytes(key, true), obj2bytes(value, false), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return op.execute();
    }
@@ -307,7 +304,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      applyDefaultExpirationFlags(lifespan, maxIdleTime);
       ReplaceOperation<V> op = operationsFactory.newReplaceOperation(obj2bytes(key, true), obj2bytes(value, false), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       return op.execute();
    }
@@ -321,7 +317,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          public V call() throws Exception {
             try {
                setFlagsIfPresent();
-               V prevValue = put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+               V prevValue =
+                     RemoteCacheImpl.this.put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
                try {
                   result.notifyDone(prevValue);
                } catch (Throwable t) {
@@ -337,7 +334,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
                throw e;
             }
          }
-
       });
       result.setFuture(future);
       return result;
@@ -666,15 +662,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
-   private void applyDefaultExpirationFlags(long lifespan, long maxIdle) {
-      if (lifespan == 0) {
-         operationsFactory.addFlags(Flag.DEFAULT_LIFESPAN);
-      }
-      if (maxIdle == 0) {
-         operationsFactory.addFlags(Flag.DEFAULT_MAXIDLE);
-      }
-   }
-
    @Override
    public Set<K> keySet() {
 	   assertRemoteCacheManagerIsStarted();
@@ -702,15 +689,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    private abstract class WithFlagsCallable implements Callable<V> {
-      final Flag[] asyncFlags;
+      final int intFlags;
 
-      protected WithFlagsCallable(Flag[] asyncFlags) {
-         this.asyncFlags = asyncFlags;
+      protected WithFlagsCallable(int intFlags) {
+         this.intFlags = intFlags;
       }
 
       void setFlagsIfPresent() {
-         if (asyncFlags != null)
-            operationsFactory.addFlags(asyncFlags);
+         if (intFlags != 0)
+            operationsFactory.setFlags(intFlags);
       }
    }
 

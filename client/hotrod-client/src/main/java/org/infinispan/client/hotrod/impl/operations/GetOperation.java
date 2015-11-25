@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GetOperation<V> extends AbstractKeyOperation<V> {
 
    public GetOperation(Codec codec, TransportFactory transportFactory,
-         byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
+                       byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags) {
       super(codec, transportFactory, key, cacheName, topologyId, flags);
    }
 

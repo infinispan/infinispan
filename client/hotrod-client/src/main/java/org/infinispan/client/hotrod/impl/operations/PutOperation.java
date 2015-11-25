@@ -23,7 +23,7 @@ public class PutOperation<V> extends AbstractKeyValueOperation<V> {
 
    public PutOperation(Codec codec, TransportFactory transportFactory,
                        byte[] key, byte[] cacheName, AtomicInteger topologyId,
-                       Flag[] flags, byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+                       int flags, byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 

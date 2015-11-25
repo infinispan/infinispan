@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -28,8 +27,8 @@ public class RemoveClientListenerOperation extends HotRodOperation {
    protected final TransportFactory transportFactory;
 
    protected RemoveClientListenerOperation(Codec codec, TransportFactory transportFactory,
-         byte[] cacheName, AtomicInteger topologyId, Flag[] flags,
-         ClientListenerNotifier listenerNotifier, Object listener) {
+                                           byte[] cacheName, AtomicInteger topologyId, int flags,
+                                           ClientListenerNotifier listenerNotifier, Object listener) {
       super(codec, flags, cacheName, topologyId);
       this.transportFactory = transportFactory;
       this.listenerNotifier = listenerNotifier;

@@ -21,7 +21,7 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
    private final long version;
 
    public ReplaceIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory, byte[] key, byte[] cacheName,
-                                       AtomicInteger topologyId, Flag[] flags, byte[] value,
+                                       AtomicInteger topologyId, int flags, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version) {
       super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       this.version = version;

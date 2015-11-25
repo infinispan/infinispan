@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -24,8 +23,8 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    public GetAllOperation(Codec codec, TransportFactory transportFactory,
-                       Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
-                       Flag[] flags) {
+                          Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
+                          int flags) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.keys = keys;
    }
