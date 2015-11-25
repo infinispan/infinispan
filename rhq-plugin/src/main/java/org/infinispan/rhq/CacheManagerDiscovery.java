@@ -27,6 +27,7 @@ import javax.management.ObjectName;
  */
 public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXComponent<?>> implements ManualAddFacet<JMXComponent<?>>{
    private static final Log log = LogFactory.getLog(CacheManagerDiscovery.class);
+   private static final boolean trace = log.isTraceEnabled();
    public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager,component=CacheManager";
 
    protected static final String CACHE_MANAGER_OBJECTS = "*:" + CACHE_MANAGER_JMX_GROUP + ",*";
@@ -95,7 +96,7 @@ public class CacheManagerDiscovery extends MBeanResourceDiscoveryComponent<JMXCo
    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
          ResourceDiscoveryContext<JMXComponent<?>> ctx) throws InvalidPluginConfigurationException {
       Set<DiscoveredResourceDetails> discoveredResources = createDiscoveredResource(ctx, pluginConfiguration, CACHE_MANAGER_OBJECTS);
-      if (log.isTraceEnabled()) log.trace("Manually discovered resource: " + discoveredResources);
+      if (trace) log.trace("Manually discovered resource: " + discoveredResources);
       if(discoveredResources.size()>0) {
          return discoveredResources.iterator().next();
       } else {

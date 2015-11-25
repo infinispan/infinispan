@@ -80,7 +80,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
          throw new NotSerializableException(nse.getMessage(), nse.getCause());
       } catch (IOException ioe) {
          if (ioe.getCause() instanceof InterruptedException) {
-            if (log.isTraceEnabled()) log.trace("Interrupted exception while marshalling", ioe.getCause());
+            if (trace) log.trace("Interrupted exception while marshalling", ioe.getCause());
             throw (InterruptedException) ioe.getCause();
          } else {
             log.errorMarshallingObject(ioe, obj);

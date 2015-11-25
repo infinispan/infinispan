@@ -20,6 +20,7 @@ import java.io.OutputStream;
 public class Streams {
 
    private static final Log log = LogFactory.getLog(Streams.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    /////////////////////////////////////////////////////////////////////////
    //                               Closing                               //
@@ -258,7 +259,6 @@ public class Streams {
       long total = 0;
       int read;
 
-      boolean trace = log.isTraceEnabled();
       if (trace) {
          log.tracef("copying %s to %s with buffer size: %d", input, output, buffer.length);
       }
@@ -352,7 +352,7 @@ public class Streams {
       int read;
       int readLength;
 
-      boolean trace = log.isTraceEnabled();
+      boolean trace = Streams.trace;
 
       // setup the initial readLength, if length is less than the buffer
       // size, then we only want to read that much

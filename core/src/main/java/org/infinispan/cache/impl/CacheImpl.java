@@ -1693,7 +1693,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       try {
          transactionManager.begin();
          final Transaction transaction = getOngoingTransaction();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Implicit transaction started! Transaction: %s", transaction);
          }
          return transaction;

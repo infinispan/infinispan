@@ -31,6 +31,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  */
 public class CacheManagerComponent extends MBeanResourceComponent<JMXServerComponent<?>> {
    private static final Log log = LogFactory.getLog(CacheManagerComponent.class);
+   private static final boolean trace = log.isTraceEnabled();
    private String cacheManagerPattern;
 
    /**
@@ -118,7 +119,7 @@ public class CacheManagerComponent extends MBeanResourceComponent<JMXServerCompo
 
    private EmsBean queryCacheManagerBean(EmsConnection conn) {
       String pattern = cacheManagerPattern;
-      if (log.isTraceEnabled()) log.trace("Pattern to query is " + pattern);
+      if (trace) log.trace("Pattern to query is " + pattern);
       EmsBean bean = conn.getBean(pattern);
       if (bean != null) {
          return bean;

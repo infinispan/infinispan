@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  * @since 7.0
  */
 public abstract class BaseStateTransferInterceptor extends CommandInterceptor {
+   private final boolean trace = getLog().isTraceEnabled();
 
    protected StateTransferManager stateTransferManager;
    private StateTransferLock stateTransferLock;
@@ -81,9 +82,8 @@ public abstract class BaseStateTransferInterceptor extends CommandInterceptor {
    }
 
    protected final void logRetry(VisitableCommand command) {
-      final Log log = getLog();
-      if (log.isTraceEnabled()) {
-         log.tracef("Retrying command because of topology change: %s", command);
+      if (trace) {
+         getLog().tracef("Retrying command because of topology change: %s", command);
       }
    }
 

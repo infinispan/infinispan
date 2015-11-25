@@ -34,7 +34,7 @@ public class Codec11 extends Codec10 {
       // New in 1.1
       int numVirtualNodes = transport.readVInt();
 
-      if (localLog.isTraceEnabled()) {
+      if (trace) {
          localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d, numVirtualNodes=%d",
                newTopologyId, numKeyOwners, hashFunctionVersion, hashSpace, clusterSize,
@@ -57,7 +57,7 @@ public class Codec11 extends Codec10 {
          // TODO: Performance improvement, since hash positions are fixed, we could maybe only calculate for those nodes that the client is not aware of?
          int baseHashCode = transport.read4ByteInt();
          int normalizedHashCode = getNormalizedHash(baseHashCode, ch);
-         localLog.tracef("Server(%s:%d) read with base hash code %d, and normalized hash code %d",
+         if (trace) localLog.tracef("Server(%s:%d) read with base hash code %d, and normalized hash code %d",
                host, port, baseHashCode, normalizedHashCode);
          cacheHashCode(servers2Hash, host, port, normalizedHashCode);
          if (numVirtualNodes > 1)
@@ -97,7 +97,7 @@ public class Codec11 extends Codec10 {
          servers2Hash.put(address, hashes);
       }
       hashes.add(hashCode);
-      getLog().tracef("Hash code is: %d", hashCode);
+      if (trace) getLog().tracef("Hash code is: %d", hashCode);
    }
 
    // IMPORTANT NOTE: Hot Rod protocol agrees to this calculation for a virtual

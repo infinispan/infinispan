@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class TotalOrderManager {
 
    private static final Log log = LogFactory.getLog(TotalOrderManager.class);
+   private static final boolean trace = log.isTraceEnabled();
    /**
     * this map is used to keep track of concurrent transactions.
     */
@@ -86,7 +87,7 @@ public class TotalOrderManager {
          state.addSynchronizedBlock(stateTransfer);
       }
 
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Transaction [%s] will wait for %s and locked %s", state.getGlobalTransaction().globalId(),
                     state.getConflictingTransactionBlocks(), state.getLockedKeys() == null ? "[ClearCommand]" :
                state.getLockedKeys());
@@ -109,7 +110,7 @@ public class TotalOrderManager {
          for (Object key : lockedKeys) {
             keysLocked.remove(key, synchronizedBlock);
          }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Release %s and locked keys %s. Checking pending tasks!", synchronizedBlock, lockedKeys);
       }
       state.reset();
@@ -130,7 +131,7 @@ public class TotalOrderManager {
       if (isRebalance) {
          stateTransferInProgress.set(new TotalOrderLatchImpl("StateTransfer-" + topologyId));
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("State Transfer start. It will wait for %s", preparingTransactions);
       }
       return preparingTransactions;
@@ -144,7 +145,7 @@ public class TotalOrderManager {
       if (block != null) {
          block.unBlock();
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("State Transfer finish. It will release %s", block);
       }
       totalOrderExecutor.checkForReadyTasks();

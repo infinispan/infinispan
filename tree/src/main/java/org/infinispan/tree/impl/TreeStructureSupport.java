@@ -15,6 +15,7 @@ import org.infinispan.util.logging.LogFactory;
 
 public class TreeStructureSupport extends AutoBatchSupport {
    private static final Log log = LogFactory.getLog(TreeStructureSupport.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    protected final AdvancedCache<NodeKey, AtomicMap<?, ?>> cache;
 
@@ -60,7 +61,7 @@ public class TreeStructureSupport extends AutoBatchSupport {
          }
          getAtomicMap(cache, structureKey);
          getAtomicMap(cache, dataKey);
-         if (log.isTraceEnabled()) log.tracef("Created node %s", fqn);
+         if (trace) log.tracef("Created node %s", fqn);
          return true;
       }
       finally {

@@ -20,6 +20,7 @@ import java.util.List;
 public class TotalOrderRemoteTransactionState {
 
    private static final Log log = LogFactory.getLog(TotalOrderRemoteTransactionState.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final EnumSet<State> transactionState;
    private final GlobalTransaction globalTransaction;
    private List<Object> lockedKeys;
@@ -54,7 +55,7 @@ public class TotalOrderRemoteTransactionState {
     * command
     */
    public synchronized void prepared() {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("[%s] Current status is %s, setting status to: PREPARED", globalTransaction.globalId(),
                     transactionState);
       }
@@ -67,7 +68,7 @@ public class TotalOrderRemoteTransactionState {
     * invoked
     */
    public synchronized void preparing() {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("[%s] Current status is %s, setting status to: PREPARING", globalTransaction.globalId(),
                     transactionState);
       }
@@ -86,7 +87,7 @@ public class TotalOrderRemoteTransactionState {
       boolean result;
 
       State state = commit ? State.COMMIT_ONLY : State.ROLLBACK_ONLY;
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("[%s] Current status is %s, setting status to: %s", globalTransaction.globalId(),
                     transactionState, state);
       }
@@ -94,17 +95,17 @@ public class TotalOrderRemoteTransactionState {
 
       if (transactionState.contains(State.PREPARED)) {
          result = true;
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("[%s] Transaction is PREPARED", globalTransaction.globalId());
          }
       } else if (transactionState.contains(State.PREPARING)) {
          wait();
          result = true;
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("[%s] Transaction was in PREPARING state but now it is prepared", globalTransaction.globalId());
          }
       } else {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("[%s] Transaction is not delivered yet", globalTransaction.globalId());
          }
          result = false;

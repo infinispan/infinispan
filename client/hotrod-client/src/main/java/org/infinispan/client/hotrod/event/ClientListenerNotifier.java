@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClientListenerNotifier {
    private static final Log log = LogFactory.getLog(ClientListenerNotifier.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private static final Map<Class<? extends Annotation>, Class<?>[]> allowedListeners =
          new HashMap<Class<? extends Annotation>, Class<?>[]>(4);
@@ -78,7 +79,7 @@ public class ClientListenerNotifier {
       Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables = findMethods(op.listener);
       EventDispatcher eventDispatcher = new EventDispatcher(op, invocables, op.getCacheName());
       clientListeners.put(op.listenerId, eventDispatcher);
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Add client listener with id %s, for listener %s and invocable methods %s",
                Util.printArray(op.listenerId), op.listener, invocables);
    }
@@ -91,7 +92,7 @@ public class ClientListenerNotifier {
          if (failedServers.contains(dispatcher.transport.getRemoteSocketAddress()))
             failoverListenerIds.add(entry.getKey());
       }
-      if (log.isTraceEnabled() && failoverListenerIds.isEmpty())
+      if (trace && failoverListenerIds.isEmpty())
          log.tracef("No event listeners registered in faild servers: %s", failedServers);
 
       // Remove tracking listeners and read to the fallback transport
@@ -102,7 +103,7 @@ public class ClientListenerNotifier {
          invokeFailoverEvent(dispatcher);
          // Re-execute adding client listener in one of the remaining nodes
          dispatcher.op.execute();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             SocketAddress failedServerAddress = dispatcher.transport.getRemoteSocketAddress();
             log.tracef("Fallback listener id %s from a failed server %s to %s",
                   Util.printArray(listenerId), failedServerAddress,
@@ -127,7 +128,7 @@ public class ClientListenerNotifier {
    public void removeClientListener(byte[] listenerId) {
       EventDispatcher dispatcher = clientListeners.remove(listenerId);
       dispatcher.transport.release(); // force shutting it
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Remove client listener with id %s", Util.printArray(listenerId));
    }
 
@@ -207,7 +208,7 @@ public class ClientListenerNotifier {
 
    public void stop() {
       for (byte[] listenerId : clientListeners.keySet()) {
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef("Remote cache manager stopping, remove client listener id %s", Util.printArray(listenerId));
 
          removeClientListener(listenerId);
@@ -294,7 +295,7 @@ public class ClientListenerNotifier {
       }
 
       void invokeClientEvent(ClientEvent clientEvent) {
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef("Event %s received for listener with id=%s", clientEvent, Util.printArray(op.listenerId));
 
          switch (clientEvent.getType()) {

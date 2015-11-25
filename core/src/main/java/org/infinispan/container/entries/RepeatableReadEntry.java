@@ -17,6 +17,7 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_LOO
  */
 public class RepeatableReadEntry extends ReadCommittedEntry {
    private static final Log log = LogFactory.getLog(RepeatableReadEntry.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public RepeatableReadEntry(Object key, Object value, Metadata metadata) {
       super(key, value, metadata);
@@ -38,7 +39,7 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
 
       Object actualValue = ice == null ? null : ice.getValue();
       Object valueToCompare = alreadyCopied ? oldValue : value;
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Performing local write skew check. actualValue=%s, transactionValue=%s", actualValue, valueToCompare);
       }
       // Note that this identity-check is intentional.  We don't *want* to call actualValue.equals() since that defeats the purpose.

@@ -68,6 +68,7 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
  */
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
+   private final boolean trace = getLog().isTraceEnabled();
    PersistenceConfiguration loaderConfig = null;
    final AtomicLong cacheStores = new AtomicLong(0);
    protected PersistenceManager persistenceManager;
@@ -117,7 +118,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       if (!ctx.getCacheTransaction().getAllModifications().isEmpty()) {
          // this is a commit call.
          GlobalTransaction tx = ctx.getGlobalTransaction();
-         if (getLog().isTraceEnabled()) getLog().tracef("Calling loader.commit() for transaction %s", tx);
+         if (trace) getLog().tracef("Calling loader.commit() for transaction %s", tx);
 
          Transaction xaTx = null;
          try {
@@ -127,7 +128,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             resumeRunningTx(xaTx);
          }
       } else {
-         if (getLog().isTraceEnabled()) getLog().trace("Commit called with no modifications; ignoring.");
+         if (trace) getLog().trace("Commit called with no modifications; ignoring.");
       }
    }
 
@@ -155,7 +156,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
       Object key = command.getKey();
       boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
-      if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
+      if (trace) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
       return retval;
    }
 
@@ -236,11 +237,12 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             if (entry != null) {
                if (entry.isRemoved()) {
                   boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
-                  if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
+                  if (trace) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
                } else if (entry.isChanged()) {
                   storeEntry(ctx, key, command);
                }
             }
+            break;
          case SKIP:
             log.trace("Skipping cache store since persistence mode parameter is SKIP");
       }
@@ -262,7 +264,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                if (entry != null) {
                   if (entry.isRemoved()) {
                      boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
-                     if (getLog().isTraceEnabled()) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
+                     if (trace) getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
                   } else if (entry.isChanged() && isProperWriter(ctx, command, key)) {
                      storeEntry(ctx, key, command);
                      storedCount++;
@@ -271,6 +273,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             }
 
             if (getStatisticsEnabled()) cacheStores.getAndAdd(storedCount);
+            break;
          case SKIP:
             log.trace("Skipping cache store since persistence mode parameter is SKIP");
       }
@@ -280,10 +283,10 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    protected final void store(TxInvocationContext ctx) throws Throwable {
       List<WriteCommand> modifications = ctx.getCacheTransaction().getAllModifications();
       if (modifications.isEmpty()) {
-         if (getLog().isTraceEnabled()) getLog().trace("Transaction has not logged any modifications!");
+         if (trace) getLog().trace("Transaction has not logged any modifications!");
          return;
       }
-      if (getLog().isTraceEnabled()) getLog().tracef("Cache loader modification list: %s", modifications);
+      if (trace) getLog().tracef("Cache loader modification list: %s", modifications);
 
 
       Updater modsBuilder = new Updater(getStatisticsEnabled());
@@ -411,7 +414,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       InternalCacheValue sv = getStoredValue(key, ctx);
       persistenceManager.writeToAllStores(new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller),
                                           skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
-      if (getLog().isTraceEnabled()) getLog().tracef("Stored entry %s under key %s", sv, key);
+      if (trace) getLog().tracef("Stored entry %s under key %s", sv, key);
    }
 
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {

@@ -23,6 +23,7 @@ import org.infinispan.jcache.logging.Log;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public abstract class AbstractCacheRemoveAllInterceptor implements Serializable {
+   protected final boolean trace = getLog().isTraceEnabled();
 
    private static final long serialVersionUID = -8763819640664021763L;
 
@@ -35,7 +36,7 @@ public abstract class AbstractCacheRemoveAllInterceptor implements Serializable 
    }
 
    public Object cacheRemoveAll(InvocationContext invocationContext) throws Exception {
-      if (getLog().isTraceEnabled()) {
+      if (trace) {
          getLog().tracef("Interception of method named '%s'", invocationContext.getMethod().getName());
       }
 
@@ -46,7 +47,7 @@ public abstract class AbstractCacheRemoveAllInterceptor implements Serializable 
 
       if (!cacheRemoveAll.afterInvocation()) {
          cache.clear();
-         if (getLog().isTraceEnabled()) {
+         if (trace) {
             getLog().tracef("Clear cache '%s' before method invocation", cache.getName());
          }
       }
@@ -55,7 +56,7 @@ public abstract class AbstractCacheRemoveAllInterceptor implements Serializable 
 
       if (cacheRemoveAll.afterInvocation()) {
          cache.clear();
-         if (getLog().isTraceEnabled()) {
+         if (trace) {
             getLog().tracef("Clear cache '%s' after method invocation", cache.getName());
          }
       }

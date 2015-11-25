@@ -61,6 +61,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
 public class MapReduceManagerImpl implements MapReduceManager {
 
    private static final Log log = LogFactory.getLog(MapReduceManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
    private ClusteringDependentLogic cdl;
    private EmbeddedCacheManager cacheManager;
    private PersistenceManager persistenceManager;
@@ -134,7 +135,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          final boolean sharedTmpCacheUsed = reduceCommand.isUseIntermediateSharedCache();
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
          log.tracef("For m/r task %s invoking %s at %s", taskId, reduceCommand, cdl.getAddress());
-         long start = log.isTraceEnabled() ? timeService.time() : 0;
+         long start = trace ? timeService.time() : 0;
          try {
             Cache<IntermediateKey<KOut>, List<VOut>> cache = cacheManager.getCache(reduceCommand.getCacheName());
             taskLifecycleService.onPreExecute(reducer, cache);
@@ -160,7 +161,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             });
 
          } finally {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Reduce for task %s took %s milliseconds", reduceCommand.getTaskId(),
                      timeService.timeDuration(start, TimeUnit.MILLISECONDS));
             }
@@ -184,7 +185,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             new DefaultCollector<KIn, VIn, KOut, VOut>(mcc, maxCSize));
       DataContainer<KIn, VIn> dc = cache.getAdvancedCache().getDataContainer();
       log.tracef("For m/r task %s invoking %s with input keys %s",  mcc.getTaskId(), mcc, keys);
-      long start = log.isTraceEnabled() ? timeService.time() : 0;
+      long start = trace ? timeService.time() : 0;
       try {
          taskLifecycleService.onPreExecute(mapper, cache);
          //User specified input taks keys, most likely a short list of input keys (<10^3), iterate serially
@@ -214,7 +215,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                      true, false);
          }
       } finally {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Map phase for task %s took %s milliseconds",
                        mcc.getTaskId(), timeService.timeDuration(start, TimeUnit.MILLISECONDS));
          }
@@ -236,7 +237,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
       DataContainer<KIn, VIn>  dc = cache.getAdvancedCache().getDataContainer();
       log.tracef("For m/r task %s invoking %s with input keys %s", mcc.getTaskId(), mcc, mcc.getKeys());
-      long start = log.isTraceEnabled() ? timeService.time() : 0;
+      long start = trace ? timeService.time() : 0;
       final Set<KOut> intermediateKeys = new HashSet<KOut>();
       try {
          taskLifecycleService.onPreExecute(mapper, cache);
@@ -275,7 +276,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             intermediateKeys.addAll(lastOne);
          }
       } finally {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Map phase for task %s took %s milliseconds", mcc.getTaskId(),
                   timeService.timeDuration(start, TimeUnit.MILLISECONDS));
          }
@@ -291,7 +292,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
          Cache<?, ?> cache = cacheManager.getCache(mcc.getCacheName());
          log.tracef("For m/r task %s invoking combiner %s at %s", mcc.getTaskId(), mcc, cdl.getAddress());
          MapReduceTaskLifecycleService taskLifecycleService = MapReduceTaskLifecycleService.getInstance();
-         long start = log.isTraceEnabled() ? timeService.time() : 0;
+         long start = trace ? timeService.time() : 0;
          try {
             taskLifecycleService.onPreExecute(combiner, cache);
             for (Entry<KOut, List<VOut>> e : c.collectedValues().entrySet()) {
@@ -302,7 +303,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
                }
             }
          } finally {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Combine for task %s took %s milliseconds", mcc.getTaskId(),
                      timeService.timeDuration(start, TimeUnit.MILLISECONDS));
             }
@@ -347,7 +348,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             }
          }
       } finally {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Migrating keys for task %s took %s milliseconds (Migrated %s keys)",
                   mcc.getTaskId(), timeService.timeDuration(start, TimeUnit.MILLISECONDS), mapPhaseKeys.size());
          }

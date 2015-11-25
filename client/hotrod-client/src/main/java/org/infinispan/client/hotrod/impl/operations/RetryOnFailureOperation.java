@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
 
    private static final Log log = LogFactory.getLog(RetryOnFailureOperation.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    protected final TransportFactory transportFactory;
 
@@ -84,7 +85,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
 
    private void invalidateTransport(Transport transport, SocketAddress address) {
       if (transport != null) {
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef("Invalidating transport %s as a result of transport exception", transport);
 
          transportFactory.invalidateTransport(address, transport);
@@ -96,7 +97,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
          failedServers = new HashSet<SocketAddress>();
       }
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Add %s to failed servers", address);
 
       failedServers.add(address);

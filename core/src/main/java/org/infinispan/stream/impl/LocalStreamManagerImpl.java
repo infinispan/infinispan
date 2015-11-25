@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 @Listener(observation = Listener.Observation.POST)
 public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private final static Log log = LogFactory.getLog(LocalStreamManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private AdvancedCache<K, V> cache;
    private ComponentRegistry registry;
@@ -259,7 +260,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          log.tracef("UnRegistered change listener for %s", requestId);
       }
       if (cache.getStatus() != ComponentStatus.RUNNING) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Cache status is no longer running, all segments are now suspect for %s", requestId);
          }
          listener.segmentsLost.addAll(segments);
@@ -298,21 +299,21 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       operation.handleInjection(registry);
       // We currently only allow 1 request per id (we may change this later)
       changeListener.put(requestId, listener);
-      log.tracef("Registered change listener for %s", requestId);
+      if (trace) log.tracef("Registered change listener for %s", requestId);
       try {
          operation.setSupplier(() -> getRehashStream(cacheEntrySet, requestId, listener, parallelStream, segments,
                  keysToInclude, keysToExclude));
          results = operation.performOperationRehashAware(new NonRehashIntermediateCollector<>(origin, requestId,
                  parallelStream));
          // TODO: need to remove the full trace later
-         log.tracef("Request %s completed segments %s with %s suspected segments", requestId, segments,
+         if (trace) log.tracef("Request %s completed segments %s with %s suspected segments", requestId, segments,
                  listener.segmentsLost);
       } finally {
          changeListener.remove(requestId);
-         log.tracef("UnRegistered change listener for %s", requestId);
+         if (trace) log.tracef("UnRegistered change listener for %s", requestId);
       }
       if (cache.getStatus() != ComponentStatus.RUNNING) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Cache status is no longer running, all segments are now suspect for %s", requestId);
          }
          listener.segmentsLost.addAll(segments);

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorService implements BlockingTaskAwareExecutorService {
 
    private static final Log log = LogFactory.getLog(BlockingTaskAwareExecutorServiceImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final Queue<BlockingRunnable> blockedTasks;
    private final ExecutorService executorService;
    private final TimeService timeService;
@@ -49,14 +50,14 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       }
       if (runnable.isReady()) {
          doExecute(runnable);
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Added a new task directly: %s task(s) are waiting", blockedTasks.size());
          }
       } else {
          //we no longer submit directly to the executor service.
          blockedTasks.offer(runnable);
          controllerThread.checkForReadyTask();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Added a new task to the queue: %s task(s) are waiting", blockedTasks.size());
          }
       }
@@ -168,7 +169,7 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
                }
             }
 
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Tasks to be executed=%s, still pending=~%s", readyList.size(), size);
             }
 

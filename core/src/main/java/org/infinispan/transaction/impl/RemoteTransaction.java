@@ -26,6 +26,7 @@ import java.util.Map;
 public class RemoteTransaction extends AbstractCacheTransaction implements Cloneable {
 
    private static final Log log = LogFactory.getLog(RemoteTransaction.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    /**
     * This int should be set to the highest topology id for transactions received via state transfer. During state
@@ -66,7 +67,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    @Override
    public void putLookedUpEntry(Object key, CacheEntry e) {
       checkIfRolledBack();
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Adding key %s to tx %s", key, getGlobalTransaction());
       }
       lookedUpEntries.put(key, e);
@@ -75,7 +76,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    @Override
    public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
       checkIfRolledBack();
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Adding keys %s to tx %s", entries.keySet(), getGlobalTransaction());
       }
       lookedUpEntries.putAll(entries);

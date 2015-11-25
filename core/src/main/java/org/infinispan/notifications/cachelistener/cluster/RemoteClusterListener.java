@@ -39,6 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 @Listener(primaryOnly = true, observation = Listener.Observation.POST)
 public class RemoteClusterListener {
    private static final Log log = LogFactory.getLog(RemoteClusterListener.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final UUID id;
    private final Address origin;
@@ -73,7 +74,7 @@ public class RemoteClusterListener {
    @ViewChanged
    public void viewChange(ViewChangedEvent event) {
       if (!event.getNewMembers().contains(origin)) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Origin %s storing cluster listener is gone, removing local listener", origin);
          }
          removeListener();
@@ -104,7 +105,7 @@ public class RemoteClusterListener {
          events.add(event);
       }  else {
          // Send event back to origin who has the cluster listener
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Submitting Event %s to cluster listener to %s", event, origin);
          }
          eventManager.addEvents(origin, id, Collections.singleton(ClusterEvent.fromEvent(event)), sync);
@@ -119,7 +120,7 @@ public class RemoteClusterListener {
          for (CacheEntryEvent cacheEvent : events) {
             eventsToSend.add(ClusterEvent.fromEvent(cacheEvent));
             // Send event back to origin who has the cluster listener
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Submitting Event(s) %s to cluster listener to %s", eventsToSend, origin);
             }
          }

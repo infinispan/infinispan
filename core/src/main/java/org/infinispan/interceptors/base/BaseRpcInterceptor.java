@@ -31,6 +31,7 @@ import java.util.Set;
  * @since 4.0
  */
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
+   protected boolean trace = getLog().isTraceEnabled();
 
    protected RpcManager rpcManager;
 
@@ -57,7 +58,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected final boolean isLocalModeForced(FlagAffectedCommand command) {
       if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (getLog().isTraceEnabled()) getLog().trace("LOCAL mode forced on invocation.  Suppressing clustered events.");
+         if (trace) getLog().trace("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return true;
       }
       return false;
@@ -79,7 +80,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       boolean shouldInvokeRemotely = ctx.hasModifications() || !localCtx.getRemoteLocksAcquired().isEmpty() ||
          localCtx.getCacheTransaction().getTopologyId() != rpcManager.getTopologyId();
 
-      if (getLog().isTraceEnabled()) {
+      if (trace) {
          getLog().tracef("Should invoke remotely? %b. hasModifications=%b, hasRemoteLocksAcquired=%b",
                shouldInvokeRemotely, ctx.hasModifications(), !localCtx.getRemoteLocksAcquired().isEmpty());
       }

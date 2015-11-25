@@ -23,6 +23,7 @@ import java.util.UUID;
  */
 public class ClusterListenerRemoveCallable<K, V> implements DistributedCallable<K, V, Void> {
    private static final Log log = LogFactory.getLog(ClusterListenerRemoveCallable.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private transient Cache<K, V> cache;
 
@@ -45,7 +46,7 @@ public class ClusterListenerRemoveCallable<K, V> implements DistributedCallable<
          if (listener instanceof RemoteClusterListener) {
             RemoteClusterListener clusterListener = (RemoteClusterListener)listener;
             if (identifier.equals(clusterListener.getId())) {
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Removing local cluster listener due to parent cluster listener was removed : %s", identifier);
                }
                clusterListener.removeListener();

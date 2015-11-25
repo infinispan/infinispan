@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @since 5.1
  */
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
+   private boolean trace = getLog().isTraceEnabled();
 
    protected RpcManager rpcManager;
    private PartitionHandlingManager partitionHandlingManager;
@@ -104,21 +105,19 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     */
    protected final boolean lockOrRegisterBackupLock(TxInvocationContext<?> ctx, Object key, long lockTimeout)
          throws InterruptedException {
-      final Log log = getLog();
-      final boolean trace = log.isTraceEnabled();
-
       switch (LockUtil.getLockOwnership(key, cdl)) {
          case PRIMARY:
             if (trace) {
-               log.tracef("Acquiring locks on %s.", key);
+               getLog().tracef("Acquiring locks on %s.", key);
             }
             checkPendingAndLockKey(ctx, key, lockTimeout);
             return true;
          case BACKUP:
             if (trace) {
-               log.tracef("Acquiring backup locks on %s.", key);
+               getLog().tracef("Acquiring backup locks on %s.", key);
             }
             ctx.getCacheTransaction().addBackupLockForKey(key);
+            return false;
          default:
             return false;
       }
@@ -153,6 +152,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
                   log.tracef("Acquiring backup locks on %s.", key);
                }
                ctx.getCacheTransaction().addBackupLockForKey(key);
+               break;
             default:
                break;
          }

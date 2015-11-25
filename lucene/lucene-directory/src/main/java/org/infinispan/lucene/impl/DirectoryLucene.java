@@ -29,6 +29,7 @@ import org.infinispan.util.logging.LogFactory;
 class DirectoryLucene extends Directory implements DirectoryExtensions {
 
    private static final Log log = LogFactory.getLog(DirectoryLucene.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final DirectoryImplementor impl;
 
@@ -169,7 +170,7 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
       Cache<Object, Integer> lockCache = getDistLockCache().getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
       FileCacheKey fileCacheKey = new FileCacheKey(indexName, lockName);
       Object previousValue = lockCache.remove(fileCacheKey);
-      if (previousValue!=null && log.isTraceEnabled()) {
+      if (previousValue!=null && trace) {
          log.tracef("Lock forcibly removed for index: %s", indexName);
       }
    }

@@ -14,10 +14,11 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 public class RhqUtil {
 
    private static final Log log = LogFactory.getLog(RhqUtil.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public static MeasurementDataNumeric constructNumericMeasure(
          Class<?> attrType, Object o, MeasurementScheduleRequest req) {
-      if (log.isTraceEnabled())
+      if (trace)
          log.trace("Metric ("+req.getName() +") is measurement with value " + o);
       return new MeasurementDataNumeric(req, constructDouble(attrType, o));
    }

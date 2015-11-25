@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataValue<V>> {
 
    private static final Log log = LogFactory.getLog(GetWithMetadataOperation.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public GetWithMetadataOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
@@ -52,7 +53,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
             maxIdle = transport.readVInt();
          }
          long version = transport.readLong();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Received version: %d", version);
          }
          V value = codec.readUnmarshallByteArray(transport, status);

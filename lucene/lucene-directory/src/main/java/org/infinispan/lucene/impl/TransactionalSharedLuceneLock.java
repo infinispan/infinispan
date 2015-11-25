@@ -28,6 +28,7 @@ import org.infinispan.util.logging.LogFactory;
 class TransactionalSharedLuceneLock extends Lock implements Closeable, ObtainableLock {
 
    private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<FileCacheKey, FileCacheKey> noCacheStoreCache;
    private final String lockName;
@@ -47,7 +48,7 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable, Obtainabl
    public boolean obtain() throws IOException {
       Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Lock: %s acquired for index: %s", lockName, indexName);
          }
          // we own the lock:
@@ -55,7 +56,7 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable, Obtainabl
          return true;
       }
       else {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Lock: %s not acquired for index: %s, was taken already.", lockName, indexName);
          }
          return false;
@@ -68,7 +69,7 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable, Obtainabl
     */
    private void clearLock() {
       Object previousValue = noCacheStoreCache.remove(keyOfLock);
-      if (previousValue!=null && log.isTraceEnabled()) {
+      if (previousValue!=null && trace) {
          log.tracef("Lock removed for index: %s", indexName);
       }
    }
@@ -113,7 +114,7 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable, Obtainabl
          log.unableToStartTransaction(e);
          throw new IOException("SharedLuceneLock could not start a transaction after having acquired the lock", e);
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Batch transaction started for index: %s", indexName);
       }
    }
@@ -132,7 +133,7 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable, Obtainabl
          log.unableToCommitTransaction(e);
          throw new IOException("SharedLuceneLock could not commit a transaction", e);
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Batch transaction committed for index: %s", indexName);
       }
    }

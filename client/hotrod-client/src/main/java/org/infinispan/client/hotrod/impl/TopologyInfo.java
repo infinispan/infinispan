@@ -35,6 +35,7 @@ import static org.infinispan.commons.util.InfinispanCollections.emptySet;
 public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private Collection<SocketAddress> servers = new ArrayList<>();
    private Map<byte[], ConsistentHash> consistentHashes = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
@@ -98,7 +99,7 @@ public final class TopologyInfo {
          ConsistentHash consistentHash = consistentHashes.get(cacheName);
          if (consistentHash != null) {
             server = Optional.of(consistentHash.getServer(key));
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Using consistent hash for determining the server: " + server);
             }
          }
@@ -111,7 +112,7 @@ public final class TopologyInfo {
    public boolean isTopologyValid(byte[] cacheName) {
       Integer id = topologyIds.get(cacheName).get();
       Boolean valid = id != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Is topology id (%s) valid? %b", id, valid);
 
       return valid;

@@ -5,7 +5,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -77,6 +76,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    private Address localAddress;
    private RpcManager rpcManager;
    private ExecutorService remoteExecutorService;
+   private boolean trace = log.isTraceEnabled();
 
    class IterationStatus<C> {
       final DistributedItr<C> ongoingIterator;
@@ -130,7 +130,6 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    public void dataRehashed(DataRehashedEvent<K, V> event) {
       ConsistentHash startHash = event.getConsistentHashAtStart();
       ConsistentHash endHash = event.getConsistentHashAtEnd();
-      boolean trace = log.isTraceEnabled();
       if (event.isPre() && startHash != null && endHash != null) {
          log.tracef("Data rehash occurring startHash: %s and endHash: %s", startHash, endHash);
 
@@ -173,8 +172,6 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          ConsistentHash afterHash = event.getConsistentHashAtEnd();
 
          currentHash.set(afterHash);
-         boolean trace = log.isTraceEnabled();
-
          if (beforeHash != null && afterHash != null) {
             if (trace) {
                log.tracef("Rehash hashes before %s after %s", beforeHash, afterHash);
@@ -278,7 +275,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                                          final Set<K> keysToFilter,
                                          final KeyValueFilter<? super K, ? super V> filter,
                                          final Converter<? super K, ? super V, C> converter, final Set<Flag> flags) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Received entry request for %s from node %s for segments %s", identifier, origin, segments);
       }
 
@@ -287,13 +284,13 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments,
                                  Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries) {
             if (cache.getStatus() != ComponentStatus.RUNNING) {
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Cache status is no longer running, all segments are now suspect");
                }
                inDoubtSegments.addAll(completedSegments);
                completedSegments.clear();
             }
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Sending batch response for %s to origin %s with %s completed segments, %s in doubt segments and %s values",
                           identifier, origin, completedSegments, inDoubtSegments, entries.size());
             }
@@ -339,7 +336,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             // perform filtering and conversion in a single step
             filterAndConvert = true;
             usedConverter = null;
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.trace("User supplied a KeyValueFilterConverter for both filter and converter");
             }
          } else {
@@ -359,7 +356,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                // a non local will set this to false at the end every time
                boolean repeat = true;
                while (repeat) {
-                  if (log.isTraceEnabled()) {
+                  if (trace) {
                      log.tracef("Starting retrieval of values for identifier %s", identifier);
                   }
                   SegmentChangeListener segmentChangeListener = new SegmentChangeListener();
@@ -472,7 +469,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                      Collection entriesToSend = new ArrayList<>(queue);
 
                      handler.handleBatch(identifier, true, completedSegments, inDoubtSegmentsToUse, entriesToSend);
-                     if (log.isTraceEnabled()) {
+                     if (trace) {
                         log.tracef("Completed data iteration for request %s with segments %s", identifier, segmentsToUse);
                      }
                   } catch (Throwable t) {
@@ -490,7 +487,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                         segmentsToUse = findMissingLocalSegments(status.processedKeys, hashToUse);
                         inDoubtSegmentsToUse.clear();
 
-                        if (log.isTraceEnabled()) {
+                        if (trace) {
                            if (!segmentsToUse.isEmpty()) {
                                  log.tracef("Local retrieval found it should rerun - now finding segments %s for identifier %s",
                                             segmentsToUse, identifier);
@@ -504,7 +501,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                         repeat = false;
                      }
                   } else {
-                     if (log.isTraceEnabled()) {
+                     if (trace) {
                         log.tracef("Completed request %s for segments %s", identifier, segmentsToUse);
                      }
                      repeat = false;
@@ -513,7 +510,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             }
          });
       } else {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Our node no longer has any of the segments %s that were requested for %s", inDoubtSegments,
                        identifier);
          }
@@ -534,11 +531,11 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                                                           final SegmentBatchHandler<K, H> handler) {
       boolean shouldRun = updatedLocalAndRun(identifier);
       if (shouldRun) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Starting local request to retrieve segments %s for identifier %s", segments, identifier);
          }
          startRetrievingValues(identifier, segments, null, status.filter, status.converter, status.flags, handler);
-      } else if (log.isTraceEnabled()) {
+      } else if (trace) {
          log.tracef("Not running local retrieval as another thread is handling it for identifier %s.", identifier);
       }
    }
@@ -565,7 +562,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       if (filter instanceof KeyValueFilterConverter && (filter == converter || converter == null)) {
          // perform filtering and conversion in a single step
          usedConverter = null;
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("User supplied a KeyValueFilterConverter for both filter and converter");
          }
       } else {
@@ -573,7 +570,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       }
 
       UUID identifier = UUID.randomUUID();
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Processing entry retrieval request with identifier %s with filter %s and converter %s", identifier,
                     filter, usedConverter);
       }
@@ -627,7 +624,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       while (!sent) {
          // This means our iterator was closed explicitly
          if (!iteratorDetails.containsKey(identifier)) {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Cannot send remote request as our iterator was concurrently closed for %s", identifier);
             }
             return false;
@@ -646,7 +643,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                break;
             }
          } else {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Cannot send remote request as there are no longer any remote segments missing for %s", identifier);
             }
             break;
@@ -657,7 +654,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
    private <C> boolean sendRequest(boolean sync, Map.Entry<Address, Set<Integer>> route, UUID identifier,
                                    IterationStatus<?> status) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Sending request to %s for identifier %s", route, identifier);
       }
       Address address = route.getKey();
@@ -672,7 +669,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             keysToFilter.addAll(valuesSeen);
          }
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          if (keysToFilter.isEmpty()) {
             log.tracef("Using provided filter %s", status.filter);
          } else {
@@ -695,7 +692,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             Response response = responseMap.values().iterator().next();
             if (!response.isSuccessful()) {
                Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef(cause, "Unsuccessful response received from node %s for %s, must resend to a new node!",
                              route.getKey(), identifier);
                }
@@ -705,7 +702,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          }
          return true;
       } catch (SuspectException e) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Request to %s for %s was suspect, must resend to a new node!", route, identifier);
          }
          atomicRemove(status.awaitingResponseFrom, address);
@@ -854,12 +851,12 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    @Override
    public <C> void receiveResponse(UUID identifier, Address origin, Set<Integer> completedSegments,
                                    Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries, CacheException e) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Processing response for identifier %s", identifier);
       }
       
       if (e != null) {
-         log.tracef("Response for identifier %s contained exception", identifier, e);
+         if (trace) log.tracef("Response for identifier %s contained exception", identifier, e);
       } else {
          try {
             processData(identifier, origin, completedSegments, inDoubtSegments, entries);
@@ -894,7 +891,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          final AtomicReferenceArray<Set<K>> processedKeys = status.processedKeys;
 
          final DistributedItr<C> itr = status.ongoingIterator;
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Processing data for identifier %s completedSegments: %s inDoubtSegments: %s entryCount: %s", identifier,
                        completedSegments, inDoubtSegments, entries.size());
          }
@@ -934,7 +931,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          try {
             itr.addEntries(nonDuplicateEntries);
          } catch (InterruptedException e) {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                // If we were interrupted then just shut down this processing completely
                log.tracef("Iteration thread was interrupted, stopping iteration for identifier %s", identifier);
             }
@@ -943,7 +940,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
          // We complete the segments after setting the entries
          if (!completedSegments.isEmpty()) {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Completing segments %s for identifier %s", completedSegments, identifier);
             }
             for (Integer completeSegment : completedSegments) {
@@ -963,7 +960,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
             boolean isMissingRemoteSegments = missingRemoteSegment(processedKeys, hash);
             if (isMissingRemoteSegments) {
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   // Note if a rehash occurs here and all our segments become local this could be an empty set
                   log.tracef("Request %s not yet complete, remote segments %s are still missing", identifier,
                              findMissingRemoteSegments(processedKeys, hash));
@@ -974,7 +971,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                   // is null that means the iterator was closed, if it was non null means this node went down while
                   // processing response
                   if (atomicRemove(status.awaitingResponseFrom, origin)) {
-                     if (log.isTraceEnabled()) {
+                     if (trace) {
                         log.tracef("Sending request for %s via remote transport thread", identifier);
                      }
                      remoteExecutorService.submit(new Runnable() {
@@ -983,7 +980,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                            eventuallySendRequest(identifier, status);
                         }
                      });
-                  } else if (log.isTraceEnabled()) {
+                  } else if (trace) {
                      log.tracef("Not sending new remote request as %s was either stopped or %s went down", identifier,
                                 origin);
                   }
@@ -1012,7 +1009,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
             Set<Integer> localSegments = findMissingLocalSegments(processedKeys, hash);
             if (!localSegments.isEmpty()) {
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Request %s not yet complete, local segments %s are still missing", identifier, localSegments);
                }
                complete = false;
@@ -1034,7 +1031,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                completeIteration(identifier);
             }
          }
-      } else if (log.isTraceEnabled()) {
+      } else if (trace) {
          log.tracef("Ignoring values as identifier %s was marked as complete", identifier);
       }
    }
@@ -1049,7 +1046,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    }
 
    private void completeIteration(UUID identifier) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Processing complete for identifier %s", identifier);
       }
       IterationStatus<?> status = iteratorDetails.get(identifier);
@@ -1090,7 +1087,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
       private void notifyListenerCompletedSegment(int segment, boolean fromIterator) {
          if (segmentListener != null) {
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Notifying listener of segment %s being completed for %s", segment, identifier);
             }
             segmentListener.segmentTransferred(segment, fromIterator);
@@ -1107,7 +1104,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                if (!keysNeededToComplete.containsKey(entry.getKey())) {
                   notifyListenerCompletedSegment(entry.getKey(), false);
                } else {
-                  if (log.isTraceEnabled()) {
+                  if (trace) {
                      log.tracef("No keys found for segment %s, but previous response had keys - so cannot complete " +
                                       "segment", entry.getKey());
                   }
@@ -1213,7 +1210,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       private final Set<Integer> changedSegments = new ConcurrentHashSet<Integer>();
 
       public void changedSegments(Set<Integer> changedSegments) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Adding changed segments %s so iteration can properly suspect them", changedSegments);
          }
          for (Integer segment : changedSegments) {

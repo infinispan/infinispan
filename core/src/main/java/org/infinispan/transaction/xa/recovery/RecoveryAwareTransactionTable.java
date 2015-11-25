@@ -29,6 +29,7 @@ import java.util.Set;
 public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    private static final Log log = LogFactory.getLog(RecoveryAwareTransactionTable.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private RecoveryManagerImpl recoveryManager;
 
@@ -146,11 +147,11 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
       for (RemoteTransaction rTx : getRemoteTransactions()) {
          RecoverableTransactionIdentifier gtx = (RecoverableTransactionIdentifier) rTx.getGlobalTransaction();
          if (gtx.getInternalId() == internalId) {
-            if (log.isTraceEnabled()) log.tracef("Found xid %s matching internal id %s", gtx.getXid(), internalId);
+            if (trace) log.tracef("Found xid %s matching internal id %s", gtx.getXid(), internalId);
             return gtx.getXid();
          }
       }
-      log.tracef("Could not find remote transactions matching internal id %s", internalId);
+      if (trace) log.tracef("Could not find remote transactions matching internal id %s", internalId);
       return null;
    }
 

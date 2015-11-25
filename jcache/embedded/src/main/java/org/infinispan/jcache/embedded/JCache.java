@@ -61,6 +61,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    private static final Log log =
          LogFactory.getLog(JCache.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final AdvancedCache<K, V> cache;
    private final AdvancedCache<K, V> ignoreReturnValuesCache;
@@ -146,7 +147,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public boolean containsKey(final K key) {
       checkNotClosed();
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Invoke containsKey(key=%s)", key);
 
       if (key == null)
@@ -271,7 +272,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       // verify that under contended access, one of the threads should "wait"
       // for the other, hence the use locks.
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Invoke entry processor %s for key=%s", entryProcessor, key);
 
       return new WithProcessorLock<T>().call(key, new Callable<T>() {
@@ -346,7 +347,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       // specifically tested by the TCK comparing duration of paralell
       // executions.
       boolean locked = processorLocks.isLocked(key);
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Lock required for key=%s? %s", key, locked);
 
       return locked;
@@ -625,7 +626,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          final CyclicBarrier barrier = new CyclicBarrier(keysToLoad.size(), new Runnable() {
             @Override
             public void run() {
-               if (log.isTraceEnabled())
+               if (trace)
                   log.tracef("Keys %s loaded, notify listener on completion", keysToLoad);
 
                setListenerCompletion(listener);
@@ -635,7 +636,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
             @Override
             public void futureDone(Future<V> future) {
                try {
-                  if (log.isTraceEnabled())
+                  if (trace)
                      log.tracef("Key loaded, wait for the rest of keys to load");
 
                   barrier.await(30, TimeUnit.SECONDS);

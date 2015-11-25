@@ -331,7 +331,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
          versionsSeenMap = new EntryVersionsMap();
       }
       if (!versionsSeenMap.containsKey(key)) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Transaction %s read %s with version %s", getGlobalTransaction().globalId(), key, version);
          }
          versionsSeenMap.put(key, (IncrementableEntryVersion) version);
@@ -347,7 +347,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
          versionsSeenMap = new EntryVersionsMap();
       }
       EntryVersion oldVersion = versionsSeenMap.put(key, (IncrementableEntryVersion) version);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Transaction %s replaced version for key %s. old=%s, new=%s", getGlobalTransaction().globalId(), key,
                     oldVersion, version);
       }

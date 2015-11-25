@@ -180,7 +180,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    private void put(Modification mod, int count) {
       stateLock.writeLock(count);
       try {
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef("Queue modification: %s", mod);
 
          assertNotStopped();

@@ -24,6 +24,7 @@ import org.jboss.logging.BasicLogger;
 public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
 
    private static final BasicLogger log = BasicLogFactory.getLog(PutIfAbsentOperation.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public PutIfAbsentOperation(Codec codec, TransportFactory transportFactory,
                                byte[] key, byte[] cacheName, AtomicInteger topologyId,
@@ -37,7 +38,7 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
       V previousValue = null;
       if (HotRodConstants.isNotExecuted(status)) {
          previousValue = returnPossiblePrevValue(transport, status);
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Returning from putIfAbsent: %s", previousValue);
          }
       }

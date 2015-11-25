@@ -30,6 +30,7 @@ import static org.infinispan.stats.percentiles.PercentileStatistic.*;
  */
 public class CacheStatisticCollector {
    private final static Log log = LogFactory.getLog(CacheStatisticCollector.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
    private final TimeService timeService;
    private final ConcurrentGlobalContainer globalContainer;
    private volatile EnumMap<PercentileStatistic, ReservoirSampler> percentiles;
@@ -44,7 +45,7 @@ public class CacheStatisticCollector {
     * reset all the statistics collected so far.
     */
    public final void reset() {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Resetting Node Scope Statistics");
       }
       globalContainer.reset();
@@ -58,7 +59,7 @@ public class CacheStatisticCollector {
     * Merges a transaction statistics in this cache statistics.
     */
    public final void merge(TransactionStatistics transactionStatistics) {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Merge transaction statistics %s to the node statistics", transactionStatistics);
       }
       ReservoirSampler reservoirSampler;
@@ -107,7 +108,7 @@ public class CacheStatisticCollector {
     */
    public final double getPercentile(PercentileStatistic stat, int percentile)
          throws IllegalArgumentException {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Get percentile %s from %s", percentile, stat);
       }
       return percentiles.get(stat).getKPercentile(percentile);
@@ -355,7 +356,7 @@ public class CacheStatisticCollector {
             }
             break;
          default:
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Attribute %s is not exposed via JMX. Calculating raw value", stat);
             }
             if (stat.isLocal()) {
@@ -365,7 +366,7 @@ public class CacheStatisticCollector {
                value += snapshot.getRemote(stat);
             }
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Get attribute %s = %s", stat, value);
       }
       return value;

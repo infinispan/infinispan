@@ -27,6 +27,7 @@ import org.infinispan.util.logging.LogFactory;
 public class MultiClusterEventCallable<K, V> implements DistributedCallable<K, V, Void> {
 
    private static final Log log = LogFactory.getLog(MultiClusterEventCallable.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private transient ClusterCacheNotifier<K, V> clusterCacheNotifier;
 
@@ -38,7 +39,7 @@ public class MultiClusterEventCallable<K, V> implements DistributedCallable<K, V
 
    @Override
    public Void call() throws Exception {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Received multiple cluster event(s) %s", multiEvents);
       }
       for (Entry<UUID, Collection<ClusterEvent<K, V>>> entry : multiEvents.entrySet()) {

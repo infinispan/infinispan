@@ -25,6 +25,7 @@ import java.io.IOException;
 class DirectoryImplementor {
 
     private static final Log log = LogFactory.getLog(DirectoryImplementor.class);
+    private static final boolean trace = log.isTraceEnabled();
 
     protected final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
     protected final AdvancedCache<ChunkCacheKey, Object> chunksCache;
@@ -93,7 +94,7 @@ class DirectoryImplementor {
 
        // now trigger deletion of old file chunks:
        readLocks.deleteOrReleaseReadLock(from);
-       if (log.isTraceEnabled()) {
+       if (trace) {
           log.tracef("Renamed file from: %s to: %s in index %s", from, to, indexName);
        }
     }

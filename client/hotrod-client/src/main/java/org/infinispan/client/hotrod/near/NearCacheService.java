@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
  */
 public class NearCacheService<K, V> implements NearCache<K, V> {
    private static final Log log = LogFactory.getLog(NearCacheService.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final NearCacheConfiguration config;
    private final ClientListenerNotifier listenerNotifier;
@@ -59,7 +60,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    public void stop(RemoteCache<K, V> remote) {
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Stop near cache, remove underlying listener id %s", Util.printArray(listenerId));
 
       // Remove listener
@@ -83,7 +84,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    public void put(K key, VersionedValue<V> value) {
        cache.put(key, value);
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Put key=%s and value=%s in near cache (listenerId=%s)",
                key, value, Util.printArray(listenerId));
    }
@@ -92,7 +93,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    public void putIfAbsent(K key, VersionedValue<V> value) {
       cache.putIfAbsent(key, value);
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Conditionally put key=%s and value=%s if absent in near cache (listenerId=%s)",
                key, value, Util.printArray(listenerId));
    }
@@ -101,7 +102,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    public void remove(K key) {
       cache.remove(key);
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Removed key=%s from near cache (listenedId=%s)", key, Util.printArray(listenerId));
    }
 
@@ -110,13 +111,13 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       boolean listenerConnected = isConnected();
       if (listenerConnected) {
          VersionedValue<V> value = cache.get(key);
-         if (log.isTraceEnabled())
+         if (trace)
             log.tracef("Get key=%s returns value=%s (listenerId=%s)", key, value, Util.printArray(listenerId));
 
          return value;
       }
 
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Near cache disconnected from server, returning null for key=%s (listenedId=%s)",
                key, Util.printArray(listenerId));
 
@@ -126,7 +127,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    @Override
    public void clear() {
       cache.clear();
-      if (log.isTraceEnabled()) log.tracef("Cleared near cache (listenerId=%s)", Util.printArray(listenerId));
+      if (trace) log.tracef("Cleared near cache (listenerId=%s)", Util.printArray(listenerId));
    }
 
    private boolean isConnected() {
@@ -164,7 +165,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       @ClientCacheFailover
       @SuppressWarnings("unused")
       public void handleFailover(ClientCacheFailoverEvent e) {
-         if (log.isTraceEnabled()) log.trace("Clear near cache after fail-over of server");
+         if (trace) log.trace("Clear near cache after fail-over of server");
          cache.clear();
       }
 
@@ -233,7 +234,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       @ClientCacheFailover
       @SuppressWarnings("unused")
       public void handleFailover(ClientCacheFailoverEvent e) {
-         if (log.isTraceEnabled()) log.trace("Clear near cache after fail-over of server");
+         if (trace) log.trace("Clear near cache after fail-over of server");
          cache.clear();
       }
 

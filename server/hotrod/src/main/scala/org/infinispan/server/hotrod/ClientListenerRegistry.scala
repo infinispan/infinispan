@@ -31,6 +31,8 @@ import scala.collection.JavaConversions._
 class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends Log {
    import ClientListenerRegistry._
 
+   val isTrace = isTraceEnabled
+
    private val messageId = new AtomicLong()
    private val eventSenders = new EquivalentConcurrentHashMapV8[Bytes, AnyRef](
       ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance())
@@ -213,7 +215,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
       def sendEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]) {
          val remoteEvent = createRemoteEvent(key, value, dataVersion, event)
-         if (isTraceEnabled)
+         if (isTrace)
             log.tracef("Send %s to remote clients", remoteEvent)
 
          ch.writeAndFlush(remoteEvent)

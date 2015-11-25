@@ -56,6 +56,7 @@ import java.util.concurrent.TimeUnit;
 public class RemoteStore implements AdvancedLoadWriteStore {
 
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private RemoteStoreConfiguration configuration;
 
@@ -160,7 +161,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
 
    @Override
    public void write(MarshalledEntry entry) throws PersistenceException {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Adding entry: %s", entry);
       }
       InternalMetadata metadata = entry.getMetadata();
@@ -184,7 +185,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
 
    private long toSeconds(long millis, Object key, String desc) {
       if (millis > 0 && millis < 1000) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Adjusting %s time for (k,v): (%s, %s) from %d millis to 1 sec, as milliseconds are not supported by HotRod",
                        desc ,key, millis);
          }

@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 public abstract class AbstractTransport implements Transport {
 
    private static final Log log = LogFactory.getLog(AbstractTransport.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final TransportFactory transportFactory;
 
@@ -30,9 +31,7 @@ public abstract class AbstractTransport implements Transport {
    public String readString() {
       byte[] strContent = readArray();
       String readString = new String(strContent, HotRodConstants.HOTROD_STRING_CHARSET);
-      if (log.isTraceEnabled()) {
-         log.tracef("Read string is: %s", readString);
-      }
+      if (trace) log.tracef("Read string is: %s", readString);
       return readString;
    }
 

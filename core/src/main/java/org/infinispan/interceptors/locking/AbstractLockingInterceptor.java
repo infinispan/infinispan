@@ -38,6 +38,7 @@ import java.util.stream.Stream;
  * @since 5.1
  */
 public abstract class AbstractLockingInterceptor extends CommandInterceptor {
+   private boolean trace = getLog().isTraceEnabled();
 
    protected LockManager lockManager;
    protected DataContainer<Object, Object> dataContainer;
@@ -116,7 +117,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    @Override
    public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       if (command.isCausedByALocalWrite(cdl.getAddress())) {
-         getLog().trace("Skipping invalidation as the write operation originated here.");
+         if (trace) getLog().trace("Skipping invalidation as the write operation originated here.");
          return null;
       }
 
@@ -180,7 +181,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    protected final boolean shouldLockKey(Object key) {
       //only the primary owner acquires the lock.
       boolean shouldLock = LockUtil.getLockOwnership(key, cdl) == LockUtil.LockOwnership.PRIMARY;
-      getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), key, shouldLock);
+      if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), key, shouldLock);
       return shouldLock;
    }
 

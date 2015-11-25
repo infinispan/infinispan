@@ -69,7 +69,7 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
          //in the case of DIST we need to propagate the list of keys. In all other situations in can be determined
          // based on the actual command
          if (cacheConfiguration.clustering().cacheMode().isDistributed()) {
-            if (log.isTraceEnabled()) log.tracef("Locks as seen at origin are: %s", ctx.getLockedKeys());
+            if (trace) log.tracef("Locks as seen at origin are: %s", ctx.getLockedKeys());
             ((DldGlobalTransaction) ctx.getGlobalTransaction()).setLocksHeldAtOrigin(ctx.getLockedKeys());
          }
       }

@@ -78,6 +78,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       implements ClusterCacheNotifier<K, V> {
 
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<Class<? extends Annotation>, Class<?>>(16);
    private static final Map<Class<? extends Annotation>, Class<?>> clusterAllowedListeners =
@@ -264,7 +265,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                return transactionManager.suspend();
          }
       } catch (Exception e) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("An error occurred while trying to suspend a transaction.", e);
          }
          return null;
@@ -279,7 +280,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       try {
          transactionManager.resume(transaction);
       } catch (Exception e) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef(e, "An error occurred while trying to resume a suspended transaction. tx=%s", transaction);
          }
       }
@@ -661,7 +662,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       Set<Object> enlistedAlready = new HashSet<>();
       Set<DistributedCallable> callables = new HashSet<>();
 
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Request received to get cluster listeners currently registered");
       }
 
@@ -669,7 +670,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       registerClusterListenerCallablesToInstall(enlistedAlready, callables, cacheEntryCreatedListeners);
       registerClusterListenerCallablesToInstall(enlistedAlready, callables, cacheEntryRemovedListeners);
 
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Cluster listeners found %s", callables);
       }
 
@@ -783,7 +784,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             if (members != null && members.size() > 1) {
                DistributedExecutionCompletionService decs = new DistributedExecutionCompletionService(distExecutorService);
 
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
                              members, generatedId);
                }
@@ -810,7 +811,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                List<Address> membersAfter = manager.getMembers();
                for (Address member : membersAfter) {
                   if (!members.contains(member) && !member.equals(ourAddress)) {
-                     if (log.isTraceEnabled()) {
+                     if (trace) {
                         log.tracef("Found additional node %s that joined during replication of cluster listener with id %s",
                                    member, generatedId);
                      }
@@ -835,7 +836,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       // If we have a segment listener handler, it means we have to do initial state
       QueueingSegmentListener handler = segmentHandler.remove(generatedId);
       if (handler != null) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
 
@@ -874,7 +875,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             raiseEventForInitialTransfer(generatedId, entry, l.clustered());
          }
 
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Listener %s initial state for cache completed", generatedId);
          }
 

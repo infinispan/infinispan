@@ -63,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 @SurvivesRestarts
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable {
+   private final boolean trace = getLog().isTraceEnabled();
 
    private static final String DEPENDENCIES_ENABLE_JVMOPTION = "infinispan.debugDependencies";
 
@@ -219,7 +220,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Class<?>[] dependencies = injectMetadata.getParameterClasses();
       if (dependencies.length > 0) {
          Object[] params = new Object[dependencies.length];
-         if (getLog().isTraceEnabled())
+         if (trace)
             getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].", injectMetadata.getMethod(), o.getClass().getName());
          for (int i = 0; i < dependencies.length; i++) {
             String name = injectMetadata.getParameterName(i);
@@ -501,7 +502,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          }
       }
 
-      if (getLog().isTraceEnabled())
+      if (trace)
          getLog().tracef("Reset volatile components. Registry now contains %s", componentLookup.keySet());
    }
 

@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PersistenceUtil {
 
    private static Log log = LogFactory.getLog(PersistenceUtil.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public static KeyFilter notNull(KeyFilter filter) {
       return filter == null ? KeyFilter.ACCEPT_ALL_FILTER : filter;
@@ -110,7 +111,7 @@ public class PersistenceUtil {
    public static MarshalledEntry loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
                                                         InvocationContext context, TimeService timeService) {
       final MarshalledEntry loaded = persistenceManager.loadFromAllStores(key, context);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Loaded %s for key %s from persistence.", loaded, key);
       }
       if (loaded == null) {

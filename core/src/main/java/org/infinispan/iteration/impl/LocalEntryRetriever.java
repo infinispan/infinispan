@@ -74,6 +74,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  */
 public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    protected final Log log = LogFactory.getLog(this.getClass());
+   private final boolean trace = log.isTraceEnabled();
    protected final int batchSize;
    protected final long timeout;
    protected final TimeUnit unit;
@@ -235,7 +236,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
          // perform filtering and conversion in a single step
          filterAndConvert = true;
          usedConverter = null;
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("User supplied a KeyValueFilterConverter for both filter and converter, so ignoring converter");
          }
       } else {
@@ -358,7 +359,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                      }
                   }
                }
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.trace("Completed transfer of entries from cache");
                }
 
@@ -441,13 +442,13 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
          while (next == null) {
             if (iterator.hasNext()) {
                InternalCacheEntry<K, V> entry = iterator.next();
-               if (log.isTraceEnabled()) {
+               if (trace) {
                   log.tracef("Object [%s] returned from iteration - need to check if filtered", entry);
                }
 
                // Skip any expired entries
                if (entry.isExpired(timeService.wallClockTime())) {
-                  if (log.isTraceEnabled()) {
+                  if (trace) {
                      log.tracef("Object [%s] was expired, not returning", entry);
                   }
                   continue;
@@ -476,14 +477,14 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                            clone.setValue((V) converted);
                         }
                      } else {
-                        if (log.isTraceEnabled()) {
+                        if (trace) {
                            log.tracef("Object [%s] was filtered by KeyValueFilterConverter, not returning", clone);
                         }
                         continue;
                      }
                   }
                   else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
-                     if (log.isTraceEnabled()) {
+                     if (trace) {
                         log.tracef("Object [%s] was filtered, not returning", clone);
                      }
                      continue;
@@ -572,7 +573,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                   try {
                      if (!nextCondition.await(timeService.remainingTime(targetTime, TimeUnit.NANOSECONDS),
                                               TimeUnit.NANOSECONDS)) {
-                        if (log.isTraceEnabled()) {
+                        if (trace) {
                            log.tracef("Did not retrieve entries in allotted timeout: %s units: unit", timeout, unit);
                         }
                         throw new TimeoutException("Did not retrieve entries in allotted timeout: " + timeout +

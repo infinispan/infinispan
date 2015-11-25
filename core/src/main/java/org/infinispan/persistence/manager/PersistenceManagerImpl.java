@@ -73,6 +73,7 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.B
 public class PersistenceManagerImpl implements PersistenceManager {
 
    private static final Log log = LogFactory.getLog(PersistenceManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    Configuration configuration;
    AdvancedCache<Object, Object> cache;
@@ -358,7 +359,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
       long start = -1;
       try {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("Purging cache store of expired entries");
             start = timeService.time();
          }
@@ -378,7 +379,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             storesMutex.readLock().unlock();
          }
 
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.tracef("Purging cache store completed in %s",
                        Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
          }

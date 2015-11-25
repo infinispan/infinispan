@@ -31,13 +31,8 @@ import java.util.ArrayList;
 public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryWrappingInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedEntryWrappingInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
    private static final EntryVersionsMap EMPTY_VERSION_MAP = new EntryVersionsMap();
-   private boolean trace;
-
-   @Start
-   public void setLogLevel() {
-      trace = log.isTraceEnabled();
-   }
 
    @Override
    public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

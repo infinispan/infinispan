@@ -17,6 +17,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderStateTransferInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
@@ -35,7 +36,7 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
       final int topologyId = currentTopologyId();
       ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
 
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Remote transaction received %s. Tx topology id is %s and current topology is is %s",
                     ctx.getGlobalTransaction().globalId(), command.getTopologyId(), topologyId);
       }
@@ -60,7 +61,7 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
          try {
             command.setTopologyId(currentTopologyId());
 
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.tracef("Local transaction received %s. setting topology Id to %s",
                           command.getGlobalTransaction().globalId(), command.getTopologyId());
             }
