@@ -5,8 +5,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -62,7 +62,9 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
          this.flags = null;
       else {
          this.flags = EnumSet.noneOf(Flag.class);
-         this.flags.addAll(Arrays.asList(flags));
+         for (Flag flag : flags) {
+            this.flags.add(flag);
+         }
       }
       this.classLoader = new WeakReference<ClassLoader>(classLoader);
 
@@ -92,20 +94,24 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       if (flags == null || flags.length == 0)
          return this;
       else {
-         final List<Flag> flagsToAdd = Arrays.asList(flags);
-         if (this.flags != null && this.flags.containsAll(flagsToAdd)) {
+         boolean containsAll;
+         if (this.flags != null) {
+            containsAll = true;
+            for (Flag flag : flags) {
+               if (!this.flags.contains(flag)) {
+                  containsAll = false;
+               }
+            }
+         } else {
+            containsAll = false;
+         }
+         if (containsAll) {
             //we already have all specified flags
             return this;
-         }
-         else {
-            if (this.flags==null) {
-               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), EnumSet.copyOf(flagsToAdd));
-            }
-            else {
-               EnumSet<Flag> newFlags = EnumSet.copyOf(this.flags);
-               newFlags.addAll(flagsToAdd);
-               return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), newFlags);
-            }
+         } else {
+            EnumSet<Flag> newFlags = this.flags != null ? EnumSet.copyOf(this.flags) : EnumSet.noneOf(Flag.class);
+            Collections.addAll(newFlags, flags);
+            return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), newFlags);
          }
       }
    }
