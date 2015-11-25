@@ -77,7 +77,7 @@ public abstract class BasePessimisticTxPartitionAndMergeTest extends BaseTxParti
 
       checkLocksDuringPartition(splitMode, keyInfo, discard);
 
-      mergeCluster();
+      mergeCluster(PESSIMISTIC_TX_CACHE_NAME);
       finalAsserts(PESSIMISTIC_TX_CACHE_NAME, keyInfo, txFail ? INITIAL_VALUE : FINAL_VALUE);
    }
 }

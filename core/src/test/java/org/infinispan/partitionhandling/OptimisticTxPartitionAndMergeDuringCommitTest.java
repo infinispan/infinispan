@@ -66,7 +66,7 @@ public class OptimisticTxPartitionAndMergeDuringCommitTest extends BaseOptimisti
       assertLocked(cache(1, OPTIMISTIC_TX_CACHE_NAME), keyInfo.getKey1());
       assertLocked(cache(2, OPTIMISTIC_TX_CACHE_NAME), keyInfo.getKey2());
 
-      mergeCluster();
+      mergeCluster(OPTIMISTIC_TX_CACHE_NAME);
       finalAsserts(OPTIMISTIC_TX_CACHE_NAME, keyInfo, FINAL_VALUE);
    }
 

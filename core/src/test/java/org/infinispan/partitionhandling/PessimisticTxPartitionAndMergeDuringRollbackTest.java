@@ -65,7 +65,7 @@ public class PessimisticTxPartitionAndMergeDuringRollbackTest extends BasePessim
       assertEventuallyNotLocked(cache(1, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey1());
       assertLocked(cache(2, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey2());
 
-      mergeCluster();
+      mergeCluster(PESSIMISTIC_TX_CACHE_NAME);
       finalAsserts(PESSIMISTIC_TX_CACHE_NAME, keyInfo, INITIAL_VALUE);
    }
 

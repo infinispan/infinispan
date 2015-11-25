@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractLockManager;
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandler;
 
 /**
@@ -80,9 +81,10 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
 
    protected abstract Log getLog();
 
-   protected void mergeCluster() {
+   protected void mergeCluster(String cacheName) {
       getLog().debugf("Merging cluster");
       partition(0).merge(partition(1));
+      waitForRehashToComplete(caches(cacheName));
       getLog().debugf("Cluster merged");
    }
 
