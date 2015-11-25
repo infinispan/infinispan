@@ -17,7 +17,7 @@ public class IterationNextOperation extends HotRodOperation {
    private final String iterationId;
    private final Transport transport;
 
-   protected IterationNextOperation(Codec codec, Flag[] flags, byte[] cacheName, AtomicInteger topologyId,
+   protected IterationNextOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
                                     String iterationId, Transport transport) {
       super(codec, flags, cacheName, topologyId);
       this.iterationId = iterationId;

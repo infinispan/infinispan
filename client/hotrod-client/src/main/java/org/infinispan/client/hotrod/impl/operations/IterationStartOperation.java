@@ -31,7 +31,7 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    private final int batchSize;
    private final TransportFactory transportFactory;
 
-   protected IterationStartOperation(Codec codec, Flag[] flags, byte[] cacheName, AtomicInteger topologyId,
+   protected IterationStartOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
                                      String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments, int batchSize, TransportFactory transportFactory) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.filterConverterFactory = filterConverterFactory;

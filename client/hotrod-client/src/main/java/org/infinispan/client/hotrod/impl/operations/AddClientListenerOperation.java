@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
@@ -44,7 +43,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    public final byte[][] converterFactoryParams;
 
    protected AddClientListenerOperation(Codec codec, TransportFactory transportFactory,
-         String cacheName, AtomicInteger topologyId, Flag[] flags,
+         String cacheName, AtomicInteger topologyId, int flags,
          ClientListenerNotifier listenerNotifier, Object listener,
          byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
       super(codec, transportFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags);

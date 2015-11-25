@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.client.hotrod.CacheTopologyInfo;
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
@@ -27,7 +25,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.infinispan.commons.util.Util.*;
@@ -100,7 +97,7 @@ public class Codec20 implements Codec, HotRodConstants {
       transport.writeByte(version);
       transport.writeByte(params.opCode);
       transport.writeArray(params.cacheName);
-      int joinedFlags = HeaderParams.joinFlags(params.flags);
+      int joinedFlags = params.flags;
       transport.writeVInt(joinedFlags);
       transport.writeByte(params.clientIntel);
       int topologyId = params.topologyId.get();
@@ -169,6 +166,7 @@ public class Codec20 implements Codec, HotRodConstants {
             break;
          case ERROR_RESPONSE:
             checkForErrorsInResponseStatus(transport, null, status);
+            // Fall through if we didn't throw an exception already
          default:
             throw log.unknownEvent(eventTypeId);
       }
@@ -219,7 +217,7 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
-   public Object returnPossiblePrevValue(Transport transport, short status, Flag[] flags) {
+   public Object returnPossiblePrevValue(Transport transport, short status, int flags) {
       Marshaller marshaller = transport.getTransportFactory().getMarshaller();
       if (HotRodConstants.hasPrevious(status)) {
          byte[] bytes = transport.readArray();

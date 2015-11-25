@@ -72,13 +72,7 @@ public class Codec10 implements Codec {
       transport.writeByte(params.opCode);
       transport.writeArray(params.cacheName);
 
-      int flagInt = 0;
-      if (params.flags != null) {
-         for (Flag flag : params.flags) {
-            if (flag.equals(Flag.FORCE_RETURN_VALUE)) // 1.0 / 1.1 servers only understand this flag
-               flagInt = flag.getFlagInt();
-         }
-      }
+      int flagInt = params.flags & Flag.FORCE_RETURN_VALUE.getFlagInt(); // 1.0 / 1.1 servers only understand this flag
       transport.writeVInt(flagInt);
       transport.writeByte(params.clientIntel);
       transport.writeVInt(params.topologyId.get());
@@ -146,7 +140,7 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public Object returnPossiblePrevValue(Transport transport, short status, Flag[] flags) {
+   public Object returnPossiblePrevValue(Transport transport, short status, int flags) {
       Marshaller marshaller = transport.getTransportFactory().getMarshaller();
       if (hasForceReturn(flags)) {
          byte[] bytes = transport.readArray();
@@ -158,12 +152,8 @@ public class Codec10 implements Codec {
       }
    }
 
-   private boolean hasForceReturn(Flag[] flags) {
-      if (flags == null) return false;
-      for (Flag flag : flags) {
-         if (flag == Flag.FORCE_RETURN_VALUE) return true;
-      }
-      return false;
+   private boolean hasForceReturn(int flags) {
+      return (flags & Flag.FORCE_RETURN_VALUE.getFlagInt()) != 0;
    }
 
    @Override

@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -29,7 +28,7 @@ public class Codec12 extends Codec11 {
       transport.writeByte(params.opCode);
       transport.writeArray(params.cacheName);
 
-      int joinedFlags = HeaderParams.joinFlags(params.flags);
+      int joinedFlags = params.flags;
       transport.writeVInt(joinedFlags);
       transport.writeByte(params.clientIntel);
       transport.writeVInt(params.topologyId.get());

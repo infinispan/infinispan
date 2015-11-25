@@ -12,8 +12,6 @@ import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -28,9 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public class OperationsFactory implements HotRodConstants {
 
-   private static final Flag[] FORCE_RETURN_VALUE = {Flag.FORCE_RETURN_VALUE};
-
-   private final ThreadLocal<List<Flag>> flagsMap = new ThreadLocal<List<Flag>>();
+   private final ThreadLocal<Integer> flagsMap = new ThreadLocal<Integer>();
 
    private final TransportFactory transportFactory;
 
@@ -91,7 +87,7 @@ public class OperationsFactory implements HotRodConstants {
    public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(byte[] key,
             byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version) {
       return new ReplaceIfUnmodifiedOperation(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
+            codec, transportFactory, key, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version);
    }
 
@@ -113,28 +109,28 @@ public class OperationsFactory implements HotRodConstants {
    public <V> PutOperation<V> newPutKeyValueOperation(byte[] key, byte[] value,
           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new PutOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
+            codec, transportFactory, key, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    public PutAllOperation newPutAllOperation(Map<byte[], byte[]> map,
           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new PutAllOperation(
-            codec, transportFactory, map, cacheNameBytes, topologyId, flags(),
+            codec, transportFactory, map, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    public <V> PutIfAbsentOperation<V> newPutIfAbsentOperation(byte[] key, byte[] value,
              long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return new PutIfAbsentOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
+            codec, transportFactory, key, cacheNameBytes, topologyId, flags(lifespan, maxIdleTime),
             value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    public <V> ReplaceOperation<V> newReplaceOperation(byte[] key, byte[] values,
            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new ReplaceOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
+            codec, transportFactory, key, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
@@ -211,39 +207,53 @@ public class OperationsFactory implements HotRodConstants {
 		return new ExecuteOperation<T>(codec, transportFactory, cacheNameBytes, topologyId, flags(), taskName, marshalledParams);
 	}
 
-   public Flag[] flags() {
-      List<Flag> flags = this.flagsMap.get();
-      this.flagsMap.remove();
-      if (forceReturnValue) {
-         if (flags == null) {
-            return FORCE_RETURN_VALUE;
-         } else {
-            flags.add(Flag.FORCE_RETURN_VALUE);
-         }
+   private int flags(long lifespan, long maxIdle) {
+      int intFlags = flags();
+      if (lifespan == 0) {
+         intFlags |= Flag.DEFAULT_LIFESPAN.getFlagInt();
       }
-      return flags != null ? flags.toArray(new Flag[0]) : null;
+      if (maxIdle == 0) {
+         intFlags |= Flag.DEFAULT_MAXIDLE.getFlagInt();
+      }
+      return intFlags;
+   }
+
+   public int flags() {
+      Integer threadLocalFlags = this.flagsMap.get();
+      this.flagsMap.remove();
+      int intFlags = 0;
+      if (threadLocalFlags != null) {
+         intFlags |= threadLocalFlags.intValue();
+      }
+      if (forceReturnValue) {
+         intFlags |= Flag.FORCE_RETURN_VALUE.getFlagInt();
+      }
+      return intFlags;
    }
 
    public void setFlags(Flag[] flags) {
-      List<Flag> list = new ArrayList<Flag>();
+      int intFlags = 0;
       for(Flag flag : flags)
-         list.add(flag);
-      this.flagsMap.set(list);
+         intFlags |= flag.getFlagInt();
+      this.flagsMap.set(intFlags);
    }
 
-   public void addFlags(Flag... flags) {
-      List<Flag> list = this.flagsMap.get();
-      if (list == null) {
-         list = new ArrayList<Flag>();
-         this.flagsMap.set(list);
+   public void setFlags(int intFlags) {
+      this.flagsMap.set(intFlags);
+   }
+
+   public void addFlag(Flag flag) {
+      int intFlags = flag.getFlagInt();
+      Integer threadLocalFlags = this.flagsMap.get();
+      if (threadLocalFlags != null) {
+         intFlags |= threadLocalFlags;
       }
-      for(Flag flag : flags)
-         list.add(flag);
+      this.flagsMap.set(intFlags);
    }
 
    public boolean hasFlag(Flag flag) {
-      List<Flag> list = this.flagsMap.get();
-      return list != null && list.contains(flag);
+      Integer threadLocalFlags = this.flagsMap.get();
+      return threadLocalFlags != null && (threadLocalFlags & flag.getFlagInt()) != 0;
    }
 
    public CacheTopologyInfo getCacheTopologyInfo() {

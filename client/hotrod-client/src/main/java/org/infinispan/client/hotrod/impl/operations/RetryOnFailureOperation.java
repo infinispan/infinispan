@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
@@ -9,7 +8,6 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.ClusterSwitchStatus;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -38,7 +36,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
    private boolean triedCompleteRestart = false;
 
    protected RetryOnFailureOperation(Codec codec, TransportFactory transportFactory,
-            byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
+                                     byte[] cacheName, AtomicInteger topologyId, int flags) {
       super(codec, flags, cacheName, topologyId);
       this.transportFactory = transportFactory;
    }

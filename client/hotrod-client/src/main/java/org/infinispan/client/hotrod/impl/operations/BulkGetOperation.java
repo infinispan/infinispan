@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -22,7 +21,7 @@ public class BulkGetOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    private final int entryCount;
 
-   public BulkGetOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId, Flag[] flags, int entryCount) {
+   public BulkGetOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId, int flags, int entryCount) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.entryCount = entryCount;
    }

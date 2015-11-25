@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.VersionedValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -29,7 +28,7 @@ public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedVa
    private static final boolean trace = log.isTraceEnabled();
 
    public GetWithVersionOperation(Codec codec, TransportFactory transportFactory,
-            byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
+                                  byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags) {
       super(codec, transportFactory, key, cacheName, topologyId, flags);
    }
 

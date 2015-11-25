@@ -15,7 +15,7 @@ public class HeaderParams {
    short opCode;
    short opRespCode;
    byte[] cacheName;
-   Flag[] flags;
+   int flags;
    byte clientIntel;
    byte txMarker;
    AtomicInteger topologyId;
@@ -33,7 +33,7 @@ public class HeaderParams {
       return this;
    }
 
-   public HeaderParams flags(Flag[] flags) {
+   public HeaderParams flags(int flags) {
       this.flags = flags;
       return this;
    }

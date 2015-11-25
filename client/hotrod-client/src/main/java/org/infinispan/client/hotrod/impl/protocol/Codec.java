@@ -45,7 +45,7 @@ public interface Codec {
 
    Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller);
 
-   Object returnPossiblePrevValue(Transport transport, short status, Flag[] flags);
+   Object returnPossiblePrevValue(Transport transport, short status, int flags);
 
    /**
     * Logger for Hot Rod client codec

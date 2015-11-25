@@ -22,7 +22,7 @@ public class AuthOperation extends HotRodOperation {
    private final byte[] response;
 
    public AuthOperation(Codec codec, AtomicInteger topologyId, Transport transport, String saslMechanism, byte response[]) {
-      super(codec, null, DEFAULT_CACHE_NAME_BYTES, topologyId);
+      super(codec, 0, DEFAULT_CACHE_NAME_BYTES, topologyId);
       this.transport = transport;
       this.saslMechanism = saslMechanism;
       this.response = response;

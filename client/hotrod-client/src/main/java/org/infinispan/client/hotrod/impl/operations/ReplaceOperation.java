@@ -21,8 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ReplaceOperation<V> extends AbstractKeyValueOperation<V> {
 
    public ReplaceOperation(Codec codec, TransportFactory transportFactory,
-            byte[] key, byte[] cacheName, AtomicInteger topologyId,
-            Flag[] flags, byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+                           byte[] key, byte[] cacheName, AtomicInteger topologyId,
+                           int flags, byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 

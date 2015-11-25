@@ -22,7 +22,7 @@ public class AuthMechListOperation extends HotRodOperation {
    private final Transport transport;
 
    public AuthMechListOperation(Codec codec, AtomicInteger topologyId, Transport transport) {
-      super(codec, null, DEFAULT_CACHE_NAME_BYTES, topologyId);
+      super(codec, 0, DEFAULT_CACHE_NAME_BYTES, topologyId);
       this.transport = transport;
    }
 
