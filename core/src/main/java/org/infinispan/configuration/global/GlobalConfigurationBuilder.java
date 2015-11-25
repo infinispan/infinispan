@@ -272,7 +272,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             ", asyncThreadPool=" + asyncThreadPool +
             ", security=" + security +
             ", shutdown=" + shutdown +
-            ", statePersistence=" + globalState +
+            ", globalState=" + globalState +
             ", site=" + site +
             '}';
    }
