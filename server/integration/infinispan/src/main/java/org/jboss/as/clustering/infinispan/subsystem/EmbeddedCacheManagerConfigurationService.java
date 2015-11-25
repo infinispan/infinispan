@@ -44,6 +44,7 @@ public class EmbeddedCacheManagerConfigurationService {
 
     interface AuthorizationConfiguration {
         String getPrincipalMapper();
+        String getAuditLogger();
         Map<String, List<String>> getRoles();
     }
 

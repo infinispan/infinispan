@@ -506,11 +506,15 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         PathAddress authorizationAddress = securityAddress.append(ModelKeys.AUTHORIZATION, ModelKeys.AUTHORIZATION_NAME);
         ModelNode authorization = Util.createAddOperation(authorizationAddress);
 
+        String auditLogger = null;
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case AUDIT_LOGGER: {
-                    // Ignore
+                    if (auditLogger != null) {
+                       throw ParseUtils.unexpectedElement(reader);
+                    }
+                    auditLogger = reader.getAttributeValue(i);
                     break;
                 }
                 default: {
@@ -518,6 +522,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
             }
         }
+        CacheContainerAuthorizationResource.AUDIT_LOGGER.parseAndSetParameter(auditLogger, authorization, reader);
 
         Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
         String roleMapper = null;

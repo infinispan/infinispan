@@ -35,8 +35,10 @@ import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
+import org.infinispan.security.impl.NullAuditLogger;
 import org.infinispan.server.commons.service.Builder;
 import org.infinispan.server.commons.service.InjectedValueDependency;
 import org.infinispan.server.commons.service.ValueDependency;
@@ -147,6 +149,15 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
 
         if (authorization != null) {
             authorizationBuilder.enable();
+            if (authorization.getAuditLogger() != null) {
+               try {
+                  authorizationBuilder.auditLogger(Class.forName(authorization.getAuditLogger(), true, loader).asSubclass(AuditLogger.class).newInstance());
+               } catch (Exception e) {
+                  throw new IllegalStateException(e);
+               }
+            } else {
+               authorizationBuilder.auditLogger(new NullAuditLogger());
+            }
             if (authorization.getPrincipalMapper() != null) {
                 try {
                     authorizationBuilder.principalRoleMapper(Class.forName(authorization.getPrincipalMapper(), true, loader).asSubclass(PrincipalRoleMapper.class).newInstance());

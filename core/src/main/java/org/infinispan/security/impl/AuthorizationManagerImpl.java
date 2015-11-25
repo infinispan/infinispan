@@ -1,6 +1,5 @@
 package org.infinispan.security.impl;
 
-import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.Cache;
