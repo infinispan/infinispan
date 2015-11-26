@@ -535,7 +535,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
 
       List<org.jgroups.Address> jgAddressList = toJGroupsAddressListExcludingSelf(recipients, totalOrder);
-      int membersSize = members.size();
+      List<Address> localMembers = this.members;
+      int membersSize = localMembers.size();
       boolean broadcast = jgAddressList == null || recipients.size() == membersSize;
       if (membersSize < 3 || (jgAddressList != null && jgAddressList.size() < 2)) broadcast = false;
       RspListFuture rspListFuture = null;
@@ -550,15 +551,22 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                timeout, toJGroupsFilter(responseFilter), deliverOrder);
       } else {
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
-            boolean singleRecipient = !ignoreLeavers && jgAddressList != null && jgAddressList.size() == 1;
+            boolean singleRecipient = false;
             boolean skipRpc = false;
             if (jgAddressList == null) {
-               // broadcast with membersSize < 3
-               ArrayList<Address> others = new ArrayList<>(members);
-               others.remove(self);
-               skipRpc = others.isEmpty();
-               singleRecipient = !ignoreLeavers && others.size() == 1;
-               if (singleRecipient) singleJGAddress = toJGroupsAddress(others.get(0));
+               if (membersSize == 1) {
+                  skipRpc = true;
+               } else if (!ignoreLeavers && membersSize == 2) {
+                  singleRecipient = true;
+                  if (localMembers.get(0).equals(self)) {
+                     singleJGAddress = toJGroupsAddress(localMembers.get(1));
+                  } else {
+                     singleJGAddress = toJGroupsAddress(localMembers.get(0));
+                  }
+               }
+            } else if (jgAddressList.size() == 1 && !ignoreLeavers) {
+               singleRecipient = true;
+               singleJGAddress = jgAddressList.get(0);
             }
             if (skipRpc) {
                return CompletableFutures.returnEmptyMap();
