@@ -3,10 +3,9 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.configuration.attributes.SimpleInstanceAttributeCopier;
+import org.infinispan.hash.InjectableEquivalenceMurmurHash3;
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -19,7 +18,7 @@ import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
  */
 public class HashConfiguration {
    public static final AttributeDefinition<ConsistentHashFactory> CONSISTENT_HASH_FACTORY  = AttributeDefinition.builder("consistentHashFactory", null, ConsistentHashFactory.class).immutable().build();
-   public static final AttributeDefinition<Hash> HASH = AttributeDefinition.builder("hash", (Hash)MurmurHash3.getInstance()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<Hash> HASH = AttributeDefinition.builder("hash", (Hash) new InjectableEquivalenceMurmurHash3()).copier(SimpleInstanceAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners" , 2).immutable().build();
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)

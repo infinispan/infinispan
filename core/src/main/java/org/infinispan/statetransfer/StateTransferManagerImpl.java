@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -13,6 +14,7 @@ import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.distribution.group.PartitionerConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -48,6 +50,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   private ComponentRegistry componentRegistry;
    private StateConsumer stateConsumer;
    private StateProvider stateProvider;
    private PartitionHandlingManager partitionHandlingManager;
@@ -57,6 +60,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private GlobalConfiguration globalConfiguration;
    private RpcManager rpcManager;
    private LocalTopologyManager localTopologyManager;
+   private Hash hash;
 
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
    // The first topology in which the local node was a member. Any command with a lower
@@ -68,7 +72,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Inject
-   public void init(StateConsumer stateConsumer,
+   public void init(ComponentRegistry componentRegistry,
+                    StateConsumer stateConsumer,
                     StateProvider stateProvider,
                     Cache cache,
                     CacheNotifier cacheNotifier,
@@ -77,7 +82,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     RpcManager rpcManager,
                     KeyPartitioner keyPartitioner,
                     LocalTopologyManager localTopologyManager,
-                    PartitionHandlingManager partitionHandlingManager) {
+                    PartitionHandlingManager partitionHandlingManager,
+                    Hash hash) {
+      this.componentRegistry = componentRegistry;
       this.stateConsumer = stateConsumer;
       this.stateProvider = stateProvider;
       this.cacheName = cache.getName();
@@ -88,6 +95,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.keyPartitioner = keyPartitioner;
       this.localTopologyManager = localTopologyManager;
       this.partitionHandlingManager = partitionHandlingManager;
+      this.hash = hash;
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
@@ -98,8 +106,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
          log.tracef("Starting StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
 
-      CacheJoinInfo joinInfo = new CacheJoinInfo(pickConsistentHashFactory(),
-            configuration.clustering().hash().hash(),
+      CacheJoinInfo joinInfo = new CacheJoinInfo(
+            pickConsistentHashFactory(),
+            hash,
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(),
             configuration.clustering().stateTransfer().timeout(),

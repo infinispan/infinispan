@@ -687,6 +687,7 @@ class IntegrationTest extends RestServerTestBase {
          eTagFirst.equals(eTagSecond))
    }
 
+   @Test(enabled = false, description = "Disabled due to ISPN-5992")
    def testConcurrentETagChanges(m: Method) {
       val v2PutLatch = new CountDownLatch(1)
       val v3PutLatch = new CountDownLatch(1)

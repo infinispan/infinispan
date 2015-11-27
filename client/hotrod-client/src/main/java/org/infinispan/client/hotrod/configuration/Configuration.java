@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -28,6 +29,7 @@ public class Configuration {
    private final int connectionTimeout;
    private final Class<? extends ConsistentHash>[] consistentHashImpl;
    private final boolean forceReturnValues;
+   private final Equivalence keyEquivalence;
    private final int keySizeEstimate;
    private final Class<? extends Marshaller> marshallerClass;
    private final Marshaller marshaller;
@@ -44,7 +46,7 @@ public class Configuration {
    private final List<ClusterConfiguration> clusters;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
-         ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
+         ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, Equivalence keyEquivalence, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
          String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
          List<ClusterConfiguration> clusters) {
@@ -57,6 +59,7 @@ public class Configuration {
       this.connectionTimeout = connectionTimeout;
       this.consistentHashImpl = consistentHashImpl;
       this.forceReturnValues = forceReturnValues;
+      this.keyEquivalence = keyEquivalence;
       this.keySizeEstimate = keySizeEstimate;
       this.marshallerClass = marshallerClass;
       this.marshaller = null;
@@ -73,7 +76,7 @@ public class Configuration {
    }
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
-         ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
+         ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, Equivalence keyEquivalence, int keySizeEstimate, Marshaller marshaller,
          String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
          List<ClusterConfiguration> clusters) {
@@ -86,6 +89,7 @@ public class Configuration {
       this.connectionTimeout = connectionTimeout;
       this.consistentHashImpl = consistentHashImpl;
       this.forceReturnValues = forceReturnValues;
+      this.keyEquivalence = keyEquivalence;
       this.keySizeEstimate = keySizeEstimate;
       this.marshallerClass = null;
       this.marshaller = marshaller;
@@ -135,6 +139,10 @@ public class Configuration {
 
    public boolean forceReturnValues() {
       return forceReturnValues;
+   }
+
+   public Equivalence keyEquivalence() {
+      return keyEquivalence;
    }
 
    public int keySizeEstimate() {
@@ -197,7 +205,7 @@ public class Configuration {
    public String toString() {
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyClass=" + balancingStrategyClass + ", balancingStrategy=" + balancingStrategy + ",classLoader=" + classLoader + ", connectionPool="
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
-            + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
+            + forceReturnValues + ", keyEquivalence=" + keyEquivalence + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
             + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay + ", tcpKeepAlive=" + tcpKeepAlive
             + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
             + "nearCache=" + nearCache + "]";
