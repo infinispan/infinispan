@@ -31,6 +31,6 @@ public class TransportObjectFactoryTest {
             .when(codec).writeHeader(any(Transport.class), any(HeaderParams.class));
 
       InetSocketAddress address = new InetSocketAddress(123);
-      assertFalse("Exception shouldn't be thrown here", objectFactory.validateObject(address, any(TcpTransport.class)));
+      assertFalse("Exception shouldn't be thrown here", objectFactory.validateObject(address, null));
    }
 }
