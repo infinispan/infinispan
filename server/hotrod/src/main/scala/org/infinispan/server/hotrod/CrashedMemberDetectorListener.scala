@@ -17,11 +17,8 @@ import org.infinispan.context.Flag
 @Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread
 class CrashedMemberDetectorListener(cache: AddressCache, server: HotRodServer) extends Log {
 
-   // Let all nodes remove the address from their own cache locally. By doing
-   // this, we can guarantee that transport view id has been updated before
-   // updating the locally cached view id. This cached view id is used to
-   // guarantee that the address cache will be updated *before* the client can
-   // detect a new topology view.
+   // Let all nodes remove the address from their own cache locally.
+   // This will exclude the address from their topology updates.
    val addressCache = cache.getAdvancedCache.withFlags(Flag.CACHE_MODE_LOCAL)
 
    @ViewChanged
@@ -35,12 +32,8 @@ class CrashedMemberDetectorListener(cache: AddressCache, server: HotRodServer) e
          val oldMembers = collectionAsScalaIterable(e.getOldMembers)
          val goneMembers = oldMembers.filterNot(newMembers contains _)
          trace("View change received: %s, removing members %s", e, goneMembers)
-         if (!goneMembers.isEmpty) {
-            // Consider doing removeAsync and then waiting for all removals...
-            if (addressCache.getStatus.allowInvocations()) {
-               goneMembers.foreach(addressCache.remove(_))
-            }
-         }
+         // Consider doing removeAsync and then waiting for all removals...
+         goneMembers.foreach(a => if (addressCache.getStatus.allowInvocations()) addressCache.remove(a))
       } catch {
          case t: Throwable => logErrorDetectingCrashedMember(t)
       }

@@ -21,7 +21,7 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodViewMergeTest")
-class HotRodViewMergeTest extends BasePartitionHandlingTest {
+class HotRodMergeTest extends BasePartitionHandlingTest {
 
    numMembersInCluster = 2
    cacheMode = CacheMode.DIST_SYNC
@@ -63,18 +63,34 @@ class HotRodViewMergeTest extends BasePartitionHandlingTest {
       waitForClusterToForm()
    }
 
-   def testNewTopologySentAfterViewMerge(m: Method) {
-      expectCompleteTopology(client, 2)
+   def testNewTopologySentAfterCleanMerge(m: Method) {
+      TestingUtil.waitForRehashToComplete(caches())
+      val initialTopology = advancedCache(0).getRpcManager.getTopologyId
+
+      expectCompleteTopology(client, initialTopology)
       val p0 = new PartitionDescriptor(0)
       val p1 = new PartitionDescriptor(1)
       splitCluster(p0.getNodes, p1.getNodes)
       TestingUtil.waitForRehashToComplete(cache(p1.node(0)))
       TestingUtil.waitForRehashToComplete(cache(p0.node(0)))
-      expectPartialTopology(client)
+      expectPartialTopology(client, initialTopology + 1)
       partition(0).merge(partition(1))
-      val expectedTopologyId = 8
-      eventuallyExpectCompleteTopology(client, expectedTopologyId)
+      eventuallyExpectCompleteTopology(client, initialTopology + 6)
    }
+
+   def testNewTopologySentAfterOverlappingMerge(m: Method) {
+      TestingUtil.waitForRehashToComplete(caches())
+      val initialTopology = advancedCache(0).getRpcManager.getTopologyId
+      expectCompleteTopology(client, initialTopology)
+      val p1 = new PartitionDescriptor(0)
+      isolatePartition(p1.getNodes)
+      TestingUtil.waitForRehashToComplete(cache(p1.node(0)))
+      eventuallyExpectPartialTopology(client, initialTopology + 1)
+
+      partition(0).merge(partition(1))
+      eventuallyExpectCompleteTopology(client, initialTopology + 2)
+   }
+
 
    private def eventuallyExpectCompleteTopology(c: HotRodClient, expectedTopologyId: Int): Unit = {
       eventually(new Condition {
@@ -96,10 +112,24 @@ class HotRodViewMergeTest extends BasePartitionHandlingTest {
       assertHashTopology20Received(resp.topologyResponse.get, servers.toList, "", expectedTopologyId)
    }
 
-   private def expectPartialTopology(c: HotRodClient): Unit = {
-      val resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 2)
+   private def eventuallyExpectPartialTopology(c: HotRodClient, expectedTopologyId: Int): Unit = {
+      eventually(new Condition {
+         override def isSatisfied: Boolean = {
+            val resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
+            assertStatus(resp, Success)
+            if (!resp.topologyResponse.isDefined || (resp.topologyResponse.get.topologyId < expectedTopologyId)) {
+               return false
+            }
+            assertHashTopology20Received(resp.topologyResponse.get, List(servers.head), "", expectedTopologyId)
+            return true
+         }
+      })
+   }
+
+   private def expectPartialTopology(c: HotRodClient, expectedTopologyId: Int): Unit = {
+      val resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
       assertStatus(resp, Success)
-      assertHashTopology20Received(resp.topologyResponse.get, List(servers.head), "", 3)
+      assertHashTopology20Received(resp.topologyResponse.get, List(servers.head), "", expectedTopologyId)
    }
 
 }

@@ -30,10 +30,14 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static java.util.stream.Stream.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -142,9 +146,9 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       private List<Address> installMergeView(ArrayList<Channel> view1, ArrayList<Channel> view2) {
-         List<Address> allAddresses = new ArrayList<>();
-         for (Channel c: view1) allAddresses.add(c.getAddress());
-         for (Channel c: view2) allAddresses.add(c.getAddress());
+         List<Address> allAddresses =
+               concat(view1.stream(), view2.stream()).map(Channel::getAddress).distinct()
+                     .collect(Collectors.toList());
 
          View v1 = toView(view1);
          View v2 = toView(view2);
@@ -200,7 +204,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          ArrayList<Channel> view2 = new ArrayList<>(partition.channels);
 //         System.out.println("view1 = " + printView(view1));
 //         System.out.println("view2 = " + printView(view2));
-         channels.addAll(partition.channels);
+         partition.channels.stream().filter(c -> !channels.contains(c)).forEach(c -> channels.add(c));
          installMergeView(view1, view2);
          waitForPartitionToForm();
          List<Partition> tmp = new ArrayList<>(Arrays.asList(BasePartitionHandlingTest.this.partitions));
@@ -344,6 +348,18 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          p.partition();
       }
    }
+
+   protected void isolatePartition(int[] isolatedPartition) {
+      List<Address> allMembers = channel(0).getView().getMembers();
+      Partition p0 = new Partition(allMembers);
+      IntStream.range(0, allMembers.size()).forEach(i -> p0.addNode(channel(i)));
+
+      Partition p1 = new Partition(allMembers);
+      Arrays.stream(isolatedPartition).forEach(i -> p1.addNode(channel(i)));
+      p1.partition();
+      partitions = new Partition[]{p0, p1};
+   }
+
 
    private Channel channel(int i) {
       return channel(cache(i));

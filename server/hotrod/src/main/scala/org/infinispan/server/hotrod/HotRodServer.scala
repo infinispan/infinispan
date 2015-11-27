@@ -1,13 +1,14 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
+import org.infinispan
 import org.infinispan.AdvancedCache
 import org.infinispan.commons.marshall.Marshaller
+import org.infinispan.distexec._
 import org.infinispan.filter.{ParamKeyValueFilterConverterFactory, KeyValueFilterConverterFactory}
 import org.infinispan.notifications.Listener
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent
 import org.infinispan.notifications.cachelistener.filter.{CacheEventFilterConverterFactory, CacheEventConverterFactory, CacheEventFilterFactory}
 import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
 import org.infinispan.manager.EmbeddedCacheManager
@@ -302,26 +303,44 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    @Listener(sync = false)
    class ReAddMyAddressListener(addressCache: AddressCache, clusterAddress: Address, address: ServerAddress) {
-      // We rely on the fact that even with partition handling disabled, the data in the minority
-      // partition is wiped on a merge.
-      // We also listen for removal events, in case we receive (and apply) the other partition's remove
-      // command after the merge.
-      @CacheEntryInvalidated @CacheEntryRemoved
-      def addressRemoved(event: CacheEntryEvent[Address, ServerAddress]): Unit = {
+      @TopologyChanged
+      def topologyChanged(event: TopologyChangedEvent[Address, ServerAddress]): Unit = {
          if (event.isPre)
             return
 
-         if (event.getKey.equals(clusterAddress)) {
-            // Our address just got invalidated out of the cache, most likely because of a merge
-            // Put it back asynchronously, so we don't block the topology update
-            log.debugf("Re-adding %s to the topology cache", clusterAddress)
-            addressCache.put(clusterAddress, address)
+         val distributedExecutor = new DefaultExecutorService(addressCache)
+         var success = false
+         while (!success) {
+            try {
+               val futures = distributedExecutor.submitEverywhere(new CheckAddressTask(clusterAddress, address))
+               val everybodyHasIt = futures.forall(_.get())
+               if (!everybodyHasIt) {
+                  log.debugf("Re-adding %s to the topology cache", clusterAddress)
+                  addressCache.putAsync(clusterAddress, address)
+               }
+               success = true
+            } catch {
+               case e: Throwable => log.debug("Error re-adding address to topology cache, retrying", e)
+            }
          }
       }
    }
-
 }
 
 object HotRodServer {
    val DEFAULT_TOPOLOGY_ID = -1
+}
+
+class CheckAddressTask(clusterAddress: Address, serverAddress: ServerAddress)
+      extends DistributedCallable[Address, ServerAddress, Boolean] with Serializable with Log {
+   @transient
+   private var cache: infinispan.Cache[Address, ServerAddress] = null
+
+   override def setEnvironment(cache: infinispan.Cache[Address, ServerAddress], inputKeys: java.util.Set[Address]): Unit = {
+      this.cache = cache
+   }
+
+   override def call(): Boolean = {
+      cache.containsKey(clusterAddress)
+   }
 }
