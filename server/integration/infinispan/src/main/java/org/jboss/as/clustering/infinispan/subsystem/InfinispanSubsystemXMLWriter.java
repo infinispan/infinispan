@@ -130,13 +130,13 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write any configured thread pools
                 if (container.hasDefined(ThreadPoolResource.WILDCARD_PATH.getKey())) {
                     writeThreadPoolElements(Element.ASYNC_OPERATIONS_THREAD_POOL, ThreadPoolResource.ASYNC_OPERATIONS, writer, container);
+                    writeScheduledThreadPoolElements(Element.EXPIRATION_THREAD_POOL, ScheduledThreadPoolResource.EXPIRATION, writer, container);
                     writeThreadPoolElements(Element.LISTENER_THREAD_POOL, ThreadPoolResource.LISTENER, writer, container);
                     writeThreadPoolElements(Element.PERSISTENCE_THREAD_POOL, ThreadPoolResource.PERSISTENCE, writer, container);
                     writeThreadPoolElements(Element.REMOTE_COMMAND_THREAD_POOL, ThreadPoolResource.REMOTE_COMMAND, writer, container);
+                    writeScheduledThreadPoolElements(Element.REPLICATION_QUEUE_THREAD_POOL, ScheduledThreadPoolResource.REPLICATION_QUEUE, writer, container);
                     writeThreadPoolElements(Element.STATE_TRANSFER_THREAD_POOL, ThreadPoolResource.STATE_TRANSFER, writer, container);
                     writeThreadPoolElements(Element.TRANSPORT_THREAD_POOL, ThreadPoolResource.TRANSPORT, writer, container);
-                    writeScheduledThreadPoolElements(Element.EXPIRATION_THREAD_POOL, ScheduledThreadPoolResource.EXPIRATION, writer, container);
-                    writeScheduledThreadPoolElements(Element.REPLICATION_QUEUE_THREAD_POOL, ScheduledThreadPoolResource.REPLICATION_QUEUE, writer, container);
                 }
 
                 ModelNode configurations = container.get(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME);
@@ -275,6 +275,49 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         this.writeOptional(writer, Attribute.STATISTICS, cache, ModelKeys.STATISTICS);
         this.writeOptional(writer, Attribute.STATISTICS_AVAILABLE, cache, ModelKeys.STATISTICS_AVAILABLE);
 
+        if (cache.get(ModelKeys.BACKUP).isDefined()) {
+            writer.writeStartElement(Element.BACKUPS.getLocalName());
+            for (Property property : cache.get(ModelKeys.BACKUP).asPropertyList()) {
+                writer.writeStartElement(Element.BACKUP.getLocalName());
+                writer.writeAttribute(Attribute.SITE.getLocalName(), property.getName());
+                ModelNode backup = property.getValue();
+                BackupSiteConfigurationResource.FAILURE_POLICY.marshallAsAttribute(backup, writer);
+                BackupSiteConfigurationResource.STRATEGY.marshallAsAttribute(backup, writer);
+                BackupSiteConfigurationResource.REPLICATION_TIMEOUT.marshallAsAttribute(backup, writer);
+                BackupSiteConfigurationResource.ENABLED.marshallAsAttribute(backup, writer);
+                if (backup.hasDefined(ModelKeys.TAKE_BACKUP_OFFLINE_AFTER_FAILURES)
+                        || backup.hasDefined(ModelKeys.TAKE_BACKUP_OFFLINE_MIN_WAIT)) {
+                    writer.writeStartElement(Element.TAKE_OFFLINE.getLocalName());
+                    BackupSiteConfigurationResource.TAKE_OFFLINE_AFTER_FAILURES.marshallAsAttribute(backup, writer);
+                    BackupSiteConfigurationResource.TAKE_OFFLINE_MIN_WAIT.marshallAsAttribute(backup, writer);
+                    writer.writeEndElement();
+                }
+                if (backup.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME).isDefined()) {
+                    ModelNode stateTransfer = backup.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME);
+                    if (stateTransfer.hasDefined(ModelKeys.CHUNK_SIZE)
+                          || stateTransfer.hasDefined(ModelKeys.TIMEOUT)
+                          || stateTransfer.hasDefined(ModelKeys.MAX_RETRIES)
+                          || stateTransfer.hasDefined(ModelKeys.WAIT_TIME)) {
+                       writer.writeStartElement(Element.STATE_TRANSFER.getLocalName());
+                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_CHUNK_SIZE.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_TIMEOUT.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_MAX_RETRIES.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_WAIT_TIME.marshallAsAttribute(stateTransfer, writer);
+                       writer.writeEndElement();
+                    }
+                }
+                writer.writeEndElement();
+            }
+            writer.writeEndElement();
+        }
+
+        if (cache.get(ModelKeys.REMOTE_CACHE).isDefined() || cache.get(ModelKeys.REMOTE_SITE).isDefined()) {
+            writer.writeStartElement(Element.BACKUP_FOR.getLocalName());
+            CacheConfigurationResource.REMOTE_CACHE.marshallAsAttribute(cache, writer);
+            CacheConfigurationResource.REMOTE_SITE.marshallAsAttribute(cache, writer);
+            writer.writeEndElement();
+        }
+
         if (cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME).isDefined()) {
             writer.writeStartElement(Element.LOCKING.getLocalName());
             ModelNode locking = cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME);
@@ -311,23 +354,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             this.writeOptional(writer, Attribute.MAX_IDLE, expiration, ModelKeys.MAX_IDLE);
             this.writeOptional(writer, Attribute.LIFESPAN, expiration, ModelKeys.LIFESPAN);
             this.writeOptional(writer, Attribute.INTERVAL, expiration, ModelKeys.INTERVAL);
-            writer.writeEndElement();
-        }
-
-        if (cache.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME).isDefined()) {
-            ModelNode stateTransfer = cache.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME);
-            writer.writeStartElement(Element.STATE_TRANSFER.getLocalName());
-            this.writeOptional(writer, Attribute.AWAIT_INITIAL_TRANSFER, stateTransfer, ModelKeys.AWAIT_INITIAL_TRANSFER);
-            this.writeOptional(writer, Attribute.ENABLED, stateTransfer, ModelKeys.ENABLED);
-            this.writeOptional(writer, Attribute.TIMEOUT, stateTransfer, ModelKeys.TIMEOUT);
-            this.writeOptional(writer, Attribute.CHUNK_SIZE, stateTransfer, ModelKeys.CHUNK_SIZE);
-            writer.writeEndElement();
-        }
-
-        if (cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME).isDefined()) {
-            ModelNode partitionHandling = cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME);
-            writer.writeStartElement(Element.PARTITION_HANDLING.getLocalName());
-            this.writeOptional(writer, Attribute.ENABLED, partitionHandling, ModelKeys.ENABLED);
             writer.writeEndElement();
         }
 
@@ -460,8 +486,30 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 this.writeJdbcStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);
-                this.writeJDBCStoreTable(writer, Element.STRING_KEYED_TABLE, store, ModelKeys.STRING_KEYED_TABLE);
                 this.writeJDBCStoreTable(writer, Element.BINARY_KEYED_TABLE, store, ModelKeys.BINARY_KEYED_TABLE);
+                this.writeJDBCStoreTable(writer, Element.STRING_KEYED_TABLE, store, ModelKeys.STRING_KEYED_TABLE);
+                writer.writeEndElement();
+            }
+        }
+
+        if (cache.get(ModelKeys.LEVELDB_STORE).isDefined()) {
+            for (Property levelDbStoreEntry : cache.get(ModelKeys.LEVELDB_STORE).asPropertyList()) {
+                ModelNode store = levelDbStoreEntry.getValue();
+                writer.writeStartElement(Element.LEVELDB_STORE.getLocalName());
+                // write identifier before other attributes
+                ModelNode name = new ModelNode();
+                name.get(ModelKeys.NAME).set(levelDbStoreEntry.getName());
+                LevelDBStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
+                this.writeOptional(writer, Attribute.RELATIVE_TO, store, ModelKeys.RELATIVE_TO);
+                this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
+                this.writeOptional(writer, Attribute.BLOCK_SIZE, store, ModelKeys.BLOCK_SIZE);
+                this.writeOptional(writer, Attribute.CACHE_SIZE, store, ModelKeys.CACHE_SIZE);
+                this.writeOptional(writer, Attribute.CLEAR_THRESHOLD, store, ModelKeys.CLEAR_THRESHOLD);
+                this.writeStoreAttributes(writer, store);
+                this.writeStoreExpiration(writer, store);
+                this.writeStoreImplementation(writer, store);
+                this.writeStoreCompression(writer, store);
+                this.writeStoreProperties(writer, store);
                 writer.writeEndElement();
             }
         }
@@ -506,6 +554,12 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);
 
+                for (ModelNode remoteServer: store.require(ModelKeys.REMOTE_SERVERS).asList()) {
+                    writer.writeStartElement(Element.REMOTE_SERVER.getLocalName());
+                    writer.writeAttribute(Attribute.OUTBOUND_SOCKET_BINDING.getLocalName(), remoteServer.get(ModelKeys.OUTBOUND_SOCKET_BINDING).asString());
+                    writer.writeEndElement();
+                }
+
                 if (store.hasDefined(ModelKeys.CONNECTION_POOL)) {
                     ModelNode pool = store.get(ModelKeys.CONNECTION_POOL);
                     writer.writeStartElement(Element.CONNECTION_POOL.getLocalName());
@@ -515,12 +569,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     this.writeOptional(writer, Attribute.BUFFER_SIZE, pool, ModelKeys.BUFFER_SIZE);
                     this.writeOptional(writer, Attribute.SOCKET_TIMEOUT, pool, ModelKeys.SOCKET_TIMEOUT);
                     this.writeOptional(writer, Attribute.TCP_NO_DELAY, pool, ModelKeys.TCP_NO_DELAY);
-                    writer.writeEndElement();
-                }
-
-                for (ModelNode remoteServer: store.require(ModelKeys.REMOTE_SERVERS).asList()) {
-                    writer.writeStartElement(Element.REMOTE_SERVER.getLocalName());
-                    writer.writeAttribute(Attribute.OUTBOUND_SOCKET_BINDING.getLocalName(), remoteServer.get(ModelKeys.OUTBOUND_SOCKET_BINDING).asString());
                     writer.writeEndElement();
                 }
 
@@ -536,69 +584,21 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             writer.writeEndElement();
         }
 
-        if (cache.get(ModelKeys.BACKUP).isDefined()) {
-            writer.writeStartElement(Element.BACKUPS.getLocalName());
-            for (Property property : cache.get(ModelKeys.BACKUP).asPropertyList()) {
-                writer.writeStartElement(Element.BACKUP.getLocalName());
-                writer.writeAttribute(Attribute.SITE.getLocalName(), property.getName());
-                ModelNode backup = property.getValue();
-                BackupSiteConfigurationResource.FAILURE_POLICY.marshallAsAttribute(backup, writer);
-                BackupSiteConfigurationResource.STRATEGY.marshallAsAttribute(backup, writer);
-                BackupSiteConfigurationResource.REPLICATION_TIMEOUT.marshallAsAttribute(backup, writer);
-                BackupSiteConfigurationResource.ENABLED.marshallAsAttribute(backup, writer);
-                if (backup.hasDefined(ModelKeys.TAKE_BACKUP_OFFLINE_AFTER_FAILURES)
-                        || backup.hasDefined(ModelKeys.TAKE_BACKUP_OFFLINE_MIN_WAIT)) {
-                    writer.writeStartElement(Element.TAKE_OFFLINE.getLocalName());
-                    BackupSiteConfigurationResource.TAKE_OFFLINE_AFTER_FAILURES.marshallAsAttribute(backup, writer);
-                    BackupSiteConfigurationResource.TAKE_OFFLINE_MIN_WAIT.marshallAsAttribute(backup, writer);
-                    writer.writeEndElement();
-                }
-                if (backup.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME).isDefined()) {
-                    ModelNode stateTransfer = backup.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME);
-                    if (stateTransfer.hasDefined(ModelKeys.CHUNK_SIZE)
-                          || stateTransfer.hasDefined(ModelKeys.TIMEOUT)
-                          || stateTransfer.hasDefined(ModelKeys.MAX_RETRIES)
-                          || stateTransfer.hasDefined(ModelKeys.WAIT_TIME)) {
-                       writer.writeStartElement(Element.STATE_TRANSFER.getLocalName());
-                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_CHUNK_SIZE.marshallAsAttribute(stateTransfer, writer);
-                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_TIMEOUT.marshallAsAttribute(stateTransfer, writer);
-                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_MAX_RETRIES.marshallAsAttribute(stateTransfer, writer);
-                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_WAIT_TIME.marshallAsAttribute(stateTransfer, writer);
-                       writer.writeEndElement();
-                    }
-                }
-                writer.writeEndElement();
-            }
+        if (cache.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME).isDefined()) {
+            ModelNode stateTransfer = cache.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME);
+            writer.writeStartElement(Element.STATE_TRANSFER.getLocalName());
+            this.writeOptional(writer, Attribute.AWAIT_INITIAL_TRANSFER, stateTransfer, ModelKeys.AWAIT_INITIAL_TRANSFER);
+            this.writeOptional(writer, Attribute.ENABLED, stateTransfer, ModelKeys.ENABLED);
+            this.writeOptional(writer, Attribute.TIMEOUT, stateTransfer, ModelKeys.TIMEOUT);
+            this.writeOptional(writer, Attribute.CHUNK_SIZE, stateTransfer, ModelKeys.CHUNK_SIZE);
             writer.writeEndElement();
         }
 
-        if (cache.get(ModelKeys.REMOTE_CACHE).isDefined() || cache.get(ModelKeys.REMOTE_SITE).isDefined()) {
-            writer.writeStartElement(Element.BACKUP_FOR.getLocalName());
-            CacheConfigurationResource.REMOTE_CACHE.marshallAsAttribute(cache, writer);
-            CacheConfigurationResource.REMOTE_SITE.marshallAsAttribute(cache, writer);
+        if (cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME).isDefined()) {
+            ModelNode partitionHandling = cache.get(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME);
+            writer.writeStartElement(Element.PARTITION_HANDLING.getLocalName());
+            this.writeOptional(writer, Attribute.ENABLED, partitionHandling, ModelKeys.ENABLED);
             writer.writeEndElement();
-        }
-
-        if (cache.get(ModelKeys.LEVELDB_STORE).isDefined()) {
-            for (Property levelDbStoreEntry : cache.get(ModelKeys.LEVELDB_STORE).asPropertyList()) {
-                ModelNode store = levelDbStoreEntry.getValue();
-                writer.writeStartElement(Element.LEVELDB_STORE.getLocalName());
-                // write identifier before other attributes
-                ModelNode name = new ModelNode();
-                name.get(ModelKeys.NAME).set(levelDbStoreEntry.getName());
-                LevelDBStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
-                this.writeOptional(writer, Attribute.RELATIVE_TO, store, ModelKeys.RELATIVE_TO);
-                this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
-                this.writeOptional(writer, Attribute.BLOCK_SIZE, store, ModelKeys.BLOCK_SIZE);
-                this.writeOptional(writer, Attribute.CACHE_SIZE, store, ModelKeys.CACHE_SIZE);
-                this.writeOptional(writer, Attribute.CLEAR_THRESHOLD, store, ModelKeys.CLEAR_THRESHOLD);
-                this.writeStoreAttributes(writer, store);
-                this.writeStoreExpiration(writer, store);
-                this.writeStoreCompression(writer, store);
-                this.writeStoreImplementation(writer, store);
-                this.writeStoreProperties(writer, store);
-                writer.writeEndElement();
-            }
         }
 
     }

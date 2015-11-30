@@ -56,6 +56,11 @@
                     <xs:documentation>Configures security for this cache container.</xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="global-state" type="tns:global-state" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Defines the global state configuration.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
             <xs:element name="async-operations-thread-pool" type="tns:thread-pool" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>Defines a thread pool used for asynchronous operations.</xs:documentation>
@@ -96,15 +101,20 @@
                     <xs:documentation>Defines a thread pool used for asynchronous transport communication.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="global-state" type="tns:global-state" minOccurs="0">
-                <xs:annotation>
-                    <xs:documentation>Defines the global state configuration.</xs:documentation>
-                </xs:annotation>
-            </xs:element>
             <xs:choice maxOccurs="unbounded">
+                <xs:element name="local-cache-configuration" type="tns:local-cache">
+                    <xs:annotation>
+                        <xs:documentation>Defines a LOCAL mode cache configuration.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="local-cache" type="tns:local-cache">
                     <xs:annotation>
                         <xs:documentation>Defines a LOCAL mode cache.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="replicated-cache-configuration" type="tns:replicated-cache">
+                    <xs:annotation>
+                        <xs:documentation>Defines a REPL_* mode cache configuration.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="replicated-cache" type="tns:replicated-cache">
@@ -112,9 +122,19 @@
                         <xs:documentation>Defines a REPL_* mode cache.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
+                <xs:element name="invalidation-cache-configuration" type="tns:invalidation-cache">
+                    <xs:annotation>
+                        <xs:documentation>Defines an INVALIDATION_* mode cache configuration.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="invalidation-cache" type="tns:invalidation-cache">
                     <xs:annotation>
                         <xs:documentation>Defines an INVALIDATION_* mode cache.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="distributed-cache-configuration" type="tns:distributed-cache">
+                    <xs:annotation>
+                        <xs:documentation>Defines a DIST_* mode cache configuration.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="distributed-cache" type="tns:distributed-cache">
@@ -410,7 +430,7 @@
                     <xs:documentation>The cache compatibility mode configuration.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:choice minOccurs="0">
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element name="cluster-loader" type="tns:cluster-loader">
                     <xs:annotation>
                         <xs:documentation>Defines a cluster cache loader.</xs:documentation>
@@ -426,7 +446,7 @@
                         <xs:documentation>Defines a file-based cache store.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
-                <xs:choice minOccurs="0">
+                <xs:choice minOccurs="0" maxOccurs="unbounded">
                     <xs:element name="string-keyed-jdbc-store" type="tns:string-keyed-jdbc-store">
                         <xs:annotation>
                             <xs:documentation>Defines a database cache store accessed via JDBC using string-based keys.</xs:documentation>
@@ -443,6 +463,13 @@
                         </xs:annotation>
                     </xs:element>
                 </xs:choice>
+                <xs:element name="leveldb-store" type="tns:leveldb-store">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Defines a LevelDB cache store.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="remote-store" type="tns:remote-store">
                     <xs:annotation>
                         <xs:documentation>
@@ -495,6 +522,11 @@
         <xs:attribute name="name" type="xs:string" use="required">
             <xs:annotation>
                 <xs:documentation>Uniquely identifies this cache within its cache container.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="configuration" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="start" type="tns:controller-mode" default="LAZY">
@@ -646,7 +678,7 @@
     <xs:complexType name="clustered-cache" abstract="true">
         <xs:complexContent>
             <xs:extension base="tns:cache">
-                <xs:attribute name="mode" type="tns:mode" use="required">
+                <xs:attribute name="mode" type="tns:mode">
                     <xs:annotation>
                         <xs:documentation>Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.</xs:documentation>
                     </xs:annotation>
@@ -744,7 +776,7 @@
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required">
+        <xs:attribute name="name" type="xs:string">
             <xs:annotation>
                 <xs:documentation>Uniquely identifies this loader.</xs:documentation>
             </xs:annotation>
@@ -786,7 +818,7 @@
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required">
+        <xs:attribute name="name" type="xs:string">
             <xs:annotation>
                 <xs:documentation>Uniquely identifies this store.</xs:documentation>
             </xs:annotation>
