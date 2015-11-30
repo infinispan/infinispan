@@ -301,6 +301,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
             throw log.invalidLockingModeForTotalOrder(lockingMode());
          }
       }
+      if (!attributes.attribute(NOTIFICATIONS).get()) {
+         log.transactionNotificationsDisabled();
+      }
       recovery.validate();
    }
 

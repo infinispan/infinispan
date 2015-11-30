@@ -185,11 +185,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(interceptor, false);
       }
 
-      // NotificationInterceptor is used only for Prepare/Commit/Rollback notifications
-      if (transactionMode.isTransactional() && configuration.transaction().notifications()) {
-         interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(), NotificationInterceptor.class), false);
-      }
-
       if (configuration.transaction().useEagerLocking()) {
          configuration.transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
@@ -205,6 +200,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          } else {
             interceptorChain.appendInterceptor(createInterceptor(new NonTransactionalLockingInterceptor(), NonTransactionalLockingInterceptor.class), false);
          }
+      }
+
+      // NotificationInterceptor is used only for Prepare/Commit/Rollback notifications
+      // This needs to be after locking interceptor to guarantee that locks are still held when raising notifications
+      if (transactionMode.isTransactional() && configuration.transaction().notifications()) {
+         interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(), NotificationInterceptor.class), false);
       }
 
       if (configuration.sites().hasEnabledBackups() && !configuration.sites().disableBackups()) {

@@ -106,7 +106,7 @@ public class RemoteClusterListener {
       }  else {
          // Send event back to origin who has the cluster listener
          if (trace) {
-            log.tracef("Submitting Event %s to cluster listener to %s", event, origin);
+            log.tracef("Passing Event to manager %s to send to %s", event, origin);
          }
          eventManager.addEvents(origin, id, Collections.singleton(ClusterEvent.fromEvent(event)), sync);
       }
@@ -121,7 +121,7 @@ public class RemoteClusterListener {
             eventsToSend.add(ClusterEvent.fromEvent(cacheEvent));
             // Send event back to origin who has the cluster listener
             if (trace) {
-               log.tracef("Submitting Event(s) %s to cluster listener to %s", eventsToSend, origin);
+               log.tracef("Passing Event(s) to manager %s to send to %s", eventsToSend, origin);
             }
          }
          eventManager.addEvents(origin, id, eventsToSend, sync);
