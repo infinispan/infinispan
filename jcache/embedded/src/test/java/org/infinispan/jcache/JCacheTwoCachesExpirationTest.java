@@ -4,11 +4,15 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
 import javax.cache.Cache;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.test.TestingUtil.replaceComponent;
 
 /**
  * @author Matej Cimbora
@@ -32,8 +36,9 @@ public class JCacheTwoCachesExpirationTest extends AbstractTwoCachesExpirationTe
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultClusteredCacheConfig2 = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      defaultClusteredCacheConfig2.expiration().lifespan(2000);
+      defaultClusteredCacheConfig2.expiration().lifespan(EXPIRATION_TIMEOUT).wakeUpInterval(100, TimeUnit.MILLISECONDS);
       createClusteredCaches(2, "expiry", defaultClusteredCacheConfig2);
+      cacheManagers.forEach(cm -> replaceComponent(cm, TimeService.class, controlledTimeService, true));
       waitForClusterToForm("expiry");
    }
 }
