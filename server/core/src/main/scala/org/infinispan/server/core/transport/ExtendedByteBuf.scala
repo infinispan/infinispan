@@ -26,7 +26,7 @@ object ExtendedByteBuf {
          bf.readBytes(array)
          array
       } else {
-         Array[Byte]()
+         Array.empty
       }
    }
 
@@ -70,6 +70,6 @@ object ExtendedByteBuf {
    def writeString(msg: String, bf: ByteBuf) = writeRangedBytes(msg.getBytes(CharsetUtil.UTF_8), bf)
 
    def writeString(msg: Option[String], bf: ByteBuf) =
-      writeRangedBytes(msg.map(_.getBytes(CharsetUtil.UTF_8)).getOrElse(Array()), bf)
+      writeRangedBytes(msg.map(_.getBytes(CharsetUtil.UTF_8)).getOrElse(Array.empty), bf)
 
 }
