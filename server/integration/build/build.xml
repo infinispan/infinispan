@@ -17,7 +17,9 @@
             <include name="run.*" />
             <include name="wsconsume.*" />
             <include name="wsprovide.*" />
-            <include name="jboss-cli*" />
+            <include name="jboss-cli.bat" />
+            <include name="jboss-cli.sh" />
+            <include name="jboss-cli.ps1" />
          </fileset>
       </delete>
       <delete dir="${output.dir}/appclient" />
