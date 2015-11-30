@@ -1,5 +1,6 @@
 package org.infinispan.remoting.inboundhandler.action;
 
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.concurrent.locks.PendingLockListener;
@@ -62,13 +63,18 @@ public class PendingTxAction extends BaseLockingAction implements PendingLockLis
       final long timeout = state.getTimeout();
       final List<Object> keysToLock = getAndUpdateFilteredKeys(state);
 
+      RemoteLockCommand command = state.getCommand();
+      if (command instanceof PrepareCommand && ((PrepareCommand) command).isRetriedCommand()) {
+         //clear the backup locks
+         context.getCacheTransaction().cleanupBackupLocks();
+         keysToLock.removeAll(context.getLockedKeys());
+      }
+
       if (keysToLock.isEmpty()) {
          //nothing to do. nobody else was able to update the state from checking, so no need to check the CAS
          cas(InternalState.CHECKING, InternalState.READY);
          return ActionStatus.READY;
       }
-
-      keysToLock.forEach(context::addLockedKey);
 
       PendingLockPromise promise = keysToLock.size() == 1 ?
             pendingLockManager.checkPendingTransactionsForKey(context, keysToLock.get(0), timeout, TimeUnit.MILLISECONDS) :
