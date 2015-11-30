@@ -1,6 +1,7 @@
 package org.infinispan.jcache.remote;
 
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
@@ -19,6 +20,7 @@ public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K
    @ClientCacheEntryCreated
    @ClientCacheEntryModified
    @ClientCacheEntryRemoved
+   @ClientCacheEntryExpired
    public void handleCacheEntryEvent(ClientCacheEntryCustomEvent<KeyValueWithPrevious<K, V>> e) {
       KeyValueWithPrevious<K, V> event = e.getEventData();
       switch (e.getType()) {
@@ -32,6 +34,10 @@ public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K
       }
       case CLIENT_CACHE_ENTRY_MODIFIED: {
          notifier.notifyEntryUpdated(jcache, event.getKey(), event.getValue());
+         break;
+      }
+      case CLIENT_CACHE_ENTRY_EXPIRED: {
+         notifier.notifyEntryExpired(jcache, event.getKey(), event.getValue());
          break;
       }
       case CLIENT_CACHE_FAILOVER:
