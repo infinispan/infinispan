@@ -89,6 +89,8 @@ class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTim
       assertStatus(put(k(m) , lifespan, maxIdle, v(m)), Success)
    }
 
+   def put(k: String, v: String): TestResponse = put(k.getBytes, 0, 0, v.getBytes)
+
    def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
 
@@ -167,6 +169,8 @@ class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTim
    def get(k: Array[Byte], flags: Int): TestGetResponse = {
       get(0x03, k, flags).asInstanceOf[TestGetResponse]
    }
+
+   def get(k: String): TestResponse = get(0x03, k.getBytes, 0)
 
    def assertGet(m: Method): TestGetResponse = assertGet(m, 0)
 

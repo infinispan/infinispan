@@ -9,6 +9,7 @@ import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.test.AbstractInfinispanTest;
 
 /**
  *
@@ -17,7 +18,7 @@ import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
  * @author Michal Linhard (mlinhard@redhat.com)
  *
  */
-public class RestServerTestBase {
+public class RestServerTestBase extends AbstractInfinispanTest {
    private Map<String, NettyRestServer> servers = new HashMap<String, NettyRestServer>();
    private HttpClient client;
 
@@ -38,6 +39,14 @@ public class RestServerTestBase {
 
    public void addServer(String name, EmbeddedCacheManager cacheManager, RestServerConfiguration configuration) {
       servers.put(name, NettyRestServer.apply(configuration, cacheManager));
+   }
+
+   protected void ignoreCache(String cacheName) {
+      servers.values().forEach(s -> s.ignoreCache(cacheName));
+   }
+
+   protected void enableCache(String cacheName) {
+      servers.values().forEach(s -> s.unignore(cacheName));
    }
 
    protected void removeServers() {

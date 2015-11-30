@@ -35,6 +35,12 @@ public class ChannelUtils {
       ctx.channel().writeAndFlush(new TextWebSocketFrame(responseObject.toString()));
    }
 
+   public static void pushErrorMessage(String errorMessage, ChannelHandlerContext ctx) {
+      JsonObject errorObject = JsonObject.createNew();
+      errorObject.put(OpHandler.ERROR, errorMessage);
+      ctx.channel().writeAndFlush(new TextWebSocketFrame(errorObject.toString()));
+   }
+
    /**
     * Cache key, value and cache-name to JSON string.
     * <p>

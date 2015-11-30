@@ -2,6 +2,8 @@ package org.infinispan.server.core.configuration;
 
 import org.infinispan.commons.configuration.Self;
 
+import java.util.Set;
+
 /**
  * ProtocolServerConfigurationChildBuilder.
  *
@@ -57,6 +59,11 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
     * Sets the number of worker threads
     */
    S workerThreads(int workerThreads);
+
+   /**
+    * Sets the caches to be ignored
+    */
+   S ignoredCaches(Set<String> ignoredCaches);
 
    /**
     * Builds a configuration object

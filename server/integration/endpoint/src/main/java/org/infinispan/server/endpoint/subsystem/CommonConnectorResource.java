@@ -24,8 +24,10 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleListAttributeDefinition;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
+import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelType;
 
@@ -50,7 +52,20 @@ public abstract class CommonConnectorResource extends SimpleResourceDefinition {
                  .setRestartAllServices()
                  .build();
 
-   static final SimpleAttributeDefinition[] COMMON_CONNECTOR_ATTRIBUTES = { NAME, CACHE_CONTAINER };
+   static final AttributeDefinition IGNORED_CACHE =
+          new SimpleAttributeDefinitionBuilder(ModelKeys.IGNORED_CACHE, ModelType.STRING, true)
+                  .setXmlName(ModelKeys.IGNORED_CACHE)
+                  .setAllowExpression(false)
+                  .setFlags(AttributeAccess.Flag.RESTART_NONE)
+                  .build();
+
+   static final SimpleListAttributeDefinition IGNORED_CACHES = SimpleListAttributeDefinition.Builder.of(ModelKeys.IGNORED_CACHES, IGNORED_CACHE)
+           .setFlags(AttributeAccess.Flag.RESTART_NONE)
+           .setAllowNull(true)
+           .build();
+
+   static final SimpleAttributeDefinition[] COMMON_CONNECTOR_ATTRIBUTES = {NAME, CACHE_CONTAINER};
+   static final SimpleListAttributeDefinition[] COMMON_LIST_CONNECTOR_ATTRIBUTES = {IGNORED_CACHES};
 
    private final boolean runtimeRegistration;
 
@@ -67,6 +82,7 @@ public abstract class CommonConnectorResource extends SimpleResourceDefinition {
       for (AttributeDefinition attr : COMMON_CONNECTOR_ATTRIBUTES) {
          resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
       }
+      resourceRegistration.registerReadWriteAttribute(IGNORED_CACHES, null, new CacheIgnoreReadWriteHandler(IGNORED_CACHES));
    }
 
    protected boolean isRuntimeRegistration() {

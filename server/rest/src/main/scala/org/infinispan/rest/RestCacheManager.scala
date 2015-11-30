@@ -12,12 +12,15 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport
 
-class RestCacheManager(instance: EmbeddedCacheManager) {
+class RestCacheManager(instance: EmbeddedCacheManager, isCacheIgnored: String => Boolean = Function.const(false)) {
 
    private val knownCaches : java.util.Map[String, AdvancedCache[String, Array[Byte]]] =
       CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
 
    def getCache(name: String): AdvancedCache[String, Array[Byte]] = {
+      if(isCacheIgnored(name)) {
+         throw new CacheUnavailableException("Cache with name '" + name + "' is temporarily unavailable.")
+      }
       val isKnownCache = knownCaches.containsKey(name)
       if (name != BasicCacheContainer.DEFAULT_CACHE_NAME && !isKnownCache && !instance.getCacheNames.contains(name))
          throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches")

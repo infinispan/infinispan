@@ -1,5 +1,6 @@
 package org.infinispan.server.websocket.json;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -15,7 +16,7 @@ import static org.testng.Assert.assertEquals;
  * @author Sebastian Laskawiec
  */
 @Test(testName = "websocket.json.JsonObjectTest", groups = "unit")
-public class JsonObjectTest {
+public class JsonObjectTest extends AbstractInfinispanTest {
 
    private static class ExampleObject {
 

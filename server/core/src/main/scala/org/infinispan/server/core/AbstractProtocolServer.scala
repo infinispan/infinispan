@@ -9,6 +9,7 @@ import javax.management.{ObjectName, MBeanServer}
 import org.infinispan.server.core.transport.TimeoutEnabledChannelInitializer
 import org.infinispan.server.core.transport.NettyChannelInitializer
 import io.netty.channel.{Channel, ChannelInitializer}
+import scala.collection.JavaConversions._
 
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
@@ -41,6 +42,7 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
 
    final override def start(configuration: SuitableConfiguration, cacheManager: EmbeddedCacheManager) {
       try {
+         configuration.ignoredCaches foreach ignoreCache
          startInternal(configuration, cacheManager)
       } catch {
          case t: Throwable => {

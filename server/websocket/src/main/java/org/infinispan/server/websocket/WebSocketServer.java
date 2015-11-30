@@ -9,6 +9,7 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
+import org.infinispan.server.core.CacheIgnoreAware;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
@@ -57,17 +58,19 @@ public class WebSocketServer extends AbstractProtocolServer {
 
    @Override
    public ChannelInitializer<Channel> getInitializer() {
-      return new WebSocketServerPipelineFactory(cacheManager());
+      return new WebSocketServerPipelineFactory(cacheManager(), this);
    }
 
    private static class WebSocketServerPipelineFactory extends ChannelInitializer<Channel> {
 
       private CacheContainer cacheContainer;
+      private final CacheIgnoreAware cacheIgnoreAware;
       private Map<String, OpHandler> operationHandlers;
       private Map<String, Cache<Object, Object>> startedCaches = CollectionFactory.makeConcurrentMap();
 
-      public WebSocketServerPipelineFactory(CacheContainer cacheContainer) {
+      public WebSocketServerPipelineFactory(CacheContainer cacheContainer, CacheIgnoreAware cacheIgnoreAware) {
          this.cacheContainer = cacheContainer;
+         this.cacheIgnoreAware = cacheIgnoreAware;
 
          operationHandlers = new HashMap<String, OpHandler>();
          operationHandlers.put("put", new PutHandler());
@@ -86,7 +89,7 @@ public class WebSocketServer extends AbstractProtocolServer {
          pipeline.addLast("decoder", new HttpRequestDecoder());
          pipeline.addLast("aggregator", new HttpObjectAggregator(65536));
          pipeline.addLast("encoder", new HttpResponseEncoder());
-         pipeline.addLast("handler", new WebSocketServerHandler(cacheContainer, operationHandlers, startedCaches));
+         pipeline.addLast("handler", new WebSocketServerHandler(cacheContainer, operationHandlers, startedCaches, cacheIgnoreAware));
       }
    }
 

@@ -43,8 +43,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
 class IntegrationTest extends RestServerTestBase {
 
-   private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
-
    val HOST = "http://localhost:8888"
    val cacheName = BasicCacheContainer.DEFAULT_CACHE_NAME
    val fullPath = HOST + "/rest/" + cacheName
@@ -915,6 +913,19 @@ class IntegrationTest extends RestServerTestBase {
 
       val delete = call(new DeleteMethod(fullPathKey))
       assertEquals(HttpServletResponse.SC_OK, delete.getStatusCode)
+   }
+
+   def testDisableCache(m: Method): Unit = {
+      def doGet() = call(new GetMethod(fullPathKey(m)))
+
+      put(m)
+      assertEquals(SC_OK, doGet().getStatusCode)
+
+      ignoreCache(cacheName)
+      assertEquals(SC_INTERNAL_SERVER_ERROR, doGet().getStatusCode)
+
+      enableCache(cacheName)
+      assertEquals(SC_OK, doGet().getStatusCode)
    }
 
    private def waitNotFound(startTime: Long, lifespan: Int, fullPathKey: String) {

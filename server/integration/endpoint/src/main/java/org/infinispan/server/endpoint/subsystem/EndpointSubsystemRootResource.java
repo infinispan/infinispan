@@ -21,11 +21,18 @@ package org.infinispan.server.endpoint.subsystem;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
 
 import org.infinispan.server.endpoint.Constants;
+import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
+import org.jboss.as.controller.SimpleAttributeDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleListAttributeDefinition;
+import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.operations.common.GenericSubsystemDescribeHandler;
+import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
+import org.jboss.dmr.ModelType;
 
 /**
  * The root resource of the Endpoint subsystem.
@@ -44,12 +51,37 @@ public class EndpointSubsystemRootResource extends SimpleResourceDefinition {
         this.runtimeRegistration = runtimeRegistration;
     }
 
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
-        resourceRegistration.registerOperationHandler(GenericSubsystemDescribeHandler.DEFINITION, GenericSubsystemDescribeHandler.INSTANCE);
-    }
+   static final SimpleAttributeDefinition CACHE_NAME =
+           new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE_NAME, ModelType.STRING, true)
+                   .setXmlName(ModelKeys.CACHE_NAME)
+                   .setAllowExpression(false)
+                   .setFlags(AttributeAccess.Flag.RESTART_NONE)
+                   .build();
 
+   static final SimpleListAttributeDefinition CACHE_NAMES = SimpleListAttributeDefinition.Builder.of(ModelKeys.CACHE_NAMES, CACHE_NAME)
+           .setFlags(AttributeAccess.Flag.RESTART_NONE)
+           .build();
+
+   @Override
+   public void registerOperations(ManagementResourceRegistration resourceRegistration) {
+      super.registerOperations(resourceRegistration);
+      resourceRegistration.registerOperationHandler(GenericSubsystemDescribeHandler.DEFINITION, GenericSubsystemDescribeHandler.INSTANCE);
+
+      OperationDefinition ignoreCaches = new SimpleOperationDefinitionBuilder("ignore-cache-all-endpoints",
+              getResourceDescriptionResolver())
+              .setParameters(CACHE_NAMES)
+              .setRuntimeOnly()
+              .build();
+
+      OperationDefinition unignoreCaches = new SimpleOperationDefinitionBuilder("unignore-cache-all-endpoints",
+              getResourceDescriptionResolver())
+              .setParameters(CACHE_NAMES)
+              .setRuntimeOnly()
+              .build();
+
+      resourceRegistration.registerOperationHandler(ignoreCaches, new CacheDisablingCascadeHandler(ModelNodeUtils::addToList));
+      resourceRegistration.registerOperationHandler(unignoreCaches, new CacheDisablingCascadeHandler(ModelNodeUtils::removeFromList));
+   }
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);

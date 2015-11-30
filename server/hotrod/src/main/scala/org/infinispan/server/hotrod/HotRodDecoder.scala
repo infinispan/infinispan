@@ -29,7 +29,8 @@ import java.security.PrivilegedActionException
  * @author gustavonalle
  * @since 4.1
  */
-class HotRodDecoder(cacheManager: EmbeddedCacheManager, val transport: NettyTransport, server: HotRodServer)
+class HotRodDecoder(cacheManager: EmbeddedCacheManager, val transport: NettyTransport, server: HotRodServer,
+                    val isCacheIgnored: String => Boolean = Function.const(false))
 extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHandler with ServerConstants with Constants with Log {
    val authenticationConfig = server.getConfiguration.authentication()
    val secure = authenticationConfig.enabled()
@@ -80,6 +81,10 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
          // Something went wrong reading the header, so get more bytes.
          // It can happen with Hot Rod if the header is completely corrupted
          return null
+      }
+      if (isCacheIgnored(decodeCtx.header.cacheName)) {
+         decodeCtx.isError = true
+         throw new CacheUnavailableException()
       }
       val ch = ctx.channel
       decodeCtx.obtainCache(cacheManager)
@@ -278,6 +283,8 @@ class HotRodUnknownOperationException(reason: String, val version: Byte, val mes
 extends UnknownOperationException(reason)
 
 class InvalidMagicIdException(reason: String) extends StreamCorruptedException(reason)
+
+class CacheUnavailableException extends Exception
 
 class RequestParsingException(reason: String, val version: Byte, val messageId: Long, cause: Exception)
 extends IOException(reason, cause) {

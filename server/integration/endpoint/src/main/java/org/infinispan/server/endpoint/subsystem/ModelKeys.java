@@ -29,6 +29,7 @@ public class ModelKeys {
    public static final String WEBSOCKET_CONNECTOR = "websocket-connector";
 
    public static final String NAME = "name"; // string
+   public static final String CACHE_NAME = "cache-name"; // string
    public static final String SOCKET_BINDING = "socket-binding"; // string
    public static final String CACHE = "cache"; // string
    public static final String CACHE_CONTAINER = "cache-container"; // string
@@ -83,4 +84,7 @@ public class ModelKeys {
    public static final String NO_DICTIONARY = "no-dictionary";
    public static final String NO_PLAIN_TEXT = "no-plain-text";
    public static final String PASS_CREDENTIALS = "pass-credentials";
+   public static final String IGNORED_CACHE = "ignored-cache";
+   public static final String IGNORED_CACHES = "ignored-caches";
+   public static final String CACHE_NAMES = "cache-names";
 }

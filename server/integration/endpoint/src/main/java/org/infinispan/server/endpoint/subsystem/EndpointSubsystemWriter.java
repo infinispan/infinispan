@@ -26,6 +26,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
+import org.jboss.as.controller.SimpleListAttributeDefinition;
 import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.dmr.ModelNode;
@@ -124,6 +125,8 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       for (SimpleAttributeDefinition attribute : CommonConnectorResource.COMMON_CONNECTOR_ATTRIBUTES) {
          attribute.marshallAsAttribute(connector, true, writer);
       }
+      SimpleListAttributeDefinition ignoredCaches = CommonConnectorResource.IGNORED_CACHES;
+      writeListAsAttribute(writer, ignoredCaches.getXmlName(), connector, ignoredCaches.getName());
    }
 
    private void writeProtocolServerConnector(final XMLExtendedStreamWriter writer, final ModelNode connector)

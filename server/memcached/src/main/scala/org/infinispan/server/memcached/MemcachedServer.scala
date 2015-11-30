@@ -38,7 +38,7 @@ class MemcachedServer extends AbstractProtocolServer("Memcached") with Log {
    override def getEncoder = null
 
    override def getDecoder: MemcachedDecoder =
-      new MemcachedDecoder(memcachedCache, scheduler, transport)
+      new MemcachedDecoder(memcachedCache, scheduler, transport, isCacheIgnored)
 
    override def stop {
       super.stop

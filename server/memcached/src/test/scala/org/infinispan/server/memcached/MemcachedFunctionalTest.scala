@@ -15,6 +15,8 @@ import org.infinispan.Version
 import test.MemcachedTestingUtil._
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
 
+import scala.util.Try
+
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
  *
@@ -543,6 +545,21 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
          cm.stop
          testServer.stop
       }
+   }
+
+   def testDisableCache(m: Method): Unit = {
+      val f = client.set(k(m), 0, v(m))
+      assertTrue(f.get(timeout, TimeUnit.SECONDS).booleanValue)
+      assertEquals(v(m), client.get(k(m)))
+
+      val cacheName = server.getConfiguration.defaultCacheName()
+
+      server.ignoreCache(cacheName)
+      assertTrue(Try(client.get(k(m))).isFailure)
+
+      server.unignore(cacheName)
+      assertTrue(Try(client.get(k(m))).isSuccess)
+
    }
 
 //   def testRegex {

@@ -6,13 +6,23 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import io.netty.util.CharsetUtil;
 import org.infinispan.Cache;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.server.core.CacheIgnoreAware;
 import org.infinispan.server.websocket.json.JsonConversionException;
 import org.infinispan.server.websocket.json.JsonObject;
 
@@ -43,12 +53,14 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
    private Map<String, OpHandler> operationHandlers;
    private boolean connectionUpgraded;
    private final Map<String, Cache<Object, Object>> startedCaches;
+   private final CacheIgnoreAware cacheIgnoreAware;
    private WebSocketServerHandshaker handshaker;
 
-   public WebSocketServerHandler(CacheContainer cacheContainer, Map<String, OpHandler> operationHandlers, Map<String, Cache<Object, Object>> startedCaches) {
+   public WebSocketServerHandler(CacheContainer cacheContainer, Map<String, OpHandler> operationHandlers, Map<String, Cache<Object, Object>> startedCaches, CacheIgnoreAware cacheIgnoreAware) {
       this.cacheContainer = cacheContainer;
       this.operationHandlers = operationHandlers;
       this.startedCaches = startedCaches;
+      this.cacheIgnoreAware = cacheIgnoreAware;
    }
 
    @Override
@@ -95,7 +107,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
       }
    }
 
-   private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
+   private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
       if (frame instanceof PingWebSocketFrame) {
          // received a ping, so write back a pong
          ctx.channel().writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
@@ -111,19 +123,26 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
             JsonObject payload = JsonObject.fromString(binaryData.toString(CharsetUtil.UTF_8));
             String opCode = (String) payload.get(OpHandler.OP_CODE);
             String cacheName = (String) payload.get(OpHandler.CACHE_NAME);
-            Cache<Object, Object> cache = getCache(cacheName);
-
-            OpHandler handler = operationHandlers.get(opCode);
-            if (handler != null) {
-               handler.handleOp(payload, cache, ctx);
+            Cache<Object, Object> cache = getCache(cacheName, ctx);
+            if (cache != null) {
+               OpHandler handler = operationHandlers.get(opCode);
+               if (handler != null) {
+                  handler.handleOp(payload, cache, ctx);
+               }
             }
          } catch (JsonConversionException e) {
+            ChannelUtils.pushErrorMessage("Could not handle Web Socket Frame, error while converting to JSON", ctx);
             log.error("Could not handle Web Socket Frame, error while converting to JSON", e);
          }
       }
    }
 
-   private Cache<Object, Object> getCache(final String cacheName) {
+   private Cache<Object, Object> getCache(final String cacheName, ChannelHandlerContext ctx) throws Exception {
+      if(cacheIgnoreAware.isCacheIgnored(cacheName)) {
+         log.info("Cache temporarily unavailable");
+         ChannelUtils.pushErrorMessage("Cache temporarily unavailable", ctx);
+         return null;
+      }
       String key = cacheName;
       Cache<Object, Object> cache;
 

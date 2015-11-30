@@ -76,6 +76,9 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       for(AttributeDefinition attr : ProtocolServerConnectorResource.COMMON_CONNECTOR_ATTRIBUTES) {
          attr.validateAndSet(source, target);
       }
+      for(AttributeDefinition attr : ProtocolServerConnectorResource.COMMON_LIST_CONNECTOR_ATTRIBUTES) {
+         attr.validateAndSet(source, target);
+      }
       for(AttributeDefinition attr : RestConnectorResource.REST_ATTRIBUTES) {
          attr.validateAndSet(source, target);
       }

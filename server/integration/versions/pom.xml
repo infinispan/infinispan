@@ -186,6 +186,13 @@
          </dependency>
 
          <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-infinispan</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+         </dependency>
+
+         <dependency>
             <groupId>org.jboss.jbossts</groupId>
             <artifactId>jbossjta</artifactId>
             <version>${version.org.jboss.jbossts.jbossjts}</version>

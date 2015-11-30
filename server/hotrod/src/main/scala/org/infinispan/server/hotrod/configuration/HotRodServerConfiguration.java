@@ -4,6 +4,8 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 
+import java.util.Set;
+
 @BuiltBy(HotRodServerConfigurationBuilder.class)
 public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    public static final String TOPOLOGY_CACHE_NAME_PREFIX = "___hotRodTopologyCache";
@@ -17,8 +19,8 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    private final AuthenticationConfiguration authentication;
 
    HotRodServerConfiguration(String defaultCacheName, String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyAwaitInitialTransfer, boolean topologyStateTransfer,
-         String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication) {
-      super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads);
+         String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication, Set<String> ignoredCaches) {
+      super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads, ignoredCaches);
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;
       this.topologyCacheName = TOPOLOGY_CACHE_NAME_PREFIX + (name.length() > 0 ? "_" + name : name);
@@ -67,6 +69,6 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
             + topologyCacheName + ", topologyLockTimeout=" + topologyLockTimeout + ", topologyReplTimeout="
             + topologyReplTimeout + ", topologyAwaitInitialTransfer=" + topologyAwaitInitialTransfer
             + ", topologyStateTransfer=" + topologyStateTransfer + ", authentication=" + authentication
-            + ", " + super.toString() + "]";
+            + ", ignoredCaches=" + ignoredCaches() + ", " + super.toString() + "]";
    }
 }

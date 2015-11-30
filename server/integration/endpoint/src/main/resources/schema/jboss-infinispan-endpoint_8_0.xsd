@@ -18,6 +18,11 @@
                 <xs:documentation>The socket on which this connector will bind itself</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="ignored-caches" type="tns:ignored-caches">
+            <xs:annotation>
+                <xs:documentation>The list of ignored caches for this connector</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="cache-container" type="xs:string" use="required">
             <xs:annotation>
                 <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
@@ -388,5 +393,12 @@
                 </xs:annotation>
             </xs:enumeration>
         </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ignored-caches">
+        <xs:annotation>
+            <xs:documentation>The list of ignored caches</xs:documentation>
+        </xs:annotation>
+        <xs:list itemType="xs:string"/>
     </xs:simpleType>
 </xs:schema>

@@ -173,6 +173,7 @@ class ProtocolServerService implements Service<ProtocolServer> {
          throw ROOT_LOGGER.failedConnectorInstantiation(e, serverName);
       }
       ROOT_LOGGER.connectorStarting(serverName);
+      configuration.ignoredCaches().forEach(server::ignoreCache);
       SecurityActions.startProtocolServer(server, configuration, getCacheManager().getValue());
       protocolServer = server;
 

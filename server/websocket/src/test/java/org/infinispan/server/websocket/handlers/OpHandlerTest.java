@@ -1,6 +1,7 @@
 package org.infinispan.server.websocket.handlers;
 
 import org.infinispan.server.websocket.json.JsonObject;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.websocket.MockChannel;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -16,7 +17,7 @@ import static org.testng.AssertJUnit.fail;
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 @Test (testName = "websocket.handlers.OpHandlerTest", groups = "unit")
-public class OpHandlerTest {
+public class OpHandlerTest extends AbstractInfinispanTest {
 
    public static final String CACHE_NAME = "cacheName";
 

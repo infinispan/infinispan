@@ -72,7 +72,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
    override def getDecoder : HotRodDecoder =
-      new HotRodDecoder(getCacheManager, transport, this)
+      new HotRodDecoder(getCacheManager, transport, this, isCacheIgnored)
 
    override def startInternal(configuration: HotRodServerConfiguration, cacheManager: EmbeddedCacheManager) {
       this.configuration = configuration

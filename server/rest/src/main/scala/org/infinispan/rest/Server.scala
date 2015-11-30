@@ -532,6 +532,7 @@ object Server {
 }
 
 class CacheNotFoundException(msg: String) extends CacheException(msg)
+class CacheUnavailableException(msg: String) extends CacheException(msg)
 
 object Escaper {
    def escapeHtml(html: String): String = {

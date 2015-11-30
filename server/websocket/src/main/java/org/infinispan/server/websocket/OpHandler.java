@@ -16,6 +16,7 @@ public interface OpHandler {
 	String KEY = "key";
 	String VALUE = "value";
 	String MIME = "mime";
+	String ERROR = "error";
 
 	/**
 	 * Handle a websocket channel operation.

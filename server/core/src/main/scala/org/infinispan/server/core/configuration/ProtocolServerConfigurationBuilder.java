@@ -5,6 +5,9 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.logging.JavaLog;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collections;
+import java.util.Set;
+
 public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>> implements
       ProtocolServerConfigurationChildBuilder<T, S>, Builder<T> {
    private static final JavaLog log = LogFactory.getLog(ProtocolServerConfigurationBuilder.class, JavaLog.class);
@@ -18,10 +21,17 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected final SslConfigurationBuilder ssl;
    protected boolean tcpNoDelay = true;
    protected int workerThreads = 2 * Runtime.getRuntime().availableProcessors();
+   protected Set<String> ignoredCaches = Collections.EMPTY_SET;
 
    protected ProtocolServerConfigurationBuilder(int port) {
       this.port = port;
       this.ssl = new SslConfigurationBuilder();
+   }
+
+   @Override
+   public S ignoredCaches(Set<String> ignoredCaches) {
+      this.ignoredCaches = ignoredCaches;
+      return this.self();
    }
 
    @Override
@@ -112,6 +122,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       this.tcpNoDelay = template.tcpNoDelay();
       this.workerThreads = template.workerThreads();
       this.ssl.read(template.ssl());
+      this.ignoredCaches = template.ignoredCaches();
       return this;
    }
 }

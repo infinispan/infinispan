@@ -22,6 +22,9 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.dmr.ModelNode;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public abstract class ProtocolServiceSubsystemAdd extends AbstractAddStepHandler {
    private static final int DEFAULT_WORKER_THREADS = 160;
 
@@ -55,6 +58,11 @@ public abstract class ProtocolServiceSubsystemAdd extends AbstractAddStepHandler
       }
       if (config.hasDefined(ModelKeys.RECEIVE_BUFFER_SIZE)) {
          builder.recvBufSize(config.get(ModelKeys.RECEIVE_BUFFER_SIZE).asInt());
+      }
+      if (config.hasDefined(ModelKeys.IGNORED_CACHES)) {
+         Set<String> ignoredCaches = config.get(ModelKeys.IGNORED_CACHES).asList()
+                 .stream().map(ModelNode::asString).collect(Collectors.toSet());
+         builder.ignoredCaches(ignoredCaches);
       }
    }
 

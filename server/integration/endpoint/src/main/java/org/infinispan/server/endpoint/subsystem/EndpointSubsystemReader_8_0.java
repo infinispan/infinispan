@@ -166,6 +166,10 @@ class EndpointSubsystemReader_8_0 implements XMLStreamConstants, XMLElementReade
    private String parseConnectorAttributes(XMLExtendedStreamReader reader, ModelNode connector, String name, int i,
          String value, Attribute attribute) throws XMLStreamException {
       switch (attribute) {
+      case IGNORED_CACHES: {
+         reader.getListAttributeValue(i).forEach(a -> connector.get(ModelKeys.IGNORED_CACHES).add(a));
+         break;
+      }
       case CACHE_CONTAINER: {
          CommonConnectorResource.CACHE_CONTAINER.parseAndSetParameter(value, connector, reader);
          break;
@@ -252,6 +256,10 @@ class EndpointSubsystemReader_8_0 implements XMLStreamConstants, XMLElementReade
          }
          case VIRTUAL_HOST: {
             ROOT_LOGGER.virtualHostNotInUse();
+            break;
+         }
+         case IGNORED_CACHES: {
+            reader.getListAttributeValue(i).forEach(a -> connector.get(ModelKeys.IGNORED_CACHES).add(a));
             break;
          }
          default: {

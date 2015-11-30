@@ -10,7 +10,7 @@ import io.netty.channel.{Channel, ChannelInitializer, ChannelInboundHandler, Cha
  * @author Galder Zamarreño
  * @since 4.1
  */
-trait ProtocolServer {
+trait ProtocolServer extends CacheIgnoreAware {
    type SuitableConfiguration <: ProtocolServerConfiguration
 
    /**

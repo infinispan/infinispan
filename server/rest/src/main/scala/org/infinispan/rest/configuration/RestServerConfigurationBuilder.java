@@ -2,6 +2,9 @@ package org.infinispan.rest.configuration;
 
 import org.infinispan.commons.configuration.Builder;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * RestServerConfigurationBuilder.
  *
@@ -13,6 +16,7 @@ public class RestServerConfigurationBuilder implements Builder<RestServerConfigu
    private ExtendedHeaders extendedHeaders = ExtendedHeaders.ON_DEMAND;
    private int port = 8080;
    private String host = "localhost";
+   private Set<String> ignoredCaches = new HashSet<String>();
 
    public RestServerConfigurationBuilder extendedHeaders(ExtendedHeaders extendedHeaders) {
       this.extendedHeaders = extendedHeaders;
@@ -29,6 +33,11 @@ public class RestServerConfigurationBuilder implements Builder<RestServerConfigu
       return this;
    }
 
+   public RestServerConfigurationBuilder ignoredCaches(Set<String> ignoredCaches) {
+      this.ignoredCaches = ignoredCaches;
+      return this;
+   }
+
    @Override
    public void validate() {
       // Nothing to do
@@ -36,7 +45,7 @@ public class RestServerConfigurationBuilder implements Builder<RestServerConfigu
 
    @Override
    public RestServerConfiguration create() {
-      return new RestServerConfiguration(extendedHeaders, host, port);
+      return new RestServerConfiguration(extendedHeaders, host, port, ignoredCaches);
    }
 
    @Override

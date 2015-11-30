@@ -6,17 +6,20 @@ import org.infinispan.commons.api.Lifecycle
 import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import org.infinispan.rest.configuration.{RestServerConfiguration, RestServerConfigurationBuilder}
 import org.infinispan.rest.logging.Log
+import org.infinispan.server.core.CacheIgnoreAware
 import org.jboss.resteasy.plugins.server.netty.NettyJaxrsServer
 import org.jboss.resteasy.spi.ResteasyDeployment
+import scala.collection.JavaConversions._
 
 final class NettyRestServer (
       val cacheManager: EmbeddedCacheManager, val configuration: RestServerConfiguration,
-      netty: NettyJaxrsServer, onStop: EmbeddedCacheManager => Unit) extends Lifecycle with Log {
+      netty: NettyJaxrsServer, onStop: EmbeddedCacheManager => Unit) extends Lifecycle with Log with CacheIgnoreAware {
 
    override def start(): Unit = {
       netty.start()
       val deployment = netty.getDeployment
-      val restCacheManager = new RestCacheManager(cacheManager)
+      configuration.getIgnoredCaches.foreach(ignoreCache)
+      val restCacheManager = new RestCacheManager(cacheManager, isCacheIgnored)
       val server = new Server(configuration, restCacheManager)
       deployment.getRegistry.addSingletonResource(server)
       logStartRestServer(configuration.host(), configuration.port())

@@ -1,5 +1,7 @@
 package org.infinispan.server.core.configuration;
 
+import java.util.Set;
+
 /**
  * ServerConfiguration.
  *
@@ -17,8 +19,9 @@ public abstract class ProtocolServerConfiguration {
    private final SslConfiguration ssl;
    private final boolean tcpNoDelay;
    private final int workerThreads;
+   private final Set<String> ignoredCaches;
 
-   protected ProtocolServerConfiguration(String defaultCacheName, String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads) {
+   protected ProtocolServerConfiguration(String defaultCacheName, String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, Set<String> ignoredCaches) {
       this.defaultCacheName = defaultCacheName;
       this.name = name;
       this.host = host;
@@ -29,6 +32,7 @@ public abstract class ProtocolServerConfiguration {
       this.ssl = ssl;
       this.tcpNoDelay = tcpNoDelay;
       this.workerThreads = workerThreads;
+      this.ignoredCaches = ignoredCaches;
    }
 
    public String defaultCacheName() {
@@ -71,10 +75,14 @@ public abstract class ProtocolServerConfiguration {
       return workerThreads;
    }
 
+   public Set<String> ignoredCaches() {
+      return ignoredCaches;
+   }
+
    @Override
    public String toString() {
       return "ProtocolServerConfiguration [defaultCacheName=" + defaultCacheName +", name=" + name + ", host=" + host + ", port=" + port + ", idleTimeout=" + idleTimeout + ", recvBufSize=" + recvBufSize + ", sendBufSize="
-            + sendBufSize + ", ssl=" + ssl + ", tcpNoDelay=" + tcpNoDelay + ", workerThreads=" + workerThreads + "]";
+            + sendBufSize + ", ssl=" + ssl + ", tcpNoDelay=" + tcpNoDelay + ", workerThreads=" + workerThreads + ", ignoredCaches=" + ignoredCaches + "]";
    }
 
 }

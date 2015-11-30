@@ -21,6 +21,8 @@ package org.infinispan.server.endpoint.subsystem;
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 import java.net.InetSocketAddress;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -68,6 +70,11 @@ public class RestService implements Service<Lifecycle> {
       securityMode = config.hasDefined(ModelKeys.SECURITY_MODE) ? SecurityMode.valueOf(config.get(ModelKeys.SECURITY_MODE).asString()) : SecurityMode.READ_WRITE;
 
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
+      if (config.hasDefined(ModelKeys.IGNORED_CACHES)) {
+         Set<String> ignoredCaches = config.get(ModelKeys.IGNORED_CACHES).asList()
+                 .stream().map(ModelNode::asString).collect(Collectors.toSet());
+         builder.ignoredCaches(ignoredCaches);
+      }
       builder.extendedHeaders(config.hasDefined(ModelKeys.EXTENDED_HEADERS)
             ? ExtendedHeaders.valueOf(config.get(ModelKeys.EXTENDED_HEADERS).asString())
             : ExtendedHeaders.ON_DEMAND);

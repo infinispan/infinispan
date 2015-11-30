@@ -39,7 +39,8 @@ import scala.collection.{immutable, mutable}
  * @author Galder Zamarreño
  * @since 4.1
  */
-class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService, val transport: NettyTransport)
+class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService,
+                       val transport: NettyTransport, val cacheIgnoreAware: String => Boolean = Function.const(false))
 extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with StatsChannelHandler with ServerConstants {
 
    val SecondsInAMonth = 60 * 60 * 24 * 30
@@ -148,6 +149,8 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with StatsChannel
       }
       val ch = ctx.channel
       cache = getCache.getAdvancedCache
+      val cacheName = cache.getName
+      if (cacheIgnoreAware(cacheName)) throw new CacheUnavailableException(cacheName)
       cacheConfiguration = getCacheConfiguration
       defaultLifespanTime = cacheConfiguration.expiration().lifespan()
       defaultMaxIdleTime = cacheConfiguration.expiration().maxIdle()
@@ -977,5 +980,7 @@ class RequestHeader {
 
 
 class UnknownOperationException(reason: String) extends StreamCorruptedException(reason)
+
+class CacheUnavailableException(msg: String) extends Exception(msg)
 
 class PartialResponse(val buffer: Option[ByteBuf])
