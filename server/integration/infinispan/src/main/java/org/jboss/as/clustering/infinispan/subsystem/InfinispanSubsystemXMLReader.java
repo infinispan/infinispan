@@ -44,11 +44,9 @@ import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.server.jgroups.subsystem.ChannelResourceDefinition;
 import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ObjectListAttributeDefinition;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.ParseUtils;
@@ -239,7 +237,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_1)) {
                       parseGlobalState(reader, containerAddress, operations);
                    } else {
-                      ParseUtils.unexpectedElement(reader);
+                      throw ParseUtils.unexpectedElement(reader);
                    }
                    break;
                 }

@@ -608,7 +608,7 @@ public class Parser80 implements ConfigurationParser {
                if (reader.getSchema().since(8, 1)) {
                   parseGlobalState(reader, holder);
                } else {
-                  ParseUtils.unexpectedElement(reader);
+                  throw ParseUtils.unexpectedElement(reader);
                }
                break;
             }
