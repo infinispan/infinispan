@@ -1,6 +1,7 @@
 package org.infinispan.jcache;
 
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.Test;
 
 import javax.cache.Cache;
@@ -10,10 +11,11 @@ import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListenerException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.jcache.util.JCacheTestingUtil.sleep;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 /**
  * Base class for clustered JCache expiration tests. Implementations must provide cache references.
@@ -22,6 +24,9 @@ import static org.testng.Assert.*;
  */
 @Test(testName = "org.infinispan.jcache.AbstractTwoCachesExpirationTest", groups = "functional")
 public abstract class AbstractTwoCachesExpirationTest extends MultipleCacheManagersTest {
+
+   protected final ControlledTimeService controlledTimeService = new ControlledTimeService(0);
+   protected static final int EXPIRATION_TIMEOUT = 1000;
 
    @Test
    public void testExpiration(Method m) {
@@ -32,29 +37,26 @@ public abstract class AbstractTwoCachesExpirationTest extends MultipleCacheManag
       MutableCacheEntryListenerConfiguration conf1 = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, false);
       cache1.registerCacheEntryListener(conf1);
       cache2.put("key1", "val1");
-      sleep(5000);
+      controlledTimeService.advance(EXPIRATION_TIMEOUT + 1000);
+      eventually(() -> listener.invocationCount.get() >0);
       assertNull(cache1.get("key1"));
-      assertEquals(listener.invocationCount, 1);
 
-      listener.invocationCount = 0;
+      listener.invocationCount.set(0);
       cache1.deregisterCacheEntryListener(conf1);
       cache2.put("key2", "val2");
-      sleep(5000);
+      controlledTimeService.advance(EXPIRATION_TIMEOUT + 1000);
       assertNull(cache1.get("key2"));
-      assertEquals(listener.invocationCount, 0);
+      sleep(EXPIRATION_TIMEOUT);
+      assertEquals(listener.invocationCount.get(), 0);
    }
 
    private static class TestExpiredListener implements CacheEntryExpiredListener, Serializable {
 
-      private int invocationCount;
+      private final AtomicInteger invocationCount = new AtomicInteger(0);
 
       @Override
       public void onExpired(Iterable iterable) throws CacheEntryListenerException {
-         Iterator iterator = iterable.iterator();
-         while (iterator.hasNext()) {
-            iterator.next();
-            invocationCount++;
-         }
+         iterable.forEach(e -> invocationCount.incrementAndGet());
       }
    }
 
