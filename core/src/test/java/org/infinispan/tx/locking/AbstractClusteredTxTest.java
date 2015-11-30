@@ -6,6 +6,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
+import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import java.util.Collections;
 import java.util.Map;
@@ -74,7 +75,7 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
       DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
       try {
          dtm.getTransaction().runCommit(false);
-      } catch (HeuristicMixedException | HeuristicRollbackException e) {
+      } catch (HeuristicMixedException | HeuristicRollbackException | RollbackException e) {
          throw new RuntimeException(e);
       }
    }
