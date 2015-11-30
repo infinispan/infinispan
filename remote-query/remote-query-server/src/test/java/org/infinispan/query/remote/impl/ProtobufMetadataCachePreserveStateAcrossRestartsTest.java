@@ -12,8 +12,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 
-@Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataCachePreserveStateAcrossRestarts")
-public class ProtobufMetadataCachePreserveStateAcrossRestarts extends AbstractInfinispanTest {
+@Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataCachePreserveStateAcrossRestartsTest")
+public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends AbstractInfinispanTest {
 
    protected EmbeddedCacheManager createCacheManager(String persistentStateLocation) throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
