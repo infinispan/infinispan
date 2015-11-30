@@ -50,6 +50,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    protected CacheNotifier notifier;
    protected RecoveryManager recoveryManager;
    private transient boolean replayEntryWrapping  = false;
+   protected boolean retriedCommand;
    
    private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
 
@@ -189,10 +190,11 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    public Object[] getParameters() {
       int numMods = modifications == null ? 0 : modifications.length;
       int i = 0;
-      final int params = 3;
+      final int params = 4;
       Object[] retval = new Object[numMods + params];
       retval[i++] = globalTx;
       retval[i++] = onePhaseCommit;
+      retval[i++] = retriedCommand;
       retval[i] = numMods;
       if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
       return retval;
@@ -204,6 +206,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       int i = 0;
       globalTx = (GlobalTransaction) args[i++];
       onePhaseCommit = (Boolean) args[i++];
+      retriedCommand = (boolean) args[i++];
       int numMods = (Integer) args[i++];
       if (numMods > 0) {
          modifications = new WriteCommand[numMods];
@@ -224,6 +227,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       return "PrepareCommand {" +
             "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
             ", onePhaseCommit=" + onePhaseCommit +
+            ", retried=" + retriedCommand +
             ", " + super.toString();
    }
 
@@ -260,4 +264,11 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       return false;
    }
 
+   public boolean isRetriedCommand() {
+      return retriedCommand;
+   }
+
+   public void setRetriedCommand(boolean retriedCommand) {
+      this.retriedCommand = retriedCommand;
+   }
 }

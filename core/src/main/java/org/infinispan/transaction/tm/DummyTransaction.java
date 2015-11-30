@@ -41,6 +41,7 @@ public class DummyTransaction implements Transaction {
 
    private static final Log log = LogFactory.getLog(DummyTransaction.class);
    private static boolean trace = log.isTraceEnabled();
+   public static final String FORCE_ROLLBACK_MESSAGE = "Force rollback invoked. (debug mode)";
    private final Xid xid;
    private volatile int status = Status.STATUS_UNKNOWN;
    private final List<Synchronization> syncs;
@@ -102,7 +103,6 @@ public class DummyTransaction implements Transaction {
       checkDone("Cannot commit transaction.");
       runPrepare();
       runCommit(false);
-      throwRollbackExceptionIfAny();
    }
 
    /**
@@ -128,6 +128,11 @@ public class DummyTransaction implements Transaction {
          SystemException systemException = new SystemException("Unable to rollback transaction");
          systemException.initCause(e);
          throw systemException;
+      } catch (RollbackException e) {
+         //ignored
+         if (trace) {
+            log.trace("RollbackException thrown while rolling back", e);
+         }
       }
    }
 
@@ -282,12 +287,20 @@ public class DummyTransaction implements Transaction {
       return true;
    }
 
-   public void runCommit(boolean forceRollback) throws HeuristicMixedException, HeuristicRollbackException {
+   /**
+    * Runs the second phase of two-phase-commit protocol.
+    *
+    * If {@code forceRollback} is {@code true}, then a {@link RollbackException} is thrown with the message {@link #FORCE_ROLLBACK_MESSAGE}.
+    *
+    *
+    * @param forceRollback force the transaction to rollback.
+    */
+   public void runCommit(boolean forceRollback) throws HeuristicMixedException, HeuristicRollbackException, RollbackException {
       if (trace) {
          log.tracef("runCommit(forceRollback=%b) invoked in transaction with Xid=%s", forceRollback, xid);
       }
       if (forceRollback) {
-         markRollbackOnly(new RollbackException("Force rollback invoked. (debug mode)"));
+         markRollbackOnly(new RollbackException(FORCE_ROLLBACK_MESSAGE));
       }
 
       int notifyAfterStatus = 0;
@@ -304,6 +317,7 @@ public class DummyTransaction implements Transaction {
          notifyAfterCompletion(notifyAfterStatus);
          DummyBaseTransactionManager.setTransaction(null);
       }
+      throwRollbackExceptionIfAny(forceRollback);
    }
 
    @Override
@@ -339,8 +353,12 @@ public class DummyTransaction implements Transaction {
       return this == obj;
    }
 
-   public final void throwRollbackExceptionIfAny() throws RollbackException {
+   private void throwRollbackExceptionIfAny(boolean forceRollback) throws RollbackException {
       if (firstRollbackException != null) {
+         if (forceRollback && FORCE_ROLLBACK_MESSAGE.equals(firstRollbackException.getMessage())) {
+            //force rollback set. don't throw it.
+            return;
+         }
          throw firstRollbackException;
       }
    }

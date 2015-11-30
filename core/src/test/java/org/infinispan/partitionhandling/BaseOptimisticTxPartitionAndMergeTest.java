@@ -10,11 +10,12 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 
+import javax.transaction.Status;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -49,15 +50,14 @@ public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartit
       final Cache<Object, String> originator = cache(0, OPTIMISTIC_TX_CACHE_NAME);
       final FilterCollection filterCollection = createFilters(OPTIMISTIC_TX_CACHE_NAME, discard, getCommandClass(), splitMode);
 
-      Future<Void> put = fork(() -> {
+      Future<Integer> put = fork(() -> {
          final DummyTransactionManager transactionManager = (DummyTransactionManager) originator.getAdvancedCache().getTransactionManager();
          transactionManager.begin();
          keyInfo.putFinalValue(originator);
          final DummyTransaction transaction = transactionManager.getTransaction();
          transaction.runPrepare();
          transaction.runCommit(forceRollback());
-         transaction.throwRollbackExceptionIfAny();
-         return null;
+         return transaction.getStatus();
       });
 
       filterCollection.await(30, TimeUnit.SECONDS);
@@ -65,8 +65,7 @@ public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartit
       filterCollection.unblock();
 
       try {
-         put.get();
-         assertFalse(txFail);
+         assertEquals(txFail ? Status.STATUS_ROLLEDBACK : Status.STATUS_COMMITTED, (int) put.get());
       } catch (ExecutionException e) {
          assertTrue(txFail);
       }

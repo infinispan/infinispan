@@ -61,6 +61,11 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       final Collection<Object> keysToLock = command.getKeysToLock();
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(command.getAffectedKeys());
       if (!keysToLock.isEmpty()) {
+         if (command.isRetriedCommand() && ctx.isOriginLocal()) {
+            //clear backup locks for local and retried commands only. The remote commands clears the backup locks in PendingTxAction.
+            ctx.getCacheTransaction().cleanupBackupLocks();
+            keysToLock.removeAll(ctx.getLockedKeys()); //already locked!
+         }
          Collection<Object> lockedKeys = lockAllOrRegisterBackupLock(ctx, keysToLock,
                                                                      cacheConfiguration.locking().lockAcquisitionTimeout());
          if (!lockedKeys.isEmpty()) {

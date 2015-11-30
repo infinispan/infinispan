@@ -13,21 +13,20 @@ import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static org.infinispan.commons.util.Util.toStr;
@@ -62,13 +61,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    /** Holds all the locks for which the local node is a secondary data owner. */
    protected volatile Set<Object> backupKeyLocks = null;
 
-   private volatile boolean txComplete = false;
    protected final int topologyId;
 
    private EntryVersionsMap updatedEntryVersions;
    private EntryVersionsMap versionsSeenMap;
-
-   private Map<Object, EntryVersion> lookedUpRemoteVersions;
+   private EntryVersionsMap lookedUpRemoteVersions;
 
    /** mark as volatile as this might be set from the tx thread code on view change*/
    private volatile boolean isMarkedForRollback;
@@ -87,7 +84,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    private volatile Flag stateTransferFlag;
 
-   private final CompletableFuture<Void> notifier;
+   private final CompletableFuture<Void> txCompleted;
+   private volatile CompletableFuture<Void> backupLockReleased;
 
    public final boolean isMarkedForRollback() {
       return isMarkedForRollback;
@@ -102,7 +100,8 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       this.topologyId = topologyId;
       this.keyEquivalence = keyEquivalence;
       this.txCreationTime = txCreationTime;
-      notifier = new CompletableFuture<>();
+      txCompleted = new CompletableFuture<>();
+      backupLockReleased = new CompletableFuture<>();
    }
 
    @Override
@@ -194,23 +193,15 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public void notifyOnTransactionFinished() {
       if (trace) log.tracef("Transaction %s has completed, notifying listening threads.", tx);
-      if (!txComplete) {
-         //avoid invalidate CPU L1 cache is tx is already completed
-         txComplete = true;
-         notifier.complete(null);
+      if (!txCompleted.isDone()) {
+         txCompleted.complete(null);
+         cleanupBackupLocks();
       }
    }
 
    @Override
    public final boolean waitForLockRelease(long lockAcquisitionTimeout) throws InterruptedException {
-      try {
-         notifier.get(lockAcquisitionTimeout, TimeUnit.MILLISECONDS);
-      } catch (ExecutionException e) {
-         throw new IllegalStateException("Should never happen", e);
-      } catch (TimeoutException e) {
-         //ignored.
-      }
-      return txComplete;
+      return CompletableFutures.await(txCompleted, lockAcquisitionTimeout, TimeUnit.MILLISECONDS);
    }
 
    @Override
@@ -268,7 +259,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public boolean areLocksReleased() {
-      return txComplete;
+      return txCompleted.isDone();
    }
 
    public Set<Object> getAffectedKeys() {
@@ -307,9 +298,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public void putLookedUpRemoteVersion(Object key, EntryVersion version) {
       if (lookedUpRemoteVersions == null) {
-         lookedUpRemoteVersions = new HashMap<>();
+         lookedUpRemoteVersions = new EntryVersionsMap();
       }
-      lookedUpRemoteVersions.put(key, version);
+      lookedUpRemoteVersions.put(key, (IncrementableEntryVersion) version);
    }
 
    @Override
@@ -379,6 +370,42 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public final void addListener(TransactionCompletedListener listener) {
-      notifier.thenRun(listener::onCompletion);
+      txCompleted.thenRun(listener::onCompletion);
+   }
+
+   @Override
+   public CompletableFuture<Void> getReleaseFutureForKey(Object key) {
+      if (lockedKeys != null && lockedKeys.contains(key)) {
+         return txCompleted;
+      } else if (backupKeyLocks != null && backupKeyLocks.contains(key)) {
+         return backupLockReleased;
+      }
+      return null;
+   }
+
+   @Override
+   public KeyValuePair<Object, CompletableFuture<Void>> getReleaseFutureForKeys(Collection<Object> keys) {
+      Set<Object> locked = getLockedKeys();
+      Set<Object> backupLocked = getBackupLockedKeys();
+      Object backupKey = null;
+      for (Object key : keys) {
+         if (locked.contains(key)) {
+            return new KeyValuePair<>(key, txCompleted);
+         } else if (backupLocked.contains(key)) {
+            backupKey = key;
+         }
+      }
+      return backupKey == null ? null : new KeyValuePair<>(backupKey, backupLockReleased);
+   }
+
+   @Override
+   public void cleanupBackupLocks() {
+      if (backupKeyLocks != null) {
+         synchronized (backupKeyLocks) {
+            backupLockReleased.complete(null);
+            backupLockReleased = new CompletableFuture<>();
+            backupKeyLocks.clear();
+         }
+      }
    }
 }

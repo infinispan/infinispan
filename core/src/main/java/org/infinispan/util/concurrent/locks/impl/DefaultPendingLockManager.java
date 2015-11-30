@@ -3,11 +3,14 @@ package org.infinispan.util.concurrent.locks.impl;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.PendingLockListener;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
@@ -19,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,6 +53,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
    private TransactionTable transactionTable;
    private TimeService timeService;
    private ScheduledExecutorService timeoutExecutor;
+   private StateTransferManager stateTransferManager;
 
    public DefaultPendingLockManager() {
       pendingLockPromiseMap = new ConcurrentHashMap<>();
@@ -56,10 +61,12 @@ public class DefaultPendingLockManager implements PendingLockManager {
 
    @Inject
    public void inject(TransactionTable transactionTable, TimeService timeService,
-                      @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
+                      @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
+                      StateTransferManager stateTransferManager) {
       this.transactionTable = transactionTable;
       this.timeService = timeService;
       this.timeoutExecutor = timeoutExecutor;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Override
@@ -104,11 +111,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
                                               long time, TimeUnit unit) throws InterruptedException {
       PendingLockPromiseImpl pendingLockPromise = pendingLockPromiseMap.remove(ctx.getGlobalTransaction());
       if (pendingLockPromise != null) {
-         pendingLockPromise.await();
-         if (pendingLockPromise.hasTimedOut()) {
-            timeout(pendingLockPromise.getTimedOutTransaction(), ctx.getGlobalTransaction());
-         }
-         return pendingLockPromise.getRemainingTimeout();
+         awaitOn(pendingLockPromise, ctx.getGlobalTransaction());
       }
       final int txTopologyId = getTopologyId(ctx);
       if (txTopologyId != NO_PENDING_CHECK) {
@@ -126,11 +129,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
                                                   long time, TimeUnit unit) throws InterruptedException {
       PendingLockPromiseImpl pendingLockPromise = pendingLockPromiseMap.remove(ctx.getGlobalTransaction());
       if (pendingLockPromise != null) {
-         pendingLockPromise.await();
-         if (pendingLockPromise.hasTimedOut()) {
-            timeout(pendingLockPromise.getTimedOutTransaction(), ctx.getGlobalTransaction());
-         }
-         return pendingLockPromise.getRemainingTimeout();
+         awaitOn(pendingLockPromise, ctx.getGlobalTransaction());
       }
       final int txTopologyId = getTopologyId(ctx);
       if (txTopologyId != NO_PENDING_CHECK) {
@@ -151,7 +150,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
 
       PendingLockPromiseImpl pendingLockPromise = new PendingLockPromiseImpl(transactions, timeService.expectedEndTime(time, unit));
-      PendingLockPromiseImpl existing = pendingLockPromiseMap.putIfAbsent(globalTransaction, pendingLockPromise);
+      PendingLockPromise existing = pendingLockPromiseMap.putIfAbsent(globalTransaction, pendingLockPromise);
       if (existing != null) {
          return existing;
       }
@@ -167,10 +166,10 @@ public class DefaultPendingLockManager implements PendingLockManager {
       boolean isFromStateTransfer = context.isOriginLocal() && ((LocalTransaction) tx).isFromStateTransfer();
       // if the transaction is from state transfer it should not wait for the backup locks of other transactions
       if (!isFromStateTransfer) {
-         final int transactionTopologyId = tx.getTopologyId();
-         if (transactionTopologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
-            if (transactionTable.getMinTopologyId() < transactionTopologyId) {
-               return transactionTopologyId;
+         final int topologyId = stateTransferManager.getCacheTopology().getTopologyId();
+         if (topologyId != TransactionTable.CACHE_STOPPED_TOPOLOGY_ID) {
+            if (transactionTable.getMinTopologyId() < topologyId) {
+               return topologyId;
             }
          }
       }
@@ -220,9 +219,9 @@ public class DefaultPendingLockManager implements PendingLockManager {
       return timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS);
    }
 
-   private void timeout(PendingTransaction lockOwner, GlobalTransaction thisGlobalTransaction) {
+   private static void timeout(PendingTransaction lockOwner, GlobalTransaction thisGlobalTransaction) {
       throw new TimeoutException(format("Could not acquire lock on %s in behalf of transaction %s. Current owner %s.",
-                                        lockOwner.commonKey, thisGlobalTransaction,
+                                        lockOwner.key, thisGlobalTransaction,
                                         lockOwner.cacheTransaction.getGlobalTransaction()));
    }
 
@@ -234,7 +233,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       for (PendingTransaction tx : transactionsToCheck) {
          long remaining;
          if ((remaining = timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS)) > 0) {
-            if (!tx.cacheTransaction.waitForLockRelease(remaining)) {
+            if (!CompletableFutures.await(tx.keyReleased, remaining, TimeUnit.MILLISECONDS)) {
                return tx;
             }
          }
@@ -248,9 +247,11 @@ public class DefaultPendingLockManager implements PendingLockManager {
       final Collection<PendingTransaction> pendingTransactions = new ArrayList<>();
       forEachTransaction(transaction -> {
          if (transaction.getTopologyId() < transactionTopologyId &&
-               !transaction.getGlobalTransaction().equals(globalTransaction) &&
-               transaction.containsLockOrBackupLock(key)) {
-            pendingTransactions.add(new PendingTransaction(transaction, key));
+               !transaction.getGlobalTransaction().equals(globalTransaction)) {
+            CompletableFuture<Void> keyReleasedFuture = transaction.getReleaseFutureForKey(key);
+            if (keyReleasedFuture != null) {
+               pendingTransactions.add(new PendingTransaction(transaction, key, keyReleasedFuture));
+            }
          }
       });
       return pendingTransactions.isEmpty() ? Collections.emptyList() : pendingTransactions;
@@ -263,9 +264,9 @@ public class DefaultPendingLockManager implements PendingLockManager {
       forEachTransaction(transaction -> {
          if (transaction.getTopologyId() < transactionTopologyId &&
                !transaction.getGlobalTransaction().equals(globalTransaction)) {
-            Object key = transaction.findAnyLockedOrBackupLocked(keys);
-            if (key != null) {
-               pendingTransactions.add(new PendingTransaction(transaction, key));
+            KeyValuePair<Object, CompletableFuture<Void>> keyReleaseFuture = transaction.getReleaseFutureForKeys(keys);
+            if (keyReleaseFuture != null) {
+               pendingTransactions.add(new PendingTransaction(transaction, keyReleaseFuture.getKey(), keyReleaseFuture.getValue()));
             }
          }
       });
@@ -288,17 +289,28 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
    }
 
+   private static long awaitOn(PendingLockPromiseImpl pendingLockPromise, GlobalTransaction globalTransaction)
+         throws InterruptedException {
+      pendingLockPromise.await();
+      if (pendingLockPromise.hasTimedOut()) {
+         timeout(pendingLockPromise.getPendingTransaction(), globalTransaction);
+      }
+      return pendingLockPromise.getRemainingTimeout();
+   }
+
    private static class PendingTransaction {
       public final CacheTransaction cacheTransaction;
-      public final Object commonKey;
+      public final Object key;
+      private final CompletableFuture<Void> keyReleased;
 
-      private PendingTransaction(CacheTransaction cacheTransaction, Object commonKey) {
+      private PendingTransaction(CacheTransaction cacheTransaction, Object key, CompletableFuture<Void> keyReleased) {
          this.cacheTransaction = cacheTransaction;
-         this.commonKey = commonKey;
+         this.key = key;
+         this.keyReleased = Objects.requireNonNull(keyReleased);
       }
    }
 
-   private class PendingLockPromiseImpl implements PendingLockPromise, CacheTransaction.TransactionCompletedListener, Callable<Void> {
+   private class PendingLockPromiseImpl implements PendingLockPromise, Callable<Void> {
 
       private final Collection<PendingTransaction> pendingTransactions;
       private final long expectedEndTime;
@@ -317,7 +329,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
             return true;
          }
          for (PendingTransaction transaction : pendingTransactions) {
-            if (!transaction.cacheTransaction.areLocksReleased()) {
+            if (!transaction.keyReleased.isDone()) {
                if (timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS) <= 0) {
                   timedOutTransaction = transaction;
                }
@@ -343,25 +355,24 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
 
       @Override
-      public void onCompletion() {
-         if (isReady()) {
-            notifier.complete(null);
-         }
-      }
-
-      @Override
       public Void call() throws Exception {
          isReady();
          return null;
       }
 
-      private PendingTransaction getTimedOutTransaction() {
+      private void onRelease() {
+         if (isReady()) {
+            notifier.complete(null);
+         }
+      }
+
+      private PendingTransaction getPendingTransaction() {
          return timedOutTransaction;
       }
 
       private void registerListenerInCacheTransactions() {
          for (PendingTransaction transaction : pendingTransactions) {
-            transaction.cacheTransaction.addListener(this);
+            transaction.keyReleased.thenRun(this::onRelease);
          }
       }
 

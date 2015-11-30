@@ -7,7 +7,6 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
-import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -257,6 +256,9 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
             // Only the originator can retry the command
             command.setTopologyId(retryTopologyId);
             waitForTransactionData(retryTopologyId);
+            if (command instanceof PrepareCommand) {
+               ((PrepareCommand) command).setRetriedCommand(true);
+            }
 
             log.tracef("Retrying command %s for topology %d", command, retryTopologyId);
             localResult = handleTxCommand(ctx, command);

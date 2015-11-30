@@ -5,11 +5,13 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.KeyValuePair;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Defines the state a infinispan transaction should have.
@@ -69,7 +71,7 @@ public interface CacheTransaction {
    void addBackupLockForKey(Object key);
 
    /**
-    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(InvocationContext, Object, long, boolean)
+    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#checkPendingAndLockKey(InvocationContext, Object, long)
     */
    void notifyOnTransactionFinished();
 
@@ -82,14 +84,18 @@ public interface CacheTransaction {
     * before the specified time has elapsed and without guaranteeing that this transaction is complete. The caller is
     * responsible to call the method again if transaction completion was not reached and the time budget was not spent.
     *
-    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(InvocationContext, Object, long, boolean)
+    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#checkPendingAndLockKey(InvocationContext, Object, long)
     */
+   @Deprecated
    boolean waitForLockRelease(long lockAcquisitionTimeout) throws InterruptedException;
 
+   @Deprecated
    boolean containsLockOrBackupLock(Object key);
 
+   @Deprecated
    Object findAnyLockedOrBackupLocked(Collection<Object> keys);
 
+   @Deprecated
    boolean areLocksReleased();
 
    EntryVersionsMap getUpdatedEntryVersions();
@@ -144,4 +150,25 @@ public interface CacheTransaction {
     * Prevent new modifications after prepare or commit started.
     */
    void freezeModifications();
+
+
+   /**
+    * It returns a {@link CompletableFuture} that completes when the lock for the {@code key} is released.
+    *
+    * If the {@code key} is not locked by this transaction, it returns {@code null}.
+    *
+    * @param key the key.
+    * @return the {@link CompletableFuture} or {@link null} if the key is not locked by this transaction.
+    */
+   CompletableFuture<Void> getReleaseFutureForKey(Object key);
+
+   /**
+    * Same as {@link #getReleaseFutureForKey(Object)} but it returns a pair with the key and the future.
+    */
+   KeyValuePair<Object, CompletableFuture<Void>> getReleaseFutureForKeys(Collection<Object> keys);
+
+   /**
+    * It cleans up the backup locks for this transaction.
+    */
+   void cleanupBackupLocks();
 }
