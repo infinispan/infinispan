@@ -202,24 +202,27 @@
     </xs:complexType>
     
     <xs:complexType name="sasl">
-        <xs:complexContent>
-            <xs:extension base="tns:protocol">
-                <xs:attribute name="mech" type="xs:string" use="required">
-                    <xs:annotation>
-                        <xs:documentation>The SASL mech.</xs:documentation>
-                    </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="secrity-realm" type="xs:string" use="required">
-                    <xs:annotation>
-                        <xs:documentation>The name of a Security Realm</xs:documentation>
-                    </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="cluster-role" type="xs:string">
-                    <xs:annotation>
-                        <xs:documentation>The name of a role in the Security Realm that a node must belong to in order to be allowed to join the cluster</xs:documentation>
-                    </xs:annotation>
-                </xs:attribute>
-            </xs:extension>
-        </xs:complexContent>
+        <xs:sequence>
+            <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>Defines a property override for a protocol.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="mech" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The SASL mech.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="security-realm" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The name of a Security Realm</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="cluster-role" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The name of a role in the Security Realm that a node must belong to in order to be allowed to join the cluster</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 </xs:schema>
