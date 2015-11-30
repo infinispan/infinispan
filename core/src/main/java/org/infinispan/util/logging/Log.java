@@ -1408,5 +1408,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Recovery not supported with asynchronous commit phase", id = 394)
    CacheConfigurationException recoveryNotSupportedWithAsyncCommit();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Transaction notifications are disabled.  This prevents cluster listeners from working properly!", id = 395)
+   void transactionNotificationsDisabled();
 }
 
