@@ -36,9 +36,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
    @Override
    @SuppressWarnings("unchecked")
    public <RecoveryManager> RecoveryManager construct(Class<RecoveryManager> componentType) {
-      boolean recoveryEnabled = configuration.transaction().recovery().enabled()
-            && !configuration.transaction().useSynchronization();
-      if (recoveryEnabled) {
+      if (configuration.transaction().recovery().enabled()) {
          String recoveryCacheName = configuration.transaction().recovery().recoveryInfoCacheName();
          log.tracef("Using recovery cache name %s", recoveryCacheName);
          EmbeddedCacheManager cm = componentRegistry.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);

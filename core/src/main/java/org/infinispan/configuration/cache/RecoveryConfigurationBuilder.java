@@ -1,12 +1,17 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.RecoveryConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.RecoveryConfiguration.RECOVERY_INFO_CACHE_NAME;
-
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.lang.invoke.MethodHandles;
+
+import static org.infinispan.configuration.cache.RecoveryConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.RecoveryConfiguration.RECOVERY_INFO_CACHE_NAME;
 
 /**
  * Defines recovery configuration for the cache.
@@ -16,6 +21,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration> {
 
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final AttributeSet attributes;
 
    RecoveryConfigurationBuilder(TransactionConfigurationBuilder builder) {
@@ -62,23 +68,32 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
 
    @Override
    public void validate() {
-      if (!attributes.attribute(ENABLED).get() || transaction().useSynchronization()) {
-         return;
+      if (!attributes.attribute(ENABLED).get()) {
+         return; //nothing to validate
+      }
+      if (transaction().transactionMode() == TransactionMode.NON_TRANSACTIONAL) {
+         throw log.recoveryNotSupportedWithNonTxCache();
+      }
+      if (transaction().useSynchronization()) {
+         throw log.recoveryNotSupportedWithSynchronization();
+      }
+      if (transaction().transactionProtocol() == TransactionProtocol.TOTAL_ORDER) {
+         throw log.unavailableTotalOrderWithTxRecovery();
       }
       if (!clustering().cacheMode().isSynchronous()) {
-         throw new CacheConfigurationException("Recovery not supported with Asynchronous " +
-                                                clustering().cacheMode().friendlyCacheModeString() + " cache mode.");
+         throw log.recoveryNotSupportedWithAsync(clustering().cacheMode().friendlyCacheModeString());
       }
       if (!transaction().syncCommitPhase()) {
          //configuration not supported because the Transaction Manager would not retain any transaction log information to
          //allow it to perform useful recovery anyhow. Usually you just log it in the hope a human notices and sorts
          //out the mess. Of course properly paranoid humans don't use async commit in the first place.
-         throw new CacheConfigurationException("Recovery not supported with asynchronous commit phase.");
+         throw log.recoveryNotSupportedWithAsyncCommit();
       }
    }
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      validate();
    }
 
    @Override
