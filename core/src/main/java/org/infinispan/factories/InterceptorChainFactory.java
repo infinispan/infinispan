@@ -11,8 +11,6 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.expiration.impl.ExpirationInterceptor;
-import org.infinispan.expiration.impl.OptimisticTxExpirationInterceptor;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.ActivationInterceptor;
 import org.infinispan.interceptors.BatchingInterceptor;
@@ -228,16 +226,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       if (configuration.clustering().hash().groups().enabled()) {
          interceptorChain.appendInterceptor(createInterceptor(new GroupingInterceptor(), GroupingInterceptor.class), false);
-      }
-
-      // The expiration interceptor must come before the entry wrapping interceptor as it can stop data container
-      // access from expiring things.
-      if (transactionMode.isTransactional() && configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
-         interceptorChain.appendInterceptor(createInterceptor(new OptimisticTxExpirationInterceptor<>(),
-                 ExpirationInterceptor.class), false);
-      } else {
-         interceptorChain.appendInterceptor(createInterceptor(new ExpirationInterceptor<>(),
-                 ExpirationInterceptor.class), false);
       }
 
       if (needsVersionAwareComponents && cacheMode.isClustered()) {
