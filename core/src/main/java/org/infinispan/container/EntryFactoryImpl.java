@@ -1,6 +1,7 @@
 package org.infinispan.container;
 
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
@@ -17,6 +18,7 @@ import org.infinispan.container.entries.StateChangingEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,13 +39,16 @@ public class EntryFactoryImpl implements EntryFactory {
    private boolean isL1Enabled; //cache the value
    private Configuration configuration;
    private DistributionManager distributionManager;//is null for non-clustered caches
+   private TimeService timeService;
 
    @Inject
    public void injectDependencies(DataContainer dataContainer, Configuration configuration,
-                                  DistributionManager distributionManager) {
+                                  DistributionManager distributionManager,
+                                  TimeService timeService) {
       this.container = dataContainer;
       this.configuration = configuration;
       this.distributionManager = distributionManager;
+      this.timeService = timeService;
    }
 
    @Start (priority = 8)
@@ -56,7 +61,7 @@ public class EntryFactoryImpl implements EntryFactory {
    public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key, CacheEntry existing) {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
-         cacheEntry = existing != null ? existing : getFromContainer(key, false);
+         cacheEntry = existing != null ? existing : getFromContainer(key, false, false);
 
          // With repeatable read, we need to create a RepeatableReadEntry
          // Otherwise we can store the InternalCacheEntry directly in the context
@@ -124,7 +129,7 @@ public class EntryFactoryImpl implements EntryFactory {
             log.tracef("Updated context entry %s", contextEntry);
       } else {
          // Not in the context yet.
-         InternalCacheEntry ice = getFromContainer(key, ignoreOwnership);
+         InternalCacheEntry ice = getFromContainer(key, ignoreOwnership, true);
          if (ice == null && wrap == Wrap.WRAP_NON_NULL) {
             mvccEntry = null;
          } else {
@@ -220,7 +225,7 @@ public class EntryFactoryImpl implements EntryFactory {
          ctx.putLookedUpEntry(deltaKey, deltaAwareEntry);
       } else {
          // Read the value from the container and wrap it
-         InternalCacheEntry ice = getFromContainer(deltaKey, false);
+         InternalCacheEntry ice = getFromContainer(deltaKey, false, false);
          DeltaAwareCacheEntry deltaEntry =
                createWrappedDeltaEntry(deltaKey, ice != null ? (DeltaAware) ice.getValue() : null, null);
 
@@ -247,22 +252,42 @@ public class EntryFactoryImpl implements EntryFactory {
       return cacheEntry;
    }
 
-   private InternalCacheEntry getFromContainer(Object key, boolean ignoreOwnership) {
+   private InternalCacheEntry getFromContainer(Object key, boolean ignoreOwnership, boolean writeOperation) {
       final boolean isLocal = distributionManager == null || distributionManager.getLocality(key).isLocal();
       if (isLocal || ignoreOwnership) {
-         final InternalCacheEntry ice = container.get(key);
+         final InternalCacheEntry ice = innerGetFromContainer(key, writeOperation);
          if (trace)
             log.tracef("Retrieved from container %s (ignoreOwnership=%s, isLocal=%s)", ice, ignoreOwnership,
                        isLocal);
          return ice;
       } else if (isL1Enabled) {
-         final InternalCacheEntry ice = container.get(key);
+         final InternalCacheEntry ice = innerGetFromContainer(key, writeOperation);
          final boolean isL1Entry = ice != null && ice.isL1Entry();
          if (trace) log.tracef("Retrieved from container %s (L1 is enabled, isL1Entry=%s)", ice, isL1Entry);
          return isL1Entry ? ice : null;
       }
       if (trace) log.trace("Didn't retrieve from container.");
       return null;
+   }
+
+   private InternalCacheEntry innerGetFromContainer(Object key, boolean writeOperation) {
+      InternalCacheEntry ice;
+      // Write operations should not cause expiration events to occur, because we will most likely overwrite the
+      // value anyways - also required for remove expired to not cause infinite loop
+      if (writeOperation) {
+         ice = container.peek(key);
+         if (ice != null && ice.canExpire()) {
+            long wallClockTime = timeService.wallClockTime();
+            if (ice.isExpired(wallClockTime)) {
+               ice = null;
+            } else {
+               ice.touch(wallClockTime);
+            }
+         }
+      } else {
+         ice = container.get(key);
+      }
+      return ice;
    }
 
    protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry, InvocationContext context,
