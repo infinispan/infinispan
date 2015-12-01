@@ -38,7 +38,7 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
    protected Object makeFilterResult(Object userContext, Object eventType, Object key, Object instance, Object[] projection, Comparable[] sortProjection) {
       boolean isJoining = Boolean.TRUE.equals(eventType);
       try {
-         return ProtobufUtil.toByteArray(serCtx, new ContinuousQueryResult(isJoining, (byte[]) key, (byte[]) instance));
+         return ProtobufUtil.toByteArray(serCtx, new ContinuousQueryResult(isJoining, (byte[]) key, (byte[]) instance, projection));
       } catch (IOException e) {
          throw new RuntimeException(e);
       }

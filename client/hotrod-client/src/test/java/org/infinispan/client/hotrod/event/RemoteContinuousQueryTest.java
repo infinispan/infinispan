@@ -114,23 +114,23 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(UserPB.class)
+            .select("age")
             .having("age").lte(Expression.param("ageParam"))
-            .toBuilder().select("age")
-            .build()
+            .toBuilder().build()
             .setParameter("ageParam", 32);
 
-      final BlockingQueue<Object> joined = new LinkedBlockingQueue<Object>();
-      final BlockingQueue<Object> left = new LinkedBlockingQueue<Object>();
+      final BlockingQueue<String> joined = new LinkedBlockingQueue<String>();
+      final BlockingQueue<String> left = new LinkedBlockingQueue<String>();
 
-      ContinuousQueryListener listener = new ContinuousQueryListener() {
+      ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
 
          @Override
-         public void resultJoining(Object key, Object value) {
+         public void resultJoining(String key, Object[] value) {
             joined.add(key);
          }
 
          @Override
-         public void resultLeaving(Object key) {
+         public void resultLeaving(String key) {
             left.add(key);
          }
       };

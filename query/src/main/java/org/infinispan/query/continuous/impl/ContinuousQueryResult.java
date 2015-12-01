@@ -6,6 +6,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -15,28 +16,36 @@ import java.util.Set;
  */
 public final class ContinuousQueryResult<V> {
 
-   private final boolean joining;
+   private final boolean isJoining;
 
    private final V value;
 
-   public ContinuousQueryResult(boolean joining, V value) {
-      this.joining = joining;
+   private final Object[] projection;
+
+   public ContinuousQueryResult(boolean isJoining, V value, Object[] projection) {
+      this.isJoining = isJoining;
       this.value = value;
+      this.projection = projection;
    }
 
    public boolean isJoining() {
-      return joining;
+      return isJoining;
    }
 
    public V getValue() {
       return value;
    }
 
+   public Object[] getProjection() {
+      return projection;
+   }
+
    @Override
    public String toString() {
       return "ContinuousQueryResult{" +
-            "joining=" + joining +
+            "isJoining=" + isJoining +
             ", value=" + value +
+            ", projection=" + Arrays.toString(projection) +
             '}';
    }
 
@@ -44,17 +53,30 @@ public final class ContinuousQueryResult<V> {
 
       @Override
       public void writeObject(ObjectOutput output, ContinuousQueryResult continuousQueryResult) throws IOException {
-         output.writeBoolean(continuousQueryResult.joining);
-         if (continuousQueryResult.joining) {
-            output.writeObject(continuousQueryResult.value);
+         output.writeBoolean(continuousQueryResult.isJoining);
+         if (continuousQueryResult.isJoining) {
+            if (continuousQueryResult.projection != null) {
+               // skip serializing the instance if there is a projection
+               output.writeObject(null);
+               output.writeObject(continuousQueryResult.projection);
+            } else {
+               output.writeObject(continuousQueryResult.value);
+            }
          }
       }
 
       @Override
       public ContinuousQueryResult readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         boolean joining = input.readBoolean();
-         Object value = joining ? input.readObject() : null;
-         return new ContinuousQueryResult(joining, value);
+         boolean isJoining = input.readBoolean();
+         Object value = null;
+         Object[] projection = null;
+         if (isJoining) {
+            value = input.readObject();
+            if (value == null) {
+               projection = (Object[]) input.readObject();
+            }
+         }
+         return new ContinuousQueryResult(isJoining, value, projection);
       }
 
       @Override

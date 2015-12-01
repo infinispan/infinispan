@@ -113,11 +113,11 @@ public class ClientEvents {
       @ClientCacheEntryModified
       @ClientCacheEntryRemoved
       @ClientCacheEntryExpired
-      public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) throws IOException {
-         ContinuousQueryResult cqresult = ProtobufUtil.fromByteArray(serializationContext, (byte[]) event.getEventData(), ContinuousQueryResult.class);
-         Object key = ProtobufUtil.fromWrappedByteArray(serializationContext, cqresult.getKey());
-         Object value = cqresult.getValue() != null ? ProtobufUtil.fromWrappedByteArray(serializationContext, cqresult.getValue()) : null;
-         if (cqresult.isJoining()) {
+      public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent<byte[]> event) throws IOException {
+         ContinuousQueryResult cqr = ProtobufUtil.fromByteArray(serializationContext, event.getEventData(), ContinuousQueryResult.class);
+         Object key = ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getKey());
+         Object value = cqr.getValue() != null ? ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getValue()) : cqr.getProjection();
+         if (cqr.isJoining()) {
             queryListener.resultJoining(key, value);
          } else {
             queryListener.resultLeaving(key);

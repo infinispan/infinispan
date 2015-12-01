@@ -54,16 +54,16 @@ public class RemoteContinuousQueryIT extends RemoteQueryBaseIT {
       QueryFactory<Query> qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(User.class).having("name").eq("user1").and().having("age").gt(20).toBuilder().build();
 
-      final BlockingQueue<Object> joined = new LinkedBlockingQueue<Object>();
-      final BlockingQueue<Object> left = new LinkedBlockingQueue<Object>();
-      ContinuousQueryListener listener = new ContinuousQueryListener() {
+      final BlockingQueue<Integer> joined = new LinkedBlockingQueue<Integer>();
+      final BlockingQueue<Integer> left = new LinkedBlockingQueue<Integer>();
+      ContinuousQueryListener<Integer, User> listener = new ContinuousQueryListener<Integer, User>() {
          @Override
-         public void resultJoining(Object key, Object value) {
+         public void resultJoining(Integer key, User value) {
             joined.add(key);
          }
 
          @Override
-         public void resultLeaving(Object key) {
+         public void resultLeaving(Integer key) {
             left.add(key);
          }
       };

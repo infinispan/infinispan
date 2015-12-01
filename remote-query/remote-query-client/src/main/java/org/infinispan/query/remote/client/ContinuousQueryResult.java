@@ -1,9 +1,12 @@
 package org.infinispan.query.remote.client;
 
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.WrappedMessage;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author anistor@redhat.com
@@ -11,20 +14,23 @@ import java.util.Arrays;
  */
 public final class ContinuousQueryResult {
 
-   public final boolean joining;
+   private final boolean isJoining;
 
-   public final byte[] key;
+   private final byte[] key;
 
-   public final byte[] value;
+   private final byte[] value;
 
-   public ContinuousQueryResult(boolean joining, byte[] key, byte[] value) {
-      this.joining = joining;
+   private final Object[] projection;
+
+   public ContinuousQueryResult(boolean isJoining, byte[] key, byte[] value, Object[] projection) {
+      this.isJoining = isJoining;
       this.key = key;
       this.value = value;
+      this.projection = projection;
    }
 
    public boolean isJoining() {
-      return joining;
+      return isJoining;
    }
 
    public byte[] getKey() {
@@ -35,12 +41,17 @@ public final class ContinuousQueryResult {
       return value;
    }
 
+   public Object[] getProjection() {
+      return projection;
+   }
+
    @Override
    public String toString() {
       return "ContinuousQueryResult{" +
-            "joining=" + joining +
+            "isJoining=" + isJoining +
             ", key=" + Arrays.toString(key) +
             ", value=" + Arrays.toString(value) +
+            ", projection=" + Arrays.toString(projection) +
             '}';
    }
 
@@ -48,17 +59,35 @@ public final class ContinuousQueryResult {
 
       @Override
       public ContinuousQueryResult readFrom(ProtoStreamReader reader) throws IOException {
-         boolean joining = reader.readBoolean("joining");
+         boolean isJoining = reader.readBoolean("isJoining");
          byte[] key = reader.readBytes("key");
          byte[] value = reader.readBytes("value");
-         return new ContinuousQueryResult(joining, key, value);
+         List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<WrappedMessage>(), WrappedMessage.class);
+         Object[] p = null;
+         if (!projection.isEmpty()) {
+            p = new Object[projection.size()];
+            int j = 0;
+            for (WrappedMessage m : projection) {
+               p[j++] = m.getValue();
+            }
+         }
+         return new ContinuousQueryResult(isJoining, key, value, p);
       }
 
       @Override
       public void writeTo(ProtoStreamWriter writer, ContinuousQueryResult continuousQueryResult) throws IOException {
-         writer.writeBoolean("joining", continuousQueryResult.isJoining());
-         writer.writeBytes("key", continuousQueryResult.getKey());
-         writer.writeBytes("value", continuousQueryResult.getValue());
+         writer.writeBoolean("isJoining", continuousQueryResult.isJoining);
+         writer.writeBytes("key", continuousQueryResult.key);
+         if (continuousQueryResult.projection == null) {
+            // skip marshalling the instance if there is a projection
+            writer.writeBytes("value", continuousQueryResult.value);
+         } else {
+            WrappedMessage[] p = new WrappedMessage[continuousQueryResult.projection.length];
+            for (int i = 0; i < p.length; i++) {
+               p[i] = new WrappedMessage(continuousQueryResult.projection[i]);
+            }
+            writer.writeArray("projection", p, WrappedMessage.class);
+         }
       }
 
       @Override

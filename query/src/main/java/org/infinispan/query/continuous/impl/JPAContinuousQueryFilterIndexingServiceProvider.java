@@ -66,6 +66,6 @@ public class JPAContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilt
    @Override
    protected Object makeFilterResult(Object userContext, Object eventType, Object key, Object instance, Object[] projection, Comparable[] sortProjection) {
       boolean isJoining = Boolean.TRUE.equals(eventType);
-      return new ContinuousQueryResult(isJoining, instance);
+      return new ContinuousQueryResult(isJoining, instance, projection);
    }
 }
