@@ -90,9 +90,13 @@ message FilterResult {
  */
 message ContinuousQueryResult {
 
-   required bool joining = 1;
+   required bool isJoining = 1;
 
    required bytes key = 2;
 
+   /* Only present if joining == true and projection is missing */
    optional bytes value = 3;
+
+   /* Only present if joining == true and value is missing */
+   repeated org.infinispan.protostream.WrappedMessage projection = 4;
 }

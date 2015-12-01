@@ -25,21 +25,21 @@ public final class ContinuousQuery<K, V> {
 
    private Cache<K, V> cache;
 
-   private List<EntryListener<K, V>> listeners = new ArrayList<EntryListener<K, V>>();
+   private List<EntryListener<K, V, ?>> listeners = new ArrayList<EntryListener<K, V, ?>>();
 
    public ContinuousQuery(Cache<K, V> cache) {
       this.cache = cache;
    }
 
-   public void addContinuousQueryListener(Query query, ContinuousQueryResultListener<K, V> listener) {
-      EntryListener<K, V> entryListener = new EntryListener<K, V>(listener);
+   public <C> void addContinuousQueryListener(Query query, ContinuousQueryResultListener<K, C> listener) {
+      EntryListener<K, V, C> entryListener = new EntryListener<K, V, C>(listener);
       cache.addListener(entryListener, makeFilter(query), null);
       listeners.add(entryListener);
    }
 
-   public void removeContinuousQueryListener(ContinuousQueryResultListener<K, V> listener) {
-      for (Iterator<EntryListener<K, V>> it = listeners.iterator(); it.hasNext(); ) {
-         EntryListener<K, V> l = it.next();
+   public void removeContinuousQueryListener(ContinuousQueryResultListener<?, ?> listener) {
+      for (Iterator<EntryListener<K, V, ?>> it = listeners.iterator(); it.hasNext(); ) {
+         EntryListener<K, V, ?> l = it.next();
          if (l.listener == listener) {
             cache.removeListener(l);
             it.remove();
@@ -54,11 +54,11 @@ public final class ContinuousQuery<K, V> {
    }
 
    @Listener(clustered = true, includeCurrentState = true, observation = Listener.Observation.POST)
-   public static class EntryListener<K, V> {
+   public static class EntryListener<K, V, C> {
 
-      private final ContinuousQueryResultListener<K, V> listener;
+      private final ContinuousQueryResultListener<K, C> listener;
 
-      public EntryListener(ContinuousQueryResultListener<K, V> listener) {
+      public EntryListener(ContinuousQueryResultListener<K, C> listener) {
          this.listener = listener;
       }
 
@@ -66,10 +66,11 @@ public final class ContinuousQuery<K, V> {
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryExpired
-      public void handleEvent(CacheEntryEvent<K, ?> event) {
-         ContinuousQueryResult<V> cqr = (ContinuousQueryResult<V>) event.getValue();
+      public void handleEvent(CacheEntryEvent<K, ContinuousQueryResult<V>> event) {
+         ContinuousQueryResult<V> cqr = event.getValue();
          if (cqr.isJoining()) {
-            listener.resultJoining(event.getKey(), cqr.getValue());
+            C value = cqr.getValue() != null ? (C) cqr.getValue() : (C) cqr.getProjection();
+            listener.resultJoining(event.getKey(), value);
          } else {
             listener.resultLeaving(event.getKey());
          }

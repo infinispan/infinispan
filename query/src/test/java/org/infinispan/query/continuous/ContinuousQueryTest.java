@@ -49,6 +49,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       ContinuousQuery<Object, Object> cq = new ContinuousQuery<Object, Object>(cache());
 
       Query query = qf.from(Person.class)
+            .select("age")
             .having("age").lte(30)
             .toBuilder().build();
 
