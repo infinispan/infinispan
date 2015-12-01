@@ -48,10 +48,11 @@ public class VersionedPrepareCommand extends PrepareCommand {
    public Object[] getParameters() {
       int numMods = modifications == null ? 0 : modifications.length;
       int i = 0;
-      final int params = 4;
+      final int params = 5;
       Object[] retval = new Object[numMods + params];
       retval[i++] = globalTx;
       retval[i++] = onePhaseCommit;
+      retval[i++] = retriedCommand;
       retval[i++] = versionsSeen;
       retval[i++] = numMods;
       if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
@@ -64,6 +65,7 @@ public class VersionedPrepareCommand extends PrepareCommand {
       int i = 0;
       globalTx = (GlobalTransaction) args[i++];
       onePhaseCommit = (Boolean) args[i++];
+      retriedCommand = (Boolean) args[i++];
       versionsSeen = (EntryVersionsMap) args[i++];
       int numMods = (Integer) args[i++];
       if (numMods > 0) {
@@ -82,6 +84,7 @@ public class VersionedPrepareCommand extends PrepareCommand {
       return "VersionedPrepareCommand {" +
             "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
             ", onePhaseCommit=" + onePhaseCommit +
+            ", retried=" + retriedCommand +
             ", versionsSeen=" + versionsSeen +
             ", gtx=" + globalTx +
             ", cacheName='" + cacheName + '\'' +

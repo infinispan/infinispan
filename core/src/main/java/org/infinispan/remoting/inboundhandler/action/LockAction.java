@@ -1,5 +1,6 @@
 package org.infinispan.remoting.inboundhandler.action;
 
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.concurrent.locks.LockListener;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -57,6 +58,11 @@ public class LockAction extends BaseLockingAction implements LockListener {
          return cas(InternalState.CHECKING, InternalState.READY) ? ActionStatus.READY : ActionStatus.NOT_READY;
       }
 
+      TxInvocationContext context = createContext(state);
+      if (context != null) {
+         keysToLock.forEach(context::addLockedKey);
+      }
+
       LockPromise promise = keysToLock.size() == 1 ?
             lockManager.lock(keysToLock.get(0), lockOwner, timeout, TimeUnit.MILLISECONDS) :
             lockManager.lockAll(keysToLock, lockOwner, timeout, TimeUnit.MILLISECONDS);
@@ -83,5 +89,13 @@ public class LockAction extends BaseLockingAction implements LockListener {
    @Override
    public void onEvent(LockState state) {
       notifier.complete(null);
+   }
+
+   private TxInvocationContext<?> createContext(ActionState state) {
+      RemoteLockCommand command = state.getCommand();
+      if (command instanceof TransactionalRemoteLockCommand) {
+         return ((TransactionalRemoteLockCommand) command).createContext();
+      }
+      return null;
    }
 }
