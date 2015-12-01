@@ -127,10 +127,15 @@
                            <pattern>com.google</pattern>
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
-                        <relocation>
+                        <!-- Unfortunatelly because of https://issues.jboss.org/browse/ISPN-5903
+                             and https://bugzilla.redhat.com/show_bug.cgi?id=1266831 we cannot relocate
+                             logging module, otherwise some integration modules might miss it
+                             when both Uber jar as well as ISPN commons are on classpath
+                          -->
+                        <!--<relocation>
                            <pattern>org.jboss.logging</pattern>
                            <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
-                        </relocation>
+                        </relocation> -->
                      </relocations>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
