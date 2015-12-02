@@ -21,4 +21,8 @@ public interface ReadyAction {
     */
    void addListener(ActionListener listener);
 
+   /**
+    * Cleanup when it is no longer needed.
+    */
+   void cleanup();
 }

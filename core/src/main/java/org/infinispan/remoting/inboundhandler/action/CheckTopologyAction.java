@@ -29,4 +29,9 @@ public class CheckTopologyAction implements Action {
    public void addListener(ActionListener listener) {
       //no-op
    }
+
+   @Override
+   public void cleanup(ActionState state) {
+      //no-op
+   }
 }

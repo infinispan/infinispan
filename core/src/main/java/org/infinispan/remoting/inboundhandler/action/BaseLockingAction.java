@@ -75,6 +75,11 @@ public abstract class BaseLockingAction implements Action {
       return filteredKeys;
    }
 
+   @Override
+   public void cleanup(ActionState state) {
+      //no-op by default
+   }
+
    protected enum InternalState {
       INIT,
       CHECKING,

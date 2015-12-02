@@ -81,6 +81,13 @@ public class LockAction extends BaseLockingAction implements LockListener {
    }
 
    @Override
+   public void cleanup(ActionState state) {
+      final Object lockOwner = getLockOwner(state);
+      List<Object> keysToLock = getAndUpdateFilteredKeys(state);
+      lockManager.unlockAll(keysToLock, lockOwner);
+   }
+
+   @Override
    public void onEvent(LockState state) {
       notifier.complete(null);
    }
