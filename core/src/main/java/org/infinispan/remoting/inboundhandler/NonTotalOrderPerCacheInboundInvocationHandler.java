@@ -7,9 +7,9 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.inboundhandler.action.ActionListener;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
+import org.infinispan.remoting.inboundhandler.action.CompositeAction;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.LockAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
@@ -25,7 +25,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
@@ -113,6 +112,12 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
             public boolean isReady() {
                return super.isReady() && readyAction.isReady();
             }
+
+            @Override
+            protected void onFinally() {
+               super.onFinally();
+               readyAction.cleanup();
+            }
          };
       } else {
          return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId);
@@ -164,42 +169,4 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
       return action;
    }
 
-   private static class CompositeAction implements ReadyAction, ActionListener {
-
-      private final Collection<ReadyAction> actions;
-      private final AtomicBoolean notify;
-      private volatile ActionListener listener;
-
-      private CompositeAction(Collection<ReadyAction> actions) {
-         this.actions = actions;
-         notify = new AtomicBoolean(false);
-      }
-
-      public void registerListener() {
-         actions.forEach(readyAction -> readyAction.addListener(this));
-      }
-
-      @Override
-      public boolean isReady() {
-         for (ReadyAction action : actions) {
-            if (!action.isReady()) {
-               return false;
-            }
-         }
-         return true;
-      }
-
-      @Override
-      public void addListener(ActionListener listener) {
-         this.listener = listener;
-      }
-
-      @Override
-      public void onComplete() {
-         ActionListener actionListener = listener;
-         if (isReady() && actionListener != null && notify.compareAndSet(false, true)) {
-            actionListener.onComplete();
-         }
-      }
-   }
 }

@@ -58,6 +58,11 @@ public class DefaultReadyAction implements ReadyAction, ActionListener {
    }
 
    @Override
+   public void cleanup() {
+      InfinispanCollections.forEach(actions, action -> action.cleanup(state));
+   }
+
+   @Override
    public void onComplete() {
       if (isReady()) {
          notifier.complete(null);

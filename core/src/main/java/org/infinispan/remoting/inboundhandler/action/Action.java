@@ -27,4 +27,9 @@ public interface Action {
     */
    void addListener(ActionListener listener);
 
+   /**
+    * Cleanups when it is no longer needed.
+    * @param state
+    */
+   void cleanup(ActionState state);
 }
