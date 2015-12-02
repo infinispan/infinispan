@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.query;
 
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -22,6 +21,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on this cache.*")
    @Override
    public void testIndexPresence() {
-      org.infinispan.query.Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
+      org.infinispan.query.Search.getSearchManager(getEmbeddedCache());
    }
 }

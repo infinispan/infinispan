@@ -95,7 +95,8 @@ public class JPAQueryGenerator implements Visitor<String> {
             } else {
                sb.append(", ");
             }
-            sb.append(sortCriteria.getAttributePath()).append(' ').append(sortCriteria.getSortOrder().name());
+            appendAttributePath(sb, sortCriteria.getAttributePath());
+            sb.append(' ').append(sortCriteria.getSortOrder().name());
          }
       }
 

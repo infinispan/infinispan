@@ -2173,7 +2173,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(makeDate("2013-02-27"), list.get(0)[2]);
    }
 
-   public void testDuplicateBooleanProjection() throws Exception {
+   public void testDuplicateBooleanProjection() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -2187,5 +2187,26 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.get(0)[0]);
       assertEquals(true, list.get(0)[1]);
       assertEquals(true, list.get(0)[2]);
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The property path 'addresses.street' cannot be used in the GROUP BY clause because it is multi-valued")
+   public void testGroupByMustNotAcceptRepeatedProperty() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.min("name"))
+            .groupBy("addresses.street")
+            .build();
+      q.list();
+   }
+
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
+   public void testOrderByMustNotAcceptRepeatedProperty() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("name")
+            .orderBy("addresses.street")
+            .build();
+      q.list();
    }
 }
