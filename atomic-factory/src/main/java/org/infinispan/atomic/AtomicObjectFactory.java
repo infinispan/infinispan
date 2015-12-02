@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.atomic.container.Container;
 import org.infinispan.atomic.container.ContainerSignature;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -26,14 +27,14 @@ public class AtomicObjectFactory {
    // CLASS FIELDS
    //
    private static Log log = LogFactory.getLog(AtomicObjectFactory.class);
-   private static Map<Cache,AtomicObjectFactory> factories = new HashMap<>();
-   public synchronized static AtomicObjectFactory forCache(Cache cache){
+   private static Map<Cache<?, ?>,AtomicObjectFactory> factories = new HashMap<>();
+   public synchronized static AtomicObjectFactory forCache(Cache<?, ?> cache){
       if(!factories.containsKey(cache))
          factories.put(cache, new AtomicObjectFactory(cache));
       return factories.get(cache);
    }
    protected static final int MAX_CONTAINERS=1000;// 0 means no limit
-   public static final Map<Class,List<String>> updateMethods;
+   public static final Map<Class<?>,List<String>> updateMethods;
    static{
       updateMethods = new HashMap<>();
 
@@ -55,7 +56,7 @@ public class AtomicObjectFactory {
    //
    // OBJECT FIELDS
    //
-   private Cache cache;
+   private Cache<?, ?> cache;
    private Map<ContainerSignature,Container> registeredContainers;
    private int maxSize;
    private final ExecutorService evictionExecutor = Executors.newCachedThreadPool();
@@ -70,10 +71,10 @@ public class AtomicObjectFactory {
     * @param m max amount of containers kept by this factory.
     * @throws InvalidCacheUsageException
     */
-   public AtomicObjectFactory(Cache<Object, Object> c, int m) throws InvalidCacheUsageException{
+   public AtomicObjectFactory(Cache<?, ?> c, int m) throws InvalidCacheUsageException{
       cache = c;
       maxSize = m;
-      registeredContainers= new LinkedHashMap<ContainerSignature,Container>(){
+      registeredContainers= new LinkedHashMap<ContainerSignature,Container>() {
          @Override
          protected boolean removeEldestEntry(final java.util.Map.Entry<ContainerSignature,Container> eldest) {
             if(maxSize!=0 && this.size() >= maxSize){
@@ -103,7 +104,7 @@ public class AtomicObjectFactory {
     *
     * @param c a cache,  it must be synchronous.and transactional (with autoCommit set to true, its default value).
     */
-   public AtomicObjectFactory(Cache<Object, Object> c) throws InvalidCacheUsageException{
+   public AtomicObjectFactory(Cache<?, ?> c) throws InvalidCacheUsageException{
       this(c,MAX_CONTAINERS);
    }
 
@@ -183,7 +184,7 @@ public class AtomicObjectFactory {
 
          if( container==null){
 
-            List<String> methods = Collections.EMPTY_LIST;
+            List<String> methods = InfinispanCollections.emptyList();
 
             if (Updatable.class.isAssignableFrom(clazz)) {
 
@@ -195,7 +196,7 @@ public class AtomicObjectFactory {
 
             }else{
 
-               for(Class c : updateMethods.keySet()){
+               for(Class<?> c : updateMethods.keySet()){
                   if (c.isAssignableFrom(clazz)) {
                      methods = updateMethods.get(c);
                      break;
@@ -237,7 +238,7 @@ public class AtomicObjectFactory {
     * @param key the key to use in order to store the object.
     * @param keepPersistent indicates that a persistent copy is stored in the cache or not.
     */
-   public void disposeInstanceOf(Class clazz, Object key, boolean keepPersistent)
+   public void disposeInstanceOf(Class<?> clazz, Object key, boolean keepPersistent)
          throws InvalidCacheUsageException {
 
       ContainerSignature signature = new ContainerSignature(clazz,key);
