@@ -122,6 +122,9 @@ public class QueryEngine {
             }
             // Duplicates in 'group by' are accepted and silently discarded. This behaviour is similar to SQL.
             if (!columns.containsKey(p)) {
+               if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(), p.getPath())) {
+                  throw new ParsingException("The property path '" + p + "' cannot be used in the GROUP BY clause because it is multi-valued");
+               }
                Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), p.getPath());
                int idx = columns.size();
                columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
@@ -348,6 +351,16 @@ public class QueryEngine {
                                               long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw new IllegalArgumentException("The query must not use grouping or aggregation"); // may happen only due to internal programming error
+      }
+
+      if (parsingResult.getSortFields() != null) {
+         ObjectPropertyHelper<?> propertyHelper = getFirstPhaseMatcher().getPropertyHelper();
+         for (SortField sortField : parsingResult.getSortFields()) {
+            PropertyPath p = sortField.getPath();
+            if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(), p.getPath())) {
+               throw new ParsingException("The property path '" + p + "' cannot be used in the ORDER BY clause because it is multi-valued");
+            }
+         }
       }
 
       BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());

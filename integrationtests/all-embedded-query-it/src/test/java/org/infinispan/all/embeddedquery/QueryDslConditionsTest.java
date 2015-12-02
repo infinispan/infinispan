@@ -2307,7 +2307,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
-   public void testDuplicateBooleanProjection() throws Exception {
+   public void testDuplicateBooleanProjection() {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getTransactionImplClass())
@@ -2321,6 +2321,26 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(3, list.get(0)[0]);
       assertEquals(true, list.get(0)[1]);
       assertEquals(true, list.get(0)[2]);
+   }
+
+   @Test(expected = ParsingException.class)
+   public void testGroupByMustNotAcceptRepeatedProperty() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.min("name"))
+            .groupBy("addresses.street")
+            .build();
+      q.list();
+   }
+
+   @Test(expected = ParsingException.class)
+   public void testOrderByMustNotAcceptRepeatedProperty() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("name")
+            .orderBy("addresses.street")
+            .build();
+      q.list();
    }
 
    private static ModelFactory getModelFactory() {

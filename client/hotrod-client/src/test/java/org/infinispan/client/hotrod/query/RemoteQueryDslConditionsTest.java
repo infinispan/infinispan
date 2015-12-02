@@ -185,17 +185,17 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       super.testIsNullNumericWithProjection1();
    }
 
-   //todo [anistor] the original exception gets wrapped in HotRodClientException
    @Override
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testGroupBy3() throws Exception {
+      // the original exception gets wrapped in HotRodClientException
       super.testGroupBy3();
    }
 
-   //todo [anistor] the original exception gets wrapped in HotRodClientException
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: Queries containing grouping and aggregation functions must use projections.")
    @Override
    public void testGroupBy5() {
+      // the original exception gets wrapped in HotRodClientException
       super.testGroupBy5();
    }
 
@@ -277,5 +277,19 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(3, list.get(0)[0]);
       assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[1]);
       assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[2]);
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: The property path 'addresses.street' cannot be used in the GROUP BY clause because it is multi-valued")
+   @Override
+   public void testGroupByMustNotAcceptRepeatedProperty() {
+      // the original exception gets wrapped in HotRodClientException
+      super.testGroupByMustNotAcceptRepeatedProperty();
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
+   @Override
+   public void testOrderByMustNotAcceptRepeatedProperty() {
+      // the original exception gets wrapped in HotRodClientException
+      super.testOrderByMustNotAcceptRepeatedProperty();
    }
 }
