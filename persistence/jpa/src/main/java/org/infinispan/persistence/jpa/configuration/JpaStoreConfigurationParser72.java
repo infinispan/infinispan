@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jpa.configuration;
 
 import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
@@ -27,11 +28,11 @@ public class JpaStoreConfigurationParser72 implements ConfigurationParser {
    @Override
    public void readElement(XMLExtendedStreamReader reader,
          ConfigurationBuilderHolder holder) throws XMLStreamException {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
          case JPA_STORE: {
-            parseJpaCacheStore(reader, builder.persistence().addStore(JpaStoreConfigurationBuilder.class));
+            ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+            parseJpaCacheStore(reader, builder.persistence().addStore(JpaStoreConfigurationBuilder.class), holder.getClassLoader());
             break;
          }
          default: {
@@ -40,7 +41,7 @@ public class JpaStoreConfigurationParser72 implements ConfigurationParser {
       }
    }
 
-   private void parseJpaCacheStore(XMLExtendedStreamReader reader, JpaStoreConfigurationBuilder builder)
+   private void parseJpaCacheStore(XMLExtendedStreamReader reader, JpaStoreConfigurationBuilder builder, ClassLoader classLoader)
          throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -49,13 +50,7 @@ public class JpaStoreConfigurationParser72 implements ConfigurationParser {
 
          switch (attribute) {
             case ENTITY_CLASS_NAME: {
-               Class<?> clazz;
-               try {
-                  clazz = this.getClass().getClassLoader().loadClass(value);
-               } catch (ClassNotFoundException e) {
-                  throw new XMLStreamException("Class " + value
-                        + " specified in entityClassName is not found", e);
-               }
+               Class<?> clazz = Util.loadClass(value, classLoader);
                builder.entityClass(clazz);
                break;
             }

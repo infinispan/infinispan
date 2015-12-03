@@ -1,11 +1,14 @@
 package org.infinispan.test.integration.as;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,6 +23,7 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import java.io.IOException;
 
 /**
  * Test the Infinispan JPA CacheStore AS module integration
@@ -37,6 +41,7 @@ public class InfinispanStoreJpaIT {
             .addClass(InfinispanStoreJpaIT.class)
             .addClass(KeyValueEntity.class)
             .addAsResource("META-INF/persistence.xml")
+            .addAsResource("jpa-config.xml")
             .add(manifest(), "META-INF/MANIFEST.MF");
    }
 
@@ -56,12 +61,39 @@ public class InfinispanStoreJpaIT {
          .persistenceUnitName("org.infinispan.persistence.jpa")
          .entityClass(KeyValueEntity.class);
 
-      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), builder.build());
-      Cache<String, KeyValueEntity> cache = cm.getCache();
-      KeyValueEntity entity = new KeyValueEntity("a", "a");
-      cache.put(entity.getK(), entity);
-      assertEquals("a", cache.get(entity.getK()).getValue());
-      cm.stop();
+      EmbeddedCacheManager cm = null;
+      try {
+         cm = new DefaultCacheManager(gcb.build(), builder.build());
+         Cache<String, KeyValueEntity> cache = cm.getCache();
+         KeyValueEntity entity = new KeyValueEntity("a", "a");
+         cache.put(entity.getK(), entity);
+         assertEquals("a", cache.get(entity.getK()).getValue());
+      } finally {
+         if (cm != null)
+            cm.stop();
+      }
    }
 
+   @Test
+   public void testXmlConfig() throws IOException {
+      EmbeddedCacheManager cm = null;
+      try {
+         cm = new DefaultCacheManager("jpa-config.xml");
+         Cache<String, KeyValueEntity> specificCache = cm.getCache("specificCache");
+         validateConfig(specificCache);
+         KeyValueEntity entity = new KeyValueEntity("k", "v");
+         specificCache.put(entity.getK(), entity);
+      } finally {
+         if (cm != null)
+            cm.stop();
+      }
+   }
+
+   private void validateConfig(Cache<String, KeyValueEntity> vehicleCache) {
+      StoreConfiguration config = vehicleCache.getCacheConfiguration().persistence().stores().get(0);
+      assertTrue(config instanceof JpaStoreConfiguration);
+      JpaStoreConfiguration jpaConfig = (JpaStoreConfiguration) config;
+      assertEquals(1, jpaConfig.batchSize());
+      assertEquals(KeyValueEntity.class, jpaConfig.entityClass());
+   }
 }
