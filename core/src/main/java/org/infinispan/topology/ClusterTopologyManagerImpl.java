@@ -411,9 +411,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private void waitForView(int viewId, long timeout) throws InterruptedException {
-      if (this.viewId < viewId) {
-         log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s", viewId, this.viewId);
-      }
+      if (this.viewId >= viewId)
+         return;
+      log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s", viewId, this.viewId);
       long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
       synchronized (viewUpdateLock) {
          while (this.viewId < viewId && !timeService.isTimeExpired(endTime)) {

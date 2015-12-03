@@ -57,7 +57,8 @@ public interface LocalTopologyManager {
     *
     * Mostly needed for backup, so that a new coordinator can recover the stable topology of the cluster.
     */
-   void handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, int viewId);
+   void handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, final Address sender,
+         int viewId);
 
    /**
     * Performs the state transfer.
