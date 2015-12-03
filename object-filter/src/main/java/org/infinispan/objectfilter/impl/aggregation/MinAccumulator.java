@@ -18,8 +18,7 @@ final class MinAccumulator extends FieldAccumulator {
    }
 
    @Override
-   public void update(Object[] srcRow, Object[] accRow) {
-      Comparable value = (Comparable) srcRow[inPos];
+   public void update(Object[] accRow, Object value) {
       if (value != null) {
          Comparable min = (Comparable) accRow[outPos];
          if (min == null || min.compareTo(value) > 0) {

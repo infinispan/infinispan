@@ -6,6 +6,7 @@ import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
+import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
@@ -126,6 +127,11 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters) {
+      return getObjectFilter(jpaQuery, namedParameters, null);
+   }
+
+   @Override
+   public ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters, FieldAccumulator[] acc) {
       final FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, namedParameters);
       disallowGroupingAndAggregations(parsingResult);
 
@@ -217,7 +223,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       }
 
       return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, namedParameters,
-            parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields());
+            parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), acc);
    }
 
    @Override

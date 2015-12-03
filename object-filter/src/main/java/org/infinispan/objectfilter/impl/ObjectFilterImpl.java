@@ -3,6 +3,7 @@ package org.infinispan.objectfilter.impl;
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
+import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.predicateindex.AttributeNode;
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
@@ -23,6 +24,8 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    private final AttributeNode<AttributeMetadata, AttributeId> root;
 
+   private final FieldAccumulator[] acc;
+
    private static final FilterCallback emptyCallback = new FilterCallback() {
       @Override
       public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
@@ -32,8 +35,19 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
                     MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
-                    String queryString, Map<String, Object> namedParameters, BooleanExpr query, String[] projections, Class<?>[] projectionTypes, SortField[] sortFields) {
+                    String queryString, Map<String, Object> namedParameters, BooleanExpr query,
+                    String[] projections, Class<?>[] projectionTypes, SortField[] sortFields, FieldAccumulator[] acc) {
+      if (acc != null) {
+         if (projectionTypes == null) {
+            throw new IllegalArgumentException("Accumulators can only be used with projections");
+         }
+         if (sortFields != null) {
+            throw new IllegalArgumentException("Accumulators cannot be used with sorting");
+         }
+      }
+
       this.matcher = matcher;
+      this.acc = acc;
 
       //todo [anistor] we need an efficient single-filter registry
       FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = new FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, false);
@@ -75,9 +89,25 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
       MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, null, instance, filterSubscription.getMetadataAdapter());
       if (matcherEvalContext != null) {
          FilterEvalContext filterEvalContext = matcherEvalContext.initSingleFilterContext(filterSubscription);
+         if (acc != null) {
+            filterEvalContext.acc = acc;
+            for (FieldAccumulator a : acc) {
+               if (a != null) {
+                  a.init(filterEvalContext.getProjection());
+               }
+            }
+         }
          matcherEvalContext.process(root);
 
          if (filterEvalContext.isMatching()) {
+            if (acc != null) {
+               for (FieldAccumulator a : acc) {
+                  if (a != null) {
+                     a.finish(filterEvalContext.getProjection());
+                  }
+               }
+            }
+
             Object o = filterEvalContext.getProjection() == null ? matcher.convert(instance) : null;
             return new FilterResultImpl(o, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
          }

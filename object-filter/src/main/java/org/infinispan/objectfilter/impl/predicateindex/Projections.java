@@ -48,21 +48,7 @@ final class Projections {
       for (int i = 0; i < subscriptions.size(); i++) {
          ProjectionSubscription s = subscriptions.get(i);
          FilterEvalContext c = ctx.getFilterEvalContext(s.filterSubscription);
-         Object[] projection = c.getProjection();
-         int position = s.position;
-         if (projection == null) {
-            projection = c.getSortProjection();
-         } else {
-            if (position >= projection.length) {
-               position -= projection.length;
-               projection = c.getSortProjection();
-            }
-         }
-
-         // if this is a repeated attribute then use the first occurrence in order to be consistent with the Lucene based implementation
-         if (projection[position] == null) {
-            projection[position] = attributeValue;
-         }
+         c.processProjection(s.position, attributeValue);
       }
    }
 

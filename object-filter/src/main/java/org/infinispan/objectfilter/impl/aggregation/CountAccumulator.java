@@ -19,8 +19,8 @@ final class CountAccumulator extends FieldAccumulator {
    }
 
    @Override
-   public void update(Object[] srcRow, Object[] accRow) {
-      if (srcRow[inPos] != null) {
+   public void update(Object[] accRow, Object value) {
+      if (value != null) {
          accRow[outPos] = (Long) accRow[outPos] + 1;
       }
    }

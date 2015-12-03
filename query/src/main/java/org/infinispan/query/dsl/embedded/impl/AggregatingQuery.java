@@ -4,8 +4,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.aggregation.Grouper;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.BaseQuery;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -29,8 +29,14 @@ final class AggregatingQuery extends HybridQuery {
                     int noOfGroupingColumns, FieldAccumulator[] accumulators,
                     ObjectFilter objectFilter,
                     long startOffset, int maxResults,
-                    Query baseQuery) {
+                    BaseQuery baseQuery) {
       super(queryFactory, cache, jpaQuery, namedParameters, objectFilter, startOffset, maxResults, baseQuery);
+      if (baseQuery.getProjection() == null) {
+         throw new IllegalArgumentException("Base query must use projections");
+      }
+      if (projection == null) {
+         throw new IllegalArgumentException("Aggregating query must use projections");
+      }
       this.noOfGroupingColumns = noOfGroupingColumns;
       this.accumulators = accumulators;
    }

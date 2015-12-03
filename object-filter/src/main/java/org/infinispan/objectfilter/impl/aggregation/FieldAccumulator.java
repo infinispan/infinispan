@@ -28,7 +28,11 @@ public abstract class FieldAccumulator {
    public void init(Object[] accRow) {
    }
 
-   public abstract void update(Object[] srcRow, Object[] accRow);
+   public void update(Object[] srcRow, Object[] accRow) {
+      update(accRow, srcRow[inPos]);
+   }
+
+   public abstract void update(Object[] accRow, Object value);
 
    public void finish(Object[] accRow) {
    }
