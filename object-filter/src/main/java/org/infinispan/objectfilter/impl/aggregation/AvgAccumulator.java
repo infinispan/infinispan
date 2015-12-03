@@ -26,10 +26,9 @@ final class AvgAccumulator extends FieldAccumulator {
    }
 
    @Override
-   public void update(Object[] srcRow, Object[] accRow) {
-      Number value = (Number) srcRow[inPos];
+   public void update(Object[] accRow, Object value) {
       if (value != null) {
-         ((DoubleAvg) accRow[outPos]).update(value.doubleValue());
+         ((DoubleAvg) accRow[outPos]).update(((Number) value).doubleValue());
       }
    }
 

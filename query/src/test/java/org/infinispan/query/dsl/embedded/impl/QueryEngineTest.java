@@ -387,7 +387,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       List<Object[]> list = q.list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(1, list.get(0)[0]);
+      assertEquals(2, list.get(0)[0]);
       assertEquals(1, list.get(1).length);
       assertEquals(3, list.get(1)[0]);
    }
@@ -399,7 +399,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       assertEquals(1, list.get(0).length);
       assertEquals("X1234", list.get(0)[0]);
       assertEquals(1, list.get(1).length);
-      assertEquals("Y12", list.get(1)[0]);
+      assertEquals("ZZ", list.get(1)[0]);
    }
 
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Aggregation SUM cannot be applied to property of type java.lang.String")
