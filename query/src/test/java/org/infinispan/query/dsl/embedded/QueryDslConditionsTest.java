@@ -1365,7 +1365,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select("id", "addresses.postCode")
+            .select("id", "age")
             .orderBy("id", SortOrder.ASC)
             .build();
 
@@ -1374,8 +1374,8 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0)[0]);
       assertEquals(2, list.get(1)[0]);
       assertEquals(3, list.get(2)[0]);
-      assertEquals("X1234", list.get(0)[1]);
-      assertEquals("Y12", list.get(1)[1]);
+      assertEquals(22, list.get(0)[1]);
+      assertNull(list.get(1)[1]);
       assertNull(list.get(2)[1]);
    }
 
@@ -1822,7 +1822,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).length);
       assertEquals("X1234", list.get(0)[0]);
       assertEquals(1, list.get(1).length);
-      assertEquals("Y12", list.get(1)[0]);
+      assertEquals("ZZ", list.get(1)[0]);
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014021: Queries containing grouping and aggregation functions must use projections.")
@@ -2208,5 +2208,45 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .orderBy("addresses.street")
             .build();
       q.list();
+   }
+
+   public void testOrderByInAggregationQueryMustAcceptRepeatedProperty() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.avg("age"), Expression.property("name"))
+            .having("name").gt("A").toBuilder()
+            .groupBy("name")
+            .having(Expression.max("addresses.street")).gt("A").toBuilder()
+            .orderBy(Expression.min("addresses.street"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertNull(list.get(0)[0]);
+      assertEquals("Spider", list.get(0)[1]);
+      assertEquals(22.0, list.get(1)[0]);
+      assertEquals("John", list.get(1)[1]);
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL000009: Cannot have aggregate functions in WHERE clause : MIN.")
+   public void testRejectAggregationsInWhereClause() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("name")
+            .having("name").eq(Expression.min("addresses.street")).toBuilder()
+            .build();
+      q.list();
+   }
+
+   public void testAggregateRepeatedField() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.min("addresses.street"))
+            .having("name").eq("Spider").toBuilder()
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(list.get(0)[0], "Bond Street");
    }
 }

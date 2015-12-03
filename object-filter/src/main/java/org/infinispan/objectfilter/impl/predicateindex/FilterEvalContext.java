@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.predicateindex.be.BENode;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 
@@ -23,6 +24,8 @@ public final class FilterEvalContext {
    private final Object[] projection;
 
    private final Comparable[] sortProjection;
+
+   public FieldAccumulator[] acc;
 
    public FilterEvalContext(MatcherEvalContext<?, ?, ?> matcherContext, FilterSubscriptionImpl filterSubscription) {
       this.matcherContext = matcherContext;
@@ -72,5 +75,30 @@ public final class FilterEvalContext {
 
    public Comparable[] getSortProjection() {
       return sortProjection;
+   }
+
+   void processProjection(int position, Object value) {
+      Object[] projection = this.projection;
+      if (projection == null) {
+         projection = this.sortProjection;
+      } else {
+         if (position >= projection.length) {
+            position -= projection.length;
+            projection = this.sortProjection;
+         }
+      }
+
+      if (acc != null) {
+         FieldAccumulator a = acc[position];
+         if (a != null) {
+            a.update(projection, value);
+            return;
+         }
+      }
+
+      // if this is a repeated attribute and no accumulator is used then keep the first occurrence in order to be consistent with the Lucene based implementation
+      if (projection[position] == null) {
+         projection[position] = value;
+      }
    }
 }

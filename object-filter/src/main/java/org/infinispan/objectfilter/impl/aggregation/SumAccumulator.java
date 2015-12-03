@@ -33,9 +33,9 @@ final class SumAccumulator extends FieldAccumulator {
    }
 
    @Override
-   public void update(Object[] srcRow, Object[] accRow) {
-      Number value = (Number) srcRow[inPos];
-      if (value != null) {
+   public void update(Object[] accRow, Object val) {
+      if (val != null) {
+         Number value = (Number) val;
          if (fieldType == Double.class || fieldType == Float.class) {
             ((DoubleSum) accRow[outPos]).update(value.doubleValue());
          } else if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {

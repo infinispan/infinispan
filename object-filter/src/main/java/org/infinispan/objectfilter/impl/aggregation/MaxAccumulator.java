@@ -18,8 +18,7 @@ final class MaxAccumulator extends FieldAccumulator {
    }
 
    @Override
-   public void update(Object[] srcRow, Object[] accRow) {
-      Comparable value = (Comparable) srcRow[inPos];
+   public void update(Object[] accRow, Object value) {
       if (value != null) {
          Comparable max = (Comparable) accRow[outPos];
          if (max == null || max.compareTo(value) < 0) {
