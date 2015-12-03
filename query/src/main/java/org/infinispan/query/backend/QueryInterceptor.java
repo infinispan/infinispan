@@ -256,10 +256,7 @@ public final class QueryInterceptor extends CommandInterceptor {
    }
 
    private Object extractValue(Object wrappedValue) {
-      if (wrappedValue instanceof MarshalledValue)
-         return ((MarshalledValue) wrappedValue).get();
-      else
-         return wrappedValue;
+      return MarshalledValue.unwrap(wrappedValue);
    }
 
    public void enableClasses(Class[] classes) {

@@ -3,6 +3,7 @@ package org.infinispan.filter;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.core.MarshalledValue;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -33,7 +34,11 @@ public class CollectionKeyFilter<K> implements KeyFilter<K> {
 
    @Override
    public boolean accept(K key) {
-      return accept ? keys.contains(key) : !keys.contains(key);
+      // This filter is provided as callback to cache stores, so it should be
+      // able to take normal keys and verify them against seen keys which
+      // might be MarshalledValues.
+      boolean contains = keys.stream().filter(k -> k.equals(key) || MarshalledValue.unwrap(k).equals(key)).count() > 0;
+      return accept ? contains : !contains;
    }
 
    public static class Externalizer extends AbstractExternalizer<CollectionKeyFilter> {

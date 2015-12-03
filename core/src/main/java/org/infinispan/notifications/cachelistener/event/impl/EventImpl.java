@@ -72,8 +72,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    @SuppressWarnings("unchecked")
    public K getKey() {
-      if (key instanceof MarshalledValue)
-         key = (K) ((MarshalledValue) key).get();
       return key;
    }
 
@@ -99,7 +97,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    public void setKey(K key) {
-      this.key = key;
+      this.key = MarshalledValue.unwrap(key);
    }
 
    public void setTransactionId(GlobalTransaction transaction) {
@@ -150,8 +148,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    @SuppressWarnings("unchecked")
    public V getValue() {
-      if (value instanceof MarshalledValue)
-         value = (V) ((MarshalledValue) value).get();
       return value;
    }
 
@@ -175,7 +171,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    public void setValue(V value) {
-      this.value = value;
+      this.value = MarshalledValue.unwrap(value);
    }
 
    public void setEntries(Map<? extends K, ? extends V> entries) {

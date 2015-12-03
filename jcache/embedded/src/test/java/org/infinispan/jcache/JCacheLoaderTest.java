@@ -14,6 +14,7 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
+import org.infinispan.util.Int;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
@@ -53,7 +54,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
          public void call() {
             JCacheManager jCacheManager = createJCacheManager(cm, this);
 
-            InMemoryJCacheLoader<Integer, String> cacheLoader = new InMemoryJCacheLoader<Integer, String>();
+            InMemoryJCacheLoader<Integer, String> cacheLoader = InMemoryJCacheLoader.create();
             cacheLoader.store(1, "v1").store(2, "v2");
 
             MutableConfiguration<Integer, String> cfg = new MutableConfiguration<Integer, String>();
@@ -122,7 +123,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
             TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
             JCacheManager jCacheManager = createJCacheManager(cm, this);
 
-            InMemoryJCacheLoader<Integer, String> cacheLoader = new InMemoryJCacheLoader<Integer, String>();
+            InMemoryJCacheLoader<Integer, String> cacheLoader = InMemoryJCacheLoader.create();
             cacheLoader.store(1, "v1").store(2, "v2");
 
             MutableConfiguration<Integer, String> cfg = new MutableConfiguration<Integer, String>();
@@ -162,6 +163,27 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
 
             assertEquals(null, dc.get(2));
             assertEquals(null, dc.get(1));
+         }
+      });
+   }
+
+   public void testLoadCustomKey(Method m) {
+      final String cacheName = m.getName();
+      withCacheManager(new CacheManagerCallable(
+         TestCacheManagerFactory.createCacheManager(false)) {
+         @Override
+         public void call() {
+            JCacheManager jCacheManager = createJCacheManager(cm, this);
+            InMemoryJCacheLoader<Int, String> cacheLoader = InMemoryJCacheLoader.create();
+            cacheLoader.store(new Int(1), "v1").store(new Int(2), "v2");
+
+            MutableConfiguration<Int, String> cfg = new MutableConfiguration<Int, String>();
+            cfg.setReadThrough(true);
+            cfg.setCacheLoaderFactory(new FactoryBuilder.SingletonFactory(cacheLoader));
+            Cache<Int, String> cache = jCacheManager.createCache(cacheName, cfg);
+
+            assertEquals("v2", cache.get(new Int(2)));
+            assertEquals("v1", cache.get(new Int(1)));
          }
       });
    }

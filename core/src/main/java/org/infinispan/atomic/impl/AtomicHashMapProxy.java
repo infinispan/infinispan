@@ -65,7 +65,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    // internal helper, reduces lots of casts.
    @SuppressWarnings("unchecked")
    protected AtomicHashMap<K, V> toMap(Object object) {
-      Object map = (object instanceof MarshalledValue) ? ((MarshalledValue) object).get() : object;
+      Object map = MarshalledValue.unwrap(object);
       return (AtomicHashMap<K, V>) map;
    }
 

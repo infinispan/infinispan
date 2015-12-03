@@ -63,12 +63,6 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       return replicated ? AcceptAllKeyValueFilter.getInstance() : new PrimaryOwnersKeyValueFilter();
    }
 
-   private Object extractValue(Object wrappedValue) {
-      if (wrappedValue instanceof MarshalledValue)
-         return ((MarshalledValue) wrappedValue).get();
-      return wrappedValue;
-   }
-
    @Override
    @SuppressWarnings("unchecked")
    public Void call() throws Exception {
@@ -79,7 +73,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
          Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
          while (iterator.hasNext()) {
             CacheEntry<Object, Object> next = iterator.next();
-            Object value = extractValue(next.getValue());
+            Object value = MarshalledValue.unwrap(next.getValue());
             if (value != null && value.getClass().equals(entity))
                indexUpdater.updateIndex(next.getKey(), value);
          }
