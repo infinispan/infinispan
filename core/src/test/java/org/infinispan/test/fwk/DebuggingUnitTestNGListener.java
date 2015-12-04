@@ -3,6 +3,7 @@ package org.infinispan.test.fwk;
 import java.util.Set;
 
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
@@ -28,7 +29,11 @@ public class DebuggingUnitTestNGListener extends UnitTestTestNGListener {
 
    @Override
    public void onFinish(ITestContext testCxt) {
-      super.onFinish(testCxt);
+      Class testClass = testCxt.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
+      if (!AbstractInfinispanTest.class.isAssignableFrom(testClass)) {
+         //do not null the threadTestName as it is required during cleanup check
+         TestResourceTracker.testFinished(testClass.getName(), false);
+      }
       checkCleanedUp(testCxt);
    }
 
@@ -45,6 +50,7 @@ public class DebuggingUnitTestNGListener extends UnitTestTestNGListener {
          }
       }
       finally {
+         TestResourceTracker.setThreadTestName(null);
          TestingUtil.killCacheManagers(cm);
       }
    }

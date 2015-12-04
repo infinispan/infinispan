@@ -95,13 +95,18 @@ public class TestResourceTracker {
     * Called on the "main" test thread, after any configuration method.
     */
    public static void testFinished(String testName) {
+      testFinished(testName, true);
+   }
+
+   public static void testFinished(String testName, boolean unsetThreadTestName) {
       cleanUpResources(testName);
       if (!testName.equals(getCurrentTestName())) {
          cleanUpResources(getCurrentTestName());
          throw new IllegalArgumentException("Current thread name was not set correctly: " + getCurrentTestName() +
-               ", should have been " + testName);
+                 ", should have been " + testName);
       }
-      setThreadTestName(null);
+      if (unsetThreadTestName)
+         setThreadTestName(null);
    }
 
    /**
