@@ -3,6 +3,7 @@ package org.infinispan.query.logging;
 import java.io.IOException;
 import java.util.List;
 
+import org.hibernate.hql.ParsingException;
 import org.hibernate.search.backend.LuceneWork;
 import org.infinispan.commons.CacheException;
 import org.infinispan.remoting.transport.Address;
@@ -29,7 +30,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    void keyClassNotFound(String keyClassName, @Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Cannot instantiate an instance of Transformer class %s", id = 14002)
+   @Message(value = "Cannot instantiate Transformer class %s", id = 14002)
    void couldNotInstantiaterTransformerClass(Class<?> transformer, @Cause Exception e);
 
    @LogMessage(level = INFO)
@@ -69,7 +70,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    void interruptedWhileBufferingWork(@Cause InterruptedException e);
 
    @LogMessage(level = DEBUG)
-   @Message(value = "Waiting for index lock was successfull: '%1$s'", id = 14012)
+   @Message(value = "Waiting for index lock was successful: '%1$s'", id = 14012)
    void waitingForLockAcquired(boolean waitForAvailabilityInternal);
 
    @Message(value = "Cache named '%1$s' is being shut down. No longer accepting remote commands.", id = 14013)
@@ -94,4 +95,28 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = ERROR)
    @Message(value = "Error executing MassIndexer", id = 14018)
    void errorExecutingMassIndexer(@Cause Throwable cause);
+
+   @Message(value = "Cannot run Lucene queries on a cache that does not have indexing enabled", id = 14019)
+   IllegalStateException cannotRunLuceneQueriesIfNotIndexed();
+
+   @Message(value = "Query parameter '%s' was not set", id = 14020)
+   IllegalStateException queryParameterNotSet(String paramName);
+
+   @Message(value = "Queries containing grouping and aggregation functions must use projections.",  id = 14021)
+   ParsingException groupingAndAggregationQueriesMustUseProjections();
+
+   @Message(value = "Cannot have aggregate functions in GROUP BY clause", id = 14022)
+   IllegalStateException cannotHaveAggregationsInGroupByClause();
+
+   @Message(value = "Using the multi-valued property path '%s' in the GROUP BY clause is not currently supported", id = 14023)
+   ParsingException multivaluedPropertyCannotBeUsedInGroupBy(String propertyPath);
+
+   @Message(value = "The property path '%s' cannot be used in the ORDER BY clause because it is multi-valued", id = 14024)
+   ParsingException multivaluedPropertyCannotBeUsedInOrderBy(String propertyPath);
+
+   @Message(value = "The query must not use grouping or aggregation", id = 14025)
+   IllegalStateException queryMustNotUseGroupingOrAggregation();
+
+   @Message(value = "The expression '%s' must be part of an aggregate function or it should be included in the GROUP BY clause", id = 14026)
+   ParsingException expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(String propertyPath);
 }

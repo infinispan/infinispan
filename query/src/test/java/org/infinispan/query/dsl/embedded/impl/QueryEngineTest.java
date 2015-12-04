@@ -278,13 +278,13 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       assertEquals(3, list.size());
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testMissingAggregateInSelect() {
       Query q = qe.buildQuery(null, "select age from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name", null, -1, -1);
       q.list();
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testMissingAggregateInOrderBy() {
       Query q = qe.buildQuery(null, "select name, sum(age) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name order by age", null, -1, -1);
       q.list();
@@ -296,13 +296,13 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       q.list();
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testHavingClauseAllowsAggregationsAndGroupByColumnsOnly() {
       Query q = qe.buildQuery(null, "select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name having age >= 18", null, -1, -1);
       q.list();
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The expression 'name' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'name' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testDisallowNonAggregatedProjectionWithGlobalAggregation() {
       Query q = qe.buildQuery(null, "select name, count(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
       q.list();
