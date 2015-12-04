@@ -235,4 +235,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The client listener must use the '%s' filter/converter factory", id = 4059)
    IncorrectClientListenerException clientListenerMustUseDesignatedFilterConverterFactory(String filterConverterFactoryName);
+
+   @Message(value = "Query parameter '%s' was not set", id = 4060)
+   IllegalStateException queryParameterNotSet(String filterConverterFactoryName);
 }

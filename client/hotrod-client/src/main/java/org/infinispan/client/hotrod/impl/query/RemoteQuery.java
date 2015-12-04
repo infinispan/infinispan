@@ -3,6 +3,8 @@ package org.infinispan.client.hotrod.impl.query;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.QueryOperation;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
@@ -21,6 +23,8 @@ import java.util.Map;
  * @since 6.0
  */
 public final class RemoteQuery extends BaseQuery {
+
+   private static final Log log = LogFactory.getLog(RemoteQuery.class, Log.class);
 
    private final RemoteCacheImpl cache;
    private final SerializationContext serializationContext;
@@ -90,7 +94,7 @@ public final class RemoteQuery extends BaseQuery {
       if (namedParameters != null) {
          for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
             if (e.getValue() == null) {
-               throw new IllegalStateException("Query parameter '" + e.getKey() + "' was not set");
+               throw log.queryParameterNotSet(e.getKey());
             }
          }
       }
