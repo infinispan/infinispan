@@ -1796,7 +1796,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(null, list.get(1)[0]);
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testGroupBy3() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1825,7 +1825,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Y12", list.get(1)[0]);
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "Queries containing grouping and aggregation functions must use projections.")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014021: Queries containing grouping and aggregation functions must use projections.")
    public void testGroupBy5() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2061,7 +2061,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.setParameter("param2", "John");
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Query parameter 'param2' was not set")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014020: Query parameter 'param2' was not set")
    public void testMissingParam() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2189,7 +2189,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(true, list.get(0)[2]);
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The property path 'addresses.street' cannot be used in the GROUP BY clause because it is multi-valued")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014023: Using the multi-valued property path 'addresses.street' in the GROUP BY clause is not currently supported")
    public void testGroupByMustNotAcceptRepeatedProperty() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2200,7 +2200,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014024: The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
    public void testOrderByMustNotAcceptRepeatedProperty() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())

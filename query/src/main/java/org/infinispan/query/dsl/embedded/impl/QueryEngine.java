@@ -1,6 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.hibernate.hql.ParsingException;
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
@@ -29,9 +28,11 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.query.logging.Log;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.logging.LogFactory;
 
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -46,6 +47,8 @@ import java.util.Map;
  * @since 7.2
  */
 public class QueryEngine {
+
+   private static final Log log = LogFactory.getLog(QueryEngine.class, Log.class);
 
    private static final int MAX_EXPANSION_COFACTORS = 16;
 
@@ -101,7 +104,7 @@ public class QueryEngine {
       if (namedParameters != null) {
          for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
             if (e.getValue() == null) {
-               throw new IllegalStateException("Query parameter '" + e.getKey() + "' was not set");
+               throw log.queryParameterNotSet(e.getKey());
             }
          }
       }
@@ -109,7 +112,7 @@ public class QueryEngine {
 
    private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
       if (parsingResult.getProjectedPaths() == null) {
-         throw new ParsingException("Queries containing grouping and aggregation functions must use projections.");
+         throw log.groupingAndAggregationQueriesMustUseProjections();
       }
 
       LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata>();
@@ -118,12 +121,12 @@ public class QueryEngine {
       if (parsingResult.getGroupBy() != null) {
          for (PropertyPath p : parsingResult.getGroupBy()) {
             if (p.getAggregationType() != null) {
-               throw new IllegalStateException("Cannot have aggregate functions in GROUP BY clause");  // should not really be possible because this was validated during parsing
+               throw log.cannotHaveAggregationsInGroupByClause();  // should not really be possible because this was validated during parsing
             }
             // Duplicates in 'group by' are accepted and silently discarded. This behaviour is similar to SQL.
             if (!columns.containsKey(p)) {
                if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(), p.getPath())) {
-                  throw new ParsingException("The property path '" + p + "' cannot be used in the GROUP BY clause because it is multi-valued");
+                  throw log.multivaluedPropertyCannotBeUsedInGroupBy(p.toString());
                }
                Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), p.getPath());
                int idx = columns.size();
@@ -138,7 +141,7 @@ public class QueryEngine {
          if (p.getAggregationType() == null) {
             // this must be an already processed 'group by' field, or else it's an invalid query
             if (c == null || c.getColumnIndex() >= noOfGroupingColumns) {
-               throw new ParsingException("The expression '" + p + "' must be part of an aggregate function or it should be included in the GROUP BY clause");
+               throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(p.toString());
             }
          }
          if (c == null) {
@@ -154,7 +157,7 @@ public class QueryEngine {
             if (p.getAggregationType() == null) {
                // this must be an already processed 'group by' field, or else it's an invalid query
                if (c == null || c.getColumnIndex() >= noOfGroupingColumns) {
-                  throw new ParsingException("The expression '" + p + "' must be part of an aggregate function or it should be included in the GROUP BY clause");
+                  throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(p.toString());
                }
             }
             if (c == null) {
@@ -325,7 +328,7 @@ public class QueryEngine {
             PropertyPath p = new PropertyPath(null, propertyValueExpr.getPropertyPath());
             RowPropertyHelper.ColumnMetadata c = columns.get(p);
             if (c == null) {
-               throw new ParsingException("The expression '" + propertyValueExpr.toJpaString() + "' must be part of an aggregate function or it should be included in the GROUP BY clause");
+               throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(propertyValueExpr.toJpaString());
             }
             return new PropertyValueExpr(c.getColumnName(), propertyValueExpr.isRepeated());
          }
@@ -350,7 +353,7 @@ public class QueryEngine {
    private BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters,
                                               long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
       if (parsingResult.hasGroupingOrAggregations()) {
-         throw new IllegalArgumentException("The query must not use grouping or aggregation"); // may happen only due to internal programming error
+         throw log.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
 
       if (parsingResult.getSortFields() != null) {
@@ -358,7 +361,7 @@ public class QueryEngine {
          for (SortField sortField : parsingResult.getSortFields()) {
             PropertyPath p = sortField.getPath();
             if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(), p.getPath())) {
-               throw new ParsingException("The property path '" + p + "' cannot be used in the ORDER BY clause because it is multi-valued");
+               throw log.multivaluedPropertyCannotBeUsedInOrderBy(p.toString());
             }
          }
       }
@@ -553,7 +556,7 @@ public class QueryEngine {
     */
    public CacheQuery buildLuceneQuery(String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       if (searchManager == null) {
-         throw new IllegalStateException("Cannot run Lucene queries on a cache that does not have indexing enabled");
+         throw log.cannotRunLuceneQueriesIfNotIndexed();
       }
 
       checkParameters(namedParameters);
