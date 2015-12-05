@@ -278,6 +278,18 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       assertEquals(3, list.size());
    }
 
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014024: The property path 'addresses.postCode' cannot be used in the ORDER BY clause because it is multi-valued")
+   public void testRejectMultivaluedOrderBy() {
+      Query q = qe.buildQuery(null, "from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u order by u.addresses.postCode", null, -1, -1);
+      q.list();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014023: Using the multi-valued property path 'addresses.postCode' in the GROUP BY clause is not currently supported")
+   public void testRejectMultivaluedGroupBy() {
+      Query q = qe.buildQuery(null, "select u.addresses.postCode from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u group by u.addresses.postCode", null, -1, -1);
+      q.list();
+   }
+
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014026: The expression 'age' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testMissingAggregateInSelect() {
       Query q = qe.buildQuery(null, "select age from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS group by name", null, -1, -1);
