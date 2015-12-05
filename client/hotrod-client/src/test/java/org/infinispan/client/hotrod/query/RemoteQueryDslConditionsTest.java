@@ -298,4 +298,11 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       // the original exception gets wrapped in HotRodClientException
       super.testOrderByMustNotAcceptRepeatedProperty();
    }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: HQL000009: Cannot have aggregate functions in WHERE clause : MIN.")
+   @Override
+   public void testRejectAggregationsInWhereClause() {
+      // the original exception gets wrapped in HotRodClientException
+      super.testRejectAggregationsInWhereClause();
+   }
 }

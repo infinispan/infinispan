@@ -328,6 +328,11 @@ public class JPAQueryGenerator implements Visitor<String> {
          return;
       }
 
+      if (argument instanceof PathExpression) {
+         appendAttributePath(sb, (PathExpression) argument);
+         return;
+      }
+
       if (argument instanceof Number) {
          sb.append(argument);
          return;
