@@ -2363,6 +2363,16 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals("John", list.get(1)[1]);
    }
 
+   @Test(expected = ParsingException.class)
+   public void testRejectAggregationsInWhereClause() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("name")
+            .having("name").eq(Expression.min("addresses.street")).toBuilder()
+            .build();
+      q.list();
+   }
+
    @Test
    public void testAggregateRepeatedField() {
       QueryFactory qf = getQueryFactory();
