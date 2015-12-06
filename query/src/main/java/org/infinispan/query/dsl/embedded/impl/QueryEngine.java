@@ -224,6 +224,7 @@ public class QueryEngine {
       }
       firstPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(JPAQueryGenerator.DEFAULT_ALIAS);
       if (parsingResult.getWhereClause() != null) {
+         // the WHERE clause should not touch aggregated fields
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
             return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
@@ -464,12 +465,21 @@ public class QueryEngine {
          throw log.queryMustNotUseGroupingOrAggregation(); // may happen only due to internal programming error
       }
 
+      final ObjectPropertyHelper<?> propertyHelper = getFirstPhaseMatcher().getPropertyHelper();
+
       if (parsingResult.getSortFields() != null) {
-         ObjectPropertyHelper<?> propertyHelper = getFirstPhaseMatcher().getPropertyHelper();
          for (SortField sortField : parsingResult.getSortFields()) {
             PropertyPath p = sortField.getPath();
             if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(), p.getPath())) {
                throw log.multivaluedPropertyCannotBeUsedInOrderBy(p.toString());
+            }
+         }
+      }
+
+      if (parsingResult.getProjectedPaths() != null) {
+         for (PropertyPath p : parsingResult.getProjectedPaths()) {
+            if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(), p.getPath())) {
+               throw log.multivaluedPropertyCannotBeProjected(p.asStringPath());
             }
          }
       }
