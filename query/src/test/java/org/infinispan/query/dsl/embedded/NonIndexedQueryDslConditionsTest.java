@@ -1,6 +1,5 @@
 package org.infinispan.query.dsl.embedded;
 
-import org.hibernate.hql.ParsingException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
@@ -64,21 +63,6 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testIndexPresence() {
       // this is expected to throw an exception
       Search.getSearchManager((Cache) getCacheForQuery());
-   }
-
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN000405:.*")
-   @Override
-   public void testInvalidEmbeddedAttributeQuery() throws Exception {
-      super.testInvalidEmbeddedAttributeQuery();
-   }
-
-   /**
-    * This test works for non-indexed mode so we re-enable it here.
-    */
-   @Test
-   @Override
-   public void testNullOnIntegerField() throws Exception {
-      super.testNullOnIntegerField();
    }
 
    /**
