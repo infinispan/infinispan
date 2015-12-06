@@ -797,6 +797,15 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.list();  // exception expected
    }
 
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014027: The property path 'addresses.postCode' cannot be projected because it is multi-valued")
+   public void testRejectProjectionOfRepeatedProperty() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("addresses.postCode")
+            .build();
+      q.list();
+   }
+
    public void testIsNull1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2198,7 +2207,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .build();
       q.list();
    }
-
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014024: The property path 'addresses.street' cannot be used in the ORDER BY clause because it is multi-valued")
    public void testOrderByMustNotAcceptRepeatedProperty() {

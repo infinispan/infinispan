@@ -9,7 +9,7 @@ import java.util.Set;
  */
 public interface User {
 
-   public enum Gender {
+   enum Gender {
       MALE, FEMALE
    }
 

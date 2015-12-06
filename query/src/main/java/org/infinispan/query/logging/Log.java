@@ -119,4 +119,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "The expression '%s' must be part of an aggregate function or it should be included in the GROUP BY clause", id = 14026)
    ParsingException expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(String propertyPath);
+
+   @Message(value = "The property path '%s' cannot be projected because it is multi-valued", id = 14027)
+   ParsingException multivaluedPropertyCannotBeProjected(String propertyPath);
 }

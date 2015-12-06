@@ -845,6 +845,15 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       q.list();  // exception expected
    }
 
+   @Test(expected = ParsingException.class)
+   public void testRejectProjectionOfRepeatedProperty() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("addresses.postCode")
+            .build();
+      q.list();
+   }
+
    @Test
    public void testIsNull1() throws Exception {
       QueryFactory qf = getQueryFactory();
