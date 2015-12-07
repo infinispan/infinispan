@@ -57,7 +57,7 @@ public abstract class AbstractRemoteCacheIT {
 
     protected RemoteCache remoteCache;
     protected static RemoteCacheManager remoteCacheManager = null;
-    protected final int ASYNC_OPS_ENTRY_LOAD = 100;
+    protected final int ASYNC_OPS_ENTRY_LOAD = 10;
 
     protected abstract List<RemoteInfinispanServer> getServers();
 
@@ -68,7 +68,7 @@ public abstract class AbstractRemoteCacheIT {
             remoteCacheManager = new RemoteCacheManager(config, true);
         }
         remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
-        assertCacheEmpty();
+        remoteCache.clear();
     }
 
     @AfterClass
@@ -115,17 +115,6 @@ public abstract class AbstractRemoteCacheIT {
 
     private boolean isDistributedMode() {
         return "dist".equals(AbstractRemoteCacheManagerIT.getClusteringMode());
-    }
-
-    public void assertCacheEmpty() {
-        clearServer(0);
-        if (!AbstractRemoteCacheManagerIT.isLocalMode()) {
-            clearServer(1);
-        }
-    }
-
-    private void clearServer(int serverIndex) {
-        remoteCache.clear();
     }
 
     private long numEntriesOnServer(int serverIndex) {
@@ -569,20 +558,17 @@ public abstract class AbstractRemoteCacheIT {
 
     @Test
     public void testPutAsync() throws Exception {
-        Set<Future<?>> futures = new HashSet<Future<?>>();
-        for (int i = 0; i != ASYNC_OPS_ENTRY_LOAD; i++) {
-            futures.add(remoteCache.putAsync("key" + i, "value" + i));
-        }
-        for (Future<?> f : futures) {
-            f.get();
-        }
-        assertEquals(ASYNC_OPS_ENTRY_LOAD, numEntriesOnServer(0));
-        assertEquals("value" + (ASYNC_OPS_ENTRY_LOAD - 1), remoteCache.get("key" + (ASYNC_OPS_ENTRY_LOAD - 1)));
+        assertNull(remoteCache.get("k"));
+        Future<String> f = remoteCache.putAsync("k", "v");
+        assertFalse(f.isCancelled());
+        assertNull(f.get());
+        assertTrue(f.isDone());
+        assertEquals("v", remoteCache.get("k"));
     }
 
     @Test
     public void testPutWithLifespanAsync() throws Exception {
-        long lifespanInSecs = 10;
+        long lifespanInSecs = 2;
         Set<Future<?>> futures = new HashSet<Future<?>>();
         for (int i = 0; i != ASYNC_OPS_ENTRY_LOAD; i++) {
             futures.add(remoteCache.putAsync("key" + i, "value" + i, lifespanInSecs, TimeUnit.SECONDS, -1, TimeUnit.SECONDS));
