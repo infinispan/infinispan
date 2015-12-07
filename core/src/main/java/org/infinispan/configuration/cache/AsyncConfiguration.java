@@ -10,15 +10,14 @@ import org.infinispan.remoting.ReplicationQueueImpl;
  * If configured all communications are asynchronous, in that whenever a thread sends a message sent
  * over the wire, it does not wait for an acknowledgment before returning. Asynchronous configuration is mutually
  * exclusive with synchronous configuration.
- *
  */
 public class AsyncConfiguration {
-   public static final AttributeDefinition<ReplicationQueue> REPLICATION_QUEUE  = AttributeDefinition.<ReplicationQueue>builder("replicationQueue", null, ReplicationQueue.class).immutable().build();
-   public static final AttributeDefinition<Long> REPLICATION_QUEUE_INTERVAL = AttributeDefinition.builder("replicationQueueInterval", 10l).build();
+   public static final AttributeDefinition<ReplicationQueue> REPLICATION_QUEUE  = AttributeDefinition.builder("replicationQueue", null, ReplicationQueue.class).immutable().build();
+   public static final AttributeDefinition<Long> REPLICATION_QUEUE_INTERVAL = AttributeDefinition.builder("replicationQueueInterval", 10L).build();
    public static final AttributeDefinition<Integer> REPLICATION_QUEUE_MAX_ELEMENTS  = AttributeDefinition.builder("replicationQueueMaxElements", 1000).build();
    public static final AttributeDefinition<Boolean> USE_REPLICATION_QUEUE = AttributeDefinition.builder("useReplicationQueue", false).immutable().build();
 
-   static final AttributeSet attributeDefinitionSet() {
+   static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(AsyncConfiguration.class, REPLICATION_QUEUE, REPLICATION_QUEUE_INTERVAL, REPLICATION_QUEUE_MAX_ELEMENTS, USE_REPLICATION_QUEUE);
    }
 
@@ -50,6 +49,7 @@ public class AsyncConfiguration {
    /**
     * The replication queue in use, by default {@link ReplicationQueueImpl}.
     */
+   @Deprecated
    public ReplicationQueue replQueue() {
       return replicationQueue.get();
    }
@@ -58,6 +58,7 @@ public class AsyncConfiguration {
     * If useReplQueue is set to true, this attribute controls how often the asynchronous thread
     * used to flush the replication queue runs.
     */
+   @Deprecated
    public long replQueueInterval() {
       return replicationQueueInterval.get();
    }
@@ -66,6 +67,7 @@ public class AsyncConfiguration {
     * If useReplQueue is set to true, this attribute can be used to trigger flushing of the queue
     * when it reaches a specific threshold.
     */
+   @Deprecated
    public int replQueueMaxElements() {
       return replicationQueueMaxElements.get();
    }
@@ -74,6 +76,7 @@ public class AsyncConfiguration {
     * If true, this forces all async communications to be queued up and sent out periodically as a
     * batch.
     */
+   @Deprecated
    public boolean useReplQueue() {
       return useReplicationQueue.get();
    }

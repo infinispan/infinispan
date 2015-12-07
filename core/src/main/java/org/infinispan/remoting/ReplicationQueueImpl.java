@@ -29,7 +29,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Manik Surtani
  * @version 4.2
+ * @deprecated Since 8.2, superseded by JGroups bundler functionality.
  */
+@Deprecated
 public class ReplicationQueueImpl implements ReplicationQueue {
    private static final Log log = LogFactory.getLog(ReplicationQueue.class);
 
