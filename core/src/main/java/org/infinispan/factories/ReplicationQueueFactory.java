@@ -10,7 +10,9 @@ import org.infinispan.remoting.ReplicationQueueImpl;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
+ * @deprecated Since 8.2, superseded by JGroups bundler functionality.
  */
+@Deprecated
 @DefaultFactoryFor(classes = ReplicationQueue.class)
 public class ReplicationQueueFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override

@@ -9,7 +9,9 @@ import org.infinispan.commons.api.Lifecycle;
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a>
  * @author Mircea.Markus@jboss.com
  * @since 4.0
+ * @deprecated Since 8.2, superseded by JGroups bundler functionality.
  */
+@Deprecated
 public interface ReplicationQueue extends Lifecycle {
 
 

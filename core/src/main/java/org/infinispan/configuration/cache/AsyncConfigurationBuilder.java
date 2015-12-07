@@ -17,7 +17,6 @@ import org.infinispan.util.logging.LogFactory;
  * If configured all communications are asynchronous, in that whenever a thread sends a message sent
  * over the wire, it does not wait for an acknowledgment before returning. Asynchronous configuration is mutually
  * exclusive with synchronous configuration.
- *
  */
 public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<AsyncConfiguration> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
@@ -59,10 +58,9 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    /**
     * The replication queue in use, by default {@link ReplicationQueueImpl}.
     *
-    * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
-    * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
-    * constructor to any instance. This will be resolved in Infinispan 5.2.0
+    * @deprecated Since 8.2, superseded by JGroups bundler functionality.
     */
+   @Deprecated
    public AsyncConfigurationBuilder replQueue(ReplicationQueue replicationQueue) {
       attributes.attribute(REPLICATION_QUEUE).set(replicationQueue);
       return this;
@@ -71,7 +69,10 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    /**
     * If useReplQueue is set to true, this attribute controls how often the asynchronous thread used
     * to flush the replication queue runs.
+    *
+    * @deprecated Since 8.2, superseded by JGroups bundler functionality.
     */
+   @Deprecated
    public AsyncConfigurationBuilder replQueueInterval(long interval) {
       attributes.attribute(REPLICATION_QUEUE_INTERVAL).set(interval);
       return this;
@@ -80,7 +81,10 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    /**
     * If useReplQueue is set to true, this attribute controls how often the asynchronous thread used
     * to flush the replication queue runs.
+    *
+    * @deprecated Since 8.2, superseded by JGroups bundler functionality.
     */
+   @Deprecated
    public AsyncConfigurationBuilder replQueueInterval(long interval, TimeUnit unit) {
       return replQueueInterval(unit.toMillis(interval));
    }
@@ -88,7 +92,10 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    /**
     * If useReplQueue is set to true, this attribute can be used to trigger flushing of the queue
     * when it reaches a specific threshold.
+    *
+    * @deprecated Since 8.2, superseded by JGroups bundler functionality.
     */
+   @Deprecated
    public AsyncConfigurationBuilder replQueueMaxElements(int elements) {
       attributes.attribute(REPLICATION_QUEUE_MAX_ELEMENTS).set(elements);
       return this;
@@ -97,7 +104,10 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    /**
     * If true, forces all async communications to be queued up and sent out periodically as a
     * batch.
+    *
+    * @deprecated Since 8.2, superseded by JGroups bundler functionality.
     */
+   @Deprecated
    public AsyncConfigurationBuilder useReplQueue(boolean use) {
       attributes.attribute(USE_REPLICATION_QUEUE).set(use);
       return this;
