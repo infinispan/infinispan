@@ -57,6 +57,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private val saslMechFactories = CollectionFactory.makeConcurrentMap[String, SaslServerFactory](4, 0.9f, 16)
    private var clientListenerRegistry: ClientListenerRegistry = _
    private var marshaller: Marshaller = _
+   private var distributedExecutorService: DefaultExecutorService = _
 
    lazy val iterationManager: IterationManager = new DefaultIterationManager(getCacheManager)
 
@@ -149,14 +150,17 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       addressCache = cacheManager.getCache(configuration.topologyCacheName)
       clusterAddress = cacheManager.getAddress
       address = new ServerAddress(configuration.proxyHost, configuration.proxyPort)
+      distributedExecutorService = new DefaultExecutorService(addressCache)
+
       cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
+      addressCache.addListener(new ReAddMyAddressListener(addressCache, clusterAddress, address));
+
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
       // Guaranteed delivery required since if data is lost, there won't be
       // any further cache calls, so negative acknowledgment can cause issues.
       addressCache.getAdvancedCache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.GUARANTEED_DELIVERY)
               .put(clusterAddress, address)
-      addressCache.addListener(new ReAddMyAddressListener(addressCache, clusterAddress, address));
    }
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
@@ -297,6 +301,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    override def stop: Unit = {
+      if (distributedExecutorService != null) {
+         distributedExecutorService.shutdownNow()
+      }
+
       if (clientListenerRegistry != null) clientListenerRegistry.stop()
       super.stop
    }
@@ -308,11 +316,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          if (event.isPre)
             return
 
-         val distributedExecutor = new DefaultExecutorService(addressCache)
          var success = false
          while (!success) {
             try {
-               val futures = distributedExecutor.submitEverywhere(new CheckAddressTask(clusterAddress, address))
+               val futures = distributedExecutorService.submitEverywhere(new CheckAddressTask(clusterAddress, address))
+               // No need for a timeout here, the distributed executor has a default task timeout
                val everybodyHasIt = futures.forall(_.get())
                if (!everybodyHasIt) {
                   log.debugf("Re-adding %s to the topology cache", clusterAddress)
