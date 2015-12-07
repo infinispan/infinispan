@@ -39,8 +39,6 @@ public class SuiteResourcesAndLogTest {
       log("log4.configurationFile = " + System.getProperty("log4j.configurationFile"));
       log("MAVEN_OPTS = " + System.getProperty("MAVEN_OPTS"));
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
-      
-      DebuggingUnitTestNGListener.describeErrorsIfAny();
    }
 
    private void log(String s) {
