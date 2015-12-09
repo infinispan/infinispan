@@ -3,6 +3,7 @@ package org.infinispan.util;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalJmxStatisticsConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -97,8 +98,11 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
    }
 
    private Thread doStuffWithCache(ConfigurationBuilder builder) {
-      final EmbeddedCacheManager[] cm = {new DefaultCacheManager(
-            new GlobalConfigurationBuilder().nonClusteredDefault().build(), builder.build(), true)};
+      GlobalJmxStatisticsConfigurationBuilder globalBuilder =
+            new GlobalConfigurationBuilder().nonClusteredDefault()
+                  .globalJmxStatistics().allowDuplicateDomains(true);
+      final EmbeddedCacheManager[] cm = {new DefaultCacheManager(globalBuilder.build(), builder.build(),
+            true)};
       Thread forkedThread = null;
       try {
          final Cache<Object, Object> c = cm[0].getCache();
