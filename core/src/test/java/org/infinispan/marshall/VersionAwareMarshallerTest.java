@@ -130,7 +130,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       List<GlobalTransaction> l1 = new ArrayList<GlobalTransaction>();
       List<GlobalTransaction> l2 = new LinkedList<GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
-         JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
+         JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress("localhost", 1000 * i));
          GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
          l1.add(gtx);
          l2.add(gtx);
