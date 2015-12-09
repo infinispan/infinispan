@@ -25,16 +25,40 @@ public abstract class FieldAccumulator {
       this.outPos = outPos;
    }
 
-   public void init(Object[] accRow) {
+   public static void init(Object[] accRow, FieldAccumulator[] accumulators) {
+      for (FieldAccumulator acc : accumulators) {
+         acc.init(accRow);
+      }
    }
 
-   public void update(Object[] srcRow, Object[] accRow) {
-      update(accRow, srcRow[inPos]);
+   public static void update(Object[] srcRow, Object[] accRow, FieldAccumulator[] accumulators) {
+      for (FieldAccumulator acc : accumulators) {
+         acc.update(accRow, srcRow[acc.inPos]);
+      }
+   }
+
+   public static void merge(Object[] srcRow, Object[] accRow, FieldAccumulator[] acc) {
+      for (FieldAccumulator a : acc) {
+         a.merge(accRow, srcRow[a.inPos]);
+      }
+   }
+
+   public static void finish(Object[] accRow, FieldAccumulator[] accumulators) {
+      for (FieldAccumulator acc : accumulators) {
+         acc.finish(accRow);
+      }
+   }
+
+   public void init(Object[] accRow) {
    }
 
    public abstract void update(Object[] accRow, Object value);
 
-   public void finish(Object[] accRow) {
+   protected void merge(Object[] accRow, Object value) {
+      update(accRow, value);
+   }
+
+   protected void finish(Object[] accRow) {
    }
 
    public static FieldAccumulator makeAccumulator(PropertyPath.AggregationType aggregationType, int inColumn, int outColumn, Class<?> propertyType) {

@@ -25,8 +25,10 @@ final class AggregatingQuery extends HybridQuery {
 
    private final FieldAccumulator[] accumulators;
 
+   private final boolean twoPhaseAcc;
+
    AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
-                    int noOfGroupingColumns, FieldAccumulator[] accumulators,
+                    int noOfGroupingColumns, List<FieldAccumulator> accumulators, boolean twoPhaseAcc,
                     ObjectFilter objectFilter,
                     long startOffset, int maxResults,
                     BaseQuery baseQuery) {
@@ -38,12 +40,13 @@ final class AggregatingQuery extends HybridQuery {
          throw new IllegalArgumentException("Aggregating query must use projections");
       }
       this.noOfGroupingColumns = noOfGroupingColumns;
-      this.accumulators = accumulators;
+      this.accumulators = accumulators != null ? accumulators.toArray(new FieldAccumulator[accumulators.size()]) : null;
+      this.twoPhaseAcc = twoPhaseAcc;
    }
 
    @Override
    protected Iterator<?> getBaseIterator() {
-      Grouper grouper = new Grouper(noOfGroupingColumns, accumulators);
+      Grouper grouper = new Grouper(noOfGroupingColumns, accumulators, twoPhaseAcc);
       List<Object[]> list = baseQuery.list();
       for (Object[] row : list) {
          grouper.addRow(row);

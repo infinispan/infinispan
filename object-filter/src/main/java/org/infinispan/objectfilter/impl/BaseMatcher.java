@@ -19,6 +19,7 @@ import org.jboss.logging.Logger;
 
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -131,7 +132,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters, FieldAccumulator[] acc) {
+   public ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
       final FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, namedParameters);
       disallowGroupingAndAggregations(parsingResult);
 
@@ -222,8 +223,9 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
          };
       }
 
+      FieldAccumulator[] accumulators = acc != null ? acc.toArray(new FieldAccumulator[acc.size()]) : null;
       return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, namedParameters,
-            parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), acc);
+            parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), accumulators);
    }
 
    @Override

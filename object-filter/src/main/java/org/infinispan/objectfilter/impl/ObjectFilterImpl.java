@@ -100,14 +100,6 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          matcherEvalContext.process(root);
 
          if (filterEvalContext.isMatching()) {
-            if (acc != null) {
-               for (FieldAccumulator a : acc) {
-                  if (a != null) {
-                     a.finish(filterEvalContext.getProjection());
-                  }
-               }
-            }
-
             Object o = filterEvalContext.getProjection() == null ? matcher.convert(instance) : null;
             return new FilterResultImpl(o, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
          }
