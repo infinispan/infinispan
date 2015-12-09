@@ -10,7 +10,7 @@ package org.infinispan.objectfilter.impl.aggregation;
  */
 final class MinAccumulator extends FieldAccumulator {
 
-   public MinAccumulator(int inPos, int outPos, Class<?> fieldType) {
+   protected MinAccumulator(int inPos, int outPos, Class<?> fieldType) {
       super(inPos, outPos);
       if (!Comparable.class.isAssignableFrom(fieldType)) {
          throw new IllegalStateException("Aggregation MIN cannot be applied to property of type " + fieldType.getName());

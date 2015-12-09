@@ -16,7 +16,7 @@ public class DoubleSumTest {
    @Test
    public void testEmptySum() throws Exception {
       DoubleAvg sum = new DoubleAvg();
-      assertNull(sum.getValue());
+      assertNull(sum.getSum());
    }
 
    @Test
@@ -24,7 +24,7 @@ public class DoubleSumTest {
       DoubleSum sum = new DoubleSum();
       sum.update(10);
       sum.update(20);
-      assertEquals(30.0d, sum.getValue(), DELTA);
+      assertEquals(30.0d, sum.getSum(), DELTA);
    }
 
    @Test
@@ -32,7 +32,7 @@ public class DoubleSumTest {
       DoubleSum sum = new DoubleSum();
       sum.update(10);
       sum.update(Double.NaN);
-      assertEquals(Double.NaN, sum.getValue(), DELTA);
+      assertEquals(Double.NaN, sum.getSum(), DELTA);
    }
 
    @Test
@@ -40,7 +40,7 @@ public class DoubleSumTest {
       DoubleSum sum = new DoubleSum();
       sum.update(10);
       sum.update(Double.POSITIVE_INFINITY);
-      assertEquals(Double.POSITIVE_INFINITY, sum.getValue(), DELTA);
+      assertEquals(Double.POSITIVE_INFINITY, sum.getSum(), DELTA);
    }
 
    @Test
@@ -48,7 +48,7 @@ public class DoubleSumTest {
       DoubleSum sum = new DoubleSum();
       sum.update(10);
       sum.update(Double.NEGATIVE_INFINITY);
-      assertEquals(Double.NEGATIVE_INFINITY, sum.getValue(), DELTA);
+      assertEquals(Double.NEGATIVE_INFINITY, sum.getSum(), DELTA);
    }
 
    @Test
@@ -57,6 +57,6 @@ public class DoubleSumTest {
       sum.update(10);
       sum.update(Double.NEGATIVE_INFINITY);
       sum.update(Double.POSITIVE_INFINITY);
-      assertEquals(Double.NaN, sum.getValue(), DELTA);
+      assertEquals(Double.NaN, sum.getSum(), DELTA);
    }
 }

@@ -20,6 +20,8 @@ public final class Grouper {
 
    private final FieldAccumulator[] accumulators;
 
+   private final boolean twoPhaseAcc;
+
    private final int inRowLength;
 
    private final int outRowLength;
@@ -73,9 +75,10 @@ public final class Grouper {
    /**
     * noOfGroupingColumns and accumulators must not have overlapping indices.
     */
-   public Grouper(int noOfGroupingColumns, FieldAccumulator[] accumulators) {
+   public Grouper(int noOfGroupingColumns, FieldAccumulator[] accumulators, boolean twoPhaseAcc) {
       this.noOfGroupingColumns = noOfGroupingColumns;
       this.accumulators = accumulators != null && accumulators.length != 0 ? accumulators : null;
+      this.twoPhaseAcc = twoPhaseAcc;
       inRowLength = findInRowLength(noOfGroupingColumns, accumulators);
       if (inRowLength == 0) {
          throw new IllegalArgumentException("Must have at least one grouping or aggregated column");
@@ -118,6 +121,7 @@ public final class Grouper {
             existingGroup = new Object[outRowLength];
             System.arraycopy(row, 0, existingGroup, 0, noOfGroupingColumns);
             if (accumulators != null) {
+               FieldAccumulator.init(existingGroup, accumulators);
                for (FieldAccumulator acc : accumulators) {
                   acc.init(existingGroup);
                }
@@ -125,14 +129,18 @@ public final class Grouper {
             groups.put(groupRowKey, existingGroup);
          }
          if (accumulators != null) {
-            for (FieldAccumulator acc : accumulators) {
-               acc.update(row, existingGroup);
+            if (twoPhaseAcc) {
+               FieldAccumulator.merge(row, existingGroup, accumulators);
+            } else {
+               FieldAccumulator.update(row, existingGroup, accumulators);
             }
          }
       } else {
          // we have global aggregations only
-         for (FieldAccumulator acc : accumulators) {
-            acc.update(row, globalGroup);
+         if (twoPhaseAcc) {
+            FieldAccumulator.merge(row, globalGroup, accumulators);
+         } else {
+            FieldAccumulator.update(row, globalGroup, accumulators);
          }
       }
    }
@@ -157,17 +165,13 @@ public final class Grouper {
             public Object[] next() {
                Object[] row = iterator.next();
                if (accumulators != null) {
-                  for (FieldAccumulator acc : accumulators) {
-                     acc.finish(row);
-                  }
+                  FieldAccumulator.finish(row, accumulators);
                }
                return row;
             }
          };
       } else {
-         for (FieldAccumulator acc : accumulators) {
-            acc.finish(globalGroup);
-         }
+         FieldAccumulator.finish(globalGroup, accumulators);
          return Collections.singleton(globalGroup).iterator();
       }
    }

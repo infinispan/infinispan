@@ -3,6 +3,7 @@ package org.infinispan.objectfilter;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.query.dsl.Query;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,5 +55,5 @@ public interface Matcher {
 
    ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters);
 
-   ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters, FieldAccumulator[] acc);
+   ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters, List<FieldAccumulator> acc);
 }

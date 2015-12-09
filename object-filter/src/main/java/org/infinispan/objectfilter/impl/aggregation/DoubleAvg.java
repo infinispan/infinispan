@@ -14,8 +14,12 @@ class DoubleAvg extends DoubleSum {
    private long count;
 
    void update(double value) {
+      update(value, 1);
+   }
+
+   void update(double value, long count) {
       super.update(value);
-      count++;
+      this.count += count;
    }
 
    /**
@@ -25,7 +29,11 @@ class DoubleAvg extends DoubleSum {
     *
     * @return the arithmetic mean of values, or null if none
     */
-   Double getValue() {
-      return count == 0 ? null : super.getValue() / count;
+   Double getAvg() {
+      return count == 0 ? null : getSum() / count;
+   }
+
+   public long getCount() {
+      return count;
    }
 }

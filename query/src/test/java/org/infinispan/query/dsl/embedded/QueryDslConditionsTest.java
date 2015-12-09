@@ -54,6 +54,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Address address1 = getModelFactory().makeAddress();
       address1.setStreet("Main Street");
       address1.setPostCode("X1234");
+      address1.setNumber(156);
       user1.setAddresses(Collections.singletonList(address1));
 
       User user2 = getModelFactory().makeUser();
@@ -66,9 +67,11 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Address address2 = getModelFactory().makeAddress();
       address2.setStreet("Old Street");
       address2.setPostCode("Y12");
+      address2.setNumber(-12);
       Address address3 = getModelFactory().makeAddress();
       address3.setStreet("Bond Street");
       address3.setPostCode("ZZ");
+      address3.setNumber(312);
       user2.setAddresses(Arrays.asList(address2, address3));
 
       User user3 = getModelFactory().makeUser();
@@ -2256,5 +2259,53 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<Object[]> list = q.list();
       assertEquals(list.get(0)[0], "Bond Street");
+   }
+
+   public void testEmbeddedCount1() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.property("surname"), Expression.count("accountIds"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(2L, list.get(0)[1]);
+      assertEquals(1L, list.get(1)[1]);
+      assertEquals(0L, list.get(2)[1]);
+   }
+
+   public void testEmbeddedCount2() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.property("surname"), Expression.count("addresses.street"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(1L, list.get(0)[1]);
+      assertEquals(2L, list.get(1)[1]);
+      assertEquals(0L, list.get(2)[1]);
+   }
+
+   public void testEmbeddedGlobalSum() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.sum("addresses.number"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(456, list.get(0)[0]);
    }
 }

@@ -16,7 +16,7 @@ public class DoubleAvgTest {
    @Test
    public void testEmptyAvg() throws Exception {
       DoubleAvg avg = new DoubleAvg();
-      assertNull(avg.getValue());
+      assertNull(avg.getAvg());
    }
 
    @Test
@@ -24,7 +24,7 @@ public class DoubleAvgTest {
       DoubleAvg avg = new DoubleAvg();
       avg.update(10);
       avg.update(20);
-      assertEquals(15.0d, avg.getValue(), DELTA);
+      assertEquals(15.0d, avg.getAvg(), DELTA);
    }
 
    @Test
@@ -32,7 +32,7 @@ public class DoubleAvgTest {
       DoubleAvg avg = new DoubleAvg();
       avg.update(10);
       avg.update(Double.NaN);
-      assertEquals(Double.NaN, avg.getValue(), DELTA);
+      assertEquals(Double.NaN, avg.getAvg(), DELTA);
    }
 
    @Test
@@ -40,7 +40,7 @@ public class DoubleAvgTest {
       DoubleAvg avg = new DoubleAvg();
       avg.update(10);
       avg.update(Double.POSITIVE_INFINITY);
-      assertEquals(Double.POSITIVE_INFINITY, avg.getValue(), DELTA);
+      assertEquals(Double.POSITIVE_INFINITY, avg.getAvg(), DELTA);
    }
 
    @Test
@@ -48,7 +48,7 @@ public class DoubleAvgTest {
       DoubleAvg avg = new DoubleAvg();
       avg.update(10);
       avg.update(Double.NEGATIVE_INFINITY);
-      assertEquals(Double.NEGATIVE_INFINITY, avg.getValue(), DELTA);
+      assertEquals(Double.NEGATIVE_INFINITY, avg.getAvg(), DELTA);
    }
 
    @Test
@@ -57,6 +57,6 @@ public class DoubleAvgTest {
       avg.update(10);
       avg.update(Double.NEGATIVE_INFINITY);
       avg.update(Double.POSITIVE_INFINITY);
-      assertEquals(Double.NaN, avg.getValue(), DELTA);
+      assertEquals(Double.NaN, avg.getAvg(), DELTA);
    }
 }
