@@ -107,10 +107,16 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
       // Since we picked the biggest topology, its topology id may not be the biggest
       int maxTopologyId = 0;
+      int maxRebalanceId = 0;
       for (CacheStatusResponse response : statusResponses) {
          CacheTopology topology = response.getCacheTopology();
-         if (topology != null && maxTopologyId < topology.getTopologyId()) {
-            maxTopologyId = topology.getTopologyId();
+         if (topology != null) {
+            if (maxTopologyId < topology.getTopologyId()) {
+               maxTopologyId = topology.getTopologyId();
+            }
+            if (maxRebalanceId < topology.getRebalanceId()) {
+               maxRebalanceId = topology.getRebalanceId();
+            }
          }
       }
 
@@ -121,7 +127,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       // confirmation status (yet).
       CacheTopology mergedTopology = null;
       if (maxTopology != null) {
-         mergedTopology = new CacheTopology(maxTopologyId + 1, maxTopology.getRebalanceId(),
+         mergedTopology = new CacheTopology(maxTopologyId + 1, maxRebalanceId + 1,
                maxTopology.getCurrentCH(), null, maxTopology.getActualMembers());
       }
 
