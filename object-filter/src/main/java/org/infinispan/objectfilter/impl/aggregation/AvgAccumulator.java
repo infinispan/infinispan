@@ -13,7 +13,7 @@ package org.infinispan.objectfilter.impl.aggregation;
  */
 final class AvgAccumulator extends FieldAccumulator {
 
-   public AvgAccumulator(int inPos, int outPos, Class<?> fieldType) {
+   protected AvgAccumulator(int inPos, int outPos, Class<?> fieldType) {
       super(inPos, outPos);
       if (!Number.class.isAssignableFrom(fieldType)) {
          throw new IllegalStateException("Aggregation AVG cannot be applied to property of type " + fieldType.getName());
@@ -33,7 +33,17 @@ final class AvgAccumulator extends FieldAccumulator {
    }
 
    @Override
-   public void finish(Object[] accRow) {
-      accRow[outPos] = ((DoubleAvg) accRow[outPos]).getValue();
+   protected void merge(Object[] accRow, Object value) {
+      if (value instanceof DoubleAvg) {
+         DoubleAvg avgVal = (DoubleAvg) value;
+         ((DoubleAvg) accRow[outPos]).update(avgVal.getSum(), avgVal.getCount());
+      } else {
+         update(accRow, value);
+      }
+   }
+
+   @Override
+   protected void finish(Object[] accRow) {
+      accRow[outPos] = ((DoubleAvg) accRow[outPos]).getAvg();
    }
 }

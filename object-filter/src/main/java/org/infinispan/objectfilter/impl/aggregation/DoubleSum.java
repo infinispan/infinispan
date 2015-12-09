@@ -31,7 +31,7 @@ class DoubleSum {
     *
     * @return the sum of values
     */
-   Double getValue() {
+   Double getSum() {
       // Better error bounds to add both terms as the final sum
       double tmp = sum + sumCompensation;
       if (Double.isNaN(tmp) && Double.isInfinite(simpleSum)) {

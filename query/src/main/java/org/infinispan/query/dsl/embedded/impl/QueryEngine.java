@@ -207,7 +207,6 @@ public class QueryEngine {
             accumulators.add(acc);
          }
       }
-      FieldAccumulator[] _accumulators = accumulators.toArray(new FieldAccumulator[accumulators.size()]);
 
       StringBuilder firstPhaseQuery = new StringBuilder();
       firstPhaseQuery.append("SELECT ");
@@ -271,7 +270,7 @@ public class QueryEngine {
       // second phase: grouping, aggregation, 'having' clause filtering, sorting and pagination
       String secondPhaseQueryStr = secondPhaseQuery.toString();
       return new AggregatingQuery(queryFactory, cache, secondPhaseQueryStr, namedParameters,
-            noOfGroupingColumns, _accumulators,
+            noOfGroupingColumns, accumulators, false,
             getObjectFilter(new RowMatcher(_columns), secondPhaseQueryStr, namedParameters, null),
             startOffset, maxResults, baseQuery);
    }
@@ -382,36 +381,41 @@ public class QueryEngine {
       String firstPhaseQueryStr = firstPhaseQuery.toString();
       BaseQuery baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr, namedParameters));
 
-      List<FieldAccumulator> accumulators = new LinkedList<FieldAccumulator>();
+      List<FieldAccumulator> secondPhaseAccumulators = new LinkedList<FieldAccumulator>();
+      List<FieldAccumulator> thirdPhaseAccumulators = new LinkedList<FieldAccumulator>();
       RowPropertyHelper.ColumnMetadata[] _columns = new RowPropertyHelper.ColumnMetadata[columns.size()];
       StringBuilder secondPhaseQuery = new StringBuilder();
       secondPhaseQuery.append("SELECT ");
       for (PropertyPath p : columns.keySet()) {
          RowPropertyHelper.ColumnMetadata c = columns.get(p);
-         _columns[c.getColumnIndex()] = c;
          if (c.getColumnIndex() > 0) {
             secondPhaseQuery.append(", ");
          }
          // only multi-valued fields need to be accumulated in this phase; for the others the accumulator is null
          if (p.getAggregationType() != null) {
+            FieldAccumulator acc = FieldAccumulator.makeAccumulator(p.getAggregationType(), c.getColumnIndex(), c.getColumnIndex(), c.getPropertyType());
             if (propertyHelper.isRepeatedProperty(parsingResult.getTargetEntityName(), p.getPath())) {
-               FieldAccumulator acc = FieldAccumulator.makeAccumulator(p.getAggregationType(), c.getColumnIndex(), c.getColumnIndex(), c.getPropertyType());
-               accumulators.add(acc);
+               secondPhaseAccumulators.add(acc);
+               if (p.getAggregationType() == PropertyPath.AggregationType.COUNT) {
+                  c = new RowPropertyHelper.ColumnMetadata(c.getColumnIndex(), c.getColumnName(), Long.class);
+                  acc = FieldAccumulator.makeAccumulator(PropertyPath.AggregationType.SUM, c.getColumnIndex(), c.getColumnIndex(), Long.class);
+               }
             } else {
-               accumulators.add(null);
+               secondPhaseAccumulators.add(null);
             }
+            thirdPhaseAccumulators.add(acc);
          } else {
-            accumulators.add(null);
+            secondPhaseAccumulators.add(null);
          }
          secondPhaseQuery.append(JPAQueryGenerator.DEFAULT_ALIAS).append('.').append(p.asStringPath());
+         _columns[c.getColumnIndex()] = c;
       }
       secondPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(JPAQueryGenerator.DEFAULT_ALIAS);
       String secondPhaseQueryStr = secondPhaseQuery.toString();
-      FieldAccumulator[] _accumulators = accumulators.toArray(new FieldAccumulator[accumulators.size()]);
 
       HybridQuery projectingAggregatingQuery = new HybridQuery(queryFactory, cache,
             secondPhaseQueryStr, namedParameters,
-            getObjectFilter(getSecondPhaseMatcher(), secondPhaseQueryStr, namedParameters, _accumulators),
+            getObjectFilter(getSecondPhaseMatcher(), secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
             -1, -1, baseQuery);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
@@ -442,19 +446,9 @@ public class QueryEngine {
          }
       }
 
-      // rebuild the accumulators, now for all fields
-      accumulators.clear();
-      for (PropertyPath p : columns.keySet()) {
-         RowPropertyHelper.ColumnMetadata c = columns.get(p);
-         if (p.getAggregationType() != null) {
-            FieldAccumulator acc = FieldAccumulator.makeAccumulator(p.getAggregationType(), c.getColumnIndex(), c.getColumnIndex(), c.getPropertyType());
-            accumulators.add(acc);
-         }
-      }
-      _accumulators = accumulators.toArray(new FieldAccumulator[accumulators.size()]);
       String thirdPhaseQueryStr = thirdPhaseQuery.toString();
       return new AggregatingQuery(queryFactory, cache, thirdPhaseQueryStr, namedParameters,
-            noOfGroupingColumns, _accumulators,
+            noOfGroupingColumns, thirdPhaseAccumulators, true,
             getObjectFilter(new RowMatcher(_columns), thirdPhaseQueryStr, namedParameters, null),
             startOffset, maxResults, projectingAggregatingQuery);
    }
@@ -631,10 +625,10 @@ public class QueryEngine {
       return parsingResult;
    }
 
-   private ObjectFilter getObjectFilter(BaseMatcher matcher, String jpqlString, Map<String, Object> namedParameters, FieldAccumulator[] acc) {
+   private ObjectFilter getObjectFilter(BaseMatcher matcher, String jpqlString, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
       ObjectFilter objectFilter;
       // if parameters are present caching cannot be currently performed due to internal implementation limitations
-      if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
+      if (queryCache != null && (namedParameters == null || namedParameters.isEmpty()) && acc == null) {
          KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, matcher.getClass());
          objectFilter = queryCache.get(queryCacheKey);
          if (objectFilter == null) {

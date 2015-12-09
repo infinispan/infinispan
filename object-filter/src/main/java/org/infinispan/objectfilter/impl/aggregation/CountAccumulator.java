@@ -9,13 +9,20 @@ package org.infinispan.objectfilter.impl.aggregation;
  */
 final class CountAccumulator extends FieldAccumulator {
 
-   public CountAccumulator(int inPos, int outPos) {
+   protected CountAccumulator(int inPos, int outPos) {
       super(inPos, outPos);
    }
 
    @Override
    public void init(Object[] accRow) {
       accRow[outPos] = 0L;
+   }
+
+   @Override
+   protected void merge(Object[] accRow, Object value) {
+      if (value != null) {
+         accRow[outPos] = (Long) accRow[outPos] + (Long) value;
+      }
    }
 
    @Override
