@@ -60,6 +60,22 @@ import static org.infinispan.util.logging.LogFactory.CLUSTER;
  * @since 5.2
  */
 public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
+   private enum ClusterManagerStatus {
+      INITIALIZING,
+      REGULAR_MEMBER,
+      COORDINATOR,
+      RECOVERING_CLUSTER,
+      STOPPING;
+
+      boolean isRunning() {
+         return this != STOPPING;
+      }
+
+      boolean isCoordinator() {
+         return this == COORDINATOR || this == RECOVERING_CLUSTER;
+      }
+   }
+
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -70,15 +86,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private EmbeddedCacheManager cacheManager;
    private TimeService timeService;
    private ExecutorService asyncTransportExecutor;
+   private SemaphoreCompletionService<Void> viewHandlingCompletionService;
 
    // These need to be volatile because they are sometimes read without holding the view handling lock.
-   private volatile boolean isCoordinator;
-   private volatile boolean isShuttingDown;
-   private boolean mustRecoverClusterStatus;
-   private final Object viewHandlingLock = new Object();
-
    private volatile int viewId = -1;
-   private final Object viewUpdateLock = new Object();
+   private volatile ClusterManagerStatus clusterManagerStatus = ClusterManagerStatus.INITIALIZING;
+   private final Object clusterManagerLock = new Object();
 
 
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = CollectionFactory.makeConcurrentMap();
@@ -104,17 +117,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Start(priority = 100)
    public void start() {
-      isShuttingDown = false;
-      isCoordinator = transport.isCoordinator();
+      viewHandlingCompletionService = new SemaphoreCompletionService<>(asyncTransportExecutor, 1);
 
       viewListener = new ClusterViewListener();
       cacheManagerNotifier.addListener(viewListener);
       // The listener already missed the initial view
-      asyncTransportExecutor.submit(new Runnable() {
-         @Override
-         public void run() {
-            handleClusterView(false, transport.getViewId());
-         }
+      viewHandlingCompletionService.submit(() -> {
+         handleClusterView(false, transport.getViewId());
+         return null;
       });
 
       fetchRebalancingStatusFromCoordinator();
@@ -123,8 +133,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    protected void fetchRebalancingStatusFromCoordinator() {
       if (!transport.isCoordinator()) {
          ReplicableCommand command = new CacheTopologyControlCommand(null,
-               CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(),
-               transport.getViewId());
+               CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), -1);
          Address coordinator = transport.getCoordinator();
          try {
             Map<Address, Response> responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
@@ -143,34 +152,41 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Stop(priority = 100)
    public void stop() {
-      isShuttingDown = true;
-      cacheManagerNotifier.removeListener(viewListener);
-
       // Stop blocking cache topology commands.
-      // The synchronization also ensures that the listener has finished executing
-      // so we don't get InterruptedExceptions when the notification thread pool shuts down
-      synchronized (viewUpdateLock) {
-         viewId = Integer.MAX_VALUE;
-         viewUpdateLock.notifyAll();
+      synchronized (clusterManagerLock) {
+         clusterManagerStatus = ClusterManagerStatus.STOPPING;
+         clusterManagerLock.notifyAll();
       }
+
+      cacheManagerNotifier.removeListener(viewListener);
    }
 
    @Override
-   public CacheStatusResponse handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception {
-      waitForView(viewId, joinInfo.getTimeout());
-      if (isShuttingDown) {
-         log.debugf("Ignoring join request from %s for cache %s, the local cache manager is shutting down",
-               joiner, cacheName);
-         return null;
-      }
+   public CacheStatusResponse handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo,
+         int joinerViewId) throws Exception {
+      ClusterCacheStatus cacheStatus;
+      synchronized (clusterManagerLock) {
+         waitForView(joinerViewId, joinInfo.getTimeout());
 
-      ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(cacheName);
+         if (!clusterManagerStatus.isRunning()) {
+            log.debugf("Ignoring join request from %s for cache %s, the local cache manager is shutting down",
+                  joiner, cacheName);
+            return null;
+         }
+         if (joinerViewId < viewId) {
+            log.debugf("Ignoring join request from %s for cache %s, joiner's view id is too old: %d", joiner,
+                  cacheName, joinerViewId);
+            return null;
+         }
+
+         cacheStatus = initCacheStatusIfAbsent(cacheName);
+      }
       return cacheStatus.doJoin(joiner, joinInfo);
    }
 
    @Override
    public void handleLeave(String cacheName, Address leaver, int viewId) throws Exception {
-      if (isShuttingDown) {
+      if (!clusterManagerStatus.isRunning()) {
          log.debugf("Ignoring leave request from %s for cache %s, the local cache manager is shutting down",
                leaver, cacheName);
          return;
@@ -261,55 +277,69 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void handleClusterView(boolean mergeView, int newViewId) {
-      synchronized (viewHandlingLock) {
-         // check to ensure this is not an older view
-         if (newViewId <= viewId) {
+      synchronized (clusterManagerLock) {
+         if (newViewId < transport.getViewId()) {
             log.tracef("Ignoring old cluster view notification: %s", newViewId);
             return;
          }
 
-         boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
-         isCoordinator = transport.isCoordinator();
+         boolean isCoordinator = transport.isCoordinator();
+         boolean becameCoordinator = isCoordinator && !clusterManagerStatus.isCoordinator();
          if (trace) {
-            log.tracef("Received new cluster view: %d, isCoordinator = %s, becameCoordinator = %s", (Object)newViewId,
-                  isCoordinator, becameCoordinator);
+            log.tracef("Received new cluster view: %d, isCoordinator = %s, old status = %s", (Object) newViewId,
+                  isCoordinator, clusterManagerStatus);
          }
-         mustRecoverClusterStatus |= mergeView || becameCoordinator;
-         if (!isCoordinator)
+
+         if (!isCoordinator) {
+            clusterManagerStatus = ClusterManagerStatus.REGULAR_MEMBER;
             return;
-
-         if (mustRecoverClusterStatus) {
-            // Clean up leftover cache status information from the last time we were coordinator.
-            // E.g. if the local node was coordinator, started a rebalance, and then lost coordinator
-            // status because of a merge, the existing cache statuses may have a rebalance in progress.
-            cacheStatusMap.clear();
-            try {
-               recoverClusterStatus(newViewId, mergeView, transport.getMembers());
-               mustRecoverClusterStatus = false;
-            } catch (InterruptedException e) {
-               log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
-               // the CTMI has already stopped, no need to update the view id or notify waiters
-               return;
-            } catch (SuspectException e) {
-               // We will retry when we receive the new view and then we'll reset the mustRecoverClusterStatus flag
-               return;
-            } catch (Exception e) {
-               if (!isShuttingDown) {
-                  log.failedToRecoverClusterState(e);
-               } else {
-                  log.tracef("Cluster state recovery failed because the coordinator is shutting down");
-               }
-            }
+         }
+         if (becameCoordinator || mergeView) {
+            clusterManagerStatus = ClusterManagerStatus.RECOVERING_CLUSTER;
          }
 
-         // update the view id last, so join requests from other nodes wait until we recovered existing members' info
-         synchronized (viewUpdateLock) {
-            viewId = newViewId;
-            viewUpdateLock.notifyAll();
+         // notify threads that might be waiting to join
+         viewId = newViewId;
+         clusterManagerLock.notifyAll();
+      }
+
+      // The SemaphoreCompletionService acts as a critical section, so we don't need to worry about
+      // multiple threads.
+      if (clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
+         // Clean up leftover cache status information from the last time we were coordinator.
+         // E.g. if the local node was coordinator, started a rebalance, and then lost coordinator
+         // status because of a merge, the existing cache statuses may have a rebalance in progress.
+         cacheStatusMap.clear();
+         try {
+            recoverClusterStatus(newViewId, mergeView, transport.getMembers());
+
+            synchronized (clusterManagerLock) {
+               if (viewId != newViewId) {
+                  log.debugf("View updated while we were recovering the cluster for view %d", newViewId);
+                  return;
+               }
+               clusterManagerStatus = ClusterManagerStatus.COORDINATOR;
+               // notify threads that might be waiting to join
+               clusterManagerLock.notifyAll();
+            }
+         } catch (InterruptedException e) {
+            if (trace)
+               log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
+         } catch (SuspectException e) {
+            if (trace)
+               log.tracef("Cluster state recovery interrupted because a member was lost. Will retry.");
+         } catch (Exception e) {
+            if (clusterManagerStatus.isRunning()) {
+               log.failedToRecoverClusterState(e);
+            } else {
+               log.tracef("Cluster state recovery failed because the coordinator is shutting down");
+            }
          }
       }
 
-      if (!mustRecoverClusterStatus) {
+      if (clusterManagerStatus == ClusterManagerStatus.COORDINATOR) {
+         // If we have recovered the cluster status, we rebalance the caches to include minor partitions
+         // If we processed a regular view, we prune members that left.
          try {
             updateCacheMembers(transport.getMembers());
          } catch (Exception e) {
@@ -338,7 +368,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       CLUSTER.startRebalance(cacheName, cacheTopology);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology, null,
-            transport.getViewId());
+            viewId);
       executeOnClusterAsync(command, getGlobalTimeout(), totalOrder, distributed);
    }
 
@@ -403,18 +433,28 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       transport.invokeRemotely(null, heartbeatCommand, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
    }
 
-   private void waitForView(int viewId, long timeout) throws InterruptedException {
-      if (this.viewId < viewId) {
-         log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s", viewId, this.viewId);
-      }
-      long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
-      synchronized (viewUpdateLock) {
-         while (this.viewId < viewId && !timeService.isTimeExpired(endTime)) {
-            viewUpdateLock.wait(1000);
+   /**
+    * Wait until we have received view {@code joinerViewId} and we have finished recovering the cluster state.
+    * <p>
+    * Returns early if the node is shutting down.
+    *
+    * @throws TimeoutException if the timeout expired.
+    */
+   private void waitForView(int joinerViewId, long timeout) throws InterruptedException {
+      if (joinerViewId > viewId) {
+         log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s",
+               joinerViewId, viewId);
+         long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
+         synchronized (clusterManagerLock) {
+            while (viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
+               if (timeService.isTimeExpired(endTime) || !clusterManagerStatus.isRunning())
+                  break;
+               clusterManagerLock.wait(timeService.remainingTime(endTime, TimeUnit.MILLISECONDS));
+            }
          }
-      }
-      if (this.viewId < viewId) {
-         throw new TimeoutException("Timed out waiting for view " + viewId);
+         if (timeService.isTimeExpired(endTime)) {
+            throw new TimeoutException("Timed out waiting for view " + joinerViewId);
+         }
       }
    }
 
@@ -471,7 +511,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS, timeout, null,
                                   deliverOrder, distributed);
       } catch (Exception e) {
-         throw new CacheException("Failed to broadcast asynchronous command: " + command);
+         throw new CacheException("Failed to broadcast asynchronous command: " + command, e);
       }
    }
 
@@ -480,7 +520,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       log.debugf("Updating cluster-wide current topology for cache %s, topology = %s, availability mode = %s",
             cacheName, cacheTopology, availabilityMode);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology, availabilityMode, transport.getViewId());
+            CacheTopologyControlCommand.Type.CH_UPDATE, transport.getAddress(), cacheTopology,
+            availabilityMode, viewId);
       executeOnClusterAsync(command, getGlobalTimeout(), totalOrder, distributed);
    }
 
@@ -488,7 +529,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
       log.debugf("Updating cluster-wide stable topology for cache %s, topology = %s", cacheName, cacheTopology);
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.STABLE_TOPOLOGY_UPDATE, transport.getAddress(), cacheTopology, null, transport.getViewId());
+            CacheTopologyControlCommand.Type.STABLE_TOPOLOGY_UPDATE, transport.getAddress(), cacheTopology,
+            null, viewId);
       executeOnClusterAsync(command, getGlobalTimeout(), totalOrder, distributed);
    }
 
@@ -565,11 +607,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       public void handleViewChange(final ViewChangedEvent e) {
          // Need to recover existing caches asynchronously (in case we just became the coordinator).
          // Cannot use the async notification thread pool, by default it only has 1 thread.
-         asyncTransportExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-               handleClusterView(e.isMergeView(), e.getViewId());
-            }
+         viewHandlingCompletionService.submit(() -> {
+            handleClusterView(e.isMergeView(), e.getViewId());
+            return null;
          });
       }
    }

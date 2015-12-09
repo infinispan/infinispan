@@ -178,15 +178,12 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Override
    public void onTopologyUpdate(CacheTopology cacheTopology) {
       boolean isStable = isTopologyStable(cacheTopology);
-      if (trace) {
-         log.tracef("On stable topology update. Has pending tx? %b. Is stable? %b. topology=%s",
-                    !partialTransactions.isEmpty(), isStable, cacheTopology);
-      }
       if (isStable) {
-         if (!partialTransactions.isEmpty()) {
-            for (TransactionInfo transactionInfo : partialTransactions.values()) {
-               completeTransaction(transactionInfo, cacheTopology);
-            }
+         if (trace) {
+            log.tracef("On stable topology update. Pending txs: %d", partialTransactions.size());
+         }
+         for (TransactionInfo transactionInfo : partialTransactions.values()) {
+            completeTransaction(transactionInfo, cacheTopology);
          }
       }
    }

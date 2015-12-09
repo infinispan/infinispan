@@ -175,8 +175,9 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       }
 
       // Increment the topology id so that it's bigger than any topology that might have been sent by the old
-      // coordinator. +1 is enough because there nodes wait for the new JGroups view before answering the status
-      // request, and after they have the new view they can't process topology updates with the old view id.
+      // coordinator.
+      // +1 is enough because nodes wait for the new JGroups view before answering the
+      // status request, and then they can't process topology updates from the old view.
       // Also cancel any pending rebalance by removing the pending CH, because we don't recover the rebalance
       // confirmation status (yet).
       if (mergedTopology != null) {

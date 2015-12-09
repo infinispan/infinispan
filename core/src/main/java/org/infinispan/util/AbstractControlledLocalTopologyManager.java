@@ -71,8 +71,9 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public void handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
-      delegate.handleStableTopologyUpdate(cacheName, cacheTopology, viewId);
+   public void handleStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, final Address sender,
+         int viewId) {
+      delegate.handleStableTopologyUpdate(cacheName, cacheTopology, sender, viewId);
    }
 
    @Override

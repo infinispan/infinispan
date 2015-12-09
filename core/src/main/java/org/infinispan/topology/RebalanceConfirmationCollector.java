@@ -68,10 +68,12 @@ class RebalanceConfirmationCollector {
 
    @Override
    public String toString() {
-      return "RebalanceConfirmationCollector{" +
-            "cacheName=" + cacheName +
-            "topologyId=" + topologyId +
-            ", confirmationsNeeded=" + confirmationsNeeded +
-            '}';
+      synchronized (this) {
+         return "RebalanceConfirmationCollector{" +
+               "cacheName=" + cacheName +
+               "topologyId=" + topologyId +
+               ", confirmationsNeeded=" + confirmationsNeeded +
+               '}';
+      }
    }
 }

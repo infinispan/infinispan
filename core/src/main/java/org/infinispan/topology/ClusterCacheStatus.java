@@ -639,7 +639,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
          if (isRebalanceInProgress()) {
             log.tracef("Postponing rebalance for cache %s, there's already a rebalance in progress: %s",
-                  cacheName, cacheTopology);
+                  cacheName, rebalanceConfirmationCollector);
             return;
          }
 
