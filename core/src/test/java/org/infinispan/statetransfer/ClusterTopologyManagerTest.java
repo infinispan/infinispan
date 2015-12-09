@@ -312,7 +312,11 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLocalTopologyManager, true);
    }
 
+   /*
+    * Test that cluster recovery can finish if one of the members leaves before sending the status response.
+    */
    public void testAbruptLeaveAfterGetStatus() throws TimeoutException, InterruptedException {
+
       // Block the GET_STATUS command on node 2
       final LocalTopologyManager localTopologyManager2 = TestingUtil.extractGlobalComponent(manager(1),
             LocalTopologyManager.class);
@@ -329,30 +333,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager2).handleStatusRequest(anyInt());
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
-            if (topology.getRebalanceId() == initialTopology.getRebalanceId() + 1) {
-               log.debugf("Discarding CH update command %s", topology);
-               return null;
-            }
-            return invocation.callRealMethod();
-         }
-      }).when(spyLocalTopologyManager2).handleTopologyUpdate(eq(CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt(), any(Address.class));
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
-            if (topology.getRebalanceId() == initialTopology.getRebalanceId() + 2) {
-               log.debugf("Discarding rebalance command %s", topology);
-               return null;
-            }
-            return invocation.callRealMethod();
-         }
-      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
-            any(Address.class));
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
       // Node 1 (the coordinator) dies. Node 2 becomes coordinator and tries to call GET_STATUS
@@ -372,16 +352,27 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.waitForRehashToComplete(c2);
    }
 
+   /**
+    * Similar to testAbruptLeaveAfterGetStatus, but also test that delayed CacheTopologyControlCommands
+    * are handled properly.
+    * After node 2 becomes the coordinator and the GET_STATUS command is unblocked, it normally installs
+    * these topologies:
+    * <ol>
+    * <li>The recovered topology with 2 and 3 as members (topologyId = initial topologyId + 1, rebalanceId =
+    * initial rebalanceId + 1)
+    * <li>A topology starting the rebalance with 2 and 3 (topologyId = initial topologyId + 2, rebalanceId =
+    * initial rebalanceId + 1)
+    * <li>A topology with 2 as the only member, but still with a pending CH (topologyId = initialTopologyId
+    * + 3, rebalanceId = initial rebalanceId + 2)
+    * <li>A topology ending the rebalance (topologyId = initialTopologyId + 4, rebalanceId = initial
+    * rebalanceId + 2)
+    * </ol>
+    * Sometimes node 2 can confirm the rebalance before receiving the topology in step 3, in which case
+    * step 3 is skipped.
+    * We discard the topologies from steps 1 and 2, to test that the topology update in step 3 is enough to
+    * start and finish the rebalance.
+    */
    public void testAbruptLeaveAfterGetStatus2() throws TimeoutException, InterruptedException {
-      // Similar to testAbruptLeaveAfterGetStatus, but also test that delayed CacheTopologyControlCommands
-      // are handled properly.
-      // After node 2 becomes the coordinator and the GET_STATUS command is unblocked, it normally installs these topologies:
-      // 1. The recovered topology with 2 and 3 as members (topologyId = initial topologyId + 1, rebalanceId = initial rebalanceId + 1)
-      // 2. A topology starting the rebalance with 2 and 3 (topologyId = initial topologyId + 2, rebalanceId = initial rebalanceId + 2)
-      // 3. A topology with 2 as the only member, but still with a pending CH (topologyId = initialTopologyId + 3, rebalanceId = initial rebalanceId + 2)
-      // 4. A topology ending the rebalance (topologyId = initialTopologyId + 4, rebalanceId = initial rebalanceId + 2)
-      // Sometimes node 2 can confirm the rebalance before receiving the topology in step 3, in which case step 3 is skipped.
-      // We discard the topologies from steps 1 and 2, to test that the topology update in step 3 is enough to start and finish the rebalance.
 
       // Block the GET_STATUS command on node 2
       final LocalTopologyManager localTopologyManager2 = TestingUtil.extractGlobalComponent(manager(1),
@@ -400,7 +391,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
          }
       }).when(spyLocalTopologyManager2).handleStatusRequest(anyInt());
 
-      // Delay the first CH_UPDATE after the merge so that it arrives after
+      // Discard the first topology update after the merge
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -413,6 +404,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
          }
       }).when(spyLocalTopologyManager2).handleTopologyUpdate(eq(CACHE_NAME), any(CacheTopology.class),
             any(AvailabilityMode.class), anyInt(), any(Address.class));
+      // Discard the first rebalance after the merge
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
