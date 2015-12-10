@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:8.1 http://www.infinispan.org/schemas/infinispan-config-8.1.xsd
+      xsi:schemaLocation="urn:infinispan:config:8.2 infinispan-config-8.2.xsd
                           urn:infinispan:config:store:jdbc:8.0 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-8.0.xsd"
-      xmlns="urn:infinispan:config:8.0">
+      xmlns="urn:infinispan:config:8.2">
 
    <cache-container default-cache="default">
       <transport cluster="MyCluster"/>
