@@ -18,8 +18,6 @@ import java.io.IOException;
  */
 public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, FieldDescriptor, Integer> implements TagHandler {
 
-   private static final Object DUMMY_VALUE = new Object();
-
    private boolean payloadStarted = false;
    private int skipping = 0;
 
@@ -178,7 +176,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
                // Repeated fields can't have default values but we need to at least take care of IS [NOT] NULL predicates
                if (fieldSeen) {
                   // Here we use a dummy value since it would not matter anyway for IS [NOT] NULL
-                  attributeNode.processValue(DUMMY_VALUE, this);
+                  attributeNode.processValue(AttributeNode.DUMMY_VALUE, this);
                } else {
                   processNullAttribute(attributeNode);
                }

@@ -16,6 +16,8 @@ import java.util.Map;
  */
 public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<AttributeId>> {
 
+   public static final Object DUMMY_VALUE = new Object();
+
    private static final AttributeNode[] EMPTY_CHILDREN = new AttributeNode[0];
 
    // this is never null, except for the root node
@@ -105,7 +107,7 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
    }
 
    public void processValue(Object attributeValue, MatcherEvalContext<?, AttributeMetadata, AttributeId> ctx) {
-      if (projections != null) {
+      if (projections != null && attributeValue != DUMMY_VALUE) {
          projections.processProjections(ctx, attributeValue);
       }
       if (predicates != null) {
