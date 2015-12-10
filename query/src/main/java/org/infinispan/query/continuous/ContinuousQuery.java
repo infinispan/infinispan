@@ -54,11 +54,11 @@ public final class ContinuousQuery<K, V> {
    }
 
    @Listener(clustered = true, includeCurrentState = true, observation = Listener.Observation.POST)
-   public static class EntryListener<K, V, C> {
+   private static class EntryListener<K, V, C> {
 
       private final ContinuousQueryResultListener<K, C> listener;
 
-      public EntryListener(ContinuousQueryResultListener<K, C> listener) {
+      EntryListener(ContinuousQueryResultListener<K, C> listener) {
          this.listener = listener;
       }
 
