@@ -46,7 +46,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
-      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml" } };
+      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml"}, {"8.2.xml"} };
    }
 
    @Test(dataProvider="configurationFiles")
@@ -60,6 +60,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             switch (version) {
+               case 82:
+                  configurationCheck82(cm);
+                  break;
                case 81:
                   configurationCheck81(cm);
                   break;
@@ -76,6 +79,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             }
          }
       });
+   }
+
+   private static void configurationCheck82(EmbeddedCacheManager cm) {
+      configurationCheck81(cm);
    }
 
    private static void configurationCheck81(EmbeddedCacheManager cm) {

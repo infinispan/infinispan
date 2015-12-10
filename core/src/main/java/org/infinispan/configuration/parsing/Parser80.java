@@ -92,9 +92,10 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespaces({
-   @Namespace(uri = "urn:infinispan:config:8.0", root = "infinispan"),
-   @Namespace(uri = "urn:infinispan:config:8.1", root = "infinispan"),
-   @Namespace(root = "infinispan")
+      @Namespace(uri = "urn:infinispan:config:8.0", root = "infinispan"),
+      @Namespace(uri = "urn:infinispan:config:8.1", root = "infinispan"),
+      @Namespace(uri = "urn:infinispan:config:8.2", root = "infinispan"),
+      @Namespace(root = "infinispan")
 })
 public class Parser80 implements ConfigurationParser {
 
