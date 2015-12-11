@@ -64,7 +64,7 @@ public class ListenerWithDslFilterProfilingTest extends SingleCacheManagerTest {
    }
 
    @Listener
-   public static class NoOpEntryListener {
+   private static class NoOpEntryListener {
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent<?, ?> event) {

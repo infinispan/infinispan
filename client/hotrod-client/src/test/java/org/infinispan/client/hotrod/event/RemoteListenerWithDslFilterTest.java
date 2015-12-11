@@ -242,7 +242,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    @ClientListener(filterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
          converterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
-   public static class ClientEntryListener {
+   private static class ClientEntryListener {
 
       private final Log log = LogFactory.getLog(getClass());
 
