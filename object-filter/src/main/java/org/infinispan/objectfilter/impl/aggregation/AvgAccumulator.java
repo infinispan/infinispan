@@ -4,7 +4,7 @@ package org.infinispan.objectfilter.impl.aggregation;
  * Computes the average of {@link Number}s. The output type is always a {@link Double}. Nulls are excluded from the
  * computation. If there are no remaining non-null values to which the aggregate function can be applied, the result of
  * the aggregate function is {@code null}.
- * <p/>
+ * <p>
  * The implementation uses compensated summation in order to reduce the error bound in the numerical sum compared to a
  * simple summation of {@code double} values similar to the way {@link java.util.DoubleSummaryStatistics} works.
  *
@@ -22,21 +22,21 @@ final class AvgAccumulator extends FieldAccumulator {
 
    @Override
    public void init(Object[] accRow) {
-      accRow[outPos] = new DoubleAvg();
+      accRow[outPos] = new DoubleStat();
    }
 
    @Override
    public void update(Object[] accRow, Object value) {
       if (value != null) {
-         ((DoubleAvg) accRow[outPos]).update(((Number) value).doubleValue());
+         ((DoubleStat) accRow[outPos]).update(((Number) value).doubleValue());
       }
    }
 
    @Override
    protected void merge(Object[] accRow, Object value) {
-      if (value instanceof DoubleAvg) {
-         DoubleAvg avgVal = (DoubleAvg) value;
-         ((DoubleAvg) accRow[outPos]).update(avgVal.getSum(), avgVal.getCount());
+      if (value instanceof DoubleStat) {
+         DoubleStat avgVal = (DoubleStat) value;
+         ((DoubleStat) accRow[outPos]).update(avgVal.getSum(), avgVal.getCount());
       } else {
          update(accRow, value);
       }
@@ -44,6 +44,6 @@ final class AvgAccumulator extends FieldAccumulator {
 
    @Override
    protected void finish(Object[] accRow) {
-      accRow[outPos] = ((DoubleAvg) accRow[outPos]).getAvg();
+      accRow[outPos] = ((DoubleStat) accRow[outPos]).getAvg();
    }
 }
