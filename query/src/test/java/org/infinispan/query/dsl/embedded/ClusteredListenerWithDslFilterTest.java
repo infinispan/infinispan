@@ -133,7 +133,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    }
 
    @Listener(clustered = true, includeCurrentState = true)
-   public static class EntryListener {
+   private static class EntryListener {
 
       // this is where we accumulate matches
       public final List<ObjectFilter.FilterResult> results = new ArrayList<ObjectFilter.FilterResult>();
