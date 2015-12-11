@@ -134,7 +134,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    }
 
    @Listener(observation = Listener.Observation.POST)
-   public static class EntryListener {
+   private static class EntryListener {
 
       // this is where we accumulate matches
       public final List<ObjectFilter.FilterResult> createEvents = new ArrayList<ObjectFilter.FilterResult>();

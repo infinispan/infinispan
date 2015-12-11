@@ -23,15 +23,15 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagersTest {
    
-   protected final int NUM_CACHES = 3;
-   protected final int NUM_OWNERS = NUM_CACHES - 1;
+   protected final int NUM_NODES = 3;
+   protected final int NUM_OWNERS = NUM_NODES - 1;
 
    protected abstract CacheMode getCacheMode();
    
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder c = buildConfiguration();
-      createCluster(c, NUM_CACHES);
+      createCluster(c, NUM_NODES);
       waitForClusterToForm();
    }
 
