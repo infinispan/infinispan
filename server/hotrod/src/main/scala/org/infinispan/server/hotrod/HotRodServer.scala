@@ -58,6 +58,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var clientListenerRegistry: ClientListenerRegistry = _
    private var marshaller: Marshaller = _
    private var distributedExecutorService: DefaultExecutorService = _
+   private var viewChangeListener: CrashedMemberDetectorListener = _
+   private var topologyChangeListener: ReAddMyAddressListener = _
+
 
    lazy val iterationManager: IterationManager = new DefaultIterationManager(getCacheManager)
 
@@ -152,8 +155,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       address = new ServerAddress(configuration.proxyHost, configuration.proxyPort)
       distributedExecutorService = new DefaultExecutorService(addressCache)
 
-      cacheManager.addListener(new CrashedMemberDetectorListener(addressCache, this))
-      addressCache.addListener(new ReAddMyAddressListener(addressCache, clusterAddress, address));
+      viewChangeListener = new CrashedMemberDetectorListener(addressCache, this)
+      cacheManager.addListener(viewChangeListener)
+      topologyChangeListener = new ReAddMyAddressListener(addressCache, clusterAddress, address)
+      addressCache.addListener(topologyChangeListener)
 
       // Map cluster address to server endpoint address
       debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
@@ -301,6 +306,12 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    override def stop: Unit = {
+      if (viewChangeListener != null) {
+         cacheManager.removeListener(viewChangeListener)
+      }
+      if (topologyChangeListener != null) {
+         addressCache.removeListener(topologyChangeListener)
+      }
       if (distributedExecutorService != null) {
          distributedExecutorService.shutdownNow()
       }
@@ -317,7 +328,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
             return
 
          var success = false
-         while (!success) {
+         while (!success && !distributedExecutorService.isShutdown && addressCache.getStatus.allowInvocations()) {
             try {
                val futures = distributedExecutorService.submitEverywhere(new CheckAddressTask(clusterAddress, address))
                // No need for a timeout here, the distributed executor has a default task timeout
