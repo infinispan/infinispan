@@ -63,6 +63,9 @@ final class SumAccumulator extends FieldAccumulator {
       if (value instanceof DoubleStat) {
          value = ((DoubleStat) value).getSum();
       }
+      else if (value instanceof Counter) {
+         value = ((Counter) value).getValue();
+      }
       update(accRow, value);
    }
 
