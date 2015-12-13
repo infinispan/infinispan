@@ -18,14 +18,17 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * A container of continuous query listeners for a cache.
+ * <p>This class is not threadsafe.
+ *
  * @author anistor@redhat.com
  * @since 8.0
  */
 public final class ContinuousQuery<K, V> {
 
-   private Cache<K, V> cache;
+   private final Cache<K, V> cache;
 
-   private List<EntryListener<K, V, ?>> listeners = new ArrayList<EntryListener<K, V, ?>>();
+   private final List<EntryListener<K, V, ?>> listeners = new ArrayList<EntryListener<K, V, ?>>();
 
    public ContinuousQuery(Cache<K, V> cache) {
       this.cache = cache;
@@ -48,13 +51,23 @@ public final class ContinuousQuery<K, V> {
       }
    }
 
+   public List<EntryListener<K, V, ?>> getListeners() {
+      return listeners;
+   }
+
+   public void removeAllListeners() {
+      for (EntryListener<K, V, ?> l : listeners) {
+         cache.removeListener(l);
+      }
+   }
+
    private JPAContinuousQueryCacheEventFilterConverter<K, V, ContinuousQueryResult<V>> makeFilter(Query query) {
       BaseQuery baseQuery = (BaseQuery) query;
       return new JPAContinuousQueryCacheEventFilterConverter<K, V, ContinuousQueryResult<V>>(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
    }
 
    @Listener(clustered = true, includeCurrentState = true, observation = Listener.Observation.POST)
-   private static class EntryListener<K, V, C> {
+   private static final class EntryListener<K, V, C> {
 
       private final ContinuousQueryResultListener<K, C> listener;
 
