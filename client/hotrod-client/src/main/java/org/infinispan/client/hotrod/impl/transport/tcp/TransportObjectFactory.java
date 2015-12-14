@@ -58,7 +58,7 @@ public class TransportObjectFactory
    @Override
    public boolean validateObject(SocketAddress address, TcpTransport transport) {
       try {
-         boolean valid = ping(transport, defaultCacheTopologyId) == PingOperation.PingResult.SUCCESS;
+         boolean valid = ping(transport, defaultCacheTopologyId).isSuccess();
          if (trace) log.tracef("Is connection %s valid? %s", transport, valid);
          return valid;
       } catch (Throwable e) {

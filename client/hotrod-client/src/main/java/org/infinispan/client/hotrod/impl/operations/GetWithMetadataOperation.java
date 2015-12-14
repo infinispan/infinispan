@@ -27,13 +27,13 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
    private static final boolean trace = log.isTraceEnabled();
 
    public GetWithMetadataOperation(Codec codec, TransportFactory transportFactory,
-                                   byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
    }
 
    @Override
    protected MetadataValue<V> executeOperation(Transport transport) {
-      short status = sendKeyOperation(key, transport, GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE);
+      short status = sendKeyOperation(keyBytes, transport, GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE);
       MetadataValue<V> result = null;
       if (HotRodConstants.isNotExist(status)) {
          result = null;

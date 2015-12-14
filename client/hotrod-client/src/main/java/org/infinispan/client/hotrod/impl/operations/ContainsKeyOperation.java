@@ -18,14 +18,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ContainsKeyOperation extends AbstractKeyOperation<Boolean> {
 
    public ContainsKeyOperation(Codec codec, TransportFactory transportFactory,
-                               byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
+      super(codec, transportFactory, key, keyBytes,cacheName, topologyId, flags);
    }
 
    @Override
    protected Boolean executeOperation(Transport transport) {
       boolean containsKey = false;
-      short status = sendKeyOperation(key, transport, CONTAINS_KEY_REQUEST, CONTAINS_KEY_RESPONSE);
+      short status = sendKeyOperation(keyBytes, transport, CONTAINS_KEY_REQUEST, CONTAINS_KEY_RESPONSE);
       if (HotRodConstants.isNotExist(status)) {
          containsKey = false;
       } else if (HotRodConstants.isSuccess(status)) {

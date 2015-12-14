@@ -19,13 +19,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RemoveOperation<V> extends AbstractKeyOperation<V> {
 
    public RemoveOperation(Codec codec, TransportFactory transportFactory,
-                          byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
    }
 
    @Override
    public V executeOperation(Transport transport) {
-      short status = sendKeyOperation(key, transport, REMOVE_REQUEST, REMOVE_RESPONSE);
+      short status = sendKeyOperation(keyBytes, transport, REMOVE_REQUEST, REMOVE_RESPONSE);
       V result = returnPossiblePrevValue(transport, status);
       if (HotRodConstants.isNotExist(status))
          return null;

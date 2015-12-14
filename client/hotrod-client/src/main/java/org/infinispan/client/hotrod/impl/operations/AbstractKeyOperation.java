@@ -26,18 +26,20 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
 
    private static final BasicLogger log = BasicLogFactory.getLog(AbstractKeyOperation.class);
 
-   protected final byte[] key;
+   protected final Object key;
+   protected final byte[] keyBytes;
 
    protected AbstractKeyOperation(Codec codec, TransportFactory transportFactory,
-                                  byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags) {
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.key = key;
+      this.keyBytes = keyBytes;
    }
 
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
       if (retryCount == 0) {
-         return transportFactory.getTransport(key, failedServers, cacheName);
+         return transportFactory.getTransport(key == null ? keyBytes : key, failedServers, cacheName);
       } else {
          return transportFactory.getTransport(failedServers, cacheName);
       }

@@ -64,9 +64,9 @@ public class OperationsFactory implements HotRodConstants {
       return cacheNameBytes;
    }
 
-   public <V> GetOperation<V> newGetKeyOperation(byte[] key) {
+   public <V> GetOperation<V> newGetKeyOperation(Object key, byte[] keyBytes) {
       return new GetOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags());
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags());
    }
 
    public <K, V> GetAllOperation<K, V> newGetAllOperation(Set<byte[]> keys) {
@@ -74,31 +74,31 @@ public class OperationsFactory implements HotRodConstants {
             codec, transportFactory, keys, cacheNameBytes, topologyId, flags());
    }
 
-   public <V> RemoveOperation<V> newRemoveOperation(byte[] key) {
+   public <V> RemoveOperation<V> newRemoveOperation(Object key, byte[] keyBytes) {
       return new RemoveOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags());
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags());
    }
 
-   public <V> RemoveIfUnmodifiedOperation<V> newRemoveIfUnmodifiedOperation(byte[] key, long version) {
+   public <V> RemoveIfUnmodifiedOperation<V> newRemoveIfUnmodifiedOperation(Object key, byte[] keyBytes, long version) {
       return new RemoveIfUnmodifiedOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(), version);
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), version);
    }
 
-   public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(byte[] key,
+   public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(Object key, byte[] keyBytes,
             byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version) {
       return new ReplaceIfUnmodifiedOperation(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version);
    }
 
-   public <V> GetWithVersionOperation<V> newGetWithVersionOperation(byte[] key) {
+   public <V> GetWithVersionOperation<V> newGetWithVersionOperation(Object key, byte[] keyBytes) {
       return new GetWithVersionOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags());
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags());
    }
 
-   public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(byte[] key) {
+   public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(Object key, byte[] keyBytes) {
       return new GetWithMetadataOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags());
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags());
    }
 
    public StatsOperation newStatsOperation() {
@@ -106,10 +106,10 @@ public class OperationsFactory implements HotRodConstants {
             codec, transportFactory, cacheNameBytes, topologyId, flags());
    }
 
-   public <V> PutOperation<V> newPutKeyValueOperation(byte[] key, byte[] value,
+   public <V> PutOperation<V> newPutKeyValueOperation(Object key, byte[] keyBytes, byte[] value,
           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new PutOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
@@ -120,23 +120,23 @@ public class OperationsFactory implements HotRodConstants {
             lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
-   public <V> PutIfAbsentOperation<V> newPutIfAbsentOperation(byte[] key, byte[] value,
+   public <V> PutIfAbsentOperation<V> newPutIfAbsentOperation(Object key, byte[] keyBytes, byte[] value,
              long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return new PutIfAbsentOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(lifespan, maxIdleTime),
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdleTime),
             value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
-   public <V> ReplaceOperation<V> newReplaceOperation(byte[] key, byte[] values,
+   public <V> ReplaceOperation<V> newReplaceOperation(Object key, byte[] keyBytes, byte[] values,
            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new ReplaceOperation<V>(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
-   public ContainsKeyOperation newContainsKeyOperation(byte[] key) {
+   public ContainsKeyOperation newContainsKeyOperation(Object key, byte[] keyBytes) {
       return new ContainsKeyOperation(
-            codec, transportFactory, key, cacheNameBytes, topologyId, flags());
+            codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags());
    }
 
    public ClearOperation newClearOperation() {
