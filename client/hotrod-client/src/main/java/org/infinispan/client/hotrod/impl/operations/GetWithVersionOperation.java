@@ -28,13 +28,13 @@ public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedVa
    private static final boolean trace = log.isTraceEnabled();
 
    public GetWithVersionOperation(Codec codec, TransportFactory transportFactory,
-                                  byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
    }
 
    @Override
    protected VersionedValue<V> executeOperation(Transport transport) {
-      short status = sendKeyOperation(key, transport, GET_WITH_VERSION, GET_WITH_VERSION_RESPONSE);
+      short status = sendKeyOperation(keyBytes, transport, GET_WITH_VERSION, GET_WITH_VERSION_RESPONSE);
       VersionedValue<V> result = null;
       if (HotRodConstants.isNotExist(status)) {
          result = null;

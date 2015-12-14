@@ -78,7 +78,7 @@ public class ConsistentHashV1 implements ConsistentHash {
    }
 
    @Override
-   public SocketAddress getServer(byte[] key) {
+   public SocketAddress getServer(Object key) {
       int normalisedHashForKey;
       if (hashSpaceIsMaxInt) {
          normalisedHashForKey = getNormalizedHash(key);

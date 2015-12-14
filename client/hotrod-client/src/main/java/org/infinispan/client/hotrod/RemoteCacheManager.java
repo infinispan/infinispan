@@ -658,6 +658,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
                   return null;
                }
             }
+            result.resolveCompatibility();
             result.start();
             // If ping on startup is disabled, or cache is defined in server
             cacheName2RemoteCache.put(key, rcc);

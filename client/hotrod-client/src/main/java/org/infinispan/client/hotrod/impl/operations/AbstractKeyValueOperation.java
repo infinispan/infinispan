@@ -28,10 +28,10 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
 
    protected final TimeUnit maxIdleTimeUnit;
 
-   protected AbstractKeyValueOperation(Codec codec, TransportFactory transportFactory, byte[] key, byte[] cacheName,
+   protected AbstractKeyValueOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes, byte[] cacheName,
                                        AtomicInteger topologyId, int flags, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
@@ -45,7 +45,7 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
       HeaderParams params = writeHeader(transport, opCode);
 
       // 2) write key and value
-      transport.writeArray(key);
+      transport.writeArray(keyBytes);
       codec.writeExpirationParams(transport, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       transport.writeArray(value);
       transport.flush();

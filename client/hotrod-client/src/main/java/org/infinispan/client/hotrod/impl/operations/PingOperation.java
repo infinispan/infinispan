@@ -46,7 +46,9 @@ public class PingOperation extends HotRodOperation {
          if (HotRodConstants.isSuccess(respStatus)) {
             if (trace)
                log.tracef("Successfully validated transport: %s", transport);
-            return PingResult.SUCCESS;
+            return HotRodConstants.hasCompatibility(respStatus)
+               ? PingResult.SUCCESS_WITH_COMPAT
+               : PingResult.SUCCESS;
          } else {
             String hexStatus = Integer.toHexString(respStatus);
             if (trace)
@@ -67,9 +69,19 @@ public class PingOperation extends HotRodOperation {
    public static enum PingResult {
       // Success if the ping request was responded correctly
       SUCCESS,
+      // Success with compatibility enabled
+      SUCCESS_WITH_COMPAT,
       // When the ping request fails due to non-existing cache
       CACHE_DOES_NOT_EXIST,
       // For any other type of failures
-      FAIL,
+      FAIL;
+
+      public boolean isSuccess() {
+         return this == SUCCESS || this == SUCCESS_WITH_COMPAT;
+      }
+
+      public boolean hasCompatibility() {
+         return this == SUCCESS_WITH_COMPAT;
+      }
    }
 }
