@@ -5,9 +5,11 @@ import static org.junit.Assert.assertEquals;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.hibernate.hql.ParsingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
@@ -34,6 +36,20 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cacheConfiguration);
       TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
       return cm;
+   }
+
+   /**
+    * Using grouping and aggregation with continuous query is not allowed.
+    */
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   public void testDisallowGroupingAndAggregation() {
+      Query query = Search.getQueryFactory(cache()).from(Person.class)
+            .select(Expression.max("age"))
+            .having("age").gte(20)
+            .toBuilder().build();
+
+      ContinuousQuery<Object, Object> cq = new ContinuousQuery<>(cache());
+      cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
    }
 
    public void testContinuousQuery() {

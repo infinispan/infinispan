@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
@@ -78,6 +79,27 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
       return super.createHotRodClientConfigurationBuilder(serverPort)
             .marshaller(new ProtoStreamMarshaller());
+   }
+
+   /**
+    * Using grouping and aggregation with continuous query is not allowed.
+    */
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   public void testDisallowGroupingAndAggregation() {
+      Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
+            .select(Expression.max("age"))
+            .having("age").gte(20)
+            .toBuilder().build();
+
+      ClientEvents.addContinuousQueryListener(remoteCache, new ContinuousQueryListener<String, Object[]>() {
+         @Override
+         public void resultJoining(String key, Object[] value) {
+         }
+
+         @Override
+         public void resultLeaving(String key) {
+         }
+      }, query);
    }
 
    public void testContinuousQuery() {
