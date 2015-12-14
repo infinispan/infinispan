@@ -1,14 +1,12 @@
 package org.infinispan.atomic.impl;
 
 import net.jcip.annotations.NotThreadSafe;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.NullDelta;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
@@ -21,6 +19,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -54,35 +53,44 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
    private volatile AtomicHashMapProxy<K, V> proxy;
    volatile boolean copied = false;
    volatile boolean removed = false;
+   private final ProxyMode proxyMode;
 
    /**
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
     * CacheDelegate.  User code should use {@link AtomicMapLookup#getAtomicMap(Cache, Object)}.
     */
-   public static <K, V> AtomicHashMap<K, V> newInstance(Cache<Object, Object> cache, Object cacheKey) {
-      AtomicHashMap<K, V> value = new AtomicHashMap<K, V>();
+   @SuppressWarnings("unchecked")
+   public static <K, V> AtomicHashMap<K, V> newInstance(Cache<Object, Object> cache, Object cacheKey, ProxyMode proxyMode) {
+      AtomicHashMap<K, V> value = new AtomicHashMap<>(proxyMode);
       Object oldValue = cache.putIfAbsent(cacheKey, value);
       if (oldValue != null) value = (AtomicHashMap<K, V>) oldValue;
       return value;
    }
 
+   //used in tests only
    public AtomicHashMap() {
-      this.delegate = new FastCopyHashMap<K, V>();
+      this(new FastCopyHashMap<>(), ProxyMode.COARSE);
    }
 
-   private AtomicHashMap(FastCopyHashMap<K, V> delegate) {
+   public AtomicHashMap(ProxyMode proxyMode) {
+      this(new FastCopyHashMap<>(), Objects.requireNonNull(proxyMode));
+   }
+
+   private AtomicHashMap(FastCopyHashMap<K, V> delegate, ProxyMode proxyMode) {
       this.delegate = delegate;
+      this.proxyMode = proxyMode;
    }
 
-   public AtomicHashMap(boolean isCopy) {
-      this();
+   public AtomicHashMap(boolean isCopy, ProxyMode proxyMode) {
+      this(new FastCopyHashMap<>(), proxyMode);
       this.copied = isCopy;
    }
 
-   private AtomicHashMap(FastCopyHashMap<K, V> newDelegate, AtomicHashMapProxy<K, V> proxy) {
+   private AtomicHashMap(FastCopyHashMap<K, V> newDelegate, AtomicHashMapProxy<K, V> proxy, ProxyMode proxyMode) {
       this.delegate = newDelegate;
       this.proxy = proxy;
       this.copied = true;
+      this.proxyMode = proxyMode;
    }
 
    @Override
@@ -138,7 +146,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
    @Override
    public V put(K key, V value) {
       V oldValue = delegate.put(key, value);
-      PutOperation<K, V> op = new PutOperation<K, V>(key, oldValue, value);
+      PutOperation<K, V> op = new PutOperation<>(key, oldValue, value);
       getDelta().addOperation(op);
       return oldValue;
    }
@@ -147,7 +155,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
    @SuppressWarnings("unchecked")
    public V remove(Object key) {
       V oldValue = delegate.remove(key);
-      RemoveOperation<K, V> op = new RemoveOperation<K, V>((K) key, oldValue);
+      RemoveOperation<K, V> op = new RemoveOperation<>((K) key, oldValue);
       getDelta().addOperation(op);
       return oldValue;
    }
@@ -162,7 +170,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
    @SuppressWarnings("unchecked")
    public void clear() {
       FastCopyHashMap<K, V> originalEntries = delegate.clone();
-      ClearOperation<K, V> op = new ClearOperation<K, V>(originalEntries);
+      ClearOperation<K, V> op = new ClearOperation<>(originalEntries);
       getDelta().addOperation(op);
       delegate.clear();
    }
@@ -171,16 +179,21 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
     * Builds a thread-safe proxy for this instance so that concurrent reads are isolated from writes.
     * @return an instance of AtomicHashMapProxy
     */
-   public AtomicHashMapProxy<K, V> getProxy(AdvancedCache<Object, Object> cache, Object mapKey, boolean fineGrained) {
+   public AtomicHashMapProxy<K, V> getProxy(AdvancedCache<Object, Object> cache, Object mapKey) {
       // construct the proxy lazily
       if (proxy == null)  // DCL is OK here since proxy is volatile (and we live in a post-JDK 5 world)
       {
          synchronized (this) {
             if (proxy == null)
-               if(fineGrained){
-                  proxy = new FineGrainedAtomicHashMapProxy<K, V>(cache, mapKey);
-               } else {
-                  proxy = new AtomicHashMapProxy<K, V>(cache, mapKey);
+               switch (proxyMode) {
+                  case FINE:
+                     proxy = new FineGrainedAtomicHashMapProxy<>(cache, mapKey);
+                     break;
+                  case COARSE:
+                     proxy = new AtomicHashMapProxy<>(cache, mapKey);
+                     break;
+                  default:
+                     throw new IllegalStateException("Unknown proxy mode: " + proxyMode);
                }
          }
       }
@@ -193,7 +206,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
 
    @Override
    public Delta delta() {
-      Delta toReturn = delta == null ? NullDelta.INSTANCE : delta;
+      Delta toReturn = delta == null ? new AtomicHashMapDelta(proxyMode) : delta;
       delta = null; // reset
       return toReturn;
    }
@@ -201,7 +214,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
    @SuppressWarnings("unchecked")
    public AtomicHashMap<K, V> copy() {
       FastCopyHashMap<K, V> newDelegate = delegate.clone();
-      return new AtomicHashMap(newDelegate, proxy);
+      return new AtomicHashMap(newDelegate, proxy, proxyMode);
    }
 
    @Override
@@ -219,11 +232,11 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
     * Initializes the delta instance to start recording changes.
     */
    public void initForWriting() {
-      delta = new AtomicHashMapDelta();
+      delta = new AtomicHashMapDelta(proxyMode);
    }
 
    AtomicHashMapDelta getDelta() {
-      if (delta == null) delta = new AtomicHashMapDelta();
+      if (delta == null) delta = new AtomicHashMapDelta(proxyMode);
       return delta;
    }
 
@@ -231,16 +244,18 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
       @Override
       public void writeObject(ObjectOutput output, AtomicHashMap map) throws IOException {
          output.writeObject(map.delegate);
+         output.writeByte(map.proxyMode.ordinal());
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public AtomicHashMap readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          FastCopyHashMap<?, ?> delegate = (FastCopyHashMap<?, ?>) input.readObject();
+         ProxyMode proxyMode = ProxyMode.CACHED_VALUES[input.readByte()];
          if (trace)
             log.tracef("Restore atomic hash map from %s", delegate);
 
-         return new AtomicHashMap(delegate);
+         return new AtomicHashMap(delegate, proxyMode);
       }
 
       @Override
@@ -252,6 +267,15 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
       @SuppressWarnings("unchecked")
       public Set<Class<? extends AtomicHashMap>> getTypeClasses() {
          return Util.<Class<? extends AtomicHashMap>>asSet(AtomicHashMap.class);
+      }
+   }
+
+   public enum ProxyMode {
+      FINE, COARSE;
+      private static final ProxyMode[] CACHED_VALUES = values();
+
+      public static ProxyMode valueOf(int ordinal) {
+         return CACHED_VALUES[ordinal];
       }
    }
 }

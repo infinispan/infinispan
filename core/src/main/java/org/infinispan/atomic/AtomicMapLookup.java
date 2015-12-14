@@ -101,12 +101,12 @@ public class AtomicMapLookup {
       Object value = cache.get(key);
       if (value == null) {
          if (createIfAbsent)
-            value = AtomicHashMap.newInstance((Cache<Object,Object>) cache, key);
+            value = AtomicHashMap.newInstance((Cache<Object,Object>) cache, key, fineGrained ? AtomicHashMap.ProxyMode.FINE : AtomicHashMap.ProxyMode.COARSE);
          else return null;
       }
       AtomicHashMap<K, V> castValue = (AtomicHashMap<K, V>) value;
       AtomicHashMapProxy<K, V> proxy =
-            castValue.getProxy((AdvancedCache<Object,Object>) cache.getAdvancedCache(), key, fineGrained);
+            castValue.getProxy((AdvancedCache<Object,Object>) cache.getAdvancedCache(), key);
       boolean typeSwitchAttempt = proxy instanceof FineGrainedAtomicHashMapProxy != fineGrained;
       if (typeSwitchAttempt) {
          throw new IllegalArgumentException("Cannot switch type of previously used " + value
