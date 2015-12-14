@@ -1,7 +1,6 @@
 package org.infinispan.query.test;
 
 import org.hibernate.search.annotations.*;
-import org.hibernate.search.bridge.builtin.IntegerBridge;
 import org.hibernate.search.bridge.builtin.StringBridge;
 
 import java.io.Serializable;
