@@ -35,6 +35,7 @@ import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.operations.validation.EnumValidator;
+import org.jboss.as.controller.operations.validation.IntRangeValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
@@ -175,6 +176,29 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                .setRuntimeOnly()
                .build();
 
+   static final SimpleAttributeDefinition COUNT = SimpleAttributeDefinitionBuilder.create("lines", ModelType.INT, true)
+           .setAllowExpression(true)
+           .setDefaultValue(new ModelNode(10))
+           .setValidator(new IntRangeValidator(-1, true))
+           .build();
+
+   static final SimpleAttributeDefinition OFFSET = SimpleAttributeDefinitionBuilder.create("offset", ModelType.INT, true)
+           .setAllowExpression(true)
+           .setDefaultValue(new ModelNode(0))
+           .setValidator(new IntRangeValidator(0, true))
+           .build();
+
+
+   static final OperationDefinition READ_EVENT_LOG =
+           new SimpleOperationDefinitionBuilder("read-event-log", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+               .setParameters(COUNT, OFFSET)
+               .setReplyType(ModelType.LIST)
+               .setReplyValueType(ModelType.OBJECT)
+               .setReadOnly()
+               .setRuntimeOnly()
+               .build();
+
+
     private final ResolvePathHandler resolvePathHandler;
     private final boolean runtimeRegistration;
     public CacheContainerResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
@@ -215,6 +239,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(BACKUP_BRING_SITE_ONLINE, CacheContainerCommands.BackupBringSiteOnlineCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(BACKUP_PUSH_STATE, CacheContainerCommands.BackupPushStateCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(BACKUP_CANCEL_PUSH_STATE, CacheContainerCommands.BackupCancelPushStateCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(READ_EVENT_LOG, CacheContainerCommands.ReadEventLogCommand.INSTANCE);
     }
 
     @Override

@@ -12,6 +12,8 @@ import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
 import org.infinispan.xsite.BackupReceiverRepository;
 import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 
@@ -23,8 +25,9 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  * @since 4.0
  */
 
-@DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, ExternalizerTable.class,
-                              InboundInvocationHandler.class, RemoteCommandsFactory.class, TimeService.class})
+@DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
+                              ExternalizerTable.class, InboundInvocationHandler.class, RemoteCommandsFactory.class,
+                              TimeService.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -43,6 +46,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new RemoteCommandsFactory();
       else if (componentType.equals(TimeService.class))
          return (T) new DefaultTimeService();
+      else if (componentType.equals(EventLogManager.class))
+         return (T) new EventLogManagerImpl();
 
       throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
    }

@@ -434,7 +434,8 @@ This is the list of Externalizer identifiers that are used by Infinispan based m
 |Hibernate Search:|1500 - 1599
 |Infinispan Query Module:|1600 - 1699
 |Infinispan Remote Query Module:|1700 - 1799
-|Infinispan Scripting Module:|1800 - 1899
+|Infinispan Scripting Module:|1800 - 1849
+|Infinispan Server Event Logger Module:|1850 - 1899
 |Infinispan Remote Store:|1900 - 1999
 |===============
 
