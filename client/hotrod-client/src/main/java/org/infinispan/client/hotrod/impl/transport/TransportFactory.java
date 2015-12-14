@@ -53,7 +53,7 @@ public interface TransportFactory {
 
    ConsistentHashFactory getConsistentHashFactory();
 
-   Transport getTransport(byte[] key, Set<SocketAddress> failedServers, byte[] cacheName);
+   Transport getTransport(Object key, Set<SocketAddress> failedServers, byte[] cacheName);
 
    boolean isTcpNoDelay();
 

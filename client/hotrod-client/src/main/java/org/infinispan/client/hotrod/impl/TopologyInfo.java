@@ -93,7 +93,7 @@ public final class TopologyInfo {
       topologyIds.put(cacheName, topologyId);
    }
 
-   public Optional<SocketAddress> getHashAwareServer(byte[] key, byte[] cacheName) {
+   public Optional<SocketAddress> getHashAwareServer(Object key, byte[] cacheName) {
       Optional<SocketAddress> server = Optional.empty();
       if (isTopologyValid(cacheName)) {
          ConsistentHash consistentHash = consistentHashes.get(cacheName);

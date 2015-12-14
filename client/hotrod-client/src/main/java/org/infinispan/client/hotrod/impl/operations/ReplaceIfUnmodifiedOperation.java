@@ -20,10 +20,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<VersionedOperationResponse> {
    private final long version;
 
-   public ReplaceIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory, byte[] key, byte[] cacheName,
+   public ReplaceIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes, byte[] cacheName,
                                        AtomicInteger topologyId, int flags, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       this.version = version;
    }
 
@@ -33,7 +33,7 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
       HeaderParams params = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST);
 
       //2) write message body
-      transport.writeArray(key);
+      transport.writeArray(keyBytes);
       codec.writeExpirationParams(transport, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       transport.writeLong(version);
       transport.writeArray(value);

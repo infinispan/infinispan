@@ -19,14 +19,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GetOperation<V> extends AbstractKeyOperation<V> {
 
    public GetOperation(Codec codec, TransportFactory transportFactory,
-                       byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
    }
 
    @Override
    public V executeOperation(Transport transport) {
       V result = null;
-      short status = sendKeyOperation(key, transport, GET_REQUEST, GET_RESPONSE);
+      short status = sendKeyOperation(keyBytes, transport, GET_REQUEST, GET_RESPONSE);
       if (HotRodConstants.isNotExist(status)) {
          result = null;
       } else {

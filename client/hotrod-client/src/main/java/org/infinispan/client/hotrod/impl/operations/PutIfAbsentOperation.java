@@ -27,9 +27,9 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    private static final boolean trace = log.isTraceEnabled();
 
    public PutIfAbsentOperation(Codec codec, TransportFactory transportFactory,
-                               byte[] key, byte[] cacheName, AtomicInteger topologyId,
-                               int flags, byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit);
+                               Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
+                               int flags, byte[] value, long lifespan,TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override

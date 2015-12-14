@@ -5,6 +5,7 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +85,10 @@ public class TcpTransportFactory implements TransportFactory {
    // increased and so any old requests that might have received topology
    // updates won't be allowed to apply since they refer to older views.
    private final AtomicInteger topologyAge = new AtomicInteger(0);
+
+   @GuardedBy("lock")
+   private Map<byte[], Boolean> compatibilityCaches = CollectionFactory
+      .makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
 
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
@@ -267,7 +272,7 @@ public class TcpTransportFactory implements TransportFactory {
       return borrowTransportFromPool(server);
    }
 
-   public Transport getTransport(byte[] key, Set<SocketAddress> failedServers, byte[] cacheName) {
+   public Transport getTransport(Object key, Set<SocketAddress> failedServers, byte[] cacheName) {
       SocketAddress server;
       synchronized (lock) {
          Optional<SocketAddress> hashAwareServer = topologyInfo.getHashAwareServer(key, cacheName);
