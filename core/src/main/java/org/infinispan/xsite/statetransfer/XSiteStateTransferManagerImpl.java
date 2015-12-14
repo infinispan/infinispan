@@ -20,6 +20,7 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
@@ -368,7 +369,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) throws Exception {
       commandsFactory.initializeReplicableCommand(command, false);
       CompletableFuture<Map<Address, Response>> remoteFuture = rpcManager.invokeRemotelyAsync(null,
-            command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
+            command, rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build());
       final Future<Response> localFuture = asyncExecutor.submit(
             LocalInvocation.newInstance(responseGenerator, command, commandsFactory, rpcManager.getAddress()));
       final Map<Address, Response> responseMap = new HashMap<>();
