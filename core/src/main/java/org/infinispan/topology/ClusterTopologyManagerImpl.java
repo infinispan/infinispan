@@ -35,6 +35,8 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLogger;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.util.logging.LogFactory.CLUSTER;
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 /**
  * The {@code ClusterTopologyManager} implementation.
@@ -60,6 +63,7 @@ import static org.infinispan.util.logging.LogFactory.CLUSTER;
  */
 public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
+   private static final EventLogger eventLog = EventLogManager.getEventLogger();
    private static final boolean trace = log.isTraceEnabled();
 
    private Transport transport;
@@ -193,6 +197,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
 
       CLUSTER.rebalanceCompleted(cacheName, node, topologyId);
+      eventLog.context(cacheName).scope(node.toString()).info(MESSAGES.rebalanceCompleted());
+
 
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       if (cacheStatus == null || !cacheStatus.isRebalanceInProgress()) {
@@ -335,6 +341,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Override
    public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
       CLUSTER.startRebalance(cacheName, cacheTopology);
+      eventLog.context(cacheName).info(MESSAGES.rebalanceStarted());
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology, null,
             transport.getViewId());
