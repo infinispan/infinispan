@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
+import org.hibernate.hql.ParsingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -10,6 +11,9 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.Search;
+import org.infinispan.query.continuous.CallCountingCQResultListener;
+import org.infinispan.query.continuous.ContinuousQuery;
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
@@ -131,6 +135,20 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       }
 
       cache().removeListener(listener);
+   }
+
+   /**
+    * Using grouping and aggregation with event filters is not allowed.
+    */
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   public void testDisallowGroupingAndAggregation() {
+      Query query = Search.getQueryFactory(cache()).from(Person.class)
+            .having("age").gte(20)
+            .toBuilder().select(Expression.max("age"))
+            .build();
+
+      ContinuousQuery<Object, Object> cq = new ContinuousQuery<>(cache());
+      cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
    }
 
    @Listener(observation = Listener.Observation.POST)

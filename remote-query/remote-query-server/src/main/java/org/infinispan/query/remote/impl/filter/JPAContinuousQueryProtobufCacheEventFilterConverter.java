@@ -40,6 +40,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
    }
 
    @Inject
+   @SuppressWarnings("unused")
    protected void injectDependencies(EmbeddedCacheManager cacheManager, Configuration cfg) {
       serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
       usesValueWrapper = cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled();
