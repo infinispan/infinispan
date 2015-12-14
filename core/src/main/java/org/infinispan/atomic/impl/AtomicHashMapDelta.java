@@ -28,6 +28,11 @@ public class AtomicHashMapDelta implements Delta {
 
    private List<Operation<Object, Object>> changeLog;
    private boolean hasClearOperation;
+   private final AtomicHashMap.ProxyMode proxyMode;
+
+   public AtomicHashMapDelta(AtomicHashMap.ProxyMode proxyMode) {
+      this.proxyMode = proxyMode;
+   }
 
    @Override
    public DeltaAware merge(DeltaAware d) {
@@ -35,7 +40,7 @@ public class AtomicHashMapDelta implements Delta {
       if (d != null && (d instanceof AtomicHashMap))
          other = (AtomicHashMap<Object, Object>) d;
       else
-         other = new AtomicHashMap();
+         other = new AtomicHashMap<>(proxyMode);
       if (changeLog != null) {
          for (Operation<Object, Object> o : changeLog) o.replay(other.delegate);
       }
@@ -90,12 +95,13 @@ public class AtomicHashMapDelta implements Delta {
       @Override
       public void writeObject(ObjectOutput output, AtomicHashMapDelta delta) throws IOException {
          if (trace) log.tracef("Serializing changeLog %s", delta.changeLog);
+         output.writeByte(delta.proxyMode.ordinal());
          output.writeObject(delta.changeLog);
       }
 
       @Override
       public AtomicHashMapDelta readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         AtomicHashMapDelta delta = new AtomicHashMapDelta();
+         AtomicHashMapDelta delta = new AtomicHashMapDelta(AtomicHashMap.ProxyMode.valueOf(input.readByte()));
          delta.changeLog = (List<Operation<Object, Object>>) input.readObject();
          if (trace) log.tracef("Deserialized changeLog %s", delta.changeLog);
          return delta;

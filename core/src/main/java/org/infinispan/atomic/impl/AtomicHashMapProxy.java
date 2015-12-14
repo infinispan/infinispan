@@ -29,7 +29,7 @@ import java.util.Set;
  * reader MVCC model used in the {@link org.infinispan.container.entries.MVCCEntry} implementations for the core data
  * container, which closely follow software transactional memory approaches to dealing with concurrency.
  * <br /><br />
- * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(org.infinispan.AdvancedCache, Object, boolean)}}
+ * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(AdvancedCache, Object)}
  * should be used to retrieve an instance of this proxy.
  * <br /><br />
  * Typically proxies are only created by the {@link AtomicMapLookup} helper, and would not be created by end-user code
@@ -118,7 +118,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          assertValid(map);
 
          // copy for write
-         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<K, V>(true) : map.copy();
+         AtomicHashMap<K, V> copy = map == null ? new AtomicHashMap<>(true, AtomicHashMap.ProxyMode.COARSE) : map.copy();
          copy.initForWriting();
          cacheForWriting.put(deltaMapKey, copy);
          return copy;

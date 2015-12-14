@@ -10,7 +10,8 @@ public class AtomicHashMapTest extends AbstractInfinispanTest {
    public void testDeltasWithEmptyMap() {
       AtomicHashMap m = new AtomicHashMap();
       Delta d = m.delta();
-      assert d instanceof NullDelta;
+      assert d instanceof AtomicHashMapDelta;
+      assert ((AtomicHashMapDelta) d).getChangeLogSize() == 0;
 
       AtomicHashMap newMap = new AtomicHashMap();
       newMap.initForWriting();
@@ -30,7 +31,8 @@ public class AtomicHashMapTest extends AbstractInfinispanTest {
       m.commit();
       assert m.size() == 1;
       Delta d = m.delta();
-      assert d instanceof NullDelta;
+      assert d instanceof AtomicHashMapDelta;
+      assert ((AtomicHashMapDelta) d).getChangeLogSize() == 0;
 
       AtomicHashMap newMap = new AtomicHashMap();
       newMap.initForWriting();

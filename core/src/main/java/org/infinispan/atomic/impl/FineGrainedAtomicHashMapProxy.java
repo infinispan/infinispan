@@ -50,7 +50,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
          AtomicHashMap<K, V> map = getDeltaMapForRead();
          boolean insertNewMap = map == null;
          // copy for write
-         AtomicHashMap<K, V> copy = insertNewMap ? new AtomicHashMap<K, V>(true) : map.copy();
+         AtomicHashMap<K, V> copy = insertNewMap ? new AtomicHashMap<>(true, AtomicHashMap.ProxyMode.FINE) : map.copy();
          copy.initForWriting();
          if (insertNewMap) {
             cacheForWriting.put(deltaMapKey, copy);
