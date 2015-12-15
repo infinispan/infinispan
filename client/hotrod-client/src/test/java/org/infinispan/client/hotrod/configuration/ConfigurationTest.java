@@ -176,7 +176,7 @@ public class ConfigurationTest {
       assertEquals(100, configuration.socketTimeout());
       assertFalse(configuration.tcpNoDelay());
       assertTrue(configuration.tcpKeepAlive());
-      assertFalse(configuration.pingOnStartup());
+      assertTrue(configuration.pingOnStartup());
       assertEquals(128, configuration.keySizeEstimate());
       assertEquals(1024, configuration.valueSizeEstimate());
       assertEquals(0, configuration.maxRetries());

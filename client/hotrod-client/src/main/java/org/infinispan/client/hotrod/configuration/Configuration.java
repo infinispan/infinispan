@@ -32,6 +32,7 @@ public class Configuration {
    private final int keySizeEstimate;
    private final Class<? extends Marshaller> marshallerClass;
    private final Marshaller marshaller;
+   @Deprecated
    private final boolean pingOnStartup;
    private final String protocolVersion;
    private final List<ServerConfiguration> servers;
@@ -157,6 +158,10 @@ public class Configuration {
       return nearCache;
    }
 
+   /**
+    * @deprecated No longer in effect, ping always happens on startup now.
+    */
+   @Deprecated
    public boolean pingOnStartup() {
       return pingOnStartup;
    }

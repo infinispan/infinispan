@@ -59,38 +59,6 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       });
    }
 
-   public void testTopologyNotFetched() {
-      Properties props = new Properties();
-      HotRodServer hotRodServer2 = server(1);
-      props.put("infinispan.client.hotrod.server_list",
-            "localhost:" + hotRodServer2.getPort());
-      props.put("infinispan.client.hotrod.ping_on_startup", "false");
-
-      withRemoteCacheManager(new RemoteCacheManagerCallable(
-            new InternalRemoteCacheManager(props)) {
-         @Override
-         public void call() {
-            TcpTransportFactory tcpTransportFactory =
-                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
-            assertEquals(1, tcpTransportFactory.getServers().size());
-         }
-      });
-   }
-
-   public void testGetCacheWithPingOnStartupDisabledSingleNode() {
-      Properties props = new Properties();
-      props.put("infinispan.client.hotrod.server_list", "boomoo:12345");
-      props.put("infinispan.client.hotrod.ping_on_startup", "false");
-
-      withRemoteCacheManager(new RemoteCacheManagerCallable(
-            new RemoteCacheManager(props)) {
-         @Override
-         public void call() {
-            rcm.getCache();
-         }
-      });
-   }
-
    public void testGetCacheWithPingOnStartupDisabledMultipleNodes() {
       Properties props = new Properties();
       HotRodServer hotRodServer2 = server(1);
