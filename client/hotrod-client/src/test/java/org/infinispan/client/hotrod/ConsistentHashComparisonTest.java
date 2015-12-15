@@ -152,7 +152,7 @@ public class ConsistentHashComparisonTest {
       }
 
       @Override
-      public SocketAddress getServer(byte[] key) {
+      public SocketAddress getServer(Object key) {
          int keyHashCode = getNormalizedHash(key);
          if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
          int hash = Math.abs(keyHashCode);

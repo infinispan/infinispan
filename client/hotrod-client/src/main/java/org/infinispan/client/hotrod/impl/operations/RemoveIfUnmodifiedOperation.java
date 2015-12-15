@@ -22,8 +22,8 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
    private final long version;
 
    public RemoveIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory,
-                                      byte[] key, byte[] cacheName, AtomicInteger topologyId, int flags, long version) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, long version) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
       this.version = version;
    }
 
@@ -33,7 +33,7 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
       HeaderParams params = writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST);
 
       //2) write message body
-      transport.writeArray(key);
+      transport.writeArray(keyBytes);
       transport.writeLong(version);
       transport.flush();
 

@@ -67,7 +67,6 @@ import org.infinispan.commons.util.Util;
  * <li><tt>infinispan.client.hotrod.force_return_values</tt>, default = false.  Whether or not to implicitly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.</li>
  * <li><tt>infinispan.client.hotrod.tcp_no_delay</tt>, default = true.  Affects TCP NODELAY on the TCP stack.</li>
  * <li><tt>infinispan.client.hotrod.tcp_keep_alive</tt>, default = false.  Affects TCP KEEPALIVE on the TCP stack.</li>
- * <li><tt>infinispan.client.hotrod.ping_on_startup</tt>, default = true.  If true, a ping request is sent to a back end server in order to fetch cluster's topology.</li>
  * <li><tt>infinispan.client.hotrod.transport_factory</tt>, default = org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory - controls which transport to use.  Currently only the TcpTransport is supported.</li>
  * <li><tt>infinispan.client.hotrod.marshaller</tt>, default = org.infinispan.marshall.jboss.GenericJBossMarshaller.  Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to serialize and deserialize user objects. For portable serialization payloads, you should configure the marshaller to be {@link org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller}</li>
  * <li><tt>infinispan.client.hotrod.async_executor_factory</tt>, default = org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory.  Allows you to specify a custom asynchroous executor for async calls.</li>
@@ -318,7 +317,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
       properties.setProperty(ConfigurationProperties.FORCE_RETURN_VALUES, Boolean.toString(configuration.forceReturnValues()));
       properties.setProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, Integer.toString(configuration.keySizeEstimate()));
       properties.setProperty(ConfigurationProperties.MARSHALLER, configuration.marshallerClass().getName());
-      properties.setProperty(ConfigurationProperties.PING_ON_STARTUP, Boolean.toString(configuration.pingOnStartup()));
       properties.setProperty(ConfigurationProperties.PROTOCOL_VERSION, configuration.protocolVersion());
       properties.setProperty(ConfigurationProperties.SO_TIMEOUT, Integer.toString(configuration.socketTimeout()));
       properties.setProperty(ConfigurationProperties.TCP_NO_DELAY, Boolean.toString(configuration.tcpNoDelay()));
@@ -650,14 +648,15 @@ public class RemoteCacheManager implements BasicCacheContainer {
             RemoteCacheImpl<K, V> result = createRemoteCache(cacheName);
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? configuration.forceReturnValues() : forceReturnValueOverride);
             startRemoteCache(rcc);
-            if (configuration.pingOnStartup()) {
-               // If ping not successful assume that the cache does not exist
-               // Default cache is always started, so don't do for it
-               if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) &&
-                     ping(result) == PingResult.CACHE_DOES_NOT_EXIST) {
-                  return null;
-               }
+
+            PingResult pingResult = result.resolveCompatibility();
+            // If ping not successful assume that the cache does not exist
+            // Default cache is always started, so don't do for it
+            if (!cacheName.equals(RemoteCacheManager.DEFAULT_CACHE_NAME) &&
+                  pingResult == PingResult.CACHE_DOES_NOT_EXIST) {
+               return null;
             }
+
             result.start();
             // If ping on startup is disabled, or cache is defined in server
             cacheName2RemoteCache.put(key, rcc);
@@ -685,14 +684,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    protected <K, V> NearCacheService<K, V> createNearCacheService(NearCacheConfiguration cfg) {
       return NearCacheService.create(cfg, listenerNotifier);
-   }
-
-   private <K, V> PingResult ping(RemoteCacheImpl<K, V> cache) {
-      if (transportFactory == null) {
-         return PingResult.FAIL;
-      }
-
-      return cache.ping();
    }
 
    private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {
