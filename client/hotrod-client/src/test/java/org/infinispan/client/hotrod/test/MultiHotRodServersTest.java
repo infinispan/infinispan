@@ -57,8 +57,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       clientBuilder.addServer()
             .host("localhost")
             .port(serverPort)
-            .maxRetries(maxRetries())
-            .pingOnStartup(false);
+            .maxRetries(maxRetries());
       return clientBuilder;
    }
 

@@ -205,9 +205,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return nearCache;
    }
 
+   /**
+    * @deprecated No longer in effect, ping always happens on startup now.
+    */
+   @Deprecated
    @Override
    public ConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
-      this.pingOnStartup = pingOnStartup;
       return this;
    }
 
@@ -291,7 +294,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.MARSHALLER)) {
          this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER));
       }
-      this.pingOnStartup(typed.getBooleanProperty(ConfigurationProperties.PING_ON_STARTUP, pingOnStartup));
       this.protocolVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion));
       this.servers.clear();
       this.addServers(typed.getProperty(ConfigurationProperties.SERVER_LIST, ""));
@@ -375,7 +377,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.keySizeEstimate = template.keySizeEstimate();
       this.marshaller = template.marshaller();
       this.marshallerClass = template.marshallerClass();
-      this.pingOnStartup = template.pingOnStartup();
       this.protocolVersion = template.protocolVersion();
       this.servers.clear();
       for (ServerConfiguration server : template.servers()) {

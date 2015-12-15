@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.CacheException;
@@ -15,7 +16,6 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.net.SocketTimeoutException;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +35,6 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
 
    HotRodServer hotrodServer;
    RemoteCacheManager remoteCacheManager;
-   RemoteCache defaultRemote;
    CountDownLatch latch;
 
    @Override
@@ -50,21 +49,18 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       log.info("Started server on port: " + hotrodServer.getPort());
 
       remoteCacheManager = getRemoteCacheManager();
-      defaultRemote = remoteCacheManager.getCache();
 
       return cacheManager;
    }
 
    protected RemoteCacheManager getRemoteCacheManager() {
-      Properties config = new Properties();
-      config.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
-      config.put("infinispan.client.hotrod.socket_timeout", "5000");
-      config.put("infinispan.client.hotrod.connect_timeout", "5000");
-      config.put("maxActive", 2);
-      // Set ping on startup false, so that the hang can happen
-      // when the put comes, and not when the remote cache manager is built.
-      config.put("infinispan.client.hotrod.ping_on_startup", "false");
-      return new RemoteCacheManager(config);
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder
+         .addServers("127.0.0.1:" + hotrodServer.getPort())
+         .socketTimeout(5000).connectionTimeout(5000)
+         .connectionPool().maxActive(2)
+         .maxRetries(0);
+      return new RemoteCacheManager(builder.create());
    }
 
    @Override
@@ -78,11 +74,10 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = SocketTimeoutException.class)
    public void testPutTimeout(Method m) throws Throwable {
       try {
-         assert null == defaultRemote.put(k(m), v(m));
+         assert null == remoteCacheManager.getCache().put(k(m), v(m));
       } catch (TransportException e) {
          throw e.getCause();
       }
-
    }
 
    private static class HangingCacheManager extends AbstractDelegatingEmbeddedCacheManager {
