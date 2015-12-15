@@ -85,7 +85,7 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
             .toBuilder().build();
    }
 
-   private static class NoOpCQListener<K, V> implements ContinuousQueryResultListener<K, V> {
+   private static class NoOpCQListener<K, V> implements ContinuousQueryListener<K, V> {
 
       @Override
       public void resultJoining(K key, V value) {

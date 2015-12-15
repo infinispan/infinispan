@@ -34,13 +34,13 @@ public final class ContinuousQuery<K, V> {
       this.cache = cache;
    }
 
-   public <C> void addContinuousQueryListener(Query query, ContinuousQueryResultListener<K, C> listener) {
+   public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
       EntryListener<K, V, C> entryListener = new EntryListener<K, V, C>(listener);
       cache.addListener(entryListener, makeFilter(query), null);
       listeners.add(entryListener);
    }
 
-   public void removeContinuousQueryListener(ContinuousQueryResultListener<?, ?> listener) {
+   public void removeContinuousQueryListener(ContinuousQueryListener<?, ?> listener) {
       for (Iterator<EntryListener<K, V, ?>> it = listeners.iterator(); it.hasNext(); ) {
          EntryListener<K, V, ?> l = it.next();
          if (l.listener == listener) {
@@ -69,9 +69,9 @@ public final class ContinuousQuery<K, V> {
    @Listener(clustered = true, includeCurrentState = true, observation = Listener.Observation.POST)
    private static final class EntryListener<K, V, C> {
 
-      private final ContinuousQueryResultListener<K, C> listener;
+      private final ContinuousQueryListener<K, C> listener;
 
-      EntryListener(ContinuousQueryResultListener<K, C> listener) {
+      EntryListener(ContinuousQueryListener<K, C> listener) {
          this.listener = listener;
       }
 
