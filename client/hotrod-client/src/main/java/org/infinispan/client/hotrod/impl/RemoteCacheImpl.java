@@ -25,7 +25,6 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
-import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.impl.operations.*;
 import org.infinispan.client.hotrod.impl.iteration.RemoteCloseableIterator;
@@ -701,14 +700,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return operationsFactory.getCacheTopologyInfo();
    }
 
-   public void resolveCompatibility() {
+   public PingOperation.PingResult resolveCompatibility() {
       if (remoteCacheManager.isStarted()) {
-         try {
-            hasCompatibility = ping().hasCompatibility();
-         } catch (TransportException e) {
-            hasCompatibility = false;
-         }
+         PingOperation.PingResult result = ping();
+         hasCompatibility = result.hasCompatibility();
+         return result;
       }
+
+      return PingOperation.PingResult.FAIL;
    }
 
    private abstract class WithFlagsCallable implements Callable<V> {
