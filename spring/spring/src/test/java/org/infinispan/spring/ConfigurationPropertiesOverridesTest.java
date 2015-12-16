@@ -135,21 +135,6 @@ public class ConfigurationPropertiesOverridesTest {
    }
 
    @Test
-   public final void testIfSetPingOnStartupOverridesDefaultPingOnStartup() {
-      final boolean expectedPingOnStartup = true;
-      final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
-
-      objectUnderTest.setPingOnStartup(expectedPingOnStartup);
-      final Properties overriddenConfigurationProperties = objectUnderTest
-            .override(this.defaultConfigurationProperties);
-
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   String.valueOf(expectedPingOnStartup),
-                   overriddenConfigurationProperties.getProperty(PING_ON_STARTUP));
-   }
-
-   @Test
    public final void testIfSetRequestBalancingStrategyOverridesDefaultRequestBalancingStrategy() {
       final String expectedRequestBalancingStrategy = "test.RequestBalancingStrategy";
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();

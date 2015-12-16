@@ -74,10 +74,11 @@ public class ConfigurationPropertiesOverrides {
    }
 
    /**
-    * @param pingOnStartup
+    * @deprecated No longer in effect, ping always happens on startup now.
     */
+   @Deprecated
    public void setPingOnStartup(final boolean pingOnStartup) {
-      this.overridingProperties.setProperty(PING_ON_STARTUP, Boolean.toString(pingOnStartup));
+      // No-op
    }
 
    /**
