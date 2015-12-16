@@ -61,8 +61,6 @@ public class KeyValuePair<K,V> {
       }
    }
 
-
-
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -81,5 +79,10 @@ public class KeyValuePair<K,V> {
       int result = key != null ? key.hashCode() : 0;
       result = 31 * result + (value != null ? value.hashCode() : 0);
       return result;
+   }
+
+   @Override
+   public String toString() {
+      return "KeyValuePair{key=" + key + ", value=" + value + '}';
    }
 }

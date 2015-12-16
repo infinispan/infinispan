@@ -88,4 +88,17 @@ public abstract class FieldAccumulator {
       }
       return propertyType;
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || o.getClass() != getClass()) return false;
+      FieldAccumulator other = (FieldAccumulator) o;
+      return inPos == other.inPos && outPos == other.outPos;
+   }
+
+   @Override
+   public int hashCode() {
+      return 31 * inPos + outPos;
+   }
 }
