@@ -17,7 +17,8 @@ import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A local cache for 'parsed' queries. Each cache manager has one (lazily created) instance.
+ * A local cache for 'parsed' queries. Each cache manager has at most one QueryCache which is backed by a lazily
+ * created cache.
  *
  * @author anistor@redhat.com
  * @since 7.0
@@ -49,7 +50,7 @@ public class QueryCache {
 
    private InternalCacheRegistry internalCacheRegistry;
 
-   private volatile Cache<KeyValuePair<String, Class>, Object> lazyCache;
+   private volatile Cache<KeyValuePair<String, ?>, Object> lazyCache;
 
    @Inject
    public void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
@@ -58,26 +59,26 @@ public class QueryCache {
    }
 
    /**
-    * Gets the cache object. The key used for lookup if a pair containing the query string and the Class of the cached
-    * query object.
+    * Gets the cached query object. The key used for lookup is an object pair containing the query string and a
+    * discriminator value which is usually the Class of the cached query object.
     */
-   public <T> T get(KeyValuePair<String, Class> queryKey) {
-      Object cachedResult = getCache().get(queryKey);
+   public <T> T get(KeyValuePair<String, ?> queryKey) {
+      T cachedResult = (T) getCache().get(queryKey);
       if (trace && cachedResult != null) {
          log.tracef("QueryCache hit: %s, %s", queryKey.getKey(), queryKey.getValue());
       }
-      return (T) cachedResult;
+      return cachedResult;
    }
 
-   public void put(KeyValuePair<String, Class> queryKey, Object queryParsingResult) {
+   public void put(KeyValuePair<String, ?> queryKey, Object queryParsingResult) {
       getCache().put(queryKey, queryParsingResult);
    }
 
    /**
     * Obtain the cache. Start it lazily when needed.
     */
-   private Cache<KeyValuePair<String, Class>, Object> getCache() {
-      final Cache<KeyValuePair<String, Class>, Object> cache = lazyCache;
+   private Cache<KeyValuePair<String, ?>, Object> getCache() {
+      final Cache<KeyValuePair<String, ?>, Object> cache = lazyCache;
 
       //Most likely branch first:
       if (cache != null) {

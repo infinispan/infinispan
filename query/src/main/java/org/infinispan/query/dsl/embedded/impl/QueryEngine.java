@@ -142,7 +142,7 @@ public class QueryEngine {
          RowPropertyHelper.ColumnMetadata c = columns.get(p);
          if (p.getAggregationType() == null) {
             // this must be an already processed 'group by' field, or else it's an invalid query
-            if (c == null || c.getColumnIndex() >= noOfGroupingColumns) {    //todo [anistor]   c.getColumnIndex() >= noOfGroupingColumns seems redundant
+            if (c == null || c.getColumnIndex() >= noOfGroupingColumns) {
                throw log.expressionMustBePartOfAggregateFunctionOrShouldBeIncludedInGroupByClause(p.toString());
             }
          }
@@ -628,8 +628,8 @@ public class QueryEngine {
    private ObjectFilter getObjectFilter(BaseMatcher matcher, String jpqlString, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
       ObjectFilter objectFilter;
       // if parameters are present caching cannot be currently performed due to internal implementation limitations
-      if (queryCache != null && (namedParameters == null || namedParameters.isEmpty()) && acc == null) {
-         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, matcher.getClass());
+      if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
+         KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>> queryCacheKey = new KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>>(jpqlString, new KeyValuePair<Class, List<FieldAccumulator>>(matcher.getClass(), acc));
          objectFilter = queryCache.get(queryCacheKey);
          if (objectFilter == null) {
             objectFilter = matcher.getObjectFilter(jpqlString, namedParameters, acc);
