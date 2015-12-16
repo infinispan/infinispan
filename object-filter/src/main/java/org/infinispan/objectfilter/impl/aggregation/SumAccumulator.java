@@ -62,8 +62,7 @@ final class SumAccumulator extends FieldAccumulator {
    protected void merge(Object[] accRow, Object value) {
       if (value instanceof DoubleStat) {
          value = ((DoubleStat) value).getSum();
-      }
-      else if (value instanceof Counter) {
+      } else if (value instanceof Counter) {
          value = ((Counter) value).getValue();
       }
       update(accRow, value);
@@ -90,5 +89,18 @@ final class SumAccumulator extends FieldAccumulator {
          return Long.class;
       }
       return fieldType;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || o.getClass() != getClass()) return false;
+      SumAccumulator other = (SumAccumulator) o;
+      return inPos == other.inPos && outPos == other.outPos && fieldType == other.fieldType;
+   }
+
+   @Override
+   public int hashCode() {
+      return 31 * super.hashCode() + fieldType.hashCode();
    }
 }
