@@ -377,29 +377,6 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
 
    /**
     * Test method for
-    * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setPingOnStartup(boolean)}
-    * .
-    *
-    * @throws Exception
-    */
-   @Test
-   public final void setPingOnStartupShouldOverrideDefaultPingOnStartup() throws Exception {
-      final boolean expectedPingOnStartup = true;
-      final SpringRemoteCacheManagerFactoryBean objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
-      objectUnderTest.setPingOnStartup(expectedPingOnStartup);
-      objectUnderTest.afterPropertiesSet();
-
-      final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-
-      assertEquals("setPingOnStartup(" + expectedPingOnStartup
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   String.valueOf(expectedPingOnStartup), remoteCacheManager.getNativeCacheManager()
-                  .getProperties().get(PING_ON_STARTUP));
-      objectUnderTest.destroy();
-   }
-
-   /**
-    * Test method for
     * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setRequestBalancingStrategy(java.lang.String)}
     * .
     *
