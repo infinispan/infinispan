@@ -1,0 +1,121 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+       <groupId>org.infinispan.server</groupId>
+       <artifactId>infinispan-server-versions</artifactId>
+       <version>8.2.0-SNAPSHOT</version>
+       <relativePath>../versions/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>infinispan-server-event-logger</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Infinispan Server - Event Logger</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-query</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging-processor</artifactId>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
+                    <parallel>none</parallel>
+                </configuration>
+            </plugin>
+            <plugin>
+	            <groupId>org.codehaus.mojo</groupId>
+	            <artifactId>exec-maven-plugin</artifactId>
+	            <executions>
+	               <execution>
+	                  <id>serialize_component_metadata</id>
+	                  <phase>process-classes</phase>
+	                  <goals>
+	                     <goal>java</goal>
+	                  </goals>
+	                  <configuration>
+	                     <classpathScope>compile</classpathScope>
+	                     <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
+	                     <arguments>
+	                        <argument>${project.build.outputDirectory}</argument>
+	                        <argument>${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat</argument>
+	                     </arguments>
+	                     <systemProperties>
+	                        <systemProperty>
+	                           <key>infinispan.isCoreModule</key>
+	                           <value>${module.metadata.isCoreModule}</value>
+	                        </systemProperty>
+	                     </systemProperties>
+	                  </configuration>
+	               </execution>
+	            </executions>
+	         </plugin>
+        </plugins>
+    </build>
+    
+    <description>Infinispan Server - Infinispan Server Event Logger</description>
+
+    <profiles>
+       <profile>
+          <id>smoke</id>
+          <build>
+             <plugins>
+                <plugin>
+                   <groupId>org.apache.maven.plugins</groupId>
+                   <artifactId>maven-surefire-plugin</artifactId>
+                   <executions>
+                      <execution>
+                         <id>default-test</id>
+                         <phase>none</phase>
+                      </execution>
+                   </executions>
+                </plugin>
+             </plugins>
+          </build>
+       </profile>
+    </profiles>
+</project>

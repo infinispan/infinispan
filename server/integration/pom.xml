@@ -19,6 +19,7 @@
    <modules>
       <module>versions</module>
       <module>commons</module>
+      <module>event-logger</module>
       <module>jgroups</module>
       <module>infinispan</module>
       <module>endpoint</module>
@@ -38,6 +39,7 @@
          <modules>
             <module>versions</module>
             <module>commons</module>
+            <module>event-logger</module>
             <module>jgroups</module>
             <module>infinispan</module>
             <module>endpoint</module>

@@ -168,6 +168,12 @@
 
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-event-logger</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
             <version>${project.version}</version>
          </dependency>

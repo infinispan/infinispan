@@ -1,7 +1,9 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.eventlogger.ServerEventLogManager;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
+import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -13,6 +15,8 @@ import org.jboss.msc.service.ServiceController;
 import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
 import static org.jboss.as.controller.PathAddress.pathAddress;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
+import java.util.List;
 
 /**
  * Custom commands related to the cache container.
@@ -45,17 +49,16 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
       ModelNode operationResult;
       try {
-         operationResult = invokeCommand(getEmbeddedCacheManager(context, operation), operation);
+         operationResult = invokeCommand(getEmbeddedCacheManager(context, operation), context, operation);
       } catch (Exception e) {
-         throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
+         throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
       }
       if (operationResult != null) {
          context.getResult().set(operationResult);
       }
-      context.stepCompleted();
    }
 
-   protected abstract ModelNode invokeCommand(EmbeddedCacheManager cacheManager, ModelNode operation) throws Exception;
+   protected abstract ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception;
 
    private EmbeddedCacheManager getEmbeddedCacheManager(OperationContext context, ModelNode operation) {
       final PathAddress address = pathAddress(operation.require(OP_ADDR));
@@ -73,7 +76,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       }
 
       @Override
-      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, ModelNode operation) throws Exception {
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
          GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
@@ -89,7 +92,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       }
 
       @Override
-      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, ModelNode operation) throws Exception {
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
          GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
@@ -105,7 +108,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       }
 
       @Override
-      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, ModelNode operation) throws Exception {
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
          GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
@@ -121,11 +124,39 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
       }
 
       @Override
-      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, ModelNode operation) throws Exception {
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
          final String siteNameParameter = CacheContainerResource.SITE_NAME.getName();
          final ModelNode siteName = operation.require(siteNameParameter);
          GlobalXSiteAdminOperations xsiteAdminOperations = cacheManager.getGlobalComponentRegistry().getComponent(GlobalXSiteAdminOperations.class);
          return toOperationResult(xsiteAdminOperations.cancelPushState(siteName.asString()));
       }
    }
+
+   public static class ReadEventLogCommand extends CacheContainerCommands {
+       public static final ReadEventLogCommand INSTANCE = new ReadEventLogCommand();
+
+       public ReadEventLogCommand() {
+          super(0);
+       }
+
+       @Override
+       protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+          int count = CacheContainerResource.COUNT.resolveModelAttribute(context, operation).asInt();
+          int offset = CacheContainerResource.OFFSET.resolveModelAttribute(context, operation).asInt();
+          ServerEventLogManager serverEventLogManager = cacheManager.getGlobalComponentRegistry().getComponent(ServerEventLogManager.class);
+          List<EventLog> events = serverEventLogManager.getEvents(offset, count);
+          final ModelNode result = new ModelNode().setEmptyList();
+          for (EventLog event : events) {
+              ModelNode node = result.addEmptyObject();
+              node.get("when").set(event.getWhen().toString());
+              node.get("level").set(event.getLevel().toString());
+              node.get("message").set(event.getMessage());
+              event.getDetail().ifPresent(detail -> node.get("detail").set(detail));
+              event.getContext().ifPresent(ctx -> node.get("context").set(ctx));
+              event.getScope().ifPresent(scope -> node.get("scope").set(scope));
+              event.getWho().ifPresent(who -> node.get("who").set(who));
+          }
+          return result;
+       }
+    }
 }
