@@ -87,7 +87,7 @@ public class QueryCache {
       synchronized (this) {
          if (lazyCache == null) {
             // define the query cache configuration if it does not already exist (from a previous call or manually defined by the user)
-            internalCacheRegistry.registerInternalCache(QUERY_CACHE_NAME, getDefaultQueryCacheConfig().build(), EnumSet.of(InternalCacheRegistry.Flag.USER));
+            internalCacheRegistry.registerInternalCache(QUERY_CACHE_NAME, getDefaultQueryCacheConfig().build(), EnumSet.noneOf(InternalCacheRegistry.Flag.class));
             lazyCache = cacheManager.getCache(QUERY_CACHE_NAME);
          }
          return lazyCache;
