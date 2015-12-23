@@ -1,9 +1,11 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,8 +47,13 @@ public interface ConsistentHash {
     */
    int getNumOwners();
 
-
-   Hash getHashFunction();
+   /**
+    * @deprecated Since 8.2, the {@code Hash} is optional - replaced in the configuration by the
+    * {@code KeyPartitioner}
+    */
+   default Hash getHashFunction() {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * @return The actual number of hash space segments. Note that it may not be the same as the number
@@ -67,7 +74,9 @@ public interface ConsistentHash {
     * @param key key to locate
     * @return the address of the owner
     */
-   Address locatePrimaryOwner(Object key);
+   default Address locatePrimaryOwner(Object key) {
+      return locatePrimaryOwnerForSegment(getSegment(key));
+   }
 
    /**
     * Finds all the owners of a key. The first element in the returned list is the primary owner.
@@ -76,17 +85,25 @@ public interface ConsistentHash {
     * @return An unmodifiable list of addresses where the key resides.
     *         Will never be {@code null}, and it will always have at least 1 element.
     */
-   List<Address> locateOwners(Object key);
+   default List<Address> locateOwners(Object key) {
+      return locateOwnersForSegment(getSegment(key));
+   }
 
-   /**
-    * The logical equivalent of calling {@link #locateOwners} multiple times for each key in the collection of
-    * keys and merging the results. Implementations may be optimised for such a bulk lookup.
-    *
-    *
-    * @param keys keys to locate.
-    * @return set of nodes that own at least one of the keys.
-    */
-   Set<Address> locateAllOwners(Collection<Object> keys);
+   default Set<Address> locateAllOwners(Collection<Object> keys) {
+      // Use a HashSet assuming most of the time the number of keys is small.
+      HashSet<Address> owners = new HashSet<Address>();
+      HashSet<Integer> segments = new HashSet<Integer>();
+      for (Object key : keys) {
+         int segment = getSegment(key);
+         if (segments.add(segment)) {
+            owners.addAll(locateOwnersForSegment(segment));
+         }
+         if (owners.size() == getMembers().size()) {
+            return owners;
+         }
+      }
+      return owners;
+   }
 
    /**
     * Test to see whether a key is owned by a given node.
@@ -95,7 +112,9 @@ public interface ConsistentHash {
     * @param key key to test
     * @return {@code true} if the key is mapped to the address; {@code false} otherwise
     */
-   boolean isKeyLocalToNode(Address nodeAddress, Object key);
+   default boolean isKeyLocalToNode(Address nodeAddress, Object key) {
+      return locateOwnersForSegment(getSegment(key)).contains(nodeAddress);
+   }
 
    /**
     * @return The hash space segment that a key maps to.
@@ -111,6 +130,19 @@ public interface ConsistentHash {
     * @return The primary owner of a given hash space segment. This is equivalent to {@code locateOwnersForSegment(segmentId).get(0)} but is more efficient
     */
    Address locatePrimaryOwnerForSegment(int segmentId);
+
+   /**
+    * Check if a segment is local to a given member.
+    *
+    * <p>Implementation note: normally key-based method are implemented based on segment-based methods.
+    * Here, however, we need a default implementation for the segment-based method for
+    * backwards-compatibility reasons.</p>
+    *
+    * @since 8.2
+    */
+   default boolean isSegmentLocalToNode(Address nodeAddress, int segmentId) {
+      return locateOwnersForSegment(segmentId).contains(nodeAddress);
+   }
 
    /**
     * Returns the segments owned by a cache member.

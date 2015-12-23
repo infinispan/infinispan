@@ -45,6 +45,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.MapReduceManagerImpl;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
@@ -310,6 +311,7 @@ public class ExternalizerTable implements ObjectTable {
 
       addInternalExternalizer(new MurmurHash2.Externalizer());
       addInternalExternalizer(new MurmurHash3.Externalizer());
+      addInternalExternalizer(new HashFunctionPartitioner.Externalizer());
 
       addInternalExternalizer(new DefaultConsistentHash.Externalizer());
       addInternalExternalizer(new ReplicatedConsistentHash.Externalizer());

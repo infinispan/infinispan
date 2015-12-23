@@ -398,7 +398,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       cacheStatus.getTopologyUpdatesCompletionService().submit(new Runnable() {
          @Override
          public void run() {
-            doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
+            try {
+               doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender);
+            } catch (Throwable t) {
+               log.rebalanceStartError(cacheName, t);
+            }
          }
       }, null);
    }

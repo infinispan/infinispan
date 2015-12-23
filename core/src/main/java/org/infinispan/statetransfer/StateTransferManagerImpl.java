@@ -8,11 +8,11 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
-import org.infinispan.distribution.group.GroupManager;
-import org.infinispan.distribution.group.GroupingConsistentHash;
+import org.infinispan.distribution.group.PartitionerConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -56,13 +56,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private Configuration configuration;
    private GlobalConfiguration globalConfiguration;
    private RpcManager rpcManager;
-   private GroupManager groupManager;   // optional
    private LocalTopologyManager localTopologyManager;
 
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
    // The first topology in which the local node was a member. Any command with a lower
    // topology id will be ignored.
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
+   private KeyPartitioner keyPartitioner;
 
    public StateTransferManagerImpl() {
    }
@@ -75,19 +75,19 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     Configuration configuration,
                     GlobalConfiguration globalConfiguration,
                     RpcManager rpcManager,
-                    GroupManager groupManager,
+                    KeyPartitioner keyPartitioner,
                     LocalTopologyManager localTopologyManager,
                     PartitionHandlingManager partitionHandlingManager) {
       this.stateConsumer = stateConsumer;
       this.stateProvider = stateProvider;
-      this.partitionHandlingManager = partitionHandlingManager;
       this.cacheName = cache.getName();
       this.cacheNotifier = cacheNotifier;
       this.configuration = configuration;
       this.globalConfiguration = globalConfiguration;
       this.rpcManager = rpcManager;
-      this.groupManager = groupManager;
+      this.keyPartitioner = keyPartitioner;
       this.localTopologyManager = localTopologyManager;
+      this.partitionHandlingManager = partitionHandlingManager;
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
@@ -98,8 +98,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          log.tracef("Starting StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
 
-      CacheJoinInfo joinInfo = new CacheJoinInfo(
-            pickConsistentHashFactory(),
+      CacheJoinInfo joinInfo = new CacheJoinInfo(pickConsistentHashFactory(),
             configuration.clustering().hash().hash(),
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(),
@@ -149,26 +148,20 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    /**
-    * Decorates the given cache topology to add key grouping. The ConsistentHash objects of the cache topology
-    * are wrapped to provide key grouping (if configured).
+    * Decorates the given cache topology to add a key partitioner.
     *
-    * @param cacheTopology the given cache topology
-    * @return the decorated topology
+    * The key partitioner may include support for grouping as well.
     */
-   private CacheTopology addGrouping(CacheTopology cacheTopology) {
-      if (groupManager == null) {
-         return cacheTopology;
-      }
-
+   private CacheTopology addPartitioner(CacheTopology cacheTopology) {
       ConsistentHash currentCH = cacheTopology.getCurrentCH();
-      currentCH = new GroupingConsistentHash(currentCH, groupManager);
+      currentCH = new PartitionerConsistentHash(currentCH, keyPartitioner);
       ConsistentHash pendingCH = cacheTopology.getPendingCH();
       if (pendingCH != null) {
-         pendingCH = new GroupingConsistentHash(pendingCH, groupManager);
+         pendingCH = new PartitionerConsistentHash(pendingCH, keyPartitioner);
       }
       ConsistentHash unionCH = cacheTopology.getUnionCH();
       if (unionCH != null) {
-         unionCH = new GroupingConsistentHash(unionCH, groupManager);
+         unionCH = new PartitionerConsistentHash(unionCH, keyPartitioner);
       }
       return new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), currentCH, pendingCH,
             unionCH, cacheTopology.getActualMembers());
@@ -191,8 +184,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
          if (trace) log.tracef("This is the first topology %d in which the local node is a member", firstTopologyAsMember);
       }
 
-      // handle grouping
-      newCacheTopology = addGrouping(newCacheTopology);
+      // handle the partitioner
+      newCacheTopology = addPartitioner(newCacheTopology);
 
       cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newCacheTopology.getTopologyId(), true);
 

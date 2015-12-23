@@ -7,6 +7,9 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
+/**
+ * @private
+ */
 @Scope(Scopes.NAMED_CACHE)
 @DefaultFactoryFor(classes = GroupManager.class)
 public class GroupManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {

@@ -164,4 +164,6 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    // 158 - 160 used by functions in commons
    int AVAILABILITY_MODE = 161;
    int VALUE_MATCHER = 162;
+
+   int HASH_FUNCTION_PARTITIONER = 163;
 }

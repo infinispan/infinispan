@@ -1,13 +1,16 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
+import org.infinispan.distribution.ch.KeyPartitioner
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner
+import org.infinispan.distribution.group.PartitionerConsistentHash
+import org.infinispan.distribution.group.impl.GroupingPartitioner
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import collection.JavaConversions._
 import OperationStatus._
 import org.infinispan.configuration.cache.Configuration
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash
 import collection.mutable.ArrayBuffer
 import org.infinispan.server.hotrod.util.BulkUtil
 import io.netty.buffer.ByteBuf
@@ -210,9 +213,10 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
          // of the keys (at the "segment borders"), so it's still much better than having no hash information.
          // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
-         // TODO Need a check somewhere on startup, this only works with the default consistent hash
+         // TODO Need a check somewhere on startup, this only works with the default key partitioner
          val numSegments = ch.getNumSegments
-         val segmentHashIds = ch.asInstanceOf[DefaultConsistentHash].getSegmentEndHashes
+         val keyPartitioner = ch.asInstanceOf[PartitionerConsistentHash].getKeyPartitioner
+         val segmentHashIds = extractSegmentEndHashes(keyPartitioner)
          val serverHashes = ArrayBuffer[(ServerAddress, Int)]()
          for ((address, serverAddress) <- topologyMap) {
             for (segmentIdx <- 0 until numSegments) {
@@ -234,6 +238,14 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
             log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
             buffer.writeInt(hashId)
          }
+      }
+   }
+
+   def extractSegmentEndHashes(keyPartitioner: KeyPartitioner) : java.util.List[Integer] = {
+      keyPartitioner match {
+         case hashPartitioner: HashFunctionPartitioner => hashPartitioner.getSegmentEndHashes
+         case groupPartitioner: GroupingPartitioner => extractSegmentEndHashes(groupPartitioner.unwrap())
+         case _ => java.util.Collections.emptyList()
       }
    }
 
