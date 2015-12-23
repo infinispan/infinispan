@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>infinispan-atomic-factory</artifactId>
-    <name>Infinispan Atomic Fatory</name>
+    <name>Infinispan Atomic Factory</name>
     <description>Infinispan atomic object factory module</description>
 
    <properties>
