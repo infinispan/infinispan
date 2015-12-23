@@ -8,6 +8,10 @@ import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogger;
+
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +21,11 @@ import java.util.Set;
 
 public class PreferConsistencyStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferConsistencyStrategy.class);
+   private final EventLogger eventLog;
+
+   public PreferConsistencyStrategy(EventLogger eventLog) {
+      this.eventLog = eventLog;
+   }
 
    @Override
    public void onJoin(AvailabilityStrategyContext context, Address joiner) {
@@ -46,7 +55,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       }
 
       if (isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
-         log.enteringDegradedModeGracefulLeaver(context.getCacheName(), leaver);
+         eventLog.context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.enteringDegradedModeGracefulLeaver(leaver));
          context.updateAvailabilityMode(newMembers, AvailabilityMode.DEGRADED_MODE, true);
          return;
       }
@@ -77,12 +86,12 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
       if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
-         log.enteringDegradedModeLostData(context.getCacheName(), lostMembers);
+         eventLog.context(context.getCacheName()).error(EventLogCategory.CLUSTER, MESSAGES.enteringDegradedModeLostData(lostMembers));
          context.updateAvailabilityMode(newMembers, AvailabilityMode.DEGRADED_MODE, true);
          return;
       }
       if (isMinorityPartition(stableMembers, lostMembers)) {
-         log.enteringDegradedModeMinorityPartition(context.getCacheName(), newMembers, lostMembers, stableMembers);
+         eventLog.context(context.getCacheName()).error(EventLogCategory.CLUSTER, MESSAGES.enteringDegradedModeMinorityPartition(newMembers, lostMembers, stableMembers));
          context.updateAvailabilityMode(newMembers, AvailabilityMode.DEGRADED_MODE, true);
          return;
       }
@@ -137,8 +146,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
                maxDegradedTopology = partitionTopology;
             }
          } else {
-            log.unexpectedAvailabilityMode(context.getAvailabilityMode(), context.getCacheName(),
-                  response.getCacheTopology());
+            eventLog.context(context.getCacheName()).error(EventLogCategory.CLUSTER, MESSAGES.unexpectedAvailabilityMode(context.getAvailabilityMode(), response.getCacheTopology()));
          }
       }
 
@@ -207,12 +215,12 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          List<Address> lostMembers = new ArrayList<>(stableMembers);
          lostMembers.removeAll(context.getExpectedMembers());
          if (isDataLost(maxStableTopology.getCurrentCH(), newMembers)) {
-            log.keepingDegradedModeAfterMergeDataLost(context.getCacheName(), newMembers, lostMembers, stableMembers);
+            eventLog.context(context.getCacheName()).error(EventLogCategory.CLUSTER, MESSAGES.keepingDegradedModeAfterMergeDataLost(newMembers, lostMembers, stableMembers));
             return AvailabilityMode.DEGRADED_MODE;
          }
          if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
-            log.keepingDegradedModeAfterMergeMinorityPartition(context.getCacheName(), newMembers, lostMembers,
-                  stableMembers);
+            eventLog.context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.keepingDegradedModeAfterMergeMinorityPartition(newMembers, lostMembers,
+                  stableMembers));
             return AvailabilityMode.DEGRADED_MODE;
          }
       }
