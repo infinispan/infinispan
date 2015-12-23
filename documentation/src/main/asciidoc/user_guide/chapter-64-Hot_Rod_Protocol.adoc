@@ -75,21 +75,33 @@ protocol in an asynchronous way.
 | Version             | 1 byte     | Infinispan hot rod server version.
 In this particular case, this is +10+
 | Opcode              | 1 byte     | Request operation code: +
-+0x01+ = put request +
-+0x03+ = get +
-+0x05+ = putIfAbsent +
-+0x07+ = replace +
-+0x09+ = replaceIfUnmodified +
-+0x0B+ = remove +
-+0x0D+ = removeIfUnmodified +
-+0x0F+ = containsKey +
-+0x11+ = getWithVersion +
-+0x13+ = clear +
-+0x15+ = stats +
-+0x17+ = ping +
-+0x19+ = bulkGet +
-+0x2D+ = putAll +
-+0x2F+ = getAll +
++0x01+ = put (since 1.0) +
++0x03+ = get (since 1.0) +
++0x05+ = putIfAbsent (since 1.0) +
++0x07+ = replace (since 1.0) +
++0x09+ = replaceIfUnmodified (since 1.0) +
++0x0B+ = remove (since 1.0) +
++0x0D+ = removeIfUnmodified (since 1.0) +
++0x0F+ = containsKey (since 1.0) +
++0x11+ = getWithVersion (since 1.0) +
++0x13+ = clear (since 1.0) +
++0x15+ = stats (since 1.0) +
++0x17+ = ping (since 1.0) +
++0x19+ = bulkGet (since 1.2) +
++0x1B+ = getWithMetadata (since 1.2) +
++0x1D+ = bulkGetKeys (since 1.2) +
++0x1F+ = query (since 1.3) +
++0x21+ = authMechList (since 2.0) +
++0x23+ = auth (since 2.0) +
++0x25+ = addClientListener (since 2.0) +
++0x27+ = removeClientListener (since 2.0) +
++0x29+ = size (since 2.0) +
++0x2B+ = exec (since 2.1) +
++0x2D+ = putAll (since 2.1) +
++0x2F+ = getAll (since 2.1) +
++0x31+ = iterationStart (since 2.3) +
++0x33+ = iterationNext (since 2.3) +
++0x35+ = iterationEnd (since 2.3) +
 | Cache Name Length   | vInt       | Length of cache name. If the passed
 length is +0+ (followed by no cache name), the operation will interact with
 the default cache.
@@ -138,22 +150,34 @@ The header for a response is composed of:
 | Message ID             | vLong      | ID of the message, matching the request
 for which the response is sent.
 | Opcode                 | 1 byte     | Response operation code: +
-+0x02+ = put +
-+0x04+ = get +
-+0x06+ = putIfAbsent +
-+0x08+ = replace +
-+0x0A+ = replaceIfUnmodified +
-+0x0C+ = remove +
-+0x0E+ = removeIfUnmodified +
-+0x10+ = containsKey +
-+0x12+ = getWithVersion +
-+0x14+ = clear +
-+0x16+ = stats +
-+0x18+ = ping +
-+0x1A+ = bulkGet +
-+0x2E+ = putAll +
-+0x30+ = getAll +
-+0x50+ = error +
++0x02+ = put (since 1.0) + 
++0x04+ = get (since 1.0) +
++0x06+ = putIfAbsent (since 1.0) +
++0x08+ = replace (since 1.0) +
++0x0A+ = replaceIfUnmodified (since 1.0) +
++0x0C+ = remove (since 1.0) +
++0x0E+ = removeIfUnmodified (since 1.0) +
++0x10+ = containsKey (since 1.0) +
++0x12+ = getWithVersion (since 1.0) +
++0x14+ = clear (since 1.0) +
++0x16+ = stats (since 1.0) +
++0x18+ = ping (since 1.0) +
++0x1A+ = bulkGet (since 1.0) +
++0x1C+ = getWithMetadata (since 1.2) +
++0x1E+ = bulkGetKeys (since 1.2) +
++0x20+ = query (since 1.3) +
++0x22+ = authMechList (since 2.0) +
++0x24+ = auth (since 2.0) +
++0x26+ = addClientListener (since 2.0) + 
++0x28+ = removeClientListener (since 2.0) + 
++0x2A+ = size (since 2.0) + 
++0x2C+ = exec (since 2.1) + 
++0x2E+ = putAll (since 2.1) +
++0x30+ = getAll (since 2.1) +
++0x32+ = iterationStart (since 2.3) +
++0x34+ = iterationNext (since 2.3) +
++0x36+ = iterationEnd (since 2.3) +
++0x50+ = error (since 1.0) +
 | Status                 | 1 byte     | Status of the response, possible values: +
 +0x00+ = No error +
 +0x01+ = Not put/removed/replaced +
@@ -270,7 +294,7 @@ that are not configured with distribution.
 
 ====== Operations
 
-.Get/Remove/ContainsKey/GetWithVersion
+.Get (0x03)/Remove (0x0B)/ContainsKey (0x0F)/GetWithVersion (0x11)
 
 Common request format:
 
@@ -287,7 +311,7 @@ Integer.MAX_VALUE.
 | Key                 | byte array | Byte array containing the key whose value is being requested.
 |==============================================================================
 
-Get response:
+Get response (0x04):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -301,7 +325,7 @@ Get response:
 | Value               | byte array | If success, the requested value
 |==============================================================================
 
-Remove response:
+Remove response (0x0C):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -319,7 +343,7 @@ If no flag was sent, no value length would be present.
 sent in the request and the key was removed, previous value.
 |==============================================================================
 
-ContainsKey response:
+ContainsKey response (0x10):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -331,7 +355,7 @@ ContainsKey response:
 +0x02+ = if key does not exist +
 |==============================================================================
 
-GetWithVersion response:
+GetWithVersion response (0x12):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -350,7 +374,7 @@ They just need to be unique per update at the key level.
 
 .BulkGet
 
-Request format:
+Request (0x19):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -363,7 +387,7 @@ Needed to support CacheLoader.load(int). If 0 then all entries are returned
 (needed for CacheLoader.loadAll()).
 |==============================================================================
 
-Response:
+Response (0x20):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -390,7 +414,7 @@ link:$$http://community.jboss.org/docs/DOC-15592$$[here]
 |==============================================================================
 
 
-.Put/PutIfAbsent/Replace
+.Put (0x01)/PutIfAbsent (0x05)/Replace (0x07)
 
 Common request format:
 
@@ -415,7 +439,7 @@ idle before it's evicted from the cache. If 0, no max idle time.
 | Value               | byte-array | Value to be stored
 |==============================================================================
 
-Put response:
+Put response (0x02):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -432,7 +456,7 @@ If no flag was sent, no value length would be present.
 sent in the request and the key was put, previous value.
 |==============================================================================
 
-Replace response:
+Replace response (0x08):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -450,7 +474,7 @@ If no flag was sent, no value length would be present.
 sent in the request and the key was replaced, previous value.
 |==============================================================================
 
-PutIfAbsent response:
+PutIfAbsent response (0x06):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -470,7 +494,7 @@ sent in the request and the key was replaced, previous value.
 
 .ReplaceIfUnmodified
 
-Request format:
+Request (0x09):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -494,7 +518,7 @@ idle before it's evicted from the cache. If 0, no max idle time.
 | Value               | byte-array | Value to be stored
 |==============================================================================
 
-Response:
+Response (0x0A):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -515,7 +539,7 @@ sent in the request and the key was replaced, previous value.
 
 .RemoveIfUnmodified
 
-Request format:
+Request (0x0D):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -531,7 +555,7 @@ Integer.MAX_VALUE.
 | Entry Version       | 8 bytes    | Use the value returned by GetWithVersion operation.
 |==============================================================================
 
-Response:
+Response (0x0E):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -553,7 +577,7 @@ sent in the request and the key was removed, previous value.
 
 .Clear
 
-Request:
+Request (0x13):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -562,7 +586,7 @@ Request:
 | Header              | variable   | Request header
 |==============================================================================
 
-Response:
+Response (0x14):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -577,7 +601,7 @@ Response:
 
 Bulk operation to put all key value entries into the cache at the same time.
 
-Request:
+Request (0x2D):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -603,7 +627,7 @@ idle before it's evicted from the cache. If 0, no max idle time.
 
 |==============================================================================
 
-Response:
+Response (0x2E):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -618,7 +642,7 @@ Response:
 
 Bulk operation to get all entries that map to a given set of keys.
 
-Request:
+Request (0x2F):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -634,7 +658,7 @@ Request:
 
 |==============================================================================
 
-Response:
+Response (0x30):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -676,7 +700,7 @@ The supported stats are the following:
 | removeMisses |Number of removal misses.
 |===============
 
-Request:
+Request (0x15):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -686,7 +710,7 @@ Request:
 |==============================================================================
 
 
-Response:
+Response (0x16):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -711,7 +735,7 @@ Response:
 
 Application level request to see if the server is available.
 
-Request:
+Request (0x17):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -720,7 +744,7 @@ Request:
 | Header              | variable   | Request header
 |==============================================================================
 
-Response:
+Response (0x18):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -733,7 +757,7 @@ Response:
 
 .Error Handling
 
-Error response
+Error response (0x50)
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -950,7 +974,7 @@ Two new response operation codes have been added:
 
 .GetWithMetadata
 
-Request format:
+Request (0x1B):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -965,7 +989,7 @@ Integer.MAX_VALUE.
 | Key                 | byte array | Byte array containing the key whose value is being requested.
 |==============================================================================
 
-Response format:
+Response (0x1C):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1000,7 +1024,7 @@ They just need to be unique per update at the key level.
 
 .BulkKeysGet
 
-Request format:
+Request (0x1D):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1022,7 +1046,7 @@ all nodes. Instead, it'll only get keys local from the cache instance local
 to the server receiving the request. +
 |==============================================================================
 
-Response format:
+Response (0x1E):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1066,7 +1090,7 @@ A new response operation code has been added:
 
 .Query
 
-Request format:
+Request (0x1F):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1076,7 +1100,7 @@ Request format:
 | Query | byte array | Byte array containing the protobuf encoded query object, having a length specified by previous field.
 |==============================================================================
 
-Response format:
+Response (0x20):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1228,7 +1252,7 @@ protocol limits the number of owners to send for efficiency reasons.
 
 .Auth Mech List
 
-Request format:
+Request (0x21):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1236,7 +1260,7 @@ Request format:
 | Header | variable | Request header
 |==============================================================================
 
-Response format:
+Response (0x22):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1253,7 +1277,7 @@ will then need to issue an Authenticate request with the preferred mech.
 
 .Authenticate
 
-Request format:
+Request (0x23):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1264,7 +1288,7 @@ Request format:
 | Response data   | byte array | The SASL client response
 |==============================================================================
 
-Response format:
+Response (0x24):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1280,7 +1304,7 @@ on the chosen mech, might be a multi-step operation. Once complete the connectio
 
 .Add client listener for remote events
 
-Request format:
+Request (0x25):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1329,7 +1353,7 @@ present in the request.
 | ... | |
 |==============================================================================
 
-Response format:
+Response (0x26):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1339,7 +1363,7 @@ Response format:
 
 .Remove client listener for remote events
 
-Request format:
+Request (0x27):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1348,7 +1372,7 @@ Request format:
 | Listener ID   | byte array   | Listener identifier
 |==============================================================================
 
-Response format:
+Response (0x28):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1358,7 +1382,7 @@ Response format:
 
 .Size
 
-Request format:
+Request (0x29):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1366,7 +1390,7 @@ Request format:
 | Header | variable | Request header
 |==============================================================================
 
-Response format:
+Response (0x2A):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1379,7 +1403,7 @@ well.
 
 .Exec
 
-Request format:
+Request (0x2B):
 [cols="3,^2,10",options="header"]
 |==============================================================================
 | Field Name          | Size       | Value
@@ -1392,7 +1416,7 @@ Request format:
 | ...
 |==============================================================================
 
-Response format:
+Response (0x2C):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1582,7 +1606,7 @@ TIP: This version of the protocol is implemented since Infinispan 8.0
 
 .Iteration Start
 
-Request format:
+Request (0x31):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1601,7 +1625,7 @@ More details in the java.util.BitSet implementation. Segments will be sent if th
 | BatchSize           | vInt        | number of entries to transfers from the server at one go
 |==============================================================================
 
-Response format:
+Response (0x32):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1612,7 +1636,7 @@ Response format:
 
 .Iteration Next
 
-Request format:
+Request (0x33):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1620,7 +1644,7 @@ Request format:
 | IterationId         | String     | The unique id of the iteration
 |==============================================================================
 
-Response format:
+Response (0x34):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1641,7 +1665,7 @@ Response format:
 
 .Iteration End
 
-Request format:
+Request (0x35):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1649,7 +1673,7 @@ Request format:
 | IterationId         | String     | The unique id of the iteration
 |==============================================================================
 
-Response format:
+Response (0x36):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1678,7 +1702,7 @@ it's parametrised:
 
 .Iteration Start
 
-Request format:
+Request (0x31):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
@@ -1697,7 +1721,7 @@ meaning more than one value is contained in the same entry.
 
 .Iteration Next
 
-Response format:
+Response (0x34):
 
 [cols="3,^2,10",options="header"]
 |==============================================================================
