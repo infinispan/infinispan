@@ -66,6 +66,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       Address address1 = getModelFactory().makeAddress();
       address1.setStreet("Main Street");
       address1.setPostCode("X1234");
+      address1.setNumber(156);
       user1.setAddresses(Collections.singletonList(address1));
 
       User user2 = getModelFactory().makeUser();
@@ -78,9 +79,11 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       Address address2 = getModelFactory().makeAddress();
       address2.setStreet("Old Street");
       address2.setPostCode("Y12");
+      address2.setNumber(-12);
       Address address3 = getModelFactory().makeAddress();
       address3.setStreet("Bond Street");
       address3.setPostCode("ZZ");
+      address3.setNumber(312);
       user2.setAddresses(Arrays.asList(address2, address3));
 
       User user3 = getModelFactory().makeUser();
@@ -2013,6 +2016,214 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(1, list.size());
       assertEquals(2, list.get(0)[0]);
       assertEquals(149.0d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   @Test
+   public void testSum() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.sum("age"))
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(22L, list.get(0)[0]);
+      assertEquals(1, list.get(1).length);
+      assertEquals(null, list.get(1)[0]);
+   }
+
+   @Test
+   public void testEmbeddedSum() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.property("surname"), Expression.sum("addresses.number"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(156L, list.get(0)[1]);
+      assertEquals(300L, list.get(1)[1]);
+      assertNull(list.get(2)[1]);
+   }
+
+   @Test
+   public void testGlobalSum() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.sum("amount"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(9693d, (Double) list.get(0)[0], 0.0001d);
+   }
+
+   @Test
+   public void testEmbeddedGlobalSum() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.sum("addresses.number"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(456, list.get(0)[0]);
+   }
+
+   @Test
+   public void testCount() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.property("surname"), Expression.count("age"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(1L, list.get(0)[1]);
+      assertEquals(0L, list.get(1)[1]);
+      assertEquals(0L, list.get(2)[1]);
+   }
+
+   @Test
+   public void testEmbeddedCount1() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.property("surname"), Expression.count("accountIds"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(2L, list.get(0)[1]);
+      assertEquals(1L, list.get(1)[1]);
+      assertEquals(0L, list.get(2)[1]);
+   }
+
+   @Test
+   public void testEmbeddedCount2() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.property("surname"), Expression.count("addresses.street"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(1L, list.get(0)[1]);
+      assertEquals(2L, list.get(1)[1]);
+      assertEquals(0L, list.get(2)[1]);
+   }
+
+   @Test
+   public void testGlobalCount() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getAccountImplClass())
+            .select(Expression.count("creationDate"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(3L, list.get(0)[0]);
+   }
+
+   @Test
+   public void testEmbeddedGlobalCount() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.count("accountIds"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(3L, list.get(0)[0]);
+   }
+
+   @Test
+   public void testAvg() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.avg("amount"))
+            .groupBy("accountId")
+            .orderBy("accountId")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(1107.6666d, (Double) list.get(0)[1], 0.0001d);
+      assertEquals(120.18867d, (Double) list.get(1)[1], 0.0001d);
+   }
+
+   @Test
+   public void testEmbeddedAvg() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.property("surname"), Expression.avg("addresses.number"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(156d, (Double) list.get(0)[1], 0.0001d);
+      assertEquals(150d, (Double) list.get(1)[1], 0.0001d);
+      assertEquals(null, list.get(2)[1]);
+   }
+
+   @Test
+   public void testGlobalAvg() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.avg("amount"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(173.0892d, (Double) list.get(0)[0], 0.0001d);
+   }
+
+   @Test
+   public void testEmbeddedGlobalAvg() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.avg("addresses.number"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(152d, (Double) list.get(0)[0], 0.0001d);
    }
 
    @Test
