@@ -401,10 +401,6 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      // lock .errors key
-      VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, null, null);
-      invoker.invoke(ctx, cmd);
-
       for (String fileName : serializationContext.getFileDescriptors().keySet()) {
          serializationContext.unregisterProtoFile(fileName);
       }
