@@ -383,9 +383,10 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                case _ => false
             }
             val reg = server.getClientListenerRegistry
-            reg.addClientListener(ch, h, listenerId, cache, includeState,
+            reg.addClientListener(this, ch, h, listenerId, cache, includeState,
                   (filterFactoryInfo, converterFactoryInfo), useRawData)
-            createSuccessResponse(h, null)
+            decoder.checkpointTo(HotRodDecoderState.DECODE_HEADER)
+            null
          case RemoveClientListenerRequest =>
             val listenerId = readRangedBytes(buffer)
             val reg = server.getClientListenerRegistry

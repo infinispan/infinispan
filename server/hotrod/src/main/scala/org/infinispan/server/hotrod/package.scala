@@ -2,6 +2,7 @@ package org.infinispan.server
 
 import java.util.function.{Function => J8Function}
 import java.util.function.{Consumer => J8Consumer}
+import java.util.function.{BiConsumer => J8BiConsumer}
 
 import org.infinispan.remoting.transport.Address
 
@@ -27,5 +28,13 @@ package object hotrod {
 
    implicit def asJavaConsumer[T](f: T => Unit): J8Consumer[T] = new J8Consumer[T] {
       override def accept(t: T): Unit = f(t)
+   }
+
+   implicit def asJavaBiConsumer[T, U](f: (T, U) => Unit): J8BiConsumer[T, U] = new J8BiConsumer[T, U] {
+      override def accept(t: T, u: U): Unit = f(t, u)
+   }
+
+   implicit def asJavaRunnable(f: () => Unit): Runnable = new Runnable {
+      override def run(): Unit = f()
    }
 }
