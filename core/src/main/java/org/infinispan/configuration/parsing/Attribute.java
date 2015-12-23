@@ -57,6 +57,7 @@ public enum Attribute {
     JMX_DOMAIN("domain"),
     KEEP_ALIVE_TIME("keepalive-time"),
     KEY_EQUIVALENCE("key-equivalence"),
+    KEY_PARTITIONER("key-partitioner"),
     L1_LIFESPAN("l1-lifespan"),
     LIFESPAN("lifespan"),
     LISTENER_EXECUTOR("listener-executor"),

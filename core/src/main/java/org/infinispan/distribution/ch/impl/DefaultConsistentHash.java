@@ -152,6 +152,9 @@ public class DefaultConsistentHash implements ConsistentHash {
       return hashFunction.hash(key) & Integer.MAX_VALUE;
    }
 
+   /**
+    * @deprecated Since 8.2, use {@link HashFunctionPartitioner#getSegmentEndHashes()} instead.
+    */
    public List<Integer> getSegmentEndHashes() {
       int numSegments = segmentOwners.length;
       List<Integer> hashes = new ArrayList<Integer>(numSegments);
@@ -207,12 +210,12 @@ public class DefaultConsistentHash implements ConsistentHash {
 
    @Override
    public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      int segment = getSegment(key);
-      for (Address a : segmentOwners[segment]) {
-         if (a.equals(nodeAddress))
-            return true;
-      }
-      return false;
+      return isSegmentLocalToNode(nodeAddress, getSegment(key));
+   }
+
+   @Override
+   public boolean isSegmentLocalToNode(Address nodeAddress, int segmentId) {
+      return segmentOwners[segmentId].contains(nodeAddress);
    }
 
    @Override

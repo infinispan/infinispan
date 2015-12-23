@@ -142,6 +142,11 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
+      return isSegmentLocalToNode(nodeAddress, 0);
+   }
+
+   @Override
+   public boolean isSegmentLocalToNode(Address nodeAddress, int segmentId) {
       return membersSet.contains(nodeAddress);
    }
 

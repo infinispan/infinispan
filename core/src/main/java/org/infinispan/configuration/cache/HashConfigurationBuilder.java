@@ -8,6 +8,7 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 /**
@@ -140,7 +141,9 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * NOTE: Currently Infinispan will not use the object instance, but instead instantiate a new
     * instance of the class. Therefore, do not expect any state to survive, and provide a no-args
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
+    * @deprecated Since 8.2, use {@link #keyPartitioner(KeyPartitioner)} instead.
     */
+   @Deprecated
    public HashConfigurationBuilder hash(Hash hash) {
       attributes.attribute(HASH).set(hash);
       return this;
@@ -155,6 +158,19 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    public HashConfigurationBuilder capacityFactor(float capacityFactor) {
       if (capacityFactor < 0) throw new IllegalArgumentException("capacityFactor must be positive");
       attributes.attribute(CAPACITY_FACTOR).set(capacityFactor);
+      return this;
+   }
+
+   /**
+    * Key partitioner, controlling the mapping of keys to hash segments.
+    * <p>
+    * The default implementation {@code org.infinispan.distribution.ch.impl.HashFunctionPartitioner},
+    * uses the hash function configured via {@link #hash(Hash)}. Future versions may ignore the hash function.
+    *
+    * @since 8.2
+    */
+   public HashConfigurationBuilder keyPartitioner(KeyPartitioner keyPartitioner) {
+      attributes.attribute(KEY_PARTITIONER).set(keyPartitioner);
       return this;
    }
 

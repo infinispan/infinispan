@@ -15,7 +15,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-
+/**
+ * @private
+ */
 public class GroupManagerImpl implements GroupManager {
     
     private static interface GroupMetadata {

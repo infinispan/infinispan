@@ -429,7 +429,7 @@ public class Codec20 implements Codec, HotRodConstants {
       } else {
          if (trace)
             log.tracef("Outdated topology received (topology id = %s, topology age = %s), so ignoring it: %s",
-               newTopologyId, topologyAge, addresses);
+               newTopologyId, topologyAge, Arrays.toString(addresses));
       }
    }
 

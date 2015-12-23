@@ -4,10 +4,13 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
+import org.infinispan.commons.configuration.attributes.SimpleInstanceAttributeCopier;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
@@ -22,9 +25,13 @@ public class HashConfiguration {
    // up to 6 members and the difference between nodes stays under 20% up to 12 members.
    public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder("numSegments" , 60).immutable().build();
    public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder("capacityFactor", 1.0f).immutable().build();
+   public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
+         .builder("keyPartitioner", new HashFunctionPartitioner(), KeyPartitioner.class)
+         .copier(SimpleInstanceAttributeCopier.INSTANCE).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(HashConfiguration.class, CONSISTENT_HASH_FACTORY, HASH, NUM_OWNERS, NUM_SEGMENTS, CAPACITY_FACTOR);
+      return new AttributeSet(HashConfiguration.class, CONSISTENT_HASH_FACTORY, HASH, NUM_OWNERS,
+            NUM_SEGMENTS, CAPACITY_FACTOR, KEY_PARTITIONER);
    }
 
    private final Attribute<ConsistentHashFactory> consistentHashFactory;
@@ -32,6 +39,7 @@ public class HashConfiguration {
    private final Attribute<Integer> numOwners;
    private final Attribute<Integer> numSegments;
    private final Attribute<Float> capacityFactor;
+   private final Attribute<KeyPartitioner> keyPartitioner;
 
    private final GroupsConfiguration groupsConfiguration;
    private final StateTransferConfiguration stateTransferConfiguration;
@@ -47,6 +55,7 @@ public class HashConfiguration {
       numOwners = attributes.attribute(NUM_OWNERS);
       numSegments = attributes.attribute(NUM_SEGMENTS);
       capacityFactor = attributes.attribute(CAPACITY_FACTOR);
+      keyPartitioner = attributes.attribute(KEY_PARTITIONER);
    }
 
    /**
@@ -68,7 +77,9 @@ public class HashConfiguration {
     * The hash function in use. Used as a bit spreader and a general hash code generator.
     * Typically one of the the many default {@link org.infinispan.distribution.ch.ConsistentHash}
     * implementations shipped.
+    * @deprecated Since 8.2, use {@link #keyPartitioner()} instead.
     */
+   @Deprecated
    public Hash hash() {
       return hash.get();
    }
@@ -136,6 +147,10 @@ public class HashConfiguration {
     */
    public float capacityFactor() {
       return capacityFactor.get();
+   }
+
+   public KeyPartitioner keyPartitioner() {
+      return keyPartitioner.get();
    }
 
    /**
