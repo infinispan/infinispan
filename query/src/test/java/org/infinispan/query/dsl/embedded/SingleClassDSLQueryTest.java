@@ -24,6 +24,7 @@ import static org.testng.Assert.assertEquals;
  * @author Tristan Tarrant
  * @since 8.0
  */
+@Test(groups = "functional", testName = "query.dsl.embedded.SingleClassDSLQueryTest")
 public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
 
    @Override
@@ -35,7 +36,9 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
       return new DefaultCacheManager(builder.build());
    }
 
-   @Test
+   /**
+    * Test querying for entities defined as inner classes.
+    */
    public void testQuery() throws Exception {
       Cache<String, Person> cache = cacheManager.getCache();
       cache.put("person1", new Person("William", "Shakespeare"));
