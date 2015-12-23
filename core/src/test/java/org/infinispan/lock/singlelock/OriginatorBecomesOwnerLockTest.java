@@ -1,5 +1,6 @@
 package org.infinispan.lock.singlelock;
 
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +28,7 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -63,12 +65,21 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       configurationBuilder.clustering().sync().replTimeout(30000, TimeUnit.MILLISECONDS);
       configurationBuilder.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(1000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
+      ControlledConsistentHashFactory consistentHashFactory =
+            new ControlledConsistentHashFactory(new int[]{KILLED_INDEX, ORIGINATOR_INDEX},
+                  new int[]{KILLED_INDEX, OTHER_INDEX});
+      configurationBuilder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
       createCluster(configurationBuilder, 3);
       waitForClusterToForm();
 
       originatorCache = cache(ORIGINATOR_INDEX);
       killedCache = cache(KILLED_INDEX);
       otherCache = cache(OTHER_INDEX);
+      // Set up the consistent hash after node 1 is killed
+      consistentHashFactory.setOwnerIndexes(new int[]{ORIGINATOR_INDEX, OTHER_INDEX},
+            new int[]{OTHER_INDEX, ORIGINATOR_INDEX});
+      // TODO Add another test method with ownership changing from [KILLED_INDEX, OTHER_INDEX] to [ORIGINATOR_INDEX, OTHER_INDEX]
+      // i.e. the originator is a non-owner at first, and becomes the primary owner when the prepare is retried
    }
 
 

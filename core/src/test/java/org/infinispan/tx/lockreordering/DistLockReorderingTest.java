@@ -19,7 +19,7 @@ import static org.infinispan.tx.lockreordering.LocalLockReorderingTest.runTest;
 @Test (groups = "functional", testName = "tx.lockreordering.DistLockReorderingTest")
 public class DistLockReorderingTest extends MultipleCacheManagersTest {
 
-   protected List keys;
+   protected List<Object> keys;
    protected CacheMode cacheMode = CacheMode.DIST_SYNC;
 
    @Override
@@ -36,7 +36,7 @@ public class DistLockReorderingTest extends MultipleCacheManagersTest {
       int node = (int) (System.nanoTime() % 2);
       /** this is what's used for inducing ordering */
       MurmurHash3 hashFunction = MurmurHash3.getInstance();
-      keys = new ArrayList<Integer>(2);
+      keys = new ArrayList<>(2);
       final Object firstKey = getKeyForCache(node);
       keys.add(firstKey);
       while (keys.size() < 2) {

@@ -8,6 +8,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -31,6 +32,8 @@ public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+      // Make the coordinator the primary owner of the only segment
+      configurationBuilder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().stateTransfer().awaitInitialTransfer(false);
 
       addClusterEnabledCacheManager(configurationBuilder);

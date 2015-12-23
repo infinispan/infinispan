@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -21,6 +22,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class StateTransferLockImpl implements StateTransferLock {
    private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final int TOPOLOGY_ID_STOPPED = Integer.MAX_VALUE;
 
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
 
@@ -31,6 +33,11 @@ public class StateTransferLockImpl implements StateTransferLock {
    private volatile int transactionDataTopologyId = -1;
    private final Lock transactionDataLock = new ReentrantLock();
    private final Condition transactionDataCondition = transactionDataLock.newCondition();
+
+   public void stop() {
+      notifyTransactionDataReceived(TOPOLOGY_ID_STOPPED);
+      notifyTopologyInstalled(TOPOLOGY_ID_STOPPED);
+   }
 
    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
@@ -88,9 +95,7 @@ public class StateTransferLockImpl implements StateTransferLock {
          while (transactionDataTopologyId < expectedTopologyId && timeoutNanos > 0) {
             timeoutNanos = transactionDataCondition.awaitNanos(timeoutNanos);
          }
-         if (timeoutNanos <= 0) {
-            throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
-         }
+         reportErrorAfterWait(expectedTopologyId, timeoutNanos);
       } finally {
          transactionDataLock.unlock();
       }
@@ -140,14 +145,21 @@ public class StateTransferLockImpl implements StateTransferLock {
          while (topologyId < expectedTopologyId && timeoutNanos > 0) {
             timeoutNanos = topologyCondition.awaitNanos(timeoutNanos);
          }
-         if (timeoutNanos <= 0) {
-            throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
-         }
+         reportErrorAfterWait(expectedTopologyId, timeoutNanos);
       } finally {
          topologyLock.unlock();
       }
       if (trace) {
          log.tracef("Topology %d is now installed, expected topology was %d", topologyId, expectedTopologyId);
+      }
+   }
+
+   private void reportErrorAfterWait(int expectedTopologyId, long timeoutNanos) {
+      if (timeoutNanos <= 0) {
+         throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
+      }
+      if (topologyId == TOPOLOGY_ID_STOPPED) {
+         throw new IllegalLifecycleStateException("Cache was stopped while waiting for topology " + expectedTopologyId);
       }
    }
 

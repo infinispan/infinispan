@@ -1,6 +1,8 @@
 package org.infinispan.configuration.override;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.MagicKey;
 import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -29,6 +31,7 @@ import java.util.List;
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests verifying that the overriding of the configuration which is read from the configuration XML file is done
@@ -337,7 +340,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             Assert.assertEquals(CacheMode.DIST_SYNC, cnf.clustering().cacheMode());
             Assert.assertEquals(1, cnf.clustering().hash().numOwners());
 
-            Cache cache1 = cm.getCache(distCacheToChange);
+            AdvancedCache cache1 = cm.getCache(distCacheToChange).getAdvancedCache();
             for (int i = 0; i < 10; i++) {
                cache1.put("key" + i, "value" + i);
             }
@@ -347,11 +350,13 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                cm1 = TestCacheManagerFactory.fromXml("configs/named-cache-override-test.xml");
                cm1.defineConfiguration(distCacheToChange, conf);
 
-               Cache cache2 = cm1.getCache(distCacheToChange);
+               AdvancedCache cache2 = cm1.getCache(distCacheToChange).getAdvancedCache();
                waitForRehashToComplete(cache1, cache2);
 
-               int cache2Size = cache2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();
-               Assert.assertTrue(cache2Size > 0 && cache2Size != cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
+               assertTrue(cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() > 0);
+               // Stale entries on cache1 are not removed immediately
+               eventually(() -> 10 == cache1.withFlags(Flag.CACHE_MODE_LOCAL).size() +
+                     cache2.withFlags(Flag.CACHE_MODE_LOCAL).size());
             } finally {
                TestingUtil.killCacheManagers(cm1);
             }
@@ -384,7 +389,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
                ReplListener replList2 = new ReplListener(cache2, true, true);
 
-               String key = "key1";
+               MagicKey key = new MagicKey("key1", cache1);
                String value = "value1";
 
                replList2.expect(PutKeyValueCommand.class);

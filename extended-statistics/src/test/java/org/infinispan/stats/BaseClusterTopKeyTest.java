@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
@@ -19,6 +20,8 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
 
 /**
  * @author Pedro Ruivo
@@ -211,9 +214,15 @@ public abstract class BaseClusterTopKeyTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   protected abstract boolean isOwner(Cache<?, ?> cache, Object key);
+   protected boolean isOwner(Cache<?, ?> cache, Object key) {
+      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+      return dm.locate(key).contains(addressOf(cache));
+   }
 
-   protected abstract boolean isPrimaryOwner(Cache<?, ?> cache, Object key);
+   protected boolean isPrimaryOwner(Cache<?, ?> cache, Object key) {
+      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+      return dm.getPrimaryLocation(key).equals(addressOf(cache));
+   }
 
    private ThrowableAwareThread putInOtherThread(final Cache<Object, Object> cache, final Object key, final Object value) {
       ThrowableAwareThread thread = new ThrowableAwareThread() {

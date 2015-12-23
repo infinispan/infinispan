@@ -20,6 +20,7 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -52,9 +53,11 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
    }
 
    private ConfigurationBuilder buildConfig(LockingMode lockingMode, Class<?> commandToBlock, boolean isOriginator) {
-      // The coordinator will always be the primary owner
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, lockingMode != null);
       configurationBuilder.transaction().lockingMode(lockingMode);
+      // The coordinator will always be the primary owner
+      configurationBuilder.clustering().hash().numSegments(1)
+            .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().sync().replTimeout(15000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       if (commandToBlock == LockControlCommand.class && !isOriginator) {

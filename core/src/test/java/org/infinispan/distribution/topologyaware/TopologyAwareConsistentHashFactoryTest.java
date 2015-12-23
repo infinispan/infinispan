@@ -2,6 +2,7 @@ package org.infinispan.distribution.topologyaware;
 
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.TestTopologyAwareAddress;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
@@ -20,7 +21,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -434,26 +437,25 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
          // generates extra moves trying to balance the CH.
          AtomicInteger movedSegmentsCount = new AtomicInteger(0);
          for (int segment = 0; segment < numSegments; segment++) {
-            checkConsistency(segment, numOwners, ch.locateOwnersForSegment(segment), addr, newCH, movedSegmentsCount);
+            checkConsistency(segment, numOwners, addr, newCH, movedSegmentsCount);
          }
-         assert movedSegmentsCount.get() <= numSegments / 10 :
+         assert movedSegmentsCount.get() <= numSegments * numOwners * 0.1 :
                String.format("Too many moved segments after leave: %d. CH after leave is: %s\nPrevious: %s",
                      movedSegmentsCount.get(), newCH, ch);
       }
    }
 
-   private void checkConsistency(int segment, int replCount, List<Address> originalOwners,
-                                 Address removedAddress, DefaultConsistentHash newCH,
-                                 AtomicInteger movedSegmentsCount) {
+   private void checkConsistency(int segment, int replCount, Address removedAddress,
+         DefaultConsistentHash newCH, AtomicInteger movedSegmentsCount) {
+      List<Address> removedOwners = new ArrayList<Address>(ch.locateOwnersForSegment(segment));
       List<Address> currentOwners = newCH.locateOwnersForSegment(segment);
-      originalOwners = new ArrayList<Address>(originalOwners);
-      originalOwners.remove(removedAddress);
+      removedOwners.remove(removedAddress);
+      removedOwners.removeAll(currentOwners);
 
       assertEquals(replCount, currentOwners.size(), currentOwners.toString());
-      if (!currentOwners.containsAll(originalOwners))
-         movedSegmentsCount.incrementAndGet();
+      if (!currentOwners.containsAll(removedOwners))
+         movedSegmentsCount.addAndGet(removedOwners.size());
    }
-
 
    private void assertSegmentLocation(int segment, int expectedOwners, int expectedMachines, int expectedRacks,
                                       int expectedSites) {

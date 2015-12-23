@@ -50,7 +50,7 @@ import java.util.Set;
 public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
 
    public static final float OWNED_SEGMENTS_ALLOWED_VARIATION = 1.10f;
-   public static final float PRIMARY_SEGMENTS_ALLOWED_VARIATION = 1.20f;
+   public static final float PRIMARY_SEGMENTS_ALLOWED_VARIATION = 1.05f;
 
    @Override
    public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
@@ -226,14 +226,12 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          for (int segment = 0; segment < numSegments; segment++) {
             List<Address> owners = segmentOwners[segment];
             int additionalOwnersSegment = nextSegment(segment);
-            segmentLoop:
-            while (owners.size() < actualNumOwners && additionalOwnersSegment != segment) {
+            while (canAddOwners(owners) && additionalOwnersSegment != segment) {
                List<Address> additionalOwners = segmentOwners[additionalOwnersSegment];
-               for (int i = 0; i < additionalOwners.size(); i++) {
-                  addOwner(segment, additionalOwners.get(i));
-                  if (!canAddOwners(owners)) {
-                     break segmentLoop;
-                  }
+               for (Address additionalOwner : additionalOwners) {
+                  addBackupOwner(segment, additionalOwner);
+                  if (!canAddOwners(owners))
+                     break;
                }
                additionalOwnersSegment = nextSegment(additionalOwnersSegment);
             }
@@ -253,23 +251,42 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       }
 
       protected void populateOwners(int numSegments) {
-         int numVirtualNodes = numSegments;
-         for (int virtualNode = 0; virtualNode < numVirtualNodes; virtualNode++) {
+         int virtualNode = 0;
+         // Loop until we have already assigned a primary owner to each segment
+         do {
             for (Address member : sortedMembers) {
-               // Add the virtual node count after applying MurmurHash on the node's hashCode
-               // to make up for badly spread test addresses.
-               int virtualNodeHash = normalizedHash(hashFunction, member.hashCode());
-               if (virtualNode != 0) {
-                  virtualNodeHash = normalizedHash(hashFunction, virtualNodeHash + virtualNode);
-               }
-               int segment = virtualNodeHash / segmentSize;
-               addOwner(segment, member);
+               int segment = computeSegment(member, virtualNode);
+               addPrimaryOwner(segment, member);
             }
+            virtualNode++;
+         } while (stats.sumPrimaryOwned() < numSegments);
 
-            // Exit if we have already assigned enough owners to each segment
-            if (stats.sumOwned() >= numSegments * actualNumOwners)
-               break;
+         // If there are too few segments, some members may not have any segments at this point
+         // Loop until we have assigned at least one segment to each member
+         // or until we have assigned numOwners owners to all segments
+         virtualNode = 0;
+         boolean membersWithZeroSegments = false;
+         do {
+            for (Address member : sortedMembers) {
+               if (stats.getOwned(member) > 0)
+                  continue;
+
+               membersWithZeroSegments = true;
+               int segment = computeSegment(member, virtualNode);
+               addBackupOwner(segment, member);
+            }
+            virtualNode++;
+         } while (membersWithZeroSegments && stats.sumOwned() < numSegments);
+      }
+
+      private int computeSegment(Address member, int virtualNode) {
+         // Add the virtual node count after applying MurmurHash on the node's hashCode
+         // to make up for badly spread test addresses.
+         int virtualNodeHash = normalizedHash(hashFunction, member.hashCode());
+         if (virtualNode != 0) {
+            virtualNodeHash = normalizedHash(hashFunction, virtualNodeHash + virtualNode);
          }
+         return virtualNodeHash / segmentSize;
       }
 
       protected double computeExpectedSegmentsForNode(Address node, int numCopies) {
@@ -299,27 +316,38 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          throw new IllegalStateException("The nodes collection does not include " + node);
       }
 
-      protected void addOwner(int segment, Address candidate) {
+      protected boolean addPrimaryOwner(int segment, Address candidate) {
+         List<Address> owners = segmentOwners[segment];
+         if (owners.isEmpty()) {
+            double expectedSegments = computeExpectedSegmentsForNode(candidate, 1);
+            long maxSegments = Math.round(Math.ceil(expectedSegments) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
+            if (stats.getPrimaryOwned(candidate) < maxSegments) {
+               addOwnerNoCheck(segment, candidate);
+               return true;
+            }
+         }
+         return false;
+      }
+
+      protected boolean addBackupOwner(int segment, Address candidate) {
          List<Address> owners = segmentOwners[segment];
          if (owners.size() < actualNumOwners && !owners.contains(candidate)) {
             if (!ignoreMaxSegments) {
-               if (owners.isEmpty()) {
-                  long maxSegments = Math.round(computeExpectedSegmentsForNode(candidate, 1) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
-                  if (stats.getPrimaryOwned(candidate) < maxSegments) {
-                     addOwnerNoCheck(segment, candidate);
-                  }
-               } else {
-                  long maxSegments = Math.round(computeExpectedSegmentsForNode(candidate, actualNumOwners) * OWNED_SEGMENTS_ALLOWED_VARIATION);
-                  if (stats.getOwned(candidate) < maxSegments) {
-                     addOwnerNoCheck(segment, candidate);
-                  }
+               double expectedSegments = computeExpectedSegmentsForNode(candidate, actualNumOwners);
+               long maxSegments = Math.round(Math.ceil(expectedSegments) * OWNED_SEGMENTS_ALLOWED_VARIATION);
+
+               if (stats.getOwned(candidate) < maxSegments) {
+                  addOwnerNoCheck(segment, candidate);
+                  return true;
                }
             } else {
                if (!capacityFactors.get(candidate).equals(0f)) {
                   addOwnerNoCheck(segment, candidate);
+                  return true;
                }
             }
          }
+         return false;
       }
 
       protected int normalizedHash(Hash hashFunction, int hashcode) {

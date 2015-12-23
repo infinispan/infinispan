@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest")
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
@@ -163,7 +164,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       JoiningNode node = new JoiningNode(createCacheManager());
       cache2 = node.getCache(cacheName);
       node.waitForJoin(60000, cache1, cache2);
-      node.verifyStateTransfer(new CacheVerifier(cache2));
+      verifyInitialData(cache2);
 
       logTestEnd(m);
    }
@@ -179,7 +180,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       JoiningNode node = new JoiningNode(createCacheManager());
       cache2 = node.getCache(cacheName);
       node.waitForJoin(60000, cache1, cache2);
-      node.verifyStateTransfer(new CacheVerifier(cache2));
+      verifyInitialData(cache2);
 
       cacheManager1.defineConfiguration("otherCache", configurationBuilder.build());
       cacheManager1.getCache("otherCache");
@@ -199,7 +200,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1.put("delay", new DelayTransfer());
 
       node2.waitForJoin(60000, cache1, cache2);
-      node2.verifyStateTransfer(new CacheVerifier(cache2));
+      verifyInitialData(cache2);
 
       final JoiningNode node3 = new JoiningNode(createCacheManager());
       final JoiningNode node4 = new JoiningNode(createCacheManager());
@@ -229,8 +230,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       node3.waitForJoin(120000, cache1, cache2, cache3, cache4);
       node4.waitForJoin(120000, cache1, cache2, cache3, cache4);
 
-      node3.verifyStateTransfer(new CacheVerifier(cache3));
-      node4.verifyStateTransfer(new CacheVerifier(cache4));
+      verifyInitialData(cache3);
+      verifyInitialData(cache4);
 
       logTestEnd(m);
    }
@@ -275,7 +276,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       JoiningNode node2 = new JoiningNode(createCacheManager());
       cache2 = node2.getCache(cacheName);
       node2.waitForJoin(60000, cache1, cache2);
-      node2.verifyStateTransfer(new CacheVerifier(cache2));
+      verifyInitialData(cache2);
 
       cache2.stop();
       cache2.start();
@@ -320,7 +321,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       writingTask.stop();
       int count = future.get(60, SECONDS);
 
-      node2.verifyStateTransfer(new CacheVerifier(cache2));
+      verifyInitialData(cache2);
 
       for (int c = 0; c < count; c++) {
          assertEquals(c, cache2.get("test" + c));
@@ -366,26 +367,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       int count = future.get(60, SECONDS);
 
       verifyInitialData(cache1);
-      node2.verifyStateTransfer(new CacheVerifier(cache2));
+      verifyInitialData(cache2);
 
       for (int c = 0; c < count; c++) {
          assertEquals(c, cache2.get("test" + c));
       }
    }
-
-   public class CacheVerifier implements Callable<Void> {
-
-      private final Cache<Object, Object> cache;
-
-      public CacheVerifier(Cache<Object, Object> cache) {
-         this.cache = cache;
-      }
-
-      @Override
-      public Void call() {
-         verifyInitialData(cache);
-         return null;
-      }
-   }
-
 }

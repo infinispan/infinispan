@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
@@ -96,7 +97,8 @@ public class MagicKey implements Serializable {
 
       MagicKey magicKey = (MagicKey) o;
 
-      return hashcode == magicKey.hashcode && address.equals(magicKey.address);
+      return hashcode == magicKey.hashcode && address.equals(magicKey.address) &&
+            Objects.equals(name, magicKey.name);
    }
 
    @Override

@@ -4,6 +4,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
@@ -35,7 +36,7 @@ public class CheckRemoteLockAcquiredOnlyOnceTest extends MultipleCacheManagersTe
       waitForClusterToForm();
       controlInterceptor = new ControlInterceptor();
       cache(0).getAdvancedCache().addInterceptor(controlInterceptor, 1);
-      key = "k";
+      key = new MagicKey("k", cache(0));
    }
 
    public void testLockThenLock() throws Exception {

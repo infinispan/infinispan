@@ -8,6 +8,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
  * Represents a joining node, designed for state transfer related tests.
  *
@@ -38,17 +40,13 @@ public class JoiningNode {
    public void waitForJoin(long timeout, Cache... caches) throws InterruptedException {
       // Wait for either a merge or view change to happen
       latch.await(timeout, TimeUnit.MILLISECONDS);
+      assertTrue(isStateTransferred());
+
       // Wait for the state transfer to end
       TestingUtil.waitForRehashToComplete(caches);
    }
 
-   private boolean isStateTransferred() {
+   public boolean isStateTransferred() {
       return !listener.merged;
    }
-
-   void verifyStateTransfer(Callable<Void> verify) throws Exception {
-      if (isStateTransferred())
-         verify.call();
-   }
-
 }

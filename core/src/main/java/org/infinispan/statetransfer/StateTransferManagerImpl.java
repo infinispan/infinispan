@@ -9,9 +9,9 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.distribution.group.PartitionerConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -134,13 +134,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
          if (cacheMode.isClustered()) {
             if (cacheMode.isDistributed()) {
                if (globalConfiguration.transport().hasTopologyInfo()) {
-                  factory = new TopologyAwareConsistentHashFactory();
+                  factory = new TopologyAwareSyncConsistentHashFactory();
                } else {
-                  factory = new DefaultConsistentHashFactory();
+                  factory = new SyncConsistentHashFactory();
                }
             } else {
                // this is also used for invalidation mode
-               factory = new ReplicatedConsistentHashFactory();
+               factory = new SyncReplicatedConsistentHashFactory();
             }
          }
       }

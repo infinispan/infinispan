@@ -4,6 +4,7 @@ import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -24,6 +25,8 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
       final ConfigurationBuilder conf = buildConfiguration();
       createCluster(conf, 2);
       waitForClusterToForm();
+
+      k = new MagicKey(cache(0));
    }
 
    protected ConfigurationBuilder buildConfiguration() {
@@ -33,10 +36,6 @@ public class PessimisticReplTxTest extends AbstractClusteredTxTest {
             .transactionManagerLookup(new DummyTransactionManagerLookup())
          .locking().lockAcquisitionTimeout(10L); //fail fast
       return conf;
-   }
-
-   public PessimisticReplTxTest() {
-      k = "k";
    }
 
    public void testTxInProgress1() throws Exception {

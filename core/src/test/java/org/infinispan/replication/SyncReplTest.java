@@ -14,6 +14,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.anyBoolean;
@@ -38,6 +39,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder replSync = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      replSync.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       createClusteredCaches(2, "replSync", replSync);
    }
 
@@ -142,6 +144,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       try {
          ConfigurationBuilder asyncCache = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
          asyncCache.clustering().async().asyncMarshalling(true);
+         asyncCache.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
          defineConfigurationOnAllManagers("asyncCache", asyncCache);
          Cache<String, String> asyncCache1 = manager(0).getCache("asyncCache");
          manager(1).getCache("asyncCache");

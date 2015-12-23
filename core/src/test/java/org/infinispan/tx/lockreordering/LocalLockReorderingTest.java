@@ -21,7 +21,7 @@ import java.util.concurrent.CyclicBarrier;
 @Test (groups = "functional", testName = "tx.lockreordering.LocalLockReorderingTest")
 public class LocalLockReorderingTest extends SingleCacheManagerTest {
 
-   private List<Integer> keys;
+   private List<Object> keys;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -48,11 +48,11 @@ public class LocalLockReorderingTest extends SingleCacheManagerTest {
       runTest(StresserThread.MIXED_OPS_PERFORMER, cache, cache, keys, getThreadName(m));
    }
 
-   static void runTest(StresserThread.OperationsPerformer ops, Cache c1, Cache c2, List<Integer> keys, String threadNamePrefix) throws InterruptedException {
+   static void runTest(StresserThread.OperationsPerformer ops, Cache c1, Cache c2, List<Object> keys, String threadNamePrefix) throws InterruptedException {
       CyclicBarrier beforeCommit = new CyclicBarrier(2);
 
       StresserThread st1 = new StresserThread(c1, keys, "t1", ops, beforeCommit, threadNamePrefix + "-1");
-      final ArrayList<Integer> reversedKeys = new ArrayList<Integer>(keys);
+      final ArrayList<Object> reversedKeys = new ArrayList<>(keys);
       Collections.reverse(reversedKeys);
       StresserThread st2 = new StresserThread(c2, reversedKeys, "t2", ops, beforeCommit, threadNamePrefix+"-2");
 
@@ -66,11 +66,10 @@ public class LocalLockReorderingTest extends SingleCacheManagerTest {
       assert !st2.isError();
    }
 
-   static List<Integer> generateKeys() {
-      List<Integer> keys;
+   static List<Object> generateKeys() {
+      List<Object> keys = new ArrayList<>(2);
       /** this is what's used for inducing ordering */
       MurmurHash2 hashFunction = new MurmurHash2();
-      keys = new ArrayList<Integer>(2);
       int count = 0;
       keys.add(count);
       while (keys.size() < 2) {

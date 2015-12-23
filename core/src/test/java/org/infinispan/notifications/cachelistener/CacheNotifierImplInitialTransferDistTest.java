@@ -391,6 +391,11 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       for (K key : keys) {
          boolean isPrimaryOwner = hash.locatePrimaryOwner(key).equals(address);
          if (isPrimaryOwner == shouldBePrimaryOwner) {
+            if (shouldBePrimaryOwner) {
+               log.debugf("Found key %s with primary owner %s", key, address);
+            } else {
+               log.debugf("Found key %s with primary owner != %s", key, address);
+            }
             return key;
          }
       }

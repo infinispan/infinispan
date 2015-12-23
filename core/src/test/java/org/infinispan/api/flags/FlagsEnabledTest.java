@@ -50,8 +50,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
             .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .transaction().syncCommitPhase(true)
-            .clustering().hash().numSegments(2);
+            .transaction().syncCommitPhase(true);
       createClusteredCaches(2, cacheName, builder);
    }
 
@@ -120,12 +119,12 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    }
 
    public void testReplicateSkipCacheLoad(Method m) {
-      final AdvancedCache<String, String> cache1 = advancedCache(0, cacheName);
-      final AdvancedCache<String, String> cache2 = advancedCache(1, cacheName);
+      final AdvancedCache<Object, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<Object, String> cache2 = advancedCache(1, cacheName);
       assertLoadsAndReset(cache1, 0, cache2, 0);
 
       final String v = v(m, 1);
-      final String k = k(m, 1);
+      final Object k = getKeyForCache(0, cacheName);
       cache1.withFlags(Flag.SKIP_CACHE_LOAD).put(k, v);
       // The write-skew check tries to load it from persistence.
       assertLoadsAndReset(cache1, isTxCache() ? 1 : 0, cache2, 0);

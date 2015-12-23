@@ -1126,10 +1126,9 @@
             </xs:annotation>
           </xs:element>
         </xs:sequence>
-        <xs:attribute name="segments" type="xs:int" default="80">
+        <xs:attribute name="segments" type="xs:int" default="256">
           <xs:annotation>
-            <xs:documentation>Number of hash space segments (per cluster). The recommended value is 10 *
-              cluster size. The default value is 80
+            <xs:documentation>Number of hash space segments (per cluster). The default value is 256, and should be at least 20 * cluster size.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -1179,9 +1178,9 @@
             <xs:documentation>Number of cluster-wide replicas for each cache entry.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="segments" type="xs:int" default="60">
+        <xs:attribute name="segments" type="xs:int" default="256">
           <xs:annotation>
-            <xs:documentation>Number of hash space segments (per cluster). The recommended value is 10 * cluster size. The default value is 80</xs:documentation>
+            <xs:documentation>Number of hash space segments (per cluster). The default value is 256, and should be at least 20 * cluster size.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="capacity-factor" type="xs:double" default="1">

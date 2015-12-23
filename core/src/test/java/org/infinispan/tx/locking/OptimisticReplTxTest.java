@@ -46,13 +46,13 @@ public class OptimisticReplTxTest extends AbstractClusteredTxTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      k = "k";
       final ConfigurationBuilder conf = getDefaultClusteredCacheConfig(cacheMode, true);
       conf.transaction()
             .lockingMode(LockingMode.OPTIMISTIC)
             .transactionManagerLookup(new DummyTransactionManagerLookup());
       createCluster(conf, 2);
       waitForClusterToForm();
+      k = getKeyForCache(0);
    }
 
    @Override

@@ -323,7 +323,8 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       Map<Integer, Set<Map.Entry<Object, String>>> entriesPerSegment = generateEntriesPerSegment(ch, entries.entrySet());
 
-      assertEquals(segmentsCache0, entriesPerSegment.keySet());
+      // We should not see keys from other segments, but there may be segments without any keys
+      assertTrue(segmentsCache0.containsAll(entriesPerSegment.keySet()));
       verify(clusterStreamManager, never()).awaitCompletion(any(UUID.class), anyLong(), any(TimeUnit.class));
    }
 

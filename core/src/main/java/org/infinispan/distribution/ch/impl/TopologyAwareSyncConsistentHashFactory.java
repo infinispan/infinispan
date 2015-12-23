@@ -63,7 +63,7 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
       }
 
       @Override
-      protected void addOwner(int segment, Address candidate) {
+      protected boolean addBackupOwner(int segment, Address candidate) {
          List<Address> owners = segmentOwners[segment];
          if (owners.size() < actualNumOwners && !locationAlreadyAdded(candidate, owners, currentLevel)) {
             if (!ignoreMaxSegments) {
@@ -71,19 +71,23 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
                   long maxSegments = Math.round(computeExpectedSegmentsForNode(candidate, 1) * PRIMARY_SEGMENTS_ALLOWED_VARIATION);
                   if (stats.getPrimaryOwned(candidate) < maxSegments) {
                      addOwnerNoCheck(segment, candidate);
+                     return true;
                   }
                } else {
                   long maxSegments = Math.round(computeExpectedSegmentsForNode(candidate, actualNumOwners) * OWNED_SEGMENTS_ALLOWED_VARIATION);
                   if (stats.getOwned(candidate) < maxSegments) {
                      addOwnerNoCheck(segment, candidate);
+                     return true;
                   }
                }
             } else {
                if (!capacityFactors.get(candidate).equals(0f)) {
                   addOwnerNoCheck(segment, candidate);
+                  return true;
                }
             }
          }
+         return false;
       }
 
       @Override

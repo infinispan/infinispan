@@ -100,6 +100,14 @@ public class OwnershipStatistics {
       owned[i]--;
    }
 
+   public int sumPrimaryOwned() {
+      int segmentsWithPrimaryOwners = 0;
+      for (int ownedCount : primaryOwned) {
+         segmentsWithPrimaryOwners += ownedCount;
+      }
+      return segmentsWithPrimaryOwners;
+   }
+
    public int sumOwned() {
       int allOwnersCount = 0;
       for (int ownedCount : owned) {

@@ -379,7 +379,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       return partitionHandlingManager(advancedCache(index));
    }
 
-   private PartitionHandlingManager partitionHandlingManager(Cache cache) {
+   protected PartitionHandlingManager partitionHandlingManager(Cache cache) {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(PartitionHandlingManager.class);
    }
 

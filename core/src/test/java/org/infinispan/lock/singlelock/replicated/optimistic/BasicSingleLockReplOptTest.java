@@ -1,6 +1,7 @@
 package org.infinispan.lock.singlelock.replicated.optimistic;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -18,31 +19,31 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
    }
 
    protected void testTxAndLockOnDifferentNodes(Operation operation, boolean addFirst, boolean removed) throws Exception {
-
+      MagicKey k = new MagicKey("k", cache(0));
       if (addFirst)
-         cache(0).put("k", "v_initial");
+         cache(0).put(k, "v_initial");
 
-      assertNotLocked("k");
+      assertNotLocked(k);
 
       tm(0).begin();
-      operation.perform("k", 0);
+      operation.perform(k, 0);
       DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
       dtm.runPrepare();
 
-      assert lockManager(0).isLocked("k");
-      assert !lockManager(1).isLocked("k");
-      assert !lockManager(2).isLocked("k");
+      assert lockManager(0).isLocked(k);
+      assert !lockManager(1).isLocked(k);
+      assert !lockManager(2).isLocked(k);
 
       dtm.runCommit(false);
 
-      assertNotLocked("k");
+      assertNotLocked(k);
 
-      assertValue("k", removed);
+      assertValue(k, removed);
    }
 
    public void testMultipleLocksInSameTx() throws Exception {
-      final Object k1 = "k1";
-      final Object k2 = "k2";
+      final Object k1 = new MagicKey("k1", cache(0));
+      final Object k2 = new MagicKey("k2", cache(0));
 
       tm(0).begin();
       cache(0).put(k1, "v");
@@ -66,27 +67,29 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
    }
 
    public void testTxAndLockOnSameNode() throws Exception {
+      Object k0 = new MagicKey("k0", cache(0));
 
       tm(0).begin();
-      cache(0).put("k0", "v");
+      cache(0).put(k0, "v");
       DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
 
       dtm.runPrepare();
 
-      assert lockManager(0).isLocked("k0");
-      assert !lockManager(1).isLocked("k0");
-      assert !lockManager(2).isLocked("k0");
+      assert lockManager(0).isLocked(k0);
+      assert !lockManager(1).isLocked(k0);
+      assert !lockManager(2).isLocked(k0);
 
       dtm.runCommit(false);
 
-      assertNotLocked("k0");
-      assertValue("k0", false);
+      assertNotLocked(k0);
+      assertValue(k0, false);
    }
 
    public void testSecondTxCannotPrepare() throws Exception {
+      Object k0 = new MagicKey("k0", cache(0));
 
       tm(0).begin();
-      cache(0).put("k0", "v");
+      cache(0).put(k0, "v");
       DummyTransaction dtm = (DummyTransaction) tm(0).getTransaction();
       dtm.runPrepare();
       tm(0).suspend();
@@ -96,7 +99,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
       assert checkTxCount(2, 0, 1);
 
       tm(0).begin();
-      cache(0).put("k0", "other");
+      cache(0).put(k0, "other");
       try {
          tm(0).commit();
          assert false;
@@ -113,7 +116,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
 
 
       tm(1).begin();
-      cache(1).put("k0", "other");
+      cache(1).put(k0, "other");
       try {
          tm(1).commit();
          assert false;
@@ -132,7 +135,7 @@ public class BasicSingleLockReplOptTest extends AbstractNoCrashTest {
       tm(0).resume(dtm);
       dtm.runCommit(false);
 
-      assertValue("k0", false);
+      assertValue(k0, false);
 
       eventually(new Condition() {
          @Override

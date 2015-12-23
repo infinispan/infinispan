@@ -15,6 +15,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.anyBoolean;
@@ -39,6 +40,7 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
 
    public void testForceAsyncFlagUsage() throws Exception {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      builder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       createClusteredCaches(2, "replSync", builder);
 
       AdvancedCache<String, String> cache1 = this.<String, String>cache(0, "replSync").getAdvancedCache();
@@ -67,6 +69,7 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
 
    public void testForceSyncFlagUsage() throws Exception {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
+      builder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       createClusteredCaches(2, "replAsync", builder);
 
       AdvancedCache<String, String> cache1 = this.<String, String>cache(0, "replAsync").getAdvancedCache();
