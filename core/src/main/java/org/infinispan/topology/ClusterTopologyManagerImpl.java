@@ -35,6 +35,9 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLogger;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.util.logging.LogFactory.CLUSTER;
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 /**
  * The {@code ClusterTopologyManager} implementation.
@@ -86,6 +90,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private TimeService timeService;
    private ExecutorService asyncTransportExecutor;
    private SemaphoreCompletionService<Void> viewHandlingCompletionService;
+   private EventLogger eventLog;
 
    // These need to be volatile because they are sometimes read without holding the view handling lock.
    private volatile int viewId = -1;
@@ -117,6 +122,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Start(priority = 100)
    public void start() {
       viewHandlingCompletionService = new SemaphoreCompletionService<>(asyncTransportExecutor, 1);
+      eventLog = EventLogManager.getEventLogger(cacheManager);
 
       viewListener = new ClusterViewListener();
       cacheManagerNotifier.addListener(viewListener);
@@ -209,6 +215,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
 
       CLUSTER.rebalanceCompleted(cacheName, node, topologyId);
+      eventLog.context(cacheName).scope(node.toString()).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceCompleted());
+
 
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       if (cacheStatus == null || !cacheStatus.isRebalanceInProgress()) {
@@ -354,9 +362,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          Configuration cacheConfiguration = cacheManager.getCacheConfiguration(cacheName);
          AvailabilityStrategy availabilityStrategy;
          if (cacheConfiguration != null && cacheConfiguration.clustering().partitionHandling().enabled()) {
-            availabilityStrategy = new PreferConsistencyStrategy();
+            availabilityStrategy = new PreferConsistencyStrategy(eventLog);
          } else {
-            availabilityStrategy = new PreferAvailabilityStrategy();
+            availabilityStrategy = new PreferAvailabilityStrategy(eventLog);
          }
          return new ClusterCacheStatus(cacheName, availabilityStrategy, this, transport);
       });
@@ -365,6 +373,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Override
    public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
       CLUSTER.startRebalance(cacheName, cacheTopology);
+      eventLog.context(cacheName).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceStarted());
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology, null,
             viewId);

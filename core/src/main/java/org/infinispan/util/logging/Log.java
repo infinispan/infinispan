@@ -11,7 +11,6 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partitionhandling.AvailabilityException;
-import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.RemoteException;
@@ -1129,41 +1128,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Received a command from an outdated topology, returning the exception to caller", id = 311)
    void outdatedTopology(@Cause Throwable oe);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Cache %s lost data because of graceful leaver %s", id = 312)
-   void lostDataBecauseOfGracefulLeaver(String cacheName, Address leaver);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Cache %s lost data because of abrupt leavers %s", id = 313)
-   void lostDataBecauseOfAbruptLeavers(String cacheName, Collection<Address> leavers);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Cache %s lost at least half of the stable members, possible split brain causing data inconsistency. Current members are %s, lost members are %s, stable members are %s", id = 314)
-   void minorityPartition(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Unexpected availability mode %s for cache %s partition %s", id = 315)
-   void unexpectedAvailabilityMode(AvailabilityMode availabilityMode, String cacheName, CacheTopology cacheTopology);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Cache %s lost data because of graceful leaver %s, entering degraded mode", id = 316)
-   void enteringDegradedModeGracefulLeaver(String cacheName, Address leaver);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Cache %s lost data because of abrupt leavers %s, assuming a network split and entering degraded mode", id = 317)
-   void enteringDegradedModeLostData(String cacheName, Collection<Address> leavers);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Cache %s lost at least half of the stable members, assuming a network split and entering degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 318)
-   void enteringDegradedModeMinorityPartition(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "After merge (or coordinator change), cache %s still hasn't recovered all its data and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 319)
-   void keepingDegradedModeAfterMergeDataLost(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "After merge (or coordinator change), cache %s still hasn't recovered a majority of members and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 320)
-   void keepingDegradedModeAfterMergeMinorityPartition(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
+   // Messages between 312 and 320 have been moved to the org.infinispan.util.logging.events.Messages class
 
    @LogMessage(level = WARN)
    @Message(value = "Cyclic dependency detected between caches, stop order ignored", id = 321)
