@@ -7,12 +7,12 @@ import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -24,6 +24,7 @@ import static org.testng.Assert.assertEquals;
  * @author Tristan Tarrant
  * @since 8.0
  */
+@Test(groups = "functional", testName = "query.dsl.embedded.SingleClassDSLQueryTest")
 public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
 
    @Override
@@ -32,10 +33,12 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
       builder.indexing().index(Index.ALL)
               .addProperty("default.directory_provider", "ram")
               .addProperty("lucene_version", "LUCENE_CURRENT");
-      return new DefaultCacheManager(builder.build());
+      return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   @Test
+   /**
+    * Test querying for entities defined as inner classes.
+    */
    public void testQuery() throws Exception {
       Cache<String, Person> cache = cacheManager.getCache();
       cache.put("person1", new Person("William", "Shakespeare"));
