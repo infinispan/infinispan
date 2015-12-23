@@ -17,9 +17,22 @@ import org.infinispan.factories.scopes.Scopes;
 @Scope(Scopes.GLOBAL)
 public interface InternalCacheRegistry {
    enum Flag {
-      EXCLUSIVE, // means that the cache must be declared only once
-      USER, // means that this cache is visible to users
-      PERSISTENT, // means the cache should be made persistent across restarts if global state persistence is enabled
+      /**
+       * means that the cache must be declared only once
+       */
+      EXCLUSIVE,
+      /**
+       * means that this cache is visible to users
+       */
+      USER,
+      /**
+       * means the cache should be made persistent across restarts if global state persistence is enabled
+       */
+      PERSISTENT,
+      /**
+       * means that this cache should be queryable
+       */
+      QUERYABLE
    }
 
    /**
@@ -59,4 +72,13 @@ public interface InternalCacheRegistry {
     * Removes the private caches from the specified set of cache names
     */
    void filterPrivateCaches(Set<String> names);
+
+   /**
+    * Returns whether a particular internal cache has a specific flag
+    *
+    * @param name the name of the internal cache
+    * @param flag the flag to check
+    * @return true if the internal cache has the flag, false otherwise
+    */
+   boolean internalCacheHasFlag(String name, Flag flag);
 }

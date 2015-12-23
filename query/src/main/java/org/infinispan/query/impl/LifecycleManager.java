@@ -52,6 +52,7 @@ import org.infinispan.query.continuous.impl.ContinuousQueryResult;
 import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
@@ -93,8 +94,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
-      if (!icr.isInternalCache(cacheName)) {
-         cr.registerComponent(new ReflectionMatcher(null), ReflectionMatcher.class);
+      if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
+         ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
+         cr.registerComponent(new ReflectionMatcher(classLoader), ReflectionMatcher.class);
 
          if (cfg.indexing().index().isEnabled()) {
             log.registeringQueryInterceptor();
