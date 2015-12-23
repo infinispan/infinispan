@@ -1928,7 +1928,6 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
             .groupBy("name")
             .orderBy("surname")
             .build();
-
       q.list();
    }
 
@@ -1958,8 +1957,37 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       q.list();
    }
 
-   @Test
+   @Test(expected = IllegalStateException.class)
    public void testGroupBy6() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.sum("name"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(2, list.get(0)[0]);
+   }
+
+   @Test(expected = ParsingException.class)
+   public void testGroupBy7() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.sum("age"))
+            .having(Expression.sum("age")).gt(10).toBuilder()
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(3, list.get(0).length);
+      assertEquals(3, list.get(1).length);
+      assertEquals(1500d, (Double) list.get(0)[2], 0.0001d);
+      assertEquals(45d, (Double) list.get(1)[2], 0.0001d);
+   }
+
+   @Test
+   public void testHavingWithSum() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(Expression.property("accountId"), Expression.sum("amount"))
@@ -1974,7 +2002,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
-   public void testGroupBy7() {
+   public void testHavingWithAvg() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(Expression.property("accountId"), Expression.avg("amount"))
@@ -1989,7 +2017,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
-   public void testGroupBy8() {
+   public void testHavingWithMin() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(Expression.property("accountId"), Expression.min("amount"))
@@ -2004,7 +2032,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
-   public void testGroupBy9() {
+   public void testHavingWithMax() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(Expression.property("accountId"), Expression.max("amount"))
@@ -2227,19 +2255,24 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
-   public void testGlobalMin() {
+   public void testMin() {
       QueryFactory qf = getQueryFactory();
-      Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.min("name"))
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.min("amount"))
+            .groupBy("accountId")
+            .orderBy("accountId")
             .build();
+
       List<Object[]> list = q.list();
-      assertEquals(1, list.size());
-      assertEquals(1, list.get(0).length);
-      assertEquals("John", list.get(0)[0]);
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(23d, list.get(0)[1]);
+      assertEquals(5d, list.get(1)[1]);
    }
 
    @Test
-   public void testMin() {
+   public void testMinString() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select(Expression.min("surname"))
@@ -2255,19 +2288,81 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
-   public void testGlobalMax() {
+   public void testEmbeddedMin() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.max("name"))
+            .select(Expression.property("surname"), Expression.min("addresses.number"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(156, list.get(0)[1]);
+      assertEquals(-12, list.get(1)[1]);
+      assertEquals(null, list.get(2)[1]);
+   }
+
+   @Test
+   public void testGlobalMinDouble() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.min("amount"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(5d, list.get(0)[0]);
+   }
+
+   @Test
+   public void testGlobalMinString() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.min("name"))
             .build();
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals("Spider", list.get(0)[0]);
+      assertEquals("John", list.get(0)[0]);
+   }
+
+   @Test
+   public void testEmbeddedGlobalMin() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.min("addresses.number"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(-12, list.get(0)[0]);
    }
 
    @Test
    public void testMax() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.max("amount"))
+            .groupBy("accountId")
+            .orderBy("accountId")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(1800d, list.get(0)[1]);
+      assertEquals(149d, list.get(1)[1]);
+   }
+
+   @Test
+   public void testMaxString() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select(Expression.max("surname"))
@@ -2280,6 +2375,80 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(1, list.get(1).length);
       assertEquals("Doe", list.get(0)[0]);
       assertEquals("Woman", list.get(1)[0]);
+   }
+
+   @Test
+   public void testEmbeddedMax() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.property("surname"), Expression.max("addresses.number"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(2, list.get(1).length);
+      assertEquals(2, list.get(2).length);
+      assertEquals(156, list.get(0)[1]);
+      assertEquals(312, list.get(1)[1]);
+      assertEquals(null, list.get(2)[1]);
+   }
+
+   @Test
+   public void testEmbeddedMaxString() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.max("addresses.postCode"))
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("X1234", list.get(0)[0]);
+      assertEquals(1, list.get(1).length);
+      assertEquals("ZZ", list.get(1)[0]);
+   }
+
+   @Test
+   public void testGlobalMaxDouble() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.max("amount"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(1800d, list.get(0)[0]);
+   }
+
+   @Test
+   public void testGlobalMaxString() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.max("name"))
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("Spider", list.get(0)[0]);
+   }
+
+   @Test
+   public void testEmbeddedGlobalMax() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.max("addresses.number"))
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(312, list.get(0)[0]);
    }
 
    @Test
@@ -2398,6 +2567,23 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(User.Gender.MALE, list.get(1).getGender());
    }
 
+   @Test
+   public void testParamWithGroupBy() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.property("date"), Expression.sum("amount"))
+            .groupBy("accountId", "date")
+            .having(Expression.sum("amount")).gt(Expression.param("param")).toBuilder()
+            .build();
+
+      q.setParameter("param", 1801);
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(3, list.get(0).length);
+      assertEquals(6225d, list.get(0)[2]);
+   }
+
    @Test(expected = IllegalArgumentException.class)
    public void testUnknownParam() throws Exception {
       QueryFactory qf = getQueryFactory();
@@ -2421,6 +2607,63 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       q.setParameter("param1", "John");
 
       q.list();
+   }
+
+   @Test
+   public void testComplexQuery() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.avg("amount"), Expression.sum("amount"), Expression.count("date"), Expression.min("date"),
+                    Expression.max("accountId"))
+            .having("isDebit").eq(Expression.param("param")).toBuilder()
+            .orderBy(Expression.avg("amount"), SortOrder.DESC).orderBy(Expression.count("date"), SortOrder.DESC)
+            .orderBy(Expression.max("amount"), SortOrder.ASC)
+            .build();
+
+      q.setParameter("param", true);
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(5, list.get(0).length);
+      assertEquals(143.50909d, (Double) list.get(0)[0], 0.0001d);
+      assertEquals(7893d, (Double) list.get(0)[1], 0.0001d);
+      assertEquals(55L, list.get(0)[2]);
+      assertEquals(java.util.Date.class, list.get(0)[3].getClass());
+      assertTrue(((Date) list.get(0)[3]).compareTo(makeDate("2013-01-01")) == 0);
+      assertEquals(2, list.get(0)[4]);
+   }
+
+   @Test
+   public void testDateFilteringWithGroupBy() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("date")
+            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15")).toBuilder()
+            .groupBy("date")
+            .build();
+      List<Object[]> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(java.util.Date.class, list.get(0)[0].getClass());
+      assertTrue(((Date) list.get(0)[0]).compareTo(makeDate("2013-02-27")) == 0);
+   }
+
+   @Test
+   public void testAggregateDate() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.count("date"), Expression.min("date"))
+            .having("description").eq("Hotel").toBuilder()
+            .groupBy("id")
+            .build();
+      List<Object[]> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(1L, list.get(0)[0]);
+      assertEquals(java.util.Date.class, list.get(0)[1].getClass());
+      assertTrue(((Date) list.get(0)[1]).compareTo(makeDate("2013-02-27")) == 0);
    }
 
    @Test
