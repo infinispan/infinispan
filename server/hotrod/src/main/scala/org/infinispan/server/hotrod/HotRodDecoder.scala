@@ -42,6 +42,8 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
    var callbackHandler: AuthorizingCallbackHandler = null
    var subject: Subject = ANONYMOUS
 
+   val isTrace = isTraceEnabled
+
    def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: java.util.List[AnyRef]): Unit = {
       try {
          if (decodeCtx.isTrace) trace("Decode using instance @%x", System.identityHashCode(this))
@@ -234,9 +236,9 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
    }
 
    protected def writeResponse(ch: Channel, response: AnyRef): AnyRef = {
-       if (response != null) {
+      if (response != null) {
+         if (decodeCtx.isTrace) trace("Write response %s", response)
          try {
-            if (decodeCtx.isTrace) trace("Write response %s", response)
             response match {
                // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
                case l: Array[ByteBuf] =>
@@ -247,11 +249,12 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
                case pr: PartialResponse => return pr
                case _ => ch.writeAndFlush(response)
             }
-         } finally {
-           resetParams
+         }
+         finally {
+            resetParams()
          }
       }
-         null
+      null
    }
 
    private def resetParams() = {
@@ -274,6 +277,19 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
    override def checkpoint() = {
      super.checkpoint
    }
+
+   override def channelActive(ctx: ChannelHandlerContext): Unit = {
+      super.channelActive(ctx)
+      if (isTrace) tracef("Channel %s became active", ctx.channel)
+      server.getClientListenerRegistry.findAndWriteEvents(ctx.channel)
+   }
+
+   override def channelWritabilityChanged(ctx: ChannelHandlerContext): Unit = {
+      super.channelWritabilityChanged(ctx)
+      if (isTrace) tracef("Channel %s writability changed", ctx.channel)
+      server.getClientListenerRegistry.findAndWriteEvents(ctx.channel)
+   }
+
 }
 
 class UnknownVersionException(reason: String, val version: Byte, val messageId: Long)
