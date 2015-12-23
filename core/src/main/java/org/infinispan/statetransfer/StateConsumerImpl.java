@@ -628,6 +628,7 @@ public class StateConsumerImpl implements StateConsumer {
                   ((RemoteTransaction) tx).setLookedUpEntriesTopology(topologyId - 1);
                }
             }
+            // TODO Shouldn't this be done for transactions originated locally as well?
             transactionInfo.getLockedKeys().forEach(tx::addBackupLockForKey);
          }
       }

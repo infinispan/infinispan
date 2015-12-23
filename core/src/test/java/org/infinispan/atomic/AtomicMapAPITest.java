@@ -9,6 +9,7 @@ import java.util.Map;
 
 import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
 import static org.infinispan.atomic.AtomicMapLookup.getFineGrainedAtomicMap;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * @author Pedro Ruivo
@@ -17,52 +18,34 @@ import static org.infinispan.atomic.AtomicMapLookup.getFineGrainedAtomicMap;
 @Test(groups = "functional", testName = "atomic.AtomicMapAPITest")
 public class AtomicMapAPITest extends BaseAtomicHashMapAPITest {
 
-   @SuppressWarnings("UnusedDeclaration")
-   @Test(expectedExceptions = {IllegalArgumentException.class})
-   public void testAtomicMapAfterFineGrainedAtomicMap(Method m) throws Exception {
-      Cache<Object, Object> cache = cache(0, "atomic");
-      final Object key = new MagicKey(m.getName(), cache);
+   public void testAtomicMapAfterFineGrainedAtomicMapPrimary() throws Exception {
+      Cache<MagicKey, Object> cache1 = cache(0, "atomic");
 
-      Map<String, String> map = getFineGrainedAtomicMap(cache, key);
-      Map<String, String> map2 = getAtomicMap(cache, key);
-   }
+      MagicKey key = new MagicKey(cache1);
+      getFineGrainedAtomicMap(cache1, key);
 
-   @SuppressWarnings("UnusedDeclaration")
-   @Test(expectedExceptions = {IllegalArgumentException.class})
-   public void testAtomicMapBeforeFineGrainedAtomicMap(Method m) throws Exception {
-      Cache<Object, Object> cache = cache(0, "atomic");
-      final Object key = new MagicKey(m.getName(), cache);
-
-      Map<String, String> map = getAtomicMap(cache, key);
-      Map<String, String> map2 = getFineGrainedAtomicMap(cache, key);
-   }
-
-   @SuppressWarnings("UnusedDeclaration")
-   @Test(expectedExceptions = {IllegalArgumentException.class})
-   public void testAtomicMapAfterFineGrainedAtomicMapOnNonOwner(Method m) throws Exception {
-      Cache<Object, Object> cache = cache(0, "atomic");
-      if (cache.getCacheConfiguration().clustering().cacheMode().isReplicated()) {
-         //no-op since everybody is an owner.
-         throw new IllegalArgumentException();
+      try {
+         getAtomicMap(cache1, key);
+         fail("Should have failed with an IllegalArgumentException");
+      } catch (IllegalArgumentException e) {
+         // Expected
       }
-      final Object key = new MagicKey(m.getName(), cache(1, "atomic"));
-
-      Map<String, String> map = getFineGrainedAtomicMap(cache, key);
-      Map<String, String> map2 = getAtomicMap(cache, key);
    }
 
-   @SuppressWarnings("UnusedDeclaration")
-   @Test(expectedExceptions = {IllegalArgumentException.class})
-   public void testAtomicMapBeforeFineGrainedAtomicMapOnNonOwner(Method m) throws Exception {
-      Cache<Object, Object> cache = cache(0, "atomic");
-      if (cache.getCacheConfiguration().clustering().cacheMode().isReplicated()) {
-         //no-op since everybody is an owner.
-         throw new IllegalArgumentException();
-      }
-      final Object key = new MagicKey(m.getName(), cache(1, "atomic"));
+   @Test(enabled = false, description = "Doesn't work when the originator isn't the primary owner, see ISPN-5988")
+   public void testAtomicMapAfterFineGrainedAtomicMapBackup() throws Exception {
+      Cache<MagicKey, Object> cache1 = cache(0, "atomic");
+      Cache<MagicKey, Object> cache2 = cache(1, "atomic");
 
-      Map<String, String> map = getAtomicMap(cache, key);
-      Map<String, String> map2 = getFineGrainedAtomicMap(cache, key);
+      MagicKey key = new MagicKey(cache2);
+      getFineGrainedAtomicMap(cache1, key);
+
+      try {
+         getAtomicMap(cache1, key);
+         fail("Should have failed with an IllegalArgumentException");
+      } catch (IllegalArgumentException e) {
+         // Expected
+      }
    }
 
    @Override

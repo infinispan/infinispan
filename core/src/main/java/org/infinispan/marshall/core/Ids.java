@@ -166,4 +166,5 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int VALUE_MATCHER = 162;
 
    int HASH_FUNCTION_PARTITIONER = 163;
+   int SYNC_REPLICATED_CONSISTENT_HASH_FACTORY = 164;
 }

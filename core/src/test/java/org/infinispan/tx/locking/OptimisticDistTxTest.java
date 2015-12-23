@@ -12,10 +12,4 @@ public class OptimisticDistTxTest extends OptimisticReplTxTest {
    public OptimisticDistTxTest() {
       this.cacheMode = CacheMode.DIST_SYNC;
    }
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
-      k = getKeyForCache(0);
-   }
 }

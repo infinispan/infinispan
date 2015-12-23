@@ -9,7 +9,6 @@ import org.infinispan.remoting.transport.Address;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -124,28 +123,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
 
    @Override
    public ReplicatedConsistentHash union(ReplicatedConsistentHash ch1, ReplicatedConsistentHash ch2) {
-      if (!ch1.getHashFunction().equals(ch2.getHashFunction())) {
-         throw new IllegalArgumentException("The consistent hash objects must have the same hash function");
-      }
-      if (ch1.getNumSegments() != ch2.getNumSegments()) {
-         throw new IllegalArgumentException("The consistent hash objects must have the same number of segments");
-      }
-
-      List<Address> unionMembers = new ArrayList<Address>(ch1.getMembers());
-      for (Address member : ch2.getMembers()) {
-         if (!unionMembers.contains(member)) {
-            unionMembers.add(member);
-         }
-      }
-
-      int[] primaryOwners = new int[ch1.getNumSegments()];
-      for (int segmentId = 0; segmentId < primaryOwners.length; segmentId++) {
-         Address primaryOwner = ch1.locatePrimaryOwnerForSegment(segmentId);
-         int primaryOwnerIndex = unionMembers.indexOf(primaryOwner);
-         primaryOwners[segmentId] = primaryOwnerIndex;
-      }
-
-      return new ReplicatedConsistentHash(ch1.getHashFunction(), unionMembers, primaryOwners);
+      return ch1.union(ch2);
    }
 
    @Override

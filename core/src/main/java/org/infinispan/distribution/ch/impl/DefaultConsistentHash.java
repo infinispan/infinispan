@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Default {@link ConsistentHash} implementation. This object is immutable.
@@ -350,6 +352,23 @@ public class DefaultConsistentHash implements ConsistentHash {
          capacityFactorsMap.put(members.get(i), capacityFactors[i]);
       }
       return capacityFactorsMap;
+   }
+
+   public String prettyPrintOwnership() {
+      StringBuilder sb = new StringBuilder();
+      for (Address member : getMembers()) {
+         sb.append("\n").append(member).append(":");
+         for (int segment = 0; segment < segmentOwners.length; segment++) {
+            int index = segmentOwners[segment].indexOf(member);
+            if (index >= 0) {
+               sb.append(' ').append(segment);
+               if (index == 0) {
+                  sb.append('\'');
+               }
+            }
+         }
+      }
+      return sb.toString();
    }
 
    public static class Externalizer extends InstanceReusingAdvancedExternalizer<DefaultConsistentHash> {

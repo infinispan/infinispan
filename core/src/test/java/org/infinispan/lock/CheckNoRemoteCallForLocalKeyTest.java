@@ -2,8 +2,10 @@ package org.infinispan.lock;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -19,7 +21,7 @@ public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest 
 
    protected CheckRemoteLockAcquiredOnlyOnceTest.ControlInterceptor controlInterceptor;
    protected CacheMode mode = CacheMode.REPL_SYNC;
-   protected Object key = "k";
+   protected Object key;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -27,6 +29,7 @@ public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest 
       c.transaction().lockingMode(LockingMode.PESSIMISTIC);
       createCluster(c, 2);
       waitForClusterToForm();
+      key = new MagicKey(cache(0));
       controlInterceptor = new CheckRemoteLockAcquiredOnlyOnceTest.ControlInterceptor();
       cache(1).getAdvancedCache().addInterceptor(controlInterceptor, 1);
    }

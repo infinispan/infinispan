@@ -116,7 +116,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
 
    public void testPostOnlyEvent() {
       Cache<Object, Object> c1 = cache(0);
-      rehashListener = new DataRehashedListenrPostOnly();
+      rehashListener = new DataRehashedListenerPostOnly();
       c1.addListener(rehashListener);
 
       ConsistentHash ch1Node = advancedCache(0).getDistributionManager().getReadConsistentHash();
@@ -127,8 +127,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       cache(1);
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
 
-      List<DataRehashedEvent<Object, Object>> events = rehashListener.removeEvents();
-      assertEquals(1, events.size());
+      rehashListener.waitForEvents(1);
    }
 
    @Listener
@@ -158,7 +157,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
    }
 
    @Listener(observation = Listener.Observation.POST)
-   public class DataRehashedListenrPostOnly extends DataRehashedListener {
+   public class DataRehashedListenerPostOnly extends DataRehashedListener {
 
    }
 }

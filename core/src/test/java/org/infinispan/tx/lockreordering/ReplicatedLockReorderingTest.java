@@ -15,9 +15,4 @@ public class ReplicatedLockReorderingTest extends DistLockReorderingTest {
    public ReplicatedLockReorderingTest() {
       cacheMode = CacheMode.REPL_SYNC;
    }
-
-   @Override
-   void buildKeys() {
-      keys = generateKeys();
-   }
 }

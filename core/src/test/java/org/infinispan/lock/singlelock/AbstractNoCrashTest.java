@@ -7,6 +7,7 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 import java.util.Collections;

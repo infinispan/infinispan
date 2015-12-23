@@ -1,5 +1,7 @@
 package org.infinispan.tx.dld;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.TestingUtil;
@@ -21,6 +23,9 @@ public abstract class BaseDldPessimisticLockingTest extends MultipleCacheManager
    protected PerCacheExecutorThread ex1;
    protected DeadlockDetectingLockManager lm0;
    protected DeadlockDetectingLockManager lm1;
+   protected Object k0;
+   protected Object k2;
+   protected Object k1;
 
    @BeforeMethod(alwaysRun=true)
    public void beforeMethod() {
@@ -40,7 +45,7 @@ public abstract class BaseDldPessimisticLockingTest extends MultipleCacheManager
    }
 
    protected void testSymmetricDld(Object k0, Object k1) throws SystemException {
-
+      long initialDeadlocks = lm0.getTotalNumberOfDetectedDeadlocks() + lm1.getTotalNumberOfDetectedDeadlocks();
       long start = System.currentTimeMillis();
 
       log.trace("Here is where the test starts");
@@ -95,8 +100,28 @@ public abstract class BaseDldPessimisticLockingTest extends MultipleCacheManager
       assert cache(1).get(k1) != null;
 
       long totalDeadlocks = lm0.getTotalNumberOfDetectedDeadlocks() + lm1.getTotalNumberOfDetectedDeadlocks();
-      assert totalDeadlocks == 1 : "Expected 1 but received " + totalDeadlocks;
+      assert totalDeadlocks - initialDeadlocks == 1 : "Expected 1 but received " + totalDeadlocks;
 
       log.debugf("Test took %s millis.", System.currentTimeMillis() - start);
+   }
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder config = createConfiguration();
+      createClusteredCaches(2, config);
+
+      k0 = new MagicKey("k0_0", cache(0));
+      k1 = new MagicKey("k1_1", cache(1));
+      k2 = new MagicKey("k2_0", cache(0));
+   }
+
+   protected abstract ConfigurationBuilder createConfiguration();
+
+   public void testSymmetricDeadlock() throws SystemException {
+      testSymmetricDld(k0, k1);
+   }
+
+   public void testSymmetricDeadlockSamePrimary() throws SystemException {
+      testSymmetricDld(k0, k2);
    }
 }

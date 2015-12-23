@@ -3,10 +3,13 @@ package org.infinispan.test;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -61,11 +64,6 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
          builder.clustering().sync();
       else
          builder.clustering().async();
-
-      if (mode.isReplicated()) {
-         // only one segment is supported for REPL tests now because some old tests still expect a single primary owner
-         builder.clustering().hash().numSegments(1);
-      }
 
       return builder;
    }

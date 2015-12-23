@@ -7,6 +7,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
@@ -68,7 +69,8 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
          globalTransaction.setRemoteLockIntention(command.getKeys());
          //in the case of DIST we need to propagate the list of keys. In all other situations in can be determined
          // based on the actual command
-         if (cacheConfiguration.clustering().cacheMode().isDistributed()) {
+         CacheMode cacheMode = cacheConfiguration.clustering().cacheMode();
+         if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
             if (trace) log.tracef("Locks as seen at origin are: %s", ctx.getLockedKeys());
             ((DldGlobalTransaction) ctx.getGlobalTransaction()).setLocksHeldAtOrigin(ctx.getLockedKeys());
          }

@@ -16,6 +16,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -42,6 +43,7 @@ import static org.junit.Assert.*;
 public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(DistStateTransferOnLeaveConsistencyTest.class);
+   private ControlledConsistentHashFactory consistentHashFactory;
 
    private enum Operation {
       REMOVE, CLEAR, PUT, PUT_MAP, PUT_IF_ABSENT, REPLACE
@@ -66,8 +68,11 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       }
 
-      builder.clustering().hash().numSegments(10).numOwners(2).l1().disable().locking().lockAcquisitionTimeout(1000l);
+      // Make it impossible for a key to be owned by nodes 0 and 2
+      consistentHashFactory = new ControlledConsistentHashFactory(new int[]{0, 1}, new int[]{1, 2});
+      builder.clustering().hash().numOwners(2).numSegments(2).consistentHashFactory(consistentHashFactory);
       builder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
+      builder.clustering().l1().disable().locking().lockAcquisitionTimeout(1000L);
       return builder;
    }
 
@@ -175,6 +180,8 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          }
       }, 0);
 
+      // The indexes will only be used after node 1 is killed
+      consistentHashFactory.setOwnerIndexes(new int[]{0, 1}, new int[]{1, 0});
       log.info("Killing node 1 ..");
       TestingUtil.killCacheManagers(manager(1));
       log.info("Node 1 killed");

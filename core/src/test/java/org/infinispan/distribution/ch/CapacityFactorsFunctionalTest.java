@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
+import static org.infinispan.test.TestingUtil.assertBetween;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -33,35 +34,35 @@ public class CapacityFactorsFunctionalTest extends MultipleCacheManagersTest {
    public void testCapacityFactors() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-      cb.clustering().hash().numSegments(60);
+      cb.clustering().hash().numSegments(NUM_SEGMENTS);
 
       cb.clustering().hash().capacityFactor(0.5f);
       addClusterEnabledCacheManager(cb);
       waitForClusterToForm();
       assertCapacityFactors(0.5f);
-      assertPrimaryOwned(60);
-      assertOwned(60);
+      assertPrimaryOwned(NUM_SEGMENTS);
+      assertOwned(NUM_SEGMENTS);
 
       cb.clustering().hash().capacityFactor(1.5f);
       addClusterEnabledCacheManager(cb);
       waitForClusterToForm();
       assertCapacityFactors(0.5f, 1.5f);
-      assertPrimaryOwned(15, 45);
-      assertOwned(60, 60);
+      assertPrimaryOwned(NUM_SEGMENTS / 4, NUM_SEGMENTS * 3 / 4);
+      assertOwned(NUM_SEGMENTS, NUM_SEGMENTS);
 
       cb.clustering().hash().capacityFactor(0.0f);
       addClusterEnabledCacheManager(cb);
       waitForClusterToForm();
       assertCapacityFactors(0.5f, 1.5f, 0.0f);
-      assertPrimaryOwned(15, 45);
-      assertOwned(60, 60, 0);
+      assertPrimaryOwned(NUM_SEGMENTS / 4, NUM_SEGMENTS * 3 / 4, 0);
+      assertOwned(NUM_SEGMENTS, NUM_SEGMENTS, 0);
 
       cb.clustering().hash().capacityFactor(1.0f);
       addClusterEnabledCacheManager(cb);
       waitForClusterToForm();
       assertCapacityFactors(0.5f, 1.5f, 0.0f, 1.0f);
-      assertPrimaryOwned(10, 30, 0, 20);
-      assertOwned(20, 60, 0, 40);
+      assertPrimaryOwned(NUM_SEGMENTS / 6, NUM_SEGMENTS * 3 / 6, 0, NUM_SEGMENTS * 2 / 6);
+      assertOwned(NUM_SEGMENTS / 3, NUM_SEGMENTS, 0, NUM_SEGMENTS * 2 / 3);
    }
 
    private void assertCapacityFactors(float... expectedCapacityFactors) {
@@ -80,7 +81,9 @@ public class CapacityFactorsFunctionalTest extends MultipleCacheManagersTest {
       OwnershipStatistics stats = new OwnershipStatistics(ch, ch.getMembers());
       int numNodes = expectedPrimaryOwned.length;
       for (int i = 0; i < numNodes; i++) {
-         assertEquals((double) expectedPrimaryOwned[i], (double) stats.getPrimaryOwned(address(i)), 1.0);
+         double delta = expectedPrimaryOwned[i] * 0.15;
+         assertBetween(expectedPrimaryOwned[i] - 2 * delta, expectedPrimaryOwned[i] + delta,
+               stats.getPrimaryOwned(address(i)));
       }
    }
 
@@ -89,7 +92,8 @@ public class CapacityFactorsFunctionalTest extends MultipleCacheManagersTest {
       OwnershipStatistics stats = new OwnershipStatistics(ch, ch.getMembers());
       int numNodes = expectedOwned.length;
       for (int i = 0; i < numNodes; i++) {
-         assertEquals((double)expectedOwned[i], (double)stats.getOwned(address(i)), 1.0);
+         double delta = expectedOwned[i] * 0.25;
+         assertBetween(expectedOwned[i] - 2 * delta, expectedOwned[i] + delta, stats.getOwned(address(i)));
       }
    }
 }

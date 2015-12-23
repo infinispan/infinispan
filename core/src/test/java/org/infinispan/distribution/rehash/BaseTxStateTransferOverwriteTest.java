@@ -196,15 +196,15 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
    protected void doStateTransferInBetweenPrepareCommit(final TestWriteOperation op,
                                                       final boolean additionalValueOnNonOwner) throws Exception {
-      final String key = getClass().getName() + "-key";
       // Test scenario:
       // cache0,1,2 are in the cluster, an owner leaves
       // Key k is in the cache, and is transferred to the non owner
       // A user operation also modifies key k causing an invalidation
       // on the non owner which is getting the state transfer
-      final AdvancedCache<Object, Object> primaryOwnerCache = getFirstOwner(key).getAdvancedCache();
-      final AdvancedCache<Object, Object> backupOwnerCache = getOwners(key)[1].getAdvancedCache();
-      final AdvancedCache<Object, Object> nonOwnerCache = getFirstNonOwner(key).getAdvancedCache();
+      final AdvancedCache<Object, Object> primaryOwnerCache = advancedCache(0, cacheName);
+      final AdvancedCache<Object, Object> backupOwnerCache = advancedCache(1, cacheName);
+      final AdvancedCache<Object, Object> nonOwnerCache = advancedCache(2, cacheName);
+      final MagicKey key = new MagicKey(op + "-key", cache(0, cacheName), cache(1, cacheName));
 
       // Prepare for replace/remove: put a previous value in cache0
       final Object previousValue = op.getPreviousValue();
@@ -265,7 +265,6 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
          // let state transfer go
          checkPoint.trigger("pre_state_apply_release_for_" + nonOwnerCache);
-
          TestingUtil.waitForRehashToComplete(primaryOwnerCache, nonOwnerCache);
 
          switch (op) {
@@ -304,7 +303,6 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       final AdvancedCache<Object, Object> primaryOwnerCache = cache(0, cacheName).getAdvancedCache();
       final AdvancedCache<Object, Object> backupOwnerCache = cache(1, cacheName).getAdvancedCache();
       final AdvancedCache<Object, Object> nonOwnerCache = cache(2, cacheName).getAdvancedCache();
-
       final MagicKey key = new MagicKey(primaryOwnerCache, backupOwnerCache);
 
       // Prepare for replace/remove: put a previous value in cache0
@@ -410,15 +408,15 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
    }
 
    private void doL1InvalidationOldTopologyComesAfterRebalance(final TestWriteOperation op) throws Exception {
-      final String key = getClass().getName() + "-key";
       // Test scenario:
       // cache0,1,2 are in the cluster, an owner leaves
       // Key k is in the cache, and is transferred to the non owner
       // A user operation also modifies key k causing an invalidation
       // on the non owner which is getting the state transfer
-      final AdvancedCache<Object, Object> primaryOwnerCache = getFirstOwner(key).getAdvancedCache();
-      final AdvancedCache<Object, Object> backupOwnerCache = getOwners(key)[1].getAdvancedCache();
-      final AdvancedCache<Object, Object> nonOwnerCache = getFirstNonOwner(key).getAdvancedCache();
+      final AdvancedCache<Object, Object> primaryOwnerCache = advancedCache(0, cacheName);
+      final AdvancedCache<Object, Object> backupOwnerCache = advancedCache(1, cacheName);
+      final AdvancedCache<Object, Object> nonOwnerCache = advancedCache(2, cacheName);
+      final MagicKey key = new MagicKey(op + "-key", cache(0, cacheName), cache(1, cacheName));
 
       // Prepare for replace/remove: put a previous value in cache0
       final Object previousValue = op.getPreviousValue();

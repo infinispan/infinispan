@@ -85,6 +85,10 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       getLog().debugf("Merging cluster");
       partition(0).merge(partition(1));
       waitForRehashToComplete(caches(cacheName));
+      for (int i = 0; i < numMembersInCluster; i++) {
+         PartitionHandlingManager phmI = partitionHandlingManager(cache(i, cacheName));
+         eventually(() -> AvailabilityMode.AVAILABLE == phmI.getAvailabilityMode());
+      }
       getLog().debugf("Cluster merged");
    }
 

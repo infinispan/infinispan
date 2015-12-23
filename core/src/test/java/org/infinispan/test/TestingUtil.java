@@ -94,6 +94,7 @@ import static java.io.File.separator;
 import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.fail;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -1492,6 +1493,12 @@ public class TestingUtil {
          AssertJUnit.assertArrayEquals((byte[]) expected, (byte[]) actual);
       else
          AssertJUnit.assertEquals(expected, actual);
+   }
+
+   public static void assertBetween(double lowerBound, double upperBound, double actual) {
+      if (actual < lowerBound || upperBound < actual) {
+         fail("Expected between:<" + lowerBound + "> and:<" + upperBound + "> but was:<" + actual + ">");
+      }
    }
 
    public static class TestPrincipal implements Principal, Serializable {

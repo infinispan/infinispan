@@ -333,7 +333,7 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
 
          }
       }
-      assertTxSeen(txExecutor, numOfLocalWriteTx, replicated ? numOfLocalWriteTx : numOfRemoteWriteTx, numOfReadOnlyTx, abort);
+      assertTxSeen(txExecutor, numOfLocalWriteTx, numOfRemoteWriteTx, numOfReadOnlyTx, abort);
 
       EnumSet<ExtendedStatistic> statsToValidate = getStatsToValidate();
 
@@ -380,19 +380,19 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
    }
 
    private boolean isRemote(Object key, Cache cache) {
-      return !replicated && !DistributionTestHelper.isOwner(cache, key);
+      return !DistributionTestHelper.isOwner(cache, key);
    }
 
    private boolean isLockOwner(Object key, Cache cache) {
-      return replicated ? address(0).equals(address(cache)) : DistributionTestHelper.isFirstOwner(cache, key);
+      return DistributionTestHelper.isFirstOwner(cache, key);
    }
 
    private Object getKey(int i) {
       if (i < 0) {
-         return replicated ? "KEY_" + i : new MagicKey("KEY_" + i, cache(0));
+         return new MagicKey("KEY_" + i, cache(0));
       }
       for (int j = keys.size(); j < i; ++j) {
-         keys.add(replicated ? "KEY_" + (j + 1) : new MagicKey("KEY_" + (j + 1), cache(0)));
+         keys.add(new MagicKey("KEY_" + (j + 1), cache(0)));
       }
       return keys.get(i - 1);
    }

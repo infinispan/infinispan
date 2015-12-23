@@ -12,8 +12,8 @@ import org.testng.annotations.Test;
 public class DldEagerLockingReplicationWithSyncTest extends DldPessimisticLockingReplicationTest {
 
    @Override
-   protected ConfigurationBuilder getConfigurationBuilder() {
-      ConfigurationBuilder config = super.getConfigurationBuilder();
+   protected ConfigurationBuilder createConfiguration() {
+      ConfigurationBuilder config = super.createConfiguration();
       config.transaction().useSynchronization(true);
       return config;
    }

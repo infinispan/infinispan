@@ -17,23 +17,6 @@ import javax.transaction.SystemException;
 @Test (groups = "functional", testName = "tx.dld.DldPessimisticLockingDistributedTest")
 public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLockingTest {
 
-   private Object k0;
-   private Object k1;
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder config = createConfiguration();
-
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      registerCacheManager(cm1);
-      registerCacheManager(cm2);
-      waitForClusterToForm();
-
-      k0 = new MagicKey(cache(0));
-      k1 = new MagicKey(cache(1));
-   }
-
    protected ConfigurationBuilder createConfiguration() {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       config
@@ -44,7 +27,4 @@ public class DldPessimisticLockingDistributedTest extends BaseDldPessimisticLock
       return config;
    }
 
-   public void testSymmetricDeadlock() throws SystemException {
-      testSymmetricDld(k0, k1);
-   }
 }

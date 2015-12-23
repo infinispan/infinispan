@@ -18,6 +18,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -50,9 +52,10 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder buildConfig(boolean transactional, boolean onePhase, Class<?> commandToBlock) {
       CacheMode mode = (transactional && !onePhase) ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC;
-      // The coordinator will always be the primary owner
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(mode, transactional);
       if (mode.isSynchronous()) configurationBuilder.clustering().sync().replTimeout(15000);
+      // The coordinator will always be the primary owner
+      configurationBuilder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       configurationBuilder.transaction().syncCommitPhase(false);
       // We must block after the commit was replicated, but before the entries are committed

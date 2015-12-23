@@ -15,6 +15,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -119,6 +120,7 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; ++i) {
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+         builder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
          builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)//.writeSkewCheck(true)
                .lockAcquisitionTimeout(60000); //the timeout are triggered by the TimeService!
          builder.transaction().recovery().disable();

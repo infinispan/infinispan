@@ -19,10 +19,4 @@ public class PessimisticDistTxTest extends PessimisticReplTxTest {
             .hash().numOwners(1);
       return builder;
    }
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
-      k = getKeyForCache(0);
-   }
 }

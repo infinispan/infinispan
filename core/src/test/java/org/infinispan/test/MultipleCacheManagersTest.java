@@ -514,10 +514,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected <K, V> Cache<K, V> getLockOwner(Object key, String cacheName) {
       Configuration c = getCache(0, cacheName).getCacheConfiguration();
-      if (c.clustering().cacheMode().isReplicated() || c.clustering().cacheMode().isInvalidation()) {
+      if (c.clustering().cacheMode().isInvalidation()) {
          return getCache(0, cacheName); //for replicated caches only the coordinator acquires lock
-      }  else {
-         if (!c.clustering().cacheMode().isDistributed()) throw new IllegalStateException("This is not a clustered cache!");
+      }  else if (!c.clustering().cacheMode().isClustered()) {
+         throw new IllegalStateException("This is not a clustered cache!");
+      } else {
          final Address address = getCache(0, cacheName).getAdvancedCache().getDistributionManager().locate(key).get(0);
          for (Cache<K, V> cache : this.<K, V>caches(cacheName)) {
             if (cache.getAdvancedCache().getRpcManager().getTransport().getAddress().equals(address)) {
