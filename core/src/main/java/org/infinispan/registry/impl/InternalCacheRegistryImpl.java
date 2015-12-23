@@ -3,8 +3,10 @@ package org.infinispan.registry.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -25,7 +27,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private EmbeddedCacheManager cacheManager;
-   private final Set<String> internalCaches = new ConcurrentHashSet<>();
+   private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = CollectionFactory.makeBoundedConcurrentMap(10);
    private final Set<String> privateCaches = new ConcurrentHashSet<>();
 
    @Inject
@@ -35,11 +37,11 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
 
    @Stop(priority = 1)
    public void stop() {
-      for (String cacheName : internalCaches) {
+      internalCaches.keySet().forEach(cacheName -> {
          Cache<Object, Object> cache = cacheManager.getCache(cacheName, false);
          if (cache != null)
             cache.stop();
-      }
+      });
    }
 
    @Override
@@ -50,7 +52,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    @Override
    public void registerInternalCache(String name, Configuration configuration, EnumSet<Flag> flags) {
       // check if it already has been defined. Currently we don't support existing user-defined configuration.
-      if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.contains(name)) && cacheManager.getCacheConfiguration(name) != null) {
+      if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.containsKey(name)) && cacheManager.getCacheConfiguration(name) != null) {
          throw log.existingConfigForInternalCache(name);
       }
       ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration);
@@ -60,7 +62,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
          builder.persistence().addSingleFileStore().location(globalConfiguration.globalState().persistentLocation()).purgeOnStartup(false).preload(true);
       }
       SecurityActions.defineConfiguration(cacheManager, name, builder.build());
-      internalCaches.add(name);
+      internalCaches.put(name, flags);
       if (!flags.contains(Flag.USER)) {
          privateCaches.add(name);
       }
@@ -68,16 +70,22 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
 
    @Override
    public boolean isInternalCache(String name) {
-      return internalCaches.contains(name);
+      return internalCaches.containsKey(name);
    }
 
    @Override
    public Set<String> getInternalCacheNames() {
-      return internalCaches;
+      return internalCaches.keySet();
    }
 
    @Override
    public void filterPrivateCaches(Set<String> names) {
       names.removeAll(privateCaches);
+   }
+
+   @Override
+   public boolean internalCacheHasFlag(String name, Flag flag) {
+      EnumSet<Flag> flags = internalCaches.get(name);
+      return flags != null && flags.contains(flag);
    }
 }
