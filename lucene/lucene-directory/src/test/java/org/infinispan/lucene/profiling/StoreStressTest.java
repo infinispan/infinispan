@@ -53,7 +53,7 @@ public class StoreStressTest extends SingleCacheManagerTest {
       assert cache!=null;
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, indexName).create();
       PerformanceCompareStressTest.stressTestDirectory(dir, "InfinispanClusteredWith-Store");
-      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName, true);
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName, true, -1);
    }
 
 }

@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 
@@ -22,14 +23,16 @@ public final class FileReadLockKey implements IndexScopedKey {
    private final String indexName;
    private final String fileName;
    private final int hashCode;
+   private final int affinitySegmentId;
 
-   public FileReadLockKey(final String indexName, final String fileName) {
+   public FileReadLockKey(final String indexName, final String fileName, final int affinitySegmentId) {
       if (indexName == null)
          throw new IllegalArgumentException("indexName shall not be null");
       if (fileName == null)
          throw new IllegalArgumentException("fileName shall not be null");
       this.indexName = indexName;
       this.fileName = fileName;
+      this.affinitySegmentId = affinitySegmentId;
       this.hashCode = generateHashCode();
    }
 
@@ -41,6 +44,11 @@ public final class FileReadLockKey implements IndexScopedKey {
    @Override
    public String getIndexName() {
       return indexName;
+   }
+
+   @Override
+   public int getAffinitySegmentId() {
+      return affinitySegmentId;
    }
 
    /**
@@ -82,7 +90,7 @@ public final class FileReadLockKey implements IndexScopedKey {
 
    @Override
    public String toString() {
-      return fileName + "|RL|"+ indexName;
+      return "RL|" + fileName + "|"+ indexName + "|" + affinitySegmentId;
    }
 
    public static final class Externalizer extends AbstractExternalizer<FileReadLockKey> {
@@ -91,13 +99,15 @@ public final class FileReadLockKey implements IndexScopedKey {
       public void writeObject(final ObjectOutput output, final FileReadLockKey key) throws IOException {
          output.writeUTF(key.indexName);
          output.writeUTF(key.fileName);
+         UnsignedNumeric.writeUnsignedInt(output, key.affinitySegmentId);
       }
 
       @Override
       public FileReadLockKey readObject(final ObjectInput input) throws IOException {
          String indexName = input.readUTF();
          String fileName = input.readUTF();
-         return new FileReadLockKey(indexName, fileName);
+         final int affinitySegmentId = UnsignedNumeric.readUnsignedInt(input);
+         return new FileReadLockKey(indexName, fileName, affinitySegmentId);
       }
 
       @Override

@@ -23,14 +23,16 @@ public final class ChunkCacheKey implements IndexScopedKey {
    private final String fileName;
    private final int bufferSize;
    private final int hashCode;
+   private final int affinitySegmentId;
 
-   public ChunkCacheKey(final String indexName, final String fileName, final int chunkId, final int bufferSize) {
+   public ChunkCacheKey(final String indexName, final String fileName, final int chunkId, final int bufferSize, final int affinitySegmentId) {
       if (fileName == null)
          throw new IllegalArgumentException("filename must not be null");
       this.indexName = indexName;
       this.fileName = fileName;
       this.chunkId = chunkId;
       this.bufferSize = bufferSize;
+      this.affinitySegmentId = affinitySegmentId;
       this.hashCode = generatedHashCode();
    }
 
@@ -60,6 +62,11 @@ public final class ChunkCacheKey implements IndexScopedKey {
    @Override
    public String getIndexName() {
       return indexName;
+   }
+
+   @Override
+   public int getAffinitySegmentId() {
+      return affinitySegmentId;
    }
 
    @Override
@@ -111,7 +118,7 @@ public final class ChunkCacheKey implements IndexScopedKey {
     */
    @Override
    public String toString() {
-      return fileName + "|" + chunkId + "|" + bufferSize + "|" + indexName;
+      return "C|" + fileName + "|" + chunkId + "|" + bufferSize + "|" + indexName + "|" + affinitySegmentId;
    }
 
    public static final class Externalizer extends AbstractExternalizer<ChunkCacheKey> {
@@ -122,6 +129,7 @@ public final class ChunkCacheKey implements IndexScopedKey {
          output.writeUTF(key.fileName);
          UnsignedNumeric.writeUnsignedInt(output, key.chunkId);
          UnsignedNumeric.writeUnsignedInt(output, key.bufferSize);
+         UnsignedNumeric.writeUnsignedInt(output, key.affinitySegmentId);
       }
 
       @Override
@@ -130,7 +138,8 @@ public final class ChunkCacheKey implements IndexScopedKey {
          final String fileName = input.readUTF();
          final int chunkId = UnsignedNumeric.readUnsignedInt(input);
          final int bufferSize = UnsignedNumeric.readUnsignedInt(input);
-         return new ChunkCacheKey(indexName, fileName, chunkId, bufferSize);
+         final int affinitySegmentId = UnsignedNumeric.readUnsignedInt(input);
+         return new ChunkCacheKey(indexName, fileName, chunkId, bufferSize, affinitySegmentId);
       }
 
       @Override

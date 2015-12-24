@@ -5,6 +5,7 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.ch.AffinityTaggedKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -144,6 +145,15 @@ public class DefaultConsistentHash implements ConsistentHash {
 
    @Override
    public int getSegment(Object key) {
+      if (key instanceof AffinityTaggedKey) {
+         AffinityTaggedKey tagged = (AffinityTaggedKey) key;
+         int segment = tagged.getAffinitySegmentId();
+         //The check for [segment < numSegments] should generally not be needed, but let's be safe as the entry
+         //might have been stored when a different configuration or version of Infinispan was used
+         if (segment != -1 && segment < getNumSegments()) {
+            return segment;
+         }//Else: use normal hashing, which is always safe as AffinityTaggedKey is meant only as performance boost
+      }
       // The result must always be positive, so we make sure the dividend is positive first
       return getNormalizedHash(key) / segmentSize;
    }

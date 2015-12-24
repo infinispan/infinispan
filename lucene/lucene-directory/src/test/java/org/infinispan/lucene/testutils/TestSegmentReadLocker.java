@@ -12,6 +12,6 @@ import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 @SuppressWarnings("unchecked")
 public class TestSegmentReadLocker extends DistributedSegmentReadLocker {
    public TestSegmentReadLocker(Cache<?, ?> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName) {
-      super((Cache<Object, Integer>) locksCache, chunksCache, metadataCache, indexName, true);
+      super((Cache<Object, Integer>) locksCache, chunksCache, metadataCache, indexName, -1, true);
    }
 }

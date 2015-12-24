@@ -98,7 +98,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
          if (cfg.indexing().index().isEnabled()) {
             log.registeringQueryInterceptor();
-            SearchIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
+            SearchIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr, cacheName);
             createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
             EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
             addCacheDependencyIfNeeded(cacheName, cacheManager, cfg.indexing().properties());
@@ -191,7 +191,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private void registerQueryMBeans(AdvancedCache cache, ComponentRegistry cr, String cacheName) {
       Configuration cfg = cache.getCacheConfiguration();
-      SearchIntegrator sf = getSearchFactory(cfg.indexing().properties(), cr);
+      SearchIntegrator sf = getSearchFactory(cfg.indexing().properties(), cr, cacheName);
 
       // Resolve MBean server instance
       GlobalConfiguration globalCfg =
@@ -240,7 +240,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       return interceptorChain != null && interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
-   private SearchIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr) {
+   private SearchIntegrator getSearchFactory(Properties indexingProperties, ComponentRegistry cr, String cacheName) {
       Object component = cr.getComponent(SearchIntegrator.class);
       SearchIntegrator searchFactory = null;
       if (component instanceof SearchIntegrator) { //could be the placeholder Object REMOVED_REGISTRY_COMPONENT
@@ -252,7 +252,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          EmbeddedCacheManager uninitializedCacheManager = globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
          indexingProperties = addProgrammaticMappings(indexingProperties, cr);
          // Set up the search factory for Hibernate Search first.
-         SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties, uninitializedCacheManager, cr);
+         SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties, uninitializedCacheManager, cr, cacheName);
          searchFactory = new SearchIntegratorBuilder().configuration(config).buildSearchIntegrator();
          cr.registerComponent(searchFactory, SearchIntegrator.class);
       }

@@ -82,7 +82,7 @@ public class DeltaReplicationTest extends MultipleCacheManagersTest {
 
    private FileListCacheValue extract(Cache cache, String index) {
       DataContainer dataContainer = extractComponent(cache, DataContainer.class);
-      InternalCacheEntry ice = dataContainer.get(new FileListCacheKey(index));
+      InternalCacheEntry ice = dataContainer.get(new FileListCacheKey(index, -1));
       return (FileListCacheValue) ice.getValue();
    }
 

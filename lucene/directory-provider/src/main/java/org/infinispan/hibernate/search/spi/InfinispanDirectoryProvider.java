@@ -48,9 +48,16 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
    private boolean writeFileListAsync;
 
    private LockFactory indexWriterLockFactory;
+   private int affinityId;
 
    @Override
    public void initialize(String directoryProviderName, Properties properties, BuildContext context) {
+      String sharding_strategy = properties.getProperty("sharding_strategy");
+      String shardName = null;
+      if (sharding_strategy != null && sharding_strategy.endsWith("AffinityShardIdentifierProvider")) {
+         shardName = directoryProviderName.substring(directoryProviderName.lastIndexOf(".") + 1,directoryProviderName.length());
+      }
+      this.affinityId = shardName == null ? -1 : Integer.valueOf(shardName);
       this.directoryProviderName = directoryProviderName;
       this.serviceManager = context.getServiceManager();
       this.cacheManager = serviceManager.requestService(CacheManagerService.class).getEmbeddedCacheManager();
@@ -122,6 +129,10 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       }
       if (indexWriterLockFactory != null) {
          directoryBuildContext.overrideWriteLocker(indexWriterLockFactory);
+      }
+      if (affinityId >= 0) {
+         directoryBuildContext.affinityLocationIntoSegment(affinityId);
+
       }
       directory = directoryBuildContext.create();
       DirectoryHelper.initializeIndexIfNeeded(directory);
