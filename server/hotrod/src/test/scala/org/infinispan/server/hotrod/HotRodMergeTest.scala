@@ -2,8 +2,9 @@ package org.infinispan.server.hotrod
 
 import java.lang.reflect.Method
 
+import org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME
 import org.infinispan.configuration.cache.{ConfigurationBuilder, CacheMode}
-import org.infinispan.partitionhandling.{AvailabilityMode, BasePartitionHandlingTest}
+import org.infinispan.partitionhandling.BasePartitionHandlingTest
 import org.infinispan.partitionhandling.BasePartitionHandlingTest.PartitionDescriptor
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.infinispan.server.hotrod.Constants._
@@ -42,7 +43,7 @@ class HotRodMergeTest extends BasePartitionHandlingTest {
       }
 
       client = new HotRodClient("127.0.0.1", servers.head.getPort, "", 60, 21)
-      TestingUtil.waitForRehashToComplete(cache(0, ""), cache(1, ""))
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1))
    }
 
    @AfterClass(alwaysRun = true)
@@ -100,7 +101,7 @@ class HotRodMergeTest extends BasePartitionHandlingTest {
             if (!resp.topologyResponse.isDefined || (resp.topologyResponse.get.topologyId < expectedTopologyId)) {
                return false
             }
-            assertHashTopology20Received(resp.topologyResponse.get, servers.toList, "", expectedTopologyId)
+            assertHashTopology20Received(resp.topologyResponse.get, servers.toList, DEFAULT_CACHE_NAME, expectedTopologyId)
             return true
          }
       })
@@ -109,7 +110,7 @@ class HotRodMergeTest extends BasePartitionHandlingTest {
    private def expectCompleteTopology(c: HotRodClient, expectedTopologyId: Int): Unit = {
       val resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
       assertStatus(resp, Success)
-      assertHashTopology20Received(resp.topologyResponse.get, servers.toList, "", expectedTopologyId)
+      assertHashTopology20Received(resp.topologyResponse.get, servers.toList, DEFAULT_CACHE_NAME, expectedTopologyId)
    }
 
    private def eventuallyExpectPartialTopology(c: HotRodClient, expectedTopologyId: Int): Unit = {
@@ -120,7 +121,7 @@ class HotRodMergeTest extends BasePartitionHandlingTest {
             if (!resp.topologyResponse.isDefined || (resp.topologyResponse.get.topologyId < expectedTopologyId)) {
                return false
             }
-            assertHashTopology20Received(resp.topologyResponse.get, List(servers.head), "", expectedTopologyId)
+            assertHashTopology20Received(resp.topologyResponse.get, List(servers.head), DEFAULT_CACHE_NAME, expectedTopologyId)
             return true
          }
       })
@@ -129,7 +130,7 @@ class HotRodMergeTest extends BasePartitionHandlingTest {
    private def expectPartialTopology(c: HotRodClient, expectedTopologyId: Int): Unit = {
       val resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
       assertStatus(resp, Success)
-      assertHashTopology20Received(resp.topologyResponse.get, List(servers.head), "", expectedTopologyId)
+      assertHashTopology20Received(resp.topologyResponse.get, List(servers.head), DEFAULT_CACHE_NAME, expectedTopologyId)
    }
 
 }
