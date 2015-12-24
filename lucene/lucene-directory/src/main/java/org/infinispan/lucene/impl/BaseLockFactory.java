@@ -28,9 +28,10 @@ public class BaseLockFactory extends LockFactory {
          throw new UnsupportedOperationException("BaseLuceneLock can only be used with DirectoryLucene, got: " + dir);
       }
       DirectoryLucene infinispanDirectory = (DirectoryLucene) dir;
+      int affinitySegmentId = infinispanDirectory.getAffinitySegmentId();
       Cache distLockCache = infinispanDirectory.getDistLockCache();
       String indexName = infinispanDirectory.getIndexName();
-      BaseLuceneLock lock = new BaseLuceneLock(distLockCache, indexName, lockName);
+      BaseLuceneLock lock = new BaseLuceneLock(distLockCache, indexName, lockName, affinitySegmentId);
       CommonLockObtainUtils.attemptObtain(lock);
       return lock;
    }

@@ -38,6 +38,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    private final FileCacheKey fileKey;
    private final FileListOperations fileOps;
    private final Checksum crc = new BufferedChecksum(new CRC32());
+   private final int affinitySegmentId;
 
    private byte[] buffer;
 
@@ -50,10 +51,11 @@ public class InfinispanIndexOutput extends IndexOutput {
    private long filePosition = 0;
    private int currentChunkNumber = 0;
 
-   public InfinispanIndexOutput(final AdvancedCache<FileCacheKey, FileMetadata> metadataCache, final AdvancedCache<ChunkCacheKey, Object> chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
+   public InfinispanIndexOutput(final AdvancedCache<FileCacheKey, FileMetadata> metadataCache, final AdvancedCache<ChunkCacheKey, Object> chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList,final int affinitySegmentId) {
       super("InfinispanIndexOutput{metadataCache=" + metadataCache + ", chunksCache=" + chunksCache + ", fileKey=" + fileKey + ", bufferSize=" + bufferSize + '}');
       this.metadataCache = metadataCache;
       this.chunksCache = chunksCache;
+      this.affinitySegmentId = affinitySegmentId;
       this.chunksCacheForStorage = chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
@@ -70,7 +72,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       if (file.getNumberOfChunks() <= chunkNumber) {
          return new byte[bufferSize];
       }
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber, bufferSize);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber, bufferSize, affinitySegmentId);
       byte[] readBuffer = (byte[]) chunksCache.get(key);
       if (readBuffer==null) {
          return new byte[bufferSize];
@@ -162,7 +164,7 @@ public class InfinispanIndexOutput extends IndexOutput {
     * @param chunkNumber
     */
    private void storeBufferAsChunk(final byte[] bufferToFlush, final int chunkNumber) {
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber, bufferSize);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber, bufferSize, affinitySegmentId);
       if (trace) log.tracef("Storing segment chunk: %s", key);
       chunksCacheForStorage.put(key, bufferToFlush);
    }

@@ -43,8 +43,8 @@ public class LocalLockStressTest extends SingleCacheManagerTest {
 
       FileMetadata fileMetadata = new FileMetadata(10);
       fileMetadata.setSize(11); // Make it chunked otherwise no read lock will involved
-      metadata.put(new FileCacheKey("indexName", "fileName"), fileMetadata);
-      final LocalLockMergingSegmentReadLocker locker = new LocalLockMergingSegmentReadLocker(locks, chunks, metadata, "indexName");
+      metadata.put(new FileCacheKey("indexName", "fileName", -1), fileMetadata);
+      final LocalLockMergingSegmentReadLocker locker = new LocalLockMergingSegmentReadLocker(locks, chunks, metadata, "indexName", -1);
       final AtomicBoolean testFailed = new AtomicBoolean(false);
       final ExecutorService exec = Executors.newFixedThreadPool(NUM_THREADS);
 
@@ -64,7 +64,7 @@ public class LocalLockStressTest extends SingleCacheManagerTest {
                      System.out.print(".");
                      Thread.sleep(7);
                   }
-                  if (metadata.get(new FileCacheKey("indexName", "fileName")) == null) {
+                  if (metadata.get(new FileCacheKey("indexName", "fileName", -1)) == null) {
                      //Shouldn't have been deleted!
                      testFailed.set(true);
                      System.out.print("X");

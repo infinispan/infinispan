@@ -17,8 +17,8 @@ import java.util.concurrent.Executor;
 public class DirectoryBuilderImpl implements BuildContext {
 
    /**
-    * Used as default chunk size: each Lucene index segment is split into smaller parts having a default size in bytes as
-    * defined here
+    * Used as default chunk size: each Lucene index segment is split into smaller parts having a default size in bytes
+    * as defined here
     */
    public static final int DEFAULT_BUFFER_SIZE = 1024 * 1024;
 
@@ -42,12 +42,13 @@ public class DirectoryBuilderImpl implements BuildContext {
    private LockFactory lockFactory = null;
    private boolean writeFileListAsync = false;
    private Executor deleteExecutor = null;
+   private int affinitySegmentId = -1;
 
    public DirectoryBuilderImpl(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
       this.metadataCache = checkValidConfiguration(checkNotNull(metadataCache, "metadataCache"), indexName);
       this.chunksCache = checkValidConfiguration(checkNotNull(chunksCache, "chunksCache"), indexName);
       this.distLocksCache = checkValidConfiguration(checkNotNull(distLocksCache, "distLocksCache"), indexName);
-      this.indexName =  checkNotNull(indexName, "indexName");
+      this.indexName = checkNotNull(indexName, "indexName");
       validateMetadataCache(metadataCache, indexName);
    }
 
@@ -57,12 +58,12 @@ public class DirectoryBuilderImpl implements BuildContext {
          lockFactory = makeDefaultLockFactory();
       }
       if (srl == null) {
-         srl = makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName);
+         srl = makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName, affinitySegmentId);
       }
       if (deleteExecutor == null) {
          deleteExecutor = new WithinThreadExecutor();
       }
-      return new DirectoryLucene(metadataCache, chunksCache, distLocksCache, indexName, lockFactory, chunkSize, srl, writeFileListAsync, deleteExecutor);
+      return new DirectoryLucene(metadataCache, chunksCache, distLocksCache, indexName, lockFactory, chunkSize, srl, writeFileListAsync, deleteExecutor, affinitySegmentId);
    }
 
    @Override
@@ -77,6 +78,15 @@ public class DirectoryBuilderImpl implements BuildContext {
    public BuildContext overrideSegmentReadLocker(SegmentReadLocker srl) {
       checkNotNull(srl, "srl");
       this.srl = srl;
+      return this;
+   }
+
+   @Override
+   public BuildContext affinityLocationIntoSegment(int segmentId) {
+      if (segmentId < 0) {
+         throw log.affinityLocationIntoSegmentValueShallNotBeNegative(indexName, segmentId);
+      }
+      this.affinitySegmentId = segmentId;
       return this;
    }
 
@@ -100,10 +110,10 @@ public class DirectoryBuilderImpl implements BuildContext {
       return this;
    }
 
-   private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
+   private static SegmentReadLocker makeDefaultSegmentReadLocker(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, int affinitySegmentId) {
       checkNotNull(distLocksCache, "distLocksCache");
       checkNotNull(indexName, "indexName");
-      return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName);
+      return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName, affinitySegmentId);
    }
 
    private static <T> T checkNotNull(final T v,final String objectname) {

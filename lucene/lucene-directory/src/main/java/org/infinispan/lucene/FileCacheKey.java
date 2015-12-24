@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 
@@ -19,13 +20,15 @@ public final class FileCacheKey implements IndexScopedKey {
 
    private final String indexName;
    private final String fileName;
+   private final int affinitySegmentId;
    private final int hashCode;
 
-   public FileCacheKey(final String indexName, final String fileName) {
+   public FileCacheKey(final String indexName, final String fileName, final int affinitySegmentId) {
       if (fileName == null)
          throw new IllegalArgumentException("filename must not be null");
       this.indexName = indexName;
       this.fileName = fileName;
+      this.affinitySegmentId = affinitySegmentId;
       this.hashCode = generatedHashCode();
    }
 
@@ -36,6 +39,11 @@ public final class FileCacheKey implements IndexScopedKey {
     */
    public String getIndexName() {
       return indexName;
+   }
+
+   @Override
+   public int getAffinitySegmentId() {
+      return affinitySegmentId;
    }
 
    @Override
@@ -83,7 +91,7 @@ public final class FileCacheKey implements IndexScopedKey {
     */
    @Override
    public String toString() {
-      return fileName + "|M|"+ indexName;
+      return "M|" + fileName + "|"+ indexName + "|" + affinitySegmentId;
    }
 
    public static final class Externalizer extends AbstractExternalizer<FileCacheKey> {
@@ -92,13 +100,15 @@ public final class FileCacheKey implements IndexScopedKey {
       public void writeObject(final ObjectOutput output, final FileCacheKey key) throws IOException {
          output.writeUTF(key.indexName);
          output.writeUTF(key.fileName);
+         UnsignedNumeric.writeUnsignedInt(output, key.affinitySegmentId);
       }
 
       @Override
       public FileCacheKey readObject(final ObjectInput input) throws IOException {
          String indexName = input.readUTF();
          String fileName = input.readUTF();
-         return new FileCacheKey(indexName, fileName);
+         int affinitySegmentId = UnsignedNumeric.readUnsignedInt(input);
+         return new FileCacheKey(indexName, fileName, affinitySegmentId);
       }
 
       @Override

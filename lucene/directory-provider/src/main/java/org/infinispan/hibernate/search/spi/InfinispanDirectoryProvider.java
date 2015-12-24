@@ -48,6 +48,16 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
    private boolean writeFileListAsync;
 
    private LockFactory indexWriterLockFactory;
+   private int affinityId;
+
+
+   public InfinispanDirectoryProvider(int affinityId) {
+      this.affinityId = affinityId;
+   }
+
+   public InfinispanDirectoryProvider() {
+      this.affinityId = -1;
+   }
 
    @Override
    public void initialize(String directoryProviderName, Properties properties, BuildContext context) {
@@ -122,6 +132,10 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       }
       if (indexWriterLockFactory != null) {
          directoryBuildContext.overrideWriteLocker(indexWriterLockFactory);
+      }
+      if (affinityId >= 0) {
+         directoryBuildContext.affinityLocationIntoSegment(affinityId);
+
       }
       directory = directoryBuildContext.create();
       DirectoryHelper.initializeIndexIfNeeded(directory);

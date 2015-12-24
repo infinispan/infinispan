@@ -72,4 +72,17 @@ public interface BuildContext {
     */
    BuildContext deleteOperationsExecutor(Executor executor);
 
+   /**
+    * When set to a positive integer, this will force a specific data distribution:
+    * the hashing function will resolve all keys used to store the various entries
+    * for the resulting index to be owned by the specified segment id.
+    *
+    * Use with caution, as this will obviously lead into a severely unbalanced
+    * distribution.
+    *
+    * @param segmentId
+    * @return
+    */
+   BuildContext affinityLocationIntoSegment(int segmentId);
+
 }

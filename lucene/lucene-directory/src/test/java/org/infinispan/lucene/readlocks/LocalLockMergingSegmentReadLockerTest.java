@@ -67,14 +67,16 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
    Directory createDirectory(Cache cache) {
       return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
             .chunkSize(CHUNK_SIZE)
-            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME, true))
+            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, INDEX_NAME, -1))
+            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME, true, -1))
             .create();
    }
 
    Directory createAdditionalDirectory(Cache cache) {
       return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
             .chunkSize(CHUNK_SIZE)
-            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME, true))
+            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME, -1))
+            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME, true, 1))
             .create();
    }
 

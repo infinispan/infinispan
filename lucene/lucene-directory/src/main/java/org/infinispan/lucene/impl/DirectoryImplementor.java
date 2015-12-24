@@ -40,17 +40,19 @@ class DirectoryImplementor {
     protected final FileListOperations fileOps;
     private final SegmentReadLocker readLocks;
     private final FileCacheKey segmentsGenFileKey;
+    private final int affinitySegmentId;
 
-    public DirectoryImplementor(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync) {
-        if (chunkSize <= 0)
+    public DirectoryImplementor(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync, int affinitySegmentId) {
+       this.affinitySegmentId = affinitySegmentId;
+       if (chunkSize <= 0)
            throw new IllegalArgumentException("chunkSize must be a positive integer");
         this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
         this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
         this.distLocksCache = (AdvancedCache<Object, Integer>) distLocksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
         this.indexName = indexName;
         this.chunkSize = chunkSize;
-        this.fileOps = new FileListOperations(this.metadataCache, indexName, fileListUpdatedAsync);
-        this.segmentsGenFileKey = new FileCacheKey(indexName, IndexFileNames.SEGMENTS);
+        this.fileOps = new FileListOperations(this.metadataCache, indexName, fileListUpdatedAsync, this.affinitySegmentId);
+        this.segmentsGenFileKey = new FileCacheKey(indexName, IndexFileNames.SEGMENTS, this.affinitySegmentId);
         this.readLocks = readLocker;
      }
 
@@ -71,25 +73,25 @@ class DirectoryImplementor {
     }
 
     void renameFile(final String from, final String to) {
-       final FileCacheKey fromKey = new FileCacheKey(indexName, from);
+       final FileCacheKey fromKey = new FileCacheKey(indexName, from, affinitySegmentId);
        final FileMetadata metadata = metadataCache.get(fromKey);
        final int bufferSize = metadata.getBufferSize();
        // preparation: copy all chunks to new keys
        int i = -1;
        Object ob;
        do {
-          final ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i, bufferSize);
+          final ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i, bufferSize, affinitySegmentId);
           ob = chunksCache.get(fromChunkKey);
           if (ob == null) {
              break;
           }
-          final ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i, bufferSize);
+          final ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i, bufferSize, affinitySegmentId);
           chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES).put(toChunkKey, ob);
        } while (true);
 
        // rename metadata first
 
-       metadataCache.put(new FileCacheKey(indexName, to), metadata);
+       metadataCache.put(new FileCacheKey(indexName, to, affinitySegmentId), metadata);
        fileOps.removeAndAdd(from, to);
 
        // now trigger deletion of old file chunks:
@@ -111,18 +113,18 @@ class DirectoryImplementor {
 
     IndexOutput createOutput(final String name) {
        if (IndexFileNames.SEGMENTS.equals(name)) {
-          return new InfinispanIndexOutput(metadataCache, chunksCache, segmentsGenFileKey, chunkSize, fileOps);
+          return new InfinispanIndexOutput(metadataCache, chunksCache, segmentsGenFileKey, chunkSize, fileOps, affinitySegmentId);
        }
        else {
-          final FileCacheKey key = new FileCacheKey(indexName, name);
+          final FileCacheKey key = new FileCacheKey(indexName, name, affinitySegmentId);
           // creating new file, metadata is added on flush() or close() of
           // IndexOutPut
-          return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
+          return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps, affinitySegmentId);
        }
     }
 
     IndexInputContext openInput(final String name) throws IOException {
-       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
+       final FileCacheKey fileKey = new FileCacheKey(indexName, name, affinitySegmentId);
        FileMetadata fileMetadata;
        try {
           fileMetadata = metadataCache.get(fileKey);
@@ -137,7 +139,7 @@ class DirectoryImplementor {
        }
        else if (!fileMetadata.isMultiChunked()) {
           //files smaller than chunkSize don't need a readLock
-          return new IndexInputContext(chunksCache, fileKey, fileMetadata, null);
+          return new IndexInputContext(chunksCache, fileKey, fileMetadata, null, affinitySegmentId);
        }
        else {
           boolean locked = readLocks.acquireReadLock(name);
@@ -145,7 +147,7 @@ class DirectoryImplementor {
              // safest reaction is to tell this file doesn't exist anymore.
              throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
           }
-          return new IndexInputContext(chunksCache, fileKey, fileMetadata, readLocks);
+          return new IndexInputContext(chunksCache, fileKey, fileMetadata, readLocks, affinitySegmentId);
        }
     }
 

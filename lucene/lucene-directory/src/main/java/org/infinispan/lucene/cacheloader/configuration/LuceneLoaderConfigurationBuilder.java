@@ -2,6 +2,7 @@ package org.infinispan.lucene.cacheloader.configuration;
 
 import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.AUTO_CHUNK_SIZE;
 import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.LOCATION;
+import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.AFFINITY_SEGMENT_ID;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -19,6 +20,17 @@ public class LuceneLoaderConfigurationBuilder extends
       super(builder, LuceneLoaderConfiguration.attributeDefinitionSet());
    }
 
+   /**
+    * When the index is stored on a per-segment affinity base, set the affinity id for this index instance.
+    * Ignore this when not using the Index Affinity feature.
+    *
+    * @param affinitySegmentId
+    * @return this for method chaining
+    */
+   public LuceneLoaderConfigurationBuilder affinitySegmentId(int affinitySegmentId) {
+      attributes.attribute(AFFINITY_SEGMENT_ID).set(affinitySegmentId);
+      return this;
+   }
 
    /**
     * When segment files are larger than this amount of bytes, the segment will be split into multiple chunks
