@@ -62,7 +62,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private final Map<String, LocalCacheStatus> runningCaches =
          Collections.synchronizedMap(new HashMap<String, LocalCacheStatus>());
    private volatile boolean running;
-
+   private volatile int latestStatusResponseViewId;
 
    @Inject
    public void inject(Transport transport,
@@ -81,6 +81,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          log.tracef("Starting LocalTopologyManager on %s", transport.getAddress());
       }
       running = true;
+      latestStatusResponseViewId = transport.getViewId();
    }
 
    // Need to stop before the JGroupsTransport
@@ -120,7 +121,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                if (initialStatus != null) {
                   doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(), initialStatus.getAvailabilityMode(),
                         viewId, transport.getCoordinator(), cacheStatus);
-                  doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId, cacheStatus);
+                  doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
+                        transport.getCoordinator(), cacheStatus);
                   return initialStatus.getCacheTopology();
                }
             } catch (Exception e) {
@@ -178,6 +180,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          return new ManagerStatusResponse(Collections.<String, CacheStatusResponse>emptyMap(), true);
       }
 
+      latestStatusResponseViewId = viewId;
       Map<String, CacheStatusResponse> caches = new HashMap<String, CacheStatusResponse>();
       synchronized (runningCaches) {
          for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
@@ -265,7 +268,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          CacheTopologyHandler handler = cacheStatus.getHandler();
          resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
 
-         if (!updateCacheTopology(cacheName, cacheTopology, sender, cacheStatus))
+         if (!updateCacheTopology(cacheName, cacheTopology, viewId, sender, cacheStatus))
             return;
 
          ConsistentHash unionCH = null;
@@ -297,8 +300,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
-   private boolean updateCacheTopology(String cacheName, CacheTopology cacheTopology, Address sender,
-         LocalCacheStatus cacheStatus) {
+   private boolean updateCacheTopology(String cacheName, CacheTopology cacheTopology, int viewId,
+         Address sender, LocalCacheStatus cacheStatus) {
+      if (!validateCommandViewId(cacheTopology, viewId, sender))
+         return false;
+
+      log.debugf("Updating local topology for cache %s: %s", cacheName, cacheTopology);
+      cacheStatus.setCurrentTopology(cacheTopology);
+      return true;
+   }
+
+   private boolean validateCommandViewId(CacheTopology cacheTopology, int viewId, Address sender) {
       // Block if there is a status request in progress
       // The caller should have already acquired the cacheStatus monitor
       synchronized (runningCaches) {
@@ -306,10 +318,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
             log.debugf("Ignoring topology %d from old coordinator %s", cacheTopology.getTopologyId(), sender);
             return false;
          }
+         if (viewId < latestStatusResponseViewId) {
+            log.debugf("Ignoring topology update from view %d received after status request from view %d",
+                  viewId, latestStatusResponseViewId);
+            return false;
+         }
       }
-
-      log.debugf("Updating local topology for cache %s: %s", cacheName, cacheTopology);
-      cacheStatus.setCurrentTopology(cacheTopology);
       return true;
    }
 
@@ -341,20 +355,23 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    @Override
    public void handleStableTopologyUpdate(final String cacheName, final CacheTopology newStableTopology,
-         final int viewId) {
+         final Address sender, final int viewId) {
       final LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus != null) {
          cacheStatus.getTopologyUpdatesCompletionService().submit(new Runnable() {
             @Override
             public void run() {
-               doHandleStableTopologyUpdate(cacheName, newStableTopology, viewId, cacheStatus);
+               doHandleStableTopologyUpdate(cacheName, newStableTopology, viewId, sender, cacheStatus);
             }
          }, null);
       }
    }
 
    protected void doHandleStableTopologyUpdate(String cacheName, CacheTopology newStableTopology, int viewId,
-         LocalCacheStatus cacheStatus) {
+         Address sender, LocalCacheStatus cacheStatus) {
+      if (!validateCommandViewId(newStableTopology, viewId, sender))
+         return;
+
       synchronized (cacheStatus) {
          CacheTopology stableTopology = cacheStatus.getStableTopology();
          if (stableTopology == null || stableTopology.getTopologyId() < newStableTopology.getTopologyId()) {
@@ -406,7 +423,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
             return;
          }
 
-         if (!updateCacheTopology(cacheName, cacheTopology, sender, cacheStatus))
+         if (!updateCacheTopology(cacheName, cacheTopology, viewId, sender, cacheStatus))
             return;
 
          log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
@@ -464,7 +481,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), transport.getViewId());
       while (true) {
-         Address coordinator = transport.getCoordinator();
          int nextViewId = transport.getViewId() + 1;
          try {
             return (Boolean) executeOnCoordinator(command, getGlobalTimeout());
