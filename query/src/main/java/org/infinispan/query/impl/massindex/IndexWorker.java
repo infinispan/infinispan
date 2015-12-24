@@ -33,13 +33,17 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    protected Cache<Object, Object> cache;
    protected final Class<?> entity;
    private final boolean flush;
+   private final boolean clean;
+   private final boolean primaryOwner;
    protected IndexUpdater indexUpdater;
 
    private ClusteringDependentLogic clusteringDependentLogic;
 
-   public IndexWorker(Class<?> entity, boolean flush) {
+   public IndexWorker(Class<?> entity, boolean flush, boolean clean, boolean primaryOwner) {
       this.entity = entity;
       this.flush = flush;
+      this.clean = clean;
+      this.primaryOwner = primaryOwner;
    }
 
    @Override
@@ -51,7 +55,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    protected void preIndex() {
-      if (flush) indexUpdater.purge(entity);
+      if (clean) indexUpdater.purge(entity);
    }
 
    protected void postIndex() {
@@ -59,8 +63,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    private KeyValueFilter getFilter() {
-      boolean replicated = cache.getCacheConfiguration().clustering().cacheMode().isReplicated();
-      return replicated ? AcceptAllKeyValueFilter.getInstance() : new PrimaryOwnersKeyValueFilter();
+      return primaryOwner ? new PrimaryOwnersKeyValueFilter() : AcceptAllKeyValueFilter.getInstance();
    }
 
    private Object extractValue(Object wrappedValue) {
@@ -109,11 +112,13 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       public void writeObject(ObjectOutput output, IndexWorker worker) throws IOException {
          output.writeObject(worker.entity);
          output.writeBoolean(worker.flush);
+         output.writeBoolean(worker.clean);
+         output.writeBoolean(worker.primaryOwner);
       }
 
       @Override
       public IndexWorker readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new IndexWorker((Class<?>) input.readObject(), input.readBoolean());
+         return new IndexWorker((Class<?>) input.readObject(), input.readBoolean(), input.readBoolean(), input.readBoolean());
       }
 
       @Override

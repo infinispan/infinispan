@@ -22,7 +22,7 @@ public final class SingleChunkIndexInput extends IndexInput {
 
    public SingleChunkIndexInput(final IndexInputContext iic) {
       super(iic.fileKey.getFileName());
-      ChunkCacheKey key = new ChunkCacheKey(iic.fileKey.getIndexName(), iic.fileKey.getFileName(), 0, iic.fileMetadata.getBufferSize());
+      ChunkCacheKey key = new ChunkCacheKey(iic.fileKey.getIndexName(), iic.fileKey.getFileName(), 0, iic.fileMetadata.getBufferSize(), iic.affinitySegmentId);
       byte[] b = (byte[]) iic.chunksCache.get(key);
       if (b == null) {
          buffer = new byte[0];

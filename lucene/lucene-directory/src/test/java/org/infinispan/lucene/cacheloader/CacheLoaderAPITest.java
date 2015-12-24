@@ -37,6 +37,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
    private static final String rootDirectoryName = "CacheLoaderAPITest.indexesRootDirTmp";
    private static final String indexName = "index-A";
+   private static final int segmentId = 7;
    private static final int elementCount = 10;
    protected final String parentDir = TestingUtil.tmpDirectory(this.getClass());
    private File rootDir;
@@ -89,7 +90,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
       HashSet exclusionSet = new HashSet();
       for(String fileName : fileNamesFromIndexDir) {
-         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
          AssertJUnit.assertNotNull(cacheLoader.load(key));
 
          exclusionSet.add(key);
@@ -115,7 +116,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
       for(String fileName : fileNamesFromIndexDir) {
-         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
          assert cacheLoader.contains(key);
 
          //Testing non-existent keys with non-acceptable type
@@ -129,15 +130,15 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
 
-      assert cacheLoader.contains(new FileListCacheKey(indexName));
+      assert cacheLoader.contains(new FileListCacheKey(indexName, segmentId));
 
       String[] fileNamesFromIndexDir = TestHelper.getFileNamesFromDir(rootDir, indexName);
       for(String fileName : fileNamesFromIndexDir) {
-         assert !cacheLoader.contains(new FileReadLockKey(indexName, fileName)) : "Failed for " + fileName;
-         assert cacheLoader.contains(new ChunkCacheKey(indexName, fileName, 0, 1024)) : "Failed for " + fileName;
+         assert !cacheLoader.contains(new FileReadLockKey(indexName, fileName, segmentId)) : "Failed for " + fileName;
+         assert cacheLoader.contains(new ChunkCacheKey(indexName, fileName, 0, 1024, segmentId)) : "Failed for " + fileName;
       }
 
-      assert !cacheLoader.contains(new ChunkCacheKey(indexName, "testFile.txt", 0, 1024));
+      assert !cacheLoader.contains(new ChunkCacheKey(indexName, "testFile.txt", 0, 1024, segmentId));
    }
 
    public void testLoadKey() throws Exception {
@@ -147,7 +148,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
       for(String fileName : fileNamesFromIndexDir) {
-         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
          AssertJUnit.assertNotNull(cacheLoader.load(key));
 
          //Testing non-existent keys with non-acceptable type
@@ -158,7 +159,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
    @Test(expectedExceptions = PersistenceException.class)
    public void testLoadKeyWithNonExistentFile() throws Exception {
       LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
-      FileCacheKey key = new FileCacheKey(indexName, "testKey");
+      FileCacheKey key = new FileCacheKey(indexName, "testKey", segmentId);
       AssertJUnit.assertNull(cacheLoader.load(key));
    }
 
@@ -196,7 +197,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
             PersistenceUtil.toEntrySet(cacheLoader, null, cache.getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class));
 
       for (String fileName : fileNamesFromIndexDir) {
-         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
          AssertJUnit.assertNotNull(cacheLoader.load(key));
 
          boolean found = false;
@@ -225,7 +226,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
       Set keyList = PersistenceUtil.toKeySet(cacheLoader, null);
       for(String fileName : fileNamesFromIndexDir) {
-         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
          AssertJUnit.assertNotNull(cacheLoader.load(key));
 
          boolean found = false;
@@ -248,7 +249,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       int initialCount = keySet.size();
 
       HashSet exclusionSet = new HashSet();
-      exclusionSet.add(new FileListCacheKey(indexName));
+      exclusionSet.add(new FileListCacheKey(indexName, segmentId));
 
       keySet = PersistenceUtil.toKeySet(cacheLoader, new CollectionKeyFilter(exclusionSet));
       String[] fileNamesArr = TestHelper.getFileNamesFromDir(rootDir, indexName);
@@ -267,7 +268,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       HashSet exclusionSet = new HashSet();
       String[] fileNames = TestHelper.getFileNamesFromDir(rootDir, indexName);
       for(String fileName : fileNames) {
-         exclusionSet.add(new ChunkCacheKey(indexName, fileName, 0, 110));
+         exclusionSet.add(new ChunkCacheKey(indexName, fileName, 0, 110, segmentId));
       }
 
       Set keyList = PersistenceUtil.toKeySet(cacheLoader, null);
@@ -288,7 +289,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       Set keyList = PersistenceUtil.toKeySet(cacheLoader, null);
 
       for(String fileName : fileNamesFromIndexDir) {
-         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         FileCacheKey key = new FileCacheKey(indexName, fileName, segmentId);
          AssertJUnit.assertNotNull(cacheLoader.load(key));
 
          boolean found = false;

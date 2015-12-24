@@ -84,4 +84,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Lucene Directory for index '%s' can not use Cache '%s': fetch in state is not enabled in Cache configuration!", id = 15020)
    IllegalArgumentException luceneStorageNoStateTransferEnabled(String indexName, String cacheName);
+
+   @Message(value = "Lucene Directory for index '%s' can not set affinity location to segment id '%d': must be a positive integer!", id = 15021)
+   IllegalArgumentException affinityLocationIntoSegmentValueShallNotBeNegative(String indexName, int segmentId);
 }

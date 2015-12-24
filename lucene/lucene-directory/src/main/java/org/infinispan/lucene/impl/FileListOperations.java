@@ -31,14 +31,16 @@ public final class FileListOperations {
    private final Lock readLock;
    private final Lock writeLock;
    private final boolean writeAsync;
+   private final int affinitySegmentId;
 
    @SuppressWarnings("unchecked")
-   public FileListOperations(AdvancedCache<?, ?> cache, String indexName, boolean writeAsync) {
+   public FileListOperations(AdvancedCache<?, ?> cache, String indexName, boolean writeAsync, int affinitySegmentId) {
       this.writeAsync = writeAsync;
+      this.affinitySegmentId = affinitySegmentId;
       this.cache = (AdvancedCache<FileListCacheKey, Object>) cache;
       this.cacheNoRetrieve = (AdvancedCache<FileListCacheKey, FileListCacheValue>) cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.indexName = indexName;
-      this.fileListCacheKey = new FileListCacheKey(indexName);
+      this.fileListCacheKey = new FileListCacheKey(indexName, affinitySegmentId);
       ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
       readLock = lock.readLock();
       writeLock = lock.writeLock();
@@ -68,7 +70,7 @@ public final class FileListOperations {
     * @return the FileMetadata associated with the fileName, or null if the file wasn't found.
     */
    public FileMetadata getFileMetadata(final String fileName) {
-      FileCacheKey key = new FileCacheKey(indexName, fileName);
+      FileCacheKey key = new FileCacheKey(indexName, fileName, affinitySegmentId);
       FileMetadata metadata = (FileMetadata) cache.get(key);
       return metadata;
    }

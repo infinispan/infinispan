@@ -32,12 +32,14 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    private final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
    private final String indexName;
    private final boolean forceSynchronousDeletes;
+   private final int affinitySegmentId;
 
-   public DistributedSegmentReadLocker(Cache<Object, Integer> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName) {
-      this(locksCache, chunksCache, metadataCache, indexName, false);
+   public DistributedSegmentReadLocker(Cache<Object, Integer> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName, int affinitySegmentId) {
+      this(locksCache, chunksCache, metadataCache, indexName, affinitySegmentId, false);
    }
 
-   public DistributedSegmentReadLocker(Cache<Object, Integer> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName, boolean forceSynchronousDeletes) {
+   public DistributedSegmentReadLocker(Cache<Object, Integer> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName, int affinitySegmentId, boolean forceSynchronousDeletes) {
+      this.affinitySegmentId = affinitySegmentId;
       this.forceSynchronousDeletes = forceSynchronousDeletes;
       if (locksCache == null)
          throw new IllegalArgumentException("locksCache must not be null");
@@ -54,8 +56,8 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       verifyCacheHasNoEviction(this.locksCache);
    }
 
-   public DistributedSegmentReadLocker(Cache<?, ?> cache, String indexName) {
-      this((Cache<Object, Integer>) cache, cache, cache, indexName);
+   public DistributedSegmentReadLocker(Cache<?, ?> cache, String indexName, int affinitySegmentId) {
+      this((Cache<Object, Integer>) cache, cache, cache, indexName, affinitySegmentId);
    }
 
    /**
@@ -70,7 +72,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    public void deleteOrReleaseReadLock(final String filename) {
       if (isMultiChunked(filename)) {
          int newValue = 0;
-         FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
+         FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename, affinitySegmentId);
          boolean done = false;
          Object lockValue = locksCache.get(readLockKey);
          while (!done) {
@@ -89,11 +91,11 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
             }
          }
          if (newValue == 0) {
-            realFileDelete(indexName, filename, locksCache, chunksCache, metadataCache, forceSynchronousDeletes);
+            realFileDelete(indexName, filename, locksCache, chunksCache, metadataCache, forceSynchronousDeletes, affinitySegmentId);
          }
       }
       else {
-         realFileDelete(indexName, filename, locksCache, chunksCache, metadataCache, forceSynchronousDeletes);
+         realFileDelete(indexName, filename, locksCache, chunksCache, metadataCache, forceSynchronousDeletes, affinitySegmentId);
       }
    }
 
@@ -104,7 +106,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * @return true if it is definitely fragmented, or if it's possibly fragmented.
     */
    private boolean isMultiChunked(final String filename) {
-      final FileCacheKey fileCacheKey = new FileCacheKey(indexName, filename);
+      final FileCacheKey fileCacheKey = new FileCacheKey(indexName, filename, affinitySegmentId);
       final FileMetadata fileMetadata = metadataCache.get(fileCacheKey);
       if (fileMetadata==null) {
          //This might happen under high load when the metadata is being written
@@ -135,7 +137,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     */
    @Override
    public boolean acquireReadLock(String filename) {
-      FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
+      FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename, affinitySegmentId);
       Integer lockValue = locksCache.get(readLockKey);
       boolean done = false;
       while (done == false) {
@@ -158,7 +160,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
             if (done) {
                // have to check now that the fileKey still exists to prevent the race condition of
                // T1 fileKey exists - T2 delete file and remove readlock - T1 putIfAbsent(readlock, 2)
-               final FileCacheKey fileKey = new FileCacheKey(indexName, filename);
+               final FileCacheKey fileKey = new FileCacheKey(indexName, filename, affinitySegmentId);
                if (metadataCache.get(fileKey) == null) {
                   locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).removeAsync(readLockKey);
                   return false;
@@ -184,16 +186,16 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * @param forceSynchronousDeletes when false deletion of chunk data is performed asynchronously
     */
    static void realFileDelete(String indexName, String fileName, AdvancedCache<Object, Integer> locksCache,
-                              AdvancedCache<?, ?> chunksCache, AdvancedCache<?, ?> metadataCache, boolean forceSynchronousDeletes) {
+                              AdvancedCache<?, ?> chunksCache, AdvancedCache<?, ?> metadataCache, boolean forceSynchronousDeletes, int affinitySegmentId) {
       final boolean trace = log.isTraceEnabled();
-      final FileCacheKey key = new FileCacheKey(indexName, fileName);
+      final FileCacheKey key = new FileCacheKey(indexName, fileName, affinitySegmentId);
       if (trace) log.tracef("deleting metadata: %s", key);
       final FileMetadata file = (FileMetadata) metadataCache.remove(key);
       if (file != null) { //during optimization of index a same file could be deleted twice, so you could see a null here
          final int bufferSize = file.getBufferSize();
          AdvancedCache<?, ?> chunksCacheNoReturn = chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES);
          for (int i = 0; i < file.getNumberOfChunks(); i++) {
-            ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, fileName, i, bufferSize);
+            ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, fileName, i, bufferSize, affinitySegmentId);
             if (trace) log.tracef("deleting chunk: %s", chunkKey);
             if (forceSynchronousDeletes) {
                chunksCacheNoReturn.remove(chunkKey);
@@ -206,7 +208,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       // last operation, as being set as value==0 it prevents others from using it during the
       // deletion process:
       if (file != null && file.isMultiChunked()) {
-         FileReadLockKey readLockKey = new FileReadLockKey(indexName, fileName);
+         FileReadLockKey readLockKey = new FileReadLockKey(indexName, fileName, affinitySegmentId);
          if (trace) log.tracef("deleting readlock: %s", readLockKey);
          if (forceSynchronousDeletes) {
             locksCache.withFlags(Flag.IGNORE_RETURN_VALUES).remove(readLockKey);

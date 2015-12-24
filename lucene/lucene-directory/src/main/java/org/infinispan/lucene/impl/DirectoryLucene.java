@@ -36,6 +36,7 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
    // indexName is used to be able to store multiple named indexes in the same caches
    private final String indexName;
    private final Executor deleteExecutor;
+   private final int affinitySegmentId;
 
    private volatile LockFactory lockFactory;
 
@@ -49,10 +50,12 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
     * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
     * @param fileListUpdatedAsync When true, the writes to the list of currently existing files in the Directory will use the putAsync method rather than put.
     * @param deleteExecutor The Executor to run file deletes in the background
+    * @param affinitySegmentId A hint interpreted by the consistent hashing function to force locality with a specific segment identifier
     */
-   public DirectoryLucene(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync, Executor deleteExecutor) {
+   public DirectoryLucene(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync, Executor deleteExecutor, int affinitySegmentId) {
       this.deleteExecutor = deleteExecutor;
-      this.impl = new DirectoryImplementor(metadataCache, chunksCache, distLocksCache, indexName, chunkSize, readLocker, fileListUpdatedAsync);
+      this.affinitySegmentId = affinitySegmentId;
+      this.impl = new DirectoryImplementor(metadataCache, chunksCache, distLocksCache, indexName, chunkSize, readLocker, fileListUpdatedAsync, affinitySegmentId);
       this.indexName = indexName;
       this.lockFactory = lf;
    }
@@ -133,6 +136,9 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
       return indexName;
    }
 
+   public int getAffinitySegmentId() {
+      return affinitySegmentId;
+   }
    /**
     * {@inheritDoc}
     */
@@ -168,7 +174,7 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
    @Override
    public void forceUnlock(String lockName) {
       Cache<Object, Integer> lockCache = getDistLockCache().getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
-      FileCacheKey fileCacheKey = new FileCacheKey(indexName, lockName);
+      FileCacheKey fileCacheKey = new FileCacheKey(indexName, lockName, affinitySegmentId);
       Object previousValue = lockCache.remove(fileCacheKey);
       if (previousValue!=null && trace) {
          log.tracef("Lock forcibly removed for index: %s", indexName);

@@ -16,6 +16,7 @@ import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.store.ShardIdentifierProvider;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
@@ -31,6 +32,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -40,9 +42,11 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.query.Transformer;
+import org.infinispan.query.affinity.AffinityShardIdentifierProvider;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -74,6 +78,8 @@ public final class QueryInterceptor extends CommandInterceptor {
    private DataContainer dataContainer;
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+   private DistributionManager distributionManager;
+   private RpcManager rpcManager;
    protected ExecutorService asyncExecutor;
 
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
@@ -95,10 +101,14 @@ public final class QueryInterceptor extends CommandInterceptor {
                                      Cache cache,
                                      EmbeddedCacheManager cacheManager,
                                      InternalCacheRegistry internalCacheRegistry,
+                                     DistributionManager distributionManager,
+                                     RpcManager rpcManager,
                                      DataContainer dataContainer,
                                      @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
       this.transactionManager = transactionManager;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
+      this.distributionManager = distributionManager;
+      this.rpcManager = rpcManager;
       this.asyncExecutor = e;
       this.dataContainer = dataContainer;
       this.queryKnownClasses = new QueryKnownClasses(cache.getName(), cacheManager, internalCacheRegistry);
@@ -209,10 +219,17 @@ public final class QueryInterceptor extends CommandInterceptor {
       performSearchWork(value, keyToString(key), WorkType.DELETE, transactionContext);
    }
 
+   private boolean isPrimaryOwner(Object key) {
+      return distributionManager == null || distributionManager.getPrimaryLocation(key).equals(rpcManager.getAddress());
+   }
+
    protected void updateIndexes(final boolean usingSkipIndexCleanupFlag, final Object value, final Object key, final TransactionContext transactionContext) {
       // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
       // unless the specific flag is allowing this.
-      performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
+      ShardIdentifierProvider shardIdentifierProvider = searchFactory.getIndexBinding(value.getClass()).getShardIdentifierProvider();
+      if (shardIdentifierProvider == null || !(shardIdentifierProvider instanceof AffinityShardIdentifierProvider) || isPrimaryOwner(key)) {
+         performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
+      }
    }
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {
@@ -265,7 +282,7 @@ public final class QueryInterceptor extends CommandInterceptor {
 
    /**
     * Customize work creation during indexing
-    * @param searchWorkCreator custom {@link org.infinispan.query.backend.SearchWorkCreator} 
+    * @param searchWorkCreator custom {@link org.infinispan.query.backend.SearchWorkCreator}
     */
    public void setSearchWorkCreator(SearchWorkCreator<Object> searchWorkCreator) {
       this.searchWorkCreator = searchWorkCreator;

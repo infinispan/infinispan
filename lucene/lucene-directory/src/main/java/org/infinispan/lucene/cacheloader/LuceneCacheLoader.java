@@ -44,6 +44,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
    private String fileRoot;
    private File rootDirectory;
    private int autoChunkSize;
+   private int affinitySegmentId;
 
    private InitializationContext ctx;
 
@@ -54,6 +55,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
       LuceneLoaderConfiguration configuration = ctx.getConfiguration();
       this.fileRoot = configuration.location();
       this.autoChunkSize = configuration.autoChunkSize();
+      this.affinitySegmentId = configuration.affinitySegmentId();
    }
 
    @Override
@@ -190,7 +192,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
             if (adapter == null) {
                final File path = new File(this.rootDirectory, indexName);
                final FSDirectory directory = openLuceneDirectory(path);
-               adapter = new DirectoryLoaderAdaptor(directory, indexName, autoChunkSize);
+               adapter = new DirectoryLoaderAdaptor(directory, indexName, autoChunkSize, affinitySegmentId);
                openDirectories.put(indexName, adapter);
             }
          }

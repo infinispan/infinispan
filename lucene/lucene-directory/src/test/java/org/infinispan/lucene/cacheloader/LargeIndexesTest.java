@@ -31,6 +31,7 @@ public class LargeIndexesTest {
    private static final String INDEX_NAME = "myIndex";
    private static final String FILE_NAME = "largeFile";
    private static final long TEST_SIZE = ((long)Integer.MAX_VALUE) + 10;//something not fitting in int
+   private static final int segmentId = 279;//anything, as long as it's a constant
    private static final int AUTO_BUFFER = 16;//ridiculously low
 
    private Directory createMockDirectory() throws IOException {
@@ -49,8 +50,8 @@ public class LargeIndexesTest {
    public void testAutoChunkingOnLargeFiles() throws IOException {
       Directory mockDirectory = createMockDirectory();
 
-      FileCacheKey k = new FileCacheKey(INDEX_NAME, FILE_NAME);
-      DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(mockDirectory, INDEX_NAME, AUTO_BUFFER);
+      FileCacheKey k = new FileCacheKey(INDEX_NAME, FILE_NAME, segmentId);
+      DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(mockDirectory, INDEX_NAME, AUTO_BUFFER, -1);
       Object loaded = adaptor.load(k);
       AssertJUnit.assertTrue(loaded instanceof FileMetadata);
       FileMetadata metadata = (FileMetadata)loaded;
@@ -61,17 +62,17 @@ public class LargeIndexesTest {
    public void testSmallChunkLoading() throws IOException {
       Directory mockDirectory = createMockDirectory();
 
-      DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(mockDirectory, INDEX_NAME, AUTO_BUFFER);
-      Object loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 0, AUTO_BUFFER));
+      DirectoryLoaderAdaptor adaptor = new DirectoryLoaderAdaptor(mockDirectory, INDEX_NAME, AUTO_BUFFER, -1);
+      Object loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 0, AUTO_BUFFER, segmentId));
       AssertJUnit.assertTrue(loaded instanceof byte[]);
       AssertJUnit.assertEquals(AUTO_BUFFER, ((byte[])loaded).length);
-      loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 5, AUTO_BUFFER));
+      loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, 5, AUTO_BUFFER, segmentId));
       AssertJUnit.assertTrue(loaded instanceof byte[]);
       AssertJUnit.assertEquals(AUTO_BUFFER, ((byte[])loaded).length);
       final int lastChunk = (int)(TEST_SIZE / AUTO_BUFFER);
       final long lastChunkSize = TEST_SIZE % AUTO_BUFFER;
       AssertJUnit.assertEquals(9, lastChunkSize);
-      loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, lastChunk, AUTO_BUFFER));
+      loaded = adaptor.load(new ChunkCacheKey(INDEX_NAME, FILE_NAME, lastChunk, AUTO_BUFFER, segmentId));
       AssertJUnit.assertTrue(loaded instanceof byte[]);
       AssertJUnit.assertEquals(lastChunkSize, ((byte[])loaded).length);
    }
