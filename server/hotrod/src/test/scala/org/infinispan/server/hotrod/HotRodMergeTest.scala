@@ -15,10 +15,8 @@ import org.infinispan.test.AbstractCacheTest.CleanupPhase
 import org.infinispan.test.AbstractInfinispanTest.Condition
 import org.infinispan.test.TestingUtil
 import org.infinispan.test.fwk.TransportFlags
-import org.testng.Assert._
 import org.testng.annotations.{AfterClass, BeforeClass, Test}
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodViewMergeTest")
