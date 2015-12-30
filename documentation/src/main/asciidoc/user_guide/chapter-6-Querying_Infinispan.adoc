@@ -414,6 +414,7 @@ qb.having("title").eq("Infinispan Data Grid Platform");
 | isNull | | Checks that the left argument is null.
 | like | String pattern | Checks that the left argument (which is expected to be a String) matches a wildcard pattern that follows the JPA rules.
 | eq | Object value | Checks that the left argument is equal to the given value.
+| equal | Object value | Alias for eq.
 | gt | Object value | Checks that the left argument is greater than the given value.
 | gte | Object value | Checks that the left argument is greater than or equal to the given value.
 | lt | Object value | Checks that the left argument is less than the given value.
