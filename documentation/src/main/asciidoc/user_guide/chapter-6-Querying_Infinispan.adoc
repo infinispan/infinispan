@@ -344,11 +344,8 @@ from link:$$#_simple_example$$[previous example].
 ----
 import org.infinispan.query.dsl.*;
 
-// get the search manager from the cache, as in previous examples:
-SearchManager searchManager = org.infinispan.query.Search.getSearchManager(cache);
-
-// get the DSL query factory, to be used for constructing the Query object:
-QueryFactory qf = searchManager.getQueryFactory();
+// get the DSL query factory from the cache, to be used for constructing the Query object:
+QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
 
 // create a query for all the books that have a title which contains the word "engine":
 org.infinispan.query.dsl.Query query = qf.from(Book.class)
