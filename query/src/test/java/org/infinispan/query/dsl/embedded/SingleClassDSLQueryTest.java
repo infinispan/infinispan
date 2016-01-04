@@ -7,12 +7,12 @@ import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
       builder.indexing().index(Index.ALL)
               .addProperty("default.directory_provider", "ram")
               .addProperty("lucene_version", "LUCENE_CURRENT");
-      return new DefaultCacheManager(builder.build());
+      return TestCacheManagerFactory.createCacheManager(builder);
    }
 
    /**
