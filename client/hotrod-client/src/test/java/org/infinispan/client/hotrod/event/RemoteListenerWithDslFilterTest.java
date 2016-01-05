@@ -166,8 +166,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    /**
     * Using grouping and aggregation with event filters is not allowed.
     */
-   // Regular expression adjusted to support multi-line messages
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "(?s).*ISPN000411:(?s).*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .having("age").gte(20)

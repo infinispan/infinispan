@@ -4,7 +4,6 @@ import java.io.{ObjectInput, ObjectOutput}
 import java.lang.reflect.Constructor
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicLong
-import java.util.function.{BiConsumer, Consumer, Function}
 
 import io.netty.channel.Channel
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
@@ -112,8 +111,11 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
             cache.addListener(clientEventSender, filter.orNull, converter.orNull), addListenerExecutor)
 
          cf.whenComplete((t: Void, cause: Throwable) => {
-            val resp = if (cause == null) decoder.createSuccessResponse(h, null)
-            else decoder.createErrorResponse(h, cause)
+            val resp = cause match {
+               case c: CompletionException => decoder.createErrorResponse(h, c.getCause)
+               case t: Throwable => decoder.createErrorResponse(h, t)
+               case _ => decoder.createSuccessResponse(h, null)
+            }
             ch.writeAndFlush(resp)
             ()
          })
