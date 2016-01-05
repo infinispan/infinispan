@@ -2,8 +2,9 @@ package org.infinispan.server.hotrod
 
 import java.io.{ObjectInput, ObjectOutput}
 import java.lang.reflect.Constructor
-import java.util.concurrent.ConcurrentMap
+import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicLong
+import java.util.function.{BiConsumer, Consumer, Function}
 
 import io.netty.channel.Channel
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
@@ -12,6 +13,7 @@ import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
 import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
 import org.infinispan.container.versioning.NumericVersion
+import org.infinispan.factories.threads.DefaultThreadFactory
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications._
 import org.infinispan.notifications.cachelistener.annotation.{CacheEntryExpired, CacheEntryCreated, CacheEntryModified, CacheEntryRemoved}
@@ -41,6 +43,10 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    private val cacheEventFilterFactories = CollectionFactory.makeConcurrentMap[String, CacheEventFilterFactory](4, 0.9f, 16)
    private val cacheEventConverterFactories = CollectionFactory.makeConcurrentMap[String, CacheEventConverterFactory](4, 0.9f, 16)
    private val cacheEventFilterConverterFactories = CollectionFactory.makeConcurrentMap[String, CacheEventFilterConverterFactory](4, 0.9f, 16)
+
+   private val addListenerExecutor = new ThreadPoolExecutor(
+      0, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable],
+      new DefaultThreadFactory(null, 1, "add-listener-thread", null, null))
 
    def setEventMarshaller(eventMarshaller: Option[Marshaller]): Unit = {
       // Set a custom marshaller or reset to default if none
@@ -77,7 +83,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       cacheEventFilterConverterFactories.remove(name)
    }
 
-   def addClientListener(ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
+   def addClientListener(decoder: AbstractVersionedDecoder, ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
            includeState: Boolean, namedFactories: NamedFactories, useRawData: Boolean): Unit = {
       val eventType = ClientEventType.apply(namedFactories._2.isDefined, useRawData, h.version)
       val clientEventSender = ClientEventSender(includeState, ch, h.version, cache, listenerId, eventType)
@@ -99,7 +105,25 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       }
 
       eventSenders.put(listenerId, clientEventSender)
-      cache.addListener(clientEventSender, filter.orNull, converter.orNull)
+
+      if (includeState) {
+         // If state included, do it async
+         val cf = CompletableFuture.runAsync(() =>
+            cache.addListener(clientEventSender, filter.orNull, converter.orNull), addListenerExecutor)
+
+         cf.whenComplete((t: Void, cause: Throwable) => {
+            val resp = cause match {
+               case c: CompletionException => decoder.createErrorResponse(h, c.getCause)
+               case t: Throwable => decoder.createErrorResponse(h, t)
+               case _ => decoder.createSuccessResponse(h, null)
+            }
+            ch.writeAndFlush(resp)
+            ()
+         })
+      } else {
+         cache.addListener(clientEventSender, filter.orNull, converter.orNull)
+         ch.writeAndFlush(decoder.createSuccessResponse(h, null))
+      }
    }
 
    def getFilter(name: String, compatEnabled: Boolean, useRawData: Boolean, binaryParams: List[Bytes]): CacheEventFilter[Bytes, Bytes] = {
@@ -168,8 +192,17 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       eventSenders.clear()
       cacheEventFilterFactories.clear()
       cacheEventConverterFactories.clear()
+      addListenerExecutor.shutdown()
    }
 
+   def findAndWriteEvents(channel: Channel): Unit = {
+      eventSenders.values().collectFirst { case s: BaseClientEventSender =>
+         if(s.hasChannel(channel)) s.writeEventsIfPossible()
+      }
+   }
+
+   // Do not make sync=false, instead move cache operation causing
+   // listener calls out of the Netty event loop thread
    @Listener(clustered = true, includeCurrentState = true)
    private class StatefulClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType)
            extends BaseClientEventSender(ch, listenerId, version, targetEventType)
@@ -179,6 +212,23 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
            extends BaseClientEventSender(ch, listenerId, version, targetEventType)
 
    private abstract class BaseClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType) {
+      val eventQueue = new LinkedBlockingQueue[AnyRef](100)
+
+      def hasChannel(channel: Channel): Boolean = ch == channel
+
+      def writeEventsIfPossible(): Unit = {
+         var written = false
+         while(eventQueue.size() > 0 && ch.isWritable) {
+            val event = eventQueue.poll()
+            if (isTrace) tracef("Write event: %s to channel %s", event, ch)
+            ch.write(event)
+            written = true
+         }
+         if (written) {
+            ch.flush()
+         }
+      }
+
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
@@ -216,9 +266,14 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       def sendEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]) {
          val remoteEvent = createRemoteEvent(key, value, dataVersion, event)
          if (isTrace)
-            log.tracef("Send %s to remote clients", remoteEvent)
+            log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, eventQueue.size())
 
-         ch.writeAndFlush(remoteEvent)
+         val waitingForFlush = !ch.isWritable
+         eventQueue.put(remoteEvent)
+
+         if (!waitingForFlush) {
+            ch.eventLoop().submit(() => writeEventsIfPossible())
+         }
       }
 
       private def createRemoteEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]): AnyRef = {
