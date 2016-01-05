@@ -93,10 +93,10 @@ public class HotRodRollingUpgradesIT {
             controller.start("hotrod-rolling-upgrade-1");
 
             RemoteInfinispanMBeans s1 = createRemotes("hotrod-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
-            // hotrod.protocol.version, if explictily defined, is set in createRemotes() method
+            // hotrod.protocol.version, if explicitly defined, is set in createRemotes() method
             final RemoteCache<Object, Object> c1 = createCache(s1);
 
-            assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
+            assertEquals("Can't access entries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
 
             provider2 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer2);
 

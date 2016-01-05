@@ -115,10 +115,10 @@ public class HotRodRollingUpgradesDistIT {
             final RemoteCache<Object, Object> c2 = createCache(s2);
 
             // test cross-fetching of entries from stores
-            assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
-            assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "valuex1", c1.get("keyx1"));
-            assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "value1", c2.get("key1"));
-            assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "valuex1", c2.get("keyx1"));
+            assertEquals("Can't access entries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
+            assertEquals("Can't access entries stored in source node (target's RemoteCacheStore).", "valuex1", c1.get("keyx1"));
+            assertEquals("Can't access entries stored in source node (target's RemoteCacheStore).", "value1", c2.get("key1"));
+            assertEquals("Can't access entries stored in source node (target's RemoteCacheStore).", "valuex1", c2.get("keyx1"));
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getHotrodEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
