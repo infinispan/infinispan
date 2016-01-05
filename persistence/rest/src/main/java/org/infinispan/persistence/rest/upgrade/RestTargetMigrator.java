@@ -4,11 +4,11 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.rest.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
@@ -33,7 +33,12 @@ public class RestTargetMigrator implements TargetMigrator {
 
    @Override
    public long synchronizeData(final Cache<Object, Object> cache) throws CacheException {
-      int threads = Runtime.getRuntime().availableProcessors();
+      return synchronizeData(cache, 0, Runtime.getRuntime().availableProcessors());
+
+   }
+
+   @Override
+   public long synchronizeData(Cache<Object, Object> cache, int readBatch, int threads) throws CacheException {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
       Set<RestStore> stores = loaderManager.getStores(RestStore.class);
@@ -59,7 +64,7 @@ public class RestTargetMigrator implements TargetMigrator {
                      if (log.isDebugEnabled() && i % 100 == 0)
                         log.debugf(">>    Moved %s keys\n", i);
                   } catch (Exception e) {
-                     if ((key instanceof String) && ((String)key).matches("___MigrationManager_.+_KnownKeys___")) {
+                     if ((key instanceof String) && ((String) key).matches("___MigrationManager_.+_KnownKeys___")) {
                         // ISPN-3724 Ignore keys from other migrators.
                      } else {
                         log.keyMigrationFailed(Util.toStr(key), e);

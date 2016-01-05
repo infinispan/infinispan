@@ -41,6 +41,10 @@ public class CodecFactory {
       codecMap.put(PROTOCOL_VERSION_25, CODEC_25);
    }
 
+   public static boolean isVersionDefined(String version) {
+      return codecMap.containsKey(version);
+   }
+
    public static Codec getCodec(String version) {
       if (codecMap.containsKey(version))
          return codecMap.get(version);

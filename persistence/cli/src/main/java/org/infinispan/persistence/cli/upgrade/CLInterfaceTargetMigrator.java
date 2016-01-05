@@ -45,7 +45,11 @@ public class CLInterfaceTargetMigrator implements TargetMigrator {
 
    @Override
    public long synchronizeData(final Cache<Object, Object> cache) throws CacheException {
-      int threads = Runtime.getRuntime().availableProcessors();
+      return synchronizeData(cache, 0, Runtime.getRuntime().availableProcessors());
+   }
+
+   @Override
+   public long synchronizeData(Cache<Object, Object> cache, int readBatch, int threads) throws CacheException {
       PersistenceManager loaderManager = getPersistenceManager(cache);
       Set<CLInterfaceLoader> loaders = loaderManager.getStores(CLInterfaceLoader.class);
 
@@ -55,10 +59,10 @@ public class CLInterfaceTargetMigrator implements TargetMigrator {
             Set<Object> keys;
             try {
                keys = jsonMapper
-                     .readValue((String) loadedKnownKey.getValue(), HashSet.class);
+                       .readValue((String) loadedKnownKey.getValue(), HashSet.class);
             } catch (IOException e) {
                throw new CacheException(
-                     "Unable to read JSON value: " + loadedKnownKey.getValue(), e);
+                       "Unable to read JSON value: " + loadedKnownKey.getValue(), e);
             }
 
             ExecutorService es = Executors.newFixedThreadPool(threads);
@@ -75,13 +79,13 @@ public class CLInterfaceTargetMigrator implements TargetMigrator {
                      } catch (Exception e) {
                         log.keyMigrationFailed(Util.toStr(key), e);
                      }
-            }
+                  }
                });
 
             }
             es.shutdown();
             try {
-               while (!es.awaitTermination(500, TimeUnit.MILLISECONDS));
+               while (!es.awaitTermination(500, TimeUnit.MILLISECONDS)) ;
             } catch (InterruptedException e) {
                throw new CacheException(e);
             }

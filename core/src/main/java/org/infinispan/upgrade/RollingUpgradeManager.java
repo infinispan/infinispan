@@ -1,9 +1,5 @@
 package org.infinispan.upgrade;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
@@ -17,6 +13,10 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This component handles the control hooks to handle migrating from one version of Infinispan to
@@ -61,6 +61,20 @@ public class RollingUpgradeManager {
       log.entriesMigrated(count, cache.getName(), Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       return count;
 
+   }
+
+   @ManagedOperation(
+           description = "Synchronizes data from the old cluster to this using the specified migrator",
+           displayName = "Synchronizes data from the old cluster to this using the specified migrator"
+   )
+   public long synchronizeData(@Parameter(name = "migratorName", description = "The name of the migrator to use") String migratorName,
+                               @Parameter(name = "readBatch", description = "Numbers of entries transferred at a time from the old cluster") int readBatch,
+                               @Parameter(name = "threads", description = "Number of threads per node used to write data to the new cluster") int threads) throws Exception {
+      TargetMigrator migrator = getMigrator(migratorName);
+      long start = timeService.time();
+      long count = migrator.synchronizeData(cache, readBatch, threads);
+      log.entriesMigrated(count, cache.getName(), Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
+      return count;
    }
 
    @ManagedOperation(

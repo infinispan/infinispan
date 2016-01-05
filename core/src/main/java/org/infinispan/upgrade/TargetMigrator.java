@@ -15,9 +15,14 @@ public interface TargetMigrator {
     */
    String getName();
    /**
-    * Performs the synchronization of data between source and target by retrieving the set of known keys and fetching each key in turn
+    * Performs the synchronization of data between source and target
     */
    long synchronizeData(Cache<Object, Object> cache) throws CacheException;
+
+   /**
+    * Performs the synchronization of data between source and target
+    */
+   long synchronizeData(Cache<Object, Object> cache, int readBatch, int threads) throws CacheException;
 
    /**
     * Disconnects the target from the source. This operation is the last step that must be performed after a rolling upgrade.
