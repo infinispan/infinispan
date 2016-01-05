@@ -45,7 +45,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
    private val addListenerExecutor = new ThreadPoolExecutor(
       0, 10, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable],
-      new DefaultThreadFactory(null, 1, "add-listener-thread", null, null))
+      new DefaultThreadFactory(null, 1, "add-listener-thread-%t", null, null))
 
    def setEventMarshaller(eventMarshaller: Option[Marshaller]): Unit = {
       // Set a custom marshaller or reset to default if none
