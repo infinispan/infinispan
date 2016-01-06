@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -36,6 +37,17 @@ public class ExpiryTest extends MultiHotRodServersTest {
       createHotRodServers(1, builder);
       timeService = new ControlledTimeService(0);
       TestingUtil.replaceComponent(cacheManagers.get(0), TimeService.class, timeService, true);
+   }
+
+   @AfterMethod
+   public void after() {
+      try {
+         // https://bugzilla.redhat.com/show_bug.cgi?id=1279757
+         // https://issues.jboss.org/browse/ISPN-5937
+         Thread.sleep(500);
+      } catch (InterruptedException e) {
+         e.printStackTrace();
+      }
    }
 
    public void testGlobalExpiryPut() {
