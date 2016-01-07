@@ -1,6 +1,8 @@
 package org.infinispan.client.hotrod.event;
 
 /**
+ * Listener for continuous query events.
+ *
  * @author anistor@redhat.com
  * @since 8.0
  */
@@ -9,15 +11,15 @@ public interface ContinuousQueryListener<K, V> {
    /**
     * Receives notification that a cache entry has joined the matching set.
     *
-    * @param key
-    * @param value
+    * @param key the key of the joining entry
+    * @param value the joining entry or the Object[] projection if specified
     */
    void resultJoining(K key, V value);
 
    /**
     * Receives notification that a cache entry has left the matching set.
     *
-    * @param key
+    * @param key the key of the leaving entry
     */
    void resultLeaving(K key);
 }
