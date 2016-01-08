@@ -6,5 +6,6 @@
     </resources>
 
     <dependencies>
+       <module name="sun.jdk"/>
     </dependencies>
 </module>
