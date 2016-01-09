@@ -405,7 +405,8 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                for (factory <- readOptString(buffer)) yield (factory, readOptionalParams(buffer))
             }
             val batchSize = readUnsignedInt(buffer)
-            val iterationId = server.iterationManager.start(cache.getName, segments.map(JavaBitSet.valueOf), namedFactory, batchSize)
+            val metadata = Constants.isVersionPost24(h.version) && buffer.readByte() != 0
+            val iterationId = server.iterationManager.start(cache.getName, segments.map(JavaBitSet.valueOf), namedFactory, batchSize, metadata)
             new IterationStartResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, iterationId)
          case IterationNextRequest =>
             val iterationId = readString(buffer)

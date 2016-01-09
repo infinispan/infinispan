@@ -11,6 +11,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:$$#_hot_rod_protocol_2_2$$[Hot Rod Protocol 2.2]
 * link:$$#_hot_rod_protocol_2_3$$[Hot Rod Protocol 2.3]
 * link:$$#_hot_rod_protocol_2_4$$[Hot Rod Protocol 2.4]
+* link:$$#_hot_rod_protocol_2_5$$[Hot Rod Protocol 2.5]
 
 ===== Hot Rod Protocol 1.0
 
@@ -1765,6 +1766,83 @@ returned:
 | globalRemoveHits |Total number of removal hits across the Hot Rod cluster.
 | globalRemoveMisses |Total number of removal misses across the Hot Rod cluster.
 |===============
+
+===== Hot Rod Protocol 2.5
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 8.2
+
+This Hot Rod protocol version adds support for metadata retrieval along with entries in the iterator.
+It includes two changes:
+
+* Iteration Start request includes an optional flag
+* IterationNext operation may include metadata info for each entry if the flag above is set
+
+.Iteration Start
+
+Request (0x31):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size             | Value
+| Segments size       | signed vInt      | same as protocol version 2.4.
+| Segments            | byte array       | same as protocol version 2.4.
+| FilterConverter size| signed vInt      | same as protocol version 2.4.
+| FilterConverter     | UTF-8 byte array | same as protocol version 2.4.
+| Parameters size     | byte             | same as protocol version 2.4.
+| Parameters          | byte[][]         | same as protocol version 2.4.
+| BatchSize           | vInt             | same as protocol version 2.4.
+| Metadata            | 1 byte           | 1 if metadata is to be returned for each entry, 0 otherwise
+|==============================================================================
+
+
+.Iteration Next
+
+Response (0x34):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name               | Size       | Value
+| Finished segments size   | vInt       | same as protocol version 2.4.
+| Finished segments        | byte array | same as protocol version 2.4.
+| Entry count              | vInt       | same as protocol version 2.4.
+| Number of value projections   | vInt       | same as protocol version 2.4.
+| Metadata  (entry 1)      | 1 byte     | If set, entry has metadata associated
+| Expiration (entry 1)              | 1 byte     | A flag indicating whether the response
+contains expiration information. The value of the flag is obtained as a
+bitwise OR operation between +INFINITE_LIFESPAN (0x01)+ and
+`INFINITE_MAXIDLE (0x02)`. Only present if the metadata flag above is set
+| Created (entry 1)           | Long       | (optional) a Long representing the
+timestamp when the entry was created on the server. This value is returned
+only if the flag's +INFINITE_LIFESPAN+ bit is not set.
+| Lifespan (entry 1)          | vInt       | (optional) a vInt representing the
+lifespan of the entry in seconds. This value is returned only if the flag's
++INFINITE_LIFESPAN+ bit is not set.
+| LastUsed (entry 1)          | Long       | (optional) a Long representing the
+timestamp when the entry was last accessed on the server. This value is
+returned only if the flag's `INFINITE_MAXIDLE` bit is not set.
+| MaxIdle (entry 1)            | vInt       | (optional) a vInt representing the
+maxIdle of the entry in seconds. This value is returned only if the flag's
+`INFINITE_MAXIDLE` bit is not set.
+| Entry Version (entry 1)     | 8 bytes    | Unique value of an existing entry's modification. Only present if Metadata flag is set
+| Key 1 Length             | vInt       | same as protocol version 2.4.
+| Key 1                    | byte array | same as protocol version 2.4.
+| Value 1 Length           | vInt       | same as protocol version 2.4.
+| Value 1                  | byte array | same as protocol version 2.4.
+| Metadata (entry 2)              | 1 byte     | Same as for entry 1
+| Expiration (entry 2)             | 1 byte     | Same as for entry 1
+| Created (entry 2)           | Long      | Same as for entry 1
+| Lifespan (entry 2)          | vInt      | Same as for entry 1
+| LastUsed (entry 2)          | Long      | Same as for entry 1
+| MaxIdle (entry 2)           | vInt      | Same as for entry 1
+| Entry Version (entry 2)     | 8 bytes   | Same as for entry 1
+| Key 2 Length             | vInt       |
+| Key 2                    | byte array |
+| Value 2 Length           | vInt       |
+| Value 2                  | byte array |
+|... continues until entry count is reached ||
+|==============================================================================
+
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash

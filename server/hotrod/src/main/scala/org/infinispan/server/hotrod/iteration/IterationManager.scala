@@ -23,7 +23,7 @@ import org.infinispan.util.concurrent.ConcurrentHashSet
  */
 trait IterationManager {
    type IterationId = String
-   def start(cacheName: String, segments: Option[JavaBitSet], filterConverterFactory: NamedFactory, batch: Integer): IterationId
+   def start(cacheName: String, segments: Option[JavaBitSet], filterConverterFactory: NamedFactory, batch: Integer, metadata: Boolean): IterationId
    def next(cacheName: String, iterationId: IterationId): IterableIterationResult
    def close(cacheName: String, iterationId: IterationId): Boolean
    def addKeyValueFilterConverterFactory[K, V, C](name: String, factory: KeyValueFilterConverterFactory[K, V, C]): Unit
@@ -40,29 +40,21 @@ class IterationSegmentsListener extends CacheStream.SegmentCompletionListener {
    override def segmentCompleted(segments: util.Set[Integer]): Unit = finished addAll segments
 }
 
-class IterationState(val listener: IterationSegmentsListener, val iterator: java.util.Iterator[CacheEntry[AnyRef, AnyRef]], val stream: CacheStream[CacheEntry[AnyRef, AnyRef]], val batch: Integer, val compatInfo: CompatInfo)
+class IterationState(val listener: IterationSegmentsListener, val iterator: java.util.Iterator[CacheEntry[AnyRef, AnyRef]],
+                     val stream: CacheStream[CacheEntry[AnyRef, AnyRef]], val batch: Integer, val compatInfo: CompatInfo, val metadata: Boolean)
 
-class IterableIterationResult(finishedSegments: util.Set[Integer], val statusCode: OperationStatus, entries: List[CacheEntry[AnyRef, AnyRef]], compatInfo: CompatInfo) {
+class IterableIterationResult(finishedSegments: util.Set[Integer], val statusCode: OperationStatus, val entries: List[CacheEntry[AnyRef, AnyRef]], compatInfo: CompatInfo, val metadata: Boolean) {
+
+   lazy val compatEnabled = compatInfo.enabled && compatInfo.hotRodTypeConverter.isDefined
+
    def segmentsToBytes = {
       val bs = new util.BitSet
       finishedSegments.stream().forEach((i: Integer) => bs.set(i))
       bs.toByteArray
    }
 
-   def entrySeq: Seq[(AnyRef, AnyRef)] = {
-      entries.map { entry =>
-         val key = entry.getKey
-         val value = entry.getValue
-         if (compatInfo.enabled && compatInfo.hotRodTypeConverter.isDefined) {
-            unbox(key, value)
-         } else (key, value)
-      }
-   }
+   def unbox(value: AnyRef) = compatInfo.hotRodTypeConverter.get.unboxValue(value)
 
-   private def unbox(key: AnyRef, value: AnyRef) = {
-      val converter = compatInfo.hotRodTypeConverter.get
-      (converter.unboxKey(key), converter.unboxValue(value))
-   }
 }
 
 class CompatInfo(val enabled: Boolean, val hotRodTypeConverter: Option[HotRodTypeConverter])
@@ -78,7 +70,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
    private val iterationStateMap = CollectionFactory.makeConcurrentMap[String, IterationState]()
    private val filterConverterFactoryMap = CollectionFactory.makeConcurrentMap[String, KeyValueFilterConverterFactory[_, _, _]]()
 
-   override def start(cacheName: String, segments: Option[JavaBitSet], namedFactory: NamedFactory, batch: Integer): IterationId = {
+   override def start(cacheName: String, segments: Option[JavaBitSet], namedFactory: NamedFactory, batch: Integer, metadata: Boolean): IterationId = {
       val iterationId = UUID.randomUUID().toString
       val stream = cacheManager.getCache(cacheName).getAdvancedCache.cacheEntrySet.stream().asInstanceOf[CacheStream[CacheEntry[AnyRef, AnyRef]]]
       segments.map(bitSet => {
@@ -99,7 +91,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
 
       val iterator = filteredStream.getOrElse(stream).iterator()
 
-      val iterationState = new IterationState(segmentListener, iterator.asInstanceOf[java.util.Iterator[CacheEntry[AnyRef, AnyRef]]], stream, batch, compatInfo)
+      val iterationState = new IterationState(segmentListener, iterator.asInstanceOf[java.util.Iterator[CacheEntry[AnyRef, AnyRef]]], stream, batch, compatInfo, metadata)
 
       iterationStateMap.put(iterationId, iterationState)
       iterationId
@@ -129,8 +121,8 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
          val listener = state.listener
          val batch = state.batch
          val entries = for (i <- 0 to batch - 1; if iterator.hasNext) yield iterator.next
-         new IterableIterationResult(listener.finished, OperationStatus.Success, entries.toList, state.compatInfo)
-      }.getOrElse(new IterableIterationResult(InfinispanCollections.emptySet(), OperationStatus.InvalidIteration, List.empty, null))
+         new IterableIterationResult(listener.finished, OperationStatus.Success, entries.toList, state.compatInfo, state.metadata)
+      }.getOrElse(new IterableIterationResult(InfinispanCollections.emptySet(), OperationStatus.InvalidIteration, List.empty, null, false))
    }
 
    override def close(cacheName: String, iterationId: IterationId): Boolean = {

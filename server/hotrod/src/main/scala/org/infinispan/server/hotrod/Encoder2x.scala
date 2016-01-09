@@ -2,6 +2,8 @@ package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
 import org.infinispan.configuration.cache.CacheMode
+import org.infinispan.container.entries.CacheEntry
+import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.hotrod.Events._
@@ -239,6 +241,20 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       }
    }
 
+   private def writeMetadata(lifespan: Int, maxIdle: Int, created: Long, lastUsed: Long, dataVersion: Long, buf: ByteBuf) = {
+      val flags = (if (lifespan < 0) INFINITE_LIFESPAN else 0) + (if (maxIdle < 0) INFINITE_MAXIDLE else 0)
+      buf.writeByte(flags)
+      if (lifespan >= 0) {
+         buf.writeLong(created)
+         writeUnsignedInt(lifespan, buf)
+      }
+      if (maxIdle >= 0) {
+         buf.writeLong(lastUsed)
+         writeUnsignedInt(maxIdle, buf)
+      }
+      buf.writeLong(dataVersion)
+   }
+
    override def writeResponse(r: Response, buf: ByteBuf, cacheManager: EmbeddedCacheManager, server: HotRodServer): Unit = {
       r match {
          case r: ResponseWithPrevious =>
@@ -259,17 +275,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             }
          case g: GetWithMetadataResponse =>
             if (g.status == Success) {
-               val flags = (if (g.lifespan < 0) INFINITE_LIFESPAN else 0) + (if (g.maxIdle < 0 ) INFINITE_MAXIDLE else 0)
-               buf.writeByte(flags)
-               if (g.lifespan >= 0) {
-                  buf.writeLong(g.created)
-                  writeUnsignedInt(g.lifespan, buf)
-               }
-               if (g.maxIdle >= 0) {
-                  buf.writeLong(g.lastUsed)
-                  writeUnsignedInt(g.maxIdle, buf)
-               }
-               buf.writeLong(g.dataVersion)
+               writeMetadata(g.lifespan, g.maxIdle, g.created, g.lastUsed, g.dataVersion, buf)
                writeRangedBytes(g.data.get, buf)
             }
          case g: BulkGetResponse =>
@@ -336,12 +342,32 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          case r: IterationStartResponse => writeString(r.iterationId, buf)
          case r: IterationNextResponse =>
             writeRangedBytes(r.iterationResult.segmentsToBytes, buf)
-            val entries = r.iterationResult.entrySeq
+            val entries = r.iterationResult.entries
             writeUnsignedInt(entries.size, buf)
             val projectionLength = projectionInfo(entries, r.version)
             projectionLength.foreach(writeUnsignedInt(_, buf))
-            entries.foreach { case ((key: Bytes, value)) =>
-               writeRangedBytes(key, buf)
+            entries.foreach { case cacheEntry =>
+               if (Constants.isVersionPost24(r.version)) {
+                  if (r.iterationResult.metadata) {
+                     buf.writeByte(1)
+                     val ice = cacheEntry.asInstanceOf[InternalCacheEntry]
+                     val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
+                     val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
+                     val lastUsed = ice.getLastUsed
+                     val created = ice.getCreated
+                     val dataVersion = ice.getMetadata.version().asInstanceOf[NumericVersion]
+                     writeMetadata(lifespan, maxIdle, created, lastUsed, dataVersion.getVersion, buf)
+                  } else {
+                     buf.writeByte(0)
+                  }
+               }
+               var key = cacheEntry.getKey
+               var value = cacheEntry.getValue
+               if (r.iterationResult.compatEnabled) {
+                  key = r.iterationResult.unbox(key)
+                  value = r.iterationResult.unbox(value)
+               }
+               writeRangedBytes(key.asInstanceOf[Bytes], buf)
                value match {
                   case v: Array[Object] => v.foreach(o => writeRangedBytes(o.asInstanceOf[Bytes], buf))
                   case v: Bytes => writeRangedBytes(v, buf)
@@ -353,9 +379,12 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       }
    }
 
-   def projectionInfo(entries: Seq[(AnyRef, AnyRef)], version: Byte) = entries.headOption match {
-      case Some((_, projections: Array[Object])) => Some(projections.length)
-      case Some((_, singleValue: Bytes)) if !Constants.isVersionPre24(version) => Some(1)
-      case _ => None
+   def projectionInfo(entries: Seq[CacheEntry[AnyRef, AnyRef]], version: Byte): Option[Int] = {
+      val headOption = entries.headOption
+      headOption.map(_.getValue) match {
+         case Some(array: Array[Object]) => Some(array.length)
+         case Some(singleValue: AnyRef) if !Constants.isVersionPre24(version) => Some(1)
+         case _ => None
+      }
    }
 }
