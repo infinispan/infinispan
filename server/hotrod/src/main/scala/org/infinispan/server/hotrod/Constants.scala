@@ -19,6 +19,7 @@ trait Constants {
    val VERSION_22: Byte = 22
    val VERSION_23: Byte = 23
    val VERSION_24: Byte = 24
+   val VERSION_25: Byte = 25
    val DEFAULT_CONSISTENT_HASH_VERSION_1x: Byte = 2
    val DEFAULT_CONSISTENT_HASH_VERSION: Byte = 3
 
@@ -37,7 +38,7 @@ object Constants extends Constants {
    def isVersion12(v: Byte): Boolean = v == VERSION_12
    def isVersion13(v: Byte): Boolean = v == VERSION_13
    def isVersion1x(v: Byte): Boolean = v >= VERSION_10 && v <= VERSION_13
-   def isVersion2x(v: Byte): Boolean = v >= VERSION_20 && v <= VERSION_24
+   def isVersion2x(v: Byte): Boolean = v >= VERSION_20 && v <= VERSION_25
    def isVersionKnown(v: Byte): Boolean = isVersion1x(v) || isVersion2x(v)
 
    /**
@@ -53,6 +54,9 @@ object Constants extends Constants {
    /**
     * Is version previous post, and not including, 2.0?
     */
-   def isVersionPost20(v: Byte): Boolean = v >= VERSION_21 && v <= VERSION_24
+   def isVersionPost20(v: Byte): Boolean = v >= VERSION_21 && v <= VERSION_25
+
+   def isVersionPost24(v: Byte) = v > VERSION_24
+
 
 }

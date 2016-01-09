@@ -30,6 +30,7 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    private final Set<Integer> segments;
    private final int batchSize;
    private final TransportFactory transportFactory;
+   private final boolean metadata;
 
    protected IterationStartOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
                                      String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments, int batchSize, TransportFactory transportFactory) {
@@ -39,6 +40,19 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
       this.segments = segments;
       this.batchSize = batchSize;
       this.transportFactory = transportFactory;
+      this.metadata = false;
+   }
+
+   protected IterationStartOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
+                                     String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments,
+                                     int batchSize, TransportFactory transportFactory, boolean metadata) {
+      super(codec, transportFactory, cacheName, topologyId, flags);
+      this.filterConverterFactory = filterConverterFactory;
+      this.filterParameters = filterParameters;
+      this.segments = segments;
+      this.batchSize = batchSize;
+      this.transportFactory = transportFactory;
+      this.metadata = metadata;
    }
 
    @Override
@@ -67,6 +81,10 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
          }
       }
       transport.writeVInt(batchSize);
+      if (metadata) {
+         transport.writeByte((short) 1);
+      }
+
       transport.flush();
 
       readHeaderAndValidate(transport, params);
