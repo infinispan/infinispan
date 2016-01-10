@@ -172,7 +172,11 @@ public final class Security {
          return SUBJECT.get().peek();
       } else {
          AccessControlContext acc = AccessController.getContext();
-         return Subject.getSubject(acc);
+         if (System.getSecurityManager() == null) {
+            return Subject.getSubject(acc);
+         } else {
+            return AccessController.doPrivileged((PrivilegedAction<Subject>) () -> Subject.getSubject(acc));
+         }
       }
    }
 

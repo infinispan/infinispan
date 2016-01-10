@@ -1,10 +1,10 @@
 package org.infinispan.factories;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -19,6 +19,9 @@ import org.infinispan.util.logging.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,6 +33,8 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
 /**
  * A registry where components which have been created are stored.  Components are stored as singletons, registered
@@ -121,13 +126,21 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
                Class<?>[] methodParameters = injectMetadata.getParameterClasses();
                if (methodParameters == null) {
-                  methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader());
+                  if (System.getSecurityManager() == null) {
+                     methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader());
+                  } else {
+                     methodParameters = AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>[]>) () -> ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader()));
+                  }
                   injectMetadata.setParameterClasses(methodParameters);
                }
 
                Method method = injectMetadata.getMethod();
                if (method == null) {
-                  method = ReflectionUtil.findMethod(targetClass, injectMetadata.getMethodName(), methodParameters);
+                  if (System.getSecurityManager() == null) {
+                     method = ReflectionUtil.findMethod(targetClass, injectMetadata.getMethodName(), injectMetadata.getParameterClasses());
+                  } else {
+                     method = AccessController.doPrivileged((PrivilegedExceptionAction<Method>) () -> ReflectionUtil.findMethod(targetClass, injectMetadata.getMethodName(), injectMetadata.getParameterClasses()));
+                  }
                   injectMetadata.setMethod(method);
                }
                invokeInjectionMethod(target, injectMetadata);
@@ -227,7 +240,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             boolean nameIsFQCN = !injectMetadata.isParameterNameSet(i);
             params[i] = getOrCreateComponent(dependencies[i], name, nameIsFQCN);
          }
-         ReflectionUtil.invokeAccessibly(o, injectMetadata.getMethod(), params);
+         if (System.getSecurityManager() == null) {
+            invokeAccessibly(o, injectMetadata.getMethod(), params);
+         } else {
+            AccessController.doPrivileged((PrivilegedAction<Object>) () -> invokeAccessibly(o, injectMetadata.getMethod(), params));
+         }
       }
    }
 
@@ -690,7 +707,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     * org.infinispan.configuration.cache.StateTransferConfiguration#timeout()} millis, checking for a valid state.
     *
     * @param originLocal true if the call originates locally (i.e., from the {@link org.infinispan.cache.impl.CacheImpl} or false
-    *                    if it originates remotely, i.e., from the {@link org.infinispan.remoting.InboundInvocationHandler}.
+    *                    if it originates remotely, i.e., from the {@link org.infinispan.remoting.inboundhandler.InboundInvocationHandler}.
     * @return true if invocations are allowed, false otherwise.
     */
    public boolean invocationsAllowed(boolean originLocal) {
@@ -867,7 +884,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
 
       void invoke() {
-         ReflectionUtil.invokeAccessibly(component.instance, metadata.getMethod(), null);
+         invokeAccessibly(component.instance, metadata.getMethod(), null);
       }
 
       @Override
