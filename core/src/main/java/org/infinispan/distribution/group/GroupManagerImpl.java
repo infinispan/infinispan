@@ -11,6 +11,8 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
 
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
@@ -18,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class GroupManagerImpl implements GroupManager {
     
-    private static interface GroupMetadata {
+    private interface GroupMetadata {
         
         GroupMetadata NONE = new GroupMetadata() {
             
@@ -46,13 +48,24 @@ public class GroupManagerImpl implements GroupManager {
 
         @Override
         public String getGroup(Object instance) {
-            return String.class.cast(invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY));
+            Object object;
+            if (System.getSecurityManager() == null) {
+                object = invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY);
+            } else {
+                object = AccessController.doPrivileged((PrivilegedAction<Object>) () -> invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY));
+            }
+            return String.class.cast(object);
         }
         
     }
     
     private static GroupMetadata createGroupMetadata(Class<?> clazz) {
-        Collection<Method> possibleMethods = ReflectionUtil.getAllMethods(clazz, Group.class);
+        Collection<Method> possibleMethods;
+        if (System.getSecurityManager() == null) {
+            possibleMethods = ReflectionUtil.getAllMethods(clazz, Group.class);
+        } else {
+            possibleMethods = AccessController.doPrivileged((PrivilegedAction<List<Method>>) () -> ReflectionUtil.getAllMethods(clazz, Group.class));
+        }
         if (possibleMethods.isEmpty())
             return GroupMetadata.NONE;
         else if (possibleMethods.size() == 1)
