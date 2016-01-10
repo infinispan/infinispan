@@ -20,6 +20,8 @@ import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
@@ -192,7 +194,16 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                if (m.isAnnotationPresent(annotationClass)) {
                   final Class<?> eventClass = annotationEntry.getValue();
                   testListenerMethodValidity(m, eventClass, annotationClass.getName());
-                  m.setAccessible(true);
+
+                  if (System.getSecurityManager() == null) {
+                     m.setAccessible(true);
+                  } else {
+                     AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                        m.setAccessible(true);
+                        return null;
+                     });
+                  }
+
                   builder.setMethod(m);
                   builder.setAnnotation(annotationClass);
                   L invocation = builder.build();
