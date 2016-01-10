@@ -1,14 +1,17 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -26,7 +29,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
    }
 
    private ConfigurationBuilder getCacheConfiguration() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numOwners(2);
       return builder;
    }

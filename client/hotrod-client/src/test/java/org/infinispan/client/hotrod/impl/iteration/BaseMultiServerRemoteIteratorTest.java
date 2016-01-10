@@ -5,9 +5,11 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -130,6 +132,30 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
                                                       .getConsistentHash();
 
       assertKeysInSegment(entries, filterBySegments, marshaller, consistentHash::getSegment);
+   }
+
+   @Test
+   public void testRetrieveMetadata() throws Exception {
+      RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
+      cache.put(1, newAccount(1), 1, TimeUnit.DAYS);
+      cache.put(2, newAccount(2), 2, TimeUnit.MINUTES, 30, TimeUnit.SECONDS);
+      cache.put(3, newAccount(3));
+
+      try (CloseableIterator<Entry<Object, MetadataValue<Object>>> iterator = cache.retrieveEntriesWithMetadata(null, 10)) {
+         Entry<Object, MetadataValue<Object>> entry = iterator.next();
+         if ((int) entry.getKey() == 1) {
+            assertEquals(24 * 3600, entry.getValue().getLifespan());
+            assertEquals(-1, entry.getValue().getMaxIdle());
+         }
+         if ((int) entry.getKey() == 2) {
+            assertEquals(2 * 60, entry.getValue().getLifespan());
+            assertEquals(30, entry.getValue().getMaxIdle());
+         }
+         if ((int) entry.getKey() == 3) {
+            assertEquals(-1, entry.getValue().getLifespan());
+            assertEquals(-1, entry.getValue().getMaxIdle());
+         }
+      }
    }
 
    static final class ToHexConverterFactory implements KeyValueFilterConverterFactory<Integer, Integer, String> {

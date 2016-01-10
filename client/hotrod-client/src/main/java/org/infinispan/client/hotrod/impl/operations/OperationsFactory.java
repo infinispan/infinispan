@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
@@ -260,15 +261,15 @@ public class OperationsFactory implements HotRodConstants {
       return transportFactory.getCacheTopologyInfo(cacheNameBytes);
    }
 
-   public IterationStartOperation newIterationStartOperation(String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments, int batchSize) {
-      return new IterationStartOperation(codec, flags(), cacheNameBytes, topologyId, filterConverterFactory, filterParameters, segments, batchSize, transportFactory);
+   public IterationStartOperation newIterationStartOperation(String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments, int batchSize, boolean metadata) {
+      return new IterationStartOperation(codec, flags(), cacheNameBytes, topologyId, filterConverterFactory, filterParameters, segments, batchSize, transportFactory, metadata);
    }
 
    public IterationEndOperation newIterationEndOperation(String iterationId, Transport transport) {
       return new IterationEndOperation(codec, flags(), cacheNameBytes, topologyId, iterationId, transportFactory, transport);
    }
 
-   public <K, V> IterationNextOperation newIterationNextOperation(String iterationId, Transport transport) {
-      return new IterationNextOperation(codec, flags(), cacheNameBytes, topologyId, iterationId, transport);
+   public <K, V> IterationNextOperation newIterationNextOperation(String iterationId, Transport transport, KeyTracker segmentKeyTracker) {
+      return new IterationNextOperation(codec, flags(), cacheNameBytes, topologyId, iterationId, transport, segmentKeyTracker);
    }
 }

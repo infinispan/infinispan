@@ -2,7 +2,10 @@ package org.infinispan.client.hotrod.impl.iteration;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.testng.annotations.Test;
+
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * @author gustavonalle
@@ -18,7 +21,7 @@ public class MultiServerReplRemoteIteratorTest extends BaseMultiServerRemoteIter
    }
 
    private ConfigurationBuilder getCacheConfiguration() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       builder.clustering().hash().numSegments(60);
       return builder;
    }

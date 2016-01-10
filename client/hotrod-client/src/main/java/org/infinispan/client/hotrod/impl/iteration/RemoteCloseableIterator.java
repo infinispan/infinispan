@@ -12,48 +12,48 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
 
-import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
-
 /**
  * @author gustavonalle
  * @since 8.0
  */
 @NotThreadSafe
-public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, Object>> {
+public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Object, E>> {
 
    private static final Log log = LogFactory.getLog(RemoteCloseableIterator.class);
 
    private final OperationsFactory operationsFactory;
-   private final Marshaller marshaller;
    private final String filterConverterFactory;
    private final byte[][] filterParams;
    private final Set<Integer> segments;
    private final int batchSize;
+   private final boolean metadata;
 
    private KeyTracker segmentKeyTracker;
    private Transport transport;
    private String iterationId;
    boolean endOfIteration = false;
-   private Queue<SimpleEntry<Object, Object>> nextElements = new LinkedList<>();
+   private Queue<Entry<Object, E>> nextElements = new LinkedList<>();
 
-   public RemoteCloseableIterator(OperationsFactory operationsFactory, String filterConverterFactory, byte[][] filterParams, Set<Integer> segments, int batchSize, Marshaller marshaller) {
+   public RemoteCloseableIterator(OperationsFactory operationsFactory, String filterConverterFactory,
+                                  byte[][] filterParams, Set<Integer> segments, int batchSize, boolean metadata) {
       this.filterConverterFactory = filterConverterFactory;
       this.filterParams = filterParams;
       this.segments = segments;
       this.batchSize = batchSize;
       this.operationsFactory = operationsFactory;
-      this.marshaller = marshaller;
+      this.metadata = metadata;
+   }
+
+   public RemoteCloseableIterator(OperationsFactory operationsFactory, int batchSize, Set<Integer> segments, boolean metadata) {
+      this(operationsFactory, null, null, segments, batchSize, metadata);
    }
 
    @Override
@@ -78,34 +78,22 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
    }
 
    @Override
-   public Entry<Object, Object> next() {
+   public Entry<Object, E> next() {
       if (!hasNext()) throw new NoSuchElementException();
       return nextElements.remove();
    }
 
    private void fetch() {
       try {
-         IterationNextOperation iterationNextOperation = operationsFactory.newIterationNextOperation(iterationId, transport);
+         IterationNextOperation<E> iterationNextOperation = operationsFactory.newIterationNextOperation(iterationId, transport, segmentKeyTracker);
 
          while (nextElements.isEmpty() && !endOfIteration) {
-            IterationNextResponse iterationNextResponse = iterationNextOperation.execute();
-            short status = iterationNextResponse.getStatus();
-            if (HotRodConstants.isInvalidIteration(status)) {
-               throw log.errorRetrievingNext(iterationId);
-            }
-            Entry<byte[], Object[]>[] entries = iterationNextResponse.getEntries();
-
-            if (entries.length == 0) {
+            IterationNextResponse<E> iterationNextResponse = iterationNextOperation.execute();
+            if (!iterationNextResponse.hasMore()) {
                endOfIteration = true;
                break;
             }
-
-            for (Entry<byte[], Object[]> entry : entries) {
-               if (segmentKeyTracker.track(entry.getKey())) {
-                  nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey(), status), unmarshallValue(entry.getValue(), status)));
-               }
-            }
-            segmentKeyTracker.segmentsFinished(iterationNextResponse.getFinishedSegments());
+            nextElements.addAll(iterationNextResponse.getEntries());
          }
 
       } catch (TransportException e) {
@@ -113,15 +101,6 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
          restartIteration(segmentKeyTracker.missedSegments());
          fetch();
       }
-   }
-
-   private Object unmarshallValue(Object[] value, short status) {
-      if (value.length == 1) return unmarshall((byte[]) value[0], status);
-      return Arrays.stream(value).map(bytes -> unmarshall((byte[]) bytes, status)).toArray();
-   }
-
-   private Object unmarshall(byte[] bytes, short status) {
-      return bytes2obj(marshaller, bytes, status);
    }
 
    private void restartIteration(Set<Integer> missedSegments) {
@@ -138,7 +117,7 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
       if (log.isDebugEnabled()) {
          log.debugf("Staring iteration with segments %s", fromSegments);
       }
-      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory, filterParams, fromSegments, batchSize);
+      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory, filterParams, fromSegments, batchSize, metadata);
       IterationStartResponse startResponse = iterationStartOperation.execute();
       this.transport = startResponse.getTransport();
       if (log.isDebugEnabled()) {

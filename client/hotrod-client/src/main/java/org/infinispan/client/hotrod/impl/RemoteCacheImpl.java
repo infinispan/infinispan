@@ -183,7 +183,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          };
       }
       byte[][] params = marshallParams(filterConverterParams);
-      RemoteCloseableIterator remoteCloseableIterator = new RemoteCloseableIterator(operationsFactory, filterConverterFactory, params, segments, batchSize, marshaller);
+      RemoteCloseableIterator remoteCloseableIterator = new RemoteCloseableIterator(operationsFactory,
+              filterConverterFactory, params, segments, batchSize, false);
       remoteCloseableIterator.start();
       return remoteCloseableIterator;
    }
@@ -202,6 +203,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
       Object[] factoryParams = makeFactoryParams(filterQuery);
       return retrieveEntries(Filters.ITERATION_QUERY_FILTER_CONVERTER_FACTORY_NAME, factoryParams, segments, batchSize);
+   }
+
+   @Override
+   public CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize) {
+      RemoteCloseableIterator remoteCloseableIterator = new RemoteCloseableIterator(operationsFactory, batchSize, segments, true);
+      remoteCloseableIterator.start();
+      return remoteCloseableIterator;
    }
 
    @Override
