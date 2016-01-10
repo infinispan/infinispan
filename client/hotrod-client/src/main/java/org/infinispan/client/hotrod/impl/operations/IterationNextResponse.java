@@ -1,27 +1,29 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.Map;
+import java.util.List;
+import java.util.Map.Entry;
 
 /**
  * @author gustavonalle
  * @since 8.0
  */
-public class IterationNextResponse<K, V> {
+public class IterationNextResponse<E> {
    private final short status;
-   private final byte[] finishedSegments;
-   private final Map.Entry<byte[], Object[]>[] entries;
+   private final List<Entry<Object, E>> entries;
 
-   public IterationNextResponse(short status, byte[] finishedSegments, Map.Entry<byte[], Object[]>[] entries) {
+   private final boolean hasMore;
+
+   public IterationNextResponse(short status, List<Entry<Object, E>> entries, boolean hasMore) {
       this.status = status;
-      this.finishedSegments = finishedSegments;
       this.entries = entries;
+      this.hasMore = hasMore;
    }
 
-   public byte[] getFinishedSegments() {
-      return finishedSegments;
+   public boolean hasMore() {
+      return hasMore;
    }
 
-   public Map.Entry<byte[], Object[]>[] getEntries() {
+   public List<Entry<Object, E>> getEntries() {
       return entries;
    }
 

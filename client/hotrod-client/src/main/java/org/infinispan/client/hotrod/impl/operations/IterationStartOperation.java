@@ -5,7 +5,6 @@ import java.util.BitSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -31,17 +30,6 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    private final int batchSize;
    private final TransportFactory transportFactory;
    private final boolean metadata;
-
-   protected IterationStartOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
-                                     String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments, int batchSize, TransportFactory transportFactory) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
-      this.filterConverterFactory = filterConverterFactory;
-      this.filterParameters = filterParameters;
-      this.segments = segments;
-      this.batchSize = batchSize;
-      this.transportFactory = transportFactory;
-      this.metadata = false;
-   }
 
    protected IterationStartOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
                                      String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments,
@@ -81,9 +69,7 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
          }
       }
       transport.writeVInt(batchSize);
-      if (metadata) {
-         transport.writeByte((short) 1);
-      }
+      transport.writeByte((short) (metadata ? 1 : 0));
 
       transport.flush();
 

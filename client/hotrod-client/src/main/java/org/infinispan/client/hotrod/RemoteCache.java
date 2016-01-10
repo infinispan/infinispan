@@ -189,6 +189,11 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize);
 
    /**
+    * Retrieve entries with metadata information
+    */
+   CloseableIterator<Entry<Object, MetadataValue<Object>>> retrieveEntriesWithMetadata(Set<Integer> segments, int batchSize);
+
+   /**
     * Returns the {@link VersionedValue} associated to the supplied key param, or null if it doesn't exist.
     */
    VersionedValue<V> getVersioned(K key);
