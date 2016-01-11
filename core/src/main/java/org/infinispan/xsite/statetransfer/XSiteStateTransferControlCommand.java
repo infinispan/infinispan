@@ -89,7 +89,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{control, siteName, statusOk, topologyId};
+      return new Object[]{(byte) control.ordinal(), siteName, statusOk, topologyId};
    }
 
    @Override
@@ -97,7 +97,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       if (commandId != COMMAND_ID) {
          throw new IllegalArgumentException("CommandId is not valid! (" + commandId + " != " + COMMAND_ID + ")");
       }
-      this.control = (StateTransferControl) parameters[0];
+      this.control = StateTransferControl.CACHED_VALUES[(byte) parameters[0]];
       this.siteName = (String) parameters[1];
       this.statusOk = (Boolean) parameters[2];
       this.topologyId = (Integer) parameters[3];
@@ -139,7 +139,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       return copy;
    }
 
-   public static enum StateTransferControl {
+   public enum StateTransferControl {
       START_SEND,
       START_RECEIVE,
       FINISH_SEND,
@@ -147,7 +147,9 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       CANCEL_SEND,
       RESTART_SEND,
       STATUS_REQUEST,
-      CLEAR_STATUS
+      CLEAR_STATUS;
+
+      private static final StateTransferControl[] CACHED_VALUES = values();
    }
 
    @Override

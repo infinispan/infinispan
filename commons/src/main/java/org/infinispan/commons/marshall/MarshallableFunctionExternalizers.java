@@ -62,7 +62,7 @@ public class MarshallableFunctionExternalizers {
          int i = numbers.get(o.getClass(), -1);
          if (i > 0) {
             int valueMatcherId = ((i & VALUE_MATCH_MASK) >> 12) - 1;
-            return ValueMatcherMode.values()[valueMatcherId];
+            return ValueMatcherMode.valueOf(valueMatcherId);
          }
 
          return ValueMatcherMode.MATCH_ALWAYS;
@@ -140,7 +140,7 @@ public class MarshallableFunctionExternalizers {
          int i = numbers.get(o.getClass(), -1);
          if (i > 0) {
             int valueMatcherId = ((i & VALUE_MATCH_MASK) >> 12) - 1;
-            return ValueMatcherMode.values()[valueMatcherId];
+            return ValueMatcherMode.valueOf(valueMatcherId);
          }
 
          return ValueMatcherMode.MATCH_ALWAYS;

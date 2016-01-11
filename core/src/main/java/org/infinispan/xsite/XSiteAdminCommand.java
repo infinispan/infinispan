@@ -19,6 +19,8 @@ public class XSiteAdminCommand extends BaseRpcCommand {
       TAKE_OFFLINE,
       BRING_ONLINE,
       AMEND_TAKE_OFFLINE;
+
+      private static final AdminOperation[] CACHED_VALUES = values();
    }
 
    public enum Status {
@@ -88,7 +90,7 @@ public class XSiteAdminCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{siteName, afterFailures, minTimeToWait, adminOperation};
+      return new Object[]{siteName, afterFailures, minTimeToWait, (byte) adminOperation.ordinal()};
    }
 
    @Override
@@ -96,7 +98,7 @@ public class XSiteAdminCommand extends BaseRpcCommand {
       this.siteName = (String) parameters[0];
       this.afterFailures = (Integer)parameters[1];
       this.minTimeToWait = (Long)parameters[2];
-      this.adminOperation = (AdminOperation)parameters[3];
+      this.adminOperation = AdminOperation.CACHED_VALUES[(byte)parameters[3]];
    }
 
    @Override

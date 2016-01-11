@@ -24,7 +24,9 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       GET_TRANSACTIONS,
       GET_CACHE_LISTENERS,
       START_STATE_TRANSFER,
-      CANCEL_STATE_TRANSFER
+      CANCEL_STATE_TRANSFER;
+
+      private static final Type[] CACHED_VALUES = values();
    }
 
    public static final byte COMMAND_ID = 15;
@@ -128,7 +130,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
-      type = Type.values()[(Byte) parameters[i++]];
+      type = Type.CACHED_VALUES[(Byte) parameters[i++]];
       setOrigin((Address) parameters[i++]);
       topologyId = (Integer) parameters[i++];
       segments = (Set<Integer>) parameters[i];
