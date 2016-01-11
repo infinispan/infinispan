@@ -18,6 +18,9 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -128,18 +131,19 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{commandInvocationId, key, value, lifespan};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(commandInvocationId);
+      output.writeObject(key);
+      output.writeObject(value);
+      output.writeLong(lifespan);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      int i = 0;
-      commandInvocationId = (CommandInvocationId) args[i++];
-      key = args[i++];
-      value = args[i++];
-      lifespan = (long) args[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commandInvocationId = (CommandInvocationId) input.readObject();
+      key = input.readObject();
+      value = input.readObject();
+      lifespan = input.readLong();
    }
 
    @Override

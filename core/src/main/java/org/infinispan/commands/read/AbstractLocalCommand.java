@@ -6,6 +6,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * Abstract class
  *
@@ -14,18 +18,17 @@ import org.infinispan.lifecycle.ComponentStatus;
  * @since 4.1
  */
 public abstract class AbstractLocalCommand extends AbstractLocalFlagAffectedCommand implements LocalCommand {
-   private static final Object[] EMPTY_ARRAY = new Object[0];
 
    public byte getCommandId() {
       return 0;  // no-op
    }
 
-   public Object[] getParameters() {
-      return EMPTY_ARRAY;  // no-op
+   public final void writeTo(ObjectOutput output) throws IOException {
+      //no-op
    }
 
-   public void setParameters(int commandId, Object[] parameters) {
-      // no-op
+   public final void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      //no-op
    }
 
    public boolean shouldInvoke(InvocationContext ctx) {

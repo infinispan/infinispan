@@ -1,7 +1,12 @@
 package org.infinispan.xsite;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Command used for handling XSiteReplication administrative operations.
@@ -89,16 +94,45 @@ public class XSiteAdminCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{siteName, afterFailures, minTimeToWait, (byte) adminOperation.ordinal()};
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallEnum(adminOperation, output);
+      switch (adminOperation) {
+         case SITE_STATUS:
+         case TAKE_OFFLINE:
+         case BRING_ONLINE:
+            output.writeUTF(siteName);
+            return;
+         case AMEND_TAKE_OFFLINE:
+            output.writeUTF(siteName);
+            output.writeInt(afterFailures);
+            output.writeLong(minTimeToWait);
+            return;
+         case STATUS:
+            return;
+         default:
+            throw new IllegalStateException("Unknown admin operation " + adminOperation);
+      }
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      this.siteName = (String) parameters[0];
-      this.afterFailures = (Integer)parameters[1];
-      this.minTimeToWait = (Long)parameters[2];
-      this.adminOperation = AdminOperation.CACHED_VALUES[(byte)parameters[3]];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      adminOperation = MarshallUtil.unmarshallEnum(input, ordinal -> AdminOperation.CACHED_VALUES[ordinal]);
+      switch (adminOperation) {
+         case SITE_STATUS:
+         case TAKE_OFFLINE:
+         case BRING_ONLINE:
+            siteName = input.readUTF();
+            return;
+         case AMEND_TAKE_OFFLINE:
+            siteName = input.readUTF();
+            afterFailures = input.readInt();
+            minTimeToWait = input.readLong();
+            return;
+         case STATUS:
+            return;
+         default:
+            throw new IllegalStateException("Unknown admin operation " + adminOperation);
+      }
    }
 
    @Override

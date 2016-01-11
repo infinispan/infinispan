@@ -10,6 +10,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.functional.impl.EntryViews;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -44,13 +47,13 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
+   public void writeTo(ObjectOutput output) throws IOException {
       // Not really replicated
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[0];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      // Not really replicated
    }
 
    public ConsistentHash getConsistentHash() {

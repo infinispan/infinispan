@@ -3,6 +3,10 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * Similar to {@link org.infinispan.commands.remote.MultipleRpcCommand}, but it only aggregates a single command for
  * replication.
@@ -28,19 +32,18 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Unusupported command id:" + commandId);
-      command = (ReplicableCommand) parameters[0];
-   }
-
-   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{command};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(command);
+   }
+
+   @Override
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      command = (ReplicableCommand) input.readObject();
    }
 
    @Override

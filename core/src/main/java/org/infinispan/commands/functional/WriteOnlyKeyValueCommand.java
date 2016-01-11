@@ -4,12 +4,16 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -37,19 +41,23 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
-      value = (V) parameters[1];
-      f = (BiConsumer<V, WriteEntryView<V>>) parameters[2];
-      valueMatcher = (ValueMatcher) parameters[3];
-      flags = (Set<Flag>) parameters[4];
-      commandInvocationId = (CommandInvocationId) parameters[5];
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(key);
+      output.writeObject(value);
+      output.writeObject(f);
+      MarshallUtil.marshallEnum(valueMatcher, output);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeObject(commandInvocationId);
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{key, value, f, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readObject();
+      value = (V) input.readObject();
+      f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
+      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      flags = (Set<Flag>) input.readObject();
+      commandInvocationId = (CommandInvocationId) input.readObject();
    }
 
    @Override

@@ -2,6 +2,7 @@ package org.infinispan.topology;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
@@ -13,6 +14,10 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -248,27 +253,127 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, rebalanceId, currentCH,
-            pendingCH, availabilityMode, actualMembers, throwable, viewId};
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallString(cacheName, output);
+      MarshallUtil.marshallEnum(type, output);
+      switch (type) {
+         case JOIN:
+            output.writeObject(sender);
+            output.writeObject(joinInfo);
+            output.writeInt(viewId);
+            return;
+         case LEAVE:
+            output.writeObject(sender);
+            output.writeInt(viewId);
+            return;
+         case REBALANCE_CONFIRM:
+            output.writeObject(sender);
+            output.writeObject(throwable);
+            output.writeInt(viewId);
+            output.writeInt(topologyId);
+            return;
+         case CH_UPDATE:
+            output.writeObject(sender);
+            output.writeObject(currentCH);
+            output.writeObject(pendingCH);
+            MarshallUtil.marshallCollection(actualMembers, output);
+            MarshallUtil.marshallEnum(availabilityMode, output);
+            output.writeInt(topologyId);
+            output.writeInt(rebalanceId);
+            output.writeInt(viewId);
+            return;
+         case STABLE_TOPOLOGY_UPDATE:
+            output.writeObject(sender);
+            output.writeObject(currentCH);
+            output.writeObject(pendingCH);
+            MarshallUtil.marshallCollection(actualMembers, output);
+            output.writeInt(topologyId);
+            output.writeInt(rebalanceId);
+            output.writeInt(viewId);
+            return;
+         case REBALANCE_START:
+            output.writeObject(sender);
+            output.writeObject(currentCH);
+            output.writeObject(pendingCH);
+            MarshallUtil.marshallCollection(actualMembers, output);
+            output.writeInt(topologyId);
+            output.writeInt(rebalanceId);
+            output.writeInt(viewId);
+            return;
+         case GET_STATUS:
+            output.writeInt(viewId);
+            return;
+         case AVAILABILITY_MODE_CHANGE:
+            MarshallUtil.marshallEnum(availabilityMode, output);
+            return;
+         case POLICY_GET_STATUS:
+         case POLICY_ENABLE:
+         case POLICY_DISABLE:
+         case REBALANCING_GET_STATUS:
+         default:
+      }
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] parameters) {
-      int i = 0;
-      cacheName = (String) parameters[i++];
-      type = Type.CACHED_VALUES[(Byte) parameters[i++]];
-      sender = (Address) parameters[i++];
-      joinInfo = (CacheJoinInfo) parameters[i++];
-      topologyId = (Integer) parameters[i++];
-      rebalanceId = (Integer) parameters[i++];
-      currentCH = (ConsistentHash) parameters[i++];
-      pendingCH = (ConsistentHash) parameters[i++];
-      availabilityMode = (AvailabilityMode) parameters[i++];
-      actualMembers = (List<Address>) parameters[i++];
-      throwable = (Throwable) parameters[i++];
-      viewId = (Integer) parameters[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      cacheName = MarshallUtil.unmarshallString(input);
+      type = MarshallUtil.unmarshallEnum(input, ordinal -> Type.CACHED_VALUES[ordinal]);
+      switch (type) {
+         case JOIN:
+            sender = (Address) input.readObject();
+            joinInfo = (CacheJoinInfo) input.readObject();
+            viewId = input.readInt();
+            return;
+         case LEAVE:
+            sender = (Address) input.readObject();
+            viewId = input.readInt();
+            return;
+         case REBALANCE_CONFIRM:
+            sender = (Address) input.readObject();
+            throwable = (Throwable) input.readObject();
+            viewId = input.readInt();
+            topologyId = input.readInt();
+            return;
+         case CH_UPDATE:
+            sender = (Address) input.readObject();
+            currentCH = (ConsistentHash) input.readObject();
+            pendingCH = (ConsistentHash) input.readObject();
+            actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+            availabilityMode = MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
+            topologyId = input.readInt();
+            rebalanceId = input.readInt();
+            viewId = input.readInt();
+            return;
+         case STABLE_TOPOLOGY_UPDATE:
+            sender = (Address) input.readObject();
+            currentCH = (ConsistentHash) input.readObject();
+            pendingCH = (ConsistentHash) input.readObject();
+            actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+            topologyId = input.readInt();
+            rebalanceId = input.readInt();
+            viewId = input.readInt();
+            return;
+         case REBALANCE_START:
+            sender = (Address) input.readObject();
+            currentCH = (ConsistentHash) input.readObject();
+            pendingCH = (ConsistentHash) input.readObject();
+            actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+            topologyId = input.readInt();
+            rebalanceId = input.readInt();
+            viewId = input.readInt();
+            return;
+         case GET_STATUS:
+            viewId = input.readInt();
+            return;
+         case AVAILABILITY_MODE_CHANGE:
+            availabilityMode = MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
+            return;
+         case POLICY_GET_STATUS:
+         case POLICY_ENABLE:
+         case POLICY_DISABLE:
+         case REBALANCING_GET_STATUS:
+         default:
+      }
    }
 
    @Override

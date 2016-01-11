@@ -3,12 +3,18 @@ package org.infinispan.iteration.impl;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -69,20 +75,25 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{origin, identifier, completedSegments, inDoubtSegments, values, e, topologyId};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(origin);
+      MarshallUtil.marshallUUID(identifier, output, false);
+      MarshallUtil.marshallCollection(completedSegments, output);
+      MarshallUtil.marshallCollection(inDoubtSegments, output);
+      MarshallUtil.marshallCollection(values, output);
+      output.writeObject(e);
+      output.writeInt(topologyId);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      int i = 0;
-      origin = (Address) parameters[i++];
-      identifier = (UUID) parameters[i++];
-      completedSegments = (Set<Integer>) parameters[i++];
-      inDoubtSegments = (Set<Integer>) parameters[i++];
-      values = (Collection<CacheEntry<K, C>>)parameters[i++];
-      e = (CacheException)parameters[i++];
-      topologyId = (Integer) parameters[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      origin = (Address) input.readObject();
+      identifier = MarshallUtil.unmarshallUUID(input, false);
+      completedSegments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      inDoubtSegments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      values = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      e = (CacheException) input.readObject();
+      topologyId = input.readInt();
    }
 
    @Override

@@ -1,11 +1,13 @@
 package org.infinispan.commands.remote.recovery;
 
-import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.xa.Xid;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.List;
 
 /**
@@ -42,14 +44,12 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return Util.EMPTY_OBJECT_ARRAY;
+   public void writeTo(ObjectOutput output) throws IOException {
+      // No parameters
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Expected " + COMMAND_ID + "and received " + commandId);
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       // No parameters
    }
 

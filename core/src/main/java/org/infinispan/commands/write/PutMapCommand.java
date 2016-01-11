@@ -1,6 +1,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.MetadataAwareCommand;
@@ -13,6 +14,9 @@ import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -131,18 +135,21 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{map, metadata, isForwarded, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallMap(map, output);
+      output.writeObject(metadata);
+      output.writeBoolean(isForwarded);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeObject(commandInvocationId);
    }
 
-   @SuppressWarnings("unchecked")
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      map = (Map<Object, Object>) parameters[0];
-      metadata = (Metadata) parameters[1];
-      isForwarded = (Boolean) parameters[2];
-      flags = (Set<Flag>) parameters[3];
-      commandInvocationId = (CommandInvocationId) parameters[4];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      map = MarshallUtil.unmarshallMap(input, HashMap::new);
+      metadata = (Metadata) input.readObject();
+      isForwarded = input.readBoolean();
+      flags = (Set<Flag>) input.readObject();
+      commandInvocationId = (CommandInvocationId) input.readObject();
    }
 
    @Override

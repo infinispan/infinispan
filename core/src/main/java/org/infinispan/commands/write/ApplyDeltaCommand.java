@@ -4,15 +4,19 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 
@@ -71,22 +75,21 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{key, delta, keys, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(key);
+      output.writeObject(delta);
+      MarshallUtil.marshallCollection(keys, output);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeObject(commandInvocationId);
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] args) {
-      // TODO: Check duplicated in all commands? A better solution is needed.
-      if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Unsupported command id:" + commandId);
-      int i = 0;
-      key = args[i++];
-      delta = (Delta)args[i++];
-      keys = (List<Object>) args[i++];
-      flags = (Set<Flag>) args[i++];
-      commandInvocationId = (CommandInvocationId) args[i];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readObject();
+      delta = (Delta) input.readObject();
+      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      flags = (Set<Flag>) input.readObject();
+      commandInvocationId = (CommandInvocationId) input.readObject();
    }
 
    @Override

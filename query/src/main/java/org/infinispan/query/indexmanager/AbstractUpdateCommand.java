@@ -1,14 +1,12 @@
 package org.infinispan.query.indexmanager;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -19,6 +17,12 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base class for index commands
@@ -45,14 +49,15 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    public abstract byte getCommandId();
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{indexName, serializedModel};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeUTF(indexName);
+      MarshallUtil.marshallByteArray(serializedModel, output);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      this.indexName = (String) parameters[0];
-      this.serializedModel = (byte[]) parameters[1];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      indexName = input.readUTF();
+      serializedModel = MarshallUtil.unmarshallByteArray(input);
    }
 
    @Override
@@ -79,6 +84,10 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    @Override
    public boolean canBlock() {
       return true;
+   }
+
+   public String getIndexName() {
+      return indexName;
    }
 
    protected List<LuceneWork> transformKeysToStrings(final List<LuceneWork> luceneWorks) {

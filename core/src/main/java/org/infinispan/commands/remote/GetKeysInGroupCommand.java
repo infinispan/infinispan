@@ -3,6 +3,7 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -10,6 +11,9 @@ import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.lifecycle.ComponentStatus;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -66,18 +70,15 @@ public class GetKeysInGroupCommand extends AbstractFlagAffectedCommand implement
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{groupName, flags};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeUTF(groupName);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("Wrong command id");
-      }
-      this.groupName = (String) parameters[0];
-      //noinspection unchecked
-      this.flags = (Set<Flag>) parameters[1];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      groupName = input.readUTF();
+      flags = (Set<Flag>) input.readObject();
    }
 
    @Override
@@ -129,7 +130,7 @@ public class GetKeysInGroupCommand extends AbstractFlagAffectedCommand implement
       this.isGroupOwner = isGroupOwner;
    }
 
-   private static interface KeyValueCollector {
+   private interface KeyValueCollector {
       void addCacheEntry(CacheEntry entry);
 
       Object getResult();

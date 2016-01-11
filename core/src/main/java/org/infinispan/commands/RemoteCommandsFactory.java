@@ -104,7 +104,7 @@ public class RemoteCommandsFactory {
     *
     * @param id id of the command
     * @param parameters parameters to set
-    * @param type
+    * @param type type of the command
     * @return a replicable command
     */
    public ReplicableCommand fromStream(byte id, Object[] parameters, byte type) {
@@ -184,7 +184,6 @@ public class RemoteCommandsFactory {
          else
             throw new CacheException("Unknown command id " + id + "!");
       }
-      command.setParameters(id, parameters);
       return command;
    }
 
@@ -313,13 +312,12 @@ public class RemoteCommandsFactory {
                throw new CacheException("Unknown command id " + id + "!");
          }
       } else {
-         ModuleCommandFactory mcf = (ModuleCommandFactory) commandFactories.get(id);
+         ModuleCommandFactory mcf = commandFactories.get(id);
          if (mcf != null)
             return mcf.fromStream(id, parameters, cacheName);
          else
             throw new CacheException("Unknown command id " + id + "!");
       }
-      command.setParameters(id, parameters);
       return command;
    }
 }

@@ -4,12 +4,16 @@ import org.hibernate.search.query.engine.spi.HSQuery;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker;
 import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.ModuleCommandIds;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.UUID;
 
 /**
@@ -117,17 +121,19 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[] { commandType, query, lazyQueryId, docIndex };
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallEnum(commandType, output);
+      output.writeObject(query);
+      MarshallUtil.marshallUUID(lazyQueryId, output, true);
+      output.writeInt(docIndex);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      int i = 0;
-      commandType = (ClusteredQueryCommandType) args[i++];
-      query = (HSQuery) args[i++];
-      lazyQueryId = (UUID) args[i++];
-      docIndex = (Integer) args[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commandType = MarshallUtil.unmarshallEnum(input, ClusteredQueryCommandType::valueOf);
+      query = (HSQuery) input.readObject();
+      lazyQueryId = MarshallUtil.unmarshallUUID(input, true);
+      docIndex = input.readInt();
    }
 
    @Override

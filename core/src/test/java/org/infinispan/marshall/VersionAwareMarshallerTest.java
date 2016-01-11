@@ -3,6 +3,7 @@ package org.infinispan.marshall;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commons.util.Util;
+import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.ReplicableCommand;
@@ -280,6 +281,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshallAndAssertEquality(c14);
 
       TotalOrderVersionedPrepareCommand c15 = new TotalOrderVersionedPrepareCommand(cacheName, gtx, Arrays.<WriteCommand>asList(c5, c10), true);
+      c15.setVersionsSeen(new EntryVersionsMap());
       marshallAndAssertEquality(c15);
 
       TotalOrderRollbackCommand c16 = new TotalOrderRollbackCommand(cacheName, gtx);
@@ -312,7 +314,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       newAddresses.add(a2);
       newAddresses.add(a3);
       DefaultConsistentHash newCh = chf.create(MurmurHash3.getInstance(), 2, 3, newAddresses, null);
-      StateRequestCommand c14 = new StateRequestCommand(cacheName, StateRequestCommand.Type.START_STATE_TRANSFER, a1, 99, null);
+      StateRequestCommand c14 = new StateRequestCommand(cacheName, StateRequestCommand.Type.START_STATE_TRANSFER, a1, 99, Collections.emptySet());
       byte[] bytes = marshaller.objectToByteBuffer(c14);
       marshaller.objectFromByteBuffer(bytes);
 

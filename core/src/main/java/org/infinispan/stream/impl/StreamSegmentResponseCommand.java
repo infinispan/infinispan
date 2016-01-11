@@ -1,10 +1,14 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * A stream response command taht also returns back suspected segments that need to be retried
@@ -40,18 +44,21 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{getOrigin(), id, complete, response, missedSegments};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(getOrigin());
+      output.writeObject(id);
+      output.writeBoolean(complete);
+      output.writeObject(response);
+      MarshallUtil.marshallCollection(missedSegments, output);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      int i = 0;
-      setOrigin((Address) parameters[i++]);
-      id = parameters[i++];
-      complete = (Boolean) parameters[i++];
-      response = (R) parameters[i++];
-      missedSegments = (Set<Integer>) parameters[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      setOrigin((Address) input.readObject());
+      id = input.readObject();
+      complete = input.readBoolean();
+      response = (R) input.readObject();
+      missedSegments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
    }
 
    @Override

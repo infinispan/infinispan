@@ -2,7 +2,6 @@ package org.infinispan.commands;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.PassivationManager;
@@ -12,6 +11,10 @@ import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.DependencyGraph;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAPH;
 
@@ -65,12 +68,12 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return Util.EMPTY_OBJECT_ARRAY;
+   public void writeTo(ObjectOutput output) throws IOException {
+      // No parameters
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       // No parameters
    }
 

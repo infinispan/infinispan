@@ -4,15 +4,19 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -57,15 +61,17 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      keys = (Set<? extends K>) parameters[0];
-      f = (Function<ReadWriteEntryView<K, V>, R>) parameters[1];
-      isForwarded = (Boolean) parameters[2];
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallCollection(keys, output);
+      output.writeObject(f);
+      output.writeBoolean(isForwarded);
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{keys, f, isForwarded};
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      keys = MarshallUtil.unmarshallCollection(input, size -> new HashSet<>());
+      f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
+      isForwarded = input.readBoolean();
    }
 
    public boolean isForwarded() {

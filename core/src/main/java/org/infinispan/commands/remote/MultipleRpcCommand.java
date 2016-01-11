@@ -3,10 +3,14 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,19 +72,13 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      int numCommands = commands.length;
-      Object[] retval = new Object[numCommands];
-      System.arraycopy(commands, 0, retval, 0, numCommands);
-      return retval;
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallArray(commands, output);
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] args) {
-      int numCommands = args.length;
-      commands = new ReplicableCommand[numCommands];
-      System.arraycopy(args, 0, commands, 0, numCommands);
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commands = MarshallUtil.unmarshallArray(input, ReplicableCommand[]::new);
    }
 
    @Override

@@ -1,8 +1,6 @@
 package org.infinispan.marshall.exts;
 
 import net.jcip.annotations.Immutable;
-
-import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
@@ -28,7 +26,7 @@ import java.util.TreeSet;
 public class SetExternalizer extends AbstractExternalizer<Set> {
    private static final int HASH_SET = 0;
    private static final int TREE_SET = 1;
-   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
+   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(2);
 
    public SetExternalizer() {
       numbers.put(HashSet.class, HASH_SET);
@@ -49,19 +47,15 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
    @Override
    public Set readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
-      Set<Object> subject = null;
       switch (magicNumber) {
          case HASH_SET:
-            subject = new HashSet();
-            break;
+            return MarshallUtil.unmarshallCollection(input, s -> new HashSet<>());
          case TREE_SET:
-            Comparator comparator = (Comparator) input.readObject();
-            subject = new TreeSet(comparator);
-            break;
+            Comparator<Object> comparator = (Comparator<Object>) input.readObject();
+            return MarshallUtil.unmarshallCollection(input, s -> new TreeSet<>(comparator));
+         default:
+            throw new IllegalStateException("Unknown Set type: " + magicNumber);
       }
-      int size = UnsignedNumeric.readUnsignedInt(input);
-      for (int i = 0; i < size; i++) subject.add(input.readObject());
-      return subject;
    }
 
    @Override

@@ -10,6 +10,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
@@ -50,21 +53,18 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{Flag.copyWithoutRemotableFlags(flags)};
-   }
-
-   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid command id");
-      if (parameters.length > 0) {
-         this.flags = (Set<Flag>) parameters[0];
-      }
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+   }
+
+   @Override
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      flags = (Set<Flag>) input.readObject();
    }
 
    @Override

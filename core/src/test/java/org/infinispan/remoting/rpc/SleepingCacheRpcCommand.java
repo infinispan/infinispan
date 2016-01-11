@@ -3,6 +3,10 @@ package org.infinispan.remoting.rpc;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * @author Pedro Ruivo
  * @since 5.3
@@ -37,16 +41,13 @@ public class SleepingCacheRpcCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{sleepTime};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeLong(sleepTime);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("This is not the command id we expect: " + commandId);
-      }
-      this.sleepTime = (Long) parameters[0];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      sleepTime = input.readLong();
    }
 
    @Override

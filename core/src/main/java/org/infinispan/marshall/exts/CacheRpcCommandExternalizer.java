@@ -1,15 +1,8 @@
 package org.infinispan.marshall.exts;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CreateCacheCommand;
 import org.infinispan.commands.RemoveCacheCommand;
-import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -33,8 +26,8 @@ import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareComman
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
-import org.infinispan.commons.io.ExposedByteArrayOutputStream;
-import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.DelegatingObjectInput;
+import org.infinispan.commons.marshall.DelegatingObjectOutput;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -57,6 +50,13 @@ import org.infinispan.xsite.XSiteAdminCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.OutputStream;
+import java.util.Set;
+
 /**
  * Externalizer in charge of marshalling cache specific commands. At read time,
  * this marshaller is able to locate the right cache marshaller and provide
@@ -70,6 +70,17 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    private final ReplicableCommandExternalizer cmdExt;
    private final StreamingMarshaller globalMarshaller;
 
+   /*
+   Currently needed for MultipleRpcCommand.
+   For this command, when it tries to unmarshall the first command, the marshaller tries to read the most as possible
+   to an internal buffer.
+   What is happening is that it reads all the commands on the first try and when it tries to unmarshall the second command
+   it will fail with java.io.EOFException or java.io.StreamCorruptedException.
+   Caching in a ThreadLocal solves the problem by reusing it.
+    */
+   private final ThreadLocal<ObjectInput> reusableObjectInput = new ThreadLocal<>();
+   private final ThreadLocal<ObjectOutput> reusableObjectOutput = new ThreadLocal<>();
+
    public CacheRpcCommandExternalizer(GlobalComponentRegistry gcr, ReplicableCommandExternalizer cmdExt) {
       this.cmdExt = cmdExt;
       this.gcr = gcr;
@@ -79,6 +90,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
+      //noinspection unchecked
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(MapCombineCommand.class,
                ReduceCommand.class, DistributedExecuteCommand.class, LockControlCommand.class,
                StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
@@ -100,71 +112,72 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
    @Override
    public void writeObject(ObjectOutput output, CacheRpcCommand command) throws IOException {
+      //header: type + method id.
       cmdExt.writeCommandHeader(output, command);
-
       String cacheName = command.getCacheName();
       output.writeUTF(cacheName);
+
       StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
 
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
       // the original payload.
-      ExposedByteArrayOutputStream os = marshallParameters(command, marshaller);
-      UnsignedNumeric.writeUnsignedInt(output, os.size());
-      // Do not rely on the raw buffer's length which is likely to be much longer!
-      output.write(os.getRawBuffer(), 0, os.size());
-      if (command instanceof TopologyAffectedCommand) {
-         output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
-      }
+      marshallParameters(command, marshaller, output);
    }
 
-   private ExposedByteArrayOutputStream marshallParameters(
-         CacheRpcCommand cmd, StreamingMarshaller marshaller) throws IOException {
-      BufferSizePredictor sizePredictor = marshaller.getBufferSizePredictor(cmd);
-      int estimatedSize = sizePredictor.nextSize(cmd);
-      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
-      ObjectOutput output = marshaller.startObjectOutput(baos, true, estimatedSize);
-      try {
-         cmdExt.writeCommandParameters(output, cmd);
-      } finally {
-         marshaller.finishObjectOutput(output);
+   private void marshallParameters(CacheRpcCommand cmd, StreamingMarshaller marshaller, ObjectOutput oo) throws IOException {
+      ObjectOutput paramsOutput = reusableObjectOutput.get();
+      final boolean firstTime = paramsOutput == null;
+      if (firstTime) {
+         BufferSizePredictor sizePredictor = marshaller.getBufferSizePredictor(cmd);
+         int estimatedSize = sizePredictor.nextSize(cmd);
+         paramsOutput = marshaller.startObjectOutput(convertObjectOutput(oo), true, estimatedSize);
+         reusableObjectOutput.set(paramsOutput);
       }
-      return baos;
+      try {
+         cmdExt.writeCommandParameters(paramsOutput, cmd);
+      } finally {
+         if (firstTime) {
+            marshaller.finishObjectOutput(paramsOutput);
+            reusableObjectOutput.remove();
+         }
+      }
    }
 
    @Override
    public CacheRpcCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      //header
       byte type = input.readByte();
       byte methodId = (byte) input.readShort();
-
       String cacheName = input.readUTF();
+
       StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
 
-      byte[] paramsRaw = new byte[UnsignedNumeric.readUnsignedInt(input)];
-      // This is not ideal cos it forces the code to read all parameters into
-      // memory and then splitting them, potentially leading to excessive
-      // buffering. An alternative solution is shown in SharedStreamMultiMarshallerTest
-      // but it requires some special treatment - iow, hacking :)
-      input.readFully(paramsRaw);
-      ByteArrayInputStream is = new ByteArrayInputStream(paramsRaw, 0, paramsRaw.length);
-      ObjectInput paramsInput = marshaller.startObjectInput(is, true);
-      // Not ideal, but the alternative (without changing API), would have been
-      // using thread locals which are expensive to retrieve.
-      // Remember that the aim with externalizers is for them to be stateless.
-      if (paramsInput instanceof ExtendedRiverUnmarshaller)
-         ((ExtendedRiverUnmarshaller) paramsInput).setInfinispanMarshaller(marshaller);
-
-      try {
-         Object[] args = cmdExt.readParameters(paramsInput);
-         CacheRpcCommand cacheRpcCommand = cmdExt.fromStream(methodId, args, type, cacheName);
-         if (cacheRpcCommand instanceof TopologyAffectedCommand) {
-            int topologyId = input.readInt();
-            ((TopologyAffectedCommand)cacheRpcCommand).setTopologyId(topologyId);
+      //create the object input
+      ObjectInput paramsInput = reusableObjectInput.get();
+      final boolean firsTime = paramsInput == null;
+      if (firsTime) {
+         paramsInput = marshaller.startObjectInput(convertInputStream(input), true);
+         // Not ideal, but the alternative (without changing API), would have been
+         // using thread locals which are expensive to retrieve.
+         // Remember that the aim with externalizers is for them to be stateless.
+         if (paramsInput instanceof ExtendedRiverUnmarshaller) {
+            ((ExtendedRiverUnmarshaller) paramsInput).setInfinispanMarshaller(marshaller);
          }
-         return cacheRpcCommand;
-      } finally {
-         marshaller.finishObjectInput(paramsInput);
+         reusableObjectInput.set(paramsInput);
       }
+
+      CacheRpcCommand cacheRpcCommand;
+      try {
+         cacheRpcCommand = cmdExt.fromStream(methodId, cmdExt.readLegacyParameters(paramsInput), type, cacheName);
+         cmdExt.readCommandParameters(paramsInput, cacheRpcCommand);
+      } finally {
+         if (firsTime) {
+            marshaller.finishObjectInput(paramsInput);
+            reusableObjectInput.remove();
+         }
+      }
+      return cacheRpcCommand;
    }
 
    @Override
@@ -191,4 +204,15 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       }
    }
 
+   private static OutputStream convertObjectOutput(ObjectOutput objectOutput) {
+      return objectOutput instanceof OutputStream ?
+            (OutputStream) objectOutput :
+            new DelegatingObjectOutput(objectOutput);
+   }
+
+   private static InputStream convertInputStream(ObjectInput objectInput) {
+      return objectInput instanceof InputStream ?
+            (InputStream) objectInput :
+            new DelegatingObjectInput(objectInput);
+   }
 }

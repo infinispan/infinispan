@@ -66,22 +66,18 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
       Map subject = null;
       switch (magicNumber) {
          case HASHMAP:
-            subject = new HashMap();
-            break;
+            return MarshallUtil.unmarshallMap(input, HashMap::new);
          case TREEMAP:
-            subject = new TreeMap();
-            break;
+            return MarshallUtil.unmarshallMap(input, size -> new TreeMap<>());
          case FASTCOPYHASHMAP:
-            subject = new FastCopyHashMap();
-            break;
+            return MarshallUtil.unmarshallMap(input, FastCopyHashMap::new);
          case EQUIVALENTHASHMAP:
             Equivalence<Object> keyEq = (Equivalence<Object>) input.readObject();
             Equivalence<Object> valueEq = (Equivalence<Object>) input.readObject();
-            subject = new EquivalentHashMap(keyEq, valueEq);
-            break;
+            return MarshallUtil.unmarshallMap(input, size -> new EquivalentHashMap<>(keyEq, valueEq));
+         default:
+            throw new IllegalStateException("Unknown Map type: " + magicNumber);
       }
-      MarshallUtil.unmarshallMap(subject, input);
-      return subject;
    }
 
    @Override

@@ -175,7 +175,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
                   Map<Address, Response> results = new HashMap<Address, Response>(1);
                   if (cmd.getType().equals(StateRequestCommand.Type.GET_TRANSACTIONS)) {
                      results.put(recipient, SuccessfulResponse.create(new ArrayList<TransactionInfo>()));
-                     Set<Integer> segments = (Set<Integer>) cmd.getParameters()[3];
+                     Set<Integer> segments = cmd.getSegments();
                      requestedSegments.put(recipient, segments);
                      flatRequestedSegments.addAll(segments);
                   } else if (cmd.getType().equals(StateRequestCommand.Type.START_STATE_TRANSFER)

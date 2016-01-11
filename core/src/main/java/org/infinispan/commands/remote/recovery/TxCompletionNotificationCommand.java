@@ -13,6 +13,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.xa.Xid;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
@@ -123,21 +126,25 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{xid != null ? xid : internalId, gtx};
+   public void writeTo(ObjectOutput output) throws IOException {
+      if (xid == null) {
+         output.writeBoolean(true);
+         output.writeLong(internalId);
+      } else {
+         output.writeBoolean(false);
+         output.writeObject(xid);
+      }
+      output.writeObject(gtx);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("Wrong command id. Received " + commandId + " and expected " + TxCompletionNotificationCommand.COMMAND_ID);
-      }
-      if (parameters[0] instanceof Xid) {
-         xid = (Xid) parameters[0];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      if (input.readBoolean()) {
+         internalId = input.readLong();
       } else {
-         internalId = (Long) parameters[0];
+         xid = (Xid) input.readObject();
       }
-      gtx = (GlobalTransaction) parameters[1];
+      gtx = (GlobalTransaction) input.readObject();
    }
 
    @Override

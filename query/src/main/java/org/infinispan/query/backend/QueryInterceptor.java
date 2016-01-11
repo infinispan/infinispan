@@ -369,13 +369,12 @@ public final class QueryInterceptor extends CommandInterceptor {
    private void processReplaceCommand(final ReplaceCommand command, final InvocationContext ctx, final Object valueReplaced, TransactionContext transactionContext) {
       if (valueReplaced != null && command.isSuccessful() && shouldModifyIndexes(command, ctx)) {
          final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
-         Object[] parameters = command.getParameters();
-         Object p2 = extractValue(parameters[2]);
+         Object p2 = extractValue(command.getNewValue());
          final boolean newValueIsIndexed = updateKnownTypesIfNeeded(p2);
          Object key = extractValue(command.getKey());
 
          if (!usingSkipIndexCleanupFlag) {
-            final Object p1 = extractValue(parameters[1]);
+            final Object p1 = extractValue(command.getOldValue());
             final boolean originalIsIndexed = updateKnownTypesIfNeeded(p1);
             if (p1 != null && originalIsIndexed) {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;

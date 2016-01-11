@@ -5,6 +5,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -14,6 +15,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -47,24 +51,27 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
-      value = (V) parameters[1];
-      f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) parameters[2];
-      valueMatcher = (ValueMatcher) parameters[3];
-      flags = (Set<Flag>) parameters[4];
-      commandInvocationId = (CommandInvocationId) parameters[5];
-      prevValue = (V) parameters[6];
-      prevMetadata = (Metadata) parameters[7];
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(key);
+      output.writeObject(value);
+      output.writeObject(f);
+      MarshallUtil.marshallEnum(valueMatcher, output);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeObject(commandInvocationId);
+      output.writeObject(prevValue);
+      output.writeObject(prevMetadata);
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{
-         key, value, f, valueMatcher, Flag.copyWithoutRemotableFlags(flags),
-         commandInvocationId, prevValue, prevMetadata
-      };
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readObject();
+      value = (V) input.readObject();
+      f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) input.readObject();
+      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      flags = (Set<Flag>) input.readObject();
+      commandInvocationId = (CommandInvocationId) input.readObject();
+      prevValue = (V) input.readObject();
+      prevMetadata = (Metadata) input.readObject();
    }
 
    @Override
@@ -86,7 +93,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       if (e == null) return null;
 
       // Command only has one previous value, do not override it
-      if (prevValue == null && (flags == null || !flags.contains(Flag.COMMAND_RETRY))) {
+      if (prevValue == null && !hasFlag(Flag.COMMAND_RETRY)) {
          prevValue = e.getValue();
          prevMetadata = e.getMetadata();
       }

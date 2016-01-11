@@ -143,7 +143,7 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
       verify(rpcManager, atLeastOnce()).invokeRemotely(anyCollection(), argument.capture(), eq(rpcOptions));
       boolean indexCalled = false;
       for (IndexUpdateCommand updateCommand : argument.getAllValues()) {
-         indexCalled |= updateCommand.getParameters()[0].equals(indexName);
+         indexCalled |= updateCommand.getIndexName().equals(indexName);
       }
       assertTrue(indexCalled);
    }

@@ -1,5 +1,8 @@
 package org.infinispan.commands.remote;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +12,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -124,16 +128,17 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[] { keys, flags, gtx };
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallCollection(keys, output);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeObject(gtx);
    }
 
-   @SuppressWarnings("unchecked")
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      this.keys = (List<Object>) parameters[0];
-      this.flags = (Set<Flag>) parameters[1];
-      this.gtx = (GlobalTransaction) parameters[2];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      flags = (Set<Flag>) input.readObject();
+      gtx = (GlobalTransaction) input.readObject();
    }
 
    @Override

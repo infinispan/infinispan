@@ -2,10 +2,15 @@ package org.infinispan.stream.impl;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -106,23 +111,29 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{getOrigin(), id, parallelStream, (byte) type.ordinal(), segments, keys, excludedKeys, includeLoader,
-              terminalOperation};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(getOrigin());
+      output.writeObject(id);
+      output.writeBoolean(parallelStream);
+      MarshallUtil.marshallEnum(type, output);
+      MarshallUtil.marshallCollection(segments, output);
+      MarshallUtil.marshallCollection(keys, output);
+      MarshallUtil.marshallCollection(excludedKeys, output);
+      output.writeBoolean(includeLoader);
+      output.writeObject(terminalOperation);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      int i = 0;
-      setOrigin((Address) parameters[i++]);
-      id = parameters[i++];
-      parallelStream = (Boolean) parameters[i++];
-      type = Type.CACHED_VALUES[(byte) parameters[i++]];
-      segments = (Set<Integer>) parameters[i++];
-      keys = (Set<K>) parameters[i++];
-      excludedKeys = (Set<K>) parameters[i++];
-      includeLoader = (Boolean) parameters[i++];
-      terminalOperation = parameters[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      setOrigin((Address) input.readObject());
+      id = input.readObject();
+      parallelStream = input.readBoolean();
+      type = MarshallUtil.unmarshallEnum(input, ordinal -> Type.CACHED_VALUES[ordinal]);
+      segments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      excludedKeys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      includeLoader = input.readBoolean();
+      terminalOperation = input.readObject();
    }
 
    @Override

@@ -34,8 +34,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
 
    @Override
    public boolean isReturnValueExpected() {
-      return flags == null || (!flags.contains(Flag.SKIP_REMOTE_LOOKUP)
-                                  && !flags.contains(Flag.IGNORE_RETURN_VALUES));
+      return !hasFlag(Flag.SKIP_REMOTE_LOOKUP) && !hasFlag(Flag.IGNORE_RETURN_VALUES);
    }
 
    @Override

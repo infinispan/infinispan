@@ -12,6 +12,10 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * An abstract transaction boundary command that holds a reference to a {@link org.infinispan.transaction.xa.GlobalTransaction}
  *
@@ -105,13 +109,13 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{globalTx};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(globalTx);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      globalTx = (GlobalTransaction) args[0];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      globalTx = (GlobalTransaction) input.readObject();
    }
 
    @Override

@@ -6,6 +6,9 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 
 /**
@@ -49,16 +52,13 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{arg};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(arg);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("This is not the command id we expect: " + commandId);
-      }
-      arg = parameters[0];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      arg = input.readObject();
    }
 
    @Override
