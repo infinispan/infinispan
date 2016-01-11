@@ -39,117 +39,130 @@ public class ExpiryTest extends MultiHotRodServersTest {
    }
 
    public void testGlobalExpiryPut() {
-      expectExpiryAfterRequest(Req.PUT);
+      RemoteCache<Integer, String> cache0 = client(0).getCache();
+      Req.PUT.execute(cache0,0,"v0");
+      expectCachedThenExpired(cache0, 0, "v0");
    }
 
    public void testGlobalExpiryPutWithFlag() {
-      expectExpiryAfterRequest(Req.PUT, client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING));
+      RemoteCache<Integer, String> cache0 = client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING);
+      Req.PUT.execute(cache0,1,"v0");
+      expectCachedThenExpired(cache0, 1, "v0");
    }
 
    public void testGlobalExpiryPutAll() {
-      expectExpiryAfterRequest(Req.PUT_ALL);
+      RemoteCache<Integer, String> cache0 = client(0).getCache();
+      Map<Integer, String> data = new HashMap<Integer, String>();
+      data.put(2,"v0");
+      Req.PUT_ALL.execute(cache0,data);
+      expectCachedThenExpired(cache0, 2, "v0");
    }
 
    public void testGlobalExpiryPutAllWithFlag() {
-      expectExpiryAfterRequest(Req.PUT_ALL, client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING));
+      RemoteCache<Integer, String> cache0 = client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING);
+      Map<Integer, String> data = new HashMap<Integer, String>();
+      data.put(3, "v0");
+      Req.PUT_ALL.execute(cache0,data);
+      expectCachedThenExpired(cache0, 3, "v0");
    }
 
    public void testGlobalExpiryPutIfAbsent() {
-      expectExpiryAfterRequest(Req.PUT_IF_ABSENT);
+      RemoteCache<Integer, String> cache0 = client(0).getCache();
+      Req.PUT_IF_ABSENT.execute(cache0, 4, "v0");
+      expectCachedThenExpired(cache0, 4, "v0");
    }
 
    public void testGlobalExpiryPutIfAbsentWithFlag() {
-      expectExpiryAfterRequest(Req.PUT_IF_ABSENT, client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING));
+      RemoteCache<Integer, String> cache0 = client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING);
+      Req.PUT_IF_ABSENT.execute(cache0, 5, "v0");
+      expectCachedThenExpired(cache0, 5, "v0");
    }
 
    public void testGlobalExpiryReplace() {
-      client(0).getCache().put(1, "v0");
-      expectExpiryAfterRequest(Req.REPLACE);
+      RemoteCache<Integer, String> cache0 = client(0).getCache();
+      cache0.put(6,"v1");
+      Req.REPLACE.execute(cache0, 6, "v0");
+      expectCachedThenExpired(cache0, 6, "v0");
+
    }
 
    public void testGlobalExpiryReplaceFlag() {
-      client(0).getCache().put(1, "v0");
-      expectExpiryAfterRequest(Req.REPLACE, client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING));
+      RemoteCache<Integer, String> cache0 = client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING);
+      cache0.put(7,"v1");
+      Req.REPLACE.execute(cache0, 7, "v0");
+      expectCachedThenExpired(cache0, 7, "v0");
    }
 
    public void testGlobalExpiryReplaceWithVersion() {
-      client(0).getCache().put(1, "v0");
-      long version = client(0).getCache().getVersioned(1).getVersion();
+      client(0).getCache().put(8, "v0");
+      long version = client(0).getCache().getVersioned(8).getVersion();
       RemoteCache<Integer, String> cache0 = client(0).getCache();
-      Req.REPLACE_WITH_VERSION.execute(cache0, version);
-      expectCachedThenExpired(cache0);
+      Req.REPLACE_WITH_VERSION.execute(cache0, 8,"v1",version);
+      expectCachedThenExpired(cache0, 8, "v1");
    }
 
    public void testGlobalExpiryReplaceWithVersionFlag() {
-      client(0).getCache().put(1, "v0");
-      long version = client(0).getCache().getVersioned(1).getVersion();
+      client(0).getCache().put(9, "v0");
+      long version = client(0).getCache().getVersioned(9).getVersion();
       RemoteCache<Integer, String> cache0 = client(0).getCache();
-      Req.REPLACE_WITH_VERSION.execute(client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING), version);
-      expectCachedThenExpired(cache0);
+      Req.REPLACE_WITH_VERSION.execute(client(0).<Integer, String>getCache().withFlags(Flag.SKIP_INDEXING),9,"v1",version);
+      expectCachedThenExpired(cache0,9,"v1");
    }
 
-   private void expectExpiryAfterRequest(Req req) {
-      RemoteCache<Integer, String> cache0 = client(0).getCache();
-      req.execute(cache0);
-      expectCachedThenExpired(cache0);
-   }
 
-   private void expectExpiryAfterRequest(Req req, RemoteCache<Integer, String> cache0) {
-      req.execute(cache0);
-      expectCachedThenExpired(cache0);
-   }
-
-   private void expectCachedThenExpired(RemoteCache<Integer, String> cache) {
-      assertEquals("v1", cache.get(1));
+   private void expectCachedThenExpired(RemoteCache<Integer, String> cache, int key, String value) {
+      assertEquals(value, cache.get(key));
       timeService.advance(EXPIRATION_TIMEOUT + 100);
-      assertNull(cache.get(1));
+      assertNull(cache.get(key));
    }
 
    private enum Req {
       PUT {
          @Override
-         void execute(RemoteCache<Integer, String> c) {
-            c.put(1, "v1");
+         void execute(RemoteCache<Integer, String> c, int key ,String value) {
+            c.put(key, value);
          }
       },
 
       PUT_IF_ABSENT {
          @Override
-         void execute(RemoteCache<Integer, String> c) {
-            c.putIfAbsent(1, "v1");
+         void execute(RemoteCache<Integer, String> c, int key, String value) {
+            c.putIfAbsent(key, value);
          }
       },
 
       PUT_ALL {
          @Override
-         void execute(RemoteCache<Integer, String> c) {
-            Map<Integer, String> data = new HashMap<Integer, String>();
-            data.put(1, "v1");
+         void execute(RemoteCache<Integer, String> c,Map<Integer, String> data) {
             c.putAll(data);
          }
       },
 
       REPLACE {
          @Override
-         void execute(RemoteCache<Integer, String> c) {
-            c.replace(1, "v1");
+         void execute(RemoteCache<Integer, String> c, int key, String value) {
+            c.replace(key, value);
          }
       },
 
       REPLACE_WITH_VERSION {
          @Override
-         void execute(RemoteCache<Integer, String> c, Long version) {
-            c.replaceWithVersion(1, "v1", version);
+         void execute(RemoteCache<Integer, String> c, int key, String value, Long version) {
+            c.replaceWithVersion(key, value, version);
          }
       },
       ;
 
-      void execute(RemoteCache<Integer, String> c) {
-         execute(c, null);
+      void execute(RemoteCache<Integer, String> c, int key, String value,  Long version) {
+         execute(c,key,value,version);
       }
 
-      void execute(RemoteCache<Integer, String> c, Long version) {
-         execute(c);
+      void execute(RemoteCache<Integer, String> c, int key, String value) {
+         execute(c,key,value);
+      }
+
+      void execute(RemoteCache<Integer, String> c, Map<Integer, String> data) {
+         execute(c,data);
       }
    }
 
