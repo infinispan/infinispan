@@ -3,6 +3,10 @@ package org.infinispan.xsite;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * RPC command to replicate cache operations (such as put, remove, replace, etc.) to the backup site.
  *
@@ -43,16 +47,13 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{command};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(command);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("Unusupported command id:" + commandId);
-      }
-      command = (VisitableCommand) parameters[0];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      command = (VisitableCommand) input.readObject();
    }
 
    @Override

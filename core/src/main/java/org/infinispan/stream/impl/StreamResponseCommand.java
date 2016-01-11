@@ -5,8 +5,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collections;
-import java.util.UUID;
 
 /**
  * Stream response command used to handle returning intermediate or final responses from the remote node
@@ -53,17 +55,19 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{getOrigin(), id, complete, response};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(getOrigin());
+      output.writeObject(id);
+      output.writeBoolean(complete);
+      output.writeObject(response);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      int i = 0;
-      setOrigin((Address) parameters[i++]);
-      id = parameters[i++];
-      complete = (Boolean) parameters[i++];
-      response = (R) parameters[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      setOrigin((Address) input.readObject());
+      id = input.readObject();
+      complete = input.readBoolean();
+      response = (R) input.readObject();
    }
 
    @Override

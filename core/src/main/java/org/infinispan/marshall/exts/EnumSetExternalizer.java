@@ -55,7 +55,10 @@ public class EnumSetExternalizer extends AbstractExternalizer<Set> {
          output.writeObject(set);
       } else {
          output.writeByte(number);
-         MarshallUtil.marshallCollection(set, output);
+         UnsignedNumeric.writeUnsignedInt(output, set.size());
+         for (Object o : set) {
+            output.writeObject(o);
+         }
       }
    }
 

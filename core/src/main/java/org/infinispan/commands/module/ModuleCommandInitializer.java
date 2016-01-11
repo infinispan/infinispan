@@ -18,7 +18,7 @@ import org.infinispan.factories.scopes.Scopes;
 @SurvivesRestarts
 public interface ModuleCommandInitializer {
    /**
-    * Initializes a command constructed using {@link ModuleCommandFactory#fromStream(byte, Object[])} with
+    * Initializes a command constructed using {@link ModuleCommandFactory#fromStream(byte)} with
     * necessary named-cache-specific components.
     *
     * @param c command to initialize

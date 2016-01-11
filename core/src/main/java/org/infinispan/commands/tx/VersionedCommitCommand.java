@@ -1,7 +1,12 @@
 package org.infinispan.commands.tx;
 
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * The same as a {@link CommitCommand} except that version information is also carried by this command, used by
@@ -40,14 +45,15 @@ public class VersionedCommitCommand extends CommitCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{globalTx, updatedVersions};
+   public void writeTo(ObjectOutput output) throws IOException {
+      super.writeTo(output); //write global tx
+      MarshallUtil.marshallMap(updatedVersions, output);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      globalTx = (GlobalTransaction) args[0];
-      updatedVersions = (EntryVersionsMap) args[1];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      super.readFrom(input);
+      updatedVersions = MarshallUtil.unmarshallMap(input, EntryVersionsMap::new);
    }
 
    @Override

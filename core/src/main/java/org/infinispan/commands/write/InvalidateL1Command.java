@@ -1,5 +1,8 @@
 package org.infinispan.commands.write;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -112,34 +115,15 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      if (keys == null || keys.length == 0) {
-         return new Object[]{commandInvocationId, writeOrigin, 0};
-      } else if (keys.length == 1) {
-         return new Object[]{commandInvocationId, writeOrigin, 1,  keys[0]};
-      } else {
-         Object[] retval = new Object[keys.length + 3];
-         int i = 0;
-         retval[i++] = commandInvocationId;
-         retval[i++] = writeOrigin;
-         retval[i++] = keys.length;
-         System.arraycopy(keys, 0, retval, i, keys.length);
-         return retval;
-      }
+   public void writeTo(ObjectOutput output) throws IOException {
+      super.writeTo(output); //command invocation id + keys
+      output.writeObject(writeOrigin);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      int i = 0;
-      commandInvocationId = (CommandInvocationId) args[i++];
-      writeOrigin = (Address) args[i++];
-      int size = (Integer) args[i++];
-      keys = new Object[size];
-      if (size == 1) {
-         keys[0] = args[i];
-      } else if (size > 0) {
-         System.arraycopy(args, i, keys, 0, size);
-      }
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      super.readFrom(input);
+      writeOrigin = (Address) input.readObject();
    }
 
    @Override

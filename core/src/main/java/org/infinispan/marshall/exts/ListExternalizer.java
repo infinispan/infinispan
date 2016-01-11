@@ -1,8 +1,6 @@
 package org.infinispan.marshall.exts;
 
 import net.jcip.annotations.Immutable;
-
-import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
@@ -47,22 +45,14 @@ public class ListExternalizer extends AbstractExternalizer<List> {
    @Override
    public List readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
-      int size = UnsignedNumeric.readUnsignedInt(input);
-
-      List<Object> subject = null;
       switch (magicNumber) {
          case ARRAY_LIST:
-            subject = new ArrayList<Object>(size);
-            break;
+            return MarshallUtil.unmarshallCollection(input, ArrayList::new);
          case LINKED_LIST:
-            subject = new LinkedList<Object>();
-            break;
+            return MarshallUtil.unmarshallCollection(input, s -> new LinkedList<>());
+         default:
+            throw new IllegalStateException("Unknown List type: " + magicNumber);
       }
-
-      for (int i = 0; i < size; i++)
-         subject.add(input.readObject());
-
-      return subject;
    }
 
    @Override

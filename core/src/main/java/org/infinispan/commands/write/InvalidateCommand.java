@@ -2,6 +2,7 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
@@ -12,6 +13,9 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -92,32 +96,15 @@ public class InvalidateCommand extends RemoveCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      if (keys == null || keys.length == 0) {
-         return new Object[]{commandInvocationId, 0};
-      } else if (keys.length == 1) {
-         return new Object[]{commandInvocationId, 1, keys[0]};
-      } else {
-         Object[] retval = new Object[keys.length + 2];
-         retval[0] = commandInvocationId;
-         retval[1] = keys.length;
-         System.arraycopy(keys, 0, retval, 2, keys.length);
-         return retval;
-      }
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(commandInvocationId);
+      MarshallUtil.marshallArray(keys, output);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      int i = 0;
-      commandInvocationId = (CommandInvocationId) args[i++];
-      int size = (Integer) args[i++];
-      keys = new Object[size];
-      if (size == 1) {
-         keys[0] = args[i];
-      } else if (size > 0) {
-         System.arraycopy(args, i, keys, 0, size);
-      }
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commandInvocationId = (CommandInvocationId) input.readObject();
+      keys = MarshallUtil.unmarshallArray(input, Object[]::new);
    }
 
    @Override

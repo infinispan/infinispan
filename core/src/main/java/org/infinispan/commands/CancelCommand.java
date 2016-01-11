@@ -1,8 +1,12 @@
 package org.infinispan.commands;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.UUID;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -53,17 +57,13 @@ public class CancelCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[] { commandToCancel };
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallUUID(commandToCancel, output, false);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Invalid method id " + commandId + " but "
-                  + this.getClass() + " has id " + getCommandId());
-      int i = 0;
-      commandToCancel = (UUID) parameters[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      commandToCancel = MarshallUtil.unmarshallUUID(input, false);
    }
 
    @Override

@@ -1,8 +1,13 @@
 package org.infinispan.xsite.statetransfer;
 
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Command used to control the state transfer between sites.
@@ -77,7 +82,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
             stateTransferManager.clearStatus();
             break;
          default:
-            throw new IllegalStateException("Unknown control command: " + consumer);
+            throw new IllegalStateException("Unknown control command: " + control);
       }
       return null;
    }
@@ -88,19 +93,55 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{(byte) control.ordinal(), siteName, statusOk, topologyId};
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallEnum(control, output);
+      switch (control) {
+         case START_SEND:
+         case RESTART_SEND:
+            output.writeUTF(siteName);
+            output.writeInt(topologyId);
+            return;
+         case CANCEL_SEND:
+            output.writeUTF(siteName);
+            return;
+         case FINISH_SEND:
+            output.writeUTF(siteName);
+            output.writeBoolean(statusOk);
+            return;
+         case START_RECEIVE:
+         case FINISH_RECEIVE:
+         case STATUS_REQUEST:
+         case CLEAR_STATUS:
+            return;
+         default:
+            throw new IllegalStateException("Unknown control command: " + control);
+      }
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("CommandId is not valid! (" + commandId + " != " + COMMAND_ID + ")");
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      control = MarshallUtil.unmarshallEnum(input, ordinal -> StateTransferControl.CACHED_VALUES[ordinal]);
+      switch (control) {
+         case START_SEND:
+         case RESTART_SEND:
+            siteName = input.readUTF();
+            topologyId = input.readInt();
+            return;
+         case CANCEL_SEND:
+            siteName = input.readUTF();
+            return;
+         case FINISH_SEND:
+            siteName = input.readUTF();
+            statusOk = input.readBoolean();
+            return;
+         case START_RECEIVE:
+         case FINISH_RECEIVE:
+         case STATUS_REQUEST:
+         case CLEAR_STATUS:
+            return;
+         default:
+            throw new IllegalStateException("Unknown control command: " + control);
       }
-      this.control = StateTransferControl.CACHED_VALUES[(byte) parameters[0]];
-      this.siteName = (String) parameters[1];
-      this.statusOk = (Boolean) parameters[2];
-      this.topologyId = (Integer) parameters[3];
    }
 
    @Override

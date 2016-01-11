@@ -1,9 +1,13 @@
 package org.infinispan.commands.tx;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
 
@@ -45,33 +49,15 @@ public class VersionedPrepareCommand extends PrepareCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      int numMods = modifications == null ? 0 : modifications.length;
-      int i = 0;
-      final int params = 5;
-      Object[] retval = new Object[numMods + params];
-      retval[i++] = globalTx;
-      retval[i++] = onePhaseCommit;
-      retval[i++] = retriedCommand;
-      retval[i++] = versionsSeen;
-      retval[i++] = numMods;
-      if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
-      return retval;
+   public void writeTo(ObjectOutput output) throws IOException {
+      super.writeTo(output); //writes global tx, one phase, retried and mods.
+      MarshallUtil.marshallMap(versionsSeen, output);
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] args) {
-      int i = 0;
-      globalTx = (GlobalTransaction) args[i++];
-      onePhaseCommit = (Boolean) args[i++];
-      retriedCommand = (Boolean) args[i++];
-      versionsSeen = (EntryVersionsMap) args[i++];
-      int numMods = (Integer) args[i++];
-      if (numMods > 0) {
-         modifications = new WriteCommand[numMods];
-         System.arraycopy(args, i, modifications, 0, numMods);
-      }
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      super.readFrom(input);
+      versionsSeen = MarshallUtil.unmarshallMap(input, EntryVersionsMap::new);
    }
 
    @Override

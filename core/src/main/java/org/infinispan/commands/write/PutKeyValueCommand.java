@@ -3,6 +3,7 @@ package org.infinispan.commands.write;
 import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
@@ -15,6 +16,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 import static org.infinispan.commons.util.Util.toStr;
@@ -111,21 +115,25 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{key, value, metadata, putIfAbsent, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(key);
+      output.writeObject(value);
+      output.writeObject(metadata);
+      MarshallUtil.marshallEnum(valueMatcher, output);
+      output.writeObject(commandInvocationId);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeBoolean(putIfAbsent);
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
-      value = parameters[1];
-      metadata = (Metadata) parameters[2];
-      putIfAbsent = (Boolean) parameters[3];
-      valueMatcher = (ValueMatcher) parameters[4];
-      flags = (Set<Flag>) parameters[5];
-      commandInvocationId = (CommandInvocationId) parameters[6];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readObject();
+      value = input.readObject();
+      metadata = (Metadata) input.readObject();
+      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      commandInvocationId = (CommandInvocationId) input.readObject();
+      flags = (Set<Flag>) input.readObject();
+      putIfAbsent = input.readBoolean();
    }
 
    @Override

@@ -51,6 +51,8 @@ public enum ClusteredQueryCommandType {
       }
    };
 
+   private static final ClusteredQueryCommandType[] CACHED_VALUES = values();
+
    protected abstract ClusteredQueryCommandWorker getNewInstance();
 
    public ClusteredQueryCommandWorker getCommand(Cache<?, ?> cache, HSQuery query, UUID lazyQueryId,
@@ -59,6 +61,10 @@ public enum ClusteredQueryCommandType {
       command = getNewInstance();
       command.init(cache, query, lazyQueryId, docIndex);
       return command;
+   }
+
+   public static ClusteredQueryCommandType valueOf(int ordinal) {
+      return CACHED_VALUES[ordinal];
    }
 
 }

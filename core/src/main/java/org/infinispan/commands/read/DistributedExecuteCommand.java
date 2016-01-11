@@ -1,5 +1,8 @@
 package org.infinispan.commands.read;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -11,6 +14,7 @@ import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
@@ -130,18 +134,17 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[] { keys, callable, uuid};
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallCollection(keys, output);
+      output.writeObject(callable);
+      MarshallUtil.marshallUUID(uuid, output, false);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Invalid method id");
-      int i = 0;
-      this.keys = (Set<Object>) args[i++];
-      this.callable = (Callable<V>) args[i++];
-      this.uuid = (UUID) args[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      callable = (Callable<V>) input.readObject();
+      uuid = MarshallUtil.unmarshallUUID(input, false);
    }
 
    @Override

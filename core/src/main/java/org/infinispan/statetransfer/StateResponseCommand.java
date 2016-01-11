@@ -1,11 +1,16 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -82,20 +87,17 @@ public class StateResponseCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{getOrigin(), topologyId, stateChunks};
-   }
-
-   public int getTopologyId() {
-      return topologyId;
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(getOrigin());
+      output.writeInt(topologyId);
+      MarshallUtil.marshallCollection(stateChunks, output);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      int i = 0;
-      setOrigin((Address) parameters[i++]);
-      topologyId = (Integer) parameters[i++];
-      stateChunks = (Collection<StateChunk>) parameters[i];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      setOrigin((Address) input.readObject());
+      topologyId = input.readInt();
+      stateChunks = MarshallUtil.unmarshallCollection(input, ArrayList::new);
    }
 
    @Override

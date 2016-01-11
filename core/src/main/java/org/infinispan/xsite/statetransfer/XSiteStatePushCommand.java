@@ -1,8 +1,13 @@
 package org.infinispan.xsite.statetransfer;
 
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Wraps the state to be sent to another site
@@ -61,22 +66,15 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      Object[] result = new Object[chunk.length + 1];
-      result[0] = timeoutMillis;
-      System.arraycopy(chunk, 0, result, 1, chunk.length);
-      return result;
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeLong(timeoutMillis);
+      MarshallUtil.marshallArray(chunk, output);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("CommandId is not valid! (" + commandId + " != " + COMMAND_ID + ")");
-      }
-      this.timeoutMillis = (long) parameters[0];
-      this.chunk = new XSiteState[parameters.length - 1];
-      //noinspection SuspiciousSystemArraycopy
-      System.arraycopy(parameters, 1, chunk, 0, chunk.length);
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      timeoutMillis = input.readLong();
+      chunk = MarshallUtil.unmarshallArray(input, XSiteState[]::new);
    }
 
    @Override

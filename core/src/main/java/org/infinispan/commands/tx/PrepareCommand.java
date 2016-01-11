@@ -9,6 +9,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -22,6 +23,9 @@ import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -187,31 +191,19 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public Object[] getParameters() {
-      int numMods = modifications == null ? 0 : modifications.length;
-      int i = 0;
-      final int params = 4;
-      Object[] retval = new Object[numMods + params];
-      retval[i++] = globalTx;
-      retval[i++] = onePhaseCommit;
-      retval[i++] = retriedCommand;
-      retval[i] = numMods;
-      if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
-      return retval;
+   public void writeTo(ObjectOutput output) throws IOException {
+      super.writeTo(output); //global tx
+      output.writeBoolean(onePhaseCommit);
+      output.writeBoolean(retriedCommand);
+      MarshallUtil.marshallArray(modifications, output);
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] args) {
-      int i = 0;
-      globalTx = (GlobalTransaction) args[i++];
-      onePhaseCommit = (Boolean) args[i++];
-      retriedCommand = (boolean) args[i++];
-      int numMods = (Integer) args[i++];
-      if (numMods > 0) {
-         modifications = new WriteCommand[numMods];
-         System.arraycopy(args, i, modifications, 0, numMods);
-      }
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      super.readFrom(input);
+      onePhaseCommit = input.readBoolean();
+      retriedCommand = input.readBoolean();
+      modifications = MarshallUtil.unmarshallArray(input, WriteCommand[]::new);
    }
 
    public PrepareCommand copy() {

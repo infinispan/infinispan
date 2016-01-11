@@ -1,9 +1,13 @@
 package org.infinispan.commands;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -113,19 +117,17 @@ public class CreateCacheCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{cacheNameToCreate, cacheConfigurationName, expectedMembers};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeUTF(cacheNameToCreate);
+      output.writeUTF(cacheConfigurationName);
+      output.writeInt(expectedMembers);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Invalid method id " + commandId + " but " +
-                                               this.getClass() + " has id " + getCommandId());
-      int i = 0;
-      cacheNameToCreate = (String) parameters[i++];
-      cacheConfigurationName = (String) parameters[i++];
-      expectedMembers = (Integer) parameters[i];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      cacheNameToCreate = input.readUTF();
+      cacheConfigurationName = input.readUTF();
+      expectedMembers = input.readInt();
    }
 
    @Override

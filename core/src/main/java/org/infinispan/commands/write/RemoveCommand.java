@@ -3,6 +3,7 @@ package org.infinispan.commands.write;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -14,6 +15,9 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 
@@ -153,19 +157,21 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
-      value = parameters[1];
-      flags = (Set<Flag>) parameters[2];
-      valueMatcher = (ValueMatcher) parameters[3];
-      commandInvocationId = (CommandInvocationId) parameters[4];
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(key);
+      output.writeObject(value);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      MarshallUtil.marshallEnum(valueMatcher, output);
+      output.writeObject(commandInvocationId);
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), valueMatcher, commandInvocationId};
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readObject();
+      value = input.readObject();
+      flags = (Set<Flag>) input.readObject();
+      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      commandInvocationId = (CommandInvocationId) input.readObject();
    }
 
    @Override

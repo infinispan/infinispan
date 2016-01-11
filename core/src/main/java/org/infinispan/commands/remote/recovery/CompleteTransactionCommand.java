@@ -2,6 +2,9 @@ package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
 import javax.transaction.xa.Xid;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Command used by the recovery tooling for forcing transaction completion .
@@ -48,18 +51,15 @@ public class CompleteTransactionCommand extends RecoveryCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{xid, commit};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(xid);
+      output.writeBoolean(commit);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) {
-         throw new IllegalArgumentException("Unexpected command id: " + commandId + ". Expected " + COMMAND_ID);
-      }
-      int i = 0;
-      xid = (Xid) parameters[i++];
-      commit = (Boolean) parameters[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      xid = (Xid) input.readObject();
+      commit = input.readBoolean();
    }
 
    @Override

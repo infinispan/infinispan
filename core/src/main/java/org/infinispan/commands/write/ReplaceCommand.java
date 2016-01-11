@@ -4,6 +4,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -12,6 +13,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 import static org.infinispan.commons.util.Util.toStr;
@@ -110,21 +114,25 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, metadata, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(key);
+      output.writeObject(oldValue);
+      output.writeObject(newValue);
+      output.writeObject(metadata);
+      MarshallUtil.marshallEnum(valueMatcher, output);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeObject(commandInvocationId);
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalArgumentException("Invalid method name");
-      key = parameters[0];
-      oldValue = parameters[1];
-      newValue = parameters[2];
-      metadata = (Metadata) parameters[3];
-      valueMatcher = (ValueMatcher) parameters[4];
-      flags = (Set<Flag>) parameters[5];
-      commandInvocationId = (CommandInvocationId) parameters[6];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readObject();
+      oldValue = input.readObject();
+      newValue = input.readObject();
+      metadata = (Metadata) input.readObject();
+      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
+      flags = (Set<Flag>) input.readObject();
+      commandInvocationId = (CommandInvocationId) input.readObject();
    }
 
    @Override

@@ -2,12 +2,17 @@ package org.infinispan.commands.functional;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.lifecycle.ComponentStatus;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -46,15 +51,17 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      keys = (Set<? extends K>) parameters[0];
-      f = (Consumer<WriteEntryView<V>>) parameters[1];
-      isForwarded = (Boolean) parameters[2];
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallCollection(keys, output);
+      output.writeObject(f);
+      output.writeBoolean(isForwarded);
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{keys, f, isForwarded};
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      f = (Consumer<WriteEntryView<V>>) input.readObject();
+      isForwarded = input.readBoolean();
    }
 
    @Override

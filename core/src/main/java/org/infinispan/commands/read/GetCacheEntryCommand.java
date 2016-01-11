@@ -2,6 +2,9 @@ package org.infinispan.commands.read;
 
 import static org.infinispan.commons.util.Util.toStr;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commands.Visitor;
@@ -62,13 +65,6 @@ public final class GetCacheEntryCommand extends AbstractDataCommand implements R
       return COMMAND_ID;
    }
 
-   @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      key = parameters[0];
-      flags = (Set<Flag>) parameters[1];
-   }
-
    /**
     * @see #getRemotelyFetchedValue()
     */
@@ -86,8 +82,15 @@ public final class GetCacheEntryCommand extends AbstractDataCommand implements R
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{key, Flag.copyWithoutRemotableFlags(flags)};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(key);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+   }
+
+   @Override
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readObject();
+      flags = (Set<Flag>) input.readObject();
    }
 
    public String toString() {

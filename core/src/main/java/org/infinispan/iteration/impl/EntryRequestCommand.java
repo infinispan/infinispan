@@ -2,6 +2,7 @@ package org.infinispan.iteration.impl;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -9,6 +10,10 @@ import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.remoting.transport.Address;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -70,21 +75,27 @@ public class EntryRequestCommand<K, V, C> extends BaseRpcCommand implements Topo
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{identifier, getOrigin(), segments, keysToFilter, filter, converter, topologyId, flags};
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallUUID(identifier, output, false);
+      output.writeObject(getOrigin());
+      MarshallUtil.marshallCollection(segments, output);
+      MarshallUtil.marshallCollection(keysToFilter, output);
+      output.writeObject(filter);
+      output.writeObject(converter);
+      output.writeInt(topologyId);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      int i = 0;
-      identifier = (UUID) parameters[i++];
-      setOrigin((Address) parameters[i++]);
-      segments = (Set<Integer>) parameters[i++];
-      keysToFilter = (Set<K>) parameters[i++];
-      filter = (KeyValueFilter<? super K, ? super V>) parameters[i++];
-      converter = (Converter<? super K, ? super V, C>) parameters[i++];
-      topologyId = (Integer) parameters[i++];
-      flags = (Set<Flag>)parameters[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      identifier = MarshallUtil.unmarshallUUID(input, false);
+      setOrigin((Address) input.readObject());
+      segments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      keysToFilter = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      filter = (KeyValueFilter<? super K, ? super V>) input.readObject();
+      converter = (Converter<? super K, ? super V, C>) input.readObject();
+      topologyId = input.readInt();
+      flags = (Set<Flag>) input.readObject();
    }
 
    @Override

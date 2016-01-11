@@ -3,11 +3,16 @@ package org.infinispan.statetransfer;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -109,7 +114,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
 
    @Override
    public void setTopologyId(int topologyId) {
-      // CacheRpcCommandExternalizer wants to read and write the topology id out of get/setParameters, ignore it
+      this.topologyId = topologyId;
    }
 
    public Set<Integer> getSegments() {
@@ -122,18 +127,36 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{(byte) type.ordinal(), getOrigin(), topologyId, segments};
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallEnum(type, output);
+      switch (type) {
+         case GET_TRANSACTIONS:
+         case START_STATE_TRANSFER:
+         case CANCEL_STATE_TRANSFER:
+            output.writeObject(getOrigin());
+            MarshallUtil.marshallCollection(segments, output);
+            return;
+         case GET_CACHE_LISTENERS:
+            return;
+         default:
+            throw new IllegalStateException("Unknown state request command type: " + type);
+      }
    }
 
    @Override
-   @SuppressWarnings("unchecked")
-   public void setParameters(int commandId, Object[] parameters) {
-      int i = 0;
-      type = Type.CACHED_VALUES[(Byte) parameters[i++]];
-      setOrigin((Address) parameters[i++]);
-      topologyId = (Integer) parameters[i++];
-      segments = (Set<Integer>) parameters[i];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      type = MarshallUtil.unmarshallEnum(input, ordinal -> Type.CACHED_VALUES[ordinal]);
+      switch (type) {
+         case GET_TRANSACTIONS:
+         case CANCEL_STATE_TRANSFER:
+         case START_STATE_TRANSFER:
+            setOrigin((Address) input.readObject());
+            segments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+         case GET_CACHE_LISTENERS:
+            return;
+         default:
+            throw new IllegalStateException("Unknown state request command type: " + type);
+      }
    }
 
    @Override

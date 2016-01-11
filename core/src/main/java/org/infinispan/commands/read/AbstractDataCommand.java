@@ -36,12 +36,6 @@ public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand im
    }
 
    @Override
-   public abstract void setParameters(int commandId, Object[] parameters);
-
-   @Override
-   public abstract Object[] getParameters();
-
-   @Override
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
    }

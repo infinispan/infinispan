@@ -1,5 +1,8 @@
 package org.infinispan.commands.remote;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -132,17 +135,23 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{key, flags, acquireRemoteLock, acquireRemoteLock ? gtx : null};
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeObject(key);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeBoolean(acquireRemoteLock);
+      if (acquireRemoteLock) {
+         output.writeObject(gtx);
+      }
    }
 
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      int i = 0;
-      key = args[i++];
-      flags = (Set<Flag>) args[i++];
-      acquireRemoteLock = (Boolean) args[i++];
-      gtx = (GlobalTransaction) args[i];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      key = input.readObject();
+      flags = (Set<Flag>) input.readObject();
+      acquireRemoteLock = input.readBoolean();
+      if (acquireRemoteLock) {
+         gtx = (GlobalTransaction) input.readObject();
+      }
    }
 
    @Override

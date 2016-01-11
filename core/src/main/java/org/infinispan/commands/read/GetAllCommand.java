@@ -2,6 +2,7 @@ package org.infinispan.commands.read;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -13,6 +14,10 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -130,16 +135,17 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[]{ keys.toArray(), Flag.copyWithoutRemotableFlags(flags), returnEntries};
+   public void writeTo(ObjectOutput output) throws IOException {
+      MarshallUtil.marshallCollection(keys, output);
+      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeBoolean(returnEntries);
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
-      keys = createSet((Object[]) parameters[0]);
-      flags = (Set<Flag>) parameters[1];
-      returnEntries = (Boolean) parameters[2];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+      flags = (Set<Flag>) input.readObject();
+      returnEntries = input.readBoolean();
    }
 
    @Override

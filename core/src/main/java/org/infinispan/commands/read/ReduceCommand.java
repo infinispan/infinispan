@@ -1,5 +1,8 @@
 package org.infinispan.commands.read;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -8,6 +11,7 @@ import java.util.UUID;
 
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Reducer;
@@ -113,22 +117,23 @@ public class ReduceCommand<KOut, VOut> extends BaseRpcCommand implements Cancell
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[] { taskId, keys, reducer, useIntermediateSharedCache, uuid, resultCacheName };
+   public void writeTo(ObjectOutput output) throws IOException {
+      output.writeUTF(taskId);
+      MarshallUtil.marshallCollection(keys, output);
+      output.writeObject(reducer);
+      output.writeBoolean(useIntermediateSharedCache);
+      MarshallUtil.marshallUUID(uuid, output, false);
+      MarshallUtil.marshallString(resultCacheName, output);
    }
 
-   @SuppressWarnings({ "unchecked", "rawtypes" })
    @Override
-   public void setParameters(int commandId, Object[] args) {
-      if (commandId != COMMAND_ID)
-         throw new IllegalStateException("Invalid method id");
-      int i = 0;
-      taskId = (String) args[i++];
-      keys = (Set<KOut>) args[i++];
-      reducer = (Reducer) args[i++];
-      useIntermediateSharedCache = (Boolean) args[i++];
-      uuid = (UUID) args[i++];
-      resultCacheName = (String) args[i++];
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      taskId = input.readUTF();
+      keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      reducer = (Reducer<KOut, VOut>) input.readObject();
+      useIntermediateSharedCache = input.readBoolean();
+      uuid = MarshallUtil.unmarshallUUID(input, false);
+      resultCacheName = MarshallUtil.unmarshallString(input);
    }
 
    @Override
