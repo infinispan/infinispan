@@ -1,6 +1,7 @@
 package org.infinispan.partitionhandling;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -27,6 +28,11 @@ public enum AvailabilityMode {
       return AVAILABLE;
    }
 
+   private static final AvailabilityMode[] CACHED_VALUES = values();
+
+   public static AvailabilityMode valueOf(int ordinal) {
+      return CACHED_VALUES[ordinal];
+   }
 
    public static class Externalizer extends AbstractExternalizer<AvailabilityMode> {
       @Override
@@ -41,18 +47,12 @@ public enum AvailabilityMode {
 
       @Override
       public void writeObject(ObjectOutput output, AvailabilityMode AvailabilityMode) throws IOException {
-         output.writeByte(AvailabilityMode.ordinal());
+         MarshallUtil.marshallEnum(AvailabilityMode, output);
       }
 
       @Override
       public AvailabilityMode readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte AvailabilityModeByte = input.readByte();
-         try {
-            // values() cached by Class.getEnumConstants()
-            return AvailabilityMode.values()[AvailabilityModeByte];
-         } catch (ArrayIndexOutOfBoundsException e) {
-            throw new IllegalStateException("Unknown AvailabilityMode index: " + AvailabilityModeByte);
-         }
+         return MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
       }
    }
 }

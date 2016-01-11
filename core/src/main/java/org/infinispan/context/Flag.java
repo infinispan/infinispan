@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -332,6 +333,12 @@ public enum Flag {
       return copy;
    }
 
+   private static final Flag[] CACHED_VALUES = values();
+
+   private static Flag valueOf(int ordinal) {
+      return CACHED_VALUES[ordinal];
+   }
+
    public static class Externalizer extends AbstractExternalizer<Flag> {
 
       @Override
@@ -346,18 +353,12 @@ public enum Flag {
 
       @Override
       public void writeObject(ObjectOutput output, Flag flag) throws IOException {
-         output.writeByte(flag.ordinal());
+         MarshallUtil.marshallEnum(flag, output);
       }
 
       @Override
       public Flag readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte flagByte = input.readByte();
-         try {
-            // values() cached by Class.getEnumConstants()
-            return Flag.values()[flagByte];
-         } catch (ArrayIndexOutOfBoundsException e) {
-            throw new IllegalStateException("Unknown flag index: " + flagByte);
-         }
+         return MarshallUtil.unmarshallEnum(input, Flag::valueOf);
       }
 
    }

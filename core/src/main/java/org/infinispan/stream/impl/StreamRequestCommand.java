@@ -48,7 +48,9 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements Cancellab
       TERMINAL,
       TERMINAL_REHASH,
       TERMINAL_KEY,
-      TERMINAL_KEY_REHASH
+      TERMINAL_KEY_REHASH;
+
+      private static final Type[] CACHED_VALUES = values();
    }
 
    // Only here for CommandIdUniquenessTest
@@ -108,7 +110,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements Cancellab
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{getOrigin(), id, parallelStream, type, segments, keys, excludedKeys, includeLoader,
+      return new Object[]{getOrigin(), id, parallelStream, (byte) type.ordinal(), segments, keys, excludedKeys, includeLoader,
               terminalOperation};
    }
 
@@ -118,7 +120,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements Cancellab
       setOrigin((Address) parameters[i++]);
       id = (UUID) parameters[i++];
       parallelStream = (Boolean) parameters[i++];
-      type = (Type) parameters[i++];
+      type = Type.CACHED_VALUES[(byte) parameters[i++]];
       segments = (Set<Integer>) parameters[i++];
       keys = (Set<K>) parameters[i++];
       excludedKeys = (Set<K>) parameters[i++];

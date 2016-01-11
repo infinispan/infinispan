@@ -53,7 +53,9 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       // Change the availability
       AVAILABILITY_MODE_CHANGE,
       // Query the rebalancing progress
-      REBALANCING_GET_STATUS
+      REBALANCING_GET_STATUS;
+
+      private static final Type[] CACHED_VALUES = values();
    }
 
    private static final Log log = LogFactory.getLog(CacheTopologyControlCommand.class);
@@ -256,7 +258,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
       cacheName = (String) parameters[i++];
-      type = Type.values()[(Byte) parameters[i++]];
+      type = Type.CACHED_VALUES[(Byte) parameters[i++]];
       sender = (Address) parameters[i++];
       joinInfo = (CacheJoinInfo) parameters[i++];
       topologyId = (Integer) parameters[i++];
