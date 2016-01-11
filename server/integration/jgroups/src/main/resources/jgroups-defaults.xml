@@ -30,12 +30,14 @@
       mcast_recv_buf_size="25m"
       ip_ttl="${jgroups.ip_ttl:2}"
       thread_naming_pattern="pl"
-      enable_diagnostics="false" />
+      enable_diagnostics="false"
+      bundler_type="sender-sends-with-timer"/>
    <TCP 
       enable_diagnostics="false"
       thread_naming_pattern="pl"
       send_buf_size="640k"
-      sock_conn_timeout="300" />
+      sock_conn_timeout="300"
+      bundler_type="sender-sends-with-timer"/>
    <PING />
    <MPING 
       ip_ttl="${jgroups.udp.ip_ttl:2}"/>
