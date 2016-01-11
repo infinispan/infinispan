@@ -16,6 +16,7 @@ import org.infinispan.server.hotrod.OperationStatus.OperationStatus
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.util.concurrent.ConcurrentHashSet
+import scala.collection.JavaConversions._
 
 /**
  * @author gustavonalle
@@ -37,7 +38,7 @@ class IterationSegmentsListener extends CacheStream.SegmentCompletionListener {
 
    def clear() = finished.clear()
 
-   override def segmentCompleted(segments: util.Set[Integer]): Unit = finished addAll segments
+   override def segmentCompleted(segments: util.Set[Integer]): Unit = segments.foreach(finished.add)
 }
 
 class IterationState(val listener: IterationSegmentsListener, val iterator: java.util.Iterator[CacheEntry[AnyRef, AnyRef]],
@@ -89,7 +90,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
          stream <- Some(filterAndConvert(stream.asInstanceOf[util.stream.Stream[CacheEntry[Any, Any]]], iterationFilter.asInstanceOf[KeyValueFilterConverter[Any, Any, Any]]))
       } yield stream
 
-      val iterator = filteredStream.getOrElse(stream).iterator()
+      val iterator = filteredStream.getOrElse(stream).asInstanceOf[CacheStream[CacheEntry[AnyRef, AnyRef]]].segmentCompletionListener(segmentListener).iterator()
 
       val iterationState = new IterationState(segmentListener, iterator.asInstanceOf[java.util.Iterator[CacheEntry[AnyRef, AnyRef]]], stream, batch, compatInfo, metadata)
 
