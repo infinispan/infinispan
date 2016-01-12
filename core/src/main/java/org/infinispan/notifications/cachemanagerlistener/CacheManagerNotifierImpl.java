@@ -85,7 +85,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          e.setOldMembers(oldMembers);
          e.setCacheManager(cacheManager);
          e.setType(Event.Type.VIEW_CHANGED);
-         for (ListenerInvocation listener : viewChangedListeners) listener.invoke(e);
+         for (ListenerInvocation listener : viewChangedListeners) invokeListener(listener, e);
       }
    }
 
@@ -101,7 +101,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          e.setCacheManager(cacheManager);
          e.setSubgroupsMerged(subgroupsMerged);
          e.setType(Event.Type.MERGED);
-         for (ListenerInvocation listener : mergeListeners) listener.invoke(e);
+         for (ListenerInvocation listener : mergeListeners) invokeListener(listener, e);
       }
    }
 
@@ -112,7 +112,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          e.setCacheName(cacheName);
          e.setCacheManager(cacheManager);
          e.setType(Event.Type.CACHE_STARTED);
-         for (ListenerInvocation listener : cacheStartedListeners) listener.invoke(e);
+         for (ListenerInvocation listener : cacheStartedListeners) invokeListener(listener, e);
       }
    }
 
@@ -123,7 +123,17 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          e.setCacheName(cacheName);
          e.setCacheManager(cacheManager);
          e.setType(Event.Type.CACHE_STOPPED);
-         for (ListenerInvocation listener : cacheStoppedListeners) listener.invoke(e);
+         for (ListenerInvocation listener : cacheStoppedListeners) invokeListener(listener, e);
+      }
+   }
+
+   private void invokeListener(ListenerInvocation listener, EventImpl e) {
+      try {
+         listener.invoke(e);
+      } catch (Exception x) {
+         // Only cache entry-related listeners should be able to throw an exception to veto the operation.
+         // Just log the exception thrown by the invoker, it should contain all the relevant information.
+         log.error(x);
       }
    }
 
