@@ -527,6 +527,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 this.writeOptional(writer, Attribute.RAW_VALUES, store, ModelKeys.RAW_VALUES);
                 this.writeOptional(writer, Attribute.SOCKET_TIMEOUT, store, ModelKeys.SOCKET_TIMEOUT);
                 this.writeOptional(writer, Attribute.TCP_NO_DELAY, store, ModelKeys.TCP_NO_DELAY);
+                this.writeOptional(writer, Attribute.PROTOCOL_VERSION, store, ModelKeys.PROTOCOL_VERSION);
                 this.writeStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);

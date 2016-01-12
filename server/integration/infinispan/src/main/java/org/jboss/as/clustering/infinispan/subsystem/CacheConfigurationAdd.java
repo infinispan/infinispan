@@ -714,6 +714,9 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             if (store.hasDefined(ModelKeys.TCP_NO_DELAY)) {
                 builder.tcpNoDelay(store.require(ModelKeys.TCP_NO_DELAY).asBoolean());
             }
+            if (store.hasDefined(ModelKeys.PROTOCOL_VERSION)) {
+                builder.protocolVersion(store.require(ModelKeys.PROTOCOL_VERSION).asString());
+            }
             return builder;
         } else if (storeKey.equals(ModelKeys.LEVELDB_STORE)) {
             final LevelDBStoreConfigurationBuilder builder = persistenceBuilder.addStore(LevelDBStoreConfigurationBuilder.class);

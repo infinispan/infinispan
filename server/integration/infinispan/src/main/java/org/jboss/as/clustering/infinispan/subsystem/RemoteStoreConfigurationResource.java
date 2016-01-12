@@ -56,6 +56,12 @@ public class RemoteStoreConfigurationResource extends BaseStoreConfigurationReso
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
+   static final SimpleAttributeDefinition PROTOCOL_VERSION =
+           new SimpleAttributeDefinitionBuilder(ModelKeys.PROTOCOL_VERSION, ModelType.STRING, true)
+                   .setXmlName(Attribute.PROTOCOL_VERSION.getLocalName())
+                   .setAllowExpression(true)
+                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                   .build();
     static final SimpleAttributeDefinition RAW_VALUES =
             new SimpleAttributeDefinitionBuilder(ModelKeys.RAW_VALUES, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.RAW_VALUES.getLocalName())
@@ -96,7 +102,7 @@ public class RemoteStoreConfigurationResource extends BaseStoreConfigurationReso
             setAllowNull(false).
             build();
 
-    static final AttributeDefinition[] REMOTE_STORE_ATTRIBUTES = {CACHE, HOTROD_WRAPPING, TCP_NO_DELAY, RAW_VALUES, SOCKET_TIMEOUT, REMOTE_SERVERS};
+    static final AttributeDefinition[] REMOTE_STORE_ATTRIBUTES = {CACHE, HOTROD_WRAPPING, TCP_NO_DELAY, RAW_VALUES, SOCKET_TIMEOUT, REMOTE_SERVERS, PROTOCOL_VERSION};
 
     public RemoteStoreConfigurationResource(CacheConfigurationResource parent) {
         super(REMOTE_STORE_PATH, ModelKeys.REMOTE_STORE, parent, REMOTE_STORE_ATTRIBUTES);
