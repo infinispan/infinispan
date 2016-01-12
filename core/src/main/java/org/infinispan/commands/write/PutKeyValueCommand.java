@@ -19,7 +19,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Set;
 
 import static org.infinispan.commons.util.Util.toStr;
 
@@ -45,9 +44,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
-                             CacheNotifier notifier, Metadata metadata, Set<Flag> flags,
+                             CacheNotifier notifier, Metadata metadata, long flagsBitSet,
                              Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
-      super(key, flags, commandInvocationId);
+      super(key, flagsBitSet, commandInvocationId);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
@@ -121,7 +120,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       output.writeObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
       output.writeObject(commandInvocationId);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(putIfAbsent);
    }
 
@@ -132,7 +131,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       metadata = (Metadata) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = (CommandInvocationId) input.readObject();
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       putIfAbsent = input.readBoolean();
    }
 
@@ -184,7 +183,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             .append("PutKeyValueCommand{key=")
             .append(toStr(key))
             .append(", value=").append(toStr(value))
-            .append(", flags=").append(flags)
+            .append(", flags=").append(printFlags())
             .append(", putIfAbsent=").append(putIfAbsent)
             .append(", valueMatcher=").append(valueMatcher)
             .append(", metadata=").append(metadata)

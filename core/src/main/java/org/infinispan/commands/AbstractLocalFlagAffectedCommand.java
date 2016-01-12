@@ -1,8 +1,7 @@
 package org.infinispan.commands;
 
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
-
-import java.util.Set;
 
 /**
  * Base class for those local commands that can carry flags.
@@ -12,15 +11,23 @@ import java.util.Set;
  */
 public abstract class AbstractLocalFlagAffectedCommand implements LocalFlagAffectedCommand {
 
-   protected Set<Flag> flags;
+   private long flags = 0;
 
    @Override
-   public Set<Flag> getFlags() {
+   public long getFlagsBitSet() {
       return flags;
    }
 
    @Override
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
+   public void setFlagsBitSet(long bitSet) {
+      this.flags = bitSet;
+   }
+
+   protected final boolean hasSameFlags(LocalFlagAffectedCommand other) {
+      return this.flags == other.getFlagsBitSet();
+   }
+
+   protected final String printFlags() {
+      return EnumUtil.prettyPrintBitSet(flags, Flag.class);
    }
 }

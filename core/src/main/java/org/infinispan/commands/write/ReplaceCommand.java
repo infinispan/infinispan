@@ -16,7 +16,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Set;
 
 import static org.infinispan.commons.util.Util.toStr;
 
@@ -41,9 +40,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    public ReplaceCommand(Object key, Object oldValue, Object newValue,
-                         CacheNotifier notifier, Metadata metadata, Set<Flag> flags, Equivalence valueEquivalence,
+                         CacheNotifier notifier, Metadata metadata, long flagsBitSet, Equivalence valueEquivalence,
                          CommandInvocationId commandInvocationId) {
-      super(key, flags, commandInvocationId);
+      super(key, flagsBitSet, commandInvocationId);
       this.oldValue = oldValue;
       this.newValue = newValue;
       this.notifier = notifier;
@@ -120,7 +119,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       output.writeObject(newValue);
       output.writeObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(commandInvocationId);
    }
 
@@ -131,7 +130,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       newValue = input.readObject();
       metadata = (Metadata) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       commandInvocationId = (CommandInvocationId) input.readObject();
    }
 
@@ -226,7 +225,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
             ", oldValue=" + toStr(oldValue) +
             ", newValue=" + toStr(newValue) +
             ", metadata=" + metadata +
-            ", flags=" + flags +
+            ", flags=" + printFlags() +
             ", successful=" + successful +
             ", valueMatcher=" + valueMatcher +
             '}';

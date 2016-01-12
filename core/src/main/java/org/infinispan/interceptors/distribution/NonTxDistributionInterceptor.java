@@ -327,7 +327,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (backupOwnerSize > 0) {
             List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
             RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
-            command.setFlags(Flag.SKIP_LOCKING);
+            command.addFlag(Flag.SKIP_LOCKING);
             command.setForwarded(true);
 
             for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
@@ -424,7 +424,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (backupOwnerSize > 0) {
             List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
             RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
-            command.setFlags(Flag.SKIP_LOCKING);
+            command.addFlag(Flag.SKIP_LOCKING);
             command.setForwarded(true);
 
             for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
@@ -532,7 +532,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (backupOwnerSize > 0) {
             List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
             RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
-            command.setFlags(Flag.SKIP_LOCKING);
+            command.addFlag(Flag.SKIP_LOCKING);
             command.setForwarded(true);
 
             for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
@@ -640,7 +640,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (backupOwnerSize > 0) {
             List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
             RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
-            command.setFlags(Flag.SKIP_LOCKING);
+            command.addFlag(Flag.SKIP_LOCKING);
             command.setForwarded(true);
 
             for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {

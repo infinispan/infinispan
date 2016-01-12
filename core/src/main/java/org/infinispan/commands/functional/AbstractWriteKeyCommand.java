@@ -3,9 +3,10 @@ package org.infinispan.commands.functional;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.functional.impl.Params;
 
-abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements ParamsCommand {
+abstract class AbstractWriteKeyCommand<K> extends AbstractDataWriteCommand implements ParamsCommand {
 
    Params params;
    ValueMatcher valueMatcher;
@@ -13,7 +14,7 @@ abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand im
 
    public AbstractWriteKeyCommand(K key, ValueMatcher valueMatcher,
          CommandInvocationId id, Params params) {
-      super(key, null, id);
+      super(key, EnumUtil.EMPTY_BIT_SET, id);
       this.valueMatcher = valueMatcher;
       this.params = params;
    }

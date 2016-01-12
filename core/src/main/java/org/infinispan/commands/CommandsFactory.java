@@ -97,39 +97,41 @@ public interface CommandsFactory {
     * @param key key to put
     * @param value value to put
     * @param metadata metadata of entry
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a PutKeyValueCommand
     */
-   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags);
+   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet);
 
    /**
     * Builds a RemoveCommand
     * @param key key to remove
     * @param value value to check for ina  conditional remove, or null for an unconditional remove.
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a RemoveCommand
     */
-   RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags);
+   RemoveCommand buildRemoveCommand(Object key, Object value, long flagsBitSet);
 
    /**
     * Builds an InvalidateCommand
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @param keys keys to invalidate
     * @return an InvalidateCommand
     */
-   InvalidateCommand buildInvalidateCommand(Set<Flag> flags, Object... keys);
+   InvalidateCommand buildInvalidateCommand(long flagsBitSet, Object... keys);
 
    /**
     * Builds an InvalidateFromL1Command
+    *
+    * @param flagsBitSet Command flags provided by cache
     * @param keys keys to invalidate
     * @return an InvalidateFromL1Command
     */
-   InvalidateCommand buildInvalidateFromL1Command(Set<Flag> flags, Collection<Object> keys);
+   InvalidateCommand buildInvalidateFromL1Command(long flagsBitSet, Collection<Object> keys);
 
    /**
-    * @see #buildInvalidateFromL1Command(java.util.Set, java.util.Collection)
+    * @see #buildInvalidateFromL1Command(long, Collection)
     */
-   InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys);
+   InvalidateCommand buildInvalidateFromL1Command(Address origin, long flagsBitSet, Collection<Object> keys);
 
    /**
     * Builds an expired remove command that is used to remove only a specific expired entry
@@ -146,10 +148,10 @@ public interface CommandsFactory {
     * @param oldValue existing value to check for if conditional, null if unconditional.
     * @param newValue value to replace with
     * @param metadata metadata of entry
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a ReplaceCommand
     */
-   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags);
+   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet);
 
    /**
     * Builds a SizeCommand
@@ -161,28 +163,28 @@ public interface CommandsFactory {
    /**
     * Builds a GetKeyValueCommand
     * @param key key to get
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a GetKeyValueCommand
     */
-   GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags);
+   GetKeyValueCommand buildGetKeyValueCommand(Object key, long flagsBitSet);
 
    /**
     * Builds a GetCacheEntryCommand
     * @param key key to get
-    * @param explicitFlags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a GetCacheEntryCommand
     */
-   GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags);
+   GetCacheEntryCommand buildGetCacheEntryCommand(Object key, long flagsBitSet);
 
    /**
     * Builds a GetAllCommand
     * @param keys keys to get
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @param returnEntries boolean indicating whether entire cache entries are
     *                      returned, otherwise return just the value parts
     * @return a GetKeyValueCommand
     */
-   GetAllCommand buildGetAllCommand(Collection<?> keys, Set<Flag> flags, boolean returnEntries);
+   GetAllCommand buildGetAllCommand(Collection<?> keys, long flagsBitSet, boolean returnEntries);
 
    /**
     * Builds a KeySetCommand
@@ -202,25 +204,25 @@ public interface CommandsFactory {
     * Builds a PutMapCommand
     * @param map map containing key/value entries to put
     * @param metadata metadata of entry
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a PutMapCommand
     */
-   PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags);
+   PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet);
 
    /**
     * Builds a ClearCommand
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a ClearCommand
     */
-   ClearCommand buildClearCommand(Set<Flag> flags);
+   ClearCommand buildClearCommand(long flagsBitSet);
 
    /**
     * Builds an EvictCommand
     * @param key key to evict
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return an EvictCommand
     */
-   EvictCommand buildEvictCommand(Object key, Set<Flag> flags);
+   EvictCommand buildEvictCommand(Object key, long flagsBitSet);
 
    /**
     * Builds a PrepareCommand
@@ -292,35 +294,37 @@ public interface CommandsFactory {
    /**
     * Builds a ClusteredGetCommand, which is a remote lookup command
     * @param key key to look up
+    * @param flagsBitSet Command flags provided by cache
     * @return a ClusteredGetCommand
     */
-   ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx);
+   ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx);
 
    /**
     * Builds a ClusteredGetAllCommand, which is a remote lookup command
     * @param keys key to look up
+    * @param flagsBitSet Command flags provided by cache
     * @return a ClusteredGetAllCommand
     */
-   ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, Set<Flag> flags, GlobalTransaction gtx);
+   ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, long flagsBitSet, GlobalTransaction gtx);
 
    /**
     * Builds a LockControlCommand to control explicit remote locking
     *
-    *
     * @param keys keys to lock
+    * @param flagsBitSet Command flags provided by cache
     * @param gtx
     * @return a LockControlCommand
     */
-   LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags, GlobalTransaction gtx);
+   LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet, GlobalTransaction gtx);
 
    /**
-    * Same as {@link #buildLockControlCommand(Object, java.util.Set, org.infinispan.transaction.xa.GlobalTransaction)}
+    * Same as {@link #buildLockControlCommand(Object, long, GlobalTransaction)}
     * but for locking a single key vs a collection of keys.
     */
-   LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx);
+   LockControlCommand buildLockControlCommand(Object key, long flagsBitSet, GlobalTransaction gtx);
 
 
-   LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags);
+   LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet);
 
    /**
     * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.
@@ -440,11 +444,11 @@ public interface CommandsFactory {
    /**
     * Builds {@link org.infinispan.commands.remote.GetKeysInGroupCommand} used to fetch all the keys belonging to a group.
     *
-    * @param flags
+    * @param flagsBitSet Command flags provided by cache
     * @param groupName the group name.
     * @return the GetKeysInGroup created.
     */
-   GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName);
+   GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, String groupName);
 
    <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream, StreamRequestCommand.Type type,
            Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Object terminalOperation);

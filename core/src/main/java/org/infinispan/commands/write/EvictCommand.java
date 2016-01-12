@@ -4,7 +4,6 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -12,7 +11,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -25,9 +23,9 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    private final InternalEntryFactory factory;
 
-   public EvictCommand(Object key, CacheNotifier notifier, Set<Flag> flags, CommandInvocationId commandInvocationId,
-           InternalEntryFactory factory) {
-      super(key, null, notifier, flags, null, commandInvocationId);
+   public EvictCommand(Object key, CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId,
+                       InternalEntryFactory factory) {
+      super(key, null, notifier, flagsBitSet, null, commandInvocationId);
       this.factory = factory;
    }
 
@@ -71,7 +69,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
          .append("EvictCommand{key=")
          .append(key)
          .append(", value=").append(value)
-         .append(", flags=").append(flags)
+         .append(", flags=").append(printFlags())
          .append("}")
          .toString();
    }

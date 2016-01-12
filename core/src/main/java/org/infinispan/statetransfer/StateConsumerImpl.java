@@ -6,11 +6,11 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -54,7 +54,6 @@ import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -92,6 +91,10 @@ public class StateConsumerImpl implements StateConsumer {
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final int NO_REBALANCE_IN_PROGRESS = -1;
+   private static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL,
+                                                                      IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
+                                                                      SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
+                                                                      SKIP_XSITE_BACKUP);
 
    private Cache cache;
    private StateTransferManager stateTransferManager;
@@ -586,7 +589,6 @@ public class StateConsumerImpl implements StateConsumer {
             segmentId, cacheName, sender, cacheEntries.size());
 
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
-      EnumSet<Flag> flags = EnumSet.of(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK, SKIP_XSITE_BACKUP);
       boolean transactional = transactionManager != null;
       for (InternalCacheEntry e : cacheEntries) {
          try {
@@ -601,7 +603,7 @@ public class StateConsumerImpl implements StateConsumer {
             }
 
             PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(
-                  e.getKey(), e.getValue(), e.getMetadata(), flags);
+                  e.getKey(), e.getValue(), e.getMetadata(), STATE_TRANSFER_FLAGS);
             ctx.setLockOwner(put.getKeyLockOwner());
             interceptorChain.invoke(ctx, put);
 
@@ -962,7 +964,7 @@ public class StateConsumerImpl implements StateConsumer {
 
       if (!keysToRemove.isEmpty()) {
          try {
-            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
+            InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(EnumUtil.bitSetOf(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
             InvocationContext ctx = icf.createNonTxInvocationContext();
             ctx.setLockOwner(invalidateCmd.getKeyLockOwner());
             interceptorChain.invoke(ctx, invalidateCmd);

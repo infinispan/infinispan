@@ -10,6 +10,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
@@ -30,7 +31,7 @@ import org.infinispan.marshall.core.Ids;
  */
 public enum Flag {
    /**
-    * Overrides the {@link Configuration#setLockAcquisitionTimeout(long)} configuration setting by ensuring lock
+    * Overrides the {@link org.infinispan.configuration.cache.LockingConfiguration#lockAcquisitionTimeout(long)} configuration setting by ensuring lock
     * managers use a 0-millisecond lock acquisition timeout.  Useful if you only want to acquire a lock on an entry
     * <i>if and only if</i> the lock is uncontended.
     */
@@ -220,7 +221,7 @@ public enum Flag {
     * data is lost, it can be retransmitted immediately without the need
     * to wait for an extra cluster wide operation to detect the lost message.
     * The way to force a particular cache operation to be positively
-    * acknowledged is to send this {@link #GUARANTEED_DELIVERY} flag.
+    * acknowledged is to send this flag.
     *
     * Note that this is flag is <b>EXPERIMENTAL</b> and so there is a high
     * probability that it will be removed in future Infinispan versions.
@@ -272,12 +273,12 @@ public enum Flag {
    ;
 
    /**
-    * Creates a copy of a Flag Set removing instances of FAIL_SILENTLY.
-    * The copy might be the same instance if no change is required,
-    * and should be considered immutable.
-    * @param flags
-    * @return might return the same instance
+    * Creates a copy of a Flag BitSet removing instances of FAIL_SILENTLY.
     */
+   public static long copyWithoutRemotableFlags(long flagsBitSet) {
+      return EnumUtil.unsetEnum(flagsBitSet, FAIL_SILENTLY);
+   }
+
    public static Set<Flag> copyWithoutRemotableFlags(Set<Flag> flags) {
       //FAIL_SILENTLY should not be sent to remote nodes
       if (flags != null && flags.contains(Flag.FAIL_SILENTLY)) {
@@ -292,44 +293,6 @@ public enum Flag {
       } else {
          return flags;
       }
-   }
-
-   public static Set<Flag> addFlag(Set<Flag> flags, Flag newFlag) {
-      if (flags == null || flags.isEmpty()) {
-         return EnumSet.of(newFlag);
-      }
-      if (flags.contains(newFlag)) {
-         return flags;
-      }
-      EnumSet<Flag> copy = EnumSet.copyOf(flags);
-      copy.add(newFlag);
-      return copy;
-   }
-
-   public static Set<Flag> addFlags(Set<Flag> flags, Flag... newFlags) {
-      if (newFlags == null || newFlags.length == 0) {
-         return flags;
-      }
-      EnumSet<Flag> copy;
-      if (flags == null) {
-         copy = EnumSet.noneOf(Flag.class);
-      } else {
-         copy = EnumSet.copyOf(flags);
-      }
-      Collections.addAll(copy, newFlags);
-      return copy;
-   }
-
-   public static Set<Flag> addFlags(Set<Flag> flags, Set<Flag> newFlags) {
-      if (newFlags == null || newFlags.isEmpty()) {
-         return flags;
-      }
-      if (flags == null || flags.isEmpty()) {
-         return newFlags;
-      }
-      EnumSet<Flag> copy = EnumSet.copyOf(flags);
-      copy.addAll(newFlags);
-      return copy;
    }
 
    private static final Flag[] CACHED_VALUES = values();
@@ -347,7 +310,7 @@ public enum Flag {
 
       @Override
       public Set<Class<? extends Flag>> getTypeClasses() {
-         return Util.<Class<? extends Flag>>asSet(Flag.class);
+         return Util.asSet(Flag.class);
       }
 
       @Override

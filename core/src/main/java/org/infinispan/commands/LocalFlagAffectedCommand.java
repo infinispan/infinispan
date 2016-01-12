@@ -1,7 +1,9 @@
 package org.infinispan.commands;
 
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -17,14 +19,22 @@ public interface LocalFlagAffectedCommand {
     * not be modified directly, only via the {@link #setFlags(Set)}, {@link #addFlag(Flag)} and {@link
     * #addFlags(Set)} methods.
     */
-   Set<Flag> getFlags();
+   default Set<Flag> getFlags() {
+      return EnumUtil.enumSetOf(getFlagsBitSet(), Flag.class);
+   }
+
+   long getFlagsBitSet();
 
    /**
     * Set the flags, replacing any existing flags.
     *
     * @param flags The new flags.
     */
-   void setFlags(Set<Flag> flags);
+   default void setFlags(Set<Flag> flags) {
+      setFlagsBitSet(EnumUtil.bitSetOf(flags));
+   }
+
+   void setFlagsBitSet(long bitSet);
 
    /**
     * Add some flags to the command.
@@ -35,7 +45,7 @@ public interface LocalFlagAffectedCommand {
     */
    @Deprecated
    default void setFlags(Flag... newFlags) {
-      setFlags(Flag.addFlags(getFlags(), newFlags));
+      setFlagsBitSet(EnumUtil.setEnums(getFlagsBitSet(), Arrays.asList(newFlags)));
    }
 
    /**
@@ -44,7 +54,7 @@ public interface LocalFlagAffectedCommand {
     * @param flag The flag to add.
     */
    default void addFlag(Flag flag) {
-      setFlags(Flag.addFlag(getFlags(), flag));
+      setFlagsBitSet(EnumUtil.setEnum(getFlagsBitSet(), flag));
    }
 
    /**
@@ -53,7 +63,7 @@ public interface LocalFlagAffectedCommand {
     * @param flags The flags to add.
     */
    default void addFlags(Set<Flag> flags) {
-      setFlags(Flag.addFlags(getFlags(), flags));
+      setFlagsBitSet(EnumUtil.setEnums(getFlagsBitSet(), flags));
    }
 
    /**
@@ -63,7 +73,6 @@ public interface LocalFlagAffectedCommand {
     * @return true if the flag is present
     */
    default boolean hasFlag(Flag flag) {
-      Set<Flag> flags = getFlags();
-      return flags != null && flags.contains(flag);
+      return EnumUtil.hasEnum(getFlagsBitSet(), flag);
    }
 }

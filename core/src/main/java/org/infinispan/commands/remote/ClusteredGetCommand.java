@@ -3,13 +3,12 @@ package org.infinispan.commands.remote;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.EnumSet;
-import java.util.Set;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -18,7 +17,6 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -47,7 +45,6 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    private boolean acquireRemoteLock;
    private GlobalTransaction gtx;
 
-   private DistributionManager distributionManager;
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
    private Equivalence keyEquivalence;
@@ -55,14 +52,14 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    private boolean isWrite;
 
    private ClusteredGetCommand() {
-      super(null, null); // For command id uniqueness test
+      super(null, EnumUtil.EMPTY_BIT_SET); // For command id uniqueness test
    }
 
    public ClusteredGetCommand(String cacheName) {
-      super(cacheName, null);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetCommand(Object key, String cacheName, Set<Flag> flags,
+   public ClusteredGetCommand(Object key, String cacheName, long flags,
          boolean acquireRemoteLock, GlobalTransaction gtx, Equivalence keyEquivalence) {
       super(cacheName, flags);
       this.key = key;
@@ -75,9 +72,8 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    }
 
    public void initialize(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
-         InterceptorChain interceptorChain, DistributionManager distributionManager, TransactionTable txTable,
-         Equivalence keyEquivalence) {
-      this.distributionManager = distributionManager;
+                          InterceptorChain interceptorChain, TransactionTable txTable,
+                          Equivalence keyEquivalence) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
@@ -97,9 +93,8 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
       acquireLocksIfNeeded();
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
-      Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
-      if (this.flags != null) commandFlags.addAll(this.flags);
-      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, commandFlags);
+      long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
+      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
       if (cacheEntry == null) {
@@ -123,7 +118,7 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
 
    private void acquireLocksIfNeeded() throws Throwable {
       if (acquireRemoteLock) {
-         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(key, flags, gtx);
+         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(key, getFlagsBitSet(), gtx);
          lockControlCommand.init(invoker, icf, txTable);
          lockControlCommand.perform(null);
       }
@@ -137,7 +132,7 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(acquireRemoteLock);
       if (acquireRemoteLock) {
          output.writeObject(gtx);
@@ -147,7 +142,7 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       acquireRemoteLock = input.readBoolean();
       if (acquireRemoteLock) {
          gtx = (GlobalTransaction) input.readObject();
@@ -180,7 +175,7 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
       return new StringBuilder()
          .append("ClusteredGetCommand{key=")
          .append(key)
-         .append(", flags=").append(flags)
+         .append(", flags=").append(printFlags())
          .append("}")
          .toString();
    }

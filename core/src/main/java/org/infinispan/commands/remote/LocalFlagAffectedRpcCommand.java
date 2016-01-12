@@ -1,33 +1,31 @@
 package org.infinispan.commands.remote;
 
-import java.util.Set;
-
 import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public abstract class LocalFlagAffectedRpcCommand extends BaseRpcCommand implements LocalFlagAffectedCommand {
-   protected Set<Flag> flags;
+   private long flags;
 
-   protected LocalFlagAffectedRpcCommand(String cacheName, Set<Flag> flags) {
+   protected LocalFlagAffectedRpcCommand(String cacheName, long flagBitSet) {
       super(cacheName);
-      this.flags = flags;
+      this.flags = flagBitSet;
    }
 
    @Override
-   public Set<Flag> getFlags() {
+   public long getFlagsBitSet() {
       return flags;
    }
 
    @Override
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
+   public void setFlagsBitSet(long bitSet) {
+      flags = bitSet;
    }
 
-   @Override
-   public boolean hasFlag(Flag flag) {
-      return flags != null && flags.contains(flag);
+   protected final String printFlags() {
+      return EnumUtil.prettyPrintBitSet(flags, Flag.class);
    }
 }

@@ -28,10 +28,10 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    public ClearCommand() {
    }
 
-   public ClearCommand(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer, Set<Flag> flags) {
+   public ClearCommand(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer, long flagsBitSet) {
       this.notifier = notifier;
       this.dataContainer = dataContainer;
-      this.flags = flags;
+      setFlagsBitSet(flagsBitSet);
    }
 
    public void init(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer) {
@@ -59,12 +59,12 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
    }
 
    @Override
@@ -76,7 +76,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    public String toString() {
       return new StringBuilder()
          .append("ClearCommand{flags=")
-         .append(flags)
+         .append(printFlags())
          .append("}")
          .toString();
    }
@@ -134,19 +134,20 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ClearCommand)) return false;
+      if (o == null || getClass() != o.getClass()) return false;
 
       ClearCommand that = (ClearCommand) o;
 
       if (getTopologyId() != that.getTopologyId()) return false;
-      if (flags != null ? !flags.equals(that.flags) : that.flags != null) return false;
-      return true;
+      return getFlagsBitSet() == that.getFlagsBitSet();
+
    }
 
    @Override
    public int hashCode() {
       int result = getTopologyId();
-      result = 31 * result + (flags != null ? flags.hashCode() : 0);
+      long flags = getFlagsBitSet();
+      result = 31 * result + (int) (flags ^ (flags >>> 32));
       return result;
    }
 }

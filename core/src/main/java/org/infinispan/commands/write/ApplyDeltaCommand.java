@@ -5,6 +5,7 @@ import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.context.Flag;
@@ -16,8 +17,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
-import java.util.Set;
 
 
 /**
@@ -35,7 +34,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      super(deltaAwareValueKey, EnumSet.of(Flag.DELTA_WRITE), commandInvocationId);
+      super(deltaAwareValueKey, EnumUtil.bitSetOf(Flag.DELTA_WRITE), commandInvocationId);
 
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("At least one key to be locked needs to be specified");
@@ -79,7 +78,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       output.writeObject(key);
       output.writeObject(delta);
       MarshallUtil.marshallCollection(keys, output);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(commandInvocationId);
    }
 
@@ -88,7 +87,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       key = input.readObject();
       delta = (Delta) input.readObject();
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       commandInvocationId = (CommandInvocationId) input.readObject();
    }
 

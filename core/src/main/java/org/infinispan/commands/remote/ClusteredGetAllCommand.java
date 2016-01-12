@@ -6,13 +6,13 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -49,14 +49,14 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
    private Equivalence<? super K> keyEquivalence;
 
    ClusteredGetAllCommand() {
-      super(null, null);
+      super(null, EnumUtil.EMPTY_BIT_SET);
    }
 
    public ClusteredGetAllCommand(String cacheName) {
-      super(cacheName, null);
+      super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetAllCommand(String cacheName, List<?> keys, Set<Flag> flags,
+   public ClusteredGetAllCommand(String cacheName, List<?> keys, long flags,
          GlobalTransaction gtx, Equivalence<? super K> keyEquivalence) {
       super(cacheName, flags);
       this.keys = keys;
@@ -81,7 +81,7 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
       acquireLocksIfNeeded();
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
-      GetAllCommand command = commandsFactory.buildGetAllCommand(keys, flags, true);
+      GetAllCommand command = commandsFactory.buildGetAllCommand(keys, getFlagsBitSet(), true);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) invoker.invoke(invocationContext, command);
       if (trace) log.trace("Found: " + map);
@@ -112,7 +112,7 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
 
    private void acquireLocksIfNeeded() throws Throwable {
       if (hasFlag(Flag.FORCE_WRITE_LOCK)) {
-         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(keys, flags, gtx);
+         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(keys, getFlagsBitSet(), gtx);
          lockControlCommand.init(invoker, icf, txTable);
          lockControlCommand.perform(null);
       }
@@ -130,14 +130,14 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallCollection(keys, output);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(gtx);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       gtx = (GlobalTransaction) input.readObject();
    }
 
@@ -150,7 +150,7 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
    public String toString() {
       final StringBuilder sb = new StringBuilder("ClusteredGetAllCommand{");
       sb.append("keys=").append(keys);
-      sb.append(", flags=").append(flags);
+      sb.append(", flags=").append(printFlags());
       sb.append('}');
       return sb.toString();
    }

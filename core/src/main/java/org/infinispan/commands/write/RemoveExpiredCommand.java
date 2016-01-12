@@ -1,13 +1,9 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.Visitor;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -21,8 +17,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
@@ -37,7 +31,6 @@ import java.util.Set;
 public class RemoveExpiredCommand extends RemoveCommand {
    public static final int COMMAND_ID = 58;
    private static final Log log = LogFactory.getLog(RemoveExpiredCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    protected Long lifespan;
    protected TimeService timeService;
@@ -50,7 +43,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
    public RemoveExpiredCommand(Object key, Object value, Long lifespan, CacheNotifier notifier,
            Equivalence valueEquivalence, TimeService timeService, CommandInvocationId commandInvocationId) {
       //valueEquivalence can be null because this command never compares values.
-      super(key, value, notifier, null, valueEquivalence, commandInvocationId);
+      super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, valueEquivalence, commandInvocationId);
       this.lifespan = lifespan;
       this.timeService = timeService;
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;

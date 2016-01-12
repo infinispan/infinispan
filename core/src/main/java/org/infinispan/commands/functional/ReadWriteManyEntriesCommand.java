@@ -4,6 +4,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -185,7 +186,17 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
    }
 
    @Override
+   public long getFlagsBitSet() {
+      return EnumUtil.EMPTY_BIT_SET;
+   }
+
+   @Override
    public void setFlags(Set<Flag> flags) {
+      // TODO: Customise this generated block
+   }
+
+   @Override
+   public void setFlagsBitSet(long bitSet) {
       // TODO: Customise this generated block
    }
 

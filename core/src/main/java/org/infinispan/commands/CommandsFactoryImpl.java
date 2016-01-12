@@ -214,29 +214,29 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags) {
-      return new PutKeyValueCommand(key, value, false, notifier, metadata, flags,
-            configuration.dataContainer().valueEquivalence(), generateUUID());
+   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet) {
+      return new PutKeyValueCommand(key, value, false, notifier, metadata, flagsBitSet,
+                                    configuration.dataContainer().valueEquivalence(), generateUUID());
    }
 
    @Override
-   public RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags) {
-      return new RemoveCommand(key, value, notifier, flags, configuration.dataContainer().valueEquivalence(), generateUUID());
+   public RemoveCommand buildRemoveCommand(Object key, Object value, long flagsBitSet) {
+      return new RemoveCommand(key, value, notifier, flagsBitSet, configuration.dataContainer().valueEquivalence(), generateUUID());
    }
 
    @Override
-   public InvalidateCommand buildInvalidateCommand(Set<Flag> flags, Object... keys) {
-      return new InvalidateCommand(notifier, flags, generateUUID(), keys);
+   public InvalidateCommand buildInvalidateCommand(long flagsBitSet, Object... keys) {
+      return new InvalidateCommand(notifier, flagsBitSet, generateUUID(), keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(Set<Flag> flags, Collection<Object> keys) {
-      return new InvalidateL1Command(dataContainer, distributionManager, notifier, flags, keys, generateUUID());
+   public InvalidateCommand buildInvalidateFromL1Command(long flagsBitSet, Collection<Object> keys) {
+      return new InvalidateL1Command(dataContainer, distributionManager, notifier, flagsBitSet, keys, generateUUID());
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys) {
-      return new InvalidateL1Command(origin, dataContainer, distributionManager, notifier, flags, keys, generateUUID());
+   public InvalidateCommand buildInvalidateFromL1Command(Address origin, long flagsBitSet, Collection<Object> keys) {
+      return new InvalidateL1Command(origin, dataContainer, distributionManager, notifier, flagsBitSet, keys, generateUUID());
    }
 
    @Override
@@ -246,8 +246,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags) {
-      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flags, configuration.dataContainer().valueEquivalence(), generateUUID());
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet) {
+      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flagsBitSet, configuration.dataContainer().valueEquivalence(), generateUUID());
    }
 
    @Override
@@ -266,29 +266,28 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
-      return new GetKeyValueCommand(key, flags);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, long flagsBitSet) {
+      return new GetKeyValueCommand(key, flagsBitSet);
    }
 
    @Override
-   public GetAllCommand buildGetAllCommand(Collection<?> keys,
-         Set<Flag> flags, boolean returnEntries) {
-      return new GetAllCommand(keys, flags, returnEntries, entryFactory);
+   public GetAllCommand buildGetAllCommand(Collection<?> keys, long flagsBitSet, boolean returnEntries) {
+      return new GetAllCommand(keys, flagsBitSet, returnEntries, entryFactory);
    }
 
    @Override
-   public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags) {
-      return new PutMapCommand(map, notifier, metadata, flags, generateUUID());
+   public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet) {
+      return new PutMapCommand(map, notifier, metadata, flagsBitSet, generateUUID());
    }
 
    @Override
-   public ClearCommand buildClearCommand(Set<Flag> flags) {
-      return new ClearCommand(notifier, dataContainer, flags);
+   public ClearCommand buildClearCommand(long flagsBitSet) {
+      return new ClearCommand(notifier, dataContainer, flagsBitSet);
    }
 
    @Override
-   public EvictCommand buildEvictCommand(Object key, Set<Flag> flags) {
-      return new EvictCommand(key, notifier, flags, generateUUID(), entryFactory);
+   public EvictCommand buildEvictCommand(Object key, long flagsBitSet) {
+      return new EvictCommand(key, notifier, flagsBitSet, generateUUID(), entryFactory);
    }
 
    @Override
@@ -331,9 +330,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx) {
-      return new ClusteredGetCommand(key, cacheName, flags, acquireRemoteLock, gtx,
-            configuration.dataContainer().keyEquivalence());
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
+      return new ClusteredGetCommand(key, cacheName, flagsBitSet, acquireRemoteLock, gtx,
+                                     configuration.dataContainer().keyEquivalence());
    }
 
    /**
@@ -416,8 +415,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
             clusteredGetCommand.initialize(icf, this, entryFactory,
-                  interceptorChain, distributionManager, txTable,
-                  configuration.dataContainer().keyEquivalence());
+                                           interceptorChain, txTable,
+                                           configuration.dataContainer().keyEquivalence());
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand) c;
@@ -523,18 +522,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
-      return new LockControlCommand(keys, cacheName, flags, gtx);
+   public LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet, GlobalTransaction gtx) {
+      return new LockControlCommand(keys, cacheName, flagsBitSet, gtx);
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx) {
-      return new LockControlCommand(key, cacheName, flags, gtx);
+   public LockControlCommand buildLockControlCommand(Object key, long flagsBitSet, GlobalTransaction gtx) {
+      return new LockControlCommand(key, cacheName, flagsBitSet, gtx);
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags) {
-      return new LockControlCommand(keys,  cacheName, flags, null);
+   public LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet) {
+      return new LockControlCommand(keys, cacheName, flagsBitSet, null);
    }
 
    @Override
@@ -625,8 +624,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName) {
-      return new GetKeysInGroupCommand(flags, groupName).setGroupManager(groupManager);
+   public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, String groupName) {
+      return new GetKeysInGroupCommand(flagsBitSet, groupName).setGroupManager(groupManager);
    }
 
    @Override
@@ -650,13 +649,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags) {
-      return new GetCacheEntryCommand(key, explicitFlags, entryFactory);
+   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, long flagsBitSet) {
+      return new GetCacheEntryCommand(key, flagsBitSet, entryFactory);
    }
 
    @Override
-   public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
-      return new ClusteredGetAllCommand(cacheName, keys, flags, gtx, configuration.dataContainer().keyEquivalence());
+   public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, long flagsBitSet, GlobalTransaction gtx) {
+      return new ClusteredGetAllCommand(cacheName, keys, flagsBitSet, gtx, configuration.dataContainer().keyEquivalence());
    }
 
    private CommandInvocationId generateUUID() {

@@ -63,13 +63,13 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       if (command instanceof PutKeyValueCommand) {
          PutKeyValueCommand putCommand = (PutKeyValueCommand) command;
          return commandsFactory.buildPutKeyValueCommand(putCommand.getKey(), putCommand.getValue(),
-                                                        command.getMetadata(), command.getFlags());
+                                                        command.getMetadata(), command.getFlagsBitSet());
       } else if (command instanceof ReplaceCommand) {
          ReplaceCommand replaceCommand = (ReplaceCommand) command;
          return commandsFactory.buildPutKeyValueCommand(replaceCommand.getKey(), replaceCommand.getNewValue(),
-                                                        command.getMetadata(), command.getFlags());
+                                                        command.getMetadata(), command.getFlagsBitSet());
       } else if (command instanceof RemoveCommand) {
-         return commandsFactory.buildRemoveCommand(command.getKey(), null, command.getFlags());
+         return commandsFactory.buildRemoveCommand(command.getKey(), null, command.getFlagsBitSet());
       }
       throw new IllegalArgumentException("Command " + command + " is not valid!");
    }

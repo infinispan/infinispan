@@ -1,13 +1,13 @@
 package org.infinispan.marshall;
 
 import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.context.Flag;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -17,7 +17,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
@@ -39,7 +38,7 @@ public class SharedStreamMultiMarshallerTest extends AbstractInfinispanTest {
       cm.getCache(); // Start cache so that global marshaller is resolved
       JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
       PutKeyValueCommand cmd = new PutKeyValueCommand(
-            "k", "v", false, null, new EmbeddedMetadata.Builder().build(), Collections.<Flag>emptySet(), AnyEquivalence.getInstance(),
+            "k", "v", false, null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(),
             CommandInvocationId.generateId(null));
       try {
          // Write

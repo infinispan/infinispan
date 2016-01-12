@@ -101,7 +101,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    public final ReclosableLatch gate = new ReclosableLatch(true);
    public final AtomicInteger remoteCommandsReceived = new AtomicInteger(0);
    public final AtomicInteger blockTypeCommandsReceived = new AtomicInteger(0);
-   public final List<ReplicableCommand> receivedCommands = new ArrayList<ReplicableCommand>();
+   public final List<ReplicableCommand> receivedCommands = new ArrayList<>();
    public final Class<? extends  ReplicableCommand> toBlock;
 
    public ControlledCommandFactory(CommandsFactory actual, Class<? extends ReplicableCommand> toBlock) {
@@ -151,28 +151,28 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags) {
-      return actual.buildPutKeyValueCommand(key, value, metadata, flags);
+   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet) {
+      return actual.buildPutKeyValueCommand(key, value, metadata, flagsBitSet);
    }
 
    @Override
-   public RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags) {
-      return actual.buildRemoveCommand(key, value, flags);
+   public RemoveCommand buildRemoveCommand(Object key, Object value, long flagsBitSet) {
+      return actual.buildRemoveCommand(key, value, flagsBitSet);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateCommand(Set<Flag> flags, Object... keys) {
-      return actual.buildInvalidateCommand(flags, keys);
+   public InvalidateCommand buildInvalidateCommand(long flagsBitSet, Object... keys) {
+      return actual.buildInvalidateCommand(flagsBitSet, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(Set<Flag> flags, Collection<Object> keys) {
-      return actual.buildInvalidateFromL1Command(flags, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(long flagsBitSet, Collection<Object> keys) {
+      return actual.buildInvalidateFromL1Command(flagsBitSet, keys);
    }
 
    @Override
-   public InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys) {
-      return actual.buildInvalidateFromL1Command(origin, flags, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(Address origin, long flagsBitSet, Collection<Object> keys) {
+      return actual.buildInvalidateFromL1Command(origin, flagsBitSet, keys);
    }
 
    @Override
@@ -181,8 +181,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags) {
-      return actual.buildReplaceCommand(key, oldValue, newValue, metadata, flags);
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet) {
+      return actual.buildReplaceCommand(key, oldValue, newValue, metadata, flagsBitSet);
    }
 
    @Override
@@ -191,13 +191,13 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
-      return actual.buildGetKeyValueCommand(key, flags);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, long flagsBitSet) {
+      return actual.buildGetKeyValueCommand(key, flagsBitSet);
    }
 
    @Override
-   public GetAllCommand buildGetAllCommand(Collection<?> keys, Set<Flag> flags, boolean returnEntries) {
-      return actual.buildGetAllCommand(keys, flags, returnEntries);
+   public GetAllCommand buildGetAllCommand(Collection<?> keys, long flagsBitSet, boolean returnEntries) {
+      return actual.buildGetAllCommand(keys, flagsBitSet, returnEntries);
    }
 
    @Override
@@ -211,18 +211,18 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags) {
-      return actual.buildPutMapCommand(map, metadata, flags);
+   public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet) {
+      return actual.buildPutMapCommand(map, metadata, flagsBitSet);
    }
 
    @Override
-   public ClearCommand buildClearCommand(Set<Flag> flags) {
-      return actual.buildClearCommand(flags);
+   public ClearCommand buildClearCommand(long flagsBitSet) {
+      return actual.buildClearCommand(flagsBitSet);
    }
 
    @Override
-   public EvictCommand buildEvictCommand(Object key, Set<Flag> flags) {
-      return actual.buildEvictCommand(key, flags);
+   public EvictCommand buildEvictCommand(Object key, long flagsBitSet) {
+      return actual.buildEvictCommand(key, flagsBitSet);
    }
 
    @Override
@@ -261,28 +261,28 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx) {
-      return actual.buildClusteredGetCommand(key, flags, acquireRemoteLock, gtx);
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
+      return actual.buildClusteredGetCommand(key, flagsBitSet, acquireRemoteLock, gtx);
    }
 
    @Override
-   public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
-      return actual.buildClusteredGetAllCommand(keys, flags, gtx);
+   public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, long flagsBitSet, GlobalTransaction gtx) {
+      return actual.buildClusteredGetAllCommand(keys, flagsBitSet, gtx);
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
-      return actual.buildLockControlCommand(keys, flags, gtx);
+   public LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet, GlobalTransaction gtx) {
+      return actual.buildLockControlCommand(keys, flagsBitSet, gtx);
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx) {
-      return actual.buildLockControlCommand(key, flags, gtx);
+   public LockControlCommand buildLockControlCommand(Object key, long flagsBitSet, GlobalTransaction gtx) {
+      return actual.buildLockControlCommand(key, flagsBitSet, gtx);
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags) {
-      return actual.buildLockControlCommand(keys, flags);
+   public LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet) {
+      return actual.buildLockControlCommand(keys, flagsBitSet);
    }
 
    @Override
@@ -373,8 +373,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName) {
-      return actual.buildGetKeysInGroupCommand(flags, groupName);
+   public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, String groupName) {
+      return actual.buildGetKeysInGroupCommand(flagsBitSet, groupName);
    }
 
    @Override
@@ -392,8 +392,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags) {
-      return actual.buildGetCacheEntryCommand(key, explicitFlags);
+   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, long flagsBitSet) {
+      return actual.buildGetCacheEntryCommand(key, flagsBitSet);
    }
 
    @Override

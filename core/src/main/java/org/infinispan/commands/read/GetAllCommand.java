@@ -10,7 +10,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,12 +46,12 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
 
    private /* transient */ InternalEntryFactory entryFactory;
 
-   public GetAllCommand(Collection<?> keys, Set<Flag> flags,
-         boolean returnEntries, InternalEntryFactory entryFactory) {
+   public GetAllCommand(Collection<?> keys, long flagsBitSet,
+                        boolean returnEntries, InternalEntryFactory entryFactory) {
       this.keys = keys;
-      this.flags = flags;
       this.returnEntries = returnEntries;
       this.entryFactory = entryFactory;
+      setFlagsBitSet(flagsBitSet);
    }
 
    GetAllCommand() {
@@ -137,14 +136,14 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallCollection(keys, output);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(returnEntries);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       returnEntries = input.readBoolean();
    }
 
@@ -201,7 +200,7 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
       final StringBuilder sb = new StringBuilder("GetAllCommand{");
       sb.append("keys=").append(keys);
       sb.append(", returnEntries=").append(returnEntries);
-      sb.append(", flags=").append(flags);
+      sb.append(", flags=").append(printFlags());
       sb.append('}');
       return sb.toString();
    }

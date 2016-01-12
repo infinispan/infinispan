@@ -5,7 +5,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
@@ -16,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -41,12 +41,12 @@ import org.infinispan.stream.impl.local.ValueCacheCollection;
  */
 public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
-   private final EnumSet<Flag> flags;
+   private final long flags;
    private final WeakReference<ClassLoader> classLoader;
    private final CacheImpl<K, V> cacheImplementation;
 
    public DecoratedCache(AdvancedCache<K, V> delegate, ClassLoader classLoader) {
-      this(delegate, classLoader, null);
+      this(delegate, classLoader, new Flag[0]);
    }
 
    public DecoratedCache(AdvancedCache<K, V> delegate, Flag... flags) {
@@ -55,35 +55,33 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    public DecoratedCache(AdvancedCache<K, V> delegate, ClassLoader classLoader, Flag... flags) {
       super(delegate);
-      if (flags == null || flags.length == 0)
-         this.flags = null;
-      else {
-         this.flags = EnumSet.noneOf(Flag.class);
-         for (Flag flag : flags) {
-            this.flags.add(flag);
-         }
-      }
-      this.classLoader = new WeakReference<ClassLoader>(classLoader);
 
       if (flags == null && classLoader == null)
          throw new IllegalArgumentException("There is no point in using a DecoratedCache if neither a ClassLoader nor any Flags are set.");
+
+      if (flags == null || flags.length == 0)
+         this.flags = EnumUtil.EMPTY_BIT_SET;
+      else {
+         this.flags = EnumUtil.bitSetOf(flags);
+      }
+      this.classLoader = new WeakReference<>(classLoader);
 
       // Yuk
       cacheImplementation = (CacheImpl<K, V>) delegate;
    }
 
-   private DecoratedCache(CacheImpl<K, V> delegate, ClassLoader classLoader, EnumSet<Flag> newFlags) {
+   private DecoratedCache(CacheImpl<K, V> delegate, ClassLoader classLoader, long newFlags) {
       //this constructor is private so we already checked for argument validity
       super(delegate);
       this.flags = newFlags;
-      this.classLoader = new WeakReference<ClassLoader>(classLoader);
+      this.classLoader = new WeakReference<>(classLoader);
       this.cacheImplementation = delegate;
    }
 
    @Override
    public AdvancedCache<K, V> with(final ClassLoader classLoader) {
       if (classLoader == null) throw new IllegalArgumentException("ClassLoader cannot be null!");
-      return new DecoratedCache<K, V>(this.cacheImplementation, classLoader, flags);
+      return new DecoratedCache<>(this.cacheImplementation, classLoader, flags);
    }
 
    @Override
@@ -91,24 +89,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       if (flags == null || flags.length == 0)
          return this;
       else {
-         boolean containsAll;
-         if (this.flags != null) {
-            containsAll = true;
-            for (Flag flag : flags) {
-               if (!this.flags.contains(flag)) {
-                  containsAll = false;
-               }
-            }
-         } else {
-            containsAll = false;
-         }
-         if (containsAll) {
+         long newFlags = EnumUtil.bitSetOf(flags);
+         if (EnumUtil.containsAll(this.flags, newFlags)) {
             //we already have all specified flags
             return this;
          } else {
-            EnumSet<Flag> newFlags = this.flags != null ? EnumSet.copyOf(this.flags) : EnumSet.noneOf(Flag.class);
-            Collections.addAll(newFlags, flags);
-            return new DecoratedCache<K, V>(this.cacheImplementation, this.classLoader.get(), newFlags);
+            return new DecoratedCache<>(this.cacheImplementation, this.classLoader.get(), EnumUtil.mergeBitSets(this.flags, newFlags));
          }
       }
    }
@@ -416,12 +402,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public int size() {
-      return cacheImplementation.size(flags, classLoader.get());
+      return cacheImplementation.size(getFlags(), classLoader.get());
    }
 
    @Override
    public boolean isEmpty() {
-      return cacheImplementation.isEmpty(flags, classLoader.get());
+      return cacheImplementation.isEmpty(getFlags(), classLoader.get());
    }
 
    @Override
@@ -472,7 +458,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CacheSet<K> keySet() {
-      return cacheImplementation.keySet(flags, classLoader.get());
+      return cacheImplementation.keySet(getFlags(), classLoader.get());
    }
 
    @Override
@@ -492,12 +478,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CacheSet<Entry<K, V>> entrySet() {
-      return cacheImplementation.entrySet(flags, classLoader.get());
+      return cacheImplementation.entrySet(getFlags(), classLoader.get());
    }
 
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
-      return cacheImplementation.cacheEntrySet(flags, classLoader.get());
+      return cacheImplementation.cacheEntrySet(getFlags(), classLoader.get());
    }
 
    @Override
@@ -522,7 +508,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    //Not exposed on interface
    public EnumSet<Flag> getFlags() {
-      return flags;
+      return EnumUtil.enumSetOf(flags, Flag.class);
    }
 
    @Override

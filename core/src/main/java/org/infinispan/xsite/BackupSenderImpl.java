@@ -286,15 +286,15 @@ public class BackupSenderImpl implements BackupSender {
             filteredCommand = commandsFactory.buildPutKeyValueCommand(((PutKeyValueCommand) writeCommand).getKey(),
                                                                       ((PutKeyValueCommand) writeCommand).getValue(),
                                                                       writeCommand.getMetadata(),
-                                                                      writeCommand.getFlags());
+                                                                      writeCommand.getFlagsBitSet());
          } else if (writeCommand instanceof ReplaceCommand) {
             filteredCommand = commandsFactory.buildPutKeyValueCommand(((ReplaceCommand) writeCommand).getKey(),
                                                                       ((ReplaceCommand) writeCommand).getNewValue(),
                                                                       writeCommand.getMetadata(),
-                                                                      writeCommand.getFlags());
+                                                                      writeCommand.getFlagsBitSet());
          } else if (writeCommand instanceof RemoveCommand && writeCommand.isConditional()) {
             filteredCommand = commandsFactory.buildRemoveCommand(((RemoveCommand) writeCommand).getKey(), null,
-                                                                 writeCommand.getFlags());
+                                                                 writeCommand.getFlagsBitSet());
          }
          filtered.add(filteredCommand);
       }

@@ -14,12 +14,11 @@ import org.infinispan.functional.impl.Params;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Set;
 import java.util.function.Function;
 
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
-public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
+public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K> {
 
    public static final byte COMMAND_ID = 50;
 
@@ -45,7 +44,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       output.writeObject(key);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(commandInvocationId);
    }
 
@@ -54,7 +53,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       key = input.readObject();
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       commandInvocationId = (CommandInvocationId) input.readObject();
    }
 

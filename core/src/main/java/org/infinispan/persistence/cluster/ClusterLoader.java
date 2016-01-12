@@ -3,9 +3,9 @@ package org.infinispan.persistence.cluster;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -24,7 +24,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +57,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       if (!isCacheReady()) return null;
 
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
-            key, cache.getName(), Collections.<Flag>emptySet(), false, null,
+            key, cache.getName(), EnumUtil.EMPTY_BIT_SET, false, null,
             cache.getCacheConfiguration().dataContainer().keyEquivalence());
 
       Collection<Response> responses = doRemoteCall(clusteredGetCommand);
@@ -67,7 +66,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       Response response;
       if (responses.size() > 1) {
          // Remove duplicates before deciding if multiple responses were received
-         Set<Response> setResponses = new HashSet<Response>(responses);
+         Set<Response> setResponses = new HashSet<>(responses);
          if (setResponses.size() > 1)
             throw new PersistenceException(String.format(
                   "Responses contains more than 1 element and these elements are not equal, so can't decide which one to use: %s",
@@ -104,7 +103,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
    }
 
    private Collection<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws PersistenceException {
-      Set<Address> members = new HashSet<Address>(rpcManager.getTransport().getMembers());
+      Set<Address> members = new HashSet<>(rpcManager.getTransport().getMembers());
       Address self = rpcManager.getTransport().getAddress();
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(members, self);
       try {

@@ -28,6 +28,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -93,12 +94,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -122,7 +120,7 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
-   private static final EnumSet<Flag> IGNORE_RETURN_VALUES_FLAG_SET = EnumSet.of(IGNORE_RETURN_VALUES);
+   private static final long PFER_FLAGS = EnumUtil.bitSetOf(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ);
 
    protected InvocationContextContainer icc;
    protected InvocationContextFactory invocationContextFactory;
@@ -295,7 +293,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return putAllAsync(data, defaultMetadata, null, null);
+      return putAllAsync(data, defaultMetadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
@@ -305,7 +303,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<V> putIfAbsentAsync(K key, V value) {
-      return putIfAbsentAsync(key, value, defaultMetadata, null, null);
+      return putIfAbsentAsync(key, value, defaultMetadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
@@ -315,7 +313,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<V> replaceAsync(K key, V value) {
-      return replaceAsync(key, value, defaultMetadata, null, null);
+      return replaceAsync(key, value, defaultMetadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
@@ -325,7 +323,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return replaceAsync(key, oldValue, newValue, defaultMetadata, null, null);
+      return replaceAsync(key, oldValue, newValue, defaultMetadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
@@ -335,21 +333,26 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final void putAll(Map<? extends K, ? extends V> m) {
-      putAll(m, defaultMetadata, null, null);
+      putAll(m, defaultMetadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
    public final boolean remove(Object key, Object value) {
-      return remove(key, value, null, null);
+      return remove(key, value, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final boolean remove(Object key, Object value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return remove(key, value, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final boolean remove(Object key, Object value, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return removeInternal(key, value, explicitFlags, ctx);
    }
 
-   private boolean removeInternal(Object key, Object value, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+   private boolean removeInternal(Object key, Object value, long explicitFlags, InvocationContext ctx) {
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, explicitFlags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
@@ -376,15 +379,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final boolean containsKey(Object key) {
-      return containsKey(key, null, null);
+      return containsKey(key, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final boolean containsKey(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
-      Object response = invoker.invoke(ctx, command);
-      return response != null;
+      return containsKey(key, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final boolean containsKey(Object key, long explicitFlags, ClassLoader explicitClassLoader) {
+      return get(key, explicitFlags, explicitClassLoader) != null;
    }
 
    @Override
@@ -395,18 +399,29 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final V get(Object key) {
-      return get(key, null, null);
+      return get(key, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @SuppressWarnings("unchecked")
+   @Deprecated
    final V get(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return get(key, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   @SuppressWarnings("unchecked")
+   final V get(Object key, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
       return (V) invoker.invoke(ctx, command);
    }
 
+   @Deprecated
    public final CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return getCacheEntry(key, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final CacheEntry getCacheEntry(Object key, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, explicitFlags);
@@ -416,15 +431,20 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CacheEntry getCacheEntry(Object key) {
-      return getCacheEntry(key, null, null);
+      return getCacheEntry(key, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
    public Map<K, V> getAll(Set<?> keys) {
-      return getAll(keys, null, null);
+      return getAll(keys, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    public final Map<K, V> getAll(Set<?> keys, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return getAll(keys, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final Map<K, V> getAll(Set<?> keys, long explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, keys.size());
       GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, false);
       Map<K, V> map = (Map<K, V>) invoker.invoke(ctx, command);
@@ -446,7 +466,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public final Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, keys.size());
-      GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, true);
+      GetAllCommand command = commandsFactory.buildGetAllCommand(keys, EnumUtil.bitSetOf(explicitFlags), true);
       Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) invoker.invoke(ctx, command);
       Iterator<Map.Entry<K, CacheEntry<K, V>>> entryIterator = map.entrySet().iterator();
       while (entryIterator.hasNext()) {
@@ -460,27 +480,36 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public Map<K, V> getGroup(String groupName) {
-      return getGroup(groupName, null, null);
+      return getGroup(groupName, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    protected final Map<K, V> getGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
-      return Collections.unmodifiableMap(internalGetGroup(groupName, explicitFlags, explicitClassLoader, ctx));
+      return getGroup(groupName, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
    }
 
-   private Map<K, V> internalGetGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader,
-                                      InvocationContext ctx) {
-      GetKeysInGroupCommand command = commandsFactory.buildGetKeysInGroupCommand(explicitFlags, groupName);
+   final Map<K, V> getGroup(String groupName, long explicitFlags, ClassLoader explicitClassLoader) {
+      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
+      return Collections.unmodifiableMap(internalGetGroup(groupName, explicitFlags, ctx));
+   }
+
+   private Map<K, V> internalGetGroup(String groupName, long explicitFlagsBitSet, InvocationContext ctx) {
+      GetKeysInGroupCommand command = commandsFactory.buildGetKeysInGroupCommand(explicitFlagsBitSet, groupName);
       //noinspection unchecked
       return (Map<K, V>) invoker.invoke(ctx, command);
    }
 
    @Override
    public void removeGroup(String groupName) {
-      removeGroup(groupName, null, null);
+      removeGroup(groupName, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    protected final void removeGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      removeGroup(groupName, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final void removeGroup(String groupName, long explicitFlags, ClassLoader explicitClassLoader) {
       if (transactionManager == null) {
          nonTransactionalRemoveGroup(groupName, explicitFlags, explicitClassLoader);
       } else {
@@ -488,15 +517,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
-   private void transactionalRemoveGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   private void transactionalRemoveGroup(String groupName, long explicitFlagsBitSet, ClassLoader explicitClassLoader) {
       final boolean onGoingTransaction = getOngoingTransaction() != null;
       if (!onGoingTransaction) {
          tryBegin();
       }
       try {
          InvocationContext context = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, UNBOUNDED);
-         Map<K, V> keys = internalGetGroup(groupName, explicitFlags, explicitClassLoader, context);
-         Set<Flag> removeFlags = addIgnoreReturnValuesFlag(explicitFlags);
+         Map<K, V> keys = internalGetGroup(groupName, explicitFlagsBitSet, context);
+         long removeFlags = addIgnoreReturnValuesFlag(explicitFlagsBitSet);
          for (K key : keys.keySet()) {
             removeInternal(key, removeFlags, context);
          }
@@ -511,32 +540,39 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
-   private void nonTransactionalRemoveGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   private void nonTransactionalRemoveGroup(String groupName, long explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext context = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
-      Map<K, V> keys = internalGetGroup(groupName, explicitFlags, explicitClassLoader, context);
-      Set<Flag> removeFlags = addIgnoreReturnValuesFlag(explicitFlags);
+      Map<K, V> keys = internalGetGroup(groupName, explicitFlags, context);
+      long removeFlags = addIgnoreReturnValuesFlag(explicitFlags);
       for (K key : keys.keySet()) {
          //a new context is needed for remove since in the non-owners, the command is sent to the primary owner to be
          //executed. If the context is already populated, it throws a ClassCastException because the wrapForRemove is
          //not invoked.
-         remove(key, removeFlags, explicitClassLoader);
+         assertKeyNotNull(key);
+         InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
+         removeInternal(key, removeFlags, ctx);
       }
    }
 
    @Override
    public final V remove(Object key) {
-      return remove(key, null, null);
+      return remove(key, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final V remove(Object key, Set<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return remove(key, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final V remove(Object key, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return removeInternal(key, explicitFlags, ctx);
    }
 
    @SuppressWarnings("unchecked")
-   private V removeInternal(Object key, Set<Flag> explicitFlags, InvocationContext ctx) {
-      Set<Flag> flags = addUnsafeFlags(explicitFlags);
+   private V removeInternal(Object key, long explicitFlags, InvocationContext ctx) {
+      long flags = addUnsafeFlags(explicitFlags);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
@@ -556,15 +592,20 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          displayName = "Clears the cache", name = "clear"
    )
    public final void clearOperation() {
-      clear(null, null);
+      clear(EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
    public final void clear() {
-      clear(null, null);
+      clear(EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final void clear(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      clear(EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final void clear(long explicitFlags, ClassLoader explicitClassLoader) {
       final Transaction tx = suspendOngoingTransactionIfExists();
       try {
          InvocationContext context = invocationContextFactory.createClearNonTxInvocationContext();
@@ -623,7 +664,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final void putForExternalRead(K key, V value) {
-      putForExternalRead(key, value, null, null);
+      putForExternalRead(key, value, EnumUtil.EMPTY_BIT_SET, (ClassLoader) null);
    }
 
    @Override
@@ -642,25 +683,29 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public void putForExternalRead(K key, V value, Metadata metadata) {
       Metadata merged = applyDefaultMetadata(metadata);
-      putForExternalRead(key, value, merged, null, null);
+      putForExternalRead(key, value, merged, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final void putForExternalRead(K key, V value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      putForExternalRead(key, value, defaultMetadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final void putForExternalRead(K key, V value, long explicitFlags, ClassLoader explicitClassLoader) {
       putForExternalRead(key, value, defaultMetadata, explicitFlags, explicitClassLoader);
    }
 
+   @Deprecated
    final void putForExternalRead(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      putForExternalRead(key, value, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final void putForExternalRead(K key, V value, Metadata metadata, long explicitFlags, ClassLoader explicitClassLoader) {
       Transaction ongoingTransaction = null;
       try {
          ongoingTransaction = suspendOngoingTransactionIfExists();
-
-         EnumSet<Flag> flags = EnumSet.of(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ);
-         if (explicitFlags != null && !explicitFlags.isEmpty()) {
-            flags.addAll(explicitFlags);
-         }
-
          // if the entry exists then this should be a no-op.
-         putIfAbsent(key, value, metadata, flags, explicitClassLoader);
+         putIfAbsent(key, value, metadata, EnumUtil.mergeBitSets(PFER_FLAGS, explicitFlags), explicitClassLoader);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
       }
@@ -671,10 +716,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final void evict(K key) {
-      evict(key, null, null);
+      evict(key, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final void evict(K key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      evict(key, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final void evict(K key, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = createSingleKeyNonTxInvocationContext(explicitClassLoader);
       EvictCommand command = commandsFactory.buildEvictCommand(key, explicitFlags);
@@ -771,10 +821,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return invocationContext;
    }
 
-   private boolean isPutForExternalRead(EnumSet<Flag> explicitFlags) {
-      return explicitFlags != null && explicitFlags.contains(PUT_FOR_EXTERNAL_READ);
-   }
-
    private InvocationContext getInvocationContext(Transaction tx, ClassLoader explicitClassLoader,
                                                   boolean implicitTransaction) {
       InvocationContext ctx = invocationContextFactory.createInvocationContext(tx, implicitTransaction);
@@ -792,15 +838,20 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public boolean lock(K... keys) {
       assertKeyNotNull(keys);
-      return lock(Arrays.asList(keys), null, null);
+      return lock(Arrays.asList(keys), EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
    public boolean lock(Collection<? extends K> keys) {
-      return lock(keys, null, null);
+      return lock(keys, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    boolean lock(Collection<? extends K> keys, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return lock(keys, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   boolean lock(Collection<? extends K> keys, long flagsBitSet, ClassLoader explicitClassLoader) {
       if (!config.transaction().transactionMode().isTransactional())
          throw new UnsupportedOperationException("Calling lock() on non-transactional caches is not allowed");
 
@@ -808,7 +859,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
       InvocationContext ctx = getInvocationContextForWrite(explicitClassLoader, UNBOUNDED, false);
-      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, explicitFlags);
+      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, flagsBitSet);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (Boolean) invoker.invoke(ctx, command);
    }
@@ -1085,12 +1136,18 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdleTime, idleTimeUnit).build();
-      return put(key, value, metadata, null, null);
+      return put(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @SuppressWarnings("unchecked")
+   @Deprecated
    final V put(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return put(key, value, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   @SuppressWarnings("unchecked")
+   final V put(K key, V value, Metadata metadata, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return putInternal(key, value, metadata, explicitFlags, ctx);
@@ -1098,25 +1155,21 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    private V putInternal(K key, V value, Metadata metadata,
-         EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      Set<Flag> flags = addUnsafeFlags(explicitFlags);
+         long explicitFlags, InvocationContext ctx) {
+      long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
-   private Set<Flag> addIgnoreReturnValuesFlag(Set<Flag> explicitFlags) {
-      if (explicitFlags == null) {
-         return IGNORE_RETURN_VALUES_FLAG_SET;
-      } else {
-         return Flag.addFlag(explicitFlags, IGNORE_RETURN_VALUES);
-      }
+   private long addIgnoreReturnValuesFlag(long flagBitSet) {
+      return EnumUtil.setEnum(flagBitSet, IGNORE_RETURN_VALUES);
    }
 
-   private Set<Flag> addUnsafeFlags(Set<Flag> explicitFlags) {
-      return config.unsafe().unreliableReturnValues() ? addIgnoreReturnValuesFlag(explicitFlags) :
-            explicitFlags;
+   private long addUnsafeFlags(long flagBitSet) {
+      return config.unsafe().unreliableReturnValues() ? addIgnoreReturnValuesFlag(flagBitSet) :
+            flagBitSet;
    }
 
    @Override
@@ -1124,22 +1177,27 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdleTime, idleTimeUnit).build();
-      return putIfAbsent(key, value, metadata, null, null);
+      return putIfAbsent(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @SuppressWarnings("unchecked")
-   final V putIfAbsent(K key, V value, Metadata metadata,
-         EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   @Deprecated
+   final V putIfAbsent(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return putIfAbsent(key, value, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   @SuppressWarnings("unchecked")
+   final V putIfAbsent(K key, V value, Metadata metadata, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags),
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(EnumUtil.hasEnum(explicitFlags, PUT_FOR_EXTERNAL_READ),
                                                                           explicitClassLoader, 1);
       return putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
    }
 
    @SuppressWarnings("unchecked")
    private V putIfAbsentInternal(K key, V value, Metadata metadata,
-         EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      Set<Flag> flags = addUnsafeFlags(explicitFlags);
+         long explicitFlags, InvocationContext ctx) {
+      long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
       command.setPutIfAbsent(true);
@@ -1153,16 +1211,21 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdleTime, idleTimeUnit).build();
-      putAll(map, metadata, null, null);
+      putAll(map, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final void putAll(Map<? extends K, ? extends V> map, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      putAll(map, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final void putAll(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader,
                                                                           map.size());
       putAllInternal(map, metadata, explicitFlags, ctx);
    }
 
-   private void putAllInternal(Map<? extends K, ? extends V> map, Metadata metadata, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+   private void putAllInternal(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags, InvocationContext ctx) {
       InfinispanCollections.assertNotNullEntries(map, "map");
       Metadata merged = applyDefaultMetadata(metadata);
       PutMapCommand command = commandsFactory.buildPutMapCommand(map, merged, explicitFlags);
@@ -1175,19 +1238,25 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdleTime, idleTimeUnit).build();
-      return replace(key, value, metadata, null, null);
+      return replace(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @SuppressWarnings("unchecked")
+   @Deprecated
    final V replace(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return replace(key, value, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   @SuppressWarnings("unchecked")
+   final V replace(K key, V value, Metadata metadata, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return replaceInternal(key, value, metadata, explicitFlags, ctx);
    }
 
    @SuppressWarnings("unchecked")
-   private V replaceInternal(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      Set<Flag> flags = addUnsafeFlags(explicitFlags);
+   private V replaceInternal(K key, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
+      long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, merged, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
@@ -1199,11 +1268,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdleTime, idleTimeUnit).build();
-      return replace(key, oldValue, value, metadata, null, null);
+      return replace(key, oldValue, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final boolean replace(K key, V oldValue, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return replace(key, oldValue, value, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final boolean replace(K key, V oldValue, V value, Metadata metadata, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
       assertValueNotNull(oldValue);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
@@ -1211,7 +1285,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private boolean replaceInternal(K key, V oldValue, V value, Metadata metadata,
-         EnumSet<Flag> explicitFlags, InvocationContext ctx) {
+         long explicitFlags, InvocationContext ctx) {
       Metadata merged = applyDefaultMetadata(metadata);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, merged, explicitFlags);
       ctx.setLockOwner(command.getKeyLockOwner());
@@ -1244,10 +1318,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return putAsync(key, value, metadata, null, null);
+      return putAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final CompletableFuture<V> putAsync(final K key, final V value, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return putAsync(key, value, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final CompletableFuture<V> putAsync(final K key, final V value, final Metadata metadata, final long explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       return CompletableFuture.supplyAsync(() -> {
@@ -1265,10 +1344,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return putAllAsync(data, metadata, null, null);
+      return putAllAsync(data, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return putAllAsync(data, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata, final long explicitFlags, final ClassLoader explicitClassLoader) {
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, data.size());
       return CompletableFuture.supplyAsync(() -> {
          try {
@@ -1283,10 +1367,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<Void> clearAsync() {
-      return clearAsync(null, null);
+      return clearAsync(EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final CompletableFuture<Void> clearAsync(final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return clearAsync(EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final CompletableFuture<Void> clearAsync(final long explicitFlags, final ClassLoader explicitClassLoader) {
       return CompletableFuture.supplyAsync(() -> {
          clear(explicitFlags, explicitClassLoader);
          return null;
@@ -1298,11 +1387,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return putIfAbsentAsync(key, value, metadata, null, null);
+      return putIfAbsentAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
+   }
+
+   @Deprecated
+   final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
+                                             final EnumSet<Flag> explicitFlags,final ClassLoader explicitClassLoader) {
+      return putIfAbsentAsync(key, value, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
    }
 
    final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
-         final EnumSet<Flag> explicitFlags,final ClassLoader explicitClassLoader) {
+         final long explicitFlags,final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       return CompletableFuture.supplyAsync(() -> {
@@ -1317,10 +1412,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<V> removeAsync(Object key) {
-      return removeAsync(key, null, null);
+      return removeAsync(key, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final CompletableFuture<V> removeAsync(final Object key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return removeAsync(key, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final CompletableFuture<V> removeAsync(final Object key, final long explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       return CompletableFuture.supplyAsync(() -> {
@@ -1335,10 +1435,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      return removeAsync(key, value, null, null);
+      return removeAsync(key, value, EnumUtil.EMPTY_BIT_SET, null);
    }
 
+   @Deprecated
    final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return removeAsync(key, value, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final long explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       return CompletableFuture.supplyAsync(() -> {
@@ -1356,11 +1461,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return replaceAsync(key, value, metadata, null, null);
+      return replaceAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
+   }
+
+   @Deprecated
+   final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
+         final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return replaceAsync(key, value, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
    }
 
    final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
-         final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+                                         final long explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       return CompletableFuture.supplyAsync(() -> {
@@ -1378,11 +1489,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return replaceAsync(key, oldValue, newValue, metadata, null, null);
+      return replaceAsync(key, oldValue, newValue, metadata, EnumUtil.EMPTY_BIT_SET, null);
+   }
+
+   @Deprecated
+   final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
+         final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return replaceAsync(key, oldValue, newValue, metadata, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
    }
 
    final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
-         final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+                                               final Metadata metadata, final long explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, newValue);
       assertValueNotNull(oldValue);
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
@@ -1398,24 +1515,22 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public CompletableFuture<V> getAsync(K key) {
-      return getAsync(key, null, null);
+      return getAsync(key, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @SuppressWarnings("unchecked")
-   CompletableFuture<V> getAsync(final K key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+   @Deprecated
+      CompletableFuture<V> getAsync(final K key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return getAsync(key, EnumUtil.bitSetOf(explicitFlags), explicitClassLoader);
+   }
+
+   @SuppressWarnings("unchecked")
+   CompletableFuture<V> getAsync(final K key, final long explicitFlags, final ClassLoader explicitClassLoader) {
       // Optimization to not start a new thread only when the operation is cheap:
       if (asyncSkipsThread(explicitFlags, key)) {
          return wrapInFuture(get(key, explicitFlags, explicitClassLoader));
       } else {
-         // Make sure the flags are cleared
-         final EnumSet<Flag> appliedFlags;
-         if (explicitFlags == null) {
-            appliedFlags = null;
-         } else {
-            appliedFlags = explicitFlags.clone();
-            explicitFlags.clear();
-         }
-         return CompletableFuture.supplyAsync(() -> get(key, appliedFlags, explicitClassLoader), asyncExecutor);
+         return CompletableFuture.supplyAsync(() -> get(key, explicitFlags, explicitClassLoader), asyncExecutor);
       }
    }
 
@@ -1441,10 +1556,37 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return distributionManager.getLocality(key).isLocal();
    }
 
+   /**
+    * Encodes the cases for an asyncGet operation in which it makes sense to actually perform the operation in sync.
+    *
+    * @return true if we skip the thread (performing it in sync)
+    */
+   private boolean asyncSkipsThread(long flags, K key) {
+      if (!isSkipLoader(flags)) {
+         // if we can't skip the cacheloader, we really want a thread for async.
+         return false;
+      }
+      if (!config.clustering().cacheMode().isDistributed()) {
+         //in these cluster modes we won't RPC for a get, so no need to fork a thread.
+         return true;
+      } else if (EnumUtil.hasEnum(flags, Flag.SKIP_REMOTE_LOOKUP) || EnumUtil.hasEnum(flags, Flag.CACHE_MODE_LOCAL)) {
+         //with these flags we won't RPC either
+         return true;
+      }
+      //finally, we will skip the thread if the key maps to the local node
+      return distributionManager.getLocality(key).isLocal();
+   }
+
    private boolean isSkipLoader(EnumSet<Flag> flags) {
       boolean hasCacheLoaderConfig = !config.persistence().stores().isEmpty();
       return !hasCacheLoaderConfig
             || (flags != null && (flags.contains(Flag.SKIP_CACHE_LOAD) || flags.contains(Flag.SKIP_CACHE_STORE)));
+   }
+
+   private boolean isSkipLoader(long flags) {
+      boolean hasCacheLoaderConfig = !config.persistence().stores().isEmpty();
+      return !hasCacheLoaderConfig
+            || (EnumUtil.hasEnum(flags, Flag.SKIP_CACHE_LOAD) || EnumUtil.hasEnum(flags, Flag.SKIP_CACHE_STORE));
    }
 
    @Override
@@ -1554,12 +1696,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V put(K key, V value, Metadata metadata) {
-      return put(key, value, metadata, null, null);
+      return put(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
-      putAll(map, metadata, null, null);
+      putAll(map, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    private Metadata applyDefaultMetadata(Metadata metadata) {
@@ -1572,22 +1714,22 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
-      return replace(key, value, metadata, null, null);
+      return replace(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      return replace(key, oldValue, value, metadata, null, null);
+      return replace(key, oldValue, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
-      return putIfAbsent(key, value, metadata, null, null);
+      return putIfAbsent(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return putAsync(key, value, metadata, null, null);
+      return putAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, null);
    }
 
    private void associateImplicitTransactionWithCurrentThread(InvocationContext ctx) throws InvalidTransactionException, SystemException {

@@ -2,11 +2,8 @@ package org.infinispan.commands.read;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.DataCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
-
-import java.util.Set;
 
 import static org.infinispan.commons.util.Util.toStr;
 
@@ -27,9 +24,9 @@ public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand im
       this.key = key;
    }
 
-   protected AbstractDataCommand(Object key, Set<Flag> flags) {
+   protected AbstractDataCommand(Object key, long flagsBitSet) {
       this.key = key;
-      this.flags = flags;
+      setFlagsBitSet(flagsBitSet);
    }
 
    protected AbstractDataCommand() {
@@ -59,10 +56,7 @@ public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand im
             return false;
       } else if (!key.equals(other.key))
          return false;
-      if (flags == null) {
-         if (other.flags != null)
-            return false;
-      } else if (!flags.equals(other.flags))
+      if (!hasSameFlags(other))
          return false;
       return true;
    }
@@ -77,7 +71,7 @@ public abstract class AbstractDataCommand extends AbstractFlagAffectedCommand im
       return new StringBuilder(getClass().getSimpleName())
          .append(" {key=")
          .append(toStr(key))
-         .append(", flags=").append(flags)
+         .append(", flags=").append(printFlags())
          .append("}")
          .toString();
    }

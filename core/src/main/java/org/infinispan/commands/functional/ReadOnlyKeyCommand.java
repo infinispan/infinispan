@@ -4,7 +4,7 @@ import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
@@ -21,7 +21,7 @@ public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand imple
    private Function<ReadEntryView<K, V>, R> f;
 
    public ReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f) {
-      super(key, null);
+      super(key, EnumUtil.EMPTY_BIT_SET);
       this.f = f;
    }
 

@@ -4,8 +4,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.configuration.cache.Configuration;
@@ -26,7 +26,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -142,7 +141,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
       int nodes = invalidationAddresses.size();
 
       if (nodes > 0) {
-         InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, Collections.<Flag>emptySet(), keys);
+         InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, EnumUtil.EMPTY_BIT_SET, keys);
          final SingleRpcCommand rpcCommand = commandsFactory.buildSingleRpcCommand(ic);
 
          // No need to invalidate at all if there is no one to invalidate!

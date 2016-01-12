@@ -18,13 +18,12 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Set;
 import java.util.function.BiFunction;
 
 import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
-public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
+public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K> {
    private static final Log log = LogFactory.getLog(ReadWriteKeyValueCommand.class);
 
    public static final byte COMMAND_ID = 51;
@@ -56,7 +55,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       output.writeObject(value);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(commandInvocationId);
       output.writeObject(prevValue);
       output.writeObject(prevMetadata);
@@ -68,7 +67,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       value = (V) input.readObject();
       f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       commandInvocationId = (CommandInvocationId) input.readObject();
       prevValue = (V) input.readObject();
       prevMetadata = (Metadata) input.readObject();
@@ -148,7 +147,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
          .append(", value=").append(toStr(value))
          .append(", prevValue=").append(toStr(prevValue))
          .append(", prevMetadata=").append(toStr(prevMetadata))
-         .append(", flags=").append(flags)
+         .append(", flags=").append(printFlags())
          .append(", valueMatcher=").append(valueMatcher)
          .append(", successful=").append(successful)
          .append("}")

@@ -15,6 +15,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -237,7 +238,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
 
       Object result = invokeNextInterceptor(ctx, command);
-      processInvalidationResult(ctx, command, invalidationFuture);
+      processInvalidationResult(command, invalidationFuture);
       //we also need to remove from L1 the keys that are not ours
       for (Object o : command.getAffectedKeys()) {
          if (!cdl.localNodeIsOwner(o)) {
@@ -299,7 +300,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
       Future<?> l1InvalidationFuture = invalidateL1(ctx, command, assumeOriginKeptEntryInL1);
       Object returnValue = invokeNextInterceptor(ctx, command);
-      processInvalidationResult(ctx, command, l1InvalidationFuture);
+      processInvalidationResult(command, l1InvalidationFuture);
       removeFromLocalL1(ctx, command);
       return returnValue;
    }
@@ -320,11 +321,11 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       ctx.removeLookedUpEntry(key);
       entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, true, true);
 
-      InvalidateCommand command = commandsFactory.buildInvalidateFromL1Command(null, Collections.singleton(key));
+      InvalidateCommand command = commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET, Collections.singleton(key));
       invokeNextInterceptor(ctx, command);
    }
 
-   private void processInvalidationResult(InvocationContext ctx, FlagAffectedCommand command, Future<?> l1InvalidationFuture) throws InterruptedException, ExecutionException {
+   private void processInvalidationResult(FlagAffectedCommand command, Future<?> l1InvalidationFuture) throws InterruptedException, ExecutionException {
       if (l1InvalidationFuture != null) {
          if (isSynchronous(command)) {
             l1InvalidationFuture.get();

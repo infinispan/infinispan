@@ -11,7 +11,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Set;
 
 import static org.infinispan.commons.util.Util.toStr;
 
@@ -30,9 +29,8 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
 
    private InternalCacheEntry remotelyFetchedValue;
 
-   public GetKeyValueCommand(Object key, Set<Flag> flags) {
-      this.key = key;
-      this.flags = flags;
+   public GetKeyValueCommand(Object key, long flagsBitSet) {
+      super(key, flagsBitSet);
    }
 
    public GetKeyValueCommand() {
@@ -75,13 +73,13 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
    }
 
    /**
@@ -104,7 +102,7 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
       return new StringBuilder()
             .append("GetKeyValueCommand {key=")
             .append(toStr(key))
-            .append(", flags=").append(flags)
+            .append(", flags=").append(printFlags())
             .append("}")
             .toString();
    }

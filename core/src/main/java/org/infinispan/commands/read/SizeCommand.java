@@ -3,15 +3,9 @@ package org.infinispan.commands.read;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.util.CloseableIterable;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.filter.AcceptAllKeyValueFilter;
-import org.infinispan.filter.NullValueConverter;
 
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -27,21 +21,16 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
 
    public SizeCommand(Cache<Object, ?> cache, Set<Flag> flags) {
       setFlags(flags);
-      this.cache = cache;
+      if (flags != null) {
+         this.cache = cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+      } else {
+         this.cache = cache;
+      }
    }
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitSizeCommand(ctx, this);
-   }
-
-   Cache<Object, ?> getFlagRespectingCache() {
-      Set<Flag> flags = getFlags();
-      if (flags != null  && !flags.isEmpty()) {
-         return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
-      } else {
-         return cache;
-      }
    }
 
    @Override
@@ -51,7 +40,7 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
 
    @Override
    public Integer perform(InvocationContext ctx) throws Throwable {
-      long size = getFlagRespectingCache().keySet().stream().count();
+      long size = cache.keySet().stream().count();
       if (size > Integer.MAX_VALUE) {
          return Integer.MAX_VALUE;
       } else {

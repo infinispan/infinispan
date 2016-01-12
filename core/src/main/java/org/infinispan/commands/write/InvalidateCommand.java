@@ -5,7 +5,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
@@ -38,16 +37,16 @@ public class InvalidateCommand extends RemoveCommand {
       this.valueMatcher = ValueMatcher.MATCH_ALWAYS;
    }
 
-   public InvalidateCommand(CacheNotifier notifier, Set<Flag> flags, CommandInvocationId commandInvocationId, Object... keys) {
+   public InvalidateCommand(CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId, Object... keys) {
       //valueEquivalence can be null because this command never compares values.
-      super(null, null, notifier, flags, null, commandInvocationId);
+      super(null, null, notifier, flagsBitSet, null, commandInvocationId);
       this.keys = keys;
       this.notifier = notifier;
    }
 
-   public InvalidateCommand(CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys, CommandInvocationId commandInvocationId) {
+   public InvalidateCommand(CacheNotifier notifier, long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
       //valueEquivalence can be null because this command never compares values.
-      super(null, null, notifier, flags, null, commandInvocationId);
+      super(null, null, notifier, flagsBitSet, null, commandInvocationId);
       if (keys == null || keys.isEmpty())
          this.keys = Util.EMPTY_OBJECT_ARRAY;
       else

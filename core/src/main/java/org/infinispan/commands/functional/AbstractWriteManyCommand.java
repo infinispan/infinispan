@@ -2,6 +2,7 @@ package org.infinispan.commands.functional;
 
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.FunctionalNotifier;
@@ -90,6 +91,16 @@ abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, ParamsCom
    }
 
    @Override
+   public long getFlagsBitSet() {
+      return EnumUtil.EMPTY_BIT_SET;
+   }
+
+   @Override
+   public void setFlagsBitSet(long bitSet) {
+      // TODO: Customise this generated block
+   }
+
+   @Override
    public Params getParams() {
       return params;
    }
@@ -97,4 +108,6 @@ abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, ParamsCom
    public void setParams(Params params) {
       this.params = params;
    }
+
+
 }

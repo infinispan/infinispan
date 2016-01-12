@@ -204,8 +204,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             log.tracef("We already have lock for keys %s, skip remote lock acquisition", keys);
             return;
          } else {
-            LockControlCommand lcc = cf.buildLockControlCommand(keys,
-                  command.getFlags(), txContext.getGlobalTransaction());
+            LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(), txContext.getGlobalTransaction());
             invokeNextInterceptor(ctx, lcc);
          }
       }
@@ -221,7 +220,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             log.tracef("We already have lock for key %s, skip remote lock acquisition", key);
             return;
          } else {
-            LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlags(), txContext.getGlobalTransaction());
+            LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(), txContext.getGlobalTransaction());
             invokeNextInterceptor(ctx, lcc);
          }
       }

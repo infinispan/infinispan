@@ -18,7 +18,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Set;
 
 
 /**
@@ -42,8 +41,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
     */
    protected Object value;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags, Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
-      super(key, flags, commandInvocationId);
+   public RemoveCommand(Object key, Object value, CacheNotifier notifier, long flagsBitSet, Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
+      super(key, flagsBitSet, commandInvocationId);
       this.value = value;
       this.notifier = notifier;
       this.valueEquivalence = valueEquivalence;
@@ -136,7 +135,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          .append("RemoveCommand{key=")
          .append(key)
          .append(", value=").append(value)
-         .append(", flags=").append(flags)
+         .append(", flags=").append(printFlags())
          .append(", valueMatcher=").append(valueMatcher)
          .append("}")
          .toString();
@@ -160,7 +159,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(value);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
       output.writeObject(commandInvocationId);
    }
@@ -169,7 +168,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       value = input.readObject();
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = (CommandInvocationId) input.readObject();
    }

@@ -12,6 +12,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -79,14 +80,14 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
       public void handleError(String fileName, DescriptorParserException exception) {
          // handle first error per file, ignore the rest if any
          if (errorFiles.add(fileName)) {
-            VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(fileName + ERRORS_KEY_SUFFIX, exception.getMessage(), null, null);
+            VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(fileName + ERRORS_KEY_SUFFIX, exception.getMessage(), null, EnumUtil.EMPTY_BIT_SET);
             invoker.invoke(ctx, cmd);
          }
       }
 
       @Override
       public void handleSuccess(String fileName) {
-         VisitableCommand cmd = commandsFactory.buildRemoveCommand(fileName + ERRORS_KEY_SUFFIX, null, null);
+         VisitableCommand cmd = commandsFactory.buildRemoveCommand(fileName + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
          invoker.invoke(ctx, cmd);
       }
    }
@@ -208,7 +209,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
                }
 
                // lock .errors key
-               VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, null, null);
+               VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
                invoker.invoke(ctx, cmd);
             }
          } else {
@@ -268,7 +269,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
       }
 
       // lock .errors key
-      VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, null, null);
+      VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
       invoker.invoke(ctx, cmd);
 
       final Object result = invokeNextInterceptor(ctx, command);
@@ -305,10 +306,10 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
          String key = (String) command.getKey();
          if (shouldIntercept(key)) {
             // lock .errors key
-            VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, null, null);
+            VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
             invoker.invoke(ctx, cmd);
 
-            cmd = commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX, null, null);
+            cmd = commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
             invoker.invoke(ctx, cmd);
 
             serializationContext.unregisterProtoFile(key);
@@ -318,23 +319,23 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
             StringBuilder sb = new StringBuilder();
             for (FileDescriptor fd : fileDescriptors.values()) {
                if (fd.isResolved()) {
-                  cmd = commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX, null, null);
+                  cmd = commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
                   invoker.invoke(ctx, cmd);
                } else {
                   if (sb.length() > 0) {
                      sb.append('\n');
                   }
                   sb.append(fd.getName());
-                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX, "One of the imported files is missing or has errors", null, null);
+                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX, "One of the imported files is missing or has errors", null, EnumUtil.EMPTY_BIT_SET);
                   put.setPutIfAbsent(true);
                   invoker.invoke(ctx, put);
                }
             }
 
             if (sb.length() > 0) {
-               cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), null, null);
+               cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), null, EnumUtil.EMPTY_BIT_SET);
             } else {
-               cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, null);
+               cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
             }
             invoker.invoke(ctx, cmd);
          }
@@ -363,7 +364,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
          }
 
          // lock .errors key
-         VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, null, null);
+         VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
          invoker.invoke(ctx, cmd);
 
          final Object result = invokeNextInterceptor(ctx, command);
@@ -416,7 +417,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
       // remove or update .errors accordingly
       VisitableCommand cmd;
       if (errorFiles.isEmpty()) {
-         cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, null);
+         cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
       } else {
          StringBuilder sb = new StringBuilder();
          for (String fileName : errorFiles) {
@@ -425,7 +426,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
             }
             sb.append(fileName);
          }
-         cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), null, null);
+         cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), null, EnumUtil.EMPTY_BIT_SET);
       }
       invoker.invoke(ctx, cmd);
    }

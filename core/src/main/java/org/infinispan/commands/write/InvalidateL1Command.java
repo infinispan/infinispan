@@ -6,14 +6,12 @@ import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
@@ -40,22 +38,22 @@ public class InvalidateL1Command extends InvalidateCommand {
       writeOrigin = null;
    }
 
-   public InvalidateL1Command(DataContainer dc, DistributionManager dm, CacheNotifier notifier, Set<Flag> flags,
+   public InvalidateL1Command(DataContainer dc, DistributionManager dm, CacheNotifier notifier, long flagsBitSet,
                               CommandInvocationId commandInvocationId, Object... keys) {
-      super(notifier, flags, commandInvocationId, keys);
+      super(notifier, flagsBitSet, commandInvocationId, keys);
       writeOrigin = null;
       this.dm = dm;
       this.dataContainer = dc;
    }
 
-   public InvalidateL1Command(DataContainer dc, DistributionManager dm, CacheNotifier notifier, Set<Flag> flags,
+   public InvalidateL1Command(DataContainer dc, DistributionManager dm, CacheNotifier notifier, long flagsBitSet,
                               Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      this(null, dc, dm, notifier, flags, keys, commandInvocationId);
+      this(null, dc, dm, notifier, flagsBitSet, keys, commandInvocationId);
    }
 
    public InvalidateL1Command(Address writeOrigin, DataContainer dc, DistributionManager dm, CacheNotifier notifier,
-                              Set<Flag> flags, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      super(notifier, flags, keys, commandInvocationId);
+                              long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
+      super(notifier, flagsBitSet, keys, commandInvocationId);
       this.writeOrigin = writeOrigin;
       this.dm = dm;
       this.dataContainer = dc;

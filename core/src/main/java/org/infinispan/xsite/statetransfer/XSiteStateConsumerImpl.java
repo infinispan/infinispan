@@ -3,6 +3,7 @@ package org.infinispan.xsite.statetransfer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -15,7 +16,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
-import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.infinispan.context.Flag.*;
@@ -28,9 +28,9 @@ import static org.infinispan.context.Flag.*;
  */
 public class XSiteStateConsumerImpl implements XSiteStateConsumer {
 
-   private static final EnumSet<Flag> STATE_TRANSFER_PUT_FLAGS = EnumSet.of(PUT_FOR_X_SITE_STATE_TRANSFER,
-                                                                            IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
-                                                                            SKIP_XSITE_BACKUP);
+   private static final long STATE_TRANSFER_PUT_FLAGS = EnumUtil.bitSetOf(PUT_FOR_X_SITE_STATE_TRANSFER,
+                                                                          IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
+                                                                          SKIP_XSITE_BACKUP);
    private static final Log log = LogFactory.getLog(XSiteStateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();

@@ -40,21 +40,21 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    public PutMapCommand() {
    }
 
-   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, Set<Flag> flags, CommandInvocationId commandInvocationId) {
+   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, long flagsBitSet, CommandInvocationId commandInvocationId) {
       this.map = (Map<Object, Object>) map;
       this.notifier = notifier;
       this.metadata = metadata;
-      this.flags = flags;
       this.commandInvocationId = commandInvocationId;
+      setFlagsBitSet(flagsBitSet);
    }
 
    public PutMapCommand(PutMapCommand command) {
       this.map = command.map;
       this.notifier = command.notifier;
       this.metadata = command.metadata;
-      this.flags = command.flags;
       this.isForwarded = command.isForwarded;
       this.commandInvocationId = CommandInvocationId.generateIdFrom(command.commandInvocationId);
+      setFlagsBitSet(command.getFlagsBitSet());
    }
 
    public void init(CacheNotifier notifier) {
@@ -138,7 +138,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       output.writeObject(map);
       output.writeObject(metadata);
       output.writeBoolean(isForwarded);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeObject(commandInvocationId);
    }
 
@@ -147,7 +147,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       map = (Map<Object, Object>) input.readObject();
       metadata = (Metadata) input.readObject();
       isForwarded = input.readBoolean();
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
       commandInvocationId = (CommandInvocationId) input.readObject();
    }
 
@@ -192,7 +192,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
             i++;
          }
       }
-      sb.append("}, flags=").append(flags)
+      sb.append("}, flags=").append(printFlags())
          .append(", metadata=").append(metadata)
          .append(", isForwarded=").append(isForwarded)
          .append("}");

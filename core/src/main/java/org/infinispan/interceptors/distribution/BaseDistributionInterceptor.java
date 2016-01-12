@@ -133,7 +133,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected final InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command, boolean isWrite) throws Exception {
       GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
-      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
+      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlagsBitSet(), acquireRemoteLock, gtx);
       get.setWrite(isWrite);
 
       RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
@@ -213,7 +213,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return null;
    }
 
-   protected Map<Object, InternalCacheEntry> retrieveFromRemoteSources(Set<?> requestedKeys, InvocationContext ctx, Set<Flag> flags) throws Throwable {
+   protected Map<Object, InternalCacheEntry> retrieveFromRemoteSources(Set<?> requestedKeys, InvocationContext ctx, long flagsBitSet) throws Throwable {
       GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       ConsistentHash ch = cacheTopology.getReadConsistentHash();
@@ -231,7 +231,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       Map<Address, ReplicableCommand> commands = new HashMap<>();
       for (Map.Entry<Address, List<Object>> entry : ownerKeys.entrySet()) {
          List<Object> keys = entry.getValue();
-         ClusteredGetAllCommand remoteGetAll = cf.buildClusteredGetAllCommand(keys, flags, gtx);
+         ClusteredGetAllCommand remoteGetAll = cf.buildClusteredGetAllCommand(keys, flagsBitSet, gtx);
          commands.put(entry.getKey(), remoteGetAll);
       }
 
@@ -473,7 +473,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }
 
             Map<Object, InternalCacheEntry> justRetrieved = retrieveFromRemoteSources(
-                  requestedKeys, ctx, command.getFlags());
+                  requestedKeys, ctx, command.getFlagsBitSet());
             Map<Object, InternalCacheEntry> previouslyFetched = command.getRemotelyFetched();
             if (previouslyFetched != null) {
                previouslyFetched.putAll(justRetrieved);
@@ -568,7 +568,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }
 
             Map<Object, InternalCacheEntry> justRetrieved = retrieveFromRemoteSources(
-               requestedKeys, ctx, command.getFlags());
+               requestedKeys, ctx, command.getFlagsBitSet());
             Map<Object, InternalCacheEntry> previouslyFetched = command.getRemotelyFetched();
             if (previouslyFetched != null) {
                previouslyFetched.putAll(justRetrieved);

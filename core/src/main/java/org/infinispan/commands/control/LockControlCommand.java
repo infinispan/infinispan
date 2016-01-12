@@ -4,6 +4,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -23,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -43,7 +43,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    private List<Object> keys;
    private boolean unlock = false;
-   private Set<Flag> flags;
+   private long flags = EnumUtil.EMPTY_BIT_SET;
 
    private LockControlCommand() {
       super(null); // For command id uniqueness test
@@ -53,7 +53,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super(cacheName);
    }
 
-   public LockControlCommand(Collection<?> keys, String cacheName, Set<Flag> flags, GlobalTransaction gtx) {
+   public LockControlCommand(Collection<?> keys, String cacheName, long flags, GlobalTransaction gtx) {
       super(cacheName);
       if (keys != null) {
          //building defensive copies is here in order to support replaceKey operation
@@ -65,7 +65,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       this.globalTx = gtx;
    }
 
-   public LockControlCommand(Object key, String cacheName, Set<Flag> flags, GlobalTransaction gtx) {
+   public LockControlCommand(Object key, String cacheName, long flags, GlobalTransaction gtx) {
       this(cacheName);
       this.keys = new ArrayList<>(1);
       this.keys.add(key);
@@ -150,7 +150,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super.writeTo(output);
       output.writeBoolean(unlock);
       MarshallUtil.marshallCollection(keys, output);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(flags));
    }
 
    @Override
@@ -159,7 +159,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super.readFrom(input);
       unlock = input.readBoolean();
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      flags = (Set<Flag>) input.readObject();
+      flags = input.readLong();
    }
 
    public boolean isUnlock() {
@@ -179,10 +179,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       LockControlCommand that = (LockControlCommand) o;
 
       if (unlock != that.unlock) return false;
-      if (flags == null)
-         return that.flags == null;
-      else
-         if (!flags.equals(that.flags)) return false;
+      if (flags != that.flags) return false;
       if (!keys.equals(that.keys)) return false;
 
       return true;
@@ -193,8 +190,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       int result = super.hashCode();
       result = 31 * result + keys.hashCode();
       result = 31 * result + (unlock ? 1 : 0);
-      if (flags != null)
-         result = 31 * result + flags.hashCode();
+      result = 31 * result + (int) (flags ^ (flags >>> 32));
       return result;
    }
 
@@ -203,7 +199,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       return new StringBuilder()
          .append("LockControlCommand{cache=").append(cacheName)
          .append(", keys=").append(keys)
-         .append(", flags=").append(flags)
+         .append(", flags=").append(EnumUtil.prettyPrintBitSet(flags, Flag.class))
          .append(", unlock=").append(unlock)
          .append(", gtx=").append(globalTx)
          .append("}")
@@ -211,13 +207,13 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public Set<Flag> getFlags() {
+   public long getFlagsBitSet() {
       return flags;
    }
 
    @Override
-   public void setFlags(Set<Flag> flags) {
-      this.flags = flags;
+   public void setFlagsBitSet(long bitSet) {
+      this.flags = bitSet;
    }
 
    @Override

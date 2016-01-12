@@ -582,7 +582,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          }
          if (newMap.size() > 0) {
             PutMapCommand clonedCommand = commandFactory.buildPutMapCommand(newMap,
-                  command.getMetadata(), command.getFlags());
+                  command.getMetadata(), command.getFlagsBitSet());
             invokeNextInterceptor(ctx, clonedCommand);
          }
          return null;

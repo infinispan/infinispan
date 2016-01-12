@@ -3,7 +3,6 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -18,7 +17,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * {@link org.infinispan.commands.VisitableCommand} that fetches the keys belonging to a group.
@@ -37,9 +35,9 @@ public class GetKeysInGroupCommand extends AbstractFlagAffectedCommand implement
    private transient boolean isGroupOwner;
    private transient GroupManager groupManager;
 
-   public GetKeysInGroupCommand(Set<Flag> flags, String groupName) {
+   public GetKeysInGroupCommand(long flagsBitSet, String groupName) {
       this.groupName = groupName;
-      setFlags(flags);
+      setFlagsBitSet(flagsBitSet);
    }
 
    public GetKeysInGroupCommand() {
@@ -72,13 +70,13 @@ public class GetKeysInGroupCommand extends AbstractFlagAffectedCommand implement
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeUTF(groupName);
-      output.writeObject(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       groupName = input.readUTF();
-      flags = (Set<Flag>) input.readObject();
+      setFlagsBitSet(input.readLong());
    }
 
    @Override
@@ -119,6 +117,7 @@ public class GetKeysInGroupCommand extends AbstractFlagAffectedCommand implement
    public String toString() {
       return "GetKeysInGroupCommand{" +
             "groupName='" + groupName + '\'' +
+            ", flags=" + printFlags() +
             '}';
    }
 
