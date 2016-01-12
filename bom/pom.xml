@@ -90,6 +90,7 @@
       <version.hibernate_dep.hibernate-commons-annotations>5.0.1.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.hibernate_dep.jandex>2.0.0.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javaassist>3.18.1-GA</version.hibernate_dep.javaassist>
+      <version.javassist>${version.hibernate_dep.javaassist}</version.javassist>
 
       <uberjar.deps.optional>true</uberjar.deps.optional>
    </properties>
@@ -467,6 +468,12 @@
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
             <version>${version.c3p0}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>${version.javassist}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>

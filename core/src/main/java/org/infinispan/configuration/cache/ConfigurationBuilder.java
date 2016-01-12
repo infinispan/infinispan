@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
+import static org.infinispan.configuration.cache.Configuration.INLINE_INTERCEPTORS;
 import static org.infinispan.configuration.cache.Configuration.SIMPLE_CACHE;
 
 import java.lang.reflect.Constructor;
@@ -74,6 +75,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public boolean simpleCache() {
       return attributes.attribute(SIMPLE_CACHE).get();
    }
+
+   @Override
+   public ConfigurationBuilder inlineInterceptors(boolean inlineInterceptors) {
+      // TODO: check that JVM properties are set properly so that interceptor stack
+      // can be really inlined; recommended values are
+      // -XX:FreqInlineSize=450 -XX:MaxInlineSize=100 -XX:MaxInlineLevel=50
+      attributes.attribute(INLINE_INTERCEPTORS).set(inlineInterceptors);
+      return this;
+   }
+
+   @Override
+   public boolean inlineInterceptors() { return attributes.attribute(INLINE_INTERCEPTORS).get(); }
 
    @Override
    public ClusteringConfigurationBuilder clustering() {

@@ -50,6 +50,7 @@ public enum Attribute {
     GROUP_NAME("group-name"),
     ID("id"),
     INDEX("index"),
+    INLINE_INTERCEPTORS("inline-interceptors"),
     INTERVAL("interval"),
     INVALIDATION_CLEANUP_TASK_FREQUENCY("l1-cleanup-interval"),
     ISOLATION("isolation"),

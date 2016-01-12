@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
@@ -50,6 +49,22 @@ public class ComponentMetadataRepo {
 
       componentMetadataMap.putAll(comp);
       factories.putAll(fact);
+   }
+
+   /**
+    * Adds component metadata at runtime.
+    * @param componentMetadata
+    */
+   public synchronized void addComponentMetadata(ComponentMetadata componentMetadata) {
+      componentMetadataMap.put(componentMetadata.getName(), componentMetadata);
+   }
+
+   /**
+    * Remove component metadata at runtime.
+    * @param name of component type to remove
+    */
+   public synchronized ComponentMetadata removeComponentMetadata(String name) {
+      return componentMetadataMap.remove(name);
    }
 
    /**

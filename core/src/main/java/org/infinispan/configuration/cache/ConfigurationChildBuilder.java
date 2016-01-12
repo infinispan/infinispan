@@ -8,6 +8,10 @@ public interface ConfigurationChildBuilder {
 
    boolean simpleCache();
 
+   ConfigurationChildBuilder inlineInterceptors(boolean inlineInterceptors);
+
+   boolean inlineInterceptors();
+
    ClusteringConfigurationBuilder clustering();
 
    CustomInterceptorsConfigurationBuilder customInterceptors();

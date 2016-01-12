@@ -1,22 +1,28 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.Visitor;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.stack.StackOptimizer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,19 +43,31 @@ public class InterceptorChain {
    /**
     * reference to the first interceptor in the chain
     */
-   private volatile CommandInterceptor firstInChain;
+   private CommandInterceptor firstInChain;
+   private Visitor firstVisitor;
+   private Collection<Object> replacedInterceptors;
 
-   final ReentrantLock lock = new ReentrantLock();
-   final ComponentMetadataRepo componentMetadataRepo;
+   private final ReentrantLock lock = new ReentrantLock();
+   private final ComponentMetadataRepo componentMetadataRepo;
+   private final ComponentRegistry componentRegistry;
+   private final boolean inlineInterceptors;
 
    /**
     * Constructs an interceptor chain having the supplied interceptor as first.
     */
-   public InterceptorChain(ComponentMetadataRepo componentMetadataRepo) {
+   public InterceptorChain(ComponentRegistry componentRegistry, ComponentMetadataRepo componentMetadataRepo, Configuration configuration) {
+      this.componentRegistry = componentRegistry;
       this.componentMetadataRepo = componentMetadataRepo;
+      this.inlineInterceptors = configuration.inlineInterceptors();
    }
 
-   @Start
+   @Start(priority = 30) // after all interceptors
+   private void init() {
+      printChainInfo();
+      // Stack optimization can happen only after the interceptors are initialized = started
+      inlineInterceptors();
+   }
+
    private void printChainInfo() {
       if (log.isDebugEnabled()) {
          log.debugf("Interceptor chain size: %d", size());
@@ -86,6 +104,7 @@ public class InterceptorChain {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
+         restoreInterceptors();
          Class<? extends CommandInterceptor> interceptorClass = interceptor.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
@@ -94,7 +113,9 @@ public class InterceptorChain {
             firstInChain = interceptor;
             return;
          }
-         if (firstInChain == null) return;
+         if (firstInChain == null) {
+            throw new IllegalArgumentException("Invalid position: " + position + " !");
+         }
          CommandInterceptor it = firstInChain;
          int index = 0;
          while (it != null) {
@@ -105,9 +126,13 @@ public class InterceptorChain {
             }
             it = it.getNext();
          }
-         throw new IllegalArgumentException("Invalid index: " + index + " !");
+         throw new IllegalArgumentException("Invalid position: " + position + " !");
       } finally {
-         lock.unlock();
+         try {
+            inlineInterceptors();
+         } finally {
+            lock.unlock();
+         }
       }
    }
 
@@ -121,7 +146,10 @@ public class InterceptorChain {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
-         if (firstInChain == null) return;
+         restoreInterceptors();
+         if (firstInChain == null) {
+            throw new IllegalArgumentException("Invalid position: " + position + " !");
+         }
          if (position == 0) {
             firstInChain = firstInChain.getNext();
             return;
@@ -130,7 +158,9 @@ public class InterceptorChain {
          int index = 0;
          while (it != null) {
             if (++index == position) {
-               if (it.getNext() == null) return; //nothing to remove
+               if (it.getNext() == null) {
+                  return; //nothing to remove
+               }
                it.setNext(it.getNext().getNext());
                return;
             }
@@ -138,7 +168,11 @@ public class InterceptorChain {
          }
          throw new IllegalArgumentException("Invalid position: " + position + " !");
       } finally {
-         lock.unlock();
+         try {
+            inlineInterceptors();
+         } finally {
+            lock.unlock();
+         }
       }
    }
 
@@ -181,6 +215,7 @@ public class InterceptorChain {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
+         restoreInterceptors();
          if (isFirstInChain(clazz)) {
             firstInChain = firstInChain.getNext();
          }
@@ -194,7 +229,11 @@ public class InterceptorChain {
             it = it.getNext();
          }
       } finally {
-         lock.unlock();
+         try {
+            inlineInterceptors();
+         } finally {
+            lock.unlock();
+         }
       }
    }
 
@@ -211,6 +250,7 @@ public class InterceptorChain {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
+         restoreInterceptors();
          Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
@@ -225,7 +265,11 @@ public class InterceptorChain {
          }
          return false;
       } finally {
-         lock.unlock();
+         try {
+            inlineInterceptors();
+         } finally {
+            lock.unlock();
+         }
       }
    }
 
@@ -247,6 +291,7 @@ public class InterceptorChain {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
+         restoreInterceptors();
          Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
@@ -267,7 +312,11 @@ public class InterceptorChain {
          }
          return false;
       } finally {
-         lock.unlock();
+         try {
+            inlineInterceptors();
+         } finally {
+            lock.unlock();
+         }
       }
    }
 
@@ -282,6 +331,7 @@ public class InterceptorChain {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
+         restoreInterceptors();
          Class<? extends CommandInterceptor> interceptorClass = replacingInterceptor.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
@@ -305,7 +355,11 @@ public class InterceptorChain {
          }
          return false;
       } finally {
-         lock.unlock();
+         try {
+            inlineInterceptors();
+         } finally {
+            lock.unlock();
+         }
       }
    }
 
@@ -313,6 +367,11 @@ public class InterceptorChain {
     * Appends at the end.
     */
    public void appendInterceptor(CommandInterceptor ci, boolean isCustom) {
+      // This method should be called only from InterceptorChainFactory, and the calls should be finished
+      // with call for stack optimization
+      if (firstVisitor != null && firstVisitor != firstInChain) {
+         throw new IllegalStateException("Unexpected access");
+      }
       Class<? extends CommandInterceptor> interceptorClass = ci.getClass();
       if (isCustom) validateCustomInterceptor(interceptorClass);
       assertNotAdded(interceptorClass);
@@ -333,7 +392,7 @@ public class InterceptorChain {
     */
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
       try {
-         return command.acceptVisitor(ctx, firstInChain);
+         return command.acceptVisitor(ctx, firstVisitor);
       } catch (CacheException e) {
          if (e.getCause() instanceof InterruptedException)
             Thread.currentThread().interrupt();
@@ -430,5 +489,46 @@ public class InterceptorChain {
          it = it.getNext();
       }
       return false;
+   }
+
+   public void inlineInterceptors() {
+      if (!inlineInterceptors) {
+         firstVisitor = firstInChain;
+         return;
+      }
+      StackOptimizer<Visitor, VisitableCommand, CommandInterceptor> stackOptimizer = new StackOptimizer<Visitor, VisitableCommand, CommandInterceptor>()
+            .visitor(Visitor.class)
+            .interceptor(CommandInterceptor.class)
+            .command(VisitableCommand.class)
+            .nextMethod("invokeNextInterceptor", "(Lorg/infinispan/context/InvocationContext;Lorg/infinispan/commands/VisitableCommand;)Ljava/lang/Object;")
+            .nextField(CommandInterceptor.class, "next")
+            .acceptMethod("acceptVisitor", "(Lorg/infinispan/context/InvocationContext;Lorg/infinispan/commands/Visitor;)Ljava/lang/Object;", new int[]{2, 1, -1})
+            .performMethod("perform", "(Lorg/infinispan/context/InvocationContext;)Ljava/lang/Object;", new int[]{2, 1});
+      firstVisitor = stackOptimizer.optimize(firstInChain);
+      replacedInterceptors = stackOptimizer.getReplacedInterceptors().values();
+      for (Object replacement : replacedInterceptors) {
+         Class<?> clazz = replacement.getClass();
+         componentMetadataRepo.addComponentMetadata(new ComponentMetadata(clazz,
+               ReflectionUtil.getAllMethods(clazz, Inject.class), Collections.EMPTY_LIST, Collections.EMPTY_LIST, false, false));
+         componentRegistry.registerComponent(replacement, clazz);
+      }
+   }
+
+   public void restoreInterceptors() {
+      firstVisitor = firstInChain;
+      if (replacedInterceptors != null) {
+         // TODO: if a field value in the interceptor has changed during execution, we will forget the value.
+         // Maybe we should copy the field values back, too, but changing field values is not recommended anyway
+         // with inlined stack
+         for (Object replacement : replacedInterceptors) {
+            Class<?> clazz = replacement.getClass();
+            componentMetadataRepo.removeComponentMetadata(clazz.getName());
+            Object removed = componentRegistry.unregisterComponent(clazz.getName()).getInstance();
+            if (removed != replacement) {
+               throw new IllegalStateException("Removed wrong component");
+            }
+         }
+         replacedInterceptors = null;
+      }
    }
 }

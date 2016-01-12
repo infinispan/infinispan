@@ -744,6 +744,11 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="inline-interceptors" type="xs:boolean" default="false">
+      <xs:annotation>
+        <xs:documentation>Enables bytecode enhancements that allow JIT compiler to inline calls in interceptor stack.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="local-cache">

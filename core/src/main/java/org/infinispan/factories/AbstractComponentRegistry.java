@@ -138,6 +138,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
    }
 
+   public synchronized final Component unregisterComponent(String name) {
+      return componentLookup.remove(name);
+   }
+
    /**
     * Registers a component in the registry under the given type, and injects any dependencies needed.  If a component
     * of this type already exists, it is overwritten.
