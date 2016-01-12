@@ -110,6 +110,14 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
             })
             .build();
 
+    static final SimpleAttributeDefinition INLINE_INTERCEPTORS =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.INLINE_INTERCEPTORS, ModelType.BOOLEAN, true)
+                     .setXmlName(Attribute.INLINE_INTERCEPTORS.getLocalName())
+                     .setAllowExpression(false)
+                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                     .setDefaultValue(new ModelNode().set(false))
+                     .build();
+
     static final SimpleAttributeDefinition JNDI_NAME =
             new SimpleAttributeDefinitionBuilder(ModelKeys.JNDI_NAME, ModelType.STRING, true)
                     .setXmlName(Attribute.JNDI_NAME.getLocalName())
@@ -164,7 +172,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                    .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = {BATCHING, CACHE_MODULE, CONFIGURATION, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, SIMPLE_CACHE, START, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE};
+    static final AttributeDefinition[] ATTRIBUTES = {BATCHING, CACHE_MODULE, CONFIGURATION, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, INLINE_INTERCEPTORS, JNDI_NAME, SIMPLE_CACHE, START, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =

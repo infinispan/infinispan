@@ -618,6 +618,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 CacheConfigurationResource.CACHE_MODULE.parseAndSetParameter(value, cache, reader);
                 break;
             }
+            case INLINE_INTERCEPTORS: {
+                CacheConfigurationResource.INLINE_INTERCEPTORS.parseAndSetParameter(value, cache, reader);
+                break;
+            }
             case SIMPLE_CACHE: {
                 CacheConfigurationResource.SIMPLE_CACHE.parseAndSetParameter(value, cache, reader);
                 break;

@@ -352,6 +352,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         final boolean batching = CacheConfigurationResource.BATCHING.resolveModelAttribute(context, cache).asBoolean();
 
         builder.simpleCache(CacheConfigurationResource.SIMPLE_CACHE.resolveModelAttribute(context, cache).asBoolean());
+        builder.inlineInterceptors(CacheConfigurationResource.INLINE_INTERCEPTORS.resolveModelAttribute(context, cache).asBoolean());
         // set the cache mode (may be modified when setting up clustering attributes)
         builder.clustering().cacheMode(this.mode);
         final ModelNode indexingPropertiesModel = CacheConfigurationResource.INDEXING_PROPERTIES.resolveModelAttribute(context, cache);

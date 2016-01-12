@@ -57,6 +57,16 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
    }
 
    @Override
+   public ConfigurationChildBuilder inlineInterceptors(boolean inlineInterceptors) {
+      return null;
+   }
+
+   @Override
+   public boolean inlineInterceptors() {
+      return false;
+   }
+
+   @Override
    public AsyncStoreConfigurationBuilder async() {
       return null;
    }

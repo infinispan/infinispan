@@ -274,6 +274,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         this.writeOptional(writer, Attribute.SIMPLE_CACHE, cache, ModelKeys.SIMPLE_CACHE);
         this.writeOptional(writer, Attribute.STATISTICS, cache, ModelKeys.STATISTICS);
         this.writeOptional(writer, Attribute.STATISTICS_AVAILABLE, cache, ModelKeys.STATISTICS_AVAILABLE);
+        this.writeOptional(writer, Attribute.INLINE_INTERCEPTORS, cache, ModelKeys.INLINE_INTERCEPTORS);
 
         if (cache.get(ModelKeys.BACKUP).isDefined()) {
             writer.writeStartElement(Element.BACKUPS.getLocalName());
