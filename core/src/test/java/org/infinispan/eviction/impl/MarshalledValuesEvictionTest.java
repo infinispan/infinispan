@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Test(groups = "unstable", testName = "eviction.MarshalledValuesEvictionTest",
       description = "See ISPN-4042. Is this test even valid?  Evictions don't go thru the " +
@@ -65,7 +66,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       //let eviction manager kick in
       Util.sleep(3000);
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
-      assert !interceptor.marshalledValueCreated;
+      assert !interceptor.marshalledValueCreated.get();
    }
 
    public void testEvictPrimitiveKeyCustomValue() {
@@ -87,11 +88,11 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       //let eviction manager kick in
       Util.sleep(3000);
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
-      assert !interceptor.marshalledValueCreated;
+      assert !interceptor.marshalledValueCreated.get();
    }
 
    static class MockMarshalledValueInterceptor extends MarshalledValueInterceptor {
-      boolean marshalledValueCreated;
+      AtomicBoolean marshalledValueCreated = new AtomicBoolean();
 
       MockMarshalledValueInterceptor(StreamingMarshaller marshaller) {
          inject(marshaller, new InternalEntryFactoryImpl(), null);
@@ -99,14 +100,14 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
       @Override
       protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx) {
-         marshalledValueCreated = true;
+         marshalledValueCreated.set(true);
          return super.createMarshalledValue(toWrap, ctx);
       }
 
       @Override
       public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
          // Reset value so that changes due to invocation can be asserted
-         if (marshalledValueCreated) marshalledValueCreated = false;
+         if (marshalledValueCreated.get()) marshalledValueCreated.set(false);
          return super.visitEvictCommand(ctx, command);
       }
    }

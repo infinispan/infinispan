@@ -38,6 +38,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -81,12 +82,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       final AfterPassivationOrCacheWriter controller = new AfterPassivationOrCacheWriter().injectThis(cache);
       final Latch latch = new Latch();
-      controller.beforeEvict = new Runnable() {
-         @Override
-         public void run() {
-            latch.blockIfNeeded();
-         }
-      };
+      controller.beforeEvict.set(() -> latch.blockIfNeeded());
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
@@ -168,14 +164,11 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final AtomicBoolean firstGet = new AtomicBoolean(false);
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            if (firstGet.compareAndSet(false, true)) {
-               readLatch.blockIfNeeded();
-            }
+      afterEntryWrappingInterceptor.beforeGet.set(() -> {
+         if (firstGet.compareAndSet(false, true)) {
+            readLatch.blockIfNeeded();
          }
-      };
+      });
       final SyncEvictionListener evictionListener = new
 
             SyncEvictionListener() {
@@ -222,16 +215,8 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final Latch writeLatch = new Latch();
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            readLatch.blockIfNeeded();
-
-         }
-      };
-      final SyncEvictionListener evictionListener = new
-
-            SyncEvictionListener() {
+      afterEntryWrappingInterceptor.beforeGet.set(() -> readLatch.blockIfNeeded());
+      final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
                @Override
                public void evicted(CacheEntriesEvictedEvent event) {
@@ -277,24 +262,9 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final Latch writeLatch2 = new Latch();
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            readLatch.blockIfNeeded();
-
-         }
-      };
-      afterEntryWrappingInterceptor.afterPut = new
-
-            Runnable() {
-               @Override
-               public void run() {
-                  writeLatch2.blockIfNeeded();
-               }
-            };
-      final SyncEvictionListener evictionListener = new
-
-            SyncEvictionListener() {
+      afterEntryWrappingInterceptor.beforeGet.set(() -> readLatch.blockIfNeeded());
+      afterEntryWrappingInterceptor.afterPut.set(() -> writeLatch2.blockIfNeeded());
+      final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
                @Override
                public void evicted(CacheEntriesEvictedEvent event) {
@@ -529,8 +499,8 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
    private class AfterPassivationOrCacheWriter extends ControlledCommandInterceptor {
 
-      volatile Runnable beforeEvict;
-      volatile Runnable afterEvict;
+      AtomicReference<Runnable> beforeEvict = new AtomicReference<>();
+      AtomicReference<Runnable> afterEvict = new AtomicReference<>();
 
       public AfterPassivationOrCacheWriter injectThis(Cache<Object, Object> injectInCache) {
          InterceptorChain chain = TestingUtil.extractComponent(injectInCache, InterceptorChain.class);
@@ -547,7 +517,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       @Override
       public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-         return handle(ctx, command, beforeEvict, afterEvict);
+         return handle(ctx, command, beforeEvict.get(), afterEvict.get());
       }
    }
 }

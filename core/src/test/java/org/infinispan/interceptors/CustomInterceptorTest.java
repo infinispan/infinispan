@@ -79,10 +79,10 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
          public void call() {
             List<CommandInterceptor> interceptorChain = cacheManager.getCache().getAdvancedCache().getInterceptorChain();
             assertEquals(interceptorChain.get(interceptorChain.size() - 2).getClass(), FooInterceptor.class);
-            assertFalse(interceptor.putInvoked);
+            assertFalse(interceptor.putInvoked.get());
             cacheManager.getCache().put("k", "v");
             assertEquals("v", cacheManager.getCache().get("k"));
-            assertTrue(interceptor.putInvoked);
+            assertTrue(interceptor.putInvoked.get());
          }
       });
    }

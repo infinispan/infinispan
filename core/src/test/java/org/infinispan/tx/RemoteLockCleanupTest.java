@@ -11,6 +11,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Test fpr ISPN-777.
  *
@@ -48,7 +50,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return interceptor.receivedReplRequest;
+            return interceptor.receivedReplRequest.get();
          }
       });
 
@@ -59,7 +61,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return interceptor.lockAcquired;
+            return interceptor.lockAcquired.get();
          }
       });
 
@@ -74,21 +76,19 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
 
    static public class DelayInterceptor extends CommandInterceptor {
 
-      volatile boolean receivedReplRequest = false;
-
-      volatile boolean lockAcquired = false;
-
+      AtomicBoolean receivedReplRequest = new AtomicBoolean();
+      AtomicBoolean lockAcquired = new AtomicBoolean();
 
       @Override
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
          if (!ctx.isOriginLocal()) {
-            receivedReplRequest = true;
+            receivedReplRequest.set(true);
             // TODO: we can replace this with the BlockingInterceptor instead or something equivalent to remove 5s wait
             Thread.sleep(5000);
             try {
                return super.visitLockControlCommand(ctx, command);
             } finally {
-               lockAcquired = true;
+               lockAcquired.set(true);
             }
          } else {
 

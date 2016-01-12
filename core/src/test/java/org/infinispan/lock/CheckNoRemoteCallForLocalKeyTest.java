@@ -78,7 +78,7 @@ public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest 
       assert lockManager(0).isLocked(key);
       assert !lockManager(1).isLocked(key);
 
-      assertEquals(controlInterceptor.remoteInvocations, 0);
+      assertEquals(controlInterceptor.remoteInvocations.get(), 0);
       tm(0).rollback();
    }
 }

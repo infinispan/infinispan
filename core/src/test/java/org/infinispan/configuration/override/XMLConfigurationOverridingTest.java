@@ -25,6 +25,7 @@ import javax.transaction.TransactionManager;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.infinispan.test.TestingUtil.withCacheManager;
@@ -452,10 +453,10 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             cnf = cm.getCacheConfiguration(simpleCacheName);
             Assert.assertFalse(cnf.customInterceptors().interceptors().isEmpty());
 
-            Assert.assertFalse(interceptor.putOkay);
+            Assert.assertFalse(interceptor.putOkay.get());
             cm.getCache(simpleCacheName).put("key1", "value1");
 
-            Assert.assertTrue(interceptor.putOkay);
+            Assert.assertTrue(interceptor.putOkay.get());
             Assert.assertEquals("value1", cm.getCache(simpleCacheName).get("key1"));
          }
       });
@@ -487,11 +488,11 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
    }
 
    class SimpleInterceptor extends CommandInterceptor {
-      private boolean putOkay;
+      private AtomicBoolean putOkay = new AtomicBoolean();
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (isRightType(ctx)) putOkay = true;
+         if (isRightType(ctx)) putOkay.set(true);
          return super.visitPutKeyValueCommand(ctx, command);
       }
 

@@ -46,7 +46,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       cache.evict(p1);
 
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
-      assert interceptor.marshalledValueCreated;
+      assert interceptor.marshalledValueCreated.get();
    }
 
    public void testEvictPrimitiveKeyCustomValue() {
@@ -60,7 +60,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       cache.evict("key-isoprene");
 
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
-      assert !interceptor.marshalledValueCreated;
+      assert !interceptor.marshalledValueCreated.get();
    }
 
    static class ManualEvictionPojo implements Externalizable {

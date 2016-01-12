@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.testng.AssertJUnit.*;
 
@@ -171,14 +172,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       final AtomicBoolean firstGet = new AtomicBoolean(false);
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            if (firstGet.compareAndSet(false, true)) {
-               readLatch.blockIfNeeded();
-            }
+      afterEntryWrappingInterceptor.beforeGet.set(() -> {
+         if (firstGet.compareAndSet(false, true)) {
+            readLatch.blockIfNeeded();
          }
-      };
+      });
       final SyncEvictionListener evictionListener = new
 
             SyncEvictionListener() {
@@ -231,16 +229,8 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       final Latch writeLatch = new Latch();
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            readLatch.blockIfNeeded();
-
-         }
-      };
-      final SyncEvictionListener evictionListener = new
-
-            SyncEvictionListener() {
+      afterEntryWrappingInterceptor.beforeGet.set(() -> readLatch.blockIfNeeded());
+      final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
                @Override
                public void evicted(CacheEntriesEvictedEvent event) {
@@ -294,23 +284,12 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       final AtomicBoolean firstWriter = new AtomicBoolean(false);
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            readLatch.blockIfNeeded();
-
-         }
-      };
-      afterEntryWrappingInterceptor.afterPut = new
-
-            Runnable() {
-               @Override
-               public void run() {
-                  if (!firstWriter.compareAndSet(false, true)) {
-                     writeLatch2.blockIfNeeded();
-                  }
-               }
-            };
+      afterEntryWrappingInterceptor.beforeGet.set(() -> readLatch.blockIfNeeded());
+      afterEntryWrappingInterceptor.afterPut.set(() -> {
+            if (!firstWriter.compareAndSet(false, true)) {
+               writeLatch2.blockIfNeeded();
+            }
+         });
       final SyncEvictionListener evictionListener = new
 
             SyncEvictionListener() {
@@ -366,13 +345,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       final Latch readLatch = new Latch();
       final AfterActivationOrCacheLoader commandController = new AfterActivationOrCacheLoader()
             .injectThis(cache);
-      commandController.afterGet = new Runnable() {
-         @Override
-         public void run() {
-            readLatch.blockIfNeeded();
-
-         }
-      };
+      commandController.afterGet.set(() -> readLatch.blockIfNeeded());
 
       cache.evict(key1);
 
@@ -567,24 +540,24 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    }
 
    protected abstract class ControlledCommandInterceptor extends BaseCustomInterceptor {
-      volatile Runnable beforeGet;
-      volatile Runnable afterGet;
-      volatile Runnable beforePut;
-      volatile Runnable afterPut;
+      AtomicReference<Runnable> beforeGet = new AtomicReference<>();
+      AtomicReference<Runnable> afterGet = new AtomicReference<>();
+      AtomicReference<Runnable> beforePut = new AtomicReference<>();
+      AtomicReference<Runnable> afterPut = new AtomicReference<>();
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         return handle(ctx, command, beforePut, afterPut);
+         return handle(ctx, command, beforePut.get(), afterPut.get());
       }
 
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-         return handle(ctx, command, beforeGet, afterGet);
+         return handle(ctx, command, beforeGet.get(), afterGet.get());
       }
 
       @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-         return handle(ctx, command, beforeGet, afterGet);
+         return handle(ctx, command, beforeGet.get(), afterGet.get());
       }
 
       protected final Object handle(InvocationContext ctx, VisitableCommand command, Runnable before, Runnable after)

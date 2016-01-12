@@ -10,6 +10,7 @@ import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.assertEquals;
 
@@ -120,50 +121,50 @@ public class CheckRemoteLockAcquiredOnlyOnceTest extends MultipleCacheManagersTe
    }
 
    private void testLockThenOperation(CacheOperation o) throws Exception {
-      assert controlInterceptor.remoteInvocations == 0;
+      assert controlInterceptor.remoteInvocations.get() == 0;
 
       tm(1).begin();
       advancedCache(1).lock(key);
       assert lockManager(0).isLocked(key);
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(controlInterceptor.remoteInvocations.get(), 1);
 
       for (int i = 0; i < 100; i++) {
          o.execute();
       }
 
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(controlInterceptor.remoteInvocations.get(), 1);
       tm(1).commit();
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(controlInterceptor.remoteInvocations.get(), 1);
 
-      controlInterceptor.remoteInvocations = 0;
+      controlInterceptor.remoteInvocations.set(0);
    }
 
    private void testOperationThenLock(CacheOperation o) throws Exception {
-      assert controlInterceptor.remoteInvocations == 0;
+      assert controlInterceptor.remoteInvocations.get() == 0;
 
       tm(1).begin();
       for (int i = 0; i < 100; i++) {
          o.execute();
       }
       assert lockManager(0).isLocked(key);
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(controlInterceptor.remoteInvocations.get(), 1);
 
       advancedCache(1).lock(key);
 
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(controlInterceptor.remoteInvocations.get(), 1);
       tm(1).commit();
-      assertEquals(controlInterceptor.remoteInvocations, 1);
+      assertEquals(controlInterceptor.remoteInvocations.get(), 1);
 
-      controlInterceptor.remoteInvocations = 0;
+      controlInterceptor.remoteInvocations.set(0);;
    }
 
    public static class ControlInterceptor extends CommandInterceptor {
 
-      volatile int remoteInvocations = 0;
+      final AtomicInteger remoteInvocations = new AtomicInteger(0);
 
       @Override
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-         if (!ctx.isOriginLocal()) remoteInvocations++;
+         if (!ctx.isOriginLocal()) remoteInvocations.incrementAndGet();
          return super.visitLockControlCommand(ctx, command);
       }
    }

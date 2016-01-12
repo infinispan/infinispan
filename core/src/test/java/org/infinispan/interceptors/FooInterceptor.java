@@ -4,9 +4,11 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class FooInterceptor extends BaseCustomInterceptor {
 
-   public volatile boolean putInvoked;
+   public final AtomicBoolean putInvoked = new AtomicBoolean(false);
 
    private String foo;
 
@@ -20,7 +22,7 @@ public class FooInterceptor extends BaseCustomInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      putInvoked = true;
+      putInvoked.set(true);
       return super.visitPutKeyValueCommand(ctx, command);
    }
 }

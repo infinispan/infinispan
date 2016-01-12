@@ -16,6 +16,7 @@ import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.assertEquals;
 
@@ -56,50 +57,50 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       tm(2).commit();
 
 
-      assertEquals(interceptor0.lockCount, 2);
-      assertEquals(interceptor1.lockCount, 2);
-      assertEquals(interceptor0.prepareCount, 1);
-      assertEquals(interceptor1.prepareCount, 1);
-      assertEquals(interceptor0.commitCount, 0);
-      assertEquals(interceptor1.commitCount, 0);
+      assertEquals(interceptor0.lockCount.get(), 2);
+      assertEquals(interceptor1.lockCount.get(), 2);
+      assertEquals(interceptor0.prepareCount.get(), 1);
+      assertEquals(interceptor1.prepareCount.get(), 1);
+      assertEquals(interceptor0.commitCount.get(), 0);
+      assertEquals(interceptor1.commitCount.get(), 0);
    }
 
 
    public static class TxCountInterceptor extends CommandInterceptor {
 
-      public volatile int prepareCount;
-      public volatile int commitCount;
-      public volatile int lockCount;
-      public volatile int putCount;
-      public volatile int getCount;
+      public final AtomicInteger prepareCount = new AtomicInteger(0);
+      public final AtomicInteger commitCount = new AtomicInteger(0);
+      public final AtomicInteger lockCount = new AtomicInteger(0);;
+      public final AtomicInteger putCount = new AtomicInteger(0);;
+      public final AtomicInteger getCount = new AtomicInteger(0);;
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         prepareCount++;
+         prepareCount.incrementAndGet();
          return super.visitPrepareCommand(ctx, command);
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         commitCount++;
+         commitCount.incrementAndGet();
          return super.visitCommitCommand(ctx, command);
       }
 
       @Override
       public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-         lockCount++;
+         lockCount.incrementAndGet();
          return super.visitLockControlCommand(ctx, command);
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         putCount++;
+         putCount.incrementAndGet();
          return super.visitPutKeyValueCommand(ctx, command);
       }
 
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-         getCount++;
+         getCount.incrementAndGet();
          return super.visitGetKeyValueCommand(ctx, command);
       }
    }

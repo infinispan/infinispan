@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
@@ -84,13 +85,13 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
                case SIZE:
                   int size = cache.size();
                   assert size == 1 : "size is: " + size;
-                  assert interceptor.assertKeySet;
+                  assert interceptor.assertKeySet.get();
                   break;
                case GET:
                   Object retVal = cache.get(key);
                   assert retVal != null;
                   assert retVal.equals(value): "retVal is: " + retVal;
-                  assert interceptor.assertKeySet;
+                  assert interceptor.assertKeySet.get();
                   break;
             }
 
@@ -108,7 +109,7 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
       Log log = LogFactory.getLog(EntryCreatedInterceptor.class);
 
       final CountDownLatch latch;
-      volatile boolean assertKeySet;
+      final AtomicBoolean assertKeySet = new AtomicBoolean(false);
 
       private EntryCreatedInterceptor(CountDownLatch latch) {
          this.latch = latch;
@@ -119,7 +120,7 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
                PutKeyValueCommand command) throws Throwable {
          // First execute the operation itself
          Object ret = super.visitPutKeyValueCommand(ctx, command);
-         assertKeySet = (cache.keySet().size() == 1);
+         assertKeySet.set(cache.keySet().size() == 1);
          // After entry has been committed to the container
          log.info("Cache entry created, now check in different thread");
          latch.countDown();

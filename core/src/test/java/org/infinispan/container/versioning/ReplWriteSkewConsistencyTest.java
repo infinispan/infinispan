@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.*;
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
@@ -75,7 +76,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
       ControllerInboundInvocationHandler handler = injectControllerInboundInvocationHandler(cache(0));
       BackupOwnerInterceptor backupOwnerInterceptor = injectBackupOwnerInterceptor(cache(0));
       backupOwnerInterceptor.blockCommit(true);
-      handler.discardRemoteGet = true;
+      handler.discardRemoteGet.set(true);
 
       Future<Boolean> tx1 = fork(new Callable<Boolean>() {
          @Override
@@ -123,7 +124,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
       AssertJUnit.assertTrue("Prepare of tx2 was never received.", backupOwnerInterceptor.awaitPrepare(10000));
 
       backupOwnerInterceptor.blockCommit(false);
-      handler.discardRemoteGet = false;
+      handler.discardRemoteGet.set(false);
 
       //both transaction should commit
       AssertJUnit.assertTrue("Error in tx1.", tx1.get(15, SECONDS));
@@ -193,8 +194,8 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
       private final Object blockCommitLock = new Object();
       private final Object prepareProcessedLock = new Object();
-      private boolean blockCommit;
-      private boolean prepareProcessed;
+      private final AtomicBoolean blockCommit = new AtomicBoolean();
+      private final AtomicBoolean prepareProcessed = new AtomicBoolean();
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
@@ -213,7 +214,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
       public void blockCommit(boolean blockCommit) {
          synchronized (blockCommitLock) {
-            this.blockCommit = blockCommit;
+            this.blockCommit.set(blockCommit);
             if (!blockCommit) {
                blockCommitLock.notifyAll();
             }
@@ -224,30 +225,30 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
          synchronized (prepareProcessedLock) {
             long endTime = System.nanoTime() + MILLISECONDS.toNanos(milliseconds);
             long sleepTime = NANOSECONDS.toMillis(endTime - System.nanoTime());
-            while (!prepareProcessed && sleepTime > 0) {
+            while (!prepareProcessed.get() && sleepTime > 0) {
                prepareProcessedLock.wait(sleepTime);
                sleepTime = NANOSECONDS.toMillis(endTime - System.nanoTime());
             }
-            return prepareProcessed;
+            return prepareProcessed.get();
          }
       }
 
       public void resetPrepare() {
          synchronized (prepareProcessedLock) {
-            prepareProcessed = false;
+            prepareProcessed.set(false);
          }
       }
 
       private void notifyPrepareProcessed() {
          synchronized (prepareProcessedLock) {
-            prepareProcessed = true;
+            prepareProcessed.set(true);
             prepareProcessedLock.notifyAll();
          }
       }
 
       private void blockIfNeeded() throws InterruptedException {
          synchronized (blockCommitLock) {
-            while (blockCommit) {
+            while (blockCommit.get()) {
                blockCommitLock.wait();
             }
          }
@@ -289,7 +290,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
    private class ControllerInboundInvocationHandler implements PerCacheInboundInvocationHandler {
 
       private final PerCacheInboundInvocationHandler realOne;
-      private volatile boolean discardRemoteGet;
+      private AtomicBoolean discardRemoteGet = new AtomicBoolean(false);
 
       private ControllerInboundInvocationHandler(PerCacheInboundInvocationHandler realOne) {
          this.realOne = realOne;
@@ -297,7 +298,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
       @Override
       public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (discardRemoteGet && command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
+         if (discardRemoteGet.get() && command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
             return;
          }
          realOne.handle(command, reply, order);

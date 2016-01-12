@@ -10,6 +10,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * SingleKeyNonTxInvocationContextTest
  *
@@ -36,75 +38,75 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
 
 
    public void testPut() {
-      assert !ci0.putOkay && !ci1.putOkay;
+      assert !ci0.putOkay.get() && !ci1.putOkay.get();
 
       cache(0).put(getKeyForCache(0), "v");
-      assert ci0.putOkay && !ci1.putOkay;
+      assert ci0.putOkay.get() && !ci1.putOkay.get();
 
       cache(1).put(getKeyForCache(1), "v");
-      assert ci0.putOkay && ci1.putOkay;
+      assert ci0.putOkay.get() && ci1.putOkay.get();
    }
 
    public void testRemove() {
-      assert !ci0.removeOkay && !ci1.removeOkay;
+      assert !ci0.removeOkay.get() && !ci1.removeOkay.get();
 
       cache(0).remove(getKeyForCache(0));
-      assert ci0.removeOkay && !ci1.removeOkay;
+      assert ci0.removeOkay.get() && !ci1.removeOkay.get();
 
       cache(1).remove(getKeyForCache(1));
-      assert ci0.removeOkay && ci1.removeOkay;
+      assert ci0.removeOkay.get() && ci1.removeOkay.get();
    }
 
    public void testGet() {
-      assert !ci0.getOkay && !ci1.getOkay;
+      assert !ci0.getOkay.get() && !ci1.getOkay.get();
 
       cache(0).get(getKeyForCache(0));
-      assert ci0.getOkay && !ci1.getOkay;
+      assert ci0.getOkay.get() && !ci1.getOkay.get();
 
       cache(1).get(getKeyForCache(1));
-      assert ci0.getOkay && ci1.getOkay;
+      assert ci0.getOkay.get() && ci1.getOkay.get();
    }
 
    public void testReplace() {
-      assert !ci0.replaceOkay && !ci1.replaceOkay;
+      assert !ci0.replaceOkay.get() && !ci1.replaceOkay.get();
 
       cache(0).replace(getKeyForCache(0), "v");
-      assert ci0.replaceOkay && !ci1.replaceOkay;
+      assert ci0.replaceOkay.get() && !ci1.replaceOkay.get();
 
       cache(1).replace(getKeyForCache(1), "v");
-      assert ci0.replaceOkay && ci1.replaceOkay;
+      assert ci0.replaceOkay.get() && ci1.replaceOkay.get();
    }
 
 
    static class CheckInterceptor extends CommandInterceptor {
 
-      private boolean putOkay;
-      private boolean removeOkay;
-      private boolean getOkay;
-      private boolean replaceOkay;
+      private AtomicBoolean putOkay = new AtomicBoolean();
+      private AtomicBoolean removeOkay = new AtomicBoolean();
+      private AtomicBoolean getOkay = new AtomicBoolean();
+      private AtomicBoolean replaceOkay = new AtomicBoolean();
 
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (isRightType(ctx)) putOkay = true;
+         if (isRightType(ctx)) putOkay.set(true);
          return super.visitPutKeyValueCommand(ctx, command);
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         if (isRightType(ctx)) removeOkay = true;
+         if (isRightType(ctx)) removeOkay.set(true);
          return super.visitRemoveCommand(ctx, command);
       }
 
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-         if (isRightType(ctx)) getOkay = true;
+         if (isRightType(ctx)) getOkay.set(true);
          return super.visitGetKeyValueCommand(ctx, command);
       }
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         if (isRightType(ctx)) replaceOkay = true;
+         if (isRightType(ctx)) replaceOkay.set(true);
          return super.visitReplaceCommand(ctx, command);
       }
 
