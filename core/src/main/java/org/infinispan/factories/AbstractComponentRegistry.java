@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
@@ -426,6 +427,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       if (wrapper == null) return null;
 
       return (T) unwrapComponent(wrapper);
+   }
+
+   public <T> Optional<T> getOptionalComponent(Class<T> type) {
+      return Optional.ofNullable(getComponent(type));
    }
 
    /**
