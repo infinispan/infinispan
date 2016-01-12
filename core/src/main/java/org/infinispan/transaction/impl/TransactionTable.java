@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -541,12 +542,18 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    @ViewChanged
    public void onViewChange(final ViewChangedEvent e) {
-      executorService.submit(new Callable<Void>() {
-         public Void call() {
-            cleanupLeaverTransactions(e.getNewMembers());
-            return null;
-         }
-      });
+      try {
+         executorService.submit(new Callable<Void>() {
+            public Void call() {
+               cleanupLeaverTransactions(e.getNewMembers());
+               return null;
+            }
+         });
+      } catch (RejectedExecutionException x) {
+         if (!executorService.isShutdown())
+            throw x;
+         // Otherwise we are shutting down, ignore the exception
+      }
    }
 
    /**
