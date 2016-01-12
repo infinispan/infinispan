@@ -246,4 +246,6 @@ public class ModelKeys {
     static final String REPLICATION_QUEUE_THREAD_POOL = "replication-queue-thread-pool";
     static final String STATE_TRANSFER_THREAD_POOL = "state-transfer-thread-pool";
     static final String TRANSPORT_THREAD_POOL = "transport-thread-pool";
+    static final String READ_BATCH = "read-batch";
+    static final String WRITE_THREADS = "write-threads";
 }
