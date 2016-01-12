@@ -1305,6 +1305,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     RemoteStoreConfigurationResource.TCP_NO_DELAY.parseAndSetParameter(value, store, reader);
                     break;
                 }
+                case PROTOCOL_VERSION: {
+                    RemoteStoreConfigurationResource.PROTOCOL_VERSION.parseAndSetParameter(value, store, reader);
+                    break;
+                }
 
                 default: {
                     name = this.parseStoreAttribute(name, reader, i, attribute, value, store);

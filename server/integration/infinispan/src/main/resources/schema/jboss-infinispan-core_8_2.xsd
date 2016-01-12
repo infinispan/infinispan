@@ -975,6 +975,13 @@
                         </xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
+                <xs:attribute name="protocol-version" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            This property defines the protocol version that this client should use.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
