@@ -16,7 +16,6 @@ import javax.ws.rs._
 import javax.servlet.http.HttpServletResponse
 import scala.collection.JavaConverters._
 import scala.xml.Utility
-import org.infinispan.tasks.GlobalKeySetTask
 import org.infinispan.container.entries.InternalCacheEntry
 import org.infinispan.rest.configuration.{RestServerConfiguration, ExtendedHeaders}
 import org.infinispan.configuration.cache.Configuration
@@ -40,7 +39,7 @@ class Server(configuration: RestServerConfiguration, manager: RestCacheManager) 
          @PathParam("cacheName") cacheName: String, @QueryParam("global") globalKeySet: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) => {
          val cache = manager.getCache(cacheName)
-         val keys = (if (globalKeySet !=null) GlobalKeySetTask.getGlobalKeySet(cache) else cache.keySet()).asScala
+         val keys = cache.keySet().asScala
          val variant = request.selectVariant(Server.CollectionVariantList)
          val selectedMediaType = if (variant != null) variant.getMediaType.toString else null
          selectedMediaType match {
