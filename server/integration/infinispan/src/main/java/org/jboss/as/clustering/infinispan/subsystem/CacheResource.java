@@ -34,6 +34,7 @@ import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
+import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 /**
@@ -65,6 +66,19 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
     static final SimpleAttributeDefinition MIGRATOR_NAME =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MIGRATOR_NAME, ModelType.STRING, true)
                    .setAllowExpression(false)
+                   .build();
+
+   // operation parameters
+   static final SimpleAttributeDefinition READ_BATCH =
+           new SimpleAttributeDefinitionBuilder(ModelKeys.READ_BATCH, ModelType.INT, true)
+                   .setAllowExpression(false)
+                   .setDefaultValue(new ModelNode().set(1000))
+                   .build();
+
+   static final SimpleAttributeDefinition WRITE_THREADS =
+           new SimpleAttributeDefinitionBuilder(ModelKeys.WRITE_THREADS, ModelType.INT, true)
+                   .setAllowExpression(false)
+                   .setDefaultValue(new ModelNode().set(Runtime.getRuntime().availableProcessors()))
                    .build();
 
     // operations
@@ -113,7 +127,7 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
            new SimpleOperationDefinitionBuilder(
                    "synchronize-data",
                    new InfinispanResourceDescriptionResolver("cache")
-           ).setParameters(MIGRATOR_NAME).setRuntimeOnly().build();
+           ).setParameters(MIGRATOR_NAME, READ_BATCH, WRITE_THREADS).setRuntimeOnly().build();
 
     static final OperationDefinition DISCONNECT_SOURCE =
            new SimpleOperationDefinitionBuilder(
