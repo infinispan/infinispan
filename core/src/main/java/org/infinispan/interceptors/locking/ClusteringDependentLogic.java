@@ -500,23 +500,7 @@ public interface ClusteringDependentLogic {
             if (isForeignOwned && !entry.isRemoved()) {
                if (configuration.clustering().l1().enabled()) {
                   // transform for L1
-                  long lifespan;
-                  if (metadata != null) {
-                     lifespan = metadata.lifespan();
-                  } else {
-                     lifespan = entry.getLifespan();
-                  }
-                  if (lifespan < 0 || lifespan > configuration.clustering().l1().lifespan()) {
-                     Metadata.Builder builder;
-                     if (metadata != null) {
-                        builder = metadata.builder();
-                     } else {
-                        builder = entry.getMetadata().builder();
-                     }
-                     metadata = builder
-                           .lifespan(configuration.clustering().l1().lifespan())
-                           .build();
-                  }
+                  metadata = getL1Metadata(entry, metadata);
                } else {
                   doCommit = false;
                }
@@ -551,6 +535,27 @@ public interface ClusteringDependentLogic {
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
+      }
+
+      private Metadata getL1Metadata(CacheEntry entry, Metadata metadata) {
+         long lifespan;
+         if (metadata != null) {
+            lifespan = metadata.lifespan();
+         } else {
+            lifespan = entry.getLifespan();
+         }
+         if (lifespan < 0 || lifespan > configuration.clustering().l1().lifespan()) {
+            Metadata.Builder builder;
+            if (metadata != null) {
+               builder = metadata.builder();
+            } else {
+               builder = entry.getMetadata().builder();
+            }
+            metadata = builder
+                  .lifespan(configuration.clustering().l1().lifespan())
+                  .build();
+         }
+         return metadata;
       }
 
       @Override

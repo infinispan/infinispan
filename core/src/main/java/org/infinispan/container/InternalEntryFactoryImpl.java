@@ -177,141 +177,173 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    private InternalCacheEntry updateMetadataUnawareEntry(InternalCacheEntry ice, long lifespan, long maxIdle) {
       if (ice instanceof ImmortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return ice;
-            } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
-            }
-         }
+         return updateMetadateUnawareImmortalEntry(ice, lifespan, maxIdle);
       } else if (ice instanceof MortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
-            } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               ((MortalCacheEntry) ice).setLifespan(lifespan);
-               return ice;
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
-            }
-         }
+         return updateMetadataUnawareMortalEntry(ice, lifespan, maxIdle);
       } else if (ice instanceof TransientCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
-            } else {
-               ((TransientCacheEntry) ice).setMaxIdle(maxIdle);
-               return ice;
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
-            }
-         }
+         return updateMetadataUnawareTransientEntry(ice, lifespan, maxIdle);
       } else if (ice instanceof TransientMortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
-            } else {
-               return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
-            } else {
-               TransientMortalCacheEntry transientMortalEntry = (TransientMortalCacheEntry) ice;
-               transientMortalEntry.setLifespan(lifespan);
-               transientMortalEntry.setMaxIdle(maxIdle);
-               return ice;
-            }
-         }
+         return updateMetadataUnawareTransientMortalEntry(ice, lifespan, maxIdle);
       }
       return ice;
+   }
+
+   private InternalCacheEntry updateMetadataUnawareTransientMortalEntry(InternalCacheEntry ice, long lifespan, long maxIdle) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
+         } else {
+            return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
+         }
+      } else {
+         if (maxIdle < 0) {
+            return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
+         } else {
+            TransientMortalCacheEntry transientMortalEntry = (TransientMortalCacheEntry) ice;
+            transientMortalEntry.setLifespan(lifespan);
+            transientMortalEntry.setMaxIdle(maxIdle);
+            return ice;
+         }
+      }
+   }
+
+   private InternalCacheEntry updateMetadataUnawareTransientEntry(InternalCacheEntry ice, long lifespan, long maxIdle) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
+         } else {
+            ((TransientCacheEntry) ice).setMaxIdle(maxIdle);
+            return ice;
+         }
+      } else {
+         if (maxIdle < 0) {
+            return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
+         } else {
+            long ctm = timeService.wallClockTime();
+            return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
+         }
+      }
+   }
+
+   private InternalCacheEntry updateMetadataUnawareMortalEntry(InternalCacheEntry ice, long lifespan, long maxIdle) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            return new ImmortalCacheEntry(ice.getKey(), ice.getValue());
+         } else {
+            return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
+         }
+      } else {
+         if (maxIdle < 0) {
+            ((MortalCacheEntry) ice).setLifespan(lifespan);
+            return ice;
+         } else {
+            long ctm = timeService.wallClockTime();
+            return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
+         }
+      }
+   }
+
+   private InternalCacheEntry updateMetadateUnawareImmortalEntry(InternalCacheEntry ice, long lifespan, long maxIdle) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            return ice;
+         } else {
+            return new TransientCacheEntry(ice.getKey(), ice.getValue(), maxIdle, timeService.wallClockTime());
+         }
+      } else {
+         if (maxIdle < 0) {
+            return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan, timeService.wallClockTime());
+         } else {
+            long ctm = timeService.wallClockTime();
+            return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
+         }
+      }
    }
 
    private InternalCacheEntry updateMetadataAwareEntry(InternalCacheEntry ice, Metadata metadata) {
       long lifespan = metadata.lifespan();
       long maxIdle = metadata.maxIdle();
       if (ice instanceof MetadataImmortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               ice.setMetadata(metadata);
-               return ice;
-            } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
-            }
-         }
+         return updateMetadataAwareImmortalEntry(ice, metadata, lifespan, maxIdle);
       } else if (ice instanceof MetadataMortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
-            } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               ice.setMetadata(metadata);
-               return ice;
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
-            }
-         }
+         return updateMetadataAwareMortalEntry(ice, metadata, lifespan, maxIdle);
       } else if (ice instanceof MetadataTransientCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
-            } else {
-               ice.setMetadata(metadata);
-               return ice;
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            } else {
-               long ctm = timeService.wallClockTime();
-               return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
-            }
-         }
+         return updateMetadataAwareTransientEntry(ice, metadata, lifespan, maxIdle);
       } else if (ice instanceof MetadataTransientMortalCacheEntry) {
-         if (lifespan < 0) {
-            if (maxIdle < 0) {
-               return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
-            } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            }
-         } else {
-            if (maxIdle < 0) {
-               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
-            } else {
-               ice.setMetadata(metadata);
-               return ice;
-            }
-         }
+         return updateMetadataAwareTransientMortalEntry(ice, metadata, lifespan, maxIdle);
       }
       return ice;
+   }
+
+   private InternalCacheEntry updateMetadataAwareTransientMortalEntry(InternalCacheEntry ice, Metadata metadata, long lifespan, long maxIdle) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
+         } else {
+            return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
+         }
+      } else {
+         if (maxIdle < 0) {
+            return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
+         } else {
+            ice.setMetadata(metadata);
+            return ice;
+         }
+      }
+   }
+
+   private InternalCacheEntry updateMetadataAwareTransientEntry(InternalCacheEntry ice, Metadata metadata, long lifespan, long maxIdle) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
+         } else {
+            ice.setMetadata(metadata);
+            return ice;
+         }
+      } else {
+         if (maxIdle < 0) {
+            return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
+         } else {
+            long ctm = timeService.wallClockTime();
+            return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
+         }
+      }
+   }
+
+   private InternalCacheEntry updateMetadataAwareMortalEntry(InternalCacheEntry ice, Metadata metadata, long lifespan, long maxIdle) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
+         } else {
+            return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
+         }
+      } else {
+         if (maxIdle < 0) {
+            ice.setMetadata(metadata);
+            return ice;
+         } else {
+            long ctm = timeService.wallClockTime();
+            return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
+         }
+      }
+   }
+
+   private InternalCacheEntry updateMetadataAwareImmortalEntry(InternalCacheEntry ice, Metadata metadata, long lifespan, long maxIdle) {
+      if (lifespan < 0) {
+         if (maxIdle < 0) {
+            ice.setMetadata(metadata);
+            return ice;
+         } else {
+            return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
+         }
+      } else {
+         if (maxIdle < 0) {
+            return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
+         } else {
+            long ctm = timeService.wallClockTime();
+            return new MetadataTransientMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, ctm, ctm);
+         }
+      }
    }
 
    /**
