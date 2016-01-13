@@ -5,8 +5,10 @@ import org.infinispan.Cache;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.continuous.impl.ContinuousQueryImpl;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.JPACacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
@@ -43,6 +45,10 @@ public final class Search {
          queryEngine = new QueryEngine(advancedCache, null);
       }
       return new EmbeddedQueryFactory(queryEngine);
+   }
+
+   public static <K, V> ContinuousQuery<K, V> getContinuousQuery(Cache<K, V> cache) {
+      return new ContinuousQueryImpl<K, V>(cache);
    }
 
    public static SearchManager getSearchManager(Cache<?, ?> cache) {

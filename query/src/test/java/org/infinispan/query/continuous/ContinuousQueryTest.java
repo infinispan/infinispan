@@ -12,6 +12,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -48,7 +49,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
             .having("age").gte(20)
             .toBuilder().build();
 
-      ContinuousQuery<Object, Object> cq = new ContinuousQuery<>(cache());
+      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
       cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
    }
 
@@ -62,7 +63,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       QueryFactory<?> qf = Search.getQueryFactory(cache());
 
-      ContinuousQuery<Object, Object> cq = new ContinuousQuery<Object, Object>(cache());
+      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
 
       Query query = qf.from(Person.class)
             .select("age")
@@ -157,7 +158,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       QueryFactory<?> qf = Search.getQueryFactory(cache());
 
-      ContinuousQuery<Object, Object> cq = new ContinuousQuery<Object, Object>(cache());
+      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
 
       Query query = qf.from(Person.class)
             .select("age")
@@ -198,13 +199,13 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
             .having("age").lte(30)
             .and().having("name").eq("John").or().having("name").eq("Johny")
             .toBuilder().build();
-      ContinuousQuery<Object, Object> cq1 = new ContinuousQuery<Object, Object>(cache());
+      ContinuousQuery<Object, Object> cq1 = Search.getContinuousQuery(cache());
       cq1.addContinuousQueryListener(query1, listener);
 
       Query query2 = qf.from(Person.class)
             .having("age").lte(30).or().having("name").eq("Joe")
             .toBuilder().build();
-      ContinuousQuery<Object, Object> cq2 = new ContinuousQuery<Object, Object>(cache());
+      ContinuousQuery<Object, Object> cq2 = Search.getContinuousQuery(cache());
       cq2.addContinuousQueryListener(query2, listener);
 
       final Map<Object, Integer> joined = listener.getJoined();

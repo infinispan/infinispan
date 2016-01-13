@@ -1,10 +1,11 @@
 package org.infinispan.query.continuous;
 
+import org.infinispan.query.api.continuous.ContinuousQueryListener;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
  * {@link ContinuousQueryListener} which counts number of calls for each key.
  *
  * @author vjuranek

@@ -6,6 +6,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.api.continuous.ContinuousQuery;
+import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -44,7 +46,7 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
    private long testContinuousQueryPerformance(boolean doRegisterListener) {
       final int numEntries = 100000;
       final int numListeners = 1000;
-      ContinuousQuery<Object, Object> cq = new ContinuousQuery<Object, Object>(cache(0));
+      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache(0));
       if (doRegisterListener) {
          Query query = makeQuery(cache(0));
          for (int i = 0; i < numListeners; i++) {

@@ -22,6 +22,7 @@ public interface QueryBuilder<Q extends Query> extends FilterConditionBeginConte
 
    /**
     * @see #select(String... attributePath)
+    * @deprecated to be removed in 9.0
     */
    @Deprecated
    QueryBuilder setProjection(String... attributePath);

@@ -1,5 +1,4 @@
-
- package org.infinispan.query.continuous;
+package org.infinispan.query.continuous;
 
 import static org.junit.Assert.assertEquals;
 
@@ -10,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -49,7 +49,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
             .toBuilder().build();
 
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
-      ContinuousQuery<Object, Object> cq = new ContinuousQuery<Object, Object>(cache(0));
+      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache(0));
       cq.addContinuousQueryListener(query, listener);
       return listener;
    }
