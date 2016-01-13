@@ -93,7 +93,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
 
    @Override
    public HotRodServerConfiguration create() {
-      return new HotRodServerConfiguration(defaultCacheName, proxyHost, proxyPort, topologyLockTimeout, topologyReplTimeout, topologyAwaitInitialTransfer, topologyStateTransfer, name, host, port, idleTimeout,
+      return new HotRodServerConfiguration(defaultCacheName, proxyHost == null ? host : proxyHost, proxyPort < 0 ? port : proxyPort, topologyLockTimeout, topologyReplTimeout, topologyAwaitInitialTransfer, topologyStateTransfer, name, host, port, idleTimeout,
             recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, authentication.create(), ignoredCaches);
    }
 
@@ -112,12 +112,6 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    @Override
    public void validate() {
       super.validate();
-      if (proxyHost == null) {
-         proxyHost = host;
-      }
-      if (proxyPort < 0) {
-         proxyPort = port;
-      }
       authentication.validate();
    }
 
