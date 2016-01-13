@@ -10,8 +10,8 @@
 
    <artifactId>infinispan-query</artifactId>
    <packaging>bundle</packaging>
-   <name>Infinispan Query API</name>
-   <description>Infinispan Query API module</description>
+   <name>Infinispan Query</name>
+   <description>Infinispan Query module</description>
 
 
    <properties>
@@ -144,6 +144,7 @@
                <instructions>
                   <Export-Package>
                      !${project.groupId}.query.dsl.*,
+                     !${project.groupId}.query.api.continuous.*,
                      ${project.groupId}.query.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Include-Resource>

@@ -15,6 +15,8 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.api.continuous.ContinuousQuery;
+import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.filter.JPAContinuousQueryCacheEventFilterConverterFactory;
@@ -28,6 +30,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.query.dsl.Expression.*;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.*;
 
@@ -41,7 +44,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
    private final int NUM_NODES = 5;
 
-   private RemoteCache<Object, Object> remoteCache;
+   private RemoteCache<String, User> remoteCache;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -91,7 +94,9 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
             .having("age").gte(20)
             .toBuilder().build();
 
-      ClientEvents.addContinuousQueryListener(remoteCache, new ContinuousQueryListener<String, Object[]>() {
+      ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
+
+      ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
          @Override
          public void resultJoining(String key, Object[] value) {
          }
@@ -99,7 +104,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
          @Override
          public void resultLeaving(String key) {
          }
-      }, query);
+      };
+      continuousQuery.addContinuousQueryListener(query, listener);
    }
 
    public void testContinuousQuery() {
@@ -157,9 +163,9 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
          }
       };
 
-      Object clientListener = ClientEvents.addContinuousQueryListener(remoteCache, listener, query);
+      ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
+      continuousQuery.addContinuousQueryListener(query, listener);
 
-      assertNotNull(clientListener);
       expectElementsInQueue(joined, 2);
       expectElementsInQueue(left, 0);
 
@@ -195,7 +201,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 2);
 
-      remoteCache.removeClientListener(clientListener);
+      continuousQuery.removeContinuousQueryListener(listener);
 
       user2.setAge(22);
       remoteCache.put("user" + user2.getId(), user2);
@@ -259,16 +265,16 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
          }
       };
 
-      Object clientListener = ClientEvents.addContinuousQueryListener(remoteCache, listener, query);
+      ContinuousQuery<String, User> cq = Search.getContinuousQuery(remoteCache);
+      cq.addContinuousQueryListener(query, listener);
 
-      assertNotNull(clientListener);
       expectElementsInQueue(joined, 2);
       expectElementsInQueue(left, 0);
 
       joined.clear();
       left.clear();
 
-      remoteCache.removeClientListener(clientListener);
+      cq.removeContinuousQueryListener(listener);
 
       query.setParameter("ageParam", 40);
 
@@ -285,9 +291,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
          }
       };
 
-      clientListener = ClientEvents.addContinuousQueryListener(remoteCache, listener, query);
+      cq.addContinuousQueryListener(query, listener);
 
-      assertNotNull(clientListener);
       expectElementsInQueue(joined, 3);
       expectElementsInQueue(left, 0);
    }

@@ -5,21 +5,7 @@ package org.infinispan.query.continuous;
  *
  * @author anistor@redhat.com
  * @since 8.1
+ * @deprecated replaced by {@link org.infinispan.query.api.continuous.ContinuousQueryListener}; to be removed in 8.3
  */
-public interface ContinuousQueryListener<K, V> {
-
-   /**
-    * Receives notification that a cache entry has joined the matching set.
-    *
-    * @param key the key of the joining entry
-    * @param value the joining entry or the Object[] projection if specified
-    */
-   void resultJoining(K key, V value);
-
-   /**
-    * Receives notification that a cache entry has left the matching set.
-    *
-    * @param key the key of the leaving entry
-    */
-   void resultLeaving(K key);
+public interface ContinuousQueryListener<K, V> extends org.infinispan.query.api.continuous.ContinuousQueryListener<K, V> {
 }

@@ -27,11 +27,14 @@ public class ClientEvents {
    /**
     * The name of the factory used for query DSL based filters and converters. This factory is provided internally by
     * the server.
-    * @deprecated Use constants from {@link Filters}
+    * @deprecated replaced by {@link Filters#QUERY_DSL_FILTER_FACTORY_NAME}; will be removed in 8.3
     */
    @Deprecated
    public static final String QUERY_DSL_FILTER_FACTORY_NAME = Filters.QUERY_DSL_FILTER_FACTORY_NAME;
 
+   /**
+    * @deprecated replaced by {@link Filters#CONTINUOUS_QUERY_FILTER_FACTORY_NAME}; will be removed in 8.3
+    */
    @Deprecated
    public static final String CONTINUOUS_QUERY_FILTER_FACTORY_NAME = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME;
 
@@ -89,7 +92,9 @@ public class ClientEvents {
     * @param queryListener the continuous query listener instance
     * @param query         the query to be used for determining the matching set
     * @return the reference to a client listener object to be used for removing the continuous query listener
+    * @deprecated use {@link org.infinispan.query.api.continuous.ContinuousQuery#addContinuousQueryListener} instead; to be removed in 8.3
     */
+   @Deprecated
    public static Object addContinuousQueryListener(RemoteCache<?, ?> remoteCache, ContinuousQueryListener queryListener, Query query) {
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCache.getRemoteCacheManager());
       ClientEntryListener eventListener = new ClientEntryListener(serCtx, queryListener);
@@ -101,6 +106,7 @@ public class ClientEvents {
    @ClientListener(filterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          converterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
+   @Deprecated
    private static final class ClientEntryListener {
 
       private final SerializationContext serializationContext;

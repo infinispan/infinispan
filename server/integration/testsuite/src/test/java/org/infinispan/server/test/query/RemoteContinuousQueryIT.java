@@ -11,11 +11,11 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.client.hotrod.event.ClientEvents;
-import org.infinispan.client.hotrod.event.ContinuousQueryListener;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.api.continuous.ContinuousQuery;
+import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.server.test.category.Queries;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
@@ -67,9 +67,9 @@ public class RemoteContinuousQueryIT extends RemoteQueryBaseIT {
             left.add(key);
          }
       };
-      Object clientListener = ClientEvents.addContinuousQueryListener(remoteCache, listener, query);
+      ContinuousQuery<Integer, User> continuousQuery = Search.getContinuousQuery(remoteCache);
+      continuousQuery.addContinuousQueryListener(query, listener);
 
-      assertNotNull(clientListener);
       expectElementsInQueue(joined, 1);
       expectElementsInQueue(left, 0);
 
@@ -89,7 +89,7 @@ public class RemoteContinuousQueryIT extends RemoteQueryBaseIT {
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 1);
 
-      remoteCache.removeClientListener(clientListener);
+      continuousQuery.removeContinuousQueryListener(listener);
       user1.setAge(25);
       remoteCache.put(1, user1);
       expectElementsInQueue(joined, 0);

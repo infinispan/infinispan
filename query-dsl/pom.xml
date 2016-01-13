@@ -55,6 +55,8 @@
             <configuration>
                <instructions>
                   <Export-Package>
+                     !${project.groupId}.query.dsl.impl.*,
+                     ${project.groupId}.query.api.*;version=${project.version};-split-package:=error,
                      ${project.groupId}.query.dsl.*;version=${project.version};-split-package:=error
                   </Export-Package>
                </instructions>
