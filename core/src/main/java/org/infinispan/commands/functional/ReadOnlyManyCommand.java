@@ -57,7 +57,7 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
       return ch;
    }
 
-   public void setConsistentHashAndAddress(ConsistentHash ch) {
+   public void setConsistentHash(ConsistentHash ch) {
       this.ch = ch;
    }
 
