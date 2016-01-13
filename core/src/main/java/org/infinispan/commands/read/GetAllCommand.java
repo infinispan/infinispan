@@ -35,7 +35,6 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
    private Collection<?> keys;
    private boolean returnEntries;
    private ConsistentHash ch;
-   private Address localAddress;
 
    // TODO: remotely fetched are because of compatibility - can't we just always return InternalCacheEntry and have
    //       the unboxing executed as the topmost interceptor?
@@ -183,9 +182,8 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
       this.remotelyFetched = remotelyFetched;
    }
 
-   public void setConsistentHashAndAddress(ConsistentHash ch, Address localAddress) {
+   public void setConsistentHash(ConsistentHash ch) {
       this.ch = ch;
-      this.localAddress = localAddress;
    }
 
    public ConsistentHash getConsistentHash() {

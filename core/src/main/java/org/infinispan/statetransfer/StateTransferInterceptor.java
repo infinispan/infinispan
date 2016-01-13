@@ -8,6 +8,8 @@ import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -27,18 +29,19 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 //todo [anistor] command forwarding breaks the rule that we have only one originator for a command. this opens now the possibility to have two threads processing incoming remote commands for the same TX
 /**
@@ -46,28 +49,25 @@ import java.util.Set;
  * <ol>
  *    <li>If the command's topology id is higher than the current topology id,
  *    wait for the node to receive transaction data for the new topology id.</li>
- *    <li>If the topology id changed during a command's execution, forward the command to the new owners.</li>
+ *    <li>If the topology id changed during a command's execution, retry the command, but only on the
+ *    originator (which replicates it to the new owners).</li>
  * </ol>
  *
- * Note that we don't keep track of old cache topologies (yet), so we actually forward the command to all the owners
- * -- not just the ones added in the new topology. Transactional commands are idempotent, so this is fine.
- *
- * In non-transactional mode, the semantic of these tasks changes:
- * <ol>
- *    <li>We don't have transaction data, so the interceptor only waits for the new topology to be installed.</li>
- *    <li>Instead of forwarding commands from any owner, we retry the command on the originator.</li>
- * </ol>
+ * If the cache is configured with asynchronous replication, owners cannot signal to the originator that they
+ * saw a new topology, so instead each owner forwards the command to all the other owners in the new topology.
  *
  * @author anistor@redhat.com
+ * @author Dan Berindei
  * @since 5.2
  */
 public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);
    private static boolean trace = log.isTraceEnabled();
+   public static final Consumer<ConsistentHash> NOP = ch -> {
+   };
 
    private StateTransferManager stateTransferManager;
-   private Transport transport;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -77,9 +77,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Inject
-   public void init(StateTransferManager stateTransferManager, Transport transport) {
+   public void init(StateTransferManager stateTransferManager) {
       this.stateTransferManager = stateTransferManager;
-      this.transport = transport;
    }
 
    @Override
@@ -139,7 +138,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
-      // no need to forward this command
+      // no need to retry this command
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -150,13 +149,28 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return visitReadCommand(ctx, command, NOP);
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+         throws Throwable {
+      return visitReadCommand(ctx, command, NOP);
+   }
+
+   @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      return visitReadCommand(ctx, command, command::setConsistentHash);
+   }
+
+   private Object visitReadCommand(InvocationContext ctx, FlagAffectedCommand command,
+         Consumer<ConsistentHash> consistentHashUpdater) throws Throwable {
       if (isLocalOnly(command)) {
          return invokeNextInterceptor(ctx, command);
       }
       CacheTopology beginTopology = stateTransferManager.getCacheTopology();
-      command.setConsistentHashAndAddress(beginTopology.getReadConsistentHash(),
-            transport.getAddress());
+      consistentHashUpdater.accept(beginTopology.getReadConsistentHash());
       updateTopologyId(command);
       try {
          return invokeNextInterceptor(ctx, command);
@@ -175,7 +189,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          command.setTopologyId(newTopologyId);
          waitForTopology(newTopologyId);
 
-         return visitGetAllCommand(ctx, command);
+         return visitReadCommand(ctx, command, consistentHashUpdater);
       }
    }
 
@@ -191,31 +205,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    @Override
    public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
-      if (isLocalOnly(command)) {
-         return invokeNextInterceptor(ctx, command);
-      }
-      CacheTopology beginTopology = stateTransferManager.getCacheTopology();
-      command.setConsistentHashAndAddress(beginTopology.getReadConsistentHash());
-      updateTopologyId(command);
-      try {
-         return invokeNextInterceptor(ctx, command);
-      } catch (CacheException e) {
-         Throwable ce = e;
-         while (ce instanceof RemoteException) {
-            ce = ce.getCause();
-         }
-         if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-            throw e;
-
-         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
-         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
-         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s", currentTopologyId(), command);
-         int newTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
-         command.setTopologyId(newTopologyId);
-         waitForTopology(newTopologyId);
-
-         return visitReadOnlyManyCommand(ctx, command);
-      }
+      return visitReadCommand(ctx, command, command::setConsistentHash);
    }
 
    /**
@@ -334,8 +324,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    /**
-    * For non-tx write commands, we retry the command locally if the topology changed, instead of forwarding to the
-    * new owners like we do for tx commands. But we only retry on the originator, and only if the command doesn't have
+    * For non-tx write commands, we retry the command locally if the topology changed.
+    * But we only retry on the originator, and only if the command doesn't have
     * the {@code CACHE_MODE_LOCAL} flag.
     */
    private Object handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
@@ -377,10 +367,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          command.addFlag(Flag.COMMAND_RETRY);
          localResult = handleNonTxWriteCommand(ctx, command);
       }
-
-      // We retry the command every time the topology changes, either in NonTxConcurrentDistributionInterceptor or in
-      // EntryWrappingInterceptor. So we don't need to forward the command again here (without holding a lock).
-      // stateTransferManager.forwardCommandIfNeeded(command, command.getAffectedKeys(), ctx.getOrigin(), false);
       return localResult;
    }
 
