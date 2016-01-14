@@ -145,6 +145,15 @@ public interface ConsistentHash {
    }
 
    /**
+    * @return {@code true} if every member owns every segment. This allows callers to skip computing the
+    * segment of a key in some cases.
+    */
+   default boolean isReplicated() {
+      // Returning true is only an optimization, so it's ok to return false by default.
+      return false;
+   }
+
+   /**
     * Returns the segments owned by a cache member.
     *
     * @param owner the address of the member

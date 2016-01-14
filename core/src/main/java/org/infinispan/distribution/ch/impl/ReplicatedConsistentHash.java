@@ -151,6 +151,11 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public boolean isReplicated() {
+      return true;
+   }
+
+   @Override
    public String toString() {
       StringBuilder sb = new StringBuilder("ReplicatedConsistentHash{");
       sb.append("ns = ").append(segments.size());
