@@ -1,7 +1,8 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.4.xsd">
-   <TCP
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.6.xsd">
+   <!-- Disable the regular thread pool queue for tests so we can set a lower min_threads -->
+   <TCP_NIO2
          bind_addr="${jgroups.tcp.address:127.0.0.1}"
          bind_port="${jgroups.tcp.port:7800}"
          port_range="30"
@@ -16,10 +17,10 @@
          thread_naming_pattern="pl"
 
          thread_pool.enabled="true"
-         thread_pool.min_threads="2"
-         thread_pool.max_threads="2"
+         thread_pool.min_threads="1"
+         thread_pool.max_threads="5"
          thread_pool.keep_alive_time="60000"
-         thread_pool.queue_enabled="true"
+         thread_pool.queue_enabled="false"
          thread_pool.queue_max_size="100"
          thread_pool.rejection_policy="Discard"
 

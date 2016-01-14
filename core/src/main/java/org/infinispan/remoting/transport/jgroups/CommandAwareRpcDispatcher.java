@@ -52,11 +52,7 @@ import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGr
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
    public static final RspList<Response> EMPTY_RESPONSES_LIST = new RspList<>();
 
-   static class LogWrapper {
-      // Dummy class to workaround JGRP-1942
-   }
-
-   private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.LogWrapper.class);
+   private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
 

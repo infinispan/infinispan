@@ -5,6 +5,7 @@ import org.jgroups.conf.ConfiguratorFactory;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.conf.XmlConfigurator;
+import org.jgroups.protocols.TCP_NIO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MERGE3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.RELAY2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP_NIO2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_PING;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.UDP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT;
@@ -171,7 +173,8 @@ public class JGroupsConfigBuilder {
    }
 
    private static String replaceTcpStartPort(JGroupsProtocolCfg jgroupsCfg, TransportFlags transportFlags) {
-      Map<String, String> props = jgroupsCfg.getProtocol(TCP).getProperties();
+      ProtocolType transportProtocol = jgroupsCfg.containsProtocol(TCP_NIO2) ? TCP_NIO2 : TCP;
+      Map<String, String> props = jgroupsCfg.getProtocol(transportProtocol).getProperties();
       Integer startPort = threadTcpStartPort.get();
       int portRange = TCP_PORT_RANGE_PER_THREAD;
       if (transportFlags.isSiteIndexSpecified()) {
@@ -185,7 +188,7 @@ public class JGroupsConfigBuilder {
       props.put("bind_port", startPort.toString());
       // In JGroups, the port_range is inclusive
       props.put("port_range", String.valueOf(portRange - 1));
-      return replaceProperties(jgroupsCfg, props, TCP);
+      return replaceProperties(jgroupsCfg, props, transportProtocol);
    }
 
    private static String replaceProperties(
@@ -290,7 +293,7 @@ public class JGroupsConfigBuilder {
    }
 
    enum ProtocolType {
-      TCP, UDP, SHARED_LOOPBACK,
+      TCP, TCP_NIO2, UDP, SHARED_LOOPBACK,
       MPING, PING, TCPPING, TEST_PING, SHARED_LOOPBACK_PING,
       MERGE2, MERGE3,
       FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL, FD_ALL2,
