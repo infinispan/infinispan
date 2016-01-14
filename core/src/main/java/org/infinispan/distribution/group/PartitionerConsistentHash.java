@@ -3,6 +3,7 @@ package org.infinispan.distribution.group;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.List;
@@ -61,6 +62,11 @@ public class PartitionerConsistentHash implements ConsistentHash {
    }
 
    @Override
+   public boolean isReplicated() {
+      return ch.isReplicated();
+   }
+
+   @Override
    public Set<Integer> getSegmentsForOwner(Address owner) {
       return ch.getSegmentsForOwner(owner);
    }
@@ -77,7 +83,8 @@ public class PartitionerConsistentHash implements ConsistentHash {
 
    @Override
    public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      return ch.isSegmentLocalToNode(nodeAddress, getSegment(key));
+      int segment = ch.isReplicated() ? 0 : getSegment(key);
+      return ch.isSegmentLocalToNode(nodeAddress, segment);
    }
 
    @Override
