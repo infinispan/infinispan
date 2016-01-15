@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A global component registry where shared components are stored.
@@ -58,7 +59,7 @@ import java.util.concurrent.ConcurrentMap;
 public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private static final Log log = LogFactory.getLog(GlobalComponentRegistry.class);
-   private static volatile boolean versionLogged = false;
+   private static final AtomicBoolean versionLogged = new AtomicBoolean(false);
    /**
     * Hook to shut down the cache when the JVM exits.
     */
@@ -227,9 +228,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          }
          super.start();
 
-         if (!versionLogged) {
+         if (versionLogged.compareAndSet(false, true)) {
             log.version(Version.printVersion());
-            versionLogged = true;
          }
 
          if (needToNotify && state == ComponentStatus.RUNNING) {
