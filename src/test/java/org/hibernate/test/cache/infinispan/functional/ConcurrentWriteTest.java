@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.hibernate.FlushMode;
 import org.hibernate.LockMode;
+import org.hibernate.cache.infinispan.util.InfinispanMessageLogger;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -71,10 +72,13 @@ import org.hibernate.test.cache.infinispan.functional.entities.Customer;
 >>>>>>> HHH-10030 Add read-write cache concurrency strategy to Infinispan 2LC
 import org.junit.Test;
 
+<<<<<<< HEAD
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 >>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 
+=======
+>>>>>>> HHH-9839 Use JBoss Logger interface to allow internationalization of error messages
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -85,7 +89,7 @@ import static org.junit.Assert.assertNull;
  * @author Galder Zamarreño
  */
 public class ConcurrentWriteTest extends SingleNodeTest {
-	private static final Log log = LogFactory.getLog( ConcurrentWriteTest.class );
+	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( ConcurrentWriteTest.class );
 	private static final boolean trace = log.isTraceEnabled();
 	/**
 	 * when USER_COUNT==1, tests pass, when >4 tests fail
