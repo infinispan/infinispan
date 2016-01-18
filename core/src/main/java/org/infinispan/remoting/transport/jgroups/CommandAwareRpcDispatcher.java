@@ -3,7 +3,6 @@ package org.infinispan.remoting.transport.jgroups;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -36,7 +35,6 @@ import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,7 +56,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
-   public static final int STAGGER_DELAY_MILLIS = 5;
+   private static final int STAGGER_DELAY_MILLIS = Integer.getInteger("infinispan.stagger.delay", 5);
 
    private final InboundInvocationHandler handler;
    private final ScheduledExecutorService timeoutExecutor;
@@ -105,18 +103,16 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                                        DeliverOrder deliverOrder) {
       CompletableFuture<RspList<Response>> future;
       try {
-         if (recipients != null && mode == ResponseMode.GET_FIRST) {
+         if (recipients != null && mode == ResponseMode.GET_FIRST && STAGGER_DELAY_MILLIS > 0) {
             future = new CompletableFuture<>();
             // We populate the RspList ahead of time to avoid additional synchronization afterwards
             RspList<Response> rsps = new RspList<>();
             for (Address recipient : recipients) {
                rsps.put(recipient, new Rsp<>(recipient));
             }
-            processCallsStaggered(command, filter, recipients, mode, deliverOrder, req_marshaller, future, 0,
-                  rsps);
-            if (!future.isDone()) {
-               timeoutExecutor.schedule(() -> future.complete(rsps), timeout, TimeUnit.MILLISECONDS);
-            }
+            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
+            processCallsStaggered(command, filter, recipients, mode, deliverOrder, req_marshaller, future,
+                  0, deadline, rsps);
          } else {
             future = processCalls(command, recipients == null, timeout, filter, recipients, mode, deliverOrder,
                   req_marshaller);
@@ -291,8 +287,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    }
 
    private void processCallsStaggered(ReplicableCommand command, RspFilter filter, List<Address> dests,
-         ResponseMode mode, DeliverOrder deliverOrder, Marshaller marshaller,
-         CompletableFuture<RspList<Response>> theFuture, int destIndex, RspList<Response> rsps)
+                                      ResponseMode mode, DeliverOrder deliverOrder, Marshaller marshaller,
+                                      CompletableFuture<RspList<Response>> theFuture, int destIndex,
+                                      long deadline, RspList<Response> rsps)
          throws Exception {
       if (destIndex == dests.size())
          return;
@@ -332,10 +329,19 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                }
             }
          });
-      }
-      if (subFuture != null && !subFuture.isDone()) {
-         timeoutExecutor
-               .schedule(() -> triggerNextFuture.complete(null), STAGGER_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+         if (!subFuture.isDone()) {
+            if (destIndex < dests.size() - 1) {
+               timeoutExecutor.schedule(() -> triggerNextFuture.complete(null),
+                     STAGGER_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+            } else {
+               // this is the last request, so schedule the cancelation at deadline
+               long delay = deadline - System.nanoTime();
+               timeoutExecutor.schedule(() -> triggerNextFuture.complete(null),
+                     delay, TimeUnit.NANOSECONDS);
+            }
+         }
+      } else {
+         triggerNextFuture.complete(null);
       }
       triggerNextFuture.thenAccept(ignored -> {
          if (theFuture.isDone()) {
@@ -343,7 +349,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          }
          try {
             processCallsStaggered(command, filter, dests, mode, deliverOrder, marshaller, theFuture,
-                  destIndex + 1, rsps);
+                  destIndex + 1, deadline, rsps);
          } catch (Exception e) {
             // We should never get here, any remote exception will be in the Rsp
             theFuture.completeExceptionally(e);
