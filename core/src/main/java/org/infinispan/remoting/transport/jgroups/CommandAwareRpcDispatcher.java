@@ -56,7 +56,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
-   private static final int STAGGER_DELAY_MILLIS = Integer.getInteger("infinispan.stagger.delay", 5);
+   private static final long STAGGER_DELAY_NANOS = TimeUnit.MILLISECONDS.toNanos(Long.getLong("infinispan.stagger.delay", 5));
 
    private final InboundInvocationHandler handler;
    private final ScheduledExecutorService timeoutExecutor;
@@ -103,7 +103,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                                        DeliverOrder deliverOrder) {
       CompletableFuture<RspList<Response>> future;
       try {
-         if (recipients != null && mode == ResponseMode.GET_FIRST && STAGGER_DELAY_MILLIS > 0) {
+         if (recipients != null && mode == ResponseMode.GET_FIRST && STAGGER_DELAY_NANOS > 0) {
             future = new CompletableFuture<>();
             // We populate the RspList ahead of time to avoid additional synchronization afterwards
             RspList<Response> rsps = new RspList<>();
@@ -330,21 +330,23 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             }
          });
          if (!subFuture.isDone()) {
+            long now = System.nanoTime();
+            long delay = deadline - now;
             if (destIndex < dests.size() - 1) {
-               timeoutExecutor.schedule(() -> triggerNextFuture.complete(null),
-                     STAGGER_DELAY_MILLIS, TimeUnit.MILLISECONDS);
-            } else {
-               // this is the last request, so schedule the cancelation at deadline
-               long delay = deadline - System.nanoTime();
-               timeoutExecutor.schedule(() -> triggerNextFuture.complete(null),
-                     delay, TimeUnit.NANOSECONDS);
-            }
+               delay = Math.min(STAGGER_DELAY_NANOS, delay);
+            } // else it is the last request, so schedule the cancelation at deadline
+            timeoutExecutor.schedule(() -> triggerNextFuture.complete(null),
+                  delay, TimeUnit.NANOSECONDS);
          }
       } else {
          triggerNextFuture.complete(null);
       }
       triggerNextFuture.thenAccept(ignored -> {
          if (theFuture.isDone()) {
+            return;
+         }
+         if (System.nanoTime() >= deadline) {
+            theFuture.complete(rsps);
             return;
          }
          try {
