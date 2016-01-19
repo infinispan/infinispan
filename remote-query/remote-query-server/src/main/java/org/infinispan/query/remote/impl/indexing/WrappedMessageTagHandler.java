@@ -42,7 +42,7 @@ final class WrappedMessageTagHandler implements TagHandler {
    public void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object value) {
       switch (fieldNumber) {
          case WrappedMessage.WRAPPED_BOOL:
-            numericValue = Boolean.TRUE.equals(value) ? IndexingTagHandler.TRUE_INT : IndexingTagHandler.FALSE_INT;
+            stringValue = value != null ? value.toString() : null;
             break;
          case WrappedMessage.WRAPPED_BYTES:
          case WrappedMessage.WRAPPED_STRING:

@@ -86,7 +86,7 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
             EnumMarshaller encoder = (EnumMarshaller) remoteQuery.getSerializationContext().getMarshaller(value.getClass());
             value = encoder.encode((Enum) value);
          } else if (value instanceof Boolean) {
-            value = (Boolean) value ? 1 : 0;
+            value = value.toString();
          } else if (value instanceof Date) {
             value = ((Date) value).getTime();
          }

@@ -22,9 +22,6 @@ import org.infinispan.query.remote.impl.QueryFacadeImpl;
  */
 final class IndexingTagHandler implements TagHandler {
 
-   public static final Integer TRUE_INT = 1;
-   public static final Integer FALSE_INT = 0;
-
    private static final LuceneOptions NOT_STORED_NOT_ANALYZED = new LuceneOptionsImpl(
          new DocumentFieldMetadata.Builder(null, Store.NO, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
                .indexNullAs(QueryFacadeImpl.NULL_TOKEN_CODEC)
@@ -94,7 +91,7 @@ final class IndexingTagHandler implements TagHandler {
             }
             break;
          case BOOL:
-            luceneOptions.addNumericFieldToDocument(fn, ((Boolean) value) ? TRUE_INT : FALSE_INT, document);
+            luceneOptions.addFieldToDocument(fn, value.toString(), document);
             break;
          default:
             luceneOptions.addFieldToDocument(fn, String.valueOf(value), document);
