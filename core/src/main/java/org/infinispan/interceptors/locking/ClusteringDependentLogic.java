@@ -26,6 +26,7 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -516,6 +517,7 @@ public interface ClusteringDependentLogic {
                      metadata = builder
                            .lifespan(configuration.clustering().l1().lifespan())
                            .build();
+                     metadata = new L1Metadata(metadata);
                   }
                } else {
                   doCommit = false;
