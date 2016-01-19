@@ -9,7 +9,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
@@ -18,6 +17,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests compatibility mode with primitive types.
@@ -26,7 +26,6 @@ import static org.junit.Assert.assertEquals;
  * @since 7.0
  */
 @Test(testName = "client.hotrod.marshall.PrimitiveEmbeddedCompatTest", groups = "functional")
-@CleanupAfterMethod
 public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
 
    private HotRodServer hotRodServer;
@@ -65,27 +64,52 @@ public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
       killServers(hotRodServer);
    }
 
-   public void testRemotePutAndGet() throws Exception {
-      remoteCache.put(1, "foo");
-      Object remoteObject = remoteCache.get(1);
-      assertEquals("foo", remoteObject);
-
-      // try to get the object through the local cache interface and check it's the same object we put
-      assertEquals(1, cache.keySet().size());
-      Object key = cache.keySet().iterator().next();
-      Object localObject = cache.get(key);
-      assertEquals("foo", localObject);
+   public void testRemotePutAndGet() {
+      remotePutAndGet(1, "foo");
+      remotePutAndGet(1, true);
+      remotePutAndGet(1, 7);
+      remotePutAndGet(1, 777L);
+      remotePutAndGet(1, 0.0);
+      remotePutAndGet(1, 1.0d);
    }
 
-   public void testLocalPutAndGet() throws Exception {
-      cache.put(1, "bar");
-      Object localObject = cache.get(1);
-      assertEquals("bar", localObject);
+   private void remotePutAndGet(Object key, Object value) {
+      remoteCache.clear();
 
-      // try to get the object through the local cache interface and check it's the same object we put
+      remoteCache.put(key, value);
+      Object remoteValue = remoteCache.get(key);
+      assertEquals(value, remoteValue);
+
+      // try to get the value through the embedded cache interface and check it's equals with the value we put
+      assertEquals(1, cache.keySet().size());
+      Object localKey = cache.keySet().iterator().next();
+      assertEquals(key, localKey);
+      Object localObject = cache.get(localKey);
+      assertEquals(value, localObject);
+   }
+
+   public void testEmbeddedPutAndGet() {
+      embeddedPutAndGet(1, "bar");
+      embeddedPutAndGet(1, true);
+      embeddedPutAndGet(1, 7);
+      embeddedPutAndGet(1, 777L);
+      embeddedPutAndGet(1, 0.0);
+      embeddedPutAndGet(1, 1.0d);
+   }
+
+   private void embeddedPutAndGet(Object key, Object value) {
+      cache.clear();
+
+      cache.put(key, value);
+      assertTrue(cache.keySet().contains(key));
+      Object localValue = cache.get(key);
+      assertEquals(value, localValue);
+
+      // try to get the value through the remote cache interface and check it's equals with the value we put
       assertEquals(1, remoteCache.keySet().size());
-      Object key = remoteCache.keySet().iterator().next();
-      Object remoteObject = remoteCache.get(key);
-      assertEquals("bar", remoteObject);
+      Object remoteKey = remoteCache.keySet().iterator().next();
+      assertEquals(key, remoteKey);
+      Object remoteValue = remoteCache.get(remoteKey);
+      assertEquals(value, remoteValue);
    }
 }
