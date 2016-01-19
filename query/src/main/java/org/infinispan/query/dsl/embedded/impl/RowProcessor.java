@@ -4,7 +4,7 @@ package org.infinispan.query.dsl.embedded.impl;
  * @author anistor@redhat.com
  * @since 8.1
  */
-public interface RowProcessor {
+public interface RowProcessor extends ResultProcessor<Object[], Object[]> {
 
    /**
     * Apply data conversion. The input row can be modified in-place or a new one, of equal or different size, can be

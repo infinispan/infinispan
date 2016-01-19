@@ -78,13 +78,16 @@ public final class RemoteQuery extends BaseQuery {
       } else {
          unwrappedResults = new ArrayList<Object>(results.size());
          for (WrappedMessage r : results) {
-            try {
-               byte[] bytes = (byte[]) r.getValue();
-               Object o = ProtobufUtil.fromWrappedByteArray(serializationContext, bytes);
-               unwrappedResults.add(o);
-            } catch (IOException e) {
-               throw new HotRodClientException(e);
+            Object o = r.getValue();
+            if (o instanceof byte[]) {
+               try {
+                  byte[] bytes = (byte[]) r.getValue();
+                  o = ProtobufUtil.fromWrappedByteArray(serializationContext, bytes);
+               } catch (IOException e) {
+                  throw new HotRodClientException(e);
+               }
             }
+            unwrappedResults.add(o);
          }
       }
       return unwrappedResults;

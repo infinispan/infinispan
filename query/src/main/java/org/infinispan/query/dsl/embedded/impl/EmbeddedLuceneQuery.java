@@ -19,7 +19,7 @@ final class EmbeddedLuceneQuery extends BaseQuery {
 
    private final QueryEngine queryEngine;
 
-   private final RowProcessor rowProcessor;
+   private final ResultProcessor resultProcessor;
 
    /**
     * An Infinispan Cache query that wraps an actual Lucene query object. This is built lazily when the query is
@@ -34,14 +34,14 @@ final class EmbeddedLuceneQuery extends BaseQuery {
 
    EmbeddedLuceneQuery(QueryEngine queryEngine, QueryFactory queryFactory,
                        String jpaQuery, Map<String, Object> namedParameters,
-                       String[] projection, RowProcessor rowProcessor,
+                       String[] projection, ResultProcessor resultProcessor,
                        long startOffset, int maxResults) {
       super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
-      if (rowProcessor != null && (projection == null || projection.length == 0)) {
+      if (resultProcessor instanceof RowProcessor && (projection == null || projection.length == 0)) {
          throw new IllegalArgumentException("A RowProcessor can only be specified with projections");
       }
       this.queryEngine = queryEngine;
-      this.rowProcessor = rowProcessor;
+      this.resultProcessor = resultProcessor;
    }
 
    @Override
@@ -69,12 +69,11 @@ final class EmbeddedLuceneQuery extends BaseQuery {
 
    private List<Object> listInternal() {
       List<Object> list = createCacheQuery().list();
-      if (rowProcessor != null) {
-         results = new ArrayList<Object>(list.size());
+      if (resultProcessor != null) {
+         results = new ArrayList<>(list.size());
          for (Object r : list) {
-            Object[] inRow = (Object[]) r;
-            Object[] outRow = rowProcessor.process(inRow);
-            results.add(outRow);
+            Object o = resultProcessor.process(r);
+            results.add(o);
          }
       } else {
          results = list;
