@@ -26,7 +26,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import static org.infinispan.test.TestingUtil.*;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
