@@ -58,7 +58,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       marshaller = new TestObjectStreamMarshaller();
-      timeService = new ControlledTimeService(0);
+      timeService = getTimeService();
       factory = new InternalEntryFactoryImpl();
       ((InternalEntryFactoryImpl) factory).injectTimeService(timeService);
       try {
@@ -92,6 +92,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
     */
    protected StreamingMarshaller getMarshaller() {
       return marshaller;
+   }
+
+   /**
+    * To be overridden if the store requires special time handling
+    */
+   protected ControlledTimeService getTimeService() {
+      return new ControlledTimeService(0);
    }
 
    /**
@@ -278,8 +285,8 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testLoadAndStoreWithLifespanAndIdle2() throws Exception {
       assertContains("k", false);
 
-      long lifespan = 1000;
-      long idle = 1000;
+      long lifespan = 2000;
+      long idle = 2000;
       InternalCacheEntry se = internalCacheEntry("k", "v", lifespan, idle);
       InternalCacheValue icv = se.toInternalCacheValue();
       assertEquals(se.getCreated(), icv.getCreated());
@@ -292,7 +299,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertCorrectExpiry(TestingUtil.allEntries(cl).iterator().next(), "v", lifespan, idle, false);
 
       idle = 4000;
-      lifespan = 1000;
+      lifespan = 2000;
       se = internalCacheEntry("k", "v", lifespan, idle);
       assertExpired(se, false);
       cl.write(marshalledEntry(se));

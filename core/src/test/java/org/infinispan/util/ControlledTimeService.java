@@ -6,7 +6,7 @@ import java.time.Instant;
  * TimeService that allows for wall clock time to be adjust manually.
  */
 public class ControlledTimeService extends DefaultTimeService {
-   private long currentMillis;
+   protected long currentMillis;
 
    public ControlledTimeService(long currentMillis) {
       this.currentMillis = currentMillis;
