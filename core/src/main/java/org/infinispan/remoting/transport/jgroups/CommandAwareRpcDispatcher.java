@@ -110,7 +110,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             for (Address recipient : recipients) {
                rsps.put(recipient, new Rsp<>(recipient));
             }
-            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout);
+            // This isn't really documented, but some of our internal code uses timeout = 0 as no timeout.
+            long nanoTimeout = timeout > 0 ? TimeUnit.MILLISECONDS.toNanos(timeout) : Long.MAX_VALUE;
+            long deadline = System.nanoTime() + nanoTimeout;
             processCallsStaggered(command, filter, recipients, mode, deliverOrder, req_marshaller, future,
                   0, deadline, rsps);
          } else {
