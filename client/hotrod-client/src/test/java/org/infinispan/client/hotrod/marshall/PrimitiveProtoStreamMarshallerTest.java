@@ -7,7 +7,6 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
@@ -15,7 +14,9 @@ import org.testng.annotations.Test;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests integration between HotRod client and ProtoStream marshalling library with primitive types.
@@ -24,7 +25,6 @@ import static org.junit.Assert.*;
  * @since 7.1
  */
 @Test(testName = "client.hotrod.marshall.PrimitiveProtoStreamMarshallerTest", groups = "functional")
-@CleanupAfterMethod
 public class PrimitiveProtoStreamMarshallerTest extends SingleCacheManagerTest {
 
    private HotRodServer hotRodServer;
@@ -53,17 +53,28 @@ public class PrimitiveProtoStreamMarshallerTest extends SingleCacheManagerTest {
       killServers(hotRodServer);
    }
 
-   public void testPutAndGet() throws Exception {
-      remoteCache.put(1, "foo");
-      assertTrue(remoteCache.keySet().contains(1));
+   public void testPutAndGet() {
+      putAndGet(1, "bar");
+      putAndGet(1, true);
+      putAndGet(1, 7);
+      putAndGet(1, 777L);
+      putAndGet(1, 0.0);
+      putAndGet(1, 1.0d);
+   }
+
+   private void putAndGet(Object key, Object value) {
+      remoteCache.clear();
+
+      remoteCache.put(key, value);
+      assertTrue(remoteCache.keySet().contains(key));
+      Object remoteValue = remoteCache.get(key);
+      assertEquals(value, remoteValue);
 
       assertEquals(1, cache.keySet().size());
-      byte[] key = (byte[]) cache.keySet().iterator().next();
-      Object localObject = cache.get(key);
+      Object localKey = cache.keySet().iterator().next();
+      assertTrue(localKey instanceof byte[]);
+      Object localObject = cache.get(localKey);
       assertNotNull(localObject);
       assertTrue(localObject instanceof byte[]);
-
-      Object fromRemoteCache = remoteCache.get(1);
-      assertEquals("foo", fromRemoteCache);
    }
 }

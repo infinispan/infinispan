@@ -23,8 +23,9 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
-import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.dsl.embedded.impl.ResultProcessor;
+import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
@@ -62,19 +63,27 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
-   protected BaseMatcher getFirstPhaseMatcher() {
+   protected BaseMatcher getMatcher() {
       Class<? extends BaseMatcher> matcherImplClass = isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class;
       return SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
    }
 
    @Override
-   protected BaseMatcher getSecondPhaseMatcher() {
-      // results are already in protobuf format due to type converter interceptor even if we are in compat mode ...
-      return SecurityActions.getCacheComponentRegistry(cache).getComponent(ProtobufMatcher.class);
+   protected ResultProcessor makeResultProcessor(ResultProcessor in) {
+      return new ResultProcessor<Object, Object>() {
+         @Override
+         public Object process(Object result) {
+            result = result instanceof ProtobufValueWrapper ? ((ProtobufValueWrapper) result).getBinary() : result;
+            if (in != null) {
+               result = in.process(result);
+            }
+            return result;
+         }
+      };
    }
 
    @Override
-   protected RowProcessor makeTypeConversionRowProcessor(Class<?>[] projectedTypes) {
+   protected RowProcessor makeProjectionProcessor(Class<?>[] projectedTypes) {
       // Protobuf's booleans are indexed as integers, so we need to convert them.
       // Collect here the positions of all Boolean projections.
       int[] pos = new int[projectedTypes.length];

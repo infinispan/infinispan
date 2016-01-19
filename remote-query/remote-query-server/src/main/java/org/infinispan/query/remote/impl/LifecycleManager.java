@@ -10,7 +10,6 @@ import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
@@ -130,7 +129,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
             createRemoteValueWrapperInterceptor(cr, cfg);
          }
 
-         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache().withFlags(Flag.OPERATION_HOTROD);
+         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
          RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode, serCtx);
          cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
       }
