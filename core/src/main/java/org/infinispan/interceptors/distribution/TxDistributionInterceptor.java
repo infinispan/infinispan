@@ -339,17 +339,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                                           FlagAffectedCommand command) throws Throwable {
       if (trace) log.tracef("Doing a remote get for key %s", key);
 
-      boolean acquireRemoteLock = false;
-      if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-         TxInvocationContext txContext = (TxInvocationContext) ctx;
-         acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
-      }
       // attempt a remote lookup
-      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command, isWrite);
-
-      if (acquireRemoteLock) {
-         ((TxInvocationContext) ctx).addAffectedKey(key);
-      }
+      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command, isWrite);
 
       if (ice != null) {
          if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
