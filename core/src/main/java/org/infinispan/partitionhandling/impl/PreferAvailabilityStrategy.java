@@ -8,6 +8,10 @@ import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogger;
+
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +20,11 @@ import java.util.Objects;
 
 public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferAvailabilityStrategy.class);
+   private final EventLogger eventLog;
+
+   public PreferAvailabilityStrategy(EventLogger eventLog) {
+      this.eventLog = eventLog;
+   }
 
    @Override
    public void onJoin(AvailabilityStrategyContext context, Address joiner) {
@@ -33,7 +42,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          return;
       }
       if (context.getStableTopology() != null && isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
-         log.lostDataBecauseOfGracefulLeaver(context.getCacheName(), leaver);
+         eventLog.context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfGracefulLeaver(leaver));
       }
 
       // We have to do this in case rebalancing is disabled, or there is another rebalance in progress
@@ -63,9 +72,9 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
       if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
-         log.lostDataBecauseOfAbruptLeavers(context.getCacheName(), lostMembers);
+         eventLog.context(context.getCacheName()).fatal(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfAbruptLeavers(lostMembers));
       } else if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
-         log.minorityPartition(context.getCacheName(), newMembers, lostMembers, stableMembers);
+         eventLog.context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.minorityPartition(newMembers, lostMembers, stableMembers));
       }
    }
 

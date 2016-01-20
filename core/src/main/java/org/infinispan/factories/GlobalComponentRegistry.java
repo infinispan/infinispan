@@ -32,6 +32,7 @@ import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 
 import javax.management.MBeanServer;
@@ -128,6 +129,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                   InfinispanCollections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
          this.createdCaches = createdCaches;
 
+         getOrCreateComponent(EventLogManager.class);
          // This is necessary to make sure the transport has been started and is available to other components that
          // may need it.  This is a messy approach though - a proper fix will be in ISPN-1698
          getOrCreateComponent(Transport.class);
