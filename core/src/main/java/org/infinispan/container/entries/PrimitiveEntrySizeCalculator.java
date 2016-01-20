@@ -112,20 +112,15 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
       static final int MIN_CACHE_VALUE = -128;
 
       static int calculateMaxIntCache() {
-         int h = 127;
-         String integerCacheHighPropValue =
-                 sun.misc.VM.getSavedProperty("java.lang.Integer.IntegerCache.high");
-         if (integerCacheHighPropValue != null) {
-            try {
-               int i = Integer.parseInt(integerCacheHighPropValue);
-               i = Math.max(i, 127);
-               // Maximum array size is Integer.MAX_VALUE
-               h = Math.min(i, Integer.MAX_VALUE - (-128) -1);
-            } catch( NumberFormatException nfe) {
-               // If the property cannot be parsed into an int, ignore it.
-            }
+         //We start from 128 as caching numbers up to 127 is required by the JLS:
+         //see 5.1.7 Boxing Conversion
+         for (int i = 128; i < Integer.MAX_VALUE; i++) {
+            if (Integer.valueOf(i) == Integer.valueOf(i))
+               continue;
+            else
+               return i - 1;
          }
-         return h;
+         return Integer.MAX_VALUE;
       }
    }
 
