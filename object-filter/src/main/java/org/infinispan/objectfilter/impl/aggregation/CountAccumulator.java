@@ -20,8 +20,10 @@ final class CountAccumulator extends FieldAccumulator {
 
    @Override
    protected void merge(Object[] accRow, Object value) {
-      if (value != null) {
+      if (value instanceof Counter) {
          ((Counter) accRow[outPos]).add(((Counter) value).getValue());
+      } else if (value != null) {
+         ((Counter) accRow[outPos]).add(1);
       }
    }
 

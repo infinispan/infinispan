@@ -2463,7 +2463,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
             .select(Expression.avg("amount"), Expression.sum("amount"), Expression.count("date"), Expression.min("date"),
-                    Expression.max("accountId"))
+                  Expression.max("accountId"))
             .having("isDebit").eq(Expression.param("param")).toBuilder()
             .orderBy(Expression.avg("amount"), SortOrder.DESC).orderBy(Expression.count("date"), SortOrder.DESC)
             .orderBy(Expression.max("amount"), SortOrder.ASC)
@@ -2685,5 +2685,39 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<Object[]> list = q.list();
       assertEquals(list.get(0)[0], "Bond Street");
+   }
+
+   public void testGroupingAndAggregationOnSameField() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.count("surname"))
+            .groupBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(1L, list.get(0)[0]);
+      assertEquals(1L, list.get(1)[0]);
+      assertEquals(1L, list.get(2)[0]);
+   }
+
+   public void testTwoPhaseGroupingAndAggregationOnSameField() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.count("surname"), Expression.sum("addresses.number"))
+            .groupBy("surname")
+            .orderBy("surname")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(3, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(1L, list.get(0)[0]);
+      assertEquals(156L, list.get(0)[1]);
+      assertEquals(1L, list.get(1)[0]);
+      assertEquals(300L, list.get(1)[1]);
+      assertEquals(1L, list.get(2)[0]);
+      assertNull(list.get(2)[1]);
    }
 }
