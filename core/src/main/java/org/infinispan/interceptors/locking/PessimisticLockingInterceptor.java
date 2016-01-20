@@ -65,8 +65,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    protected final Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       try {
          if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
-            acquireRemoteIfNeeded(ctx, command.getKey(), command);
-            lockOrRegisterBackupLock((TxInvocationContext<?>) ctx, command.getKey(), getLockTimeoutMillis(command));
+            Object key = command.getKey();
+            acquireRemoteIfNeeded(ctx, key, command);
+            lockOrRegisterBackupLock((TxInvocationContext<?>) ctx, key, getLockTimeoutMillis(command));
+            ((TxInvocationContext<?>) ctx).addAffectedKey(key);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable t) {
@@ -116,10 +118,13 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       try {
+         Object key = command.getKey();
          if (!hasSkipLocking(command)) {
-            acquireRemoteIfNeeded(ctx, command.getKey(), command);
-            lockOrRegisterBackupLock((TxInvocationContext<?>) ctx, command.getKey(), getLockTimeoutMillis(command));
+            acquireRemoteIfNeeded(ctx, key, command);
+            lockOrRegisterBackupLock((TxInvocationContext<?>) ctx, key, getLockTimeoutMillis(command));
          }
+         // Mark the key as affected even with SKIP_LOCKING
+         ((TxInvocationContext<?>) ctx).addAffectedKey(key);
          return invokeNextInterceptor(ctx, command);
       } catch (OutdatedTopologyException e) {
          // The command will be retried, no need to release this or other locks
@@ -219,7 +224,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             invokeNextInterceptor(ctx, lcc);
          }
       }
-      ((TxInvocationContext<?>) ctx).addAffectedKey(key);
    }
 
    private boolean isLockOwner(Collection<?> keys) {
