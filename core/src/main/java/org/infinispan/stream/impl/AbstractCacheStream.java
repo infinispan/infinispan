@@ -656,7 +656,8 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          if (excludedKeys != null) {
             return stream.filter(e -> !excludedKeys.contains(e.getKey()));
          }
-         return stream;
+         // Make sure the stream is set to be parallel or not
+         return parallel ? stream.parallel() : stream.sequential();
       };
    }
 
