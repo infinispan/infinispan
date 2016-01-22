@@ -12,6 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -31,6 +32,7 @@ import org.infinispan.security.actions.GetCacheManagerIsCoordinatorAction;
 import org.infinispan.security.actions.GetCacheManagerStatusAction;
 import org.infinispan.security.actions.GetCacheRpcManagerAction;
 import org.infinispan.security.actions.GetCacheStatusAction;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.server.infinispan.actions.ClearCacheAction;
 import org.infinispan.server.infinispan.actions.FlushCacheAction;
 import org.infinispan.server.infinispan.actions.GetCacheVersionAction;
@@ -278,6 +280,11 @@ public final class SecurityActions {
 
     public static SearchManager getSearchManager(AdvancedCache<?, ?> cache) {
         GetSearchManagerAction action = new GetSearchManagerAction(cache);
+        return doPrivileged(action);
+    }
+
+    public static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
+        GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
         return doPrivileged(action);
     }
 }

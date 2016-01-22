@@ -85,4 +85,8 @@ public class MetricKeys {
     public static final String REPLICATION_COUNT = "replication-count";
     public static final String REPLICATION_FAILURES = "replication-failures";
     public static final String SUCCESS_RATIO = "success-ratio";
+    // Backup Metrics
+    public static final String SITES_ONLINE = "sites-online";
+    public static final String SITES_OFFLINE = "sites-offline";
+    public static final String SITES_MIXED = "sites-mixed";
 }

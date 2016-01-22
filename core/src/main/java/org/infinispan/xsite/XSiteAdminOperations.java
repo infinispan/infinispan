@@ -1,6 +1,7 @@
 package org.infinispan.xsite;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -15,6 +16,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
+import org.infinispan.xsite.status.SiteStatus;
+import org.infinispan.xsite.status.CacheSiteStatusBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +54,45 @@ public class XSiteAdminOperations {
       this.stateTransferManager = stateTransferManager;
    }
 
+   public Map<String, SiteStatus> clusterStatus()  {
+      Map<String, Boolean> localNodeStatus = backupSender.status();
+      XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), null, XSiteAdminCommand.AdminOperation.STATUS, null, null);
+      Map<Address, Response> responses = invokeRemotely(command);
+      List<Address> errors = checkForErrors(responses);
+      if (!errors.isEmpty()) {
+         throw new CacheException("Unable to check cluster state for members: " + errors);
+      }
+      //site name => online/offline/mixed
+      Map<String, CacheSiteStatusBuilder> perSiteBuilder = new HashMap<>();
+      for (Map.Entry<String, Boolean> entry : localNodeStatus.entrySet()) {
+         CacheSiteStatusBuilder builder = new CacheSiteStatusBuilder();
+         builder.addMember(rpcManager.getAddress(), entry.getValue());
+         perSiteBuilder.put(entry.getKey(), builder);
+      }
+      for (Map.Entry<Address, Response> entry : responses.entrySet()) {
+         Response response = entry.getValue();
+         if (response == CacheNotFoundResponse.INSTANCE) {
+            continue; //shutting down.
+         }
+         if (!response.isSuccessful()) {
+            throw new CacheException("Unsuccessful response received from. " + entry);
+         }
+         //noinspection unchecked
+         Map<String, Boolean> sites = (Map<String, Boolean>) ((SuccessfulResponse) response).getResponseValue();
+         for (Map.Entry<String, Boolean> site : sites.entrySet()) {
+            CacheSiteStatusBuilder builder = perSiteBuilder.get(site.getKey());
+            if (builder == null) {
+               throw new IllegalStateException("Site " + entry.getKey() + " not defined in all the cluster members");
+            }
+            builder.addMember(entry.getKey(), site.getValue());
+         }
+      }
+
+      Map<String, SiteStatus> result = new HashMap<>();
+      perSiteBuilder.forEach((site, builder) -> result.put(site, builder.build()));
+      return result;
+   }
+
    @ManagedOperation(description = "Check whether the given backup site is offline or not.", displayName = "Check whether the given backup site is offline or not.")
    public String siteStatus(@Parameter(name = "site", description = "The name of the backup site") String site) {
       //also consider local node
@@ -61,9 +103,9 @@ public class XSiteAdminOperations {
 
       XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), site, XSiteAdminCommand.AdminOperation.SITE_STATUS, null, null);
       Map<Address, Response> responses = invokeRemotely(command);
-      List<Address> online = new ArrayList<Address>(responses.size());
-      List<Address> offline = new ArrayList<Address>(responses.size());
-      List<Address> failed = new ArrayList<Address>(responses.size());
+      List<Address> online = new ArrayList<>(responses.size());
+      List<Address> offline = new ArrayList<>(responses.size());
+      List<Address> failed = new ArrayList<>(responses.size());
       for (Map.Entry<Address, Response> e : responses.entrySet()) {
          if (!e.getValue().isSuccessful() || !e.getValue().isValid()) {
             if (e.getValue() != CacheNotFoundResponse.INSTANCE) {
@@ -112,9 +154,9 @@ public class XSiteAdminOperations {
          return rpcError(errors, "Failure invoking 'status()' on nodes: ");
       }
       //<site name, nodes where it failed>
-      Map<String, List<Address>> result = new HashMap<String, List<Address>>();
+      Map<String, List<Address>> result = new HashMap<>();
       for (Map.Entry<String, Boolean> e : localNodeStatus.entrySet()) {
-         ArrayList<Address> failedSites = new ArrayList<Address>();
+         ArrayList<Address> failedSites = new ArrayList<>();
          result.put(e.getKey(), failedSites);
          if (!e.getValue()) {
             failedSites.add(rpcManager.getAddress());
@@ -254,7 +296,7 @@ public class XSiteAdminOperations {
                      description = "Shows a map with destination site name and the state transfer status.",
                      name = "PushStateStatus")
    public final Map<String, String> getPushStateStatus() {
-      Map<String, String> map = new HashMap<String, String>();
+      Map<String, String> map = new HashMap<>();
       try {
          for (String siteName : getRunningStateTransfer()) {
             map.put(siteName, XSiteStateTransferManager.STATUS_SENDING);
@@ -270,12 +312,7 @@ public class XSiteAdminOperations {
                      description = "Clears the state transfer status.",
                      name = "ClearPushStateStatus")
    public final String clearPushStateStatus() {
-      return performOperation(new Operation() {
-         @Override
-         public void execute() throws Throwable {
-            stateTransferManager.clearClusterStatus();
-         }
-      });
+      return performOperation(() -> stateTransferManager.clearClusterStatus());
    }
 
    @ManagedOperation(displayName = "Cancel Push Status",
@@ -283,12 +320,7 @@ public class XSiteAdminOperations {
                      name = "CancelPushState")
    public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")
                                           final String siteName) {
-      return performOperation(new Operation() {
-         @Override
-         public void execute() throws Throwable {
-            stateTransferManager.cancelPushState(siteName);
-         }
-      });
+      return performOperation(() -> stateTransferManager.cancelPushState(siteName));
    }
 
    @ManagedOperation(displayName = "Cancel Receive State",
@@ -297,12 +329,7 @@ public class XSiteAdminOperations {
                      name = "CancelReceiveState")
    public final String cancelReceiveState(@Parameter(description = "The sending site name", name = "SiteName")
                                              final String siteName) {
-      return performOperation(new Operation() {
-         @Override
-         public void execute() throws Throwable {
-            stateTransferManager.cancelReceive(siteName);
-         }
-      });
+      return performOperation(() -> stateTransferManager.cancelReceive(siteName));
    }
 
    @ManagedOperation(displayName = "Sending Site Name",
@@ -322,7 +349,7 @@ public class XSiteAdminOperations {
    }
 
    private List<Address> checkForErrors(Map<Address, Response> responses) {
-      List<Address> failed = new ArrayList<Address>(responses.size());
+      List<Address> failed = new ArrayList<>(responses.size());
       for (Map.Entry<Address, Response> e : responses.entrySet()) {
          if (e.getValue() != CacheNotFoundResponse.INSTANCE &&
                (e.getValue() == null || !e.getValue().isSuccessful() || !e.getValue().isValid())) {
@@ -369,7 +396,7 @@ public class XSiteAdminOperations {
                                        rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build());
    }
 
-   private static interface Operation {
+   private interface Operation {
       void execute() throws Throwable;
    }
 }
