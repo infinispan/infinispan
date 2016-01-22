@@ -11,8 +11,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.Search;
-import org.infinispan.query.continuous.CallCountingCQResultListener;
-import org.infinispan.query.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -147,8 +145,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
             .toBuilder().select(Expression.max("age"))
             .build();
 
-      ContinuousQuery<Object, Object> cq = new ContinuousQuery<>(cache());
-      cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
+      cache().addListener(new EntryListener(), Search.makeFilter(query), null);
    }
 
    @Listener(observation = Listener.Observation.POST)
