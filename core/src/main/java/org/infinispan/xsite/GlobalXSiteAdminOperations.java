@@ -8,11 +8,16 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.xsite.status.ContainerSiteStatusBuilder;
+import org.infinispan.xsite.status.SiteStatus;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A per-container (cache manager) cross-site admin operations.
@@ -78,6 +83,29 @@ public class GlobalXSiteAdminOperations {
    public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")
                                        final String site) {
       return performOperation(operations -> operations.cancelPushState(site));
+   }
+
+   public final Map<String, SiteStatus> globalStatus() {
+      final Iterator<CacheXSiteAdminOperation> iterator = collectXSiteAdminOperation().iterator();
+      if (!iterator.hasNext()) {
+         return Collections.emptyMap();
+      }
+      Map<String, ContainerSiteStatusBuilder> siteStatusBuilderMap = new HashMap<>();
+      while (iterator.hasNext()) {
+         CacheXSiteAdminOperation xsiteAdminOperation = iterator.next();
+         xsiteAdminOperation.xSiteAdminOperations.clusterStatus().forEach((site, status) -> {
+            ContainerSiteStatusBuilder builder = siteStatusBuilderMap.get(site);
+            if (builder == null) {
+               builder = new ContainerSiteStatusBuilder();
+               siteStatusBuilderMap.put(site, builder);
+            }
+            builder.addCacheName(xsiteAdminOperation.cacheName, status);
+         });
+      }
+
+      Map<String, SiteStatus> result = new HashMap<>();
+      siteStatusBuilderMap.forEach((site, builder) -> result.put(site, builder.build()));
+      return result;
    }
 
    private String performOperation(Operation operation) {

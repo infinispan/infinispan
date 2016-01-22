@@ -24,15 +24,22 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.Version;
+import org.infinispan.xsite.GlobalXSiteAdminOperations;
+import org.infinispan.xsite.status.SiteStatus;
 import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
@@ -63,6 +70,10 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         MEMBERS(MetricKeys.MEMBERS, ModelType.INT, true, true),
         CLUSTER_SIZE(MetricKeys.CLUSTER_SIZE, ModelType.INT, true, true),
         VERSION(MetricKeys.VERSION, ModelType.INT, true, true),
+        //backup site
+        ONLINE_SITES(MetricKeys.SITES_ONLINE, ModelType.LIST, false),
+        OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, false),
+        MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, false),
 
         // see org.infinispan.stats.CacheContainerStats
         AVERAGE_READ_TIME(MetricKeys.AVERAGE_READ_TIME, ModelType.LONG, true),
@@ -228,6 +239,18 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                 case TIME_SINCE_RESET:
                    result.set(stats.getTimeSinceStart());
                    break;
+                case ONLINE_SITES:
+                case OFFLINE_SITES:
+                case MIXED_SITES: {
+                    GlobalComponentRegistry registry = SecurityActions.getGlobalComponentRegistry(cacheManager);
+                    Collection<String> sites = filterSitesByStatus(registry, metric);
+                    if (sites.isEmpty()) {
+                        result.setEmptyList();
+                    } else {
+                        result.set(toModelNodeCollection(sites));
+                    }
+                    break;
+                }
                 default:
                     context.getFailureDescription().set(String.format("Unknown metric %s", metric));
                     break;
@@ -241,5 +264,50 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         for (CacheManagerMetrics metric : CacheManagerMetrics.values()) {
             container.registerMetric(metric.definition, this);
         }
+    }
+
+    private static Collection<String> filterSitesByStatus(GlobalComponentRegistry registry, CacheManagerMetrics metric) {
+        GlobalXSiteAdminOperations operations = registry.getComponent(GlobalXSiteAdminOperations.class);
+        if (operations == null) {
+            return Collections.emptyList();
+        }
+        Map<String, SiteStatus> siteStatusMap = operations.globalStatus();
+        if (siteStatusMap.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<String> filterSites = new LinkedList<>();
+        for (Map.Entry<String, SiteStatus> statusEntry : siteStatusMap.entrySet()) {
+            String siteName = statusEntry.getKey();
+            SiteStatus status = statusEntry.getValue();
+            switch (metric) {
+                case ONLINE_SITES:
+                    if (status.isOnline()) {
+                        filterSites.add(siteName);
+                    }
+                    break;
+                case OFFLINE_SITES:
+                    if (status.isOffline()) {
+                        filterSites.add(siteName);
+                    }
+                    break;
+                case MIXED_SITES:
+                    if (!status.isOnline() && ! status.isOffline()) {
+                        filterSites.add(siteName);
+                    }
+                    break;
+                default:
+                    return Collections.emptyList();
+            }
+        }
+        return filterSites;
+    }
+
+    private static Collection<ModelNode> toModelNodeCollection(Collection<String> collection) {
+        if (collection == null || collection.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Collection<ModelNode> modelNodeCollection = new ArrayList<>(collection.size());
+        collection.forEach(e -> modelNodeCollection.add(new ModelNode().set(e)));
+        return modelNodeCollection;
     }
 }
