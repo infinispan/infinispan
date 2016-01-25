@@ -922,6 +922,9 @@ public class Parser80 implements ConfigurationParser {
          case SIMPLE_CACHE:
             builder.simpleCache(Boolean.valueOf(value));
             break;
+         case INLINE_INTERCEPTORS:
+            builder.inlineInterceptors(Boolean.valueOf(value));
+            break;
          case STATISTICS: {
             builder.jmxStatistics().enabled(Boolean.valueOf(value));
             break;

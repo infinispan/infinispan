@@ -9,6 +9,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.testng.Assert.assertEquals;
 
 @Test (groups = "functional", testName = "tx.Use1PcForInducedTransactionTest")
@@ -38,27 +40,27 @@ public class Use1PcForInducedTransactionTest extends MultipleCacheManagersTest {
 
       assertNotLocked("k");
 
-      assertEquals(ic0.prepareInvocations, 1);
-      assertEquals(ic1.prepareInvocations, 1);
-      assertEquals(ic0.commitInvocations, 0);
-      assertEquals(ic0.commitInvocations, 0);
+      assertEquals(ic0.prepareInvocations.get(), 1);
+      assertEquals(ic1.prepareInvocations.get(), 1);
+      assertEquals(ic0.commitInvocations.get(), 0);
+      assertEquals(ic0.commitInvocations.get(), 0);
    }
 
 
    public static class InvocationCountInterceptor extends CommandInterceptor {
 
-      volatile int prepareInvocations;
-      volatile int commitInvocations;
+      final AtomicInteger prepareInvocations = new AtomicInteger();
+      final AtomicInteger commitInvocations = new AtomicInteger();
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         prepareInvocations ++;
+         prepareInvocations.incrementAndGet();
          return super.visitPrepareCommand(ctx, command);
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         commitInvocations ++;
+         commitInvocations.incrementAndGet();
          return super.visitCommitCommand(ctx, command);
       }
    }

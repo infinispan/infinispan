@@ -454,6 +454,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Remove blocking interceptor now since we have blocked
       removeAllBlockingInterceptorsFromCache(primaryOwnerCache);
+      // Do not block commands already in the stack
+      blockingInterceptor1.suspend(true);
 
       // Remove the leaver
       log.tracef("Stopping the cache");

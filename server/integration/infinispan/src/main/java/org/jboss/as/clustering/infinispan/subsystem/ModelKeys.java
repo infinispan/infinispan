@@ -113,6 +113,7 @@ public class ModelKeys {
     static final String INDEX = "index";
     static final String INDEXING = "indexing";
     static final String INDEXING_PROPERTIES = "indexing-properties";
+    static final String INLINE_INTERCEPTORS = "inline-interceptors";
     static final String INTERVAL = "interval";
     static final String INVALIDATION_CACHE = "invalidation-cache";
     static final String INVALIDATION_CACHE_CONFIGURATION = INVALIDATION_CACHE + CONFIGURATION_SUFFIX;

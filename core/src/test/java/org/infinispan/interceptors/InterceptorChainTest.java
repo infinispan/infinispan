@@ -2,6 +2,7 @@ package org.infinispan.interceptors;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
@@ -9,12 +10,26 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.mockito.Answers;
+import org.mockito.Mockito;
+import org.mockito.internal.matchers.Any;
 import org.testng.annotations.Test;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests {@link InterceptorChain} logic
@@ -31,7 +46,13 @@ public class InterceptorChainTest {
    public void testConcurrentAddRemove() throws Exception {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
       componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(), InterceptorChainTest.class.getClassLoader());
-      InterceptorChain ic = new InterceptorChain(componentMetadataRepo);
+
+      GlobalComponentRegistry gcr = new GlobalComponentRegistry(new GlobalConfigurationBuilder().build(), mock(EmbeddedCacheManager.class), new HashSet<>());
+      Configuration configuration = new ConfigurationBuilder().build();
+      ComponentRegistry componentRegistry = new ComponentRegistry("myCache", configuration,
+            mock(AdvancedCache.class), gcr, InterceptorChainTest.class.getClassLoader());
+
+      InterceptorChain ic = new InterceptorChain(componentRegistry, componentMetadataRepo, configuration);
       ic.setFirstInChain(new CallInterceptor());
       ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);

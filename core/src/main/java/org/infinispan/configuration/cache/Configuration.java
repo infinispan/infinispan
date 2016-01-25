@@ -11,12 +11,14 @@ import java.util.Map;
 
 public class Configuration {
    public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder("simpleCache", false).immutable().build();
+   public static final AttributeDefinition<Boolean> INLINE_INTERCEPTORS = AttributeDefinition.builder("inlineInterceptors", false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(Configuration.class, SIMPLE_CACHE);
+      return new AttributeSet(Configuration.class, SIMPLE_CACHE, INLINE_INTERCEPTORS);
    }
 
    private final Attribute<Boolean> simpleCache;
+   private final Attribute<Boolean> inlineInterceptors;
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
    private final DataContainerConfiguration dataContainerConfiguration;
@@ -58,6 +60,7 @@ public class Configuration {
       this.template = template;
       this.attributes = attributes.checkProtection();
       this.simpleCache = attributes.attribute(SIMPLE_CACHE);
+      this.inlineInterceptors = attributes.attribute(INLINE_INTERCEPTORS);
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -89,6 +92,10 @@ public class Configuration {
 
    public boolean simpleCache() {
       return simpleCache.get();
+   }
+
+   public boolean inlineInterceptors() {
+      return inlineInterceptors.get();
    }
 
    public ClusteringConfiguration clustering() {
@@ -180,6 +187,7 @@ public class Configuration {
    public String toString() {
       return "Configuration{" +
             "simpleCache=" + simpleCache +
+            ", inlineInterceptors=" + inlineInterceptors +
             ", clustering=" + clusteringConfiguration +
             ", customInterceptors=" + customInterceptorsConfiguration +
             ", dataContainer=" + dataContainerConfiguration +
@@ -207,6 +215,7 @@ public class Configuration {
       final int prime = 31;
       int result = 1;
       result = prime * result + (simpleCache.get() ? 0 : 1);
+      result = prime * result + (inlineInterceptors.get() ? 0 : 1);
       result = prime * result + (template ? 1231 : 1237);
       result = prime * result + ((clusteringConfiguration == null) ? 0 : clusteringConfiguration.hashCode());
       result = prime * result + ((compatibilityConfiguration == null) ? 0 : compatibilityConfiguration.hashCode());
@@ -246,6 +255,9 @@ public class Configuration {
          return false;
       }
       if (!simpleCache.get().equals(other.simpleCache.get())) {
+         return false;
+      }
+      if (!inlineInterceptors.get().equals(other.inlineInterceptors.get())) {
          return false;
       }
       if (clusteringConfiguration == null) {

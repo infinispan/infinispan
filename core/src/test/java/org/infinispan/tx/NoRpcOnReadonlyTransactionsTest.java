@@ -10,6 +10,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -44,35 +46,35 @@ public class NoRpcOnReadonlyTransactionsTest extends MultipleCacheManagersTest {
       Object k0 = getKeyForCache(0);
       log.tracef("On address %s adding key %s", address(0), k0);
       cache(0).put(k0, "v");
-      assertEquals(0, i0.remotePrepares);
-      assertEquals(0, i0.remoteCommits);
-      assertEquals(0, i1.remotePrepares);
-      assertEquals(0, i1.remoteCommits);
-      assertEquals(0, i2.remotePrepares);
-      assertEquals(0, i2.remoteCommits);
+      assertEquals(0, i0.remotePrepares.get());
+      assertEquals(0, i0.remoteCommits.get());
+      assertEquals(0, i1.remotePrepares.get());
+      assertEquals(0, i1.remoteCommits.get());
+      assertEquals(0, i2.remotePrepares.get());
+      assertEquals(0, i2.remoteCommits.get());
 
 
       log.trace("Here is where the r-o tx happens.");
       tm(1).begin();
       assertEquals("v", cache(1).get(k0));
       tm(1).commit();
-      assertEquals(0, i0.remotePrepares);
-      assertEquals(0, i0.remoteCommits);
-      assertEquals(0, i1.remotePrepares);
-      assertEquals(0, i1.remoteCommits);
-      assertEquals(0, i2.remotePrepares);
-      assertEquals(0, i2.remoteCommits);
+      assertEquals(0, i0.remotePrepares.get());
+      assertEquals(0, i0.remoteCommits.get());
+      assertEquals(0, i1.remotePrepares.get());
+      assertEquals(0, i1.remoteCommits.get());
+      assertEquals(0, i2.remotePrepares.get());
+      assertEquals(0, i2.remoteCommits.get());
 
       tm(1).begin();
       cache(1).put(getKeyForCache(2), "v");
       assertEquals("v", cache(1).get(k0));
       tm(1).commit();
-      assertEquals(0, i0.remotePrepares);
-      assertEquals(0, i0.remoteCommits);
-      assertEquals(0, i1.remotePrepares);
-      assertEquals(0, i1.remoteCommits);
-      assertEquals(1, i2.remotePrepares);
-      assertEquals(1, i2.remoteCommits);
+      assertEquals(0, i0.remotePrepares.get());
+      assertEquals(0, i0.remoteCommits.get());
+      assertEquals(0, i1.remotePrepares.get());
+      assertEquals(0, i1.remoteCommits.get());
+      assertEquals(1, i2.remotePrepares.get());
+      assertEquals(1, i2.remoteCommits.get());
    }
 
    public void testReadOnlyTxNoNetworkCallMultipleCaches() throws Exception {
@@ -82,12 +84,12 @@ public class NoRpcOnReadonlyTransactionsTest extends MultipleCacheManagersTest {
       waitForClusterToForm("a");
       cache(0, "a").put("k", "v");
 
-      assertEquals(0, i0.remotePrepares);
-      assertEquals(0, i0.remoteCommits);
-      assertEquals(0, i1.remotePrepares);
-      assertEquals(0, i1.remoteCommits);
-      assertEquals(0, i2.remotePrepares);
-      assertEquals(0, i2.remoteCommits);
+      assertEquals(0, i0.remotePrepares.get());
+      assertEquals(0, i0.remoteCommits.get());
+      assertEquals(0, i1.remotePrepares.get());
+      assertEquals(0, i1.remoteCommits.get());
+      assertEquals(0, i2.remotePrepares.get());
+      assertEquals(0, i2.remoteCommits.get());
 
       assertEquals("v", cache(0, "a").get("k"));
       assertEquals("v", cache(1, "a").get("k"));
@@ -107,12 +109,12 @@ public class NoRpcOnReadonlyTransactionsTest extends MultipleCacheManagersTest {
       assertEquals("v0", cache(1).get(k2));
       tm(1).commit();
 
-      assertEquals(0, i0.remotePrepares);
-      assertEquals(0, i0.remoteCommits);
-      assertEquals(0, i1.remotePrepares);
-      assertEquals(0, i1.remoteCommits);
-      assertEquals(0, i2.remotePrepares);
-      assertEquals(0, i2.remoteCommits);
+      assertEquals(0, i0.remotePrepares.get());
+      assertEquals(0, i0.remoteCommits.get());
+      assertEquals(0, i1.remotePrepares.get());
+      assertEquals(0, i1.remoteCommits.get());
+      assertEquals(0, i2.remotePrepares.get());
+      assertEquals(0, i2.remoteCommits.get());
 
       assertEquals("v2", cache(0, "a").get("k"));
       assertEquals("v2", cache(1, "a").get("k"));
@@ -121,23 +123,24 @@ public class NoRpcOnReadonlyTransactionsTest extends MultipleCacheManagersTest {
    }
 
    private static class TxCheckInterceptor extends CommandInterceptor {
-      private volatile int remotePrepares;
-      private volatile int remoteCommits;
+      private final AtomicInteger remotePrepares = new AtomicInteger();
+      private final AtomicInteger remoteCommits = new AtomicInteger();
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         if (!ctx.isOriginLocal()) remotePrepares++;
+         if (!ctx.isOriginLocal()) remotePrepares.incrementAndGet();
          return super.visitPrepareCommand(ctx, command);
       }
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         if (!ctx.isOriginLocal()) remoteCommits++;
+         if (!ctx.isOriginLocal()) remoteCommits.incrementAndGet();
          return super.visitCommitCommand(ctx, command);
       }
 
       void reset() {
-         remotePrepares = remoteCommits = 0;
+         remotePrepares.set(0);
+         remoteCommits.set(0);
       }
    }
 }

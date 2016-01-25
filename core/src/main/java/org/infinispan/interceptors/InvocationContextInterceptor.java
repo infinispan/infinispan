@@ -103,45 +103,49 @@ public class InvocationContextInterceptor extends CommandInterceptor {
             if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
             if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
 
-            try {
-               return invokeNextInterceptor(ctx, command);
-            } catch (InvalidCacheUsageException ex) {
-               throw ex; // Propagate back client usage errors regardless of flag
-            } catch (Throwable th) {
-               // Only check for fail silently if there's a failure :)
-               boolean suppressExceptions = (command instanceof FlagAffectedCommand)
-                     && ((FlagAffectedCommand) command).hasFlag(Flag.FAIL_SILENTLY);
-               // If we are shutting down there is every possibility that the invocation fails.
-               suppressExceptions = suppressExceptions || shuttingDown;
-               if (suppressExceptions) {
-                  if (shuttingDown)
-                     log.trace("Exception while executing code, but we're shutting down so failing silently.", th);
-                  else
-                     log.trace("Exception while executing code, failing silently...", th);
-                  return null;
-               } else {
-                  if (th instanceof WriteSkewException) {
-                     // We log this as DEBUG rather than ERROR - see ISPN-2076
-                     log.debug("Exception executing call", th);
-                  } else if (th instanceof OutdatedTopologyException) {
-                     log.outdatedTopology(th);
-                  } else {
-                     Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
-                     log.executionError(command.getClass().getSimpleName(), affectedKeys, th);
-                  }
-                  if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-                     if (trace) log.trace("Transaction marked for rollback as exception was received.");
-                     markTxForRollbackAndRethrow(ctx, th);
-                     throw new IllegalStateException("This should not be reached");
-                  }
-                  throw th;
-               }
-            }
+            return invokeNextAndHandleFailure(ctx, command);
          } finally {
             LogFactory.popNDC(trace);
          }
       } finally {
          invocationContextContainer.clearThreadLocal();
+      }
+   }
+
+   private Object invokeNextAndHandleFailure(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } catch (InvalidCacheUsageException ex) {
+         throw ex; // Propagate back client usage errors regardless of flag
+      } catch (Throwable th) {
+         // Only check for fail silently if there's a failure :)
+         boolean suppressExceptions = (command instanceof FlagAffectedCommand)
+               && ((FlagAffectedCommand) command).hasFlag(Flag.FAIL_SILENTLY);
+         // If we are shutting down there is every possibility that the invocation fails.
+         suppressExceptions = suppressExceptions || shuttingDown;
+         if (suppressExceptions) {
+            if (shuttingDown)
+               log.trace("Exception while executing code, but we're shutting down so failing silently.", th);
+            else
+               log.trace("Exception while executing code, failing silently...", th);
+            return null;
+         } else {
+            if (th instanceof WriteSkewException) {
+               // We log this as DEBUG rather than ERROR - see ISPN-2076
+               log.debug("Exception executing call", th);
+            } else if (th instanceof OutdatedTopologyException) {
+               log.outdatedTopology(th);
+            } else {
+               Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
+               log.executionError(command.getClass().getSimpleName(), affectedKeys, th);
+            }
+            if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+               if (trace) log.trace("Transaction marked for rollback as exception was received.");
+               markTxForRollbackAndRethrow(ctx, th);
+               throw new IllegalStateException("This should not be reached");
+            }
+            throw th;
+         }
       }
    }
 

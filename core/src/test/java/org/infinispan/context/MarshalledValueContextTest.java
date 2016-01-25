@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.testng.Assert.assertEquals;
 
@@ -53,15 +54,15 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
 
       LockManager lockManager = TestingUtil.extractComponent(c, LockManager.class);
 
-      assert cex.ctx instanceof LocalTxInvocationContext;
+      assert cex.ctx.get() instanceof LocalTxInvocationContext;
 
-      assert cex.ctx.getLookedUpEntries().size() == 0 : "Looked up key should not be in transactional invocation context " +
+      assert cex.ctx.get().getLookedUpEntries().size() == 0 : "Looked up key should not be in transactional invocation context " +
                                                       "as we don't perform any changes";
       assertEquals(lockManager.getNumberOfLocksHeld(), 1, "Only one lock should be held");
 
       c.put(new Key("k"), "v2");
 
-      assert cex.ctx.getLookedUpEntries().size() == 1 : "Still should only be one entry in the context";
+      assert cex.ctx.get().getLookedUpEntries().size() == 1 : "Still should only be one entry in the context";
       assert lockManager.getNumberOfLocksHeld() == 1 : "Only one lock should be held";
 
       tm.commit();
@@ -72,10 +73,10 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    }
 
    private static class ContextExtractingInterceptor extends CommandInterceptor {
-      InvocationContext ctx;
+      AtomicReference<InvocationContext> ctx = new AtomicReference<>();
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-         this.ctx = ctx;
+         this.ctx.set(ctx);
          return super.invokeNextInterceptor(ctx, command);
       }
    }

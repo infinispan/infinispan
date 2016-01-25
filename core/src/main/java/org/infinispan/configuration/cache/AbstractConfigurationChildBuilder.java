@@ -23,6 +23,16 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   public ConfigurationChildBuilder inlineInterceptors(boolean inlineInterceptors) {
+      return builder.inlineInterceptors(inlineInterceptors);
+   }
+
+   @Override
+   public boolean inlineInterceptors() {
+      return builder.inlineInterceptors();
+   }
+
+   @Override
    public ClusteringConfigurationBuilder clustering() {
       return builder.clustering();
    }

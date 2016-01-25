@@ -150,6 +150,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.CONFIGURATION, "cache");
         sharedAttributeResolver.put(ModelKeys.MODULE, "cache");
         sharedAttributeResolver.put(ModelKeys.INDEXING, "cache");
+        sharedAttributeResolver.put(ModelKeys.INLINE_INTERCEPTORS, "cache");
         sharedAttributeResolver.put(ModelKeys.AUTO_CONFIG, "cache");
         sharedAttributeResolver.put(ModelKeys.INDEXING_PROPERTIES, "cache");
         sharedAttributeResolver.put(ModelKeys.JNDI_NAME, "cache");

@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 
@@ -75,7 +76,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
 
       // now attempt a concurrent get and evict.
       ExecutorService e = Executors.newFixedThreadPool(1);
-      sdi.enabled = true;
+      sdi.enabled.set(true);
 
       log.info("test::doing the get");
 
@@ -96,7 +97,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       assert future.get().equals("b");
 
       // disable the SlowDownInterceptor
-      sdi.enabled = false;
+      sdi.enabled.set(false);
 
       // and check that the key actually has been evicted
       assert !TestingUtil.extractComponent(cache, DataContainer.class).containsKey("a");
@@ -108,13 +109,13 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
 
       private static final long serialVersionUID = 8790944676490291484L;
 
-      volatile boolean enabled = false;
+      AtomicBoolean enabled = new AtomicBoolean();
       transient CountDownLatch getLatch = new CountDownLatch(1);
       transient CountDownLatch evictLatch = new CountDownLatch(1);
 
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-         if (enabled) {
+         if (enabled.get()) {
             getLog().trace("Wait for evict to give go ahead...");
             if (!evictLatch.await(60000, TimeUnit.MILLISECONDS))
                throw new TimeoutException("Didn't see get after 60 seconds!");
@@ -123,13 +124,13 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
             return invokeNextInterceptor(ctx, command);
          } finally {
             getLog().trace("After get, now let evict go through");
-            if (enabled) getLatch.countDown();
+            if (enabled.get()) getLatch.countDown();
          }
       }
 
       @Override
       public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-         if (enabled) {
+         if (enabled.get()) {
             evictLatch.countDown();
             getLog().trace("Wait for get to finish...");
             if (!getLatch.await(60000, TimeUnit.MILLISECONDS))

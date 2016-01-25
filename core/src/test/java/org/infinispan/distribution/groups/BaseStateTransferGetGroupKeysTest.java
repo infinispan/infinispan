@@ -24,6 +24,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -55,7 +57,7 @@ public abstract class BaseStateTransferGetGroupKeysTest extends BaseUtilGroupTes
       initCache(testCache.primaryOwner);
       final BlockCommandInterceptor interceptor = injectBlockCommandInterceptorIfAbsent(extractTargetCache(testCache));
 
-      interceptor.open = false;
+      interceptor.open.set(false);
       Future<Map<GroupKey, String>> future = fork(new Callable<Map<GroupKey, String>>() {
          @Override
          public Map<GroupKey, String> call() throws Exception {
@@ -149,16 +151,16 @@ public abstract class BaseStateTransferGetGroupKeysTest extends BaseUtilGroupTes
 
    private static class BlockCommandInterceptor extends CommandInterceptor {
 
-      private volatile CheckPoint checkPoint;
-      private volatile boolean open;
+      private AtomicReference<CheckPoint> checkPoint = new AtomicReference<>(new CheckPoint());
+      private AtomicBoolean open = new AtomicBoolean();
 
       private BlockCommandInterceptor() {
-         checkPoint = new CheckPoint();
       }
 
       @Override
       public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
-         if (!open) {
+         if (!open.get()) {
+            CheckPoint checkPoint = this.checkPoint.get();
             checkPoint.trigger("before");
             checkPoint.awaitStrict("after", 30, TimeUnit.SECONDS);
          }
@@ -166,21 +168,21 @@ public abstract class BaseStateTransferGetGroupKeysTest extends BaseUtilGroupTes
       }
 
       public final void awaitCommandBlock() throws TimeoutException, InterruptedException {
-         checkPoint.awaitStrict("before", 30, TimeUnit.SECONDS);
+         checkPoint.get().awaitStrict("before", 30, TimeUnit.SECONDS);
       }
 
       public final void unblockCommand() {
-         checkPoint.trigger("after");
+         checkPoint.get().trigger("after");
       }
 
       public final void unblockCommandAndOpen() {
-         open = true;
-         checkPoint.trigger("after");
+         open.set(true);
+         checkPoint.get().trigger("after");
       }
 
       public final void reset() {
-         open = true;
-         checkPoint = new CheckPoint();
+         open.set(true);
+         checkPoint.set(new CheckPoint());
       }
    }
 

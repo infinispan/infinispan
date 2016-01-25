@@ -6,6 +6,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Replaces a {@link CommandInterceptor} with a wrapper that can interact with a {@link StateSequencer} when a
@@ -65,8 +66,8 @@ public class InterceptorSequencerAction {
 
       private StateSequencer stateSequencer;
       private CommandMatcher matcher;
-      private volatile List<String> statesBefore;
-      private volatile List<String> statesAfter;
+      private AtomicReference<List<String>> statesBefore = new AtomicReference<>();
+      private AtomicReference<List<String>> statesAfter = new AtomicReference<>();
 
       public static SequencerInterceptor createUniqueInterceptor(List<CommandInterceptor> chain) {
          Class uniqueClass = findUniqueClass(chain);
@@ -101,20 +102,20 @@ public class InterceptorSequencerAction {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          boolean commandAccepted = matcher.accept(command);
-         StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesBefore);
+         StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesBefore.get());
          try {
             return super.handleDefault(ctx, command);
          } finally {
-            StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesAfter);
+            StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesAfter.get());
          }
       }
 
       public void beforeStates(List<String> states) {
-         this.statesBefore = StateSequencerUtil.listCopy(states);
+         this.statesBefore.set(StateSequencerUtil.listCopy(states));
       }
 
       public void afterStates(List<String> states) {
-         this.statesAfter = StateSequencerUtil.listCopy(states);
+         this.statesAfter.set(StateSequencerUtil.listCopy(states));
       }
 
       public static class U1 extends SequencerInterceptor {

@@ -48,8 +48,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
    @BeforeMethod
    protected void setUpTx() throws Exception {
-      failureInterceptor0.fail = true;
-      failureInterceptor1.fail = true;
+      failureInterceptor0.fail(true);
+      failureInterceptor1.fail(true);
 
       tm(2).begin();
       cache(2).put(this.key, "newValue");
@@ -67,8 +67,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       assertEquals(countInDoubtTx(recoveryOps(0).showInDoubtTransactions()), 1);
       assertEquals(countInDoubtTx(recoveryOps(1).showInDoubtTransactions()), 1);
 
-      failureInterceptor0.fail = false;
-      failureInterceptor1.fail = false;
+      failureInterceptor0.fail(false);
+      failureInterceptor1.fail(false);
 
    }
 

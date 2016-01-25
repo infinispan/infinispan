@@ -178,13 +178,13 @@
       <version.org.wildfly.build-tools>1.1.0.CR2</version.org.wildfly.build-tools>
       <version.org.wildfly.maven-plugin>1.1.0.Alpha4</version.org.wildfly.maven-plugin>
 
-      <version.javassist>3.18.1-GA</version.javassist>
+      <version.javassist>3.20.0-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
       <version.maven.source>2.3</version.maven.source>
       <version.maven.genjavadoc>0.9</version.maven.genjavadoc>
       <version.maven.scala>2.15.2</version.maven.scala>
-      <version.maven.surefire>2.18.1</version.maven.surefire>
+      <version.maven.surefire>2.19</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.metainf-services>1.5</version.metainf-services>
       <version.jacoco>0.5.10.201208310627</version.jacoco>

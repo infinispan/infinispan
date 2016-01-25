@@ -107,7 +107,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
               Configurations.isVersioningEnabled(configuration);
 
-      InterceptorChain interceptorChain = new InterceptorChain(componentRegistry.getComponentMetadataRepo());
+      InterceptorChain interceptorChain = new InterceptorChain(componentRegistry, componentRegistry.getComponentMetadataRepo(), configuration);
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
       componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
 

@@ -14,6 +14,8 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
 import static org.testng.Assert.assertEquals;
 
@@ -76,7 +78,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
 
    public static class ForceFailureInterceptor extends CommandInterceptor {
 
-      public boolean fail = true;
+      public AtomicBoolean fail = new AtomicBoolean(true);
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
@@ -84,8 +86,12 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
          return super.visitCommitCommand(ctx, command);
       }
 
+      public void fail(boolean fail) {
+         this.fail.set(fail);
+      }
+
       private void fail() {
-         if (fail) throw new CacheException("Induced failure");
+         if (fail.get()) throw new CacheException("Induced failure");
       }
 
       @Override
