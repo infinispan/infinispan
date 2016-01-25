@@ -1063,7 +1063,7 @@ public interface Log extends BasicLogger {
    void unableToApplyXSiteState(@Cause Throwable cause);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unrecognized attribute %s.  Please check your configuration.  Ignoring!!", id = 292)
+   @Message(value = "Unrecognized attribute '%s'. Please check your configuration. Ignoring!", id = 292)
    void unrecognizedAttribute(String property);
 
    @LogMessage(level = INFO)
