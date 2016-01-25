@@ -204,6 +204,94 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       expectElementsInQueue(left, 0);
    }
 
+   public void testContinuousQueryChangingParameter() {
+      User user1 = new UserPB();
+      user1.setId(1);
+      user1.setName("John");
+      user1.setSurname("Doe");
+      user1.setGender(User.Gender.MALE);
+      user1.setAge(22);
+      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setNotes("Lorem ipsum dolor sit amet");
+
+      User user2 = new UserPB();
+      user2.setId(2);
+      user2.setName("Spider");
+      user2.setSurname("Man");
+      user2.setGender(User.Gender.MALE);
+      user2.setAge(32);
+      user2.setAccountIds(Collections.singleton(3));
+
+      User user3 = new UserPB();
+      user3.setId(3);
+      user3.setName("Spider");
+      user3.setSurname("Woman");
+      user3.setGender(User.Gender.FEMALE);
+      user3.setAge(40);
+      user3.setAccountIds(Collections.<Integer>emptySet());
+
+      remoteCache.put("user" + user1.getId(), user1);
+      remoteCache.put("user" + user2.getId(), user2);
+      remoteCache.put("user" + user3.getId(), user3);
+      assertEquals(3, remoteCache.size());
+
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query query = qf.from(UserPB.class)
+            .select("age")
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().build()
+            .setParameter("ageParam", 32);
+
+      final BlockingQueue<String> joined = new LinkedBlockingQueue<String>();
+      final BlockingQueue<String> left = new LinkedBlockingQueue<String>();
+
+      ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
+
+         @Override
+         public void resultJoining(String key, Object[] value) {
+            joined.add(key);
+         }
+
+         @Override
+         public void resultLeaving(String key) {
+            left.add(key);
+         }
+      };
+
+      Object clientListener = ClientEvents.addContinuousQueryListener(remoteCache, listener, query);
+
+      assertNotNull(clientListener);
+      expectElementsInQueue(joined, 2);
+      expectElementsInQueue(left, 0);
+
+      joined.clear();
+      left.clear();
+
+      remoteCache.removeClientListener(clientListener);
+
+      query.setParameter("ageParam", 40);
+
+      listener = new ContinuousQueryListener<String, Object[]>() {
+
+         @Override
+         public void resultJoining(String key, Object[] value) {
+            joined.add(key);
+         }
+
+         @Override
+         public void resultLeaving(String key) {
+            left.add(key);
+         }
+      };
+
+      clientListener = ClientEvents.addContinuousQueryListener(remoteCache, listener, query);
+
+      assertNotNull(clientListener);
+      expectElementsInQueue(joined, 3);
+      expectElementsInQueue(left, 0);
+   }
+
    private void expectElementsInQueue(BlockingQueue<?> queue, int numElements) {
       for (int i = 0; i < numElements; i++) {
          try {
