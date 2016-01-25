@@ -66,8 +66,8 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .select("age")
-            .having("age").lte(30)
-            .toBuilder().build();
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().build().setParameter("ageParam", 30);
 
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
       cq.addContinuousQueryListener(query, listener);
@@ -144,6 +144,49 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       }
 
       assertEquals(0, joined.size());
+      assertEquals(0, left.size());
+   }
+
+   public void testContinuousQueryChangingParameter() {
+      for (int i = 0; i < 2; i++) {
+         Person value = new Person();
+         value.setName("John");
+         value.setAge(30 + i);
+         cache().put(i, value);
+      }
+
+      QueryFactory<?> qf = Search.getQueryFactory(cache());
+
+      ContinuousQuery<Object, Object> cq = new ContinuousQuery<Object, Object>(cache());
+
+      Query query = qf.from(Person.class)
+            .select("age")
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().build();
+
+      query.setParameter("ageParam", 30);
+
+      CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
+      cq.addContinuousQueryListener(query, listener);
+
+      Map<Object, Integer> joined = listener.getJoined();
+      Map<Object, Integer> left = listener.getLeft();
+
+      assertEquals(1, joined.size());
+      assertEquals(0, left.size());
+      joined.clear();
+
+      cq.removeContinuousQueryListener(listener);
+
+      query.setParameter("ageParam", 32);
+
+      listener = new CallCountingCQResultListener<>();
+      cq.addContinuousQueryListener(query, listener);
+
+      joined = listener.getJoined();
+      left = listener.getLeft();
+
+      assertEquals(2, joined.size());
       assertEquals(0, left.size());
    }
 
