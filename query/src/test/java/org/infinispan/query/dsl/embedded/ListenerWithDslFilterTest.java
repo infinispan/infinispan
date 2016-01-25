@@ -58,8 +58,8 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       QueryFactory qf = Search.getQueryFactory(cache());
 
       Query query = qf.from(Person.class)
-            .having("age").lte(31)
-            .toBuilder().build();
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().build().setParameter("ageParam", 31);
 
       EntryListener listener = new EntryListener();
 
@@ -98,6 +98,76 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       cache().put(-1, value);
       assertTrue(listener.createEvents.isEmpty());
       assertTrue(listener.modifyEvents.isEmpty());
+   }
+
+   public void testEventFilterChangingParameter() {
+      for (int i = 0; i < 10; ++i) {
+         Person value = new Person();
+         value.setName("John");
+         value.setAge(99);
+
+         cache().put(i, value);
+      }
+      assertEquals(10, cache.size());
+
+      QueryFactory qf = Search.getQueryFactory(cache());
+
+      Query query = qf.from(Person.class)
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().build().setParameter("ageParam", 31);
+
+      EntryListener listener = new EntryListener();
+
+      // we want our cluster listener to be notified only if the entity matches our query
+      cache().addListener(listener, Search.makeFilter(query), null);
+
+      assertTrue(listener.createEvents.isEmpty());
+      assertTrue(listener.modifyEvents.isEmpty());
+
+      for (int i = 0; i < 10; ++i) {
+         Person value = new Person();
+         value.setName("John");
+         value.setAge(i + 25);
+
+         cache().put(i, value);
+      }
+
+      assertEquals(10, cache.size());
+      assertTrue(listener.createEvents.isEmpty());
+      assertEquals(7, listener.modifyEvents.size());
+
+      for (ObjectFilter.FilterResult r : listener.modifyEvents) {
+         Person p = (Person) r.getInstance();
+         assertTrue(p.getAge() <= 31);
+      }
+
+      cache().removeListener(listener);
+
+      query.setParameter("ageParam", 30);
+
+      listener = new EntryListener();
+
+      cache().addListener(listener, Search.makeFilter(query), null);
+
+      assertTrue(listener.createEvents.isEmpty());
+      assertTrue(listener.modifyEvents.isEmpty());
+
+      for (int i = 0; i < 10; ++i) {
+         Person value = new Person();
+         value.setName("John");
+         value.setAge(i + 25);
+
+         cache().put(i, value);
+      }
+
+      assertEquals(10, cache.size());
+      assertTrue(listener.createEvents.isEmpty());
+      assertEquals(6, listener.modifyEvents.size());
+
+      for (ObjectFilter.FilterResult r : listener.modifyEvents) {
+         Person p = (Person) r.getInstance();
+         assertTrue(p.getAge() <= 30);
+      }
    }
 
    public void testEventFilterAndConverter() {

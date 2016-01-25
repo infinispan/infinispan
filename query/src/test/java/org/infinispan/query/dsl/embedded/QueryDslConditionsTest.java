@@ -23,8 +23,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -2416,6 +2418,59 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(2, list.size());
       assertEquals(User.Gender.MALE, list.get(0).getGender());
       assertEquals(User.Gender.MALE, list.get(1).getGender());
+
+      q.setParameter("param2", User.Gender.FEMALE);
+
+      list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(User.Gender.FEMALE, list.get(0).getGender());
+   }
+
+   public void testWithParameterMap() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("gender").eq(Expression.param("param1"))
+            .and()
+            .having("name").eq(Expression.param("param2"))
+            .toBuilder().build();
+
+      Map<String, Object> parameterMap = new HashMap<>(2);
+      parameterMap.put("param1", User.Gender.MALE);
+      parameterMap.put("param2", "John");
+
+      q.setParameters(parameterMap);
+
+      List<User> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(User.Gender.MALE, list.get(0).getGender());
+      assertEquals("John", list.get(0).getName());
+
+      parameterMap = new HashMap<>(2);
+      parameterMap.put("param1", User.Gender.MALE);
+      parameterMap.put("param2", "Spider");
+
+      q.setParameters(parameterMap);
+
+      list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(User.Gender.MALE, list.get(0).getGender());
+      assertEquals("Spider", list.get(0).getName());
+   }
+
+   public void testDateParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getAccountImplClass())
+            .having("creationDate").eq(Expression.param("param1"))
+            .toBuilder().build().setParameter("param1", makeDate("2013-01-03"));
+
+      List<Account> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
    }
 
    public void testParamWithGroupBy() {
@@ -2445,6 +2500,68 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.setParameter("param2", "John");
    }
 
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "No parameters named '\\[param2\\]' were found")
+   public void testUnknownParamWithParameterMap() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq(Expression.param("param1"))
+            .toBuilder().build();
+
+      Map<String, Object> parameterMap = new HashMap<>(1);
+      parameterMap.put("param2", User.Gender.MALE);
+
+      q.setParameters(parameterMap);
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Query does not have parameters")
+   public void testQueryWithNoParams() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq("John")
+            .toBuilder().build().setParameter("param1", "John");
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Query does not have parameters")
+   public void testQueryWithNoParamsWithParameterMap() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq("John")
+            .toBuilder().build();
+
+      Map<String, Object> parameterMap = new HashMap<>(1);
+      parameterMap.put("param1", User.Gender.MALE);
+
+      q.setParameters(parameterMap);
+   }
+
+
+   // TODO should we allow null param names?
+//   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testNullParamName() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq(Expression.param(null))
+            .toBuilder().build();
+
+      q.setParameter(null, "John");
+   }
+
+   // TODO should we allow empty param names?
+//   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testEmptyParamName() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq(Expression.param(""))
+            .toBuilder().build();
+
+      q.setParameter("", "John");
+   }
+
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014020: Query parameter 'param2' was not set")
    public void testMissingParam() throws Exception {
       QueryFactory qf = getQueryFactory();
@@ -2455,6 +2572,23 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build();
 
       q.setParameter("param1", "John");
+
+      q.list();
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014020: Query parameter 'param2' was not set")
+   public void testMissingParamWithParameterMap() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq(Expression.param("param1"))
+            .and().having("gender").eq(Expression.param("param2"))
+            .toBuilder().build();
+
+      Map<String, Object> parameterMap = new HashMap<>(1);
+      parameterMap.put("param1", "John");
+
+      q.setParameters(parameterMap);
 
       q.list();
    }
