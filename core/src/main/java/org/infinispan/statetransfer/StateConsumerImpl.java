@@ -269,7 +269,16 @@ public class StateConsumerImpl implements StateConsumer {
          ownsData = false;
       }
 
-      if (isRebalance) {
+      // If a member leaves/crashes immediately after a rebalance was started, the new CH_UPDATE
+      // command may be executed before the REBALANCE_START command, so it has to start the rebalance.
+      boolean startRebalance = isRebalance;
+      if (!isRebalance) {
+         if (cacheTopology.getPendingCH() != null && this.cacheTopology.getPendingCH() == null) {
+            if (trace) log.tracef("Forcing startRebalance = true");
+            startRebalance = true;
+         }
+      }
+      if (startRebalance) {
          // Only update the rebalance topology id when starting the rebalance, as we're going to ignore any state
          // response with a smaller topology id
          stateTransferTopologyId.compareAndSet(NO_REBALANCE_IN_PROGRESS, cacheTopology.getTopologyId());
@@ -277,7 +286,7 @@ public class StateConsumerImpl implements StateConsumer {
                                           cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true);
       }
 
-      awaitTotalOrderTransactions(cacheTopology, isRebalance);
+      awaitTotalOrderTransactions(cacheTopology, startRebalance);
 
       // Make sure we don't send a REBALANCE_CONFIRM command before we've added all the transfer tasks
       // even if some of the tasks are removed and re-added
@@ -290,7 +299,7 @@ public class StateConsumerImpl implements StateConsumer {
       // No need for a try/finally block, since it's just an assignment
       stateTransferLock.acquireExclusiveTopologyLock();
       this.cacheTopology = cacheTopology;
-      if (isRebalance) {
+      if (startRebalance) {
          if (trace) log.tracef("Start keeping track of keys for rebalance");
          commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
          commitManager.startTrack(PUT_FOR_STATE_TRANSFER);
@@ -348,21 +357,33 @@ public class StateConsumerImpl implements StateConsumer {
                // remove inbound transfers for segments we no longer own
                cancelTransfers(removedSegments);
 
-               // check if any of the existing transfers should be restarted from a different source because the initial source is no longer a member
+               if (!startRebalance) {
+                  // If the last owner of a segment leaves the cluster, a new set of owners is assigned,
+                  // but the new owners should not try to retrieve the segment from each other.
+                  // If this happens during a rebalance, we might have already sent our rebalance
+                  // confirmation, so the coordinator won't wait for us to retrieve those segments anyway.
+                  log.debugf("Not requesting segments %s because the last owner left the cluster",
+                        addedSegments);
+                  addedSegments.clear();
+               }
+
+               // check if any of the existing transfers should be restarted from a different source because
+               // the initial source is no longer a member
                restartBrokenTransfers(cacheTopology, addedSegments);
             }
 
             if (!addedSegments.isEmpty()) {
-               addTransfers(addedSegments);  // add transfers for new or restarted segments
+               // add transfers for new or restarted segments
+               addTransfers(addedSegments);
             }
          }
 
          int rebalanceTopologyId = stateTransferTopologyId.get();
-         if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %d, isRebalance = %s, pending CH = %s",
-               (Object)rebalanceTopologyId, isRebalance, cacheTopology.getPendingCH());
+         if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",
+               (Object)rebalanceTopologyId, startRebalance, cacheTopology.getPendingCH());
          if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS) {
             // there was a rebalance in progress
-            if (!isRebalance && cacheTopology.getPendingCH() == null) {
+            if (!startRebalance && cacheTopology.getPendingCH() == null) {
                // we have received a topology update without a pending CH, signalling the end of the rebalance
                boolean changed = stateTransferTopologyId.compareAndSet(rebalanceTopologyId, NO_REBALANCE_IN_PROGRESS);
                if (changed) {
