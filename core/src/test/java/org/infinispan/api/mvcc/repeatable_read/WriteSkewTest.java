@@ -34,12 +34,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.*;
@@ -356,29 +351,16 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       int nbWriters = 10;
       CyclicBarrier barrier = new CyclicBarrier(nbWriters + 1);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(nbWriters);
-      ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactory() {
-         volatile int i = 0;
-         @Override
-         public Thread newThread(Runnable r) {
-            int ii = i++;
-            return new Thread(r, "EntryWriter-" + ii + ", WriteSkewTest");
-         }
-      });
-
-      try {
-         for (int i = 0; i < nbWriters; i++) {
-            log.debug("Schedule execution");
-            Future<Void> future = executorService.submit(new EntryWriter(barrier));
-            futures.add(future);
-         }
-         barrier.await(); // wait for all threads to be ready
-         barrier.await(); // wait for all threads to finish
-
-         log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
-         for (Future<Void> future : futures) future.get();
-      } finally {
-         executorService.shutdownNow();
+      for (int i = 0; i < nbWriters; i++) {
+         log.debug("Schedule execution");
+         Future<Void> future = fork(new EntryWriter(barrier));
+         futures.add(future);
       }
+      barrier.await(); // wait for all threads to be ready
+      barrier.await(); // wait for all threads to finish
+
+      log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
+      for (Future<Void> future : futures) future.get();
    }
 
 

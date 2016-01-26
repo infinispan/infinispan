@@ -5,13 +5,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -24,7 +23,7 @@ import org.testng.annotations.Test;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "interceptors.InterceptorChainTest")
-public class InterceptorChainTest {
+public class InterceptorChainTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(InterceptorChainTest.class);
 
@@ -36,22 +35,18 @@ public class InterceptorChainTest {
       ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(2);
-      ExecutorService executorService = Executors.newFixedThreadPool(3);
-      try {
-         // We do test concurrent add/remove of different types per thread,
-         // so that the final result is predictable (testable) and that we
-         // can not possibly fail because of the InterceptorChain checking
-         // that no interceptor is ever added twice.
-         futures.add(executorService.submit(new InterceptorChainUpdater(ic, barrier, new CacheMgmtInterceptor())));
-         futures.add(executorService.submit(new InterceptorChainUpdater(ic, barrier, new DistCacheWriterInterceptor())));
-         futures.add(executorService.submit(new InterceptorChainUpdater(ic, barrier, new InvalidationInterceptor())));
-         barrier.await(); // wait for all threads to be ready
-         barrier.await(); // wait for all threads to finish
-         log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
-         for (Future<Void> future : futures) future.get();
-      } finally {
-         executorService.shutdownNow();
-      }
+      // We do test concurrent add/remove of different types per thread,
+      // so that the final result is predictable (testable) and that we
+      // can not possibly fail because of the InterceptorChain checking
+      // that no interceptor is ever added twice.
+      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new CacheMgmtInterceptor())));
+      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new DistCacheWriterInterceptor())));
+      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new InvalidationInterceptor())));
+      barrier.await(); // wait for all threads to be ready
+      barrier.await(); // wait for all threads to finish
+      log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
+      for (Future<Void> future : futures) future.get();
+
       assert ic.containsInterceptorType(CallInterceptor.class);
       assert ic.containsInterceptorType(ActivationInterceptor.class);
       assert ic.containsInterceptorType(CacheMgmtInterceptor.class);

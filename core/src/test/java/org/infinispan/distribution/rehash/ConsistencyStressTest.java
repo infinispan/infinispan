@@ -32,10 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 
 import static java.lang.String.format;
 import static org.infinispan.test.TestingUtil.sleepRandom;
@@ -82,22 +79,13 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
    }
 
    public void testConsistency() throws Throwable, InterruptedException {
-      // create an executor...
-      ExecutorService executorService = Executors.newFixedThreadPool(NUM_NODES * WORKERS_PER_NODE, new ThreadFactory() {
-         int i = 0;
-
-         @Override
-         public synchronized Thread newThread(Runnable r) {
-            return new Thread(r, "Worker-" + i++);
-         }
-      });
       Set<Future<Void>> futures = new HashSet<Future<Void>>(NUM_NODES * WORKERS_PER_NODE);
       Set<String> keysToIgnore = new HashSet<String>();
 
       for (int i = 0; i < NUM_NODES; i++) {
          Cache<String, String> c = cache(i);
          for (int j = 0; j < WORKERS_PER_NODE; j++) {
-            Future<Void> f = executorService.submit(new Stressor(c, i, j, keysToIgnore));
+            Future<Void> f = fork(new Stressor(c, i, j, keysToIgnore));
             futures.add(f);
             sleepRandom(500);
          }
@@ -149,8 +137,6 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
             }
          }
       }
-
-      executorService.shutdownNow();
    }
 
    private static String keyFor(int nodeId, int workerId, int iterationId) {

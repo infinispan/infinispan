@@ -56,7 +56,7 @@ public class LargeClusterStressTest extends MultipleCacheManagersTest {
             .build();
 
       // Start the caches (and the JGroups channels) in separate threads
-      ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
+      ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS, getTestThreadFactory("Worker"));
       ExecutorCompletionService<Object> completionService = new ExecutorCompletionService<Object>(executor);
       Future<Object>[] futures = new Future[NUM_NODES];
       try {

@@ -1,8 +1,6 @@
 package org.infinispan.replication;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -10,8 +8,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.transaction.LockingMode;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -26,8 +22,7 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
    
    static final String TEST_NAME = "replication.FlagsReplicationTest";
    static final String DATA_PROVIDER = TEST_NAME + ".dataprovider";
-   private ExecutorService threadPool;
-   
+
    private final Integer one = 1;
    private final String key = TEST_NAME;
    
@@ -73,14 +68,14 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
 
    private void haveSecondaryThreadTakeLock(final AdvancedCache viaCache) throws InterruptedException, ExecutionException {
       AtomicBoolean noerrors = new AtomicBoolean(true);
-      Future<?> submit = threadPool.submit(new LockingThread(viaCache, noerrors));
+      Future<?> submit = fork(new LockingThread(viaCache, noerrors));
       submit.get(); //wait to be done
       assert noerrors.get();
    }
    
    private void haveSecondaryThreadReleaseLock(final AdvancedCache viaCache) throws InterruptedException, ExecutionException {
       AtomicBoolean noerrors = new AtomicBoolean(true);
-      Future<?> submit = threadPool.submit(new CommitThread(viaCache, noerrors));
+      Future<?> submit = fork(new CommitThread(viaCache, noerrors));
       submit.get(); //wait to be done
       assert noerrors.get();
    }
@@ -130,15 +125,4 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
          }
       }
    }
-   
-   @BeforeClass
-   protected void startThreadPool() {
-      threadPool = Executors.newFixedThreadPool(1);
-   }
-   
-   @AfterClass
-   protected void stopThreadPool() {
-      threadPool.shutdownNow();
-   }
-
 }

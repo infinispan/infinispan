@@ -1,5 +1,6 @@
 package org.infinispan.util;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import static org.testng.Assert.*;
  * @since 7.0
  */
 @Test(testName = "util.DependencyGraphTest", groups = "unit")
-public class DependencyGraphTest {
+public class DependencyGraphTest extends AbstractInfinispanTest {
 
    @Test
    public void testEmpty() throws CyclicDependencyException {
@@ -93,7 +94,7 @@ public class DependencyGraphTest {
    @Test
    public void testConcurrentAccess() throws Exception {
       DependencyGraph<String> graph = new DependencyGraph<>();
-      ExecutorService service = Executors.newCachedThreadPool();
+      ExecutorService service = Executors.newCachedThreadPool(getTestThreadFactory("Worker"));
       CountDownLatch startLatch = new CountDownLatch(1);
       int threads = 20;
       ArrayList<Future<?>> futures = new ArrayList<>();

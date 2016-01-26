@@ -68,7 +68,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
       assert super.cacheManagers.size() == 4;
 
-      ex = Executors.newSingleThreadExecutor();
+      ex = Executors.newSingleThreadExecutor(getTestThreadFactory("KeyGenerator"));
       kas = KeyAffinityServiceFactory.newKeyAffinityService(cache(0),
             ex, new DistributionRetryTest.ByteKeyGenerator(), 2, true);
 

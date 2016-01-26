@@ -80,7 +80,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    private void writeData() throws InterruptedException {
-      ExecutorService executorService = Executors.newFixedThreadPool(WRITING_THREADS);
+      ExecutorService executorService = Executors.newFixedThreadPool(WRITING_THREADS, getTestThreadFactory("Worker"));
       final AtomicInteger counter = new AtomicInteger(0);
       for (int i = 0; i < OBJECT_COUNT; i++) {
          executorService.submit(new Runnable() {

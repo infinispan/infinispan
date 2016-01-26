@@ -14,7 +14,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.marshall.core.JBossMarshaller;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -105,7 +104,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
    private Object generateKeyAndShutdownServer() throws IOException, ClassNotFoundException, InterruptedException {
       resetStats();
       Cache<Object,Object> cache = manager(1).getCache();
-      ExecutorService ex = Executors.newSingleThreadExecutor();
+      ExecutorService ex = Executors.newSingleThreadExecutor(getTestThreadFactory("KeyGenerator"));
       KeyAffinityService kaf = KeyAffinityServiceFactory.newKeyAffinityService(cache, ex, new ByteKeyGenerator(), 2, true);
       Address address = cache.getAdvancedCache().getRpcManager().getTransport().getAddress();
       byte[] keyBytes = (byte[]) kaf.getKeyForAddress(address);

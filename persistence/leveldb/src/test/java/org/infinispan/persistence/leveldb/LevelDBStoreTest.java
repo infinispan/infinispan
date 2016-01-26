@@ -4,8 +4,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,10 +70,9 @@ public class LevelDBStoreTest extends BaseStoreTest {
       final AtomicBoolean post = new AtomicBoolean(false);
       final CountDownLatch started = new CountDownLatch(THREADS);
       final CountDownLatch finished = new CountDownLatch(THREADS);
-      ExecutorService executor = Executors.newFixedThreadPool(THREADS);
       for (int i = 0; i < THREADS; ++i) {
          final int thread = i;
-         executor.execute(new Runnable() {
+         fork(new Runnable() {
             @Override
             public void run() {
                try {
@@ -122,7 +119,6 @@ public class LevelDBStoreTest extends BaseStoreTest {
          fail();
       } finally {
          run.set(false);
-         executor.shutdown();
       }
       try {
          if (!finished.await(30, TimeUnit.SECONDS)) {

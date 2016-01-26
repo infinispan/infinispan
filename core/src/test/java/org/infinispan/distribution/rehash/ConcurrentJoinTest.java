@@ -8,9 +8,10 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest", description = "See ISPN-1123")
 public class ConcurrentJoinTest extends RehashTestBase {
@@ -20,7 +21,7 @@ public class ConcurrentJoinTest extends RehashTestBase {
 
    static final int NUM_JOINERS = 4;
 
-   void performRehashEvent(boolean offline) {
+   void performRehashEvent(boolean offline) throws Exception {
       joinerManagers = new CopyOnWriteArrayList<EmbeddedCacheManager>();
       joiners = new CopyOnWriteArrayList<Cache<Object, String>>(new Cache[NUM_JOINERS]);
 
@@ -31,27 +32,18 @@ public class ConcurrentJoinTest extends RehashTestBase {
          joiners.set(i, null);
       }
 
-      Thread[] threads = new Thread[NUM_JOINERS];
+      Future<?>[] threads = new Future[NUM_JOINERS];
       for (int i = 0; i < NUM_JOINERS; i++) {
          final int ii = i;
-         threads[i] = new Thread(new Runnable() {
-            public void run() {
+         threads[i] = fork(() -> {
                EmbeddedCacheManager joinerManager = joinerManagers.get(ii);
                Cache<Object, String> joiner = joinerManager.getCache(cacheName);
                joiners.set(ii, joiner);
-            }
-         }, "ConcurrentJoinTest-Worker-" + i);
+         });
       }
 
       for (int i = 0; i < NUM_JOINERS; i++) {
-         threads[i].start();
-      }
-      for (int i = 0; i < NUM_JOINERS; i++) {
-         try {
-            threads[i].join();
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-         }
+         threads[i].get(30, TimeUnit.SECONDS);
       }
    }
 

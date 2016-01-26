@@ -12,10 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 
 /**
  * Add test that exercises concurrent behaviour of both
@@ -42,31 +39,18 @@ public class ConcurrentMarshallerTest extends MultipleCacheManagersTest {
       int nbWriters = 10;
       final CyclicBarrier barrier = new CyclicBarrier(nbWriters + 1);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(nbWriters);
-      ExecutorService exec = Executors.newCachedThreadPool(new ThreadFactory() {
-         volatile int i = 0;
 
-         @Override
-         public Thread newThread(Runnable r) {
-            int ii = i++;
-            return new Thread(r, "ConcurrentMarshallerTester-" + ii);
-         }
-      });
-
-      try {
-         for (int i = 0; i < nbWriters; i++) {
-            log.debug("Schedule execution");
-            Future<Void> future = exec.submit(
-                  new CacheUpdater(barrier, cache1));
-            futures.add(future);
-         }
-         barrier.await(); // wait for all threads to be ready
-         barrier.await(); // wait for all threads to finish
-
-         log.debug("Threads finished, shutdown executor and check for exceptions");
-         for (Future<Void> future : futures) future.get();
-      } finally {
-         exec.shutdownNow();
+      for (int i = 0; i < nbWriters; i++) {
+         log.debug("Schedule execution");
+         Future<Void> future = fork(
+               new CacheUpdater(barrier, cache1));
+         futures.add(future);
       }
+      barrier.await(); // wait for all threads to be ready
+      barrier.await(); // wait for all threads to finish
+
+      log.debug("Threads finished, shutdown executor and check for exceptions");
+      for (Future<Void> future : futures) future.get();
    }
 
    static class CacheUpdater implements Callable<Void> {
