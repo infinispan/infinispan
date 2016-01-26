@@ -1,5 +1,8 @@
 package org.infinispan.distexec.mapreduce;
 
+import org.infinispan.Cache;
+import org.infinispan.CacheSet;
+
 import java.io.Serializable;
 
 /**
@@ -18,6 +21,9 @@ import java.io.Serializable;
  * @author Sanne Grinovero
  * 
  * @since 5.0
+ * @deprecated Map reduce is being replaced by Streams
+ * @see Cache#entrySet()
+ * @see CacheSet#stream()
  */
 public interface Mapper<KIn, VIn, KOut, VOut> extends Serializable {
 
