@@ -2,6 +2,7 @@ package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CommandsFactory;
@@ -135,6 +136,9 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
  * @author Sanne Grinovero
  *
  * @since 5.0
+ * @deprecated Map reduce has been replaced by streams.  This can be invoked by <b>cache.entrySet().stream()....</b>
+ * @see Cache#entrySet()
+ * @see CacheSet#stream()
  */
 public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
