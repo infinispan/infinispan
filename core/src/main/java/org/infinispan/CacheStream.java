@@ -171,6 +171,9 @@ public interface CacheStream<R> extends Stream<R> {
     * {@link CacheStream#distributedBatchSize} value controls how many elements are processed per node at a time
     * when rehash is enabled. After those are complete the keys are sent to the originator to confirm that those were
     * processed.  If that node goes down during/before the response those keys will be processed a second time.</p>
+    * <p>It is possible to have the cache local to each node injected into this instance if the provided
+    * Consumer also implements the {@link org.infinispan.stream.CacheAware} interface.  This method will be invoked
+    * before the consumer <code>accept()</code> method is invoked.</p>
     * <p>This method is ran distributed by default with a distributed backing cache.  However if you wish for this
     * operation to run locally you can use the {@code stream().iterator().forEachRemaining(action)} for a single
     * threaded variant.  If you

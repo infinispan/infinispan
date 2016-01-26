@@ -7,6 +7,13 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 
 This guide walks you through the process of upgrading Infinispan.
 
+== Upgrading from 8.1 to 8.2
+=== Entry Retriever is deprecated
+Entry Retriever is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
+
+=== Map / Reduce is deprecated
+Map reduce is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
+
 
 == Upgrading from 8.x to 8.1
 === Packaging changes
