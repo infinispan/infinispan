@@ -2,6 +2,10 @@
 
 MapReduce is a programming model allowing transparent distributed processing of very large data sets over data grids. The name MapReduce comes from an idea of using two distinct computational phases of map and reduce. In the map phase, master node that initiates a task takes the task input, divides it and sends tasks for map phase execution on the grid. Each node in turns executes a map function on its input returning intermediate results back to master node. Master node task collects all intermediate results from map phase combines them by intermediate result keys and sends intermediate keys/values for reduction on the grid. Finally master tasks node receives all results from reduction phases and returns the final result to invoker of the MapReduce task.
 
+CAUTION: The Map/Reduce framework has been deprecated and will be removed with
+Infinispan 9. Please check out the link:user_guide.html#_streams[Streams]
+section for its replacement.
+
 === API
 Infinispan's own MapReduce model is an adaptation of Google's original link:$$http://research.google.com/archive/mapreduce.html$$[MapReduce] . There are four main components in each map reduce task: Mapper, Reducer, Collator and MapReduceTask. 
 
