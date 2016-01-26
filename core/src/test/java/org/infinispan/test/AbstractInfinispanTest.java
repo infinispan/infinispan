@@ -11,10 +11,27 @@ import org.testng.annotations.BeforeTest;
 
 import javax.transaction.TransactionManager;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.Objects;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
+import java.util.function.BooleanSupplier;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 
 /**
@@ -60,6 +77,44 @@ public class AbstractInfinispanTest {
       if (activeTasks != 0) {
          log.errorf("There were %d active tasks found in the test executor service for class %s", activeTasks,
                     getClass().getSimpleName());
+      }
+   }
+
+   protected <T> void eventuallyEquals(T expected, Supplier<T> supplier) {
+      eventually(() -> "expected:<" + expected + ">, got:<" + supplier.get() + ">",
+            () -> Objects.equals(expected, supplier.get()));
+   }
+
+   protected void eventuallyEquals(int expected, IntSupplier supplier) {
+      eventually(() -> "expected:<" + expected + ">, got:<" + supplier.getAsInt() + ">",
+            () -> expected == supplier.getAsInt());
+   }
+
+   protected void eventually(Supplier<String> messageSupplier, BooleanSupplier condition) {
+      eventually(messageSupplier, condition, 30, TimeUnit.SECONDS);
+   }
+
+   protected void eventually(Supplier<String> messageSupplier, BooleanSupplier condition, long timeout,
+         TimeUnit timeUnit) {
+      try {
+         long timeoutNanos = timeUnit.toNanos(timeout);
+         // We want 10 loops with the sleep time increasing in arithmetic progression
+         int loops = 10;
+         int progressionSum = loops * (loops + 1) / 2;
+         long initialSleepNanos = timeoutNanos / progressionSum;
+         long sleepNanos = initialSleepNanos;
+         long expectedEndTime = System.nanoTime() + timeoutNanos;
+         while (expectedEndTime - System.nanoTime() > 0) {
+            if (condition.getAsBoolean())
+               return;
+            LockSupport.parkNanos(sleepNanos);
+            sleepNanos += initialSleepNanos;
+         }
+         if (!condition.getAsBoolean()) {
+            fail(messageSupplier.get());
+         }
+      } catch (Exception e) {
+         throw new RuntimeException("Unexpected!", e);
       }
    }
 
