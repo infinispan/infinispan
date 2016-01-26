@@ -41,7 +41,9 @@ Access to a cache manager or a cache is controlled by using a list of required p
 * ALL_READ: combines READ and BULK_READ
 * ALL_WRITE: combines WRITE and BULK_WRITE
 
-Some permissions might need to be combined with others in order to be useful. For example, suppose you want to allow only "supervisors" to be able to run map/reduce jobs, while "standard" users can only perform puts and gets, you would define the following mappings:
+Some permissions might need to be combined with others in order to be useful.
+For example, suppose you want to allow only "supervisors" to be able to run
+stream operations, while "standard" users can only perform puts and gets, you would define the following mappings:
 
 [source,xml]
 ----

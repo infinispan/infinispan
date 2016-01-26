@@ -88,7 +88,11 @@ assert !cache.containsKey("car") : "Value must have been removed!";
 
 The client API maps the local API: link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager] corresponds to link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/DefaultCacheManager.html[DefaultCacheManager] (both implement link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/CacheContainer.html[CacheContainer] ). This common API facilitates an easy migration from local calls to remote calls through Hot Rod: all one needs to do is switch between link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/DefaultCacheManager.html[DefaultCacheManager] and link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager] - which is further simplified by the common link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/CacheContainer.html[CacheContainer] interface that both inherit.
 
-Starting from Infinispan 5.2, all keys can be retrieved from the remote cache (whether it's local, replicated, or distributed) by using keySet() method. If the remote cache is a distributed cache, the server will start a map/reduce job to retrieve all keys from clustered nodes, and return all keys to the client.  Please use this method with care if there are large number of keys.
+All keys can be retrieved from the remote cache (whether it's local, replicated, or
+distributed) by using +keySet()+ method. If the remote cache is a distributed cache,
+the server will perform a distributed stream operation to retrieve all keys from
+clustered nodes, and return all keys to the client.  Please use this method with
+care if there are large number of keys.
 
 [source,java]
 ----

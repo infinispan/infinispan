@@ -16,7 +16,7 @@ This SPI was refactored in Infinispan 6. It brings the following improvements ov
 
 * Simplified Transaction Integration. All necessary locking is handled by Infinispan automatically and implementations don’t have to be concerned with coordinating concurrent access to the store. Even though concurrent writes on the same key are not going to happen (depending locking mode in use), implementors should expect operations on the store to happen from multiple/different threads and code the implementation accordingly.
 
-* Parallel Iteration. It is now possible to iterate over entries in the store with multiple threads in parallel. Map/Reduce tasks immediately benefit from this, as the map/reduce  tasks now run in parallel over both the nodes in the cluster and within the same node (multiple threads).
+* Parallel Iteration. It is now possible to iterate over entries in the store with multiple threads in parallel.
 
 * Reduced Serialization. This translates in less CPU usage. The new API exposes the stored entries in serialized format. If an entry is fetched from persistent storage for the sole purpose of being sent remotely, we no longer need to deserialize it (when reading from the store) and serialize it back (when writing to the wire). Now we can write to the wire the serialized format as read from the storage directly.
 
@@ -57,7 +57,9 @@ A provider might choose to only implement a subset of these interfaces:
 
 * Not implementing the  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter] makes the given writer not usable for purging expired entries or clear
 
-* Not implementing  the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheLoader] makes the information stored in the given loader not used for preloading, nor for the map/reduce iteration
+* If a loader does not implement the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/spi/AdvancedCacheWriter.html[AdvancedCacheWriter]
+inteface, then it will not participate in preloading nor in cache iteration
+(required also for stream operations).
 
 If you're looking at migrating your existing store to the new API or to write a new store implementation, the link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/persistence/file/SingleFileStore.java[SingleFileStore] might be a good starting point/example.
 
