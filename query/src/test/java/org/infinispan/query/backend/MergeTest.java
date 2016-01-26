@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -74,14 +72,13 @@ public class MergeTest extends MultipleCacheManagersTest {
    public void testMergesWrites() throws Exception {
       final long start = System.currentTimeMillis();
 
-      ExecutorService executorService = Executors.newCachedThreadPool();
       final CountDownLatch waitFor = new CountDownLatch(1);
       final AtomicLong id = new AtomicLong(1);
       ArrayList<Future> futures = new ArrayList<>();
       final Random random = new Random();
 
       for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-         futures.add(executorService.submit(new Runnable() {
+         futures.add(fork(new Runnable() {
             @Override
             public void run() {
                try {

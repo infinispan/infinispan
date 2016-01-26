@@ -17,6 +17,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 /**
@@ -25,11 +26,7 @@ import static org.junit.Assert.fail;
  */
 public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest<Object, String> {
 
-   protected ThreadFactory threadFactory = new ThreadFactory() {
-      public Thread newThread(Runnable r) {
-         return new Thread(r, "KeyGeneratorThread," + BaseKeyAffinityServiceTest.this.getClass().getSimpleName());
-      }
-   };
+   protected ThreadFactory threadFactory = getTestThreadFactory("KeyGeneratorThread");
    protected ExecutorService executor  = Executors.newSingleThreadExecutor(threadFactory);
    protected KeyAffinityServiceImpl<Object> keyAffinityService;
 

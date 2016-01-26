@@ -13,8 +13,6 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -80,7 +78,6 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
     @Test(enabled = true)
     public void distributedCacheTest() throws Exception {
 
-        ExecutorService service = Executors.newCachedThreadPool();
         List<HashSet<Integer>> sets = new ArrayList<>();
         List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
 
@@ -93,7 +90,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
         }
 
         for(Set<Integer> s : sets){
-            futures.add(service.submit(new ExerciseAtomicSetTask(s, NCALLS)));
+            futures.add(fork(new ExerciseAtomicSetTask(s, NCALLS)));
         }
 
         Integer total = 0;
@@ -101,7 +98,6 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
             total += future.get();
         }
 
-        service.shutdown();
         assertEquals(NCALLS, total.intValue());
 
     }

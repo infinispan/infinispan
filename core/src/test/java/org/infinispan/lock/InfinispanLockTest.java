@@ -1,6 +1,7 @@
 package org.infinispan.lock;
 
 import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
@@ -35,7 +36,7 @@ import static org.testng.AssertJUnit.fail;
  * @since 8.0
  */
 @Test(groups = "unit", testName = "lock.InfinispanLockTest")
-public class InfinispanLockTest {
+public class InfinispanLockTest extends AbstractInfinispanTest {
 
    public void testTimeout() throws InterruptedException {
       final String lockOwner1 = "LO1";
@@ -229,12 +230,11 @@ public class InfinispanLockTest {
       final InfinispanLock counterLock = new InfinispanLock(AbstractCacheTest.TIME_SERVICE);
       final int numThreads = 8;
       final int maxCounterValue = 100;
-      final ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
       final CyclicBarrier barrier = new CyclicBarrier(numThreads);
       List<Future<Collection<Integer>>> callableResults = new ArrayList<>(numThreads);
 
       for (int i = 0; i < numThreads; ++i) {
-         callableResults.add(executorService.submit(() -> {
+         callableResults.add(fork(() -> {
             final Thread lockOwner = Thread.currentThread();
             assertEquals(0, counter.getCount());
             List<Integer> seenValues = new LinkedList<>();
@@ -257,15 +257,10 @@ public class InfinispanLockTest {
       }
 
       Set<Integer> seenResults = new HashSet<>();
-      try {
-         for (Future<Collection<Integer>> future : callableResults) {
-            for (Integer integer : future.get()) {
-               assertTrue(seenResults.add(integer));
-            }
+      for (Future<Collection<Integer>> future : callableResults) {
+         for (Integer integer : future.get()) {
+            assertTrue(seenResults.add(integer));
          }
-      } finally {
-         executorService.shutdown();
-         executorService.awaitTermination(30, TimeUnit.SECONDS);
       }
       assertEquals(maxCounterValue, seenResults.size());
       for (int i = 0; i < maxCounterValue; ++i) {

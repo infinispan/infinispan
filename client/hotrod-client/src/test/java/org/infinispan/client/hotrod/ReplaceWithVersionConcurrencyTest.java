@@ -1,11 +1,8 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -13,18 +10,15 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "stress", testName = "client.hotrod.ReplaceWithVersionConcurrencyTest")
 public class ReplaceWithVersionConcurrencyTest extends MultiHotRodServersTest {
@@ -51,7 +45,7 @@ public class ReplaceWithVersionConcurrencyTest extends MultiHotRodServersTest {
       assertNull(cache.get(KEY));
       long timeSpent = System.currentTimeMillis();
       List<Future<Integer>> results = new ArrayList<Future<Integer>>(NUM_THREADS);
-      ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
+      ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS, getTestThreadFactory("Worker"));
       for (int i = 0; i < NUM_THREADS; i++) {
          CounterUpdater app = new CounterUpdater(cache, KEY, OPS_PER_THREAD);
          Future<Integer> result = executor.submit(app);

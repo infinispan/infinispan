@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod
 
 import java.lang.reflect.Method
-import java.util.concurrent.{Callable, Executors, Future, CyclicBarrier}
+import java.util.concurrent.{Callable, Future, CyclicBarrier}
 import test.HotRodClient
 import org.testng.annotations.Test
 
@@ -18,14 +18,13 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
       val numClients = 10
       val numOpsPerClient = 100
       val barrier = new CyclicBarrier(numClients + 1)
-      val executorService = Executors.newCachedThreadPool
       var futures: List[Future[Unit]] = List()
       var operators: List[Operator] = List()
       try {
          for (i <- 0 until numClients) {
             val operator = new Operator(barrier, m, i, numOpsPerClient)
             operators = operator :: operators
-            val future = executorService.submit(operator)
+            val future = fork(operator)
             futures = future :: futures
          }
          barrier.await // wait for all threads to be ready

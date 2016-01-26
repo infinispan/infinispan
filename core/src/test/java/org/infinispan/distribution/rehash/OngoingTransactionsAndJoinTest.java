@@ -48,7 +48,7 @@ import static org.infinispan.test.TestingUtil.replaceField;
 @CleanupAfterMethod
 public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
    ConfigurationBuilder configuration;
-   ScheduledExecutorService delayedExecutor = Executors.newScheduledThreadPool(1);
+   ScheduledExecutorService delayedExecutor = Executors.newScheduledThreadPool(1, getTestThreadFactory("Timer"));
 
    @Override
    protected void createCacheManagers() throws Throwable {

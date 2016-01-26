@@ -171,7 +171,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       // Clear the store so that we can start fresh again
       store.clear();
 
-      ExecutorService executor = Executors.newSingleThreadExecutor();
+      ExecutorService executor = Executors.newSingleThreadExecutor(getTestThreadFactory("Purge"));
       // Repeat the same logic as above
       // Just that, in this case we will call purge after each iteration
       for (int i = 0; i < TIMES; i++) {
@@ -244,7 +244,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       File file = new File(location, CACHE_NAME + ".dat");
       long length1 = file.length();
 
-      ExecutorService executor = Executors.newSingleThreadExecutor();
+      ExecutorService executor = Executors.newSingleThreadExecutor(getTestThreadFactory("Purge"));
       store.purge(executor, null);
       // Give some time for the purge thread to finish
       MILLISECONDS.sleep(200);
@@ -467,7 +467,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process-"));
+         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
          final AtomicInteger count = new AtomicInteger(0);
          store.process(new KeyFilter() {
             @Override
@@ -503,7 +503,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process-"));
+         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
          final AtomicInteger count = new AtomicInteger(0);
          store.process(
                  (key) -> true,

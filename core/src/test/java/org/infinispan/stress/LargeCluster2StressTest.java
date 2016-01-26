@@ -15,7 +15,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.jgroups.conf.ConfiguratorFactory;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
@@ -89,7 +88,7 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
 
       // Start the caches (and the JGroups channels) in separate threads
       final CountDownLatch managersLatch = new CountDownLatch(NUM_NODES);
-      ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
+      ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS, getTestThreadFactory("Worker"));
       final ExecutorCompletionService<Void> managerCompletionService = new ExecutorCompletionService<>(executor);
 //      final ExecutorCompletionService<Void> cacheCompletionService = new ExecutorCompletionService<Void>(new WithinThreadExecutor());
       final ExecutorCompletionService<Void> cacheCompletionService = new ExecutorCompletionService<Void>(executor);

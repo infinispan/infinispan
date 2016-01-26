@@ -205,24 +205,11 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       final JoiningNode node3 = new JoiningNode(createCacheManager());
       final JoiningNode node4 = new JoiningNode(createCacheManager());
 
-      Thread t1 = new Thread(new Runnable() {
-         public void run() {
-            node3.getCache(cacheName);
-         }
-      });
-      t1.setName("CacheStarter-Cache3");
-      t1.start();
+      Future<Cache> joinFuture1 = fork(() -> node3.getCache(cacheName));
+      Future<Cache> joinFuture2 = fork(() -> node4.getCache(cacheName));
 
-      Thread t2 = new Thread(new Runnable() {
-         public void run() {
-            node4.getCache(cacheName);
-         }
-      });
-      t2.setName("CacheStarter-Cache4");
-      t2.start();
-
-      t1.join();
-      t2.join();
+      joinFuture1.get(30, SECONDS);
+      joinFuture2.get(30, SECONDS);
 
       cache3 = node3.getCache(cacheName);
       cache4 = node4.getCache(cacheName);

@@ -2,6 +2,7 @@ package org.infinispan.lock;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockPromise;
@@ -21,8 +22,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -33,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * @since 8.0
  */
 @Test(groups = "unit", testName = "lock.LockManagerTest")
-public class LockManagerTest {
+public class LockManagerTest extends AbstractInfinispanTest {
 
    public void testSingleCounterPerKey() throws ExecutionException, InterruptedException {
       DefaultLockManager lockManager = new DefaultLockManager();
@@ -88,12 +87,11 @@ public class LockManagerTest {
       final String key = "key";
       final int numThreads = 8;
       final int maxCounterValue = 100;
-      final ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
       final CyclicBarrier barrier = new CyclicBarrier(numThreads);
       List<Future<Collection<Integer>>> callableResults = new ArrayList<>(numThreads);
 
       for (int i = 0; i < numThreads; ++i) {
-         callableResults.add(executorService.submit(() -> {
+         callableResults.add(fork(() -> {
             final Thread lockOwner = Thread.currentThread();
             AssertJUnit.assertEquals(0, counter.getCount());
             List<Integer> seenValues = new LinkedList<>();
@@ -118,15 +116,10 @@ public class LockManagerTest {
       }
 
       Set<Integer> seenResults = new HashSet<>();
-      try {
-         for (Future<Collection<Integer>> future : callableResults) {
-            for (Integer integer : future.get()) {
-               AssertJUnit.assertTrue(seenResults.add(integer));
-            }
+      for (Future<Collection<Integer>> future : callableResults) {
+         for (Integer integer : future.get()) {
+            AssertJUnit.assertTrue(seenResults.add(integer));
          }
-      } finally {
-         executorService.shutdown();
-         executorService.awaitTermination(30, TimeUnit.SECONDS);
       }
       AssertJUnit.assertEquals(maxCounterValue, seenResults.size());
       for (int i = 0; i < maxCounterValue; ++i) {
@@ -142,7 +135,6 @@ public class LockManagerTest {
       final String[] keys = new String[numCounters];
       final int numThreads = 8;
       final int maxCounterValue = 100;
-      final ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
       final CyclicBarrier barrier = new CyclicBarrier(numThreads);
 
       for (int i = 0; i < numCounters; ++i) {
@@ -155,7 +147,7 @@ public class LockManagerTest {
       for (int i = 0; i < numThreads; ++i) {
          final List<String> threadKeys = new ArrayList<>(Arrays.asList(keys));
          Collections.shuffle(threadKeys);
-         callableResults.add(executorService.submit(() -> {
+         callableResults.add(fork(() -> {
             final Thread lockOwner = Thread.currentThread();
             List<Integer> seenValues = new LinkedList<>();
             barrier.await();
@@ -188,15 +180,10 @@ public class LockManagerTest {
       }
 
       Set<Integer> seenResults = new HashSet<>();
-      try {
-         for (Future<Collection<Integer>> future : callableResults) {
-            for (Integer integer : future.get()) {
-               AssertJUnit.assertTrue(seenResults.add(integer));
-            }
+      for (Future<Collection<Integer>> future : callableResults) {
+         for (Integer integer : future.get()) {
+            AssertJUnit.assertTrue(seenResults.add(integer));
          }
-      } finally {
-         executorService.shutdown();
-         executorService.awaitTermination(30, TimeUnit.SECONDS);
       }
       AssertJUnit.assertEquals(maxCounterValue, seenResults.size());
       for (int i = 0; i < maxCounterValue; ++i) {
