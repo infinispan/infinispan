@@ -17,6 +17,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -125,6 +126,9 @@ public class InvocationContextInterceptor extends CommandInterceptor {
                      log.debug("Exception executing call", th);
                   } else if (th instanceof OutdatedTopologyException) {
                      log.outdatedTopology(th);
+                  } else if (th instanceof RetryPrepareException) {
+                     log.debugf("Retrying total order prepare command for transaction %s, affected keys %s",
+                           ctx.getLockOwner(), extractWrittenKeys(ctx, command));
                   } else {
                      Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
                      log.executionError(command.getClass().getSimpleName(), affectedKeys, th);

@@ -10,6 +10,7 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
@@ -41,9 +42,13 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
       try {
          final int commandTopologyId = extractCommandTopologyId(command);
+         if (isCommandSentBeforeFirstTopology(commandTopologyId)) {
+            reply.reply(CacheNotFoundResponse.INSTANCE);
+            return;
+         }
+
          final boolean onExecutorService;
          final BlockingRunnable runnable;
-
          switch (command.getCommandId()) {
             case TotalOrderVersionedPrepareCommand.COMMAND_ID:
             case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
