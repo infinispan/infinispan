@@ -6,6 +6,8 @@ import javax.enterprise.inject.spi.Extension;
 
 import org.infinispan.commons.logging.BasicLogFactory;
 import org.jboss.logging.BasicLogger;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.CacheConfigurationException;
 
 import java.lang.annotation.Annotation;
 
@@ -23,15 +25,14 @@ public class AnnotationInjectExtension implements Extension {
 
    private static final BasicLogger log = BasicLogFactory.getLog(AnnotationInjectExtension.class);
 
-   @SuppressWarnings("unchecked")
    void registerInterceptorBindings(@Observes BeforeBeanDiscovery event) {
       try {
-         event.addInterceptorBinding((Class<Annotation>) Class.forName("javax.cache.annotation.CacheResult"));
-         event.addInterceptorBinding((Class<Annotation>) Class.forName("javax.cache.annotation.CachePut"));
-         event.addInterceptorBinding((Class<Annotation>) Class.forName("javax.cache.annotation.CacheRemove"));
-         event.addInterceptorBinding((Class<Annotation>) Class.forName("javax.cache.annotation.CacheRemoveAll"));
-      } catch (ClassNotFoundException ex) {
-         log.debug("Cache API not present on class path, class not found: " + ex.getMessage());
+         event.addInterceptorBinding(Util.<Annotation>loadClass("javax.cache.annotation.CacheResult", null));
+         event.addInterceptorBinding(Util.<Annotation>loadClass("javax.cache.annotation.CachePut", null));
+         event.addInterceptorBinding(Util.<Annotation>loadClass("javax.cache.annotation.CacheRemove", null));
+         event.addInterceptorBinding(Util.<Annotation>loadClass("javax.cache.annotation.CacheRemoveAll", null));
+      } catch (CacheConfigurationException ex) {
+         log.debug("Cache API not present on class path: " + ex.getMessage());
       }
    }
 
