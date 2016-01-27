@@ -79,7 +79,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
    public void testOverrideWithStore() {
       final ConfigurationBuilder builder1 = new ConfigurationBuilder();
       builder1.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      cm = new DefaultCacheManager(new GlobalConfigurationBuilder().build(), builder1.build());
+      cm = TestCacheManagerFactory.createCacheManager(builder1);
       ConfigurationBuilder builder2 = new ConfigurationBuilder();
       builder2.read(cm.getDefaultCacheConfiguration());
       builder2.eviction().maxEntries(1000);
@@ -103,9 +103,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
    }
 
    public void testConfigurationUndefine() {
-      GlobalJmxStatisticsConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder()
-            .globalJmxStatistics().allowDuplicateDomains(true);
-      cm = new DefaultCacheManager(globalBuilder.build());
+      cm = TestCacheManagerFactory.createCacheManager();
       cm.defineConfiguration("testConfig", new ConfigurationBuilder().build());
       cm.undefineConfiguration("testConfig");
       assertNull(cm.getCacheConfiguration("testConfig"));
@@ -113,9 +111,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions=IllegalStateException.class)
    public void testConfigurationUndefineWhileInUse() {
-      GlobalJmxStatisticsConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder()
-            .globalJmxStatistics().allowDuplicateDomains(true);
-      cm = new DefaultCacheManager(globalBuilder.build());
+      cm = TestCacheManagerFactory.createCacheManager();
       cm.defineConfiguration("testConfig", new ConfigurationBuilder().build());
       cm.getCache("testConfig");
       cm.undefineConfiguration("testConfig");

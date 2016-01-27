@@ -14,6 +14,7 @@
             <role name="supervisor" permissions="READ WRITE EXEC"/>
          </authorization>
       </security>
+      <jmx duplicate-domains="true"/>
 
       <local-cache name="secured">
          <security>
