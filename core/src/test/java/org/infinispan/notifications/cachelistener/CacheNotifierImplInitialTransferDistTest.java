@@ -392,9 +392,9 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          boolean isPrimaryOwner = hash.locatePrimaryOwner(key).equals(address);
          if (isPrimaryOwner == shouldBePrimaryOwner) {
             if (shouldBePrimaryOwner) {
-               log.debugf("Found key %s with primary owner %s", key, address);
+               log.debugf("Found key %s with primary owner %s, segment %d", key, address, hash.getSegment(key));
             } else {
-               log.debugf("Found key %s with primary owner != %s", key, address);
+               log.debugf("Found key %s with primary owner != %s, segment %d", key, address, hash.getSegment(key));
             }
             return key;
          }
@@ -707,6 +707,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       ConcurrentMap<UUID, QueueingSegmentListener> listeningMap = new ConcurrentHashMap() {
          @Override
          public Object putIfAbsent(Object key, Object value) {
+            log.tracef("Adding segment listener %s : %s", key, value);
             final Answer<Object> listenerAnswer = AdditionalAnswers.delegatesTo(value);
 
             final AtomicBoolean wasLastSegment = new AtomicBoolean(false);
@@ -715,20 +716,22 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
             doAnswer(i -> {
                Set<Integer> segments = (Set<Integer>) i.getArguments()[0];
+               log.tracef("Completed segments %s", segments);
                if (segments.contains(segment)) {
                   wasLastSegment.set(true);
                }
                return listenerAnswer.answer(i);
             }).when(mockListener).segmentCompleted(Mockito.anySet());
 
-            doAnswer(i -> {
+            doAnswer(k -> {
+               log.tracef("Notified for key %s", k);
                if (wasLastSegment.compareAndSet(true, false)) {
                   // Wait for main thread to sync up
                   checkPoint.trigger("pre_complete_segment_invoked");
                   // Now wait until main thread lets us through
                   checkPoint.awaitStrict("pre_complete_segment_released", 10, TimeUnit.SECONDS);
                }
-               return listenerAnswer.answer(i);
+               return listenerAnswer.answer(k);
             }).when(mockListener).notifiedKey(Mockito.any());
             return super.putIfAbsent(key, mockListener);
          }
