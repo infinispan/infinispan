@@ -8,6 +8,7 @@ import java.util.*;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -28,6 +29,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
    private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   @Override
    public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
                                        List<Address> members, Map<Address, Float> capacityFactors) {
       if (members.size() == 0)
@@ -42,6 +44,14 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       rebalanceBuilder(builder);
 
       return builder.build();
+   }
+
+   @Override
+   public DefaultConsistentHash fromPersistentState(ScopedPersistentState state) {
+      String consistentHashClass = state.getProperty("consistentHash");
+      if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
+         throw log.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
+      return new DefaultConsistentHash(state);
    }
 
    private void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {

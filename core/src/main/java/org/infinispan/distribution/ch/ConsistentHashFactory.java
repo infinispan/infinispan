@@ -1,6 +1,7 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.List;
@@ -69,4 +70,11 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
     * parameters).
     */
    CH union(CH ch1, CH ch2);
+
+   /**
+    * Recreates a ConsistentHash from a previously stored persistent state
+    */
+   default CH fromPersistentState(ScopedPersistentState state) {
+      throw new UnsupportedOperationException();
+   }
 }

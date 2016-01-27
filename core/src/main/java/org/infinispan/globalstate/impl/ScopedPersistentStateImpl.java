@@ -32,6 +32,26 @@ public class ScopedPersistentStateImpl implements ScopedPersistentState {
    }
 
    @Override
+   public void setProperty(String key, int value) {
+      setProperty(key, Integer.toString(value));
+   }
+
+   @Override
+   public int getIntProperty(String key) {
+      return Integer.parseInt(state.get(key));
+   }
+
+   @Override
+   public void setProperty(String key, float f) {
+      setProperty(key, Float.toString(f));
+   }
+
+   @Override
+   public float getFloatProperty(String key) {
+      return Float.parseFloat(state.get(key));
+   }
+
+   @Override
    public String getProperty(String key) {
       return state.get(key);
    }
