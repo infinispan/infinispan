@@ -61,7 +61,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    private Address localAddress;
 
-   private final ConcurrentMap<UUID, SegmentListener> changeListener = CollectionFactory.makeConcurrentMap();
+   private final ConcurrentMap<Object, SegmentListener> changeListener = CollectionFactory.makeConcurrentMap();
 
    class SegmentListener {
       private final Set<Integer> segments;
@@ -145,7 +145,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
             if (!beforeSegments.isEmpty()) {
                // We have to make sure all current listeners get the newest hashes updated.  This has to occur for
                // new nodes and nodes leaving as the hash segments will change in both cases.
-               for (Map.Entry<UUID, SegmentListener> entry : changeListener.entrySet()) {
+               for (Map.Entry<Object, SegmentListener> entry : changeListener.entrySet()) {
                   if (trace) {
                      log.tracef("Notifying %s through SegmentChangeListener", entry.getKey());
                   }
@@ -186,7 +186,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       return stream;
    }
 
-   private Stream<CacheEntry<K, V>> getRehashStream(CacheSet<CacheEntry<K, V>> cacheEntrySet, UUID requestId,
+   private Stream<CacheEntry<K, V>> getRehashStream(CacheSet<CacheEntry<K, V>> cacheEntrySet, Object requestId,
            SegmentListener listener, boolean parallelStream, Set<Integer> segments, Set<K> keysToInclude,
            Set<K> keysToExclude) {
       CacheTopology topology = stm.getCacheTopology();
@@ -225,7 +225,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    }
 
    @Override
-   public <R> void streamOperation(UUID requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, TerminalOperation<R> operation) {
       log.tracef("Received operation request for id %s from %s for segments %s", requestId, origin, segments);
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
@@ -237,7 +237,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    }
 
    @Override
-   public <R> void streamOperationRehashAware(UUID requestId, Address origin, boolean parallelStream,
+   public <R> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
            Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            TerminalOperation<R> operation) {
       log.tracef("Received rehash aware operation request for id %s from %s for segments %s", requestId, origin, segments);
@@ -274,7 +274,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    }
 
    @Override
-   public <R> void streamOperation(UUID requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, R, ?> operation) {
       log.tracef("Received key aware operation request for id %s from %s for segments %s", requestId, origin, segments);
@@ -288,7 +288,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    }
 
    @Override
-   public <R2> void streamOperationRehashAware(UUID requestId, Address origin, boolean parallelStream,
+   public <R2> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
            Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, ?, R2> operation) {
       log.tracef("Received key rehash aware operation request for id %s from %s for segments %s", requestId, origin, segments);
@@ -326,10 +326,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    class NonRehashIntermediateCollector<R> implements KeyTrackingTerminalOperation.IntermediateCollector<R> {
       private final Address origin;
-      private final UUID requestId;
+      private final Object requestId;
       private final boolean useManagedBlocker;
 
-      NonRehashIntermediateCollector(Address origin, UUID requestId, boolean useManagedBlocker) {
+      NonRehashIntermediateCollector(Address origin, Object requestId, boolean useManagedBlocker) {
          this.origin = origin;
          this.requestId = requestId;
          this.useManagedBlocker = useManagedBlocker;

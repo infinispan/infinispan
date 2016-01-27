@@ -496,7 +496,7 @@ public interface CommandsFactory {
     */
    GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName);
 
-   <K> StreamRequestCommand<K> buildStreamRequestCommand(UUID id, boolean parallelStream, StreamRequestCommand.Type type,
+   <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream, StreamRequestCommand.Type type,
            Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Object terminalOperation);
 
    /**
@@ -509,7 +509,7 @@ public interface CommandsFactory {
     * @param <R> type of response
     * @return the command to send back the response
     */
-   <R> StreamResponseCommand<R> buildStreamResponseCommand(UUID identifier, boolean complete, Set<Integer> lostSegments,
+   <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete, Set<Integer> lostSegments,
            R response);
 
    <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f);

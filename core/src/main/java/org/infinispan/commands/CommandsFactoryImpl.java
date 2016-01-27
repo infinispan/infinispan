@@ -673,7 +673,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K> StreamRequestCommand<K> buildStreamRequestCommand(UUID id, boolean parallelStream,
+   public <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream,
            StreamRequestCommand.Type type, Set<Integer> segments, Set<K> keys, Set<K> excludedKeys,
            boolean includeLoader, Object terminalOperation) {
       return new StreamRequestCommand<>(cacheName, cache.getCacheManager().getAddress(), id, parallelStream, type,
@@ -681,7 +681,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <R> StreamResponseCommand<R> buildStreamResponseCommand(UUID identifier, boolean complete,
+   public <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete,
            Set<Integer> lostSegments, R response) {
       if (lostSegments.isEmpty()) {
          return new StreamResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier, complete,

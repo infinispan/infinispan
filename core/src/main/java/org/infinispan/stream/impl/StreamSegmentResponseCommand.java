@@ -22,7 +22,7 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
       super(cacheName);
    }
 
-   public StreamSegmentResponseCommand(String cacheName, Address origin, UUID id, boolean complete, R response,
+   public StreamSegmentResponseCommand(String cacheName, Address origin, Object id, boolean complete, R response,
                                        Set<Integer> missedSegments) {
       super(cacheName, origin, id, complete, response);
       this.missedSegments = missedSegments;
@@ -48,7 +48,7 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
       setOrigin((Address) parameters[i++]);
-      id = (UUID) parameters[i++];
+      id = parameters[i++];
       complete = (Boolean) parameters[i++];
       response = (R) parameters[i++];
       missedSegments = (Set<Integer>) parameters[i++];

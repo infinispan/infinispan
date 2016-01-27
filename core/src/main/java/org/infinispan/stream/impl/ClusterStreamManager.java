@@ -7,14 +7,13 @@ import org.infinispan.remoting.transport.Address;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
  * Manages distribution of various stream operations that are sent to remote nodes.  Note usage of any operations
- * should <b>always</b> be accompanied with a subsequent call to {@link ClusterStreamManager#forgetOperation(UUID)}
+ * should <b>always</b> be accompanied with a subsequent call to {@link ClusterStreamManager#forgetOperation(Object)}
  * so that the operation is fully released.  This is important especially for early terminating operations.
  * @param <K> The key type for the underlying cache
  */
@@ -66,7 +65,7 @@ public interface ClusterStreamManager<K> {
     * @param <R> the type of response
     * @return the operation id to be used for further calls
     */
-   <R> UUID remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+   <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
            Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
            TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate);
 
@@ -85,7 +84,7 @@ public interface ClusterStreamManager<K> {
     * @param <R> the type of response
     * @return the operation id to be used for further calls
     */
-   <R> UUID remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+   <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
            Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
            TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate);
 
@@ -103,7 +102,7 @@ public interface ClusterStreamManager<K> {
     * @param <R> the type of response
     * @return the operation id to be used for further calls
     */
-   <R> UUID remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+   <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
            Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback);
 
@@ -121,7 +120,7 @@ public interface ClusterStreamManager<K> {
     * @param <R2> the type of response
     * @return the operation id to be used for further calls
     */
-   <R2> UUID remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+   <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
                                                  Set<Integer> segments, Set<K> keysToInclude,
                                                  Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
                                                  KeyTrackingTerminalOperation<K, ?, R2> operation,
@@ -132,24 +131,24 @@ public interface ClusterStreamManager<K> {
     * @param id the id of the operation that was returned from the invocation
     * @return whether or not it is completed
     */
-   boolean isComplete(UUID id);
+   boolean isComplete(Object id);
 
    /**
     * Awaits completion of the given request.  Returns true when the request completes otherwise returns false after
     * the time elapses
-    * @param id the ide of the operation that was returned from the invocation
-    * @param time how long to wait before returning false
+    * @param id the ide of the operation that was returned from the invocation - must be non null
+    * @param time how long to wait before returning false - must be greater than 0
     * @param unit controls how long the time wait is
     * @return whether or not the request is complete
     */
-   boolean awaitCompletion(UUID id, long time, TimeUnit unit) throws InterruptedException;
+   boolean awaitCompletion(Object id, long time, TimeUnit unit) throws InterruptedException;
 
    /**
     * Frees any resources related to this operation and signals to any ongoing remote operations to no longer continue
     * processing
-    * @param id the ide of the operation that was returned from the invocation
+    * @param id the ide of the operation that was returned from the invocation - can be null in which case this is a noop
     */
-   void forgetOperation(UUID id);
+   void forgetOperation(Object id);
 
    /**
     * Receives a response for a given request
@@ -161,5 +160,5 @@ public interface ClusterStreamManager<K> {
     * @param <R1> The type of the response
     * @return Whether or not the operation should continue operating, only valid if complete was false
     */
-   <R1> boolean receiveResponse(UUID id, Address origin, boolean complete, Set<Integer> segments, R1 response);
+   <R1> boolean receiveResponse(Object id, Address origin, boolean complete, Set<Integer> segments, R1 response);
 }

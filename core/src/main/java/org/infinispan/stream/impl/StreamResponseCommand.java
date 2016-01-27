@@ -17,7 +17,7 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
 
    protected ClusterStreamManager csm;
 
-   protected UUID id;
+   protected Object id;
    protected boolean complete;
    protected R response;
 
@@ -28,7 +28,7 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public StreamResponseCommand(String cacheName, Address origin, UUID id, boolean complete, R response) {
+   public StreamResponseCommand(String cacheName, Address origin, Object id, boolean complete, R response) {
       super(cacheName);
       setOrigin(origin);
       this.id = id;
@@ -61,7 +61,7 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
       setOrigin((Address) parameters[i++]);
-      id = (UUID) parameters[i++];
+      id = parameters[i++];
       complete = (Boolean) parameters[i++];
       response = (R) parameters[i++];
    }
