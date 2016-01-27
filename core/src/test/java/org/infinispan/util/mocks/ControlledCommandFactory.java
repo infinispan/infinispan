@@ -393,7 +393,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K> StreamRequestCommand<K> buildStreamRequestCommand(UUID id, boolean parallelStream,
+   public <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream,
            StreamRequestCommand.Type type, Set<Integer> segments, Set<K> keys, Set<K> excludedKeys,
            boolean includeLoader, Object terminalOperation) {
       return actual.buildStreamRequestCommand(id, parallelStream, type, segments, keys, excludedKeys, includeLoader,
@@ -401,7 +401,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <R> StreamResponseCommand<R> buildStreamResponseCommand(UUID identifier, boolean complete,
+   public <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete,
                                                                   Set<Integer> lostSegments, R response) {
       return actual.buildStreamResponseCommand(identifier, complete, lostSegments, response);
    }

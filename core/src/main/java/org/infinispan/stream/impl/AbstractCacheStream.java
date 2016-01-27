@@ -267,18 +267,20 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       ConsistentHash ch = dm.getConsistentHash();
       TerminalOperation<R> op = new SingleRunOperation<>(intermediateOperations,
               supplierForSegments(ch, segmentsToFilter, null), function);
-      UUID id = csm.remoteStreamOperation(getParallelDistribution(), parallel, ch, segmentsToFilter, keysToFilter,
+      Object id = csm.remoteStreamOperation(getParallelDistribution(), parallel, ch, segmentsToFilter, keysToFilter,
               Collections.emptyMap(), includeLoader, op, remoteResults, earlyTerminatePredicate);
       try {
          R localValue = op.performOperation();
          remoteResults.onCompletion(null, Collections.emptySet(), localValue);
-         try {
-            if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
-                    !csm.awaitCompletion(id, timeout, timeoutUnit)) {
-               throw new TimeoutException();
+         if (id != null) {
+            try {
+               if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
+                       !csm.awaitCompletion(id, timeout, timeoutUnit)) {
+                  throw new TimeoutException();
+               }
+            } catch (InterruptedException e) {
+               throw new CacheException(e);
             }
-         } catch (InterruptedException e) {
-            throw new CacheException(e);
          }
 
          log.tracef("Finished operation for id %s", id);
@@ -294,7 +296,6 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       Set<Integer> segmentsToProcess = segmentsToFilter;
       TerminalOperation<R> op;
       do {
-         remoteResults.lostSegments.clear();
          ConsistentHash ch = dm.getReadConsistentHash();
          if (retryOnRehash) {
             op = new SegmentRetryingOperation<>(intermediateOperations, supplierForSegments(ch, segmentsToProcess,
@@ -303,7 +304,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
             op = new SingleRunOperation<>(intermediateOperations, supplierForSegments(ch, segmentsToProcess, null),
                     function);
          }
-         UUID id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
+         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
                  keysToFilter, Collections.emptyMap(), includeLoader, op, remoteResults, earlyTerminatePredicate);
          try {
             R localValue;
@@ -326,17 +327,20 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
                // This isn't actually used because localRun short circuits first
                localValue = null;
             }
-            try {
-               if ((!localRun || earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
-                       !csm.awaitCompletion(id,  timeout, timeoutUnit)) {
-                  throw new TimeoutException();
+            if (id != null) {
+               try {
+                  if ((!localRun || earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
+                          !csm.awaitCompletion(id, timeout, timeoutUnit)) {
+                     throw new TimeoutException();
+                  }
+               } catch (InterruptedException e) {
+                  throw new CacheException(e);
                }
-            } catch (InterruptedException e) {
-               throw new CacheException(e);
             }
 
-            segmentsToProcess = new HashSet<>(remoteResults.lostSegments);
-            if (!segmentsToProcess.isEmpty()) {
+            if (!remoteResults.lostSegments.isEmpty()) {
+               segmentsToProcess = new HashSet<>(remoteResults.lostSegments);
+               remoteResults.lostSegments.clear();
                log.tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
             } else {
                log.tracef("Finished rehash aware operation for id %s", id);
@@ -344,7 +348,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          } finally {
             csm.forgetOperation(id);
          }
-      } while (!remoteResults.lostSegments.isEmpty());
+      } while (segmentsToProcess != null && !segmentsToProcess.isEmpty());
 
       return remoteResults.currentValue;
    }
@@ -379,7 +383,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          KeyTrackingTerminalOperation<Object, T, Object> op = getForEach(consumer, supplierForSegments(ch,
                  segmentsToProcess, excludedKeys));
          op.handleInjection(registry);
-         UUID id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
+         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
                  keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray), includeLoader, op,
                  results);
          try {
@@ -398,12 +402,14 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
                   results.onIntermediateResult(null, localValue);
                }
             }
-            try {
-               if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
-                  throw new TimeoutException();
+            if (id != null) {
+               try {
+                  if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
+                     throw new TimeoutException();
+                  }
+               } catch (InterruptedException e) {
+                  throw new CacheException(e);
                }
-            } catch (InterruptedException e) {
-               throw new CacheException(e);
             }
             if (!results.lostSegments.isEmpty()) {
                segmentsToProcess = new HashSet<>(results.lostSegments);
@@ -565,12 +571,14 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       }
 
       @Override
-      public synchronized Set<Integer> onIntermediateResult(Address address, R results) {
+      public Set<Integer> onIntermediateResult(Address address, R results) {
          if (results != null) {
-            if (currentValue != null) {
-               currentValue = binaryOperator.apply(currentValue, results);
-            } else {
-               currentValue = results;
+            synchronized (this) {
+               if (currentValue != null) {
+                  currentValue = binaryOperator.apply(currentValue, results);
+               } else {
+                  currentValue = results;
+               }
             }
          }
          return null;
@@ -578,9 +586,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
 
       @Override
       public void onCompletion(Address address, Set<Integer> completedSegments, R results) {
-         if (results != null) {
-            onIntermediateResult(address, results);
-         }
+         onIntermediateResult(address, results);
       }
 
       @Override

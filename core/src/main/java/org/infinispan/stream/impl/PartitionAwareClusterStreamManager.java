@@ -59,13 +59,13 @@ public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerI
    }
 
    @Override
-   public boolean awaitCompletion(UUID id, long time, TimeUnit unit) throws InterruptedException {
+   public boolean awaitCompletion(Object id, long time, TimeUnit unit) throws InterruptedException {
       checkPartitionStatus();
       return super.awaitCompletion(id, time, unit);
    }
 
    @Override
-   public <R> UUID remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
            Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
            TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
       checkPartitionStatus();
@@ -74,7 +74,7 @@ public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerI
    }
 
    @Override
-   public <R> UUID remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
            Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
       checkPartitionStatus();
@@ -83,7 +83,7 @@ public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerI
    }
 
    @Override
-   public <R> UUID remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
+   public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
            ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
            boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
            Predicate<? super R> earlyTerminatePredicate) {
@@ -93,7 +93,7 @@ public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerI
    }
 
    @Override
-   public <R2> UUID remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
+   public <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
            ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
            boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation,
            ResultsCallback<Map<K, R2>> callback) {

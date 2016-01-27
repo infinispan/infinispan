@@ -395,7 +395,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    @Override
    public Optional<R> findAny() {
       R value = performOperation(TerminalFunctions.findAnyFunction(), false, (r1, r2) -> r1 == null ? r2 : r1,
-              a -> a != null);
+              Objects::nonNull);
       return Optional.ofNullable(value);
    }
 
@@ -445,7 +445,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       CollectionConsumer<R> remoteResults = new CollectionConsumer<>(consumer);
       ConsistentHash ch = dm.getConsistentHash();
 
-      boolean stayLocal = ch.getMembers().contains(localAddress) && segmentsToFilter != null
+      boolean runLocal = ch.getMembers().contains(localAddress);
+      boolean stayLocal = runLocal && segmentsToFilter != null
               && ch.getSegmentsForOwner(localAddress).containsAll(segmentsToFilter);
 
       NoMapIteratorOperation<?, R> op = new NoMapIteratorOperation<>(intermediateOperations, supplierForSegments(ch,
@@ -455,24 +456,32 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       executor.execute(() -> {
          try {
             log.tracef("Thread %s submitted iterator request for stream", thread);
-            Collection<R> localValue = op.performOperation(remoteResults);
-            remoteResults.onCompletion(null, Collections.emptySet(), localValue);
-            if (!stayLocal) {
-               UUID id = csm.remoteStreamOperation(iteratorParallelDistribute, parallel, ch, segmentsToFilter,
-                       keysToFilter, Collections.emptyMap(), includeLoader, op, remoteResults);
-               supplier.pending = id;
-               try {
-                  try {
-                     if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
-                        throw new TimeoutException();
-                     }
-                  } catch (InterruptedException e) {
-                     throw new CacheException(e);
-                  }
 
-               } finally {
-                  csm.forgetOperation(id);
+            if (!stayLocal) {
+               Object id = csm.remoteStreamOperation(iteratorParallelDistribute, parallel, ch, segmentsToFilter,
+                       keysToFilter, Collections.emptyMap(), includeLoader, op, remoteResults);
+               // Make sure to run this after we submit to the manager so it can process the other nodes
+               // asynchronously with the local operation
+               Collection<R> localValue = op.performOperation(remoteResults);
+               remoteResults.onCompletion(null, Collections.emptySet(), localValue);
+               if (id != null) {
+                  supplier.pending = id;
+                  try {
+                     try {
+                        if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
+                           throw new TimeoutException();
+                        }
+                     } catch (InterruptedException e) {
+                        throw new CacheException(e);
+                     }
+
+                  } finally {
+                     csm.forgetOperation(id);
+                  }
                }
+            } else {
+               Collection<R> localValue = op.performOperation(remoteResults);
+               remoteResults.onCompletion(null, Collections.emptySet(), localValue);
             }
             supplier.close();
          } catch (CacheException e) {
@@ -526,21 +535,25 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                        intermediateOperations, supplierForSegments(ch, segmentsToProcess, excludedKeys, !stayLocal),
                        distributedBatchSize);
                if (!stayLocal) {
-                  UUID id = csm.remoteStreamOperationRehashAware(iteratorParallelDistribute, parallel, ch,
+                  Object id = csm.remoteStreamOperationRehashAware(iteratorParallelDistribute, parallel, ch,
                           segmentsToProcess, keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray),
                           includeLoader, op, results);
-                  supplier.pending = id;
+                  if (id != null) {
+                     supplier.pending = id;
+                  }
                   try {
                      if (runLocal) {
                         performLocalRehashAwareOperation(results, segmentsToProcess, ch, segments, op,
                                 () -> ch.getPrimarySegmentsForOwner(localAddress), id);
                      }
-                     try {
-                        if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
-                           throw new TimeoutException();
+                     if (id != null) {
+                        try {
+                           if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
+                              throw new TimeoutException();
+                           }
+                        } catch (InterruptedException e) {
+                           throw new CacheException(e);
                         }
-                     } catch (InterruptedException e) {
-                        throw new CacheException(e);
                      }
                      segmentsToProcess = segmentsToProcess(supplier, results, segmentsToProcess, id);
                   } finally {
@@ -563,7 +576,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    private Set<Integer> segmentsToProcess(IteratorSupplier<R> supplier, KeyTrackingConsumer<Object, R> results,
-                                          Set<Integer> segmentsToProcess, UUID id) {
+                                          Set<Integer> segmentsToProcess, Object id) {
       String strId = id == null ? "local" : id.toString();
       if (!results.lostSegments.isEmpty()) {
          segmentsToProcess = new HashSet<>(results.lostSegments);
@@ -582,7 +595,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                                                  Set<Integer> segments,
                                                  KeyTrackingTerminalOperation<Object, R, Object> op,
                                                  Supplier<Set<Integer>> ownedSegmentsSupplier,
-                                                 UUID id) {
+                                                 Object id) {
       Collection<CacheEntry<Object, Object>> localValue = op.performOperationRehashAware(results);
       // TODO: we can do this more efficiently - this hampers performance during rehash
       if (dm.getReadConsistentHash().equals(ch)) {
@@ -672,7 +685,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       private final ClusterStreamManager<?> clusterStreamManager;
 
       CacheException exception;
-      volatile UUID pending;
+      volatile Object pending;
 
       private Consumer<R> consumer;
 

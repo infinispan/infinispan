@@ -3,7 +3,6 @@ package org.infinispan.stream.impl;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Stream manager that is invoked on a local node.  This is normally called due to a {@link ClusterStreamManager} from
@@ -23,7 +22,7 @@ public interface LocalStreamManager<K> {
     * @param operation the operation to perform
     * @param <R> the type of value from the operation
     */
-   <R> void streamOperation(UUID requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, TerminalOperation<R> operation);
 
    /**
@@ -38,7 +37,7 @@ public interface LocalStreamManager<K> {
     * @param operation the operation to perform
     * @param <R> the type of value from the operation
     */
-   <R> void streamOperationRehashAware(UUID requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   <R> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, TerminalOperation<R> operation);
 
    /**
@@ -53,7 +52,7 @@ public interface LocalStreamManager<K> {
     * @param operation the operation to perform
     * @param <R> the type of value from the operation
     */
-   <R> void streamOperation(UUID requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, R, ?> operation);
 
@@ -69,7 +68,7 @@ public interface LocalStreamManager<K> {
     * @param operation the operation to perform
     * @param <R2> the type of response
     */
-   <R2> void streamOperationRehashAware(UUID requestId, Address origin, boolean parallelStream, Set<Integer> segments,
+   <R2> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, ?, R2> operation);
 }
