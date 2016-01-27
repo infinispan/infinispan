@@ -356,6 +356,16 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1500, list.get(0).getAmount(), 0);
    }
 
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014802: 'from' must be an instance of java.lang.Comparable")
+   public void testBetweenArgsAreComparable() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      qf.from(getModelFactory().getTransactionImplClass())
+            .having("date").between(new Object(), new Object())
+            .toBuilder()
+            .build();
+   }
+
    public void testBetween1() throws Exception {
       QueryFactory qf = getQueryFactory();
 

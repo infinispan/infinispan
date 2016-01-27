@@ -140,5 +140,5 @@ public interface FilterConditionEndContext {
     * @param to   the end of the range
     * @return the RangeConditionContext context
     */
-   RangeConditionContext between(Object from, Object to);   //todo [anistor] from/to should be comparable and from <= to
+   RangeConditionContext between(Object from, Object to);
 }
