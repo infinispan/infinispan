@@ -16,7 +16,7 @@ import static org.jboss.logging.Logger.Level.*;
 
 /**
  * Log abstraction for the query module. For this module, message ids
- * ranging from 14001 to 15000 inclusively have been reserved.
+ * ranging from 14001 to 14800 inclusively have been reserved.
  *
  * @author Galder Zamarreño
  * @author Sanne Grinovero

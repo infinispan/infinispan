@@ -1,10 +1,15 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 abstract class OperatorAndArgument<ArgumentType> implements Visitable {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, OperatorAndArgument.class.getName());
 
    protected final AttributeCondition attributeCondition;
 
@@ -26,7 +31,7 @@ abstract class OperatorAndArgument<ArgumentType> implements Visitable {
    //todo [anistor] must also validate that the argument type is compatible with the operator
    void validate() {
       if (argument == null) {
-         throw new IllegalArgumentException("argument cannot be null");
+         throw log.argumentCannotBeNull();
       }
    }
 

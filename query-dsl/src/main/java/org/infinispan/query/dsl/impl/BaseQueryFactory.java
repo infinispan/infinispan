@@ -6,12 +6,16 @@ import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 public abstract class BaseQueryFactory<T extends Query> implements QueryFactory<T> {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, BaseQueryFactory.class.getName());
 
    @Override
    public FilterConditionEndContext having(String attributePath) {
@@ -31,7 +35,7 @@ public abstract class BaseQueryFactory<T extends Query> implements QueryFactory<
    @Override
    public FilterConditionContext not(FilterConditionContext fcc) {
       if (fcc == null) {
-         throw new IllegalArgumentException("Argument cannot be null");
+         throw log.argumentCannotBeNull();
       }
 
       BaseCondition baseCondition = ((BaseCondition) fcc).getRoot();
