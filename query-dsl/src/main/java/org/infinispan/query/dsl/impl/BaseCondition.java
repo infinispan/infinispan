@@ -5,12 +5,16 @@ import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 abstract class BaseCondition implements FilterConditionContext, Visitable {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, BaseCondition.class.getName());
 
    protected BaseCondition parent = null;
 
@@ -27,7 +31,7 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
       if (queryBuilder == null) {
          throw new IllegalStateException("This sub-query does not belong to a parent query builder yet");
       }
-      return (QueryBuilder<T>)queryBuilder;
+      return (QueryBuilder<T>) queryBuilder;
    }
 
    void setQueryBuilder(QueryBuilder queryBuilder) {
@@ -86,7 +90,7 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
 
    private void combine(boolean isConjunction, FilterConditionContext fcc) {
       if (fcc == null) {
-         throw new IllegalArgumentException("Argument cannot be null");
+         throw log.argumentCannotBeNull();
       }
 
       BaseCondition rightCondition = ((BaseCondition) fcc).getRoot();
