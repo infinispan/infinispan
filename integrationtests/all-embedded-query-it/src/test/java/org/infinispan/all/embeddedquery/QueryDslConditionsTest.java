@@ -372,6 +372,16 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(1500, list.get(0).getAmount(), 0);
    }
 
+   @Test(expected = IllegalArgumentException.class)
+   public void testBetweenArgsAreComparable() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      qf.from(getModelFactory().getTransactionImplClass())
+            .having("date").between(new Object(), new Object())
+            .toBuilder()
+            .build();
+   }
+
    @Test
    public void testBetween1() throws Exception {
       QueryFactory qf = getQueryFactory();

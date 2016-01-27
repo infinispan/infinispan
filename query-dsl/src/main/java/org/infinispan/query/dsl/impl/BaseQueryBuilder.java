@@ -8,6 +8,8 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +19,8 @@ import java.util.List;
  * @since 6.0
  */
 public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<T>, Visitable {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, BaseQueryBuilder.class.getName());
 
    protected final QueryFactory queryFactory;
 
@@ -213,7 +217,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    @Override
    public FilterConditionContext not(FilterConditionContext fcc) {
       if (fcc == null) {
-         throw new IllegalArgumentException("Argument cannot be null");
+         throw log.argumentCannotBeNull();
       }
 
       if (filterCondition != null) {

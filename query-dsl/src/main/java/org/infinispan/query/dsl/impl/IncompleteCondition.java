@@ -6,12 +6,16 @@ import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 class IncompleteCondition extends BaseCondition implements FilterConditionBeginContext {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, IncompleteCondition.class.getName());
 
    private boolean isNegated = false;
 
@@ -69,7 +73,7 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
    @Override
    public FilterConditionContext not(FilterConditionContext fcc) {
       if (fcc == null) {
-         throw new IllegalArgumentException("Argument cannot be null");
+         throw log.argumentCannotBeNull();
       }
 
       if (filterCondition != null) {
