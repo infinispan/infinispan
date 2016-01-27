@@ -4,8 +4,11 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
+import org.infinispan.topology.PersistentUUID;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -30,6 +33,8 @@ import java.util.Set;
  */
 public class ReplicatedConsistentHash implements ConsistentHash {
 
+   private static final String STATE_PRIMARY_OWNERS = "primaryOwners.%d";
+   private static final String STATE_PRIMARY_OWNERS_COUNT = "primaryOwners";
    private final Hash hashFunction;
    private final int[] primaryOwners;
    private final List<Address> members;
@@ -42,12 +47,16 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       this.members = Collections.unmodifiableList(new ArrayList<>(members));
       this.membersSet = Collections.unmodifiableSet(new HashSet<>(members));
       this.primaryOwners = primaryOwners;
+      segments = computeSegments(primaryOwners);
+      segmentSize = Util.getSegmentSize(primaryOwners.length);
+   }
+
+   private Set<Integer> computeSegments(int[] primaryOwners) {
       Set<Integer> segmentIds = new HashSet<>(primaryOwners.length);
       for (int i = 0; i < primaryOwners.length; i++) {
          segmentIds.add(i);
       }
-      segments = Collections.unmodifiableSet(segmentIds);
-      segmentSize = Util.getSegmentSize(primaryOwners.length);
+      return Collections.unmodifiableSet(segmentIds);
    }
 
    public ReplicatedConsistentHash union(ReplicatedConsistentHash ch2) {
@@ -74,6 +83,28 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       }
 
       return new ReplicatedConsistentHash(this.getHashFunction(), unionMembers, primaryOwners);
+   }
+ 
+   ReplicatedConsistentHash(ScopedPersistentState state) {
+      this.hashFunction = Util.getInstance(state.getProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION), null);
+      int numMembers = Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
+      this.members = new ArrayList<>(numMembers);
+      for(int i = 0; i < numMembers; i++) {
+         PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
+         Address address = JGroupsAddressCache.fromPersistentUUID(uuid);
+         if (address == null) {
+            throw new IllegalStateException("Unknown address for "+uuid);
+         }
+         this.members.add(address);
+      }
+      this.membersSet = Collections.unmodifiableSet(new HashSet<>(this.members));
+      int numPrimaryOwners = state.getIntProperty(STATE_PRIMARY_OWNERS_COUNT);
+      this.primaryOwners = new int[numPrimaryOwners];
+      for (int i = 0; i < numPrimaryOwners; i++) {
+         this.primaryOwners[i] = state.getIntProperty(String.format(STATE_PRIMARY_OWNERS, i));
+      }
+      segments = computeSegments(primaryOwners);
+      segmentSize = Util.getSegmentSize(primaryOwners.length);
    }
 
    @Override
@@ -177,8 +208,23 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
+
    public boolean isReplicated() {
       return true;
+   }
+
+   public void toScopedState(ScopedPersistentState state) {
+      state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
+      state.setProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION, hashFunction.getClass().getName());
+      state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, Integer.toString(members.size()));
+      for (int i = 0; i < members.size(); i++) {
+         state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
+               JGroupsAddressCache.getPersistentUUID(members.get(i)).toString());
+      }
+      state.setProperty(STATE_PRIMARY_OWNERS_COUNT, Integer.toString(primaryOwners.length));
+      for (int i = 0; i < primaryOwners.length; i++) {
+         state.setProperty(String.format(STATE_PRIMARY_OWNERS, i), Integer.toString(primaryOwners[i]));
+      }
    }
 
    @Override

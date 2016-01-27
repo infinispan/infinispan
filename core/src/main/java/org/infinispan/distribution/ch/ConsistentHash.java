@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
@@ -51,6 +51,7 @@ public interface ConsistentHash {
     * @deprecated Since 8.2, the {@code Hash} is optional - replaced in the configuration by the
     * {@code KeyPartitioner}
     */
+   @Deprecated
    default Hash getHashFunction() {
       throw new UnsupportedOperationException();
    }
@@ -172,4 +173,13 @@ public interface ConsistentHash {
     * Returns a string containing all the segments and their associated addresses.
     */
    String getRoutingTableAsString();
+
+   /**
+     * Writes this ConsistentHash to the specified scoped state.
+     *
+     * @param state the state to which this ConsistentHash will be written
+     */
+   default void toScopedState(ScopedPersistentState state) {
+      throw new UnsupportedOperationException();
+   }
 }

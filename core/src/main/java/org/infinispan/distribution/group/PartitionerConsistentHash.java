@@ -4,6 +4,7 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.List;
@@ -94,6 +95,11 @@ public class PartitionerConsistentHash implements ConsistentHash {
 
    public KeyPartitioner getKeyPartitioner() {
       return keyPartitioner;
+   }
+
+   @Override
+   public void toScopedState(ScopedPersistentState state) {
+      ch.toScopedState(state);
    }
 
    @Override

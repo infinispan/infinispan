@@ -1,5 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.util.Map.Entry;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.topology.PersistentUUID;
@@ -16,7 +18,7 @@ import org.jgroups.util.UUID;
 public class JGroupsAddressCache {
    private static final EquivalentConcurrentHashMapV8<org.jgroups.Address, JGroupsAddress> addressCache =
          new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
-   private static final EquivalentConcurrentHashMapV8<org.jgroups.Address, PersistentUUID> persistentUUIDCache =
+   private static final EquivalentConcurrentHashMapV8<JGroupsAddress, PersistentUUID> persistentUUIDCache =
          new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
 
    // HACK: Avoid the org.jgroups.Address reference in the signature so that local caches can work without the jgroups jar.
@@ -37,14 +39,20 @@ public class JGroupsAddressCache {
       });
    }
 
-   public static void putAddressPersistentUUID(Object address, PersistentUUID localUUID) {
-      final Address jgAddress = ((JGroupsAddress) address).address;
-      persistentUUIDCache.put(jgAddress, localUUID);
+   public static void putAddressPersistentUUID(Object address, PersistentUUID uuid) {
+      persistentUUIDCache.put((JGroupsAddress) address, uuid);
    }
 
    public static PersistentUUID getPersistentUUID(Object address) {
-      final Address jgAddress = ((JGroupsAddress) address).address;
-      return persistentUUIDCache.get(jgAddress);
+      return persistentUUIDCache.get(address);
+   }
+
+   public static org.infinispan.remoting.transport.Address fromPersistentUUID(PersistentUUID uuid) {
+      for(Entry<JGroupsAddress, PersistentUUID> entry : persistentUUIDCache.entrySet()) {
+         if(entry.getValue().equals(uuid))
+            return entry.getKey();
+      }
+      return null;
    }
 
    static void pruneAddressCache() {
@@ -55,5 +63,10 @@ public class JGroupsAddressCache {
             persistentUUIDCache.remove(address);
          }
       });
+   }
+
+   public static void flushAddressCaches() {
+      addressCache.clear();
+      persistentUUIDCache.clear();
    }
 }

@@ -1385,5 +1385,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Could not migrate data for cache %s, check remote store config in the target cluster", id = 397)
    CacheException couldNotMigrateData(String name);
 
+   @Message(value ="CH Factory '%s' cannot restore a persisted CH of class '%s'", id = 398)
+   IllegalStateException persistentConsistentHashMismatch(String hashFactory, String consistentHashClass);
 }
 

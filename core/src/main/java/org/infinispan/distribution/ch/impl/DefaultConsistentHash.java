@@ -6,8 +6,11 @@ import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
+import org.infinispan.topology.PersistentUUID;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -21,8 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Default {@link ConsistentHash} implementation. This object is immutable.
@@ -33,6 +34,14 @@ import java.util.stream.IntStream;
  */
 @Immutable
 public class DefaultConsistentHash implements ConsistentHash {
+   // State constants
+   private static final String STATE_CAPACITY_FACTOR = "capacityFactor.%d";
+   private static final String STATE_CAPACITY_FACTORS = "capacityFactors";
+   private static final String STATE_NUM_OWNERS = "numOwners";
+   private static final String STATE_NUM_SEGMENTS = "numSegments";
+   private static final String STATE_SEGMENT_OWNER = "segmentOwner.%d.%d";
+   private static final String STATE_SEGMENT_OWNERS = "segmentOwners";
+   private static final String STATE_SEGMENT_OWNER_COUNT = "segmentOwner.%d.num";
 
    private final Hash hashFunction;
    private final int numOwners;
@@ -98,6 +107,37 @@ public class DefaultConsistentHash implements ConsistentHash {
       this.segmentSize = Util.getSegmentSize(numSegments);
    }
 
+   DefaultConsistentHash(ScopedPersistentState state) {
+      this.numOwners = Integer.parseInt(state.getProperty(STATE_NUM_OWNERS));
+      int numMembers = Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
+      this.members = new ArrayList<>(numMembers);
+      for(int i = 0; i < numMembers; i++) {
+         PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
+         Address address = JGroupsAddressCache.fromPersistentUUID(uuid);
+         if (address == null) {
+            throw new IllegalStateException("Unknown address for "+uuid);
+         }
+         this.members.add(address);
+      }
+      int numSegments = state.getIntProperty(STATE_NUM_SEGMENTS);
+      this.segmentSize = Util.getSegmentSize(numSegments);
+      this.segmentOwners = new List[numSegments];
+      for (int i = 0; i < segmentOwners.length; i++) {
+         int segmentOwnerCount = Integer.parseInt(state.getProperty(String.format(STATE_SEGMENT_OWNER_COUNT, i)));
+         segmentOwners[i] = new ArrayList<>();
+         for (int j = 0; j < segmentOwnerCount; j++) {
+            PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(STATE_SEGMENT_OWNER, i, j)));
+            segmentOwners[i].add(JGroupsAddressCache.fromPersistentUUID(uuid));
+         }
+      }
+      int numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
+      this.capacityFactors = new float[numCapacityFactors];
+      for (int i = 0; i < numCapacityFactors; i++) {
+         this.capacityFactors[i] = Float.parseFloat(state.getProperty(String.format(STATE_CAPACITY_FACTOR, i)));
+      }
+      this.hashFunction = Util.getInstance(state.getProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION), null);
+   }
+
    @Override
    public Hash getHashFunction() {
       return hashFunction;
@@ -157,6 +197,7 @@ public class DefaultConsistentHash implements ConsistentHash {
    /**
     * @deprecated Since 8.2, use {@link HashFunctionPartitioner#getSegmentEndHashes()} instead.
     */
+   @Deprecated
    public List<Integer> getSegmentEndHashes() {
       int numSegments = segmentOwners.length;
       List<Integer> hashes = new ArrayList<Integer>(numSegments);
@@ -369,6 +410,32 @@ public class DefaultConsistentHash implements ConsistentHash {
          }
       }
       return sb.toString();
+   }
+
+   @Override
+   public void toScopedState(ScopedPersistentState state) {
+      state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
+      state.setProperty(STATE_NUM_OWNERS, numOwners);
+      state.setProperty(STATE_NUM_SEGMENTS, getNumSegments());;
+      state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, members.size());
+      for (int i = 0; i < members.size(); i++) {
+         state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
+               JGroupsAddressCache.getPersistentUUID(members.get(i)).toString());
+      }
+      state.setProperty(STATE_CAPACITY_FACTORS, capacityFactors.length);
+      for (int i = 0; i < capacityFactors.length; i++) {
+         state.setProperty(String.format(STATE_CAPACITY_FACTOR, i), capacityFactors[i]);
+      }
+      state.setProperty(STATE_SEGMENT_OWNERS, segmentOwners.length);
+      for (int i = 0; i < segmentOwners.length; i++) {
+         List<Address> segmentOwnerAddresses = segmentOwners[i];
+         state.setProperty(String.format(STATE_SEGMENT_OWNER_COUNT, i), segmentOwnerAddresses.size());
+         for(int j = 0; j < segmentOwnerAddresses.size(); j++) {
+            state.setProperty(String.format(STATE_SEGMENT_OWNER, i, j),
+                  JGroupsAddressCache.getPersistentUUID(segmentOwnerAddresses.get(j)).toString());
+         }
+      }
+      state.setProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION, hashFunction.getClass().getName());
    }
 
    public static class Externalizer extends InstanceReusingAdvancedExternalizer<DefaultConsistentHash> {
