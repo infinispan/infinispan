@@ -1,6 +1,5 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
@@ -8,18 +7,17 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Stream request command that is sent to remote nodes handle execution of remote intermediate and terminal operations.
  * @param <K> the key type
  */
-public class StreamRequestCommand<K> extends BaseRpcCommand implements CancellableCommand, TopologyAffectedCommand {
+public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 47;
 
    private LocalStreamManager lsm;
 
-   private UUID id;
+   private Object id;
    private Type type;
    private boolean parallelStream;
    private Set<Integer> segments;
@@ -39,8 +37,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements Cancellab
       this.topologyId = topologyId;
    }
 
-   @Override
-   public UUID getUUID() {
+   public Object getId() {
       return id;
    }
 
@@ -58,7 +55,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements Cancellab
       super(cacheName);
    }
 
-   public StreamRequestCommand(String cacheName, Address origin, UUID id, boolean parallelStream, Type type,
+   public StreamRequestCommand(String cacheName, Address origin, Object id, boolean parallelStream, Type type,
                                Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
                                Object terminalOperation) {
       super(cacheName);
@@ -116,7 +113,7 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements Cancellab
    public void setParameters(int commandId, Object[] parameters) {
       int i = 0;
       setOrigin((Address) parameters[i++]);
-      id = (UUID) parameters[i++];
+      id = parameters[i++];
       parallelStream = (Boolean) parameters[i++];
       type = (Type) parameters[i++];
       segments = (Set<Integer>) parameters[i++];
