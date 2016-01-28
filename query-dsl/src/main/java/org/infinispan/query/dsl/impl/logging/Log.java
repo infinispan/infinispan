@@ -19,4 +19,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "'%s' must be an instance of java.lang.Comparable", id = 14802)
    IllegalArgumentException argumentMustBeComparable(String argName);
+
+   @Message(value = "Parameter name cannot be null or empty", id = 14803)
+   IllegalArgumentException parameterNameCannotBeNulOrEmpty();
 }
