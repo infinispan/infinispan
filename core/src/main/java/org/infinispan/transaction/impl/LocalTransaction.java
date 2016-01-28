@@ -145,8 +145,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       return "LocalTransaction{" +
             "remoteLockedNodes=" + remoteLockedNodes +
             ", isMarkedForRollback=" + isMarkedForRollback() +
-            ", lockedKeys=" + lockedKeys +
-            ", backupKeyLocks=" + backupKeyLocks +
+            ", lockedKeys=" + getLockedKeys() +
+            ", backupKeyLocks=" + getBackupLockedKeys() +
             ", topologyId=" + topologyId +
             ", stateTransferFlag=" + getStateTransferFlag() +
             "} " + super.toString();

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.infinispan.commons.util.Util.toStr;
@@ -56,10 +57,10 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    protected Set<Object> affectedKeys = null;
 
    /** Holds all the keys that were actually locked on the local node. */
-   protected volatile Set<Object> lockedKeys = null;
+   private final AtomicReference<Set<Object>> lockedKeys = new AtomicReference<>();
 
    /** Holds all the locks for which the local node is a secondary data owner. */
-   protected volatile Set<Object> backupKeyLocks = null;
+   private final AtomicReference<Set<Object>> backupKeyLocks = new AtomicReference<>();
 
    protected final int topologyId;
 
@@ -211,33 +212,34 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void addBackupLockForKey(Object key) {
-      // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-      if (backupKeyLocks == null) backupKeyLocks = Collections.synchronizedSet(new HashSet<>(INITIAL_LOCK_CAPACITY));
-      backupKeyLocks.add(key);
+      // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
+      final Set<Object> keys = backupKeyLocks.updateAndGet((value) -> value == null ? Collections.synchronizedSet(new HashSet<>(INITIAL_LOCK_CAPACITY)) : value);
+      keys.add(key);
    }
 
    public void registerLockedKey(Object key) {
-      // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-      if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence));
+      // we need a synchronized collection to be able to get a valid snapshot from another thread during state transfer
+      final Set<Object> keys = lockedKeys.updateAndGet((value) -> value == null ? Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence)) : value);
       if (trace) log.tracef("Registering locked key: %s", toStr(key));
-      lockedKeys.add(key);
+      keys.add(key);
    }
 
    @Override
    public Set<Object> getLockedKeys() {
-      return lockedKeys == null ? InfinispanCollections.emptySet() : lockedKeys;
+      final Set<Object> keys = lockedKeys.get();
+      return keys == null ? InfinispanCollections.emptySet() : keys;
    }
 
    @Override
    public Set<Object> getBackupLockedKeys() {
-      return backupKeyLocks == null ?
-            InfinispanCollections.emptySet() : backupKeyLocks;
+      final Set<Object> keys = backupKeyLocks.get();
+      return keys == null ? InfinispanCollections.emptySet() : keys;
    }
 
    @Override
    public void clearLockedKeys() {
       if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys));
-      lockedKeys = null;
+      lockedKeys.set(null);
    }
 
    @Override
@@ -375,9 +377,9 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public CompletableFuture<Void> getReleaseFutureForKey(Object key) {
-      if (lockedKeys != null && lockedKeys.contains(key)) {
+      if (getLockedKeys().contains(key)) {
          return txCompleted;
-      } else if (backupKeyLocks != null && backupKeyLocks.contains(key)) {
+      } else if (getBackupLockedKeys().contains(key)) {
          return backupLockReleased;
       }
       return null;
@@ -400,12 +402,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void cleanupBackupLocks() {
-      if (backupKeyLocks != null) {
-         synchronized (backupKeyLocks) {
+      backupKeyLocks.getAndUpdate((value) -> {
+         if (value != null) {
             backupLockReleased.complete(null);
             backupLockReleased = new CompletableFuture<>();
-            backupKeyLocks.clear();
+            value.clear();
          }
-      }
+         return value;
+      });
    }
 }
