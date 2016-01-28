@@ -163,6 +163,74 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       remoteCache.removeClientListener(listener);
    }
 
+   public void testEventFilterChangingParameter() throws Exception {
+      User user1 = new UserPB();
+      user1.setId(1);
+      user1.setName("John");
+      user1.setSurname("Doe");
+      user1.setGender(User.Gender.MALE);
+      user1.setAge(22);
+      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setNotes("Lorem ipsum dolor sit amet");
+
+      Address address1 = new AddressPB();
+      address1.setStreet("Main Street");
+      address1.setPostCode("X1234");
+      user1.setAddresses(Collections.singletonList(address1));
+
+      User user2 = new UserPB();
+      user2.setId(2);
+      user2.setName("Spider");
+      user2.setSurname("Man");
+      user2.setGender(User.Gender.MALE);
+      user2.setAge(32);
+      user2.setAccountIds(Collections.singleton(3));
+
+      Address address2 = new AddressPB();
+      address2.setStreet("Old Street");
+      address2.setPostCode("Y12");
+      Address address3 = new AddressPB();
+      address3.setStreet("Bond Street");
+      address3.setPostCode("ZZ");
+      user2.setAddresses(Arrays.asList(address2, address3));
+
+      User user3 = new UserPB();
+      user3.setId(3);
+      user3.setName("Spider");
+      user3.setSurname("Woman");
+      user3.setGender(User.Gender.FEMALE);
+      user3.setAge(31);
+      user3.setAccountIds(Collections.<Integer>emptySet());
+
+      remoteCache.put("user_" + user1.getId(), user1);
+      remoteCache.put("user_" + user2.getId(), user2);
+      remoteCache.put("user_" + user3.getId(), user3);
+      assertEquals(3, remoteCache.size());
+
+      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(client(0));
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query query = qf.from(UserPB.class)
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().select("age")
+            .build()
+            .setParameter("ageParam", 32);
+
+      ClientEntryListener listener = new ClientEntryListener(serCtx);
+      ClientEvents.addClientQueryListener(remoteCache, listener, query);
+      expectElementsInQueue(listener.createEvents, 3);
+
+      remoteCache.removeClientListener(listener);
+
+      query.setParameter("ageParam", 31);
+
+      listener = new ClientEntryListener(serCtx);
+      ClientEvents.addClientQueryListener(remoteCache, listener, query);
+      expectElementsInQueue(listener.createEvents, 2);
+
+      remoteCache.removeClientListener(listener);
+   }
+
    /**
     * Using grouping and aggregation with event filters is not allowed.
     */
