@@ -2,6 +2,8 @@ package org.infinispan.query.dsl.impl;
 
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -12,6 +14,8 @@ import java.util.Set;
  * @since 7.2
  */
 public abstract class BaseQuery implements Query {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, BaseQuery.class.getName());
 
    protected final QueryFactory queryFactory;
 
@@ -49,6 +53,9 @@ public abstract class BaseQuery implements Query {
       if (namedParameters == null) {
          throw new IllegalStateException("Query does not have parameters");
       }
+      if (paramName == null || paramName.isEmpty()) {
+         throw log.parameterNameCannotBeNulOrEmpty();
+      }
       if (!namedParameters.containsKey(paramName)) {
          throw new IllegalArgumentException("No parameter named '" + paramName + "' was found");
       }
@@ -68,9 +75,19 @@ public abstract class BaseQuery implements Query {
       if (namedParameters == null) {
          throw new IllegalStateException("Query does not have parameters");
       }
-      if (!namedParameters.keySet().containsAll(paramValues.keySet())) {
-         Set<String> unknownParams = new HashSet<String>(paramValues.keySet());
-         unknownParams.removeAll(namedParameters.keySet());
+      Set<String> unknownParams = null;
+      for (String paramName : paramValues.keySet()) {
+         if (paramName == null || paramName.isEmpty()) {
+            throw new IllegalArgumentException("Parameter name cannot be null or empty");
+         }
+         if (!namedParameters.containsKey(paramName)) {
+            if (unknownParams == null) {
+               unknownParams = new HashSet<String>();
+            }
+            unknownParams.add(paramName);
+         }
+      }
+      if (unknownParams != null) {
          throw new IllegalArgumentException("No parameters named '" + unknownParams + "' were found");
       }
       namedParameters.putAll(paramValues);
