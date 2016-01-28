@@ -134,6 +134,11 @@
             <artifactId>metainf-services</artifactId>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-tasks</artifactId>
+            <version>${version.org.infinispan}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -146,6 +151,60 @@
                         <goals>
                             <goal>test-jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>serialize_component_metadata</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <classpathScope>compile</classpathScope>
+                            <skip>false</skip>
+                            <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
+                            <arguments>
+                                <argument>${project.build.outputDirectory}</argument>
+                                <argument>${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat</argument>
+                            </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>infinispan.isCoreModule</key>
+                                    <value>false</value>
+                                </systemProperty>
+                            </systemProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant</artifactId>
+                        <version>1.9.4</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>copy_serialized_metadata</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat"
+                                      todir="${project.build.outputDirectory}"/>
+                            </target>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

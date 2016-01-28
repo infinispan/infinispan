@@ -60,14 +60,26 @@ public class TaskContext {
       return parameters(params);
    }
 
+   /**
+    * Marshaller for this task execution
+    * @return optional marshaller
+    */
    public Optional<Marshaller> getMarshaller() {
       return marshaller;
    }
 
+   /**
+    * The default cache. Other caches can be obtained from cache manager ({@link Cache#getCacheManager()})
+    * @return optional cache
+    */
    public Optional<Cache<?, ?>> getCache() {
       return cache;
    }
 
+   /**
+    * Gets a map of named parameters for the task
+    * @return optional map of named parameters for the task
+    */
    public Optional<Map<String, ?>> getParameters() {
       return parameters;
    }

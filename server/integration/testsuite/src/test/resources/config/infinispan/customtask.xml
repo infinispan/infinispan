@@ -1,0 +1,18 @@
+<subsystem xmlns="urn:infinispan:server:core:8.0" >
+    <cache-container
+            name="local"
+            default-cache="taskAccessible">
+        <local-cache
+                name="taskAccessible"
+                start="EAGER"
+                batching="false">
+            <locking
+                    acquire-timeout="20000"
+                    concurrency-level="500"
+                    striping="false" />
+            <transaction mode="NONE" />
+            <compatibility enabled="true"/>
+        </local-cache>
+    </cache-container>
+</subsystem>
+

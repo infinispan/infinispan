@@ -13,6 +13,7 @@
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
         <module name="org.infinispan"/>
+        <module name="org.infinispan.tasks.api"/>
         <module name="org.infinispan.query"/>
         <module name="org.jboss.logging"/>
     </dependencies>

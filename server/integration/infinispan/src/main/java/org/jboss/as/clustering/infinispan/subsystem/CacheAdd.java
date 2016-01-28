@@ -35,6 +35,8 @@ import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactory;
 import org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactoryService;
+import org.infinispan.server.infinispan.task.ServerTaskRegistry;
+import org.infinispan.server.infinispan.task.ServerTaskRegistryService;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -175,6 +177,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         ;
 
         builder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME, DeployedCacheStoreFactory.class, cacheDependencies.getDeployedCacheStoreFactoryInjector());
+        builder.addDependency(ServerTaskRegistryService.SERVICE_NAME, ServerTaskRegistry.class, cacheDependencies.getDeployedTaskRegistryInjector());
 
         return builder.install();
     }
@@ -252,6 +255,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         private final Value<EmbeddedCacheManager> container;
         private final InjectedValue<XAResourceRecoveryRegistry> recoveryRegistry = new InjectedValue<>();
         private final InjectedValue<DeployedCacheStoreFactory> deployedCacheStoreFactory = new InjectedValue<>();
+        private final InjectedValue<ServerTaskRegistry> deployedTaskRegistry = new InjectedValue<>();
 
         CacheDependencies(Value<EmbeddedCacheManager> container) {
             this.container = container;
@@ -263,6 +267,14 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
 
         public InjectedValue<DeployedCacheStoreFactory> getDeployedCacheStoreFactoryInjector() {
            return deployedCacheStoreFactory;
+        }
+
+        public InjectedValue<ServerTaskRegistry> getDeployedTaskRegistryInjector() {
+            return deployedTaskRegistry;
+        }
+
+        public ServerTaskRegistry getDeployedTaskRegistry() {
+            return deployedTaskRegistry.getValue();
         }
 
         @Override

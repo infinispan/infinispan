@@ -63,6 +63,7 @@
       <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
       <module>tasks</module>
+      <module>tasks-api</module>
       <module>scripting</module>
       <module>demos/gui</module>
       <module>demos/distexec</module>
