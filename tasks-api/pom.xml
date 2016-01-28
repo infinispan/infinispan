@@ -9,38 +9,15 @@
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-tasks</artifactId>
-   <name>Infinispan Tasks</name>
-
-   <properties>
-      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-   </properties>
+   <artifactId>infinispan-tasks-api</artifactId>
+   <name>Infinispan Tasks API</name>
 
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
       </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-query</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-tasks-api</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.kohsuke.metainf-services</groupId>
-         <artifactId>metainf-services</artifactId>
-         <optional>true</optional>
-      </dependency>
-   </dependencies>
+  </dependencies>
 
    <build>
       <plugins>
@@ -64,4 +41,5 @@
          </plugin>
       </plugins>
    </build>
+
 </project>

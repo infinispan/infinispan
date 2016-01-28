@@ -6,6 +6,7 @@ import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.ExternalStore;
+import org.infinispan.tasks.ServerTask;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -27,24 +28,34 @@ import org.jboss.modules.ModuleLoader;
 public class ServerExtensionDependenciesProcessor implements DeploymentUnitProcessor {
 
    private static final ModuleIdentifier API = ModuleIdentifier.create("org.infinispan");
+   private static final ModuleIdentifier TASKS_API = ModuleIdentifier.create("org.infinispan.tasks.api");
 
    @Override
    public void deploy(DeploymentPhaseContext ctx) throws DeploymentUnitProcessingException {
-      if (hasInfinispanExtensions(ctx)) {
-         DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
-         ModuleSpecification moduleSpec = deploymentUnit.getAttachment(Attachments.MODULE_SPECIFICATION);
-         ModuleLoader moduleLoader = Module.getBootModuleLoader();
-         moduleSpec.addSystemDependency(new ModuleDependency(moduleLoader, API, false, false, false, false));
+      DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
+      if (hasServerTaskExtensions(deploymentUnit)) {
+         addDependencies(deploymentUnit, API, TASKS_API);
+      } else if (hasInfinispanExtensions(deploymentUnit)) {
+         addDependencies(deploymentUnit, API);
       }
    }
 
-   private boolean hasInfinispanExtensions(DeploymentPhaseContext ctx) {
-      DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
-      ServicesAttachment sa = deploymentUnit.getAttachment(Attachments.SERVICES);
-      if (sa != null) {
-         return hasDeployableCache(sa);
+   private void addDependencies(DeploymentUnit deploymentUnit, ModuleIdentifier... identifiers) {
+      ModuleSpecification moduleSpec = deploymentUnit.getAttachment(Attachments.MODULE_SPECIFICATION);
+      ModuleLoader moduleLoader = Module.getBootModuleLoader();
+      for (ModuleIdentifier identifier : identifiers) {
+         moduleSpec.addSystemDependency(new ModuleDependency(moduleLoader, identifier, false, false, false, false));
       }
-      return false;
+   }
+
+   private boolean hasInfinispanExtensions(DeploymentUnit deploymentUnit) {
+      ServicesAttachment sa = deploymentUnit.getAttachment(Attachments.SERVICES);
+      return sa != null && hasDeployableCache(sa);
+   }
+
+   private boolean hasServerTaskExtensions(DeploymentUnit deploymentUnit) {
+      ServicesAttachment sa = deploymentUnit.getAttachment(Attachments.SERVICES);
+      return sa != null && hasServerTasks(sa);
    }
 
    @Override
@@ -56,6 +67,10 @@ public class ServerExtensionDependenciesProcessor implements DeploymentUnitProce
    private boolean hasDeployableCache(ServicesAttachment sa) {
       return hasAdvancedCacheLoaders(sa) || hasAdvancedCacheWriters(sa) || hasAdvancedLoadWriteStores(sa) ||
             hasCacheLoader(sa) || hasCacheWriter(sa) || hasExternalStores(sa);
+   }
+
+   private boolean hasServerTasks(ServicesAttachment servicesAttachment) {
+      return hasExtension(servicesAttachment, ServerTask.class);
    }
 
    private boolean hasAdvancedCacheLoaders(ServicesAttachment servicesAttachment) {
