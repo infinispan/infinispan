@@ -47,6 +47,8 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleListAttributeDefinition;
+import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
@@ -71,9 +73,9 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         CLUSTER_SIZE(MetricKeys.CLUSTER_SIZE, ModelType.INT, true, true),
         VERSION(MetricKeys.VERSION, ModelType.INT, true, true),
         //backup site
-        ONLINE_SITES(MetricKeys.SITES_ONLINE, ModelType.LIST, false),
-        OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, false),
-        MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, false),
+        ONLINE_SITES(MetricKeys.SITES_ONLINE, ModelType.LIST, ModelType.STRING, false),
+        OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, ModelType.STRING, false),
+        MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, ModelType.STRING, false),
 
         // see org.infinispan.stats.CacheContainerStats
         AVERAGE_READ_TIME(MetricKeys.AVERAGE_READ_TIME, ModelType.LONG, true),
@@ -113,6 +115,17 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
 
         private CacheManagerMetrics(String attributeName, ModelType type, boolean allowNull, boolean clustered) {
             this(new SimpleAttributeDefinitionBuilder(attributeName, type, allowNull).setStorageRuntime().build(), clustered);
+        }
+
+        private CacheManagerMetrics(String attributeName, ModelType outerType, ModelType innerType, boolean allowNull) {
+            if (outerType != ModelType.LIST) {
+                throw new IllegalArgumentException();
+            }
+            if (innerType != ModelType.STRING) {
+                throw new IllegalArgumentException();
+            }
+            this.definition = new StringListAttributeDefinition.Builder(attributeName).setAllowNull(allowNull).build();
+            this.clustered = false;
         }
 
         @Override

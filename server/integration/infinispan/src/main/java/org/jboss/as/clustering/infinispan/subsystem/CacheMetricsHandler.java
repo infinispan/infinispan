@@ -46,6 +46,7 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -114,9 +115,9 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         REPLICATION_FAILURES(MetricKeys.REPLICATION_FAILURES, ModelType.LONG, true, true),
         SUCCESS_RATIO(MetricKeys.SUCCESS_RATIO, ModelType.DOUBLE, true, true),
         //backup site
-        ONLINE_SITES(MetricKeys.SITES_ONLINE, ModelType.LIST, false),
-        OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, false),
-        MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, false);
+        ONLINE_SITES(MetricKeys.SITES_ONLINE, ModelType.LIST, ModelType.STRING, false),
+        OFFLINE_SITES(MetricKeys.SITES_OFFLINE, ModelType.LIST, ModelType.STRING, false),
+        MIXED_SITES(MetricKeys.SITES_MIXED, ModelType.LIST, ModelType.STRING, false);
 
         private static final Map<String, CacheMetrics> MAP = new HashMap<String, CacheMetrics>();
 
@@ -140,6 +141,17 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
 
         private CacheMetrics(String attributeName, ModelType type, boolean allowNull, final boolean clustered) {
             this(new SimpleAttributeDefinitionBuilder(attributeName, type, allowNull).setStorageRuntime().build(), clustered);
+        }
+
+        private CacheMetrics(String attributeName, ModelType outerType, ModelType innerType, boolean allowNull) {
+            if (outerType != ModelType.LIST) {
+                throw new IllegalArgumentException();
+            }
+            if (innerType != ModelType.STRING) {
+                throw new IllegalArgumentException();
+            }
+            this.definition = new StringListAttributeDefinition.Builder(attributeName).setAllowNull(allowNull).build();
+            this.clustered = false;
         }
 
         @Override
