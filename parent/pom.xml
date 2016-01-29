@@ -186,14 +186,14 @@
       <version.maven.surefire>2.18.1</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.metainf-services>1.7</version.metainf-services>
-      <version.jacoco>0.5.10.201208310627</version.jacoco>
-      <version.asm>3.3.1</version.asm>
+      <version.jacoco>0.7.5.201505241946</version.jacoco>
       <version.pax.url>2.2.0</version.pax.url>
       <version.karaf>3.0.4</version.karaf>
       <version.pax.exam>4.5.0</version.pax.exam>
-      <reportTitle>Infinispan JaCoCo Report</reportTitle>
       <dir.ispn>../</dir.ispn>
-      <dir.report>../jacoco-html</dir.report>
+      <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
+      <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
+      <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
 
       <bnd.consumer.policy>$&lt;range;[==,+)&gt;</bnd.consumer.policy>
@@ -1170,6 +1170,13 @@
          <artifactId>junit</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.jacoco</groupId>
+         <artifactId>org.jacoco.agent</artifactId>
+         <classifier>runtime</classifier>
+         <version>${version.jacoco}</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
    <repositories>
       <repository>
@@ -1343,16 +1350,6 @@
                <groupId>org.mortbay.jetty</groupId>
                <artifactId>jetty-maven-plugin</artifactId>
                <version>8.0.0.M3</version>
-            </plugin>
-            <plugin>
-               <groupId>org.jacoco</groupId>
-               <artifactId>jacoco-maven-plugin</artifactId>
-               <version>${version.jacoco}</version>
-               <configuration>
-                  <includes>
-                     <include>org.infinispan.*</include>
-                  </includes>
-               </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -1974,164 +1971,166 @@
       <profile>
          <id>coverage</id>
 
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-
          <build>
             <plugins>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-dependency-plugin</artifactId>
-                  <executions>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <argLine combine.self="override">${forkJvmArgs} -Dsun.nio.ch.bugLevel ${jacoco.agent.argLine}</argLine>
+                  </configuration>
+               </plugin>
 
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>properties-maven-plugin</artifactId>
+                  <version>1.0.0</version>
+                  <executions>
                      <execution>
-                        <id>jacoco-dependency-ant</id>
                         <goals>
-                           <goal>copy</goal>
+                           <goal>set-system-properties</goal>
                         </goals>
-                        <phase>process-test-resources</phase>
-                        <inherited>false</inherited>
                         <configuration>
-                           <artifactItems>
-                              <artifactItem>
-                                 <groupId>org.jacoco</groupId>
-                                 <artifactId>org.jacoco.ant</artifactId>
-                                 <version>${version.jacoco}</version>
-                              </artifactItem>
-                              <artifactItem>
-                                 <groupId>org.jacoco</groupId>
-                                 <artifactId>org.jacoco.core</artifactId>
-                                 <version>${version.jacoco}</version>
-                              </artifactItem>
-                              <artifactItem>
-                                 <groupId>org.jacoco</groupId>
-                                 <artifactId>org.jacoco.report</artifactId>
-                                 <version>${version.jacoco}</version>
-                              </artifactItem>
-                              <artifactItem>
-                                 <groupId>asm</groupId>
-                                 <artifactId>asm-all</artifactId>
-                                 <version>${version.asm}</version>
-                              </artifactItem>
-                           </artifactItems>
-                           <stripVersion>true</stripVersion>
-                           <outputDirectory>${basedir}/target/jacoco-jars</outputDirectory>
+                           <properties>
+                              <property>
+                                 <name>jacoco.reportPath</name>
+                                 <value>${session.executionRootDirectory}/jacoco</value>
+                              </property>
+                           </properties>
                         </configuration>
                      </execution>
                   </executions>
                </plugin>
 
-
                <plugin>
                   <groupId>org.jacoco</groupId>
                   <artifactId>jacoco-maven-plugin</artifactId>
+                  <version>${version.jacoco}</version>
                   <executions>
                      <execution>
+                        <id>default-prepare-agent</id>
                         <goals>
                            <goal>prepare-agent</goal>
                         </goals>
                      </execution>
                   </executions>
                   <configuration>
-                     <propertyName>jacocoAgent</propertyName>
+                     <propertyName>jacoco.agent.argLine</propertyName>
+                     <destFile>${dir.jacoco}/${project.artifactId}.exec</destFile>
+                     <excludes>
+                        <exclude>**/logging/**</exclude>
+                     </excludes>
                   </configuration>
                </plugin>
-
-
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <argLine combine.self="override">-Xmx2G ${jacocoAgent}</argLine>
-                     <parallel combine.self="override">tests</parallel>
-                     <threadCount combine.self="override">${infinispan.test.parallel.threads}</threadCount>
-                     <groups combine.self="override">${defaultTestGroup}</groups>
-                     <systemPropertyVariables combine.self="override">
-                           <infinispan.test.jgroups.protocol>${infinispan.test.jgroups.protocol}</infinispan.test.jgroups.protocol>
-                           <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
-                           <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-                     </systemPropertyVariables>
-                     <trimStackTrace combine.self="override">false</trimStackTrace>
-                     <properties combine.self="override">
-                        <property>
-                           <name>listener</name>
-                           <value>${testNGListener}</value>
-                        </property>
-                     </properties>
-                  </configuration>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>copy-generated-classes</id>
+                        <phase>test</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                        <configuration>
+                           <target>
+                              <echo>Copying test classes to jacoco folder.</echo>
+                              <copydir src="${project.build.directory}/classes" dest="${jacoco.reportPath}/classes" />
+                           </target>
+                        </configuration>
+                     </execution>
+                  </executions>
                </plugin>
             </plugins>
          </build>
       </profile>
-
       <profile>
          <id>jacocoReport</id>
 
          <build>
             <plugins>
                <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>properties-maven-plugin</artifactId>
+                  <version>1.0.0</version>
+                  <executions>
+                     <execution>
+                        <goals>
+                           <goal>set-system-properties</goal>
+                        </goals>
+                        <configuration>
+                           <properties>
+                              <property>
+                                 <name>jacoco.reportPath</name>
+                                 <value>${session.executionRootDirectory}/jacoco</value>
+                              </property>
+                           </properties>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+
+               <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-antrun-plugin</artifactId>
                   <executions>
                      <execution>
-                        <phase>install</phase>
+                        <id>delete-existing-jacoco-report</id>
+                        <phase>initialize</phase>
                         <goals>
                            <goal>run</goal>
                         </goals>
-                        <configuration combine.self="override">
+                        <configuration>
                            <target>
-
-                              <taskdef classname="org.jacoco.ant.ReportTask" name="report">
-                                 <classpath path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar" />
-                                 <classpath path="target/jacoco-jars/org.jacoco.core.jar" />
-                                 <classpath path="target/jacoco-jars/org.jacoco.report.jar" />
-                                 <classpath path="target/jacoco-jars/asm-all.jar" />
-                              </taskdef>
-
-                              <echo message="Deleting previous report" />
-                              <delete dir="${dir.report}" />
-
-                              <echo message="Creating report directory" />
-                              <mkdir dir="${dir.report}" />
-
-                              <echo message="Generating JaCoCo Reports" />
-                              <report>
-
-                                 <executiondata>
-                                    <fileset dir="${dir.ispn}" includes="**/target/jacoco.exec" />
-                                 </executiondata>
-
-
-                                 <structure name="${reportTitle}">
-                                    <classfiles>
-                                       <fileset dir="${dir.ispn}">
-                                          <include name="**/target/classes/" />
-                                       </fileset>
-                                    </classfiles>
-                                    <sourcefiles encoding="UTF-8">
-                                       <mappedresources>
-                                          <fileset dir="${dir.ispn}" includes="**/src/main/java/**/*.java" />
-                                          <mapper from="^(.*/java/)(.*)$" to="\2" type="regexp" />
-                                       </mappedresources>
-                                    </sourcefiles>
-
-                                 </structure>
-
-
-                                 <html destdir="${dir.report}" />
-                              </report>
+                              <echo>Deleting existing Jacoco Report Directory.</echo>
+                              <delete dir="${dir.jacoco.report}"/>
+                              <delete dir="${dir.jacoco.merged}"/>
+                              <delete dir="${project.build.directory}/classes" />
+                              <echo>Copying the generated classes file to ${project.build.directory}/classes</echo>
+                              <copydir src="${jacoco.reportPath}/classes" dest="${project.build.directory}/classes"/>
                            </target>
                         </configuration>
                      </execution>
                   </executions>
-                  <dependencies>
-                     <dependency>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>org.jacoco.ant</artifactId>
-                        <version>${version.jacoco}</version>
-                     </dependency>
-                  </dependencies>
+               </plugin>
+
+               <plugin>
+                  <groupId>org.jacoco</groupId>
+                  <artifactId>jacoco-maven-plugin</artifactId>
+                  <version>${version.jacoco}</version>
+                  <executions>
+                     <execution>
+                        <id>default-report</id>
+                        <goals>
+                           <goal>report</goal>
+                        </goals>
+                        <phase>install</phase>
+                     </execution>
+                     <execution>
+                        <id>default-merge</id>
+                        <goals>
+                           <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                           <fileSets>
+                              <fileSet>
+                                 <directory>${dir.jacoco}</directory>
+                                 <includes>
+                                    <include>*.exec</include>
+                                 </includes>
+                              </fileSet>
+                           </fileSets>
+                           <destFile>${dir.jacoco.merged}/jacoco.exec</destFile>
+                        </configuration>
+                     </execution>
+                  </executions>
+                  <configuration>
+                     <dataFile>${dir.jacoco.merged}/jacoco.exec</dataFile>
+                     <outputDirectory>${dir.jacoco.report}</outputDirectory>
+                     <excludes>
+                        <exclude>**/logging/**</exclude>
+                     </excludes>
+                  </configuration>
                </plugin>
             </plugins>
          </build>

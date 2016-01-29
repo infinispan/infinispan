@@ -40,7 +40,7 @@ public class AuthenticationTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   private ConfigurationBuilder initServerAndClient() {
+   protected ConfigurationBuilder initServerAndClient() {
       hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();

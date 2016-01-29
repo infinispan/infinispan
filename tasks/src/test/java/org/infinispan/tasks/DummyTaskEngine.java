@@ -14,8 +14,8 @@ public class DummyTaskEngine implements TaskEngine {
       SUCCESSFUL_TASK, FAILING_TASK, SLOW_TASK
    }
 
-   final Set<String> tasks;
-   final CompletableFuture<String> slow;
+   private final Set<String> tasks;
+   private CompletableFuture<String> slow;
 
    public DummyTaskEngine() {
       tasks = new HashSet<>();
@@ -52,6 +52,14 @@ public class DummyTaskEngine implements TaskEngine {
          return (CompletableFuture<T>) slow;
       }
       throw new IllegalArgumentException();
+   }
+
+   public void setSlowTask(CompletableFuture<String> slow) {
+      this.slow = slow;
+   }
+
+   public CompletableFuture<String> getSlowTask() {
+      return slow;
    }
 
    @Override
