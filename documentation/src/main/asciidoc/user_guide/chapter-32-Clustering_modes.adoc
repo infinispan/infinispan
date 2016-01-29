@@ -111,15 +111,13 @@ is key to Infinispan's scalability.
 Another feature of the hash algorithm is that it is deterministic in locating entries
 without resorting to multicast requests or maintaining expensive metadata.
 Doing a GET anywhere will result in at most _numOwners_ remote calls.
-In fact, the remote GET requests are done in parallel, and as soon as any one of these
-returns, the entry is passed back to the caller.
+The remote GET requests are staggered: we request the value from the primary owner,
+but if it doesn't respond in a reasonable amount of time, we request the value from
+the backup owners as well.
+(The {{infinispan.stagger.delay}} system property, in milliseconds, controls the delay between requests.)
 A GET may also result in 0 remote calls if the key is present in the local cache.
 Doing a PUT can result in more remote calls, depending on the cache configuration (e.g.
 whether the cache is transactional).
-
-NOTE: We are investigating doing a single GET request and contacting the other owners
-only after a timeout.
-See link:https://issues.jboss.org/browse/ISPN-825[ISPN-825].
 
 
 ==== Read consistency
