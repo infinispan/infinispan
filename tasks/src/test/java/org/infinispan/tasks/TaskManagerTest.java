@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -12,6 +13,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.tasks.DummyTaskEngine.DummyTaskTypes;
 import org.infinispan.tasks.impl.TaskManagerImpl;
 import org.infinispan.tasks.logging.Messages;
+import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -42,6 +44,23 @@ public class TaskManagerTest extends SingleCacheManagerTest {
       gcr.getComponent(EventLogManager.class).replaceEventLogger(memoryLogger);
    }
 
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testRegisterDuplicateEngine() {
+      taskManager.registerTaskEngine(taskEngine);
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class)
+   public void testUnhandledTask() {
+      taskManager.runTask("UnhandledTask", new TaskContext());
+   }
+
+   public void testStoredEngines() {
+      Collection<TaskEngine> engines = taskManager.getEngines();
+      assertEquals(1, engines.size());
+
+      assertEquals(taskEngine.getName(), engines.iterator().next().getName());
+   }
+
    public void testRunTask() throws InterruptedException, ExecutionException {
       memoryLogger.reset();
       CompletableFuture<String> okTask = taskManager.runTask(DummyTaskTypes.SUCCESSFUL_TASK.name(), new TaskContext());
@@ -68,7 +87,16 @@ public class TaskManagerTest extends SingleCacheManagerTest {
       assertEquals(1, currentTasks.size());
       TaskExecution execution = currentTasks.iterator().next();
       assertEquals(DummyTaskTypes.SLOW_TASK.name(), execution.getName());
-      taskEngine.slow.complete("slow");
+
+      List<Task> tasks = taskManager.getTasks();
+      assertEquals(3, tasks.size());
+
+      Task task = tasks.get(2);
+      assertEquals(DummyTaskTypes.SLOW_TASK.name(), task.getName());
+      assertEquals("Dummy", task.getType());
+      assertEquals(TaskExecutionMode.ONE_NODE, task.getExecutionMode());
+
+      taskEngine.getSlowTask().complete("slow");
       assertEquals(0, taskManager.getCurrentTasks().size());
       assertEquals("slow", slowTask.get());
    }
