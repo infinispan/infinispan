@@ -520,7 +520,7 @@ TODO document what needs to be configured for an attribute to be available for p
 // match all books that have the word "Infinispan" in their title or description
 // and return only their title and publication year
 Query query = queryFactory.from(Book.class)
-  .setProjection("title", "publicationYear")
+  .select("title", "publicationYear")
   .having("title").like("%Infinispan%")
   .or().having("description").like("%Infinispan%"))
   .toBuilder().build();
