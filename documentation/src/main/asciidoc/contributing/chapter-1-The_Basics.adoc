@@ -242,17 +242,21 @@ The last thing to figure out is which id to give to the message. Each module tha
 |server memcached|11001 - 12000
 |server rest|12001 - 13000
 |server websocket|13001 - 14000
-|query|14001 - 15000
+|query|14001 - 14800
+|query-dsl|14801 - 15000
 |lucene directory|15001 - 16000
 |rhq plugin|16001 - 17000
 |cdi integration|17001 - 18000
-| hbase cache store | 18001 - 19000 
-| cli interpreter | 19001 - 20000 
-| cli client | 20001 - 21000 
+|hbase cache store | 18001 - 19000 
+|cli interpreter | 19001 - 20000 
+|cli client | 20001 - 21000 
 |mongodb cache store|21001 - 22000
-|jpa cache store|22001 - 23000
+|rest cache store|22001 - 23000
 |leveldb cache store|23001 - 24000
 |couchbase cache store|24001 - 25000
+|redis cache store|25001 - 26000
+|scripting|26001-27000
+|tasks|27001-28000
 |===============
 
 NOTE: When editing the above table, remember to update the README-i18n.txt file in the project sources!
