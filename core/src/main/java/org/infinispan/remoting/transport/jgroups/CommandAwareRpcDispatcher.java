@@ -11,6 +11,7 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteReplicateCommand;
@@ -61,9 +62,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    private final InboundInvocationHandler handler;
    private final ScheduledExecutorService timeoutExecutor;
+   private final TimeService timeService;
 
    public CommandAwareRpcDispatcher(Channel channel, JGroupsTransport transport,
-                                    InboundInvocationHandler globalHandler, ScheduledExecutorService timeoutExecutor) {
+         InboundInvocationHandler globalHandler, ScheduledExecutorService timeoutExecutor,
+         TimeService timeService) {
+      this.timeService = timeService;
       this.server_obj = transport;
       this.handler = globalHandler;
       this.timeoutExecutor = timeoutExecutor;
@@ -113,7 +117,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             }
             // This isn't really documented, but some of our internal code uses timeout = 0 as no timeout.
             long nanoTimeout = timeout > 0 ? TimeUnit.MILLISECONDS.toNanos(timeout) : Long.MAX_VALUE;
-            long deadline = System.nanoTime() + nanoTimeout;
+            long deadline = timeService.expectedEndTime(nanoTimeout, TimeUnit.NANOSECONDS);
             processCallsStaggered(command, filter, recipients, mode, deliverOrder, req_marshaller, future,
                   0, deadline, rsps);
          } else {
@@ -297,7 +301,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (destIndex == dests.size())
          return;
 
-      CompletableFuture<Void> triggerNextFuture = new CompletableFuture<>();
       CompletableFuture<Rsp<Response>> subFuture =
             processSingleCall(command, -1, dests.get(destIndex), mode, deliverOrder, marshaller);
       if (subFuture != null) {
@@ -328,38 +331,46 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   theFuture.complete(rsps);
                } else {
                   // The response was not acceptable, complete the timeout future to start the next request
-                  triggerNextFuture.complete(null);
+                  staggeredProcessNext(command, filter, dests, mode, deliverOrder, marshaller, theFuture,
+                        destIndex, deadline, rsps);
                }
             }
          });
          if (!subFuture.isDone()) {
-            long now = System.nanoTime();
-            long delay = deadline - now;
+            long delayNanos = timeService.remainingTime(deadline, TimeUnit.NANOSECONDS);
             if (destIndex < dests.size() - 1) {
-               delay = Math.min(STAGGER_DELAY_NANOS, delay);
-            } // else it is the last request, so schedule the cancelation at deadline
-            timeoutExecutor.schedule(() -> triggerNextFuture.complete(null),
-                  delay, TimeUnit.NANOSECONDS);
+               // Not the last recipient, wait for STAGGER_DELAY_NANOS only
+               delayNanos = Math.min(STAGGER_DELAY_NANOS, delayNanos);
+            }
+            ScheduledFuture<?> timeoutTask = timeoutExecutor.schedule(
+                  () -> staggeredProcessNext(command, filter, dests, mode, deliverOrder, marshaller,
+                        theFuture, destIndex, deadline, rsps), delayNanos, TimeUnit.NANOSECONDS);
+            theFuture.whenComplete((rsps1, throwable) -> timeoutTask.cancel(false));
          }
       } else {
-         triggerNextFuture.complete(null);
+         staggeredProcessNext(command, filter, dests, mode, deliverOrder, marshaller, theFuture, destIndex,
+               deadline, rsps);
       }
-      triggerNextFuture.thenAccept(ignored -> {
-         if (theFuture.isDone()) {
-            return;
-         }
-         if (System.nanoTime() >= deadline) {
-            theFuture.complete(rsps);
-            return;
-         }
-         try {
-            processCallsStaggered(command, filter, dests, mode, deliverOrder, marshaller, theFuture,
-                  destIndex + 1, deadline, rsps);
-         } catch (Exception e) {
-            // We should never get here, any remote exception will be in the Rsp
-            theFuture.completeExceptionally(e);
-         }
-      });
+   }
+
+   private void staggeredProcessNext(ReplicableCommand command, RspFilter filter, List<Address> dests,
+         ResponseMode mode, DeliverOrder deliverOrder, Marshaller marshaller,
+         CompletableFuture<RspList<Response>> theFuture, int destIndex, long deadline,
+         RspList<Response> rsps) {
+      if (theFuture.isDone()) {
+         return;
+      }
+      if (timeService.isTimeExpired(deadline)) {
+         theFuture.complete(rsps);
+         return;
+      }
+      try {
+         processCallsStaggered(command, filter, dests, mode, deliverOrder, marshaller, theFuture,
+               destIndex + 1, deadline, rsps);
+      } catch (Exception e) {
+         // We should never get here, any remote exception will be in the Rsp
+         theFuture.completeExceptionally(e);
+      }
    }
 
    private RspListFuture processCalls(ReplicableCommand command, boolean broadcast, long timeout,

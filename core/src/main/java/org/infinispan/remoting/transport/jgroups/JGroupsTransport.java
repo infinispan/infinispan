@@ -108,7 +108,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected StreamingMarshaller marshaller;
    protected CacheManagerNotifier notifier;
    protected GlobalComponentRegistry gcr;
-   private TimeService timeService;
+   protected TimeService timeService;
    protected InboundInvocationHandler globalHandler;
    private ScheduledExecutorService timeoutExecutor;
 
@@ -354,7 +354,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    protected void initRPCDispatcher() {
-      dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, timeoutExecutor);
+      dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, timeoutExecutor, timeService);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
