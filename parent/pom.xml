@@ -186,7 +186,7 @@
       <version.maven.scala>2.15.2</version.maven.scala>
       <version.maven.surefire>2.18.1</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
-      <version.metainf-services>1.5</version.metainf-services>
+      <version.metainf-services>1.7</version.metainf-services>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
       <version.pax.url>2.2.0</version.pax.url>
