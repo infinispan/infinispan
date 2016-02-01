@@ -51,7 +51,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
 
    protected BaseQueryBuilder(QueryFactory queryFactory, String rootTypeName) {
       if (rootTypeName == null) {
-         throw new IllegalArgumentException("rootTypeName cannot be null");
+         throw log.argumentCannotBeNull("rootTypeName");
       }
       this.queryFactory = queryFactory;
       this.rootTypeName = rootTypeName;
@@ -92,7 +92,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    @Override
    public QueryBuilder<T> select(String... attributePath) {
       if (attributePath == null || attributePath.length == 0) {
-         throw new IllegalArgumentException("Projection cannot be null or empty");
+         throw log.projectionCannotBeNullOrEmpty();
       }
       Expression[] projection = new Expression[attributePath.length];
       for (int i = 0; i < attributePath.length; i++) {
@@ -104,10 +104,10 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    @Override
    public QueryBuilder<T> select(Expression... projection) {
       if (projection == null || projection.length == 0) {
-         throw new IllegalArgumentException("Projection cannot be null or empty");
+         throw log.projectionCannotBeNullOrEmpty();
       }
       if (this.projection != null) {
-         throw new IllegalStateException("Projection can be specified only once");
+         throw log.projectionCanBeSpecifiedOnlyOnce();
       }
       this.projection = projection;
       return this;
@@ -141,10 +141,10 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    @Override
    public QueryBuilder groupBy(String... groupBy) {
       if (groupBy == null || groupBy.length == 0) {
-         throw new IllegalArgumentException("Grouping cannot be null or empty");
+         throw log.groupingCannotBeNullOrEmpty();
       }
       if (this.groupBy != null) {
-         throw new IllegalStateException("Grouping can be specified only once");
+         throw log.groupingCanBeSpecifiedOnlyOnce();
       }
       this.groupBy = groupBy;
       // reset this so we can start a new filter for havingFilterCondition
@@ -159,7 +159,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    @Override
    public QueryBuilder<T> startOffset(long startOffset) {
       if (startOffset < 0) {
-         throw new IllegalArgumentException("startOffset cannot be less than 0");
+         throw log.startOffsetCannotBeLessThanZero();
       }
       this.startOffset = startOffset;
       return this;
@@ -168,7 +168,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    @Override
    public QueryBuilder<T> maxResults(int maxResults) {
       if (maxResults <= 0) {
-         throw new IllegalArgumentException("maxResults must be greater than 0");
+         throw log.maxResultMustBeGreaterThanZero();
       }
       this.maxResults = maxResults;
       return this;
@@ -185,7 +185,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    @Override
    public FilterConditionEndContext having(Expression expression) {
       if (filterCondition != null) {
-         throw new IllegalStateException("Sentence already started. Cannot use 'having(..)' again.");
+         throw log.cannotUseOperatorAgain("having(..)");
       }
       AttributeCondition attributeCondition = new AttributeCondition(queryFactory, expression);
       attributeCondition.setQueryBuilder(this);
@@ -210,7 +210,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    @Override
    public FilterConditionBeginContext not() {
       if (filterCondition != null) {
-         throw new IllegalStateException("Sentence already started. Cannot use 'not()' again.");
+         throw log.cannotUseOperatorAgain("not()");
       }
       IncompleteCondition incompleteCondition = new IncompleteCondition(queryFactory);
       incompleteCondition.setQueryBuilder(this);
@@ -225,15 +225,15 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
       }
 
       if (filterCondition != null) {
-         throw new IllegalStateException("Sentence already started. Cannot use 'not(..)' again.");
+         throw log.cannotUseOperatorAgain("not(..)");
       }
 
       BaseCondition baseCondition = ((BaseCondition) fcc).getRoot();
       if (baseCondition.queryFactory != queryFactory) {
-         throw new IllegalArgumentException("The given condition was created by a different factory");
+         throw log.conditionWasCreatedByAnotherFactory();
       }
       if (baseCondition.queryBuilder != null) {
-         throw new IllegalArgumentException("The given condition is already in use by another builder");
+         throw log.conditionIsAlreadyInUseByAnotherBuilder();
       }
 
       NotCondition notCondition = new NotCondition(queryFactory, baseCondition);

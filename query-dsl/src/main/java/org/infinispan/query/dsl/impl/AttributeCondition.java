@@ -5,16 +5,18 @@ import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.RangeConditionContext;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 import java.util.Collection;
-
-//todo [anistor] i18n for exception messages
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
 class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContext {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, AttributeCondition.class.getName());
 
    private final Expression expression;
 
@@ -46,7 +48,7 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
    @Override
    public FilterConditionContext in(Object... values) {
       if (values == null || values.length == 0) {
-         throw new IllegalArgumentException("The list of values for 'in(..)' cannot be null or empty");
+         throw log.listOfValuesForInCannotBeNulOrEmpty();
       }
       setOperatorAndArgument(new InOperator(this, values));
       return this;
@@ -55,7 +57,7 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
    @Override
    public FilterConditionContext in(Collection values) {
       if (values == null || values.isEmpty()) {
-         throw new IllegalArgumentException("The list of values for 'in(..)' cannot be null or empty");
+         throw log.listOfValuesForInCannotBeNulOrEmpty();
       }
       setOperatorAndArgument(new InOperator(this, values));
       return this;
@@ -162,7 +164,7 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
       operatorAndArgument.validate();
 
       if (this.operatorAndArgument != null) {
-         throw new IllegalStateException("operator was already specified");
+         throw log.operatorWasAlreadySpecified();
       }
 
       this.operatorAndArgument = operatorAndArgument;

@@ -2,12 +2,16 @@ package org.infinispan.query.dsl.impl;
 
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.SortOrder;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
-public final class SortCriteria {
+final class SortCriteria {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, SortCriteria.class.getName());
 
    private final Expression pathExpression;
 
@@ -15,10 +19,10 @@ public final class SortCriteria {
 
    SortCriteria(Expression pathExpression, SortOrder sortOrder) {
       if (pathExpression == null) {
-         throw new IllegalArgumentException("pathExpression cannot be null");
+         throw log.argumentCannotBeNull("pathExpression");
       }
       if (sortOrder == null) {
-         throw new IllegalArgumentException("sortOrder cannot be null");
+         throw log.argumentCannotBeNull("sortOrder");
       }
       this.pathExpression = pathExpression;
       this.sortOrder = sortOrder;

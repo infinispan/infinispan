@@ -17,7 +17,7 @@ final class SumAccumulator extends FieldAccumulator {
 
    private final Class<? extends Number> fieldType;
 
-   protected SumAccumulator(int inPos, int outPos, Class<?> fieldType) {
+   SumAccumulator(int inPos, int outPos, Class<?> fieldType) {
       super(inPos, outPos);
       if (!Number.class.isAssignableFrom(fieldType)) {
          throw new IllegalStateException("Aggregation SUM cannot be applied to property of type " + fieldType.getName());

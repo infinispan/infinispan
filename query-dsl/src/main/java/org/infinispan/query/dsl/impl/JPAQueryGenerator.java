@@ -2,6 +2,8 @@ package org.infinispan.query.dsl.impl;
 
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -20,6 +22,8 @@ import java.util.TimeZone;
  * @since 6.0
  */
 public class JPAQueryGenerator implements Visitor<String> {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, JPAQueryGenerator.class.getName());
 
    public static final String DEFAULT_ALIAS = "_gen0";
 
@@ -174,13 +178,13 @@ public class JPAQueryGenerator implements Visitor<String> {
       if (!range.isIncludeLower() || !range.isIncludeUpper()) {
          appendAttributePath(sb, operator.getAttributeCondition());
          sb.append(operator.getAttributeCondition().isNegated() ?
-                         (range.isIncludeLower() ? " < " : " <= ") : (range.isIncludeLower() ? " >= " : " > "));
+               (range.isIncludeLower() ? " < " : " <= ") : (range.isIncludeLower() ? " >= " : " > "));
          appendArgument(sb, range.getFrom());
          sb.append(operator.getAttributeCondition().isNegated() ?
-                         " OR " : " AND ");
+               " OR " : " AND ");
          appendAttributePath(sb, operator.getAttributeCondition());
          sb.append(operator.getAttributeCondition().isNegated() ?
-                         (range.isIncludeUpper() ? " > " : " >= ") : (range.isIncludeUpper() ? " <= " : " < "));
+               (range.isIncludeUpper() ? " > " : " >= ") : (range.isIncludeUpper() ? " <= " : " < "));
          appendArgument(sb, range.getTo());
       } else {
          if (operator.getAttributeCondition().isNegated()) {
@@ -264,7 +268,7 @@ public class JPAQueryGenerator implements Visitor<String> {
       } else if (argument instanceof Object[]) {
          values = Arrays.asList((Object[]) argument);
       } else {
-         throw new IllegalArgumentException("Expecting a Collection or an array of Object");
+         throw log.expectingCollectionOrArray();
       }
       StringBuilder sb = new StringBuilder();
       boolean isFirst = true;
@@ -282,7 +286,7 @@ public class JPAQueryGenerator implements Visitor<String> {
    @Override
    public String visit(AttributeCondition attributeCondition) {
       if (attributeCondition.getExpression() == null || attributeCondition.getOperatorAndArgument() == null) {
-         throw new IllegalStateException("Incomplete sentence. Missing attribute path or operator.");
+         throw log.incompleteSentence();
       }
 
       return attributeCondition.getOperatorAndArgument().accept(this);

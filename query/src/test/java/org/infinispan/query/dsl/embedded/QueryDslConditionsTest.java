@@ -1667,7 +1667,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q1.eq(User.Gender.FEMALE);
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "maxResults must be greater than 0")
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults must be greater than 0")
    public void testPagination1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1675,7 +1675,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .maxResults(0);
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "maxResults must be greater than 0")
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014823: maxResults must be greater than 0")
    public void testPagination2() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1683,7 +1683,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .maxResults(-4);
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "startOffset cannot be less than 0")
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014824: startOffset cannot be less than 0")
    public void testPagination3() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2528,7 +2528,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(6225d, list.get(0)[2]);
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "No parameter named 'param2' was found")
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014805: No parameter named 'param2' was found")
    public void testUnknownParam() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2539,7 +2539,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.setParameter("param2", "John");
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "No parameters named '\\[param2\\]' were found")
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014806: No parameters named '\\[param2\\]' were found")
    public void testUnknownParamWithParameterMap() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2553,7 +2553,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.setParameters(parameterMap);
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Query does not have parameters")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014804: Query does not have parameters")
    public void testQueryWithNoParams() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2562,7 +2562,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .toBuilder().build().setParameter("param1", "John");
    }
 
-   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Query does not have parameters")
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ISPN014804: Query does not have parameters")
    public void testQueryWithNoParamsWithParameterMap() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2629,7 +2629,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       q.list();
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "paramValues cannot be null")
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ISPN014812: paramValues cannot be null")
    public void testQueryWithNoParamsWithNullParameterMap() throws Exception {
       QueryFactory qf = getQueryFactory();
 

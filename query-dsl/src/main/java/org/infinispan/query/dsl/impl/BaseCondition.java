@@ -29,14 +29,14 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
    @Override
    public <T extends Query> QueryBuilder<T> toBuilder() {
       if (queryBuilder == null) {
-         throw new IllegalStateException("This sub-query does not belong to a parent query builder yet");
+         throw log.subQueryDoesNotBelongToAParentQueryBuilder();
       }
       return (QueryBuilder<T>) queryBuilder;
    }
 
    void setQueryBuilder(QueryBuilder queryBuilder) {
       if (this.queryBuilder != null) {
-         throw new IllegalStateException("This query already belongs to a query builder");
+         throw log.queryAlreadyBelongsToAnotherBuilder();
       }
       this.queryBuilder = queryBuilder;
    }
@@ -95,11 +95,11 @@ abstract class BaseCondition implements FilterConditionContext, Visitable {
 
       BaseCondition rightCondition = ((BaseCondition) fcc).getRoot();
       if (rightCondition.queryFactory != queryFactory) {
-         throw new IllegalArgumentException("The given condition was created by a different factory");
+         throw log.conditionWasCreatedByAnotherFactory();
       }
 
       if (rightCondition.queryBuilder != null) {
-         throw new IllegalArgumentException("The given condition is already in use by another builder");
+         throw log.conditionIsAlreadyInUseByAnotherBuilder();
       }
 
       if (isConjunction && parent instanceof OrCondition) {
