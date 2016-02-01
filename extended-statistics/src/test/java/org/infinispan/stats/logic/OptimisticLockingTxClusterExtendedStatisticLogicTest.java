@@ -19,12 +19,13 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
-import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
 import org.testng.annotations.BeforeMethod;
@@ -40,8 +41,14 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.stats.CacheStatisticCollector.convertNanosToMicro;
 import static org.infinispan.stats.container.ExtendedStatistic.*;
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.Assert.*;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractField;
+import static org.infinispan.test.TestingUtil.extractLockManager;
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * @author Pedro Ruivo
@@ -113,6 +120,8 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; ++i) {
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+         builder.clustering().hash().numSegments(1)
+               .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
          builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
                .lockAcquisitionTimeout(1000);
          builder.transaction().recovery().disable();
