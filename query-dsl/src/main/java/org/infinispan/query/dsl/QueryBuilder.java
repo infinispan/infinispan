@@ -8,7 +8,7 @@ package org.infinispan.query.dsl;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface QueryBuilder<Q extends Query> extends FilterConditionBeginContext {
+public interface QueryBuilder extends FilterConditionBeginContext {
 
    QueryBuilder orderBy(Expression expression);
 
@@ -33,5 +33,5 @@ public interface QueryBuilder<Q extends Query> extends FilterConditionBeginConte
     *
     * @return the Query
     */
-   Q build();
+   Query build();
 }

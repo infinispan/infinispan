@@ -10,7 +10,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
+final class EmbeddedQueryBuilder extends BaseQueryBuilder {
 
    private static final Log log = LogFactory.getLog(EmbeddedQueryBuilder.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();

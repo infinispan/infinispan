@@ -11,7 +11,7 @@ import org.infinispan.query.dsl.impl.BaseQueryBuilder;
  * @author anistor@redhat.com
  * @since 6.0
  */
-final class RemoteQueryBuilder extends BaseQueryBuilder<Query> {
+final class RemoteQueryBuilder extends BaseQueryBuilder {
 
    private static final Log log = LogFactory.getLog(RemoteQueryBuilder.class);
    private static final boolean trace = log.isTraceEnabled();

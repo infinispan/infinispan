@@ -56,5 +56,5 @@ public interface FilterConditionContext {
     *
     * @return the parent builder
     */
-   <T extends Query> QueryBuilder<T> toBuilder();
+   QueryBuilder toBuilder();
 }
