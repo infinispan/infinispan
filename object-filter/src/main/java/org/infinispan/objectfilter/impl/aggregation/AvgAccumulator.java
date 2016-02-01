@@ -1,5 +1,8 @@
 package org.infinispan.objectfilter.impl.aggregation;
 
+import org.infinispan.objectfilter.impl.logging.Log;
+import org.jboss.logging.Logger;
+
 /**
  * Computes the average of {@link Number}s. The output type is always a {@link Double}. Nulls are excluded from the
  * computation. If there are no remaining non-null values to which the aggregate function can be applied, the result of
@@ -13,10 +16,12 @@ package org.infinispan.objectfilter.impl.aggregation;
  */
 final class AvgAccumulator extends FieldAccumulator {
 
+   private static final Log log = Logger.getMessageLogger(Log.class, AvgAccumulator.class.getName());
+
    AvgAccumulator(int inPos, int outPos, Class<?> fieldType) {
       super(inPos, outPos);
       if (!Number.class.isAssignableFrom(fieldType)) {
-         throw new IllegalStateException("Aggregation AVG cannot be applied to property of type " + fieldType.getName());
+         throw log.getAVGCannotBeAppliedToPropertyOfType(fieldType.getName());
       }
    }
 

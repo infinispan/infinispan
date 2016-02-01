@@ -39,10 +39,10 @@ public abstract class BaseQueryFactory implements QueryFactory {
 
       BaseCondition baseCondition = ((BaseCondition) fcc).getRoot();
       if (baseCondition.queryFactory != this) {
-         throw new IllegalArgumentException("The given condition was created by a different factory");
+         throw log.conditionWasCreatedByAnotherFactory();
       }
       if (baseCondition.queryBuilder != null) {
-         throw new IllegalArgumentException("The given condition is already in use by another builder");
+         throw log.conditionIsAlreadyInUseByAnotherBuilder();
       }
       NotCondition notCondition = new NotCondition(this, baseCondition);
       baseCondition.setParent(notCondition);
