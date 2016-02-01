@@ -5,7 +5,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
@@ -78,7 +77,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
             .toBuilder();
 
       // compute the same jpa query as it would be generated for the above query
-      String jpaQuery = ((BaseQueryBuilder<Query>) queryQueryBuilder).accept(new JPAQueryGenerator());
+      String jpaQuery = ((BaseQueryBuilder) queryQueryBuilder).accept(new JPAQueryGenerator());
 
       // everything set up, test follows ...
 

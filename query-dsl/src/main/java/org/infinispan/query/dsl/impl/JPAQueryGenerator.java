@@ -1,7 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
 import org.infinispan.query.dsl.Expression;
-import org.infinispan.query.dsl.Query;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -37,7 +36,7 @@ public class JPAQueryGenerator implements Visitor<String> {
    }
 
    @Override
-   public <T extends Query> String visit(BaseQueryBuilder<T> baseQueryBuilder) {
+   public String visit(BaseQueryBuilder baseQueryBuilder) {
       StringBuilder sb = new StringBuilder();
 
       if (baseQueryBuilder.getProjection() != null && baseQueryBuilder.getProjection().length != 0) {

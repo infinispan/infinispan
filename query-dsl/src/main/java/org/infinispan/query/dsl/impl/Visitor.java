@@ -1,7 +1,5 @@
 package org.infinispan.query.dsl.impl;
 
-import org.infinispan.query.dsl.Query;
-
 /**
  * @author anistor@redhat.com
  * @since 6.0
@@ -40,5 +38,5 @@ interface Visitor<ReturnType> {
 
    ReturnType visit(NotCondition notCondition);
 
-   <T extends Query> ReturnType visit(BaseQueryBuilder<T> baseQueryBuilder);
+   ReturnType visit(BaseQueryBuilder baseQueryBuilder);
 }

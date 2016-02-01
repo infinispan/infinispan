@@ -4,7 +4,7 @@ package org.infinispan.query.dsl.impl;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class DummyQueryBuilder extends BaseQueryBuilder<DummyQuery> {
+public class DummyQueryBuilder extends BaseQueryBuilder {
 
    protected DummyQueryBuilder(DummyQueryFactory queryFactory, String rootTypeName) {
       super(queryFactory, rootTypeName);

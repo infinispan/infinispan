@@ -4,7 +4,6 @@ import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
@@ -18,7 +17,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<T>, Visitable {
+public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
 
    private static final Log log = Logger.getMessageLogger(Log.class, BaseQueryBuilder.class.getName());
 
@@ -62,12 +61,12 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder<T> orderBy(Expression pathExpression) {
+   public QueryBuilder orderBy(Expression pathExpression) {
       return orderBy(pathExpression, SortOrder.ASC);
    }
 
    @Override
-   public QueryBuilder<T> orderBy(Expression pathExpression, SortOrder sortOrder) {
+   public QueryBuilder orderBy(Expression pathExpression, SortOrder sortOrder) {
       if (sortCriteria == null) {
          sortCriteria = new ArrayList<SortCriteria>();
       }
@@ -76,12 +75,12 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder<T> orderBy(String attributePath) {
+   public QueryBuilder orderBy(String attributePath) {
       return orderBy(attributePath, SortOrder.ASC);
    }
 
    @Override
-   public QueryBuilder<T> orderBy(String attributePath, SortOrder sortOrder) {
+   public QueryBuilder orderBy(String attributePath, SortOrder sortOrder) {
       return orderBy(Expression.property(attributePath), sortOrder);
    }
 
@@ -90,7 +89,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder<T> select(String... attributePath) {
+   public QueryBuilder select(String... attributePath) {
       if (attributePath == null || attributePath.length == 0) {
          throw new IllegalArgumentException("Projection cannot be null or empty");
       }
@@ -102,7 +101,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder<T> select(Expression... projection) {
+   public QueryBuilder select(Expression... projection) {
       if (projection == null || projection.length == 0) {
          throw new IllegalArgumentException("Projection cannot be null or empty");
       }
@@ -147,7 +146,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder<T> startOffset(long startOffset) {
+   public QueryBuilder startOffset(long startOffset) {
       if (startOffset < 0) {
          throw new IllegalArgumentException("startOffset cannot be less than 0");
       }
@@ -156,7 +155,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder<T> maxResults(int maxResults) {
+   public QueryBuilder maxResults(int maxResults) {
       if (maxResults <= 0) {
          throw new IllegalArgumentException("maxResults must be greater than 0");
       }

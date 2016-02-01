@@ -10,7 +10,7 @@ package org.infinispan.query.dsl;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public interface QueryFactory<Q extends Query> {
+public interface QueryFactory {
 
    /**
     * Creates a QueryBuilder for the given entity type.
@@ -18,7 +18,7 @@ public interface QueryFactory<Q extends Query> {
     * @param entityType the Class of the entity
     * @return a builder capable of creating queries for the specified entity type
     */
-   QueryBuilder<Q> from(Class entityType);
+   QueryBuilder from(Class entityType);
 
    /**
     * Creates a QueryBuilder for the given entity type.
@@ -26,7 +26,7 @@ public interface QueryFactory<Q extends Query> {
     * @param entityType fully qualified entity type name
     * @return a builder capable of creating queries for the specified entity type
     */
-   QueryBuilder<Q> from(String entityType);
+   QueryBuilder from(String entityType);
 
    FilterConditionEndContext having(Expression expression);
 

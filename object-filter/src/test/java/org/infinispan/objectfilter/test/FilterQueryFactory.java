@@ -18,7 +18,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public final class FilterQueryFactory extends BaseQueryFactory<Query> {
+public final class FilterQueryFactory extends BaseQueryFactory {
 
    private final SerializationContext serializationContext;
 
@@ -31,7 +31,7 @@ public final class FilterQueryFactory extends BaseQueryFactory<Query> {
    }
 
    @Override
-   public QueryBuilder<Query> from(Class entityType) {
+   public QueryBuilder from(Class entityType) {
       if (serializationContext != null) {
          serializationContext.getMarshaller(entityType);
       }
@@ -39,14 +39,14 @@ public final class FilterQueryFactory extends BaseQueryFactory<Query> {
    }
 
    @Override
-   public QueryBuilder<Query> from(String entityType) {
+   public QueryBuilder from(String entityType) {
       if (serializationContext != null) {
          serializationContext.getMarshaller(entityType);
       }
       return new FilterQueryBuilder(this, entityType);
    }
 
-   private static final class FilterQueryBuilder extends BaseQueryBuilder<Query> {
+   private static final class FilterQueryBuilder extends BaseQueryBuilder {
 
       private static final Log log = Logger.getMessageLogger(Log.class, FilterQueryBuilder.class.getName());
 

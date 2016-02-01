@@ -4,7 +4,6 @@ import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
@@ -13,7 +12,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public abstract class BaseQueryFactory<T extends Query> implements QueryFactory<T> {
+public abstract class BaseQueryFactory implements QueryFactory {
 
    private static final Log log = Logger.getMessageLogger(Log.class, BaseQueryFactory.class.getName());
 
