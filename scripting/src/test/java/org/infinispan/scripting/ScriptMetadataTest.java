@@ -58,7 +58,7 @@ public class ScriptMetadataTest {
       assertEquals("scala", metadata.language().get());
    }
 
-   @Test(expectedExceptions=IllegalArgumentException.class, expectedExceptionsMessageRegExp="^ISPN021011.*")
+   @Test(expectedExceptions=IllegalArgumentException.class, expectedExceptionsMessageRegExp="^ISPN026011.*")
    public void testBrokenParameters() throws Exception {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name=test,language=javascript,parameters=\"a,b,c\"");
       assertEquals("test", metadata.name());
