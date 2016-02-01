@@ -346,7 +346,7 @@ class EndpointSubsystemReader_8_0 implements XMLStreamConstants, XMLElementReade
             break;
          }
          default: {
-            ParseUtils.unexpectedAttribute(reader, i);
+            throw ParseUtils.unexpectedAttribute(reader, i);
          }
          }
       }
@@ -371,7 +371,7 @@ class EndpointSubsystemReader_8_0 implements XMLStreamConstants, XMLElementReade
             break;
          }
          default: {
-            ParseUtils.unexpectedAttribute(reader, i);
+            throw ParseUtils.unexpectedAttribute(reader, i);
          }
          }
       }
@@ -434,7 +434,7 @@ class EndpointSubsystemReader_8_0 implements XMLStreamConstants, XMLElementReade
             break;
          }
          default: {
-            ParseUtils.unexpectedAttribute(reader, i);
+            throw ParseUtils.unexpectedAttribute(reader, i);
          }
          }
       }
@@ -553,7 +553,7 @@ class EndpointSubsystemReader_8_0 implements XMLStreamConstants, XMLElementReade
             break;
          }
          default: {
-            ParseUtils.unexpectedAttribute(reader, i);
+            throw ParseUtils.unexpectedAttribute(reader, i);
          }
          }
 
