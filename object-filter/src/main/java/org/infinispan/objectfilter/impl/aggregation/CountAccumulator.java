@@ -9,7 +9,7 @@ package org.infinispan.objectfilter.impl.aggregation;
  */
 final class CountAccumulator extends FieldAccumulator {
 
-   protected CountAccumulator(int inPos, int outPos) {
+   CountAccumulator(int inPos, int outPos) {
       super(inPos, outPos);
    }
 

@@ -36,7 +36,7 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
    @Override
    public <ReturnType> ReturnType accept(Visitor<ReturnType> visitor) {
       if (filterCondition == null) {
-         throw new IllegalStateException("Cannot visit an incomplete condition.");
+         throw log.incompleteCondition();
       }
 
       return filterCondition.accept(visitor);
@@ -45,7 +45,7 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
    @Override
    public FilterConditionEndContext having(Expression expression) {
       if (filterCondition != null) {
-         throw new IllegalStateException("Sentence already started. Cannot use 'having(..)' again.");
+         throw log.cannotUseOperatorAgain("having(..)");
       }
       AttributeCondition attributeCondition = new AttributeCondition(queryFactory, expression);
       attributeCondition.setNegated(isNegated);
@@ -63,7 +63,7 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
    @Override
    public FilterConditionBeginContext not() {
       if (filterCondition != null) {
-         throw new IllegalStateException("Sentence already started. Cannot use 'not()' again.");
+         throw log.cannotUseOperatorAgain("not()");
       }
 
       isNegated = !isNegated;
@@ -77,15 +77,15 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
       }
 
       if (filterCondition != null) {
-         throw new IllegalStateException("Sentence already started. Cannot use 'not(..)' again.");
+         throw log.cannotUseOperatorAgain("not(..)");
       }
 
       BaseCondition baseCondition = ((BaseCondition) fcc).getRoot();
       if (baseCondition.queryFactory != queryFactory) {
-         throw new IllegalArgumentException("The given condition was created by a different factory");
+         throw log.conditionWasCreatedByAnotherFactory();
       }
       if (baseCondition.queryBuilder != null) {
-         throw new IllegalArgumentException("The given condition is already in use by another builder");
+         throw log.conditionIsAlreadyInUseByAnotherBuilder();
       }
 
       isNegated = !isNegated;

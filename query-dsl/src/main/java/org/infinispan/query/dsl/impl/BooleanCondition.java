@@ -2,6 +2,8 @@ package org.infinispan.query.dsl.impl;
 
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 /**
  * Unary or binary boolean condition (NOT, AND, OR).
@@ -11,11 +13,13 @@ import org.infinispan.query.dsl.QueryFactory;
  */
 abstract class BooleanCondition extends BaseCondition {
 
+   private static final Log log = Logger.getMessageLogger(Log.class, BooleanCondition.class.getName());
+
    private BaseCondition leftCondition;
 
    private BaseCondition rightCondition;
 
-   public BooleanCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
+   protected BooleanCondition(QueryFactory queryFactory, BaseCondition leftCondition, BaseCondition rightCondition) {
       super(queryFactory);
       this.leftCondition = leftCondition;
       this.rightCondition = rightCondition;
@@ -35,7 +39,7 @@ abstract class BooleanCondition extends BaseCondition {
       } else if (rightCondition == oldChild) {
          rightCondition = newChild;
       } else {
-         throw new IllegalStateException("Old child condition not found in parent");
+         throw log.conditionNotFoundInParent();
       }
       newChild.setParent(this);
    }

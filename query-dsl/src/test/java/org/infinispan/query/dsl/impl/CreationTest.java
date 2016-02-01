@@ -22,7 +22,7 @@ public class CreationTest {
       QueryFactory qf2 = new DummyQueryFactory();
 
       expectedException.expect(IllegalArgumentException.class);
-      expectedException.expectMessage("The given condition was created by a different factory");
+      expectedException.expectMessage("ISPN014809: The given condition was created by another factory");
 
       qf1.from("MyDummyType")
             .not(qf2.having("attr1").eq("1")); // exception expected
@@ -34,7 +34,7 @@ public class CreationTest {
       QueryFactory qf2 = new DummyQueryFactory();
 
       expectedException.expect(IllegalArgumentException.class);
-      expectedException.expectMessage("The given condition was created by a different factory");
+      expectedException.expectMessage("ISPN014809: The given condition was created by another factory");
 
       qf1.from("MyDummyType")
             .having("attr1").eq("1")
@@ -47,7 +47,7 @@ public class CreationTest {
       QueryFactory qf2 = new DummyQueryFactory();
 
       expectedException.expect(IllegalArgumentException.class);
-      expectedException.expectMessage("The given condition was created by a different factory");
+      expectedException.expectMessage("ISPN014809: The given condition was created by another factory");
 
       qf1.from("MyDummyType")
             .having("attr1").eq("1")
