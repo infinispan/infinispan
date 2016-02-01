@@ -133,10 +133,10 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
       dataContainer.compute(entry.getKey(), ((k, oldEntry, factory) -> {
          if (entry == oldEntry) {
-            // We have to delete from shared stores as well to make sure there are not multiple expiration events
-            persistenceManager.deleteFromAllStores(k, PersistenceManager.AccessMode.BOTH);
-            if (cacheNotifier != null) {
-               cacheNotifier.notifyCacheEntryExpired(k, entry.getValue(), entry.getMetadata(), null);
+            synchronized (entry) {
+               if (entry.isExpired(currentTime)) {
+                  deleteFromStoresAndNotify(k, entry.getValue(), entry.getMetadata());
+               }
             }
             return null;
          }
@@ -149,60 +149,61 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
       // Note since this is invoked without the actual key lock it is entirely possible for a remove to occur
       // concurrently before the data container lock is acquired and then the oldEntry below will be null causing an
       // expiration event to be generated that is extra
-      dataContainer.compute(key, ((k, oldEntry, factory) -> {
-         if (oldEntry == null || (oldEntry.canExpire() && oldEntry.isExpired(timeService.time()))) {
-            // We have to delete from shared stores as well to make sure there are not multiple expiration events
-            persistenceManager.deleteFromAllStores(key, PersistenceManager.AccessMode.BOTH);
-            if (cacheNotifier != null) {
-               V value;
-               Metadata metadata;
-               if (oldEntry != null) {
-                  value = oldEntry.getValue();
-                  metadata = oldEntry.getMetadata();
-               } else {
-                  value = null;
-                  metadata = null;
-               }
-               cacheNotifier.notifyCacheEntryExpired(k, value, metadata, null);
-            }
-            return null;
-         }
-         return oldEntry;
-      }));
+      handleInStoreExpiration(key, null, null);
    }
 
    @Override
    public void handleInStoreExpiration(final MarshalledEntry<K, V> marshalledEntry) {
-      dataContainer.compute(marshalledEntry.getKey(), (key, oldEntry, factory) -> {
-         V value;
-         Metadata metadata;
-         boolean shouldRemove;
+      handleInStoreExpiration(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata());
+   }
+
+   private void handleInStoreExpiration(K key, V value, Metadata metadata) {
+      dataContainer.compute(key, (oldKey, oldEntry, factory) -> {
+         boolean shouldRemove = false;
          if (oldEntry == null) {
             shouldRemove = true;
-            value = marshalledEntry.getValue();
-            metadata = marshalledEntry.getMetadata();
+            deleteFromStoresAndNotify(key, value, metadata);
          } else if (oldEntry.canExpire()) {
-            metadata = marshalledEntry.getMetadata();
-            value = marshalledEntry.getValue();
-            // Even though we were provided marshalled entry - they may only provide metadata or value possibly
-            // so we have to check for null on either
-            shouldRemove = (metadata == null || oldEntry.getMetadata().equals(metadata)) &&
-                    (value == null || value.equals(oldEntry.getValue()));
-         } else {
-            shouldRemove = false;
-            value = null;
-            metadata = null;
+            long time = timeService.time();
+            if (oldEntry.isExpired(time)) {
+               synchronized (oldEntry) {
+                  if (oldEntry.isExpired(time)) {
+                     // Even though we were provided marshalled entry - they may only provide metadata or value possibly
+                     // so we have to check for null on either
+                     if (shouldRemove = (metadata == null || oldEntry.getMetadata().equals(metadata)) &&
+                             (value == null || value.equals(oldEntry.getValue()))) {
+                        deleteFromStoresAndNotify(key, value, metadata);
+                     }
+                  }
+               }
+            }
          }
          if (shouldRemove) {
-            // We have to delete from shared stores as well to make sure there are not multiple expiration events
-            persistenceManager.deleteFromAllStores(key, PersistenceManager.AccessMode.BOTH);
-            if (cacheNotifier != null) {
-               cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null);
-            }
             return null;
          }
          return oldEntry;
       });
+   }
+
+   /**
+    * Deletes the key from the store as well as notifies the cache listeners of the expiration of the given key,
+    * value, metadata combination.
+    * @param key
+    * @param value
+    * @param metadata
+    */
+   private void deleteFromStoresAndNotify(K key, V value, Metadata metadata) {
+      deleteFromStores(key);
+      if (cacheNotifier != null) {
+         // To guarantee ordering of events this must be done on the entry, so that another write cannot be
+         // done at the same time
+         cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null);
+      }
+   }
+
+   private void deleteFromStores(K key) {
+      // We have to delete from shared stores as well to make sure there are not multiple expiration events
+      persistenceManager.deleteFromAllStores(key, PersistenceManager.AccessMode.BOTH);
    }
 
    @Override
