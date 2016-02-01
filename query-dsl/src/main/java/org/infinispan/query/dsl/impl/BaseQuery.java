@@ -57,13 +57,13 @@ public abstract class BaseQuery implements Query {
    @Override
    public Query setParameter(String paramName, Object paramValue) {
       if (namedParameters == null) {
-         throw new IllegalStateException("Query does not have parameters");
+         throw log.queryDoesNotHaveParameters();
       }
       if (paramName == null || paramName.isEmpty()) {
          throw log.parameterNameCannotBeNulOrEmpty();
       }
       if (!namedParameters.containsKey(paramName)) {
-         throw new IllegalArgumentException("No parameter named '" + paramName + "' was found");
+         throw log.parameterNotFound(paramName);
       }
       namedParameters.put(paramName, paramValue);
 
@@ -76,15 +76,15 @@ public abstract class BaseQuery implements Query {
    @Override
    public Query setParameters(Map<String, Object> paramValues) {
       if (paramValues == null) {
-         throw new IllegalArgumentException("paramValues cannot be null");
+         throw log.argumentCannotBeNull("paramValues");
       }
       if (namedParameters == null) {
-         throw new IllegalStateException("Query does not have parameters");
+         throw log.queryDoesNotHaveParameters();
       }
       Set<String> unknownParams = null;
       for (String paramName : paramValues.keySet()) {
          if (paramName == null || paramName.isEmpty()) {
-            throw new IllegalArgumentException("Parameter name cannot be null or empty");
+            throw log.parameterNameCannotBeNulOrEmpty();
          }
          if (!namedParameters.containsKey(paramName)) {
             if (unknownParams == null) {
@@ -94,7 +94,7 @@ public abstract class BaseQuery implements Query {
          }
       }
       if (unknownParams != null) {
-         throw new IllegalArgumentException("No parameters named '" + unknownParams + "' were found");
+         throw log.parametersNotFound(unknownParams.toString());
       }
       namedParameters.putAll(paramValues);
 

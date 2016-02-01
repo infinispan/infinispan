@@ -46,4 +46,10 @@ public interface Log extends BasicLogger {
 
    @Message(id = 413, value = "namedParameters cannot be null")
    IllegalArgumentException getNamedParametersCannotBeNull();
+
+   @Message(id = 414, value = "Aggregation %s is not supported")
+   IllegalStateException getAggregationTypeNotSupportedException(String aggregationType);
+
+   @Message(id = 415, value = "Aggregation AVG cannot be applied to property of type %s")
+   IllegalStateException getAVGCannotBeAppliedToPropertyOfType(String typeName);
 }

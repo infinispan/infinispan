@@ -1,7 +1,9 @@
 package org.infinispan.objectfilter;
 
 import org.hibernate.hql.ast.origin.hql.resolve.path.AggregationPropertyPath;
+import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.util.StringHelper;
+import org.jboss.logging.Logger;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.List;
  * @since 8.0
  */
 public final class PropertyPath {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, PropertyPath.class.getName());
 
    public enum AggregationType {
       SUM, AVG, MIN, MAX, COUNT;
@@ -33,7 +37,7 @@ public final class PropertyPath {
             case COUNT:
                return AggregationType.COUNT;
             default:
-               throw new IllegalStateException("Aggregation " + aggregationType.name() + " is not supported");
+               throw log.getAggregationTypeNotSupportedException(aggregationType.name());
          }
       }
    }
