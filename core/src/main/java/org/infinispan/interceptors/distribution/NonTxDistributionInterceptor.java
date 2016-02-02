@@ -112,25 +112,32 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       ConsistentHash ch = dm.getConsistentHash();
       Address localAddress = rpcManager.getAddress();
       if (ctx.isOriginLocal()) {
-         List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(
-               rpcManager.getMembers().size() - 1);
          // TODO: if async we don't need to do futures...
          RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
-         for (Address member : rpcManager.getMembers()) {
-            if (member.equals(rpcManager.getAddress())) {
+         Map<Address, Map<Object, Object>> primaryEntries = new HashMap<>();
+         for (Entry<Object, Object> entry : originalMap.entrySet()) {
+            Object key = entry.getKey();
+            Address owner = ch.locatePrimaryOwner(key);
+            if (localAddress.equals(owner)) {
                continue;
             }
-            Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
-            if (!segments.isEmpty()) {
-               Map<Object, Object> segmentEntriesMap =
-                     new ReadOnlySegmentAwareMap<>(originalMap, ch, segments);
-               if (!segmentEntriesMap.isEmpty()) {
-                  PutMapCommand copy = new PutMapCommand(command);
-                  copy.setMap(segmentEntriesMap);
-                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
-                        Collections.singletonList(member), copy, options);
-                  futures.add(future);
-               }
+            Map<Object, Object> currentEntries = primaryEntries.get(owner);
+            if (currentEntries == null) {
+               currentEntries = new HashMap<>();
+               primaryEntries.put(owner, currentEntries);
+            }
+            currentEntries.put(key, entry.getValue());
+         }
+         List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(
+                 rpcManager.getMembers().size() - 1);
+         for (Entry<Address, Map<Object, Object>> ownerEntry : primaryEntries.entrySet()) {
+            Map<Object, Object> entries = ownerEntry.getValue();
+            if (!entries.isEmpty()) {
+               PutMapCommand copy = new PutMapCommand(command);
+               copy.setMap(entries);
+               CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(ownerEntry.getKey()), copy, options);
+               futures.add(future);
             }
          }
          if (futures.size() > 0) {
@@ -147,42 +154,36 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       if (!command.isForwarded() && ch.getNumOwners() > 1) {
-         // Now we find all the segments that we own and map our backups to those
-         Map<Address, Set<Integer>> backupOwnerSegments = new HashMap<>();
-         int segmentCount = ch.getNumSegments();
-         for (int i = 0; i < segmentCount; ++i) {
-            Iterator<Address> iter = ch.locateOwnersForSegment(i).iterator();
-
-            if (iter.next().equals(localAddress)) {
-               while (iter.hasNext()) {
-                  Address backupOwner = iter.next();
-                  Set<Integer> segments = backupOwnerSegments.get(backupOwner);
-                  if (segments == null) {
-                     backupOwnerSegments.put(backupOwner, (segments = new HashSet<>()));
+         Map<Address, Map<Object, Object>> backupOwnerEntries = new HashMap<>();
+         for (Entry<Object, Object> entry : originalMap.entrySet()) {
+            Object key = entry.getKey();
+            List<Address> addresses = ch.locateOwners(key);
+            if (localAddress.equals(addresses.get(0))) {
+               for (int i = 1; i < addresses.size(); ++i) {
+                  Address address = addresses.get(i);
+                  Map<Object, Object> entries = backupOwnerEntries.get(address);
+                  if (entries == null) {
+                     entries = new HashMap<>();
+                     backupOwnerEntries.put(address, entries);
                   }
-                  segments.add(i);
+                  entries.put(key, entry.getValue());
                }
             }
          }
 
-         int backupOwnerSize = backupOwnerSegments.size();
+         int backupOwnerSize = backupOwnerEntries.size();
          if (backupOwnerSize > 0) {
             List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
             RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
             command.addFlag(Flag.SKIP_LOCKING);
             command.setForwarded(true);
 
-            for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
-               Set<Integer> segments = entry.getValue();
-               Map<Object, Object> segmentEntriesMap = 
-                     new ReadOnlySegmentAwareMap<>(originalMap, ch, segments);
-               if (!segmentEntriesMap.isEmpty()) {
-                  PutMapCommand copy = new PutMapCommand(command);
-                  copy.setMap(segmentEntriesMap);
-                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
-                        Collections.singletonList(entry.getKey()), copy, options);
-                  futures.add(future);
-               }
+            for (Entry<Address, Map<Object, Object>> addressEntry : backupOwnerEntries.entrySet()) {
+               PutMapCommand copy = new PutMapCommand(command);
+               copy.setMap(addressEntry.getValue());
+               CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                       Collections.singletonList(addressEntry.getKey()), copy, options);
+               futures.add(future);
             }
             command.setForwarded(false);
             if (futures.size() > 0) {
