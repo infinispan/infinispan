@@ -17,7 +17,9 @@ import javax.transaction.xa.Xid;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 
@@ -46,6 +48,7 @@ public class DummyTransaction implements Transaction {
    private volatile int status = Status.STATUS_UNKNOWN;
    private final List<Synchronization> syncs;
    private final List<XAResource> resources;
+   private final Map<XAResource, Integer> resourceStatuses;
    private RollbackException firstRollbackException;
 
    public DummyTransaction(DummyBaseTransactionManager tm) {
@@ -60,6 +63,7 @@ public class DummyTransaction implements Transaction {
       }
       syncs = new ArrayList<>(2);
       resources = new ArrayList<>(2);
+      resourceStatuses = new HashMap<>(2);
    }
 
    private static boolean isRollbackCode(XAException ex) {
@@ -269,8 +273,10 @@ public class DummyTransaction implements Transaction {
             if (trace) {
                log.tracef("XaResource.prepare() for %s", res);
             }
-            //don't need to check return value. the only possible values are OK or READ_ONLY.
-            res.prepare(xid);
+            // Need to check return value: the only possible values are XA_OK or XA_RDONLY.
+            // We do *not* perform commit() on XA_RDONLY! See ISPN-6146.
+            int lastStatus = res.prepare(xid);
+            resourceStatuses.put(res, lastStatus);
          } catch (XAException e) {
             if (trace) {
                log.trace("The resource wants to rollback!", e);
@@ -385,6 +391,10 @@ public class DummyTransaction implements Transaction {
                if (trace) {
                   log.tracef("XaResource.commit() for %s", res);
                }
+               if (resourceStatuses.get(res) == XAResource.XA_RDONLY) {
+                  log.tracef("Skipping XaResource.commit() since prepare status was XA_RDONLY for %s", res);
+                  continue;
+               }
                //we only do 2-phase commits
                res.commit(xid, false);
             } else {
@@ -415,6 +425,8 @@ public class DummyTransaction implements Transaction {
       }
 
       resources.clear();
+      resourceStatuses.clear();
+
       if (heuristic && !ok && !error) {
          //all the resources thrown an heuristic exception
          HeuristicRollbackException exception = new HeuristicRollbackException();
