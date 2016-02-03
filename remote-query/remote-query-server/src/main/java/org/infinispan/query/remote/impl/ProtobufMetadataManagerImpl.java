@@ -126,14 +126,14 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       serCtx.registerMarshaller(marshaller);
    }
 
-   @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register Protofile")
+   @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register a Protofile")
    @Override
    public void registerProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName,
                                  @Parameter(name = "contents", description = "contents of the file") String contents) {
       getCache().put(fileName, contents);
    }
 
-   @ManagedOperation(description = "Registers a set of Protobuf definition files", displayName = "Register Protofiles")
+   @ManagedOperation(description = "Registers multiple Protobuf definition files", displayName = "Register Protofiles")
    @Override
    public void registerProtofiles(@Parameter(name = "fileNames", description = "names of the protofiles") String[] fileNames,
                                   @Parameter(name = "fileContents", description = "content of the files") String[] contents) throws Exception {
@@ -145,6 +145,20 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
          files.put(fileNames[i], contents[i]);
       }
       getCache().putAll(files);
+   }
+
+   @ManagedOperation(description = "Unregisters a Protobuf definition files", displayName = "Unregister a Protofiles")
+   @Override
+   public void unregisterProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName) {
+      getCache().remove(fileName);
+   }
+
+   @ManagedOperation(description = "Unregisters multiple Protobuf definition files", displayName = "Unregister Protofiles")
+   @Override
+   public void unregisterProtofiles(@Parameter(name = "fileNames", description = "names of the protofiles") String[] fileNames) {
+      for (String fileName : fileNames) {
+         getCache().remove(fileName);
+      }
    }
 
    @ManagedAttribute(description = "The names of all Protobuf files", displayName = "Protofile Names")
