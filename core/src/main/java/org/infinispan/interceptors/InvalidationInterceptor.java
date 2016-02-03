@@ -34,6 +34,7 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -56,8 +57,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.concurrent.NotifyingFutureImpl;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.SysPropertyActions;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -134,18 +134,42 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retval = invokeNextInterceptor(ctx, command);
-      log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
-      // fetch the modifications before the transaction is committed (and thus removed from the txTable)
-      if (shouldInvokeRemoteTxCommand(ctx)) {
-         List<WriteCommand> mods = Arrays.asList(command.getModifications());
-         Transaction runningTransaction = ctx.getTransaction();
-         if (runningTransaction == null) throw new IllegalStateException("we must have an associated transaction");
-         broadcastInvalidateForPrepare(mods, runningTransaction, ctx);
-      } else {
-         log.tracef("Nothing to invalidate - no modifications in the transaction.");
+      if (isInvalidationOnPrepare()) {
+         Object retval = invokeNextInterceptor(ctx, command);
+         log.tracef("Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty");
+         // fetch the modifications before the transaction is committed (and thus removed from the txTable)
+         if (shouldInvokeRemoteTxCommand(ctx)) {
+            List<WriteCommand> mods = Arrays.asList(command.getModifications());
+            Transaction runningTransaction = ctx.getTransaction();
+            if (runningTransaction == null) throw new IllegalStateException("we must have an associated transaction");
+            broadcastInvalidateForPrepare(mods, runningTransaction, ctx);
+         } else {
+            log.tracef("Nothing to invalidate - no modifications in the transaction.");
+         }
+         return retval;
       }
-      return retval;
+
+      return super.visitPrepareCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (isInvalidationOnCommit()) {
+         Object retval = super.visitCommitCommand(ctx, command);
+         Set<Object> affectedKeys = ctx.getAffectedKeys();
+         try {
+            log.tracef("On commit, send invalidate for keys: %s", affectedKeys);
+            invalidateAcrossCluster(defaultSynchronous, affectedKeys.toArray());
+            return retval;
+         } catch (Throwable t) {
+            if (t instanceof RuntimeException)
+               throw t;
+            else
+               throw log.unableToBroadcastInvalidation(t);
+         }
+      }
+
+      return super.visitCommitCommand(ctx, command);
    }
 
    @Override
@@ -194,6 +218,21 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
             }
          }
       }
+   }
+
+   private boolean isInvalidationOnPrepare() {
+      return !isInvalidationOnCommit();
+   }
+
+   private boolean isInvalidationOnCommit() {
+      String prop = SysPropertyActions.getProperty("infinispan.invalidation.on_commit", "false");
+      boolean result = false;
+      try {
+         result = Boolean.parseBoolean(prop);
+      } catch (Exception e) {
+         // Ignore
+      }
+      return result;
    }
 
    public static class InvalidationFilterVisitor extends AbstractVisitor {
