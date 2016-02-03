@@ -114,6 +114,9 @@ public class CacheContainerResource extends SimpleResourceDefinition {
          new StringListAttributeDefinition.Builder("file-urls")
                .build();
 
+    static final SimpleAttributeDefinition PROTO_NAME =
+           new SimpleAttributeDefinition("file-name", ModelType.STRING, false);
+
     static final ListAttributeDefinition PROTO_NAMES =
            new StringListAttributeDefinition.Builder("file-names")
                    .build();
@@ -122,6 +125,15 @@ public class CacheContainerResource extends SimpleResourceDefinition {
            new StringListAttributeDefinition.Builder("file-contents")
                    .build();
 
+    static final OperationDefinition GET_PROTO_NAMES = new SimpleOperationDefinitionBuilder("get-proto-schema-names", new InfinispanResourceDescriptionResolver("cache-container"))
+           .setRuntimeOnly()
+           .build();
+
+    static final OperationDefinition GET_PROTO = new SimpleOperationDefinitionBuilder("get-proto-schema", new InfinispanResourceDescriptionResolver("cache-container"))
+           .setParameters(PROTO_NAME)
+           .setRuntimeOnly()
+           .build();
+
     static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", new InfinispanResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAMES, PROTO_URLS)
            .setRuntimeOnly()
@@ -129,6 +141,11 @@ public class CacheContainerResource extends SimpleResourceDefinition {
 
     static final OperationDefinition REGISTER_PROTO = new SimpleOperationDefinitionBuilder("register-proto-schemas", new InfinispanResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAMES, PROTO_CONTENTS)
+           .setRuntimeOnly()
+           .build();
+
+    static final OperationDefinition UNREGISTER_PROTO = new SimpleOperationDefinitionBuilder("unregister-proto-schemas", new InfinispanResourceDescriptionResolver("cache-container"))
+           .setParameters(PROTO_NAMES)
            .setRuntimeOnly()
            .build();
 
@@ -286,8 +303,11 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         // register add-alias and remove-alias
         resourceRegistration.registerOperationHandler(ALIAS_ADD, AddAliasCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(ALIAS_REMOVE, RemoveAliasCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(GET_PROTO_NAMES, GetProtobufSchemaNamesHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(GET_PROTO, GetProtobufSchemaHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(UPLOAD_PROTO, UploadProtoFileOperationHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(REGISTER_PROTO, RegisterProtoSchemasOperationHandler.INSTANCE);
+        resourceRegistration.registerOperationHandler(UNREGISTER_PROTO, UnregisterProtoSchemasOperationHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(CLI_INTERPRETER, CliInterpreterHandler.INSTANCE);
         resourceRegistration.registerOperationHandler(BACKUP_TAKE_SITE_OFFLINE, CacheContainerCommands.BackupTakeSiteOfflineCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(BACKUP_BRING_SITE_ONLINE, CacheContainerCommands.BackupBringSiteOnlineCommand.INSTANCE);
