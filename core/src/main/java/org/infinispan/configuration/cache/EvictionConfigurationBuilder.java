@@ -102,15 +102,17 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    public void validate() {
       EvictionStrategy strategy = attributes.attribute(STRATEGY).get();
       Long maxEntries = attributes.attribute(SIZE).get();
-      if (!strategy.isEnabled() && getBuilder().persistence().passivation())
-         log.passivationWithoutEviction();
-      if(strategy == EvictionStrategy.FIFO)
+      if (strategy == EvictionStrategy.FIFO)
          log.warnFifoStrategyIsDeprecated();
       if (strategy.isEnabled() && maxEntries <= 0)
          throw new CacheConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
-      if (maxEntries > 0 && !strategy.isEnabled()) {
-         strategy(EvictionStrategy.LIRS);
-         log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", maxEntries, strategy);
+      if (!strategy.isEnabled()) {
+         if (maxEntries > 0) {
+            strategy(EvictionStrategy.LIRS);
+            log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", maxEntries, strategy);
+         } else if (getBuilder().persistence().passivation()) {
+            log.passivationWithoutEviction();
+         }
       }
       if (strategy == EvictionStrategy.LIRS && attributes.attribute(TYPE).get() == EvictionType.MEMORY) {
          throw new CacheConfigurationException("Eviction cannot use memory based approximation with LIRS");
