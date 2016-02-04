@@ -23,6 +23,10 @@ public class TransportConfiguration {
          .immutable().build();
    static final AttributeDefinition<Long> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
          "distributedSyncTimeout", TimeUnit.MINUTES.toMillis(4)).build();
+   static final AttributeDefinition<Integer> INITIAL_CLUSTER_SIZE = AttributeDefinition.builder("initialClusterSize", -1)
+         .immutable().build();
+   static final AttributeDefinition<Long> INITIAL_CLUSTER_TIMEOUT = AttributeDefinition.builder(
+           "initialClusterTimeout", TimeUnit.MINUTES.toMillis(1)).build();
    static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition
          .builder("transport", null, Transport.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition
@@ -35,7 +39,7 @@ public class TransportConfiguration {
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TransportConfiguration.class, CLUSTER_NAME, MACHINE_ID, RACK_ID, SITE_ID, NODE_NAME,
-            DISTRIBUTED_SYNC_TIMEOUT, TRANSPORT, PROPERTIES);
+            DISTRIBUTED_SYNC_TIMEOUT, INITIAL_CLUSTER_SIZE, INITIAL_CLUSTER_TIMEOUT, TRANSPORT, PROPERTIES);
    }
 
    private final Attribute<String> clusterName;
@@ -44,6 +48,8 @@ public class TransportConfiguration {
    private final Attribute<String> siteId;
    private final Attribute<String> nodeName;
    private final Attribute<Long> distributedSyncTimeout;
+   private final Attribute<Integer> initialClusterSize;
+   private final Attribute<Long> initialClusterTimeout;
    private final Attribute<Transport> transport;
    private final Attribute<TypedProperties> properties;
    private final AttributeSet attributes;
@@ -62,6 +68,8 @@ public class TransportConfiguration {
       rackId = attributes.attribute(RACK_ID);
       siteId = attributes.attribute(SITE_ID);
       distributedSyncTimeout = attributes.attribute(DISTRIBUTED_SYNC_TIMEOUT);
+      initialClusterSize = attributes.attribute(INITIAL_CLUSTER_SIZE);
+      initialClusterTimeout = attributes.attribute(INITIAL_CLUSTER_TIMEOUT);
       transport = attributes.attribute(TRANSPORT);
       nodeName = attributes.attribute(NODE_NAME);
       properties = attributes.attribute(PROPERTIES);
@@ -85,6 +93,14 @@ public class TransportConfiguration {
 
    public long distributedSyncTimeout() {
       return distributedSyncTimeout.get();
+   }
+
+   public int initialClusterSize() {
+      return initialClusterSize.get();
+   }
+
+   public long initialClusterTimeout() {
+      return initialClusterTimeout.get();
    }
 
    public Transport transport() {
@@ -176,7 +192,4 @@ public class TransportConfiguration {
          return false;
       return true;
    }
-
-
-
 }

@@ -375,8 +375,22 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="initial-cluster-size" type="xs:int">
+      <xs:annotation>
+        <xs:documentation>
+          The minimum number of nodes that must join the cluster for the cache manager to start
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="initial-cluster-timeout" type="xs:long">
+      <xs:annotation>
+        <xs:documentation>
+          The amount of time in milliseconds to wait for a cluster with sufficient nodes to form. Defaults to 60000
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
-  
+
   <xs:complexType name="global-security">
     <xs:sequence>
       <xs:element name="authorization" minOccurs="0">
@@ -534,7 +548,7 @@
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
-  
+
   <xs:complexType name="global-state">
     <xs:sequence>
       <xs:element name="persistent-location" type="tns:global-state-path" minOccurs="1" maxOccurs="1">
@@ -557,7 +571,7 @@
       </xs:element>
     </xs:sequence>
   </xs:complexType>
-  
+
   <xs:complexType name="global-state-path">
     <xs:attribute name="relative-to" type="xs:string" default="jboss.server.data.dir">
         <xs:annotation>
@@ -989,7 +1003,7 @@
       </xs:element>
     </xs:sequence>
   </xs:complexType>
-  
+
   <xs:complexType name="cache-security">
     <xs:sequence>
       <xs:element name="authorization" minOccurs="0">
@@ -1812,7 +1826,7 @@
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
-  
+
   <xs:simpleType name="eviction-type">
     <xs:restriction base="xs:string">
       <xs:enumeration value="COUNT">
@@ -1846,11 +1860,11 @@
       </xs:enumeration>
     </xs:restriction>
   </xs:simpleType>
-  
+
   <xs:simpleType name="permission-list">
     <xs:list itemType="tns:permission"/>
   </xs:simpleType>
-  
+
   <xs:simpleType name="permission">
     <xs:restriction base="xs:string">
       <xs:enumeration value="LIFECYCLE">

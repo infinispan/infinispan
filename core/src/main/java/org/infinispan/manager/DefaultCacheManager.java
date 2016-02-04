@@ -607,8 +607,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             }
          }
 
-         globalComponentRegistry.start();
-
          log.tracef("About to wire and start cache %s", cacheName);
          Cache<K, V> cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
 
@@ -642,6 +640,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       if (globalConfiguration.security().authorization().enabled()) {
          globalConfiguration.security().authorization().principalRoleMapper().setContext(new PrincipalRoleMapperContextImpl(this));
       }
+      globalComponentRegistry.start();
       log.debugf("Started cache manager %s on %s", clusterName, nodeName);
    }
 

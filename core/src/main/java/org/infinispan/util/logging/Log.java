@@ -1387,5 +1387,8 @@ public interface Log extends BasicLogger {
 
    @Message(value ="CH Factory '%s' cannot restore a persisted CH of class '%s'", id = 398)
    IllegalStateException persistentConsistentHashMismatch(String hashFactory, String consistentHashClass);
+
+   @Message(value = "Timeout while waiting for %d members in cluster. Last view had %s", id = 399)
+   CacheException timeoutWaitingForInitialNodes(int initialClusterSize, List<?> members);
 }
 
