@@ -2,12 +2,16 @@ package org.infinispan.jmx;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.test.SingleCacheManagerTest;
 
 import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.*;
 
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -15,6 +19,7 @@ import org.testng.annotations.Test;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,6 +36,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    private ObjectName mgmtInterceptor;
    private MBeanServer server;
    AdvancedCache<?, ?> advanced;
+   AdvancedLoadWriteStore loader;
    private static final String JMX_DOMAIN = CacheMgmtInterceptorMBeanTest.class.getSimpleName();
 
    @Override
@@ -38,12 +44,17 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
 
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
+      configuration.eviction().strategy(EvictionStrategy.LRU).size(1)
+              .persistence()
+              .passivation(true)
+              .addStore(DummyInMemoryStoreConfigurationBuilder.class);
 
       configuration.jmxStatistics().enable();
       cacheManager.defineConfiguration("test", configuration.build());
       cache = cacheManager.getCache("test");
       advanced = cache.getAdvancedCache();
       mgmtInterceptor = getCacheObjectName(JMX_DOMAIN, "test(local)", "Statistics");
+      loader = (AdvancedLoadWriteStore) TestingUtil.getFirstLoader(cache);
 
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;
@@ -58,13 +69,18 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       checkMBeanOperationParameterNaming(mgmtInterceptor);
    }
 
-   public void testEviction() throws Exception {
+   public void testEviction(Method m) throws Exception {
       assertEvictions(0);
-      cache.put("key", "value");
-      assertEvictions(0);
-      cache.evict("key");
+      assert cache.get(k(m, "1")) == null;
+      cache.put(k(m, "1"), v(m, 1));
+      //test explicit evict command
+      cache.evict(k(m, "1"));
+      assert loader.contains(k(m, "1")) : "the entry should have been evicted";
       assertEvictions(1);
-      cache.evict("does_not_exist");
+      assert cache.get(k(m, "1")).equals(v(m, 1));
+      //test implicit eviction
+      cache.put(k(m, "2"), v(m, 2));
+      assert loader.contains(k(m, "1")) : "the entry should have been evicted";
       assertEvictions(2);
    }
 
@@ -107,7 +123,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       toAdd.put("key2", "value2");
       cache.putAll(toAdd);
       assertStores(4);
-      assertCurrentNumberOfEntries(2);
+      assertCurrentNumberOfEntries(1);
 
       resetStats();
 
@@ -116,7 +132,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       toAdd.put("key4", "value4");
       cache.putAll(toAdd);
       assertStores(2);
-      assertCurrentNumberOfEntries(4);
+      assertCurrentNumberOfEntries(1);
    }
 
    public void testStoresPutForExternalRead() throws Exception {

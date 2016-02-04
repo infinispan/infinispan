@@ -79,7 +79,7 @@ public class JmxManagementIT {
     MemcachedClient mc;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         if (provider == null) { // initialize just once
             provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
             provider2 = new MBeanServerConnectionProvider(server2.getHotrodEndpoint().getInetAddress().getHostName(), SERVER2_MGMT_PORT);
@@ -90,7 +90,12 @@ public class JmxManagementIT {
             mc = new MemcachedClient("UTF-8", server1.getMemcachedEndpoint().getInetAddress()
                     .getHostName(), server1.getMemcachedEndpoint().getPort(), 10000);
         }
+        resetCacheStatistics();
         distCache.clear();
+    }
+
+    private void resetCacheStatistics() throws Exception {
+        invokeOperation(provider, memcachedCacheStatisticsMBean, "resetStatistics", null, null);
     }
 
     @Test
@@ -224,10 +229,11 @@ public class JmxManagementIT {
     @Test
     public void testCacheStatisticsAttributes() throws Exception {
         mc.set("key1", "value1");
+        mc.set("key2", "value2");
         mc.get("key1");
-        assertNotEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "NumberOfEntries")));
+        assertEquals(1, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "NumberOfEntries")));
         mc.delete("key1");
-        assertEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "Evictions")));
+        assertEquals(2, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "Evictions")));
         assertEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "RemoveMisses")));
         assertNotEquals(0.0, Double.parseDouble(getAttribute(provider, memcachedCacheStatisticsMBean, "ReadWriteRatio")));
         assertNotEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "Hits")));
@@ -245,10 +251,10 @@ public class JmxManagementIT {
 
     @Test
     public void testCacheStatisticsOperations() throws Exception {
-        invokeOperation(provider, memcachedCacheStatisticsMBean, "resetStatistics", null, null);
+        resetCacheStatistics();
         mc.set("key1", "value1");
         assertEquals(1, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "Stores")));
-        invokeOperation(provider, memcachedCacheStatisticsMBean, "resetStatistics", null, null);
+        resetCacheStatistics();
         assertEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "Stores")));
     }
 
