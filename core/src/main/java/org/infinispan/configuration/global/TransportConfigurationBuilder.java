@@ -98,6 +98,22 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    /**
+    * Sets the number of nodes that need to join before the cache container can start. The default is to
+    */
+   public TransportConfigurationBuilder initialClusterSize(int clusterSize) {
+      attributes.attribute(INITIAL_CLUSTER_SIZE).set(clusterSize);
+      return this;
+   }
+
+   /**
+    * Sets the timeout for the initial cluster to form. Defaults to 1 minute
+    */
+   public TransportConfigurationBuilder initialClusterTimeout(long initialClusterTimeout, TimeUnit unit) {
+      attributes.attribute(INITIAL_CLUSTER_TIMEOUT).set(unit.toMillis(initialClusterTimeout));
+      return this;
+   }
+
+   /**
     * Class that represents a network transport. Must implement
     * org.infinispan.remoting.transport.Transport
     *

@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -767,10 +768,58 @@ public class Parser80 implements ConfigurationParser {
                }
                break;
             }
+            case UNKNOWN:
+               break;
+            case ACQUIRE_TIMEOUT:
+               break;
+            case AFTER:
+               break;
+            case ALIASES:
+               break;
+            case ALLOW_DUPLICATE_DOMAINS:
+               break;
+            case ASYNC_EXECUTOR:
+               break;
+            case ASYNC_MARSHALLING:
+               break;
+            case AUDIT_LOGGER:
+               break;
+            case AUTO_COMMIT:
+               break;
+            case AUTO_CONFIG:
+               break;
+            case AWAIT_INITIAL_TRANSFER:
+               break;
+            case BACKUP_FAILURE_POLICY:
+               break;
+            case BEFORE:
+               break;
+            case CAPACITY_FACTOR:
+               break;
+            case CHUNK_SIZE:
+               break;
+            case CLASS:
+               break;
             case CLUSTER: {
                globalBuilder.transport().clusterName(value);
                break;
             }
+            case COMPLETED_TX_TIMEOUT:
+               break;
+            case CONCURRENCY_LEVEL:
+               break;
+            case CONFIGURATION:
+               break;
+            case CONSISTENT_HASH_FACTORY:
+               break;
+            case CORE_THREADS:
+               break;
+            case DATA_CONTAINER:
+               break;
+            case DEFAULT_CACHE:
+               break;
+            case ENABLED:
+               break;
             case EXECUTOR: {
                globalBuilder.transport().transportThreadPool().read(
                      createThreadPoolConfiguration(value, ASYNC_TRANSPORT_EXECUTOR));
@@ -786,6 +835,46 @@ public class Parser80 implements ConfigurationParser {
                      createThreadPoolConfiguration(value, REMOTE_COMMAND_EXECUTOR));
                break;
             }
+            case EVICTION_EXECUTOR:
+               break;
+            case EXPIRATION_EXECUTOR:
+               break;
+            case FAILURE_POLICY_CLASS:
+               break;
+            case FETCH_STATE:
+               break;
+            case FLUSH_LOCK_TIMEOUT:
+               break;
+            case GROUP_NAME:
+               break;
+            case ID:
+               break;
+            case INDEX:
+               break;
+            case INTERVAL:
+               break;
+            case INVALIDATION_CLEANUP_TASK_FREQUENCY:
+               break;
+            case ISOLATION:
+               break;
+            case JNDI_NAME:
+               break;
+            case JMX_DOMAIN:
+               break;
+            case KEEP_ALIVE_TIME:
+               break;
+            case KEY_EQUIVALENCE:
+               break;
+            case KEY_PARTITIONER:
+               break;
+            case L1_LIFESPAN:
+               break;
+            case LIFESPAN:
+               break;
+            case LISTENER_EXECUTOR:
+               break;
+            case LOCATION:
+               break;
             case LOCK_TIMEOUT: {
                globalBuilder.transport().distributedSyncTimeout(Long.valueOf(value));
                break;
@@ -797,6 +886,8 @@ public class Parser80 implements ConfigurationParser {
 
                break;
             }
+            case LOCKING:
+               break;
             case MACHINE_ID: {
                globalBuilder.transport().machineId(value);
                break;
@@ -810,6 +901,166 @@ public class Parser80 implements ConfigurationParser {
                globalBuilder.site().localSite(value);
                break;
             }
+            case INITIAL_CLUSTER_SIZE: {
+               if (reader.getSchema().since(8, 2)) {
+                  globalBuilder.transport().initialClusterSize(Integer.valueOf(value));
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
+               break;
+            }
+            case INITIAL_CLUSTER_TIMEOUT: {
+               if (reader.getSchema().since(8, 2)) {
+                  globalBuilder.transport().initialClusterTimeout(Long.parseLong(value), TimeUnit.MILLISECONDS);
+               } else {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               }
+               break;
+            }
+            case MAPPER:
+               break;
+            case MARSHALLER_CLASS:
+               break;
+            case MAX_ENTRIES:
+               break;
+            case MAX_IDLE:
+               break;
+            case MAX_RETRIES:
+               break;
+            case MAX_THREADS:
+               break;
+            case MBEAN_SERVER_LOOKUP:
+               break;
+            case MODE:
+               break;
+            case MODIFICATION_QUEUE_SIZE:
+               break;
+            case MODULE:
+               break;
+            case NAME:
+               break;
+            case NAMES:
+               break;
+            case NOTIFICATIONS:
+               break;
+            case ON_REHASH:
+               break;
+            case OWNERS:
+               break;
+            case PATH:
+               break;
+            case PASSIVATION:
+               break;
+            case PERMISSIONS:
+               break;
+            case PERSISTENCE_EXECUTOR:
+               break;
+            case POSITION:
+               break;
+            case PRELOAD:
+               break;
+            case PRIORITY:
+               break;
+            case PURGE:
+               break;
+            case QUEUE_FLUSH_INTERVAL:
+               break;
+            case QUEUE_LENGTH:
+               break;
+            case QUEUE_SIZE:
+               break;
+            case READ_ONLY:
+               break;
+            case REAPER_WAKE_UP_INTERVAL:
+               break;
+            case RECOVERY_INFO_CACHE_NAME:
+               break;
+            case RELATIVE_TO:
+               break;
+            case REMOTE_CACHE:
+               break;
+            case REMOTE_SITE:
+               break;
+            case REMOTE_TIMEOUT:
+               break;
+            case REPLICATION_QUEUE_EXECUTOR:
+               break;
+            case ROLES:
+               break;
+            case SEGMENTS:
+               break;
+            case SHARED:
+               break;
+            case SHUTDOWN_HOOK:
+               break;
+            case SHUTDOWN_TIMEOUT:
+               break;
+            case SIMPLE_CACHE:
+               break;
+            case SINGLETON:
+               break;
+            case SIZE:
+               break;
+            case SPIN_DURATION:
+               break;
+            case STATISTICS:
+               break;
+            case STATISTICS_AVAILABLE:
+               break;
+            case START:
+               break;
+            case STATE_TRANSFER_EXECUTOR:
+               break;
+            case STORE_KEYS_AS_BINARY:
+               break;
+            case STORE_VALUES_AS_BINARY:
+               break;
+            case STRATEGY:
+               break;
+            case STRIPING:
+               break;
+            case STOP_TIMEOUT:
+               break;
+            case TAKE_BACKUP_OFFLINE_AFTER_FAILURES:
+               break;
+            case TAKE_BACKUP_OFFLINE_MIN_WAIT:
+               break;
+            case THREAD_FACTORY:
+               break;
+            case THREAD_NAME_PATTERN:
+               break;
+            case THREAD_POLICY:
+               break;
+            case THREAD_POOL_SIZE:
+               break;
+            case TIMEOUT:
+               break;
+            case TRANSACTION_MANAGER_LOOKUP_CLASS:
+               break;
+            case TRANSACTION_PROTOCOL:
+               break;
+            case TRANSPORT:
+               break;
+            case TYPE:
+               break;
+            case UNRELIABLE_RETURN_VALUES:
+               break;
+            case USE_TWO_PHASE_COMMIT:
+               break;
+            case VALUE:
+               break;
+            case VALUE_EQUIVALENCE:
+               break;
+            case VERSION:
+               break;
+            case VERSIONING_SCHEME:
+               break;
+            case WAIT_TIME:
+               break;
+            case WRITE_SKEW_CHECK:
+               break;
+            case FRAGMENTATION_FACTOR:
+               break;
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }

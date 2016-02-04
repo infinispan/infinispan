@@ -46,6 +46,7 @@ import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.blocks.mux.Muxer;
 import org.jgroups.jmx.JmxConfigurator;
+import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.protocols.tom.TOA;
 import org.jgroups.stack.AddressGenerator;
@@ -68,6 +69,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -191,6 +193,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       startJGroupsChannelIfNeeded();
 
       waitForChannelToConnect();
+
+      waitForInitialNodes();
    }
 
    protected void startJGroupsChannelIfNeeded() {
@@ -235,14 +239,23 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public void waitForView(int viewId) throws InterruptedException {
+      waitForView(viewId, 0, TimeUnit.SECONDS);
+   }
+
+   public boolean waitForView(int viewId, long time, TimeUnit timeUnit) throws InterruptedException {
       if (channel == null)
-         return;
+         return false;
       log.tracef("Waiting on view %d being accepted", viewId);
       viewUpdateLock.lock();
       try {
          while (channel != null && getViewId() < viewId) {
-            viewUpdateCondition.await();
+            if (time == 0) {
+               viewUpdateCondition.await();
+            } else {
+               return viewUpdateCondition.await(time, timeUnit);
+            }
          }
+         return true;
       } finally {
          viewUpdateLock.unlock();
       }
@@ -459,6 +472,25 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          // The start method can't throw checked exceptions
          log.interruptedWaitingForCoordinator(e);
          Thread.currentThread().interrupt();
+      }
+   }
+
+   private void waitForInitialNodes() {
+      int initialClusterSize = configuration.transport().initialClusterSize();
+      if (initialClusterSize > 1) {
+         long timeout = configuration.transport().initialClusterTimeout();
+         while (channel.getView().getMembers().size() < initialClusterSize) {
+            try {
+               log.debugf("Waiting for %d nodes, current view has %d", initialClusterSize, channel.getView().getMembers().size());
+               if(!waitForView(viewId + 1, timeout, TimeUnit.MILLISECONDS)) {
+                  throw log.timeoutWaitingForInitialNodes(initialClusterSize, channel.getView().getMembers());
+               }
+            } catch (InterruptedException e) {
+               log.interruptedWaitingForCoordinator(e);
+               Thread.currentThread().interrupt();
+            }
+         }
+         log.debugf("Initial cluster size of %d nodes reached", initialClusterSize);
       }
    }
 

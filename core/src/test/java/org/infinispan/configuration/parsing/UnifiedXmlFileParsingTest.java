@@ -56,7 +56,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       int minor = Integer.parseInt(parts[1]);
       final int version = major * 10 + minor;
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.fromXml("configs/unified/" + config, true, false)) {
+            TestCacheManagerFactory.fromXml("configs/unified/" + config, true, false, false)) {
          @Override
          public void call() {
             switch (version) {
@@ -83,6 +83,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    private static void configurationCheck82(EmbeddedCacheManager cm) {
       configurationCheck81(cm);
+      GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
+      assertEquals(4, globalConfiguration.transport().initialClusterSize());
+      assertEquals(30000, globalConfiguration.transport().initialClusterTimeout());
    }
 
    private static void configurationCheck81(EmbeddedCacheManager cm) {
@@ -95,9 +98,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    private static void configurationCheck80(EmbeddedCacheManager cm) {
       configurationCheck70(cm);
-      Configuration c = cm.getCache().getCacheConfiguration();
+      Configuration c = cm.getDefaultCacheConfiguration();
       assertFalse(c.eviction().type() == EvictionType.MEMORY);
-      c = cm.getCache("invalid").getCacheConfiguration();
+      c = cm.getCacheConfiguration("invalid");
       assertTrue(c.eviction().type() == EvictionType.MEMORY);
 
       DefaultThreadFactory threadFactory;
@@ -234,7 +237,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(ShutdownHookBehavior.DONT_REGISTER, g.shutdown().hookBehavior());
 
       // Default cache is "local" named cache
-      Configuration c = cm.getCache().getCacheConfiguration();
+      Configuration c = cm.getDefaultCacheConfiguration();
       assertFalse(c.invocationBatching().enabled());
       assertTrue(c.jmxStatistics().enabled());
       assertEquals(CacheMode.LOCAL, c.clustering().cacheMode());
@@ -267,7 +270,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(1, fileStore.async().threadPoolSize());
       assertEquals(Index.NONE, c.indexing().index());
 
-      c = cm.getCache("invalid").getCacheConfiguration();
+      c = cm.getCacheConfiguration("invalid");
       assertEquals(CacheMode.INVALIDATION_ASYNC, c.clustering().cacheMode());
       assertTrue(c.invocationBatching().enabled());
       assertEquals(10, c.clustering().async().replQueueInterval());
@@ -291,7 +294,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(11, c.expiration().maxIdle());
       assertEquals(Index.NONE, c.indexing().index());
 
-      c = cm.getCache("repl").getCacheConfiguration();
+      c = cm.getCacheConfiguration("repl");
       assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
       assertTrue(c.invocationBatching().enabled());
       assertEquals(11, c.clustering().async().replQueueInterval());
@@ -322,7 +325,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(clusterLoader.preload());
       assertEquals(Index.NONE, c.indexing().index());
 
-      c = cm.getCache("dist").getCacheConfiguration();
+      c = cm.getCacheConfiguration("dist");
       assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
       assertFalse(c.invocationBatching().enabled());
       assertEquals(1200000, c.clustering().l1().lifespan());
@@ -376,7 +379,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("users", c.sites().backupFor().remoteCache());
       assertEquals("LON", c.sites().backupFor().remoteSite());
 
-      c = cm.getCache("capedwarf-data").getCacheConfiguration();
+      c = cm.getCacheConfiguration("capedwarf-data");
       assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -389,7 +392,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
 
-      c = cm.getCache("capedwarf-metadata").getCacheConfiguration();
+      c = cm.getCacheConfiguration("capedwarf-metadata");
       assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -402,7 +405,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(dummyStore.preload());
       assertFalse(dummyStore.purgeOnStartup());
 
-      c = cm.getCache("capedwarf-memcache").getCacheConfiguration();
+      c = cm.getCacheConfiguration("capedwarf-memcache");
       assertEquals(CacheMode.REPL_ASYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -413,7 +416,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(-1, c.eviction().maxEntries());
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
 
-      c = cm.getCache("capedwarf-default").getCacheConfiguration();
+      c = cm.getCacheConfiguration("capedwarf-default");
       assertEquals(CacheMode.DIST_ASYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -427,7 +430,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(fileStore.purgeOnStartup());
       assertEquals(Index.NONE, c.indexing().index());
 
-      c = cm.getCache("capedwarf-dist").getCacheConfiguration();
+      c = cm.getCacheConfiguration("capedwarf-dist");
       assertEquals(CacheMode.DIST_ASYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -441,7 +444,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
 
-      c = cm.getCache("capedwarf-tasks").getCacheConfiguration();
+      c = cm.getCacheConfiguration("capedwarf-tasks");
       assertEquals(CacheMode.DIST_ASYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -455,7 +458,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(fileStore.purgeOnStartup());
       assertEquals(Index.NONE, c.indexing().index());
 
-      c = cm.getCache("HibernateSearch-LuceneIndexesMetadata").getCacheConfiguration();
+      c = cm.getCacheConfiguration("HibernateSearch-LuceneIndexesMetadata");
       assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.invocationBatching().enabled());
@@ -469,7 +472,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
 
-      c = cm.getCache("HibernateSearch-LuceneIndexesData").getCacheConfiguration();
+      c = cm.getCacheConfiguration("HibernateSearch-LuceneIndexesData");
       assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.invocationBatching().enabled());
@@ -483,7 +486,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
 
-      c = cm.getCache("HibernateSearch-LuceneIndexesLocking").getCacheConfiguration();
+      c = cm.getCacheConfiguration("HibernateSearch-LuceneIndexesLocking");
       assertEquals(CacheMode.REPL_SYNC, c.clustering().cacheMode());
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.invocationBatching().enabled());
@@ -494,7 +497,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.eviction().maxEntries());
 
-      c = cm.getCache("custom-interceptors").getCacheConfiguration();
+      c = cm.getCacheConfiguration("custom-interceptors");
       List<InterceptorConfiguration> interceptors = c.customInterceptors().interceptors();
       InterceptorConfiguration interceptor = interceptors.get(0);
       assertTrue(interceptor.interceptor() instanceof CustomInterceptor1);
@@ -510,25 +513,25 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(InterceptorConfiguration.Position.LAST, interceptor.position());
       assertTrue(c.unsafe().unreliableReturnValues());
 
-      c = cm.getCache("write-skew").getCacheConfiguration();
+      c = cm.getCacheConfiguration("write-skew");
       assertTrue(c.locking().writeSkewCheck());
       assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
       assertTrue(c.versioning().enabled());
       assertEquals(VersioningScheme.SIMPLE, c.versioning().scheme());
       assertFalse(c.deadlockDetection().enabled());
 
-      c = cm.getCache("compatibility").getCacheConfiguration();
+      c = cm.getCacheConfiguration("compatibility");
       assertTrue(c.compatibility().enabled());
       assertTrue(c.compatibility().marshaller() instanceof GenericJBossMarshaller);
       assertTrue(c.deadlockDetection().enabled());
       assertEquals(200, c.deadlockDetection().spinDuration());
 
-      c = cm.getCache("custom-container").getCacheConfiguration();
+      c = cm.getCacheConfiguration("custom-container");
       assertTrue(c.dataContainer().dataContainer() instanceof QueryableDataContainer);
       assertTrue(c.dataContainer().<byte[]>keyEquivalence() instanceof ByteArrayEquivalence);
       assertTrue(c.dataContainer().<byte[]>valueEquivalence() instanceof ByteArrayEquivalence);
 
-      c = cm.getCache("store-as-binary").getCacheConfiguration();
+      c = cm.getCacheConfiguration("store-as-binary");
       assertTrue(c.storeAsBinary().enabled());
       assertTrue(c.storeAsBinary().storeKeysAsBinary());
       assertFalse(c.storeAsBinary().storeValuesAsBinary());

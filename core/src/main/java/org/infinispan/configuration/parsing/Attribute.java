@@ -49,6 +49,8 @@ public enum Attribute {
     GROUP_NAME("group-name"),
     ID("id"),
     INDEX("index"),
+    INITIAL_CLUSTER_SIZE("initial-cluster-size"),
+    INITIAL_CLUSTER_TIMEOUT("initial-cluster-timeout"),
     INTERVAL("interval"),
     INVALIDATION_CLEANUP_TASK_FREQUENCY("l1-cleanup-interval"),
     ISOLATION("isolation"),
