@@ -82,7 +82,6 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
       if (getStatisticsEnabled(command))
          evictions.increment();
-
       return returnValue;
    }
 
@@ -440,5 +439,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return super.getStatisticsEnabled() && !cmd.hasFlag(Flag.SKIP_STATISTICS);
    }
 
+   public void addEvictions(long numEvictions) {
+      evictions.add(numEvictions);
+   }
 }
 

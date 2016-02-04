@@ -2,24 +2,32 @@ package org.infinispan.eviction.impl;
 
 import net.jcip.annotations.ThreadSafe;
 
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.eviction.EvictionManager;
-import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.CacheMgmtInterceptor;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.util.List;
 import java.util.Map;
 
 @ThreadSafe
 public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    // components to be injected
    private CacheNotifier<K, V> cacheNotifier;
+   private InterceptorChain interceptorChain;
+   private Configuration cfg;
 
    @Inject
-   public void initialize(CacheNotifier<K, V> cacheNotifier) {
+   public void initialize(CacheNotifier<K, V> cacheNotifier, Configuration cfg,  InterceptorChain chain) {
       this.cacheNotifier = cacheNotifier;
+      this.cfg = cfg;
+      this.interceptorChain = chain;
    }
 
    @Override
@@ -35,5 +43,17 @@ public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
       // contextual information, hence it makes sense for the notifyCacheEntriesEvicted()
       // call to carry on taking an InvocationContext object.
       cacheNotifier.notifyCacheEntriesEvicted(evicted.values(), ctx, null);
+
+      if (cfg.jmxStatistics().enabled()) {
+         updateEvictionStatistics(evicted);
+      }
+   }
+
+   private void updateEvictionStatistics(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted) {
+      List<CommandInterceptor> interceptors = interceptorChain.getInterceptorsWhichExtend(CacheMgmtInterceptor.class);
+      if (!interceptors.isEmpty()) {
+         CacheMgmtInterceptor mgmtInterceptor = (CacheMgmtInterceptor) interceptors.get(0);
+         mgmtInterceptor.addEvictions(evicted.size());
+      }
    }
 }
