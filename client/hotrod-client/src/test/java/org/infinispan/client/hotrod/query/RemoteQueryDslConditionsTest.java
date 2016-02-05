@@ -17,7 +17,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
@@ -35,6 +34,7 @@ import java.util.List;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.query.dsl.Expression.*;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.*;
 
@@ -246,7 +246,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testDateGrouping2() throws Exception {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.count("date"), Expression.min("date"))
+            .select(count("date"), min("date"))
             .having("description").eq("Hotel").toBuilder()
             .groupBy("id")
             .build();
@@ -266,7 +266,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testDateGrouping3() throws Exception {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.min("date"), Expression.count("date"))
+            .select(min("date"), count("date"))
             .having("description").eq("Hotel").toBuilder()
             .groupBy("id")
             .build();
@@ -321,11 +321,10 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testComplexQuery() throws Exception {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.avg("amount"), Expression.sum("amount"), Expression.count("date"), Expression.min("date"),
-                  Expression.max("accountId"))
-            .having("isDebit").eq(Expression.param("param")).toBuilder()
-            .orderBy(Expression.avg("amount"), SortOrder.DESC).orderBy(Expression.count("date"), SortOrder.DESC)
-            .orderBy(Expression.max("amount"), SortOrder.ASC)
+            .select(avg("amount"), sum("amount"), count("date"), min("date"), max("accountId"))
+            .having("isDebit").eq(param("param")).toBuilder()
+            .orderBy(avg("amount"), SortOrder.DESC).orderBy(count("date"), SortOrder.DESC)
+            .orderBy(max("amount"), SortOrder.ASC)
             .build();
 
       q.setParameter("param", true);
@@ -369,7 +368,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testAggregateDate() throws Exception {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.count("date"), Expression.min("date"))
+            .select(count("date"), min("date"))
             .having("description").eq("Hotel").toBuilder()
             .groupBy("id")
             .build();

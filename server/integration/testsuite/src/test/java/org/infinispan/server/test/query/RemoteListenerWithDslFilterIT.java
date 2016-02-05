@@ -16,7 +16,6 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.FilterResult;
@@ -36,6 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.query.dsl.Expression.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -111,7 +111,7 @@ public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(User.class)
-            .having("age").lte(Expression.param("ageParam"))
+            .having("age").lte(param("ageParam"))
             .toBuilder().select("age")
             .build()
             .setParameter("ageParam", 32);

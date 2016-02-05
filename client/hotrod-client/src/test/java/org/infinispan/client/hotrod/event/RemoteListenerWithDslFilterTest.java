@@ -20,7 +20,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -40,6 +39,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.query.dsl.Expression.*;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -143,7 +143,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(UserPB.class)
-            .having("age").lte(Expression.param("ageParam"))
+            .having("age").lte(param("ageParam"))
             .toBuilder().select("age")
             .build()
             .setParameter("ageParam", 32);
@@ -211,7 +211,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(UserPB.class)
-            .having("age").lte(Expression.param("ageParam"))
+            .having("age").lte(param("ageParam"))
             .toBuilder().select("age")
             .build()
             .setParameter("ageParam", 32);
@@ -238,7 +238,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .having("age").gte(20)
-            .toBuilder().select(Expression.max("age"))
+            .toBuilder().select(max("age"))
             .build();
 
       ClientEntryListener listener = new ClientEntryListener(ProtoStreamMarshaller.getSerializationContext(client(0)));

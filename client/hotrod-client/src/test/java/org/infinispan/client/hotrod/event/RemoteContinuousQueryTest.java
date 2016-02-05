@@ -12,7 +12,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.api.continuous.ContinuousQuery;
@@ -90,7 +89,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
-            .select(Expression.max("age"))
+            .select(max("age"))
             .having("age").gte(20)
             .toBuilder().build();
 
@@ -143,7 +142,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
       Query query = qf.from(UserPB.class)
             .select("age")
-            .having("age").lte(Expression.param("ageParam"))
+            .having("age").lte(param("ageParam"))
             .toBuilder().build()
             .setParameter("ageParam", 32);
 
@@ -245,7 +244,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
       Query query = qf.from(UserPB.class)
             .select("age")
-            .having("age").lte(Expression.param("ageParam"))
+            .having("age").lte(param("ageParam"))
             .toBuilder().build()
             .setParameter("ageParam", 32);
 

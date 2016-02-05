@@ -12,7 +12,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
@@ -22,6 +21,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.infinispan.query.dsl.Expression.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -141,7 +141,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(cache(0)).from(Person.class)
             .having("age").gte(20)
-            .toBuilder().select(Expression.max("age"))
+            .toBuilder().select(max("age"))
             .build();
 
       cache(0).addListener(new EntryListener(), Search.makeFilter(query), null);
