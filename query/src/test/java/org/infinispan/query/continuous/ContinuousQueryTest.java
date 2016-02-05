@@ -1,5 +1,6 @@
 package org.infinispan.query.continuous;
 
+import static org.infinispan.query.dsl.Expression.*;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
@@ -9,7 +10,6 @@ import org.hibernate.hql.ParsingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.api.continuous.ContinuousQuery;
@@ -45,7 +45,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(cache()).from(Person.class)
-            .select(Expression.max("age"))
+            .select(max("age"))
             .having("age").gte(20)
             .toBuilder().build();
 
@@ -67,7 +67,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .select("age")
-            .having("age").lte(Expression.param("ageParam"))
+            .having("age").lte(param("ageParam"))
             .toBuilder().build().setParameter("ageParam", 30);
 
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
@@ -162,7 +162,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       Query query = qf.from(Person.class)
             .select("age")
-            .having("age").lte(Expression.param("ageParam"))
+            .having("age").lte(param("ageParam"))
             .toBuilder().build();
 
       query.setParameter("ageParam", 30);

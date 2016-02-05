@@ -8,7 +8,6 @@ import org.infinispan.all.embeddedquery.testdomain.NotIndexed;
 import org.infinispan.all.embeddedquery.testdomain.Transaction;
 import org.infinispan.all.embeddedquery.testdomain.User;
 import org.infinispan.all.embeddedquery.testdomain.hsearch.ModelFactoryHS;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
@@ -32,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import static org.infinispan.query.dsl.Expression.*;
 import static org.junit.Assert.*;
 
 /**
@@ -307,7 +307,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
-            .and().having("surname").eq(Expression.param("surnameParam"))
+            .and().having("surname").eq(param("surnameParam"))
             .toBuilder().build();
 
       q.setParameter("surnameParam", "Doe");
@@ -1918,7 +1918,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.sum("age"))
+            .select(sum("age"))
             .groupBy("name")
             .orderBy("name")
             .build();
@@ -1947,7 +1947,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGroupBy4() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.max("addresses.postCode"))
+            .select(max("addresses.postCode"))
             .groupBy("name")
             .orderBy("name")
             .build();
@@ -1973,7 +1973,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGroupBy6() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.sum("name"))
+            .select(sum("name"))
             .build();
 
       List<Object[]> list = q.list();
@@ -1986,8 +1986,8 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGroupBy7() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.sum("age"))
-            .having(Expression.sum("age")).gt(10).toBuilder()
+            .select(sum("age"))
+            .having(sum("age")).gt(10).toBuilder()
             .build();
 
       List<Object[]> list = q.list();
@@ -2002,9 +2002,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testHavingWithSum() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.property("accountId"), Expression.sum("amount"))
+            .select(property("accountId"), sum("amount"))
             .groupBy("accountId")
-            .having(Expression.sum("amount")).gt(3324).toBuilder()
+            .having(sum("amount")).gt(3324).toBuilder()
             .orderBy("accountId")
             .build();
       List<Object[]> list = q.list();
@@ -2017,9 +2017,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testHavingWithAvg() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.property("accountId"), Expression.avg("amount"))
+            .select(property("accountId"), avg("amount"))
             .groupBy("accountId")
-            .having(Expression.avg("amount")).lt(130.0).toBuilder()
+            .having(avg("amount")).lt(130.0).toBuilder()
             .orderBy("accountId")
             .build();
       List<Object[]> list = q.list();
@@ -2032,9 +2032,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testHavingWithMin() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.property("accountId"), Expression.min("amount"))
+            .select(property("accountId"), min("amount"))
             .groupBy("accountId")
-            .having(Expression.min("amount")).lt(10).toBuilder()
+            .having(min("amount")).lt(10).toBuilder()
             .orderBy("accountId")
             .build();
       List<Object[]> list = q.list();
@@ -2047,9 +2047,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testHavingWithMax() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.property("accountId"), Expression.max("amount"))
+            .select(property("accountId"), max("amount"))
             .groupBy("accountId")
-            .having(Expression.avg("amount")).lt(150).toBuilder()
+            .having(avg("amount")).lt(150).toBuilder()
             .orderBy("accountId")
             .build();
       List<Object[]> list = q.list();
@@ -2063,7 +2063,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.sum("age"))
+            .select(sum("age"))
             .groupBy("name")
             .orderBy("name")
             .build();
@@ -2080,7 +2080,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedSum() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.property("surname"), Expression.sum("addresses.number"))
+            .select(property("surname"), sum("addresses.number"))
             .groupBy("surname")
             .orderBy("surname")
             .build();
@@ -2099,7 +2099,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGlobalSum() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.sum("amount"))
+            .select(sum("amount"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2112,7 +2112,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedGlobalSum() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.sum("addresses.number"))
+            .select(sum("addresses.number"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2125,7 +2125,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testCount() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.property("surname"), Expression.count("age"))
+            .select(property("surname"), count("age"))
             .groupBy("surname")
             .orderBy("surname")
             .build();
@@ -2144,7 +2144,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedCount1() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.property("surname"), Expression.count("accountIds"))
+            .select(property("surname"), count("accountIds"))
             .groupBy("surname")
             .orderBy("surname")
             .build();
@@ -2163,7 +2163,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedCount2() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.property("surname"), Expression.count("addresses.street"))
+            .select(property("surname"), count("addresses.street"))
             .groupBy("surname")
             .orderBy("surname")
             .build();
@@ -2182,7 +2182,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGlobalCount() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getAccountImplClass())
-            .select(Expression.count("creationDate"))
+            .select(count("creationDate"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2195,7 +2195,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedGlobalCount() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.count("accountIds"))
+            .select(count("accountIds"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2208,7 +2208,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testAvg() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.property("accountId"), Expression.avg("amount"))
+            .select(property("accountId"), avg("amount"))
             .groupBy("accountId")
             .orderBy("accountId")
             .build();
@@ -2225,7 +2225,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedAvg() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.property("surname"), Expression.avg("addresses.number"))
+            .select(property("surname"), avg("addresses.number"))
             .groupBy("surname")
             .orderBy("surname")
             .build();
@@ -2244,7 +2244,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGlobalAvg() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.avg("amount"))
+            .select(avg("amount"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2257,7 +2257,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedGlobalAvg() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.avg("addresses.number"))
+            .select(avg("addresses.number"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2270,7 +2270,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testMin() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.property("accountId"), Expression.min("amount"))
+            .select(property("accountId"), min("amount"))
             .groupBy("accountId")
             .orderBy("accountId")
             .build();
@@ -2287,7 +2287,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testMinString() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.min("surname"))
+            .select(min("surname"))
             .groupBy("name")
             .orderBy("name")
             .build();
@@ -2303,7 +2303,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedMin() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.property("surname"), Expression.min("addresses.number"))
+            .select(property("surname"), min("addresses.number"))
             .groupBy("surname")
             .orderBy("surname")
             .build();
@@ -2322,7 +2322,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGlobalMinDouble() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.min("amount"))
+            .select(min("amount"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2335,7 +2335,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGlobalMinString() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.min("name"))
+            .select(min("name"))
             .build();
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
@@ -2347,7 +2347,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedGlobalMin() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.min("addresses.number"))
+            .select(min("addresses.number"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2360,7 +2360,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testMax() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.property("accountId"), Expression.max("amount"))
+            .select(property("accountId"), max("amount"))
             .groupBy("accountId")
             .orderBy("accountId")
             .build();
@@ -2377,7 +2377,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testMaxString() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.max("surname"))
+            .select(max("surname"))
             .groupBy("name")
             .orderBy("name")
             .build();
@@ -2393,7 +2393,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedMax() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.property("surname"), Expression.max("addresses.number"))
+            .select(property("surname"), max("addresses.number"))
             .groupBy("surname")
             .orderBy("surname")
             .build();
@@ -2412,7 +2412,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedMaxString() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.max("addresses.postCode"))
+            .select(max("addresses.postCode"))
             .groupBy("name")
             .orderBy("name")
             .build();
@@ -2429,7 +2429,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGlobalMaxDouble() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.max("amount"))
+            .select(max("amount"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2442,7 +2442,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGlobalMaxString() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.max("name"))
+            .select(max("name"))
             .build();
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
@@ -2454,7 +2454,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testEmbeddedGlobalMax() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.max("addresses.number"))
+            .select(max("addresses.number"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2467,8 +2467,8 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testOrderBySum() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.sum("age"))
-            .orderBy(Expression.sum("age"))
+            .select(sum("age"))
+            .orderBy(sum("age"))
             .build();
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
@@ -2495,7 +2495,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testCountNull() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.count("age"))
+            .select(count("age"))
             .build();
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
@@ -2507,7 +2507,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testAvgNull() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.avg("age"))
+            .select(avg("age"))
             .build();
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
@@ -2534,7 +2534,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testDateGrouping2() throws Exception {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.count("date"), Expression.min("date"))
+            .select(count("date"), min("date"))
             .having("description").eq("Hotel").toBuilder()
             .groupBy("id")
             .build();
@@ -2550,7 +2550,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testDateGrouping3() throws Exception {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.min("date"), Expression.count("date"))
+            .select(min("date"), count("date"))
             .having("description").eq("Hotel").toBuilder()
             .groupBy("id")
             .build();
@@ -2567,7 +2567,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("gender").eq(Expression.param("param2"))
+            .having("gender").eq(param("param2"))
             .toBuilder().build();
 
       q.setParameter("param2", User.Gender.MALE);
@@ -2591,9 +2591,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("gender").eq(Expression.param("param1"))
+            .having("gender").eq(param("param1"))
             .and()
-            .having("name").eq(Expression.param("param2"))
+            .having("name").eq(param("param2"))
             .toBuilder().build();
 
       Map<String, Object> parameterMap = new HashMap<>(2);
@@ -2626,7 +2626,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
-            .having("creationDate").eq(Expression.param("param1"))
+            .having("creationDate").eq(param("param1"))
             .toBuilder().build().setParameter("param1", makeDate("2013-01-03"));
 
       List<Account> list = q.list();
@@ -2638,9 +2638,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testParamWithGroupBy() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.property("accountId"), Expression.property("date"), Expression.sum("amount"))
+            .select(property("accountId"), property("date"), sum("amount"))
             .groupBy("accountId", "date")
-            .having(Expression.sum("amount")).gt(Expression.param("param")).toBuilder()
+            .having(sum("amount")).gt(param("param")).toBuilder()
             .build();
 
       q.setParameter("param", 1801);
@@ -2656,7 +2656,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("name").eq(Expression.param("param1"))
+            .having("name").eq(param("param1"))
             .toBuilder().build();
 
       q.setParameter("param2", "John");
@@ -2667,7 +2667,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("name").eq(Expression.param("param1"))
+            .having("name").eq(param("param1"))
             .toBuilder().build();
 
       Map<String, Object> parameterMap = new HashMap<>(1);
@@ -2704,7 +2704,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("name").eq(Expression.param(null))
+            .having("name").eq(param(null))
             .toBuilder().build();
 
       q.setParameter(null, "John");
@@ -2715,7 +2715,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("name").eq(Expression.param(""))
+            .having("name").eq(param(""))
             .toBuilder().build();
 
       q.setParameter("", "John");
@@ -2726,8 +2726,8 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("name").eq(Expression.param("param1"))
-            .and().having("gender").eq(Expression.param("param2"))
+            .having("name").eq(param("param1"))
+            .and().having("gender").eq(param("param2"))
             .toBuilder().build();
 
       q.setParameter("param1", "John");
@@ -2740,8 +2740,8 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("name").eq(Expression.param("param1"))
-            .and().having("gender").eq(Expression.param("param2"))
+            .having("name").eq(param("param1"))
+            .and().having("gender").eq(param("param2"))
             .toBuilder().build();
 
       Map<String, Object> parameterMap = new HashMap<>(1);
@@ -2767,11 +2767,10 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testComplexQuery() throws Exception {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.avg("amount"), Expression.sum("amount"), Expression.count("date"), Expression.min("date"),
-                  Expression.max("accountId"))
-            .having("isDebit").eq(Expression.param("param")).toBuilder()
-            .orderBy(Expression.avg("amount"), SortOrder.DESC).orderBy(Expression.count("date"), SortOrder.DESC)
-            .orderBy(Expression.max("amount"), SortOrder.ASC)
+            .select(avg("amount"), sum("amount"), count("date"), min("date"), max("accountId"))
+            .having("isDebit").eq(param("param")).toBuilder()
+            .orderBy(avg("amount"), SortOrder.DESC).orderBy(count("date"), SortOrder.DESC)
+            .orderBy(max("amount"), SortOrder.ASC)
             .build();
 
       q.setParameter("param", true);
@@ -2807,7 +2806,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testAggregateDate() throws Exception {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .select(Expression.count("date"), Expression.min("date"))
+            .select(count("date"), min("date"))
             .having("description").eq("Hotel").toBuilder()
             .groupBy("id")
             .build();
@@ -2944,7 +2943,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGroupByMustNotAcceptRepeatedProperty() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.min("name"))
+            .select(min("name"))
             .groupBy("addresses.street")
             .build();
       q.list();
@@ -2964,11 +2963,11 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testOrderByInAggregationQueryMustAcceptRepeatedProperty() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.avg("age"), Expression.property("name"))
+            .select(avg("age"), property("name"))
             .having("name").gt("A").toBuilder()
             .groupBy("name")
-            .having(Expression.max("addresses.street")).gt("A").toBuilder()
-            .orderBy(Expression.min("addresses.street"))
+            .having(max("addresses.street")).gt("A").toBuilder()
+            .orderBy(min("addresses.street"))
             .build();
 
       List<Object[]> list = q.list();
@@ -2985,7 +2984,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select("name")
-            .having("name").eq(Expression.min("addresses.street")).toBuilder()
+            .having("name").eq(min("addresses.street")).toBuilder()
             .build();
       q.list();
    }
@@ -2994,7 +2993,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testAggregateRepeatedField() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.min("addresses.street"))
+            .select(min("addresses.street"))
             .having("name").eq("Spider").toBuilder()
             .build();
 
@@ -3006,7 +3005,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testGroupingAndAggregationOnSameField() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.count("surname"))
+            .select(count("surname"))
             .groupBy("surname")
             .build();
 
@@ -3022,7 +3021,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    public void testTwoPhaseGroupingAndAggregationOnSameField() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .select(Expression.count("surname"), Expression.sum("addresses.number"))
+            .select(count("surname"), sum("addresses.number"))
             .groupBy("surname")
             .orderBy("surname")
             .build();
