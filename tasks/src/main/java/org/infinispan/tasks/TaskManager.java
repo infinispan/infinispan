@@ -1,6 +1,7 @@
 package org.infinispan.tasks;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.tasks.spi.TaskEngine;
@@ -28,10 +29,17 @@ public interface TaskManager {
     *
     * @return a list of {@link TaskExecution} elements
     */
-   Collection<TaskExecution> getCurrentTasks();
+   List<TaskExecution> getCurrentTasks();
 
    /**
     * Retrieves the installed task engines
     */
-   Collection<TaskEngine> getEngines();
+   List<TaskEngine> getEngines();
+
+    /**
+     * Retrieves the list of all available tasks
+     *
+     * @return a list of {@link Task} elements
+     */
+   List<Task> getTasks();
 }
