@@ -186,7 +186,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                .setRuntimeOnly()
                .build();
 
-   static final OperationDefinition TASK_LIST =
+    static final OperationDefinition TASK_LIST =
            new SimpleOperationDefinitionBuilder("task-list", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
                 .setReplyType(ModelType.LIST)
                 .setReplyValueType(ModelType.OBJECT)
@@ -194,24 +194,24 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                 .setRuntimeOnly()
                 .build();
 
-   static final SimpleAttributeDefinition TASK_NAME = SimpleAttributeDefinitionBuilder.create("name", ModelType.STRING, false)
+    static final SimpleAttributeDefinition TASK_NAME = SimpleAttributeDefinitionBuilder.create("name", ModelType.STRING, false)
            .setAllowExpression(true)
            .build();
 
-   static final SimpleAttributeDefinition TASK_CACHE_NAME = SimpleAttributeDefinitionBuilder.create("cache-name", ModelType.STRING, true)
+    static final SimpleAttributeDefinition TASK_CACHE_NAME = SimpleAttributeDefinitionBuilder.create("cache-name", ModelType.STRING, true)
            .setAllowExpression(true)
            .build();
 
-   static final SimpleMapAttributeDefinition TASK_PARAMETERS = new SimpleMapAttributeDefinition.Builder("parameters", ModelType.STRING, true)
+    static final SimpleMapAttributeDefinition TASK_PARAMETERS = new SimpleMapAttributeDefinition.Builder("parameters", ModelType.STRING, true)
            .setAllowExpression(true)
            .build();
 
-   static final SimpleAttributeDefinition TASK_ASYNC = SimpleAttributeDefinitionBuilder.create("async", ModelType.BOOLEAN, true)
+    static final SimpleAttributeDefinition TASK_ASYNC = SimpleAttributeDefinitionBuilder.create("async", ModelType.BOOLEAN, true)
            .setAllowExpression(true)
            .setDefaultValue(new ModelNode(false))
            .build();
 
-   static final OperationDefinition TASK_EXECUTE =
+    static final OperationDefinition TASK_EXECUTE =
            new SimpleOperationDefinitionBuilder("task-execute", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
                 .setParameters(TASK_NAME, TASK_CACHE_NAME, TASK_PARAMETERS, TASK_ASYNC)
                 .setReplyType(ModelType.LIST)
@@ -220,13 +220,38 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                 .setRuntimeOnly()
                 .build();
 
-   static final OperationDefinition TASK_STATUS =
+    static final OperationDefinition TASK_STATUS =
             new SimpleOperationDefinitionBuilder("task-status", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
                     .setReplyType(ModelType.LIST)
                     .setReplyValueType(ModelType.OBJECT)
                     .setReadOnly()
                     .setRuntimeOnly()
                     .build();
+
+    static final SimpleAttributeDefinition SCRIPT_NAME = SimpleAttributeDefinitionBuilder.create("name", ModelType.STRING, false)
+            .setAllowExpression(true)
+            .build();
+
+    static final SimpleAttributeDefinition SCRIPT_CODE = SimpleAttributeDefinitionBuilder.create("code", ModelType.STRING, false)
+            .setAllowExpression(true)
+            .build();
+
+    static final OperationDefinition SCRIPT_ADD = new SimpleOperationDefinitionBuilder("script-add", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+            .setParameters(SCRIPT_NAME, SCRIPT_CODE)
+            .setRuntimeOnly()
+            .build();
+
+    static final OperationDefinition SCRIPT_CAT = new SimpleOperationDefinitionBuilder("script-cat", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+            .setParameters(SCRIPT_NAME)
+            .setReplyType(ModelType.STRING)
+            .setReadOnly()
+            .setRuntimeOnly()
+            .build();
+
+    static final OperationDefinition SCRIPT_REMOVE = new SimpleOperationDefinitionBuilder("script-remove", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+            .setParameters(SCRIPT_NAME)
+            .setRuntimeOnly()
+            .build();
 
     private final ResolvePathHandler resolvePathHandler;
     private final boolean runtimeRegistration;
@@ -269,6 +294,9 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(BACKUP_PUSH_STATE, CacheContainerCommands.BackupPushStateCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(BACKUP_CANCEL_PUSH_STATE, CacheContainerCommands.BackupCancelPushStateCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(READ_EVENT_LOG, CacheContainerCommands.ReadEventLogCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(SCRIPT_ADD, CacheContainerCommands.ScriptAddCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(SCRIPT_CAT, CacheContainerCommands.ScriptCatCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(SCRIPT_REMOVE, CacheContainerCommands.ScriptRemoveCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(TASK_LIST, CacheContainerCommands.TaskListCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(TASK_EXECUTE, CacheContainerCommands.TaskExecuteCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(TASK_STATUS, CacheContainerCommands.TaskStatusCommand.INSTANCE);

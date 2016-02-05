@@ -1,6 +1,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
@@ -21,9 +22,7 @@ import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
 import static org.jboss.as.controller.PathAddress.pathAddress;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -248,6 +247,55 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
                 execution.getWho().ifPresent(who -> node.get("who").set(who));
             }
             return result;
+        }
+    }
+
+    public static class ScriptAddCommand extends CacheContainerCommands {
+        public static final ScriptAddCommand INSTANCE = new ScriptAddCommand();
+
+        public ScriptAddCommand() {
+            super(0);
+        }
+
+        @Override
+        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+            ScriptingManager scriptManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+            String scriptName = CacheContainerResource.SCRIPT_NAME.resolveModelAttribute(context, operation).asString();
+            String scriptCode = CacheContainerResource.SCRIPT_CODE.resolveModelAttribute(context, operation).asString();
+            scriptManager.addScript(scriptName, scriptCode);
+            return null;
+        }
+    }
+
+    public static class ScriptCatCommand extends CacheContainerCommands {
+        public static final ScriptCatCommand INSTANCE = new ScriptCatCommand();
+
+        public ScriptCatCommand() {
+            super(0);
+        }
+
+        @Override
+        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+            ScriptingManager scriptManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+            String scriptName = CacheContainerResource.SCRIPT_NAME.resolveModelAttribute(context, operation).asString();
+            String scriptCode = scriptManager.getScript(scriptName);
+            return scriptCode != null ? new ModelNode().set(scriptCode) : null;
+        }
+    }
+
+    public static class ScriptRemoveCommand extends CacheContainerCommands {
+        public static final ScriptRemoveCommand INSTANCE = new ScriptRemoveCommand();
+
+        public ScriptRemoveCommand() {
+            super(0);
+        }
+
+        @Override
+        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+            ScriptingManager scriptManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+            String scriptName = CacheContainerResource.SCRIPT_NAME.resolveModelAttribute(context, operation).asString();
+            scriptManager.removeScript(scriptName);
+            return null;
         }
     }
 }

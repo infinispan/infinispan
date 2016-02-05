@@ -117,7 +117,18 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Override
    public void removeScript(String name) {
-      if (getScriptCache().remove(name) == null) {
+      if (containsScript(name)) {
+         getScriptCache().remove(name);
+      } else {
+         throw log.noNamedScript(name);
+      }
+   }
+
+   @Override
+   public String getScript(String name) {
+      if (containsScript(name)) {
+         return getScriptCache().get(name);
+      } else {
          throw log.noNamedScript(name);
       }
    }
