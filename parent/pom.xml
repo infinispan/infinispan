@@ -1408,41 +1408,6 @@
                          <goal>compile</goal>
                       </goals>
                    </execution>
-                   <execution>
-                      <id>generate-blueprint</id>
-                      <phase>none</phase>
-                      <goals>
-                         <goal>script</goal>
-                      </goals>
-                      <configuration>
-                         <keepGeneratedScript>true</keepGeneratedScript>
-
-                         <script>
-
-                             import scala.io.Source
-                             import java.io.{File, PrintWriter}
-                             val serviceDir = new File(project.getBuild().getOutputDirectory() + "/META-INF/services")
-                             if (serviceDir.exists &amp;&amp; serviceDir.listFiles.length != 0) {
-                                val services =
-                                   for (file &lt;- serviceDir.listFiles; line &lt;- Source.fromFile(file).getLines())
-                                   yield {
-                                          val beanName = line.substring(line.lastIndexOf(".") + 1).toLowerCase
-                                          "&lt;bean id=\"" + beanName + "\" class=\"" + line + "\"/&gt;" + "\n" +
-                                          "&lt;service ref=\"" + beanName + "\" interface=\"" + file.getName + "\"/&gt;\n"
-                                         }
-                                val targetBlueprint = new File(project.getBuild().getOutputDirectory() + "/OSGI-INF/blueprint/blueprint.xml")
-                                val input = Source.fromFile(targetBlueprint).getLines.mkString("\n")
-                                val output = new PrintWriter(targetBlueprint)
-                                try {
-                                   output.println(input.replace("${services}", services.toArray.mkString("\n")))
-                                } finally {
-                                   output.close
-                                }
-                             }
-
-                         </script>
-                      </configuration>
-                   </execution>
                 </executions>
                 <configuration>
                    <jvmArgs>
@@ -1709,6 +1674,27 @@
                      <skip>${module.skipTestComponentMetaDataProcessing}</skip>
                      <target>
                         <copy file="${basedir}/src/test/resources/${project.artifactId}-tests-component-metadata.dat" todir="${project.build.testOutputDirectory}" />
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>generate-blueprint</id>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <phase>none</phase>
+                  <configuration>
+                     <target>
+                        <property name="classpath" refid="maven.compile.classpath"/>
+                        <java classname="org.infinispan.commons.util.BlueprintGenerator"
+                              fork="false"
+                              failonerror="true" >
+                           <arg value="${project.build.outputDirectory}"/>
+                           <classpath>
+                              <pathelement path="${project.build.outputDirectory}"/>
+                              <pathelement path="${classpath}"/>
+                           </classpath>
+                        </java>
                      </target>
                   </configuration>
                </execution>
