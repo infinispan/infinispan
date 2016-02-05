@@ -14,7 +14,7 @@ import java.util.concurrent.Future;
  * @author Dan Berindei
  * @since 8.0
  */
-class SingleResponseFuture extends CompletableFuture<Rsp<Response>>
+public class SingleResponseFuture extends CompletableFuture<Rsp<Response>>
       implements FutureListener<Response>, Callable<Void> {
    private final UnicastRequest request;
    private volatile Future<?> timeoutFuture = null;
