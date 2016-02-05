@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
  * @author Dan Berindei
  * @since 8.0
  */
-class RspListFuture extends CompletableFuture<RspList<Response>> implements FutureListener<RspList<Response>>,
+public class RspListFuture extends CompletableFuture<RspList<Response>> implements FutureListener<RspList<Response>>,
       Callable<Void> {
    private final GroupRequest<Response> request;
    private volatile Future<?> timeoutFuture = null;

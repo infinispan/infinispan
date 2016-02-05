@@ -221,6 +221,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          case NONE:
             request.setFlag((short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value()));
             break;
+         default:
+            throw new IllegalArgumentException("Unsupported deliver mode " + deliverOrder);
       }
    }
 

@@ -676,7 +676,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
-                                                long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast)
+                                                long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
+                                                boolean totalOrder, boolean anycast)
          throws Exception {
       DeliverOrder deliverOrder = DeliverOrder.PER_SENDER;
       if (totalOrder) {

@@ -57,6 +57,12 @@ public class CompletableFutures {
       return all.thenApply(v -> futures.stream().map(future -> future.join()).collect(Collectors.<T> toList()));
    }
 
+   public static <T> CompletableFuture<T> completedExceptionFuture(Throwable ex) {
+      CompletableFuture<T> future = new CompletableFuture<>();
+      future.completeExceptionally(ex);
+      return future;
+   }
+
    /**
     * It waits until the {@link CompletableFuture} is completed.
     * <p>

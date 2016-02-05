@@ -56,6 +56,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
+import org.infinispan.manager.impl.ReplicableCommandRunnable;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.stream.impl.StreamRequestCommand;
@@ -173,6 +175,12 @@ public class RemoteCommandsFactory {
                break;
             case RemoveExpiredCommand.COMMAND_ID:
                command = new RemoveExpiredCommand();
+               break;
+            case ReplicableCommandRunnable.COMMAND_ID:
+               command = new ReplicableCommandRunnable();
+               break;
+            case ReplicableCommandManagerFunction.COMMAND_ID:
+               command = new ReplicableCommandManagerFunction();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
