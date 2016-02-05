@@ -25,9 +25,6 @@ public interface ScriptingManager {
     *           language
     * @param script
     *           the source of the script
-    * @param mimeType
-    *           the mimeType of the source which selects the {@link ScriptEngine} to use to compile
-    *           the script
     */
    void addScript(String name, String script);
 
@@ -56,4 +53,11 @@ public interface ScriptingManager {
     */
    <T> CompletableFuture<T> runScript(String scriptName, TaskContext context);
 
+   /**
+    * Retrieves the source code of an existing script.
+    *
+    * @param scriptName The name of the script
+    * @return the source code of the script
+     */
+   String getScript(String scriptName);
 }
