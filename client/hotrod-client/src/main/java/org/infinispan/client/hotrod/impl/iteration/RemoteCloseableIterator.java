@@ -40,6 +40,7 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
    private Transport transport;
    private String iterationId;
    boolean endOfIteration = false;
+   boolean closed;
    private Queue<Entry<Object, E>> nextElements = new LinkedList<>();
 
    public RemoteCloseableIterator(OperationsFactory operationsFactory, String filterConverterFactory,
@@ -58,20 +59,23 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
 
    @Override
    public void close() {
-      IterationEndResponse endResponse = operationsFactory.newIterationEndOperation(iterationId, transport).execute();
-      short status = endResponse.getStatus();
+      if (!closed) {
+         IterationEndResponse endResponse = operationsFactory.newIterationEndOperation(iterationId, transport).execute();
+         short status = endResponse.getStatus();
 
-      if (HotRodConstants.isSuccess(status)) {
-         log.iterationClosed(iterationId);
-      }
-      if (HotRodConstants.isInvalidIteration(status)) {
-         throw log.errorClosingIteration(iterationId);
+         if (HotRodConstants.isSuccess(status)) {
+            log.iterationClosed(iterationId);
+         }
+         if (HotRodConstants.isInvalidIteration(status)) {
+            throw log.errorClosingIteration(iterationId);
+         }
+         closed = true;
       }
    }
 
    @Override
    public boolean hasNext() {
-      if (nextElements.isEmpty()) {
+      if (!endOfIteration && nextElements.isEmpty()) {
          fetch();
       }
       return !endOfIteration;
