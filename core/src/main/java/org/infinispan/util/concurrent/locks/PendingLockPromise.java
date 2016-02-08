@@ -30,7 +30,12 @@ public interface PendingLockPromise {
 
       @Override
       public long getRemainingTimeout() {
-         return Long.MAX_VALUE;
+         throw new UnsupportedOperationException("This should never happen!");
+      }
+
+      @Override
+      public String toString() {
+         return "NO_OP";
       }
    };
 

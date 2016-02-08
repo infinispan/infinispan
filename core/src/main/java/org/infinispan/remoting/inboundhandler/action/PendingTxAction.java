@@ -70,17 +70,11 @@ public class PendingTxAction extends BaseLockingAction implements PendingLockLis
          keysToLock.removeAll(context.getLockedKeys());
       }
 
-      if (keysToLock.isEmpty()) {
-         //nothing to do. nobody else was able to update the state from checking, so no need to check the CAS
-         cas(InternalState.CHECKING, InternalState.READY);
-         return ActionStatus.READY;
-      }
-
       PendingLockPromise promise = keysToLock.size() == 1 ?
             pendingLockManager.checkPendingTransactionsForKey(context, keysToLock.get(0), timeout, TimeUnit.MILLISECONDS) :
             pendingLockManager.checkPendingTransactionsForKeys(context, keysToLock, timeout, TimeUnit.MILLISECONDS);
 
-      if (promise == PendingLockPromise.NO_OP) {
+      if (promise.isReady()) {
          //nothing to do. nobody else was able to update the state from checking, so no need to check the CAS
          cas(InternalState.CHECKING, InternalState.READY);
          return ActionStatus.READY;
