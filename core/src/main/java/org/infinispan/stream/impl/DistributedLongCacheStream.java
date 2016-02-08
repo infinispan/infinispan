@@ -254,12 +254,10 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public LongSummaryStatistics summaryStatistics() {
-      // TODO: maybe some day we can do this distributed way, currently IntSummaryStatistics is not serializable
-      // and doesn't allow for creating one from given values.
-      PrimitiveIterator.OfLong iterator = iterator();
-      LongSummaryStatistics stats = new LongSummaryStatistics();
-      iterator.forEachRemaining((long i) -> stats.accept(i));
-      return stats;
+      return performOperation(TerminalFunctions.summaryStatisticsLongFunction(), true, (ls1, ls2) -> {
+         ls1.combine(ls2);
+         return ls1;
+      }, null);
    }
 
    @Override

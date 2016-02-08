@@ -239,6 +239,18 @@ final class TerminalFunctions {
       return SumLongFunction.getInstance();
    }
 
+   public static Function<DoubleStream, DoubleSummaryStatistics> summaryStatisticsDoubleFunction() {
+      return SummaryStatisticsDoubleFunction.getInstance();
+   }
+
+   public static Function<LongStream, LongSummaryStatistics> summaryStatisticsLongFunction() {
+      return SummaryStatisticsLongFunction.getInstance();
+   }
+
+   public static Function<IntStream, IntSummaryStatistics> summaryStatisticsIntFunction() {
+      return SummaryStatisticsIntFunction.getInstance();
+   }
+
    public static <T> Function<Stream<T>, Object[]> toArrayFunction() {
       return ToArrayFunction.getInstance();
    }
@@ -1755,6 +1767,90 @@ final class TerminalFunctions {
          @Override
          public SumLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return SumLongFunction.getInstance();
+         }
+      }
+   }
+
+   @SerializeWith(value = SummaryStatisticsDoubleFunction.SummaryStatisticsDoubleFunctionExternalizer.class)
+   private static final class SummaryStatisticsDoubleFunction implements Function<DoubleStream, DoubleSummaryStatistics> {
+      private static final SummaryStatisticsDoubleFunction OPERATION = new SummaryStatisticsDoubleFunction();
+
+      private SummaryStatisticsDoubleFunction() { }
+
+      public static SummaryStatisticsDoubleFunction getInstance() {
+         return OPERATION;
+      }
+
+      @Override
+      public DoubleSummaryStatistics apply(DoubleStream stream) {
+         return stream.summaryStatistics();
+      }
+
+      public static final class SummaryStatisticsDoubleFunctionExternalizer
+              implements Externalizer<SummaryStatisticsDoubleFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, SummaryStatisticsDoubleFunction object) throws IOException {
+         }
+
+         @Override
+         public SummaryStatisticsDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return SummaryStatisticsDoubleFunction.getInstance();
+         }
+      }
+   }
+
+   @SerializeWith(value = SummaryStatisticsIntFunction.SummaryStatisticsIntFunctionExternalizer.class)
+   private static final class SummaryStatisticsIntFunction implements Function<IntStream, IntSummaryStatistics> {
+      private static final SummaryStatisticsIntFunction OPERATION = new SummaryStatisticsIntFunction();
+
+      private SummaryStatisticsIntFunction() { }
+
+      public static SummaryStatisticsIntFunction getInstance() {
+         return OPERATION;
+      }
+
+      @Override
+      public IntSummaryStatistics apply(IntStream stream) {
+         return stream.summaryStatistics();
+      }
+
+      public static final class SummaryStatisticsIntFunctionExternalizer
+              implements Externalizer<SummaryStatisticsIntFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, SummaryStatisticsIntFunction object) throws IOException {
+         }
+
+         @Override
+         public SummaryStatisticsIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return SummaryStatisticsIntFunction.getInstance();
+         }
+      }
+   }
+
+   @SerializeWith(value = SummaryStatisticsLongFunction.SummaryStatisticsLongFunctionExternalizer.class)
+   private static final class SummaryStatisticsLongFunction implements Function<LongStream, LongSummaryStatistics> {
+      private static final SummaryStatisticsLongFunction OPERATION = new SummaryStatisticsLongFunction();
+
+      private SummaryStatisticsLongFunction() { }
+
+      public static SummaryStatisticsLongFunction getInstance() {
+         return OPERATION;
+      }
+
+      @Override
+      public LongSummaryStatistics apply(LongStream stream) {
+         return stream.summaryStatistics();
+      }
+
+      public static final class SummaryStatisticsLongFunctionExternalizer
+              implements Externalizer<SummaryStatisticsLongFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, SummaryStatisticsLongFunction object) throws IOException {
+         }
+
+         @Override
+         public SummaryStatisticsLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return SummaryStatisticsLongFunction.getInstance();
          }
       }
    }

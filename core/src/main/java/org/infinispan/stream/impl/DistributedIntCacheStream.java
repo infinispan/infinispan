@@ -253,22 +253,20 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
 
    @Override
    public IntSummaryStatistics summaryStatistics() {
-      // TODO: maybe some day we can do this distributed way, currently IntSummaryStatistics is not serializable
-      // and doesn't allow for creating one from given values.
-      PrimitiveIterator.OfInt iterator = iterator();
-      IntSummaryStatistics stats = new IntSummaryStatistics();
-      iterator.forEachRemaining((int i) -> stats.accept(i));
-      return stats;
+      return performOperation(TerminalFunctions.summaryStatisticsIntFunction(), true, (is1, is2) -> {
+         is1.combine(is2);
+         return is1;
+      }, null);
    }
 
    @Override
    public boolean anyMatch(IntPredicate predicate) {
-      return performOperation(TerminalFunctions.allMatchFunction(predicate), false, Boolean::logicalOr, b -> b);
+      return performOperation(TerminalFunctions.anyMatchFunction(predicate), false, Boolean::logicalOr, b -> b);
    }
 
    @Override
    public boolean allMatch(IntPredicate predicate) {
-      return performOperation(TerminalFunctions.anyMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
+      return performOperation(TerminalFunctions.allMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
    }
 
    @Override

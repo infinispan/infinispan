@@ -138,6 +138,24 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
               () -> Collectors.averagingInt(e -> e.getKey()))));
    }
 
+   public void testObjCollectorIntStatistics() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      IntSummaryStatistics stats = createStream(entrySet).collect(CacheCollectors.serializableCollector(
+              () -> Collectors.summarizingInt(e -> e.getKey())));
+      assertEquals(10, stats.getCount());
+      assertEquals(4.5, stats.getAverage());
+      assertEquals(0, stats.getMin());
+      assertEquals(9, stats.getMax());
+      assertEquals(45, stats.getSum());
+   }
+
    public void testObjCollectorGroupBy() {
       Cache<Integer, String> cache = getCache(0);
       int range = 10;
