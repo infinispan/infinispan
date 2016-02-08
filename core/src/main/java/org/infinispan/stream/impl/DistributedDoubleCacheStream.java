@@ -248,12 +248,10 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public DoubleSummaryStatistics summaryStatistics() {
-      // TODO: maybe some day we can do this distributed way, currently IntSummaryStatistics is not serializable
-      // and doesn't allow for creating one from given values.
-      PrimitiveIterator.OfDouble iterator = iterator();
-      DoubleSummaryStatistics stats = new DoubleSummaryStatistics();
-      iterator.forEachRemaining((double i) -> stats.accept(i));
-      return stats;
+      return performOperation(TerminalFunctions.summaryStatisticsDoubleFunction(), true, (ds1, ds2) -> {
+         ds1.combine(ds2);
+         return ds1;
+      }, null);
    }
 
    @Override

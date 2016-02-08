@@ -35,6 +35,9 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    // internal collections (id=18 no longer in use, might get reused at a later stage)
    // id=19 moved to parent interface
    int ATOMIC_HASH_MAP = 20;
+   int INT_SUMMARY_STATISTICS = 21;
+   int LONG_SUMMARY_STATISTICS = 22;
+   int DOUBLE_SUMMARY_STATISTICS = 23;
    // others
    int GLOBAL_TRANSACTION = 38;
    int JGROUPS_ADDRESS = 39;

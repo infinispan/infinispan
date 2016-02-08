@@ -259,6 +259,10 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new ArrayExternalizers.ListArray());
       addInternalExternalizer(new SingletonListExternalizer());
 
+      addInternalExternalizer(new IntSummaryStatisticsExternalizer());
+      addInternalExternalizer(new LongSummaryStatisticsExternalizer());
+      addInternalExternalizer(new DoubleSummaryStatisticsExternalizer());
+
       addInternalExternalizer(new GlobalTransaction.Externalizer());
       addInternalExternalizer(new RecoveryAwareGlobalTransaction.Externalizer());
       addInternalExternalizer(new DldGlobalTransaction.Externalizer());
