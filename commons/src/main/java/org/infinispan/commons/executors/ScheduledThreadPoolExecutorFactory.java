@@ -1,23 +1,21 @@
 package org.infinispan.commons.executors;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 
 /**
  * @author Galder Zamarreño
  */
-public class ScheduledThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ScheduledExecutorService> {
+public enum ScheduledThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ScheduledExecutorService> {
 
-   private static final ScheduledThreadPoolExecutorFactory INSTANCE = new ScheduledThreadPoolExecutorFactory();
-
-   private ScheduledThreadPoolExecutorFactory() {
-      // singleton
-   }
+   INSTANCE;
 
    @Override
    public ScheduledExecutorService createExecutor(ThreadFactory factory) {
-      return Executors.newSingleThreadScheduledExecutor(factory);
+      ScheduledThreadPoolExecutor result = new ScheduledThreadPoolExecutor(1, factory);
+      result.setRemoveOnCancelPolicy(true);
+      return result;
    }
 
    @Override
@@ -28,5 +26,4 @@ public class ScheduledThreadPoolExecutorFactory implements ThreadPoolExecutorFac
    public static ScheduledThreadPoolExecutorFactory create() {
       return INSTANCE;
    }
-
 }

@@ -7,13 +7,9 @@ import java.util.concurrent.ThreadFactory;
 /**
  * @author Galder Zamarreño
  */
-public class CachedThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ExecutorService> {
+public enum CachedThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ExecutorService> {
 
-   private static final CachedThreadPoolExecutorFactory INSTANCE = new CachedThreadPoolExecutorFactory();
-
-   private CachedThreadPoolExecutorFactory() {
-      // singleton
-   }
+   INSTANCE;
 
    @Override
    public ExecutorService createExecutor(ThreadFactory factory) {
@@ -28,5 +24,4 @@ public class CachedThreadPoolExecutorFactory implements ThreadPoolExecutorFactor
    public static CachedThreadPoolExecutorFactory create() {
       return INSTANCE;
    }
-
 }
