@@ -27,7 +27,7 @@ import org.jboss.dmr.ModelNode;
 public class InfinispanUtil {
 
    private static final String SUBSYSTEM = "subsystem";
-   private static final String INFINISPAN = "infinispan";
+   private static final String INFINISPAN = "datagrid-infinispan";
    private static final String INFINISPAN_SUBSYSTEM = "/" + SUBSYSTEM + "=" + INFINISPAN;
    private static final String CONTAINER_TYPE = "cache-container";
    private static final String CONTAINER_ADDRESS = INFINISPAN_SUBSYSTEM + "/" + CONTAINER_TYPE;
@@ -50,7 +50,7 @@ public class InfinispanUtil {
       }
       OperationRequestAddress address = ctx.getCurrentNodePath();
       address.reset();
-      address.toNode("subsystem", "infinispan");
+      address.toNode("subsystem", INFINISPAN);
       address.toNode(CONTAINER_TYPE, container);
    }
 
