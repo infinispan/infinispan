@@ -40,7 +40,6 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
             EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT, InternalCacheRegistry.Flag.QUERYABLE));
       // Install the new logger component
       oldEventLogger = gcr.getComponent(EventLogManager.class).replaceEventLogger(new ServerEventLogger(cacheManager, gcr.getTimeService()));
-
    }
 
    @Override

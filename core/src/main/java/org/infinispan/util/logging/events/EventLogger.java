@@ -4,10 +4,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.Security;
 
 /**
@@ -68,15 +70,23 @@ public interface EventLogger {
    }
 
    /**
-    * Sets the scope of this event log, i.e. a node address. This should be used for events which
+    * Sets the scope of this event log, e.g. a node address. This should be used for events which
     * reference a single node in the cluster
     *
-    * @param scope
+    * @param scope a scope
     * @return the event logger
     */
    default EventLogger scope(String scope) {
       return this;
    }
+
+   /**
+    * Sets a node address as the scope of this event log
+    *
+    * @param scope the address of the node
+    * @return the event logger
+    */
+   default EventLogger scope(Address scope) { return this; }
 
    /**
     * Sets a cache as context of this event log. The name of the cache will be used to indicate the
@@ -178,7 +188,11 @@ public interface EventLogger {
     *           the offset from which to retrieve the logs
     * @param count
     *           the number of logs to retrieve
+    * @param category
+    *           an optional category filter
+    * @param level
+    *           an optional level filter
     * @return a list of {@link EventLog}s
     */
-   List<EventLog> getEvents(int start, int count);
+   List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level);
 }

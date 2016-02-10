@@ -3,6 +3,7 @@ package org.infinispan.util.logging.events.impl;
 import java.util.List;
 import java.util.Optional;
 
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -17,6 +18,7 @@ import static org.infinispan.util.logging.events.Messages.MESSAGES;
  * @since 8.2
  */
 public class DecoratedEventLogger implements EventLogger {
+   private static final Optional<String> LOCAL_SCOPE = Optional.of("local");
    private EventLogger delegate;
    protected Optional<String> detail = Optional.empty();
    protected Optional<String> context = Optional.empty();
@@ -51,6 +53,12 @@ public class DecoratedEventLogger implements EventLogger {
    }
 
    @Override
+   public EventLogger scope(Address scope) {
+      this.scope = scope != null ? Optional.of(scope.toString()) : LOCAL_SCOPE;
+      return this;
+   }
+
+   @Override
    public EventLogger context(String context) {
       this.context = Optional.of(context);
       return this;
@@ -63,8 +71,8 @@ public class DecoratedEventLogger implements EventLogger {
    }
 
    @Override
-   public List<EventLog> getEvents(int start, int count) {
-      return delegate.getEvents(start, count);
+   public List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
+      return delegate.getEvents(start, count, category, level);
    }
 
 }

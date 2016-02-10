@@ -21,6 +21,8 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogLevel;
 import org.jboss.as.controller.*;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.operations.validation.IntRangeValidator;
@@ -193,10 +195,19 @@ public class CacheContainerResource extends SimpleResourceDefinition {
            .setValidator(new IntRangeValidator(0, true))
            .build();
 
+   static final SimpleAttributeDefinition CATEGORY = SimpleAttributeDefinitionBuilder.create("category", ModelType.STRING, true)
+           .setAllowExpression(true)
+           .setValidator(new EnumValidator<EventLogCategory>(EventLogCategory.class, true, true))
+           .build();
+
+   static final SimpleAttributeDefinition LEVEL = SimpleAttributeDefinitionBuilder.create("level", ModelType.STRING, true)
+           .setAllowExpression(true)
+           .setValidator(new EnumValidator<EventLogLevel>(EventLogLevel.class, true, true))
+           .build();
 
    static final OperationDefinition READ_EVENT_LOG =
            new SimpleOperationDefinitionBuilder("read-event-log", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
-               .setParameters(COUNT, OFFSET)
+               .setParameters(COUNT, OFFSET, CATEGORY, LEVEL)
                .setReplyType(ModelType.LIST)
                .setReplyValueType(ModelType.OBJECT)
                .setReadOnly()

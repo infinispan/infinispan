@@ -1,13 +1,18 @@
 package org.infinispan.server.eventlogger;
 
+import java.security.cert.PKIXRevocationChecker;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Expression;
+import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.util.TimeService;
@@ -84,9 +89,18 @@ public class ServerEventLogger implements EventLogger {
    }
 
    @Override
-   public List<EventLog> getEvents(int start, int count) {
-      Query query = getQueryFactory().from(ServerEventImpl.class).orderBy("when", SortOrder.DESC).maxResults(count).startOffset(start).build();
-      return query.list();
+   public List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
+      QueryBuilder query = getQueryFactory().from(ServerEventImpl.class).orderBy("when", SortOrder.DESC).maxResults(count).startOffset(start);
+      if (category.isPresent()) {
+         if (level.isPresent()) {
+            query.having("category").eq(category.get()).and().having("level").eq(level.get());
+         } else {
+            query.having("category").eq(category.get());
+         }
+      } else if (level.isPresent()) {
+         query.having("level").eq(level.get());
+      }
+      return query.build().list();
    }
 
    private QueryFactory<Query> getQueryFactory() {

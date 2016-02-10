@@ -8,6 +8,8 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecution;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.logging.events.EventLog;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
@@ -24,6 +26,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -153,8 +156,12 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
           int count = CacheContainerResource.COUNT.resolveModelAttribute(context, operation).asInt();
           int offset = CacheContainerResource.OFFSET.resolveModelAttribute(context, operation).asInt();
+          ModelNode categoryNode = CacheContainerResource.CATEGORY.resolveModelAttribute(context, operation);
+          Optional<EventLogCategory> category = categoryNode.isDefined() ? Optional.of(EventLogCategory.valueOf(categoryNode.asString())) : Optional.empty();
+          ModelNode levelNode = CacheContainerResource.LEVEL.resolveModelAttribute(context, operation);
+          Optional<EventLogLevel> level = levelNode.isDefined() ? Optional.of(EventLogLevel.valueOf(levelNode.asString())) : Optional.empty();
           EventLogger eventLogger = EventLogManager.getEventLogger(cacheManager);
-          List<EventLog> events = eventLogger.getEvents(offset, count);
+          List<EventLog> events = eventLogger.getEvents(offset, count, category, level);
           final ModelNode result = new ModelNode().setEmptyList();
           for (EventLog event : events) {
               ModelNode node = result.addEmptyObject();

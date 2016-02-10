@@ -1,6 +1,7 @@
 package org.infinispan.util.logging.events.impl;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.util.logging.LogFactory;
@@ -43,10 +44,10 @@ public class BasicEventLogger implements EventLogger {
    }
 
    /**
-    * The null event logger doesn't collect anything.
+    * The basic event logger doesn't collect anything.
     */
    @Override
-   public List<EventLog> getEvents(int start, int count) {
+   public List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
       return InfinispanCollections.emptyList();
    }
 }
