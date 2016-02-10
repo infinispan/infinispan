@@ -205,7 +205,7 @@ public class MyClusterListener { .... }
 
 There are some limitations to cluster listeners from a non clustered listener.
 
-. A cluster listener can only listen to `@CacheEntryModified`, `@CacheEntryCreated` and `@CacheEntryRemoved` events.  Note this means any other type of event will not be listened to for this listener.
+. A cluster listener can only listen to `@CacheEntryModified`, `@CacheEntryCreated`, `@CacheEntryRemoved` and `@CacheEntryExpired` events.  Note this means any other type of event will not be listened to for this listener.
 . Only the post event is sent to a cluster listener, the pre event is ignored.
 
 ===== Event filtering and conversion
