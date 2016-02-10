@@ -66,7 +66,7 @@
             <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
          </hotrod-connector>
          <hotrod-connector name="internal" socket-binding="hotrod-internal" cache-container="local">
-            <topology-state-transfer cache-suffix="int" lock-timeout="1000" replication-timeout="5000" />
+            <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
          </hotrod-connector>
       </replacement>
    </supplement>

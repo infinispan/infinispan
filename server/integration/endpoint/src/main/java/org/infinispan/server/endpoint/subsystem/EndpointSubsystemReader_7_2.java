@@ -336,6 +336,10 @@ class EndpointSubsystemReader_7_2 implements XMLStreamConstants, XMLElementReade
             ROOT_LOGGER.topologyUpdateTimeoutIgnored();
             break;
          }
+         case CACHE_SUFFIX: {
+            ROOT_LOGGER.topologyCacheSuffixIgnored();
+            break;
+         }
          default: {
             throw ParseUtils.unexpectedAttribute(reader, i);
          }

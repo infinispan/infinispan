@@ -177,4 +177,8 @@ public interface EndpointLogger extends BasicLogger {
    @Message(id = 10030, value = "virtual-host attribute not in use")
    void virtualHostNotInUse();
 
+   @LogMessage(level = WARN)
+   @Message(id = 10031, value = "The topology cache-suffix attribute is ignored")
+   void topologyCacheSuffixIgnored();
 }
+

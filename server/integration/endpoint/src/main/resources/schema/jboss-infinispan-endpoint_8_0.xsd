@@ -131,7 +131,7 @@
     <xs:complexType name="topology-state-transfer">
         <xs:attribute name="cache-suffix" type="xs:string" use="optional">
             <xs:annotation>
-                <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND</xs:documentation>
+                <xs:documentation>Deprecated</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="lock-timeout" type="xs:int" use="optional">
