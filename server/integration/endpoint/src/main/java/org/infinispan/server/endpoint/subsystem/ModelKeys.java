@@ -57,6 +57,8 @@ public class ModelKeys {
    public static final String EXTERNAL_PORT = "external-port"; // integer
    public static final String LAZY_RETRIEVAL = "lazy-retrieval"; // boolean
    public static final String AWAIT_INITIAL_RETRIEVAL = "await-initial-retrieval"; // boolean
+   @Deprecated
+   public static final String CACHE_SUFFIX = "cache-suffix";
 
    public static final String AUTHENTICATION_NAME = "AUTHENTICATION";
    public static final String AUTHENTICATION = "authentication";
