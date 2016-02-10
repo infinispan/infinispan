@@ -17,4 +17,6 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Unknown task '%s'", id = 27002)
    IllegalArgumentException unknownTask(String taskName);
+
+
 }

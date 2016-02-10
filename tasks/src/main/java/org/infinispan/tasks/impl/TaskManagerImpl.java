@@ -2,6 +2,7 @@ package org.infinispan.tasks.impl;
 
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -15,6 +16,9 @@ import org.infinispan.tasks.logging.Log;
 import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLogger;
 
 import javax.security.auth.Subject;
 import java.lang.invoke.MethodHandles;
@@ -26,6 +30,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
+
+import static org.infinispan.tasks.logging.Messages.MESSAGES;
 
 /**
  * TaskManagerImpl.
@@ -80,9 +86,15 @@ public class TaskManagerImpl implements TaskManager {
             runningTasks.put(exec.getUUID(), exec);
             CompletableFuture<T> task = engine.runTask(name, context);
             return task.whenComplete((r, e) -> {
-               // TODO: hook up to the event logger, once that is implemented
+               EventLogger eventLog = EventLogManager.getEventLogger(cacheManager).scope(cacheManager.getAddress());
+               who.ifPresent(s -> eventLog.who(s));
+               context.getCache().ifPresent(cache -> eventLog.context(cache));
                if (e != null) {
-                  e.printStackTrace();
+                  eventLog.detail(e)
+                          .error(EventLogCategory.TASKS, MESSAGES.taskFailure(name));
+               } else {
+                  eventLog.detail(String.valueOf(r))
+                          .info(EventLogCategory.TASKS, MESSAGES.taskSuccess(name));
                }
                runningTasks.remove(exec.getUUID());
             });
