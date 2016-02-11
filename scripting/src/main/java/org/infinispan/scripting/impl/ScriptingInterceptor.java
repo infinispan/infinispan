@@ -36,13 +36,13 @@ public final class ScriptingInterceptor extends BaseCustomInterceptor {
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       scriptingManager.compiledScripts.clear();
-      return null;
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       scriptingManager.compiledScripts.remove(command.getKey());
-      return null;
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
