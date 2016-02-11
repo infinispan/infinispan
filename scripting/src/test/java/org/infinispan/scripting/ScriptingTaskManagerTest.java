@@ -1,5 +1,6 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.scripting.ScriptingTests.loadScript;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.InputStream;
@@ -34,7 +35,7 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
 
    public void testTask() throws Exception {
       ScriptingManager scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
-      ScriptingTest.loadScript(scriptingManager, TEST_SCRIPT);
+      loadScript(scriptingManager, TEST_SCRIPT);
       String result = (String) taskManager.runTask(TEST_SCRIPT, new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
    }
@@ -42,7 +43,7 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "ISPN026003.*")
    public void testBrokenTask() throws Exception {
       ScriptingManager scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
-      ScriptingTest.loadScript(scriptingManager, BROKEN_SCRIPT);
+      loadScript(scriptingManager, BROKEN_SCRIPT);
       taskManager.runTask(BROKEN_SCRIPT, new TaskContext()).get();
    }
 }
