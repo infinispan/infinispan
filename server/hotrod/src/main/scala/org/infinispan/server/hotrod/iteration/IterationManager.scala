@@ -46,7 +46,7 @@ class IterationState(val listener: IterationSegmentsListener, val iterator: java
 
 class IterableIterationResult(finishedSegments: util.Set[Integer], val statusCode: OperationStatus, val entries: List[CacheEntry[AnyRef, AnyRef]], compatInfo: CompatInfo, val metadata: Boolean) {
 
-   lazy val compatEnabled = compatInfo.enabled && compatInfo.hotRodTypeConverter.isDefined
+   lazy val compatEnabled = compatInfo.enabled
 
    def segmentsToBytes = {
       val bs = new util.BitSet
@@ -62,7 +62,7 @@ class CompatInfo(val enabled: Boolean, val hotRodTypeConverter: Option[HotRodTyp
 
 object CompatInfo {
    def apply(config: CompatibilityModeConfiguration) =
-      new CompatInfo(config.enabled(), Option(config.marshaller()).map(HotRodTypeConverter(_)))
+      new CompatInfo(config.enabled(), if (config.enabled()) Some(HotRodTypeConverter(config.marshaller())) else None)
 }
 
 class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends IterationManager with Log {
