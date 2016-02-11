@@ -23,6 +23,7 @@ import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.PreferConsistencyStrategy;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -44,13 +45,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.String.format;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.util.logging.LogFactory.CLUSTER;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
@@ -411,12 +412,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       CompletionService<Void> cs = new SemaphoreCompletionService<>(asyncTransportExecutor, maxThreads);
       for (final Map.Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
          final ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(e.getKey());
-         cs.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-               cacheStatus.doMergePartitions(e.getValue(), clusterMembers, isMergeView);
-               return null;
-            }
+         cs.submit(() -> {
+            cacheStatus.doMergePartitions(e.getValue(), clusterMembers, isMergeView);
+            return null;
          });
       }
       for (int i = 0; i < responsesByCache.size(); i++) {
@@ -470,11 +468,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout,
-         boolean totalOrder, boolean distributed) throws Exception {
-      return executeOnClusterSync(command, timeout, totalOrder, distributed, null);
-   }
-
-   private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout,
                                                      boolean totalOrder, boolean distributed, final ResponseFilter filter)
          throws Exception {
       // first invoke remotely
@@ -483,17 +476,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          Map<Address, Response> responseMap = transport.invokeRemotely(transport.getMembers(), command,
                                                                        ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
                                                                        timeout, filter, DeliverOrder.TOTAL, distributed);
-         Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
-         for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
-            Address address = entry.getKey();
-            Response response = entry.getValue();
-            if (!response.isSuccessful()) {
-               Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
-               throw new CacheException("Unsuccessful response received from node " + address + ": " + response, cause);
-            }
-            responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
-         }
-         return responseValues;
+         return extractResponseValues(responseMap, null);
       }
 
       CompletableFuture<Map<Address, Response>> remoteFuture = transport.invokeRemotelyAsync(null, command,
@@ -508,32 +491,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       } catch (Throwable throwable) {
          throw new Exception(throwable);
       }
-      if (!localResponse.isSuccessful()) {
-         Exception exception = null;
-         if (localResponse instanceof ExceptionResponse) {
-            exception = ((ExceptionResponse) localResponse).getException();
-         }
-         throw new CacheException("Unsuccessful local response: " + localResponse, exception);
-      }
 
-      // wait for the remote commands to finish
-      Map<Address, Response> responseMap = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
-
-      // parse the responses
-      Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
-      for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
-         Address address = entry.getKey();
-         Response response = entry.getValue();
-         if (!response.isSuccessful()) {
-            Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
-            throw new CacheException("Unsuccessful response received from node " + address + ": " + response, cause);
-         }
-         responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
-      }
-
-      responseValues.put(transport.getAddress(), ((SuccessfulResponse) localResponse).getResponseValue());
-
-      return responseValues;
+      return extractResponseValues(remoteFuture.get(timeout, TimeUnit.MILLISECONDS), localResponse);
    }
 
    private int getGlobalTimeout() {
@@ -544,16 +503,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private void executeOnClusterAsync(final ReplicableCommand command, final int timeout, boolean totalOrder, boolean distributed) {
       if (!totalOrder) {
          // invoke the command on the local node
-         asyncTransportExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-               try {
-                  if (trace) log.tracef("Attempting to execute command on self: %s", command);
-                  gcr.wireDependencies(command);
-                  command.perform(null);
-               } catch (Throwable throwable) {
-                  // The command already logs any exception in perform()
-               }
+         asyncTransportExecutor.submit((Runnable) () -> {
+            try {
+               if (trace) log.tracef("Attempting to execute command on self: %s", command);
+               gcr.wireDependencies(command);
+               command.perform(null);
+            } catch (Throwable throwable) {
+               // The command already logs any exception in perform()
             }
          });
       }
@@ -624,9 +580,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          }
       }
       globalRebalancingEnabled = enabled;
-      for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
-         cacheStatus.startQueuedRebalance();
-      }
+      cacheStatusMap.values().forEach(ClusterCacheStatus::startQueuedRebalance);
    }
 
    @Override
@@ -667,6 +621,29 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             return null;
          });
       }
+   }
+
+   private Map<Address, Object> extractResponseValues(Map<Address, Response> remoteResponses, Response localResponse) {
+      // parse the responses
+      Map<Address, Object> responseValues = new HashMap<>(transport.getMembers().size());
+      for (Map.Entry<Address, Response> entry : remoteResponses.entrySet()) {
+         addResponseValue(entry.getKey(), entry.getValue(), responseValues);
+      }
+
+      if (localResponse != null) {
+         addResponseValue(transport.getAddress(), localResponse, responseValues);
+      }
+      return responseValues;
+   }
+
+   private static void addResponseValue(Address origin, Response response, Map<Address, Object> values) {
+      if (!response.isSuccessful()) {
+         Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
+         throw new CacheException(format("Unsuccessful response received from node '%s': %s", origin, response), cause);
+      } else if (response == CacheNotFoundResponse.INSTANCE) {
+         return;
+      }
+      values.put(origin, ((SuccessfulResponse) response).getResponseValue());
    }
 
 }
