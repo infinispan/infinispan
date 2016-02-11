@@ -2,6 +2,7 @@ package org.infinispan.scripting;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -30,10 +31,14 @@ public class ScriptingTest extends SingleCacheManagerTest {
       super.setup();
       scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
       for (String scriptName : getScripts()) {
-         try (InputStream is = this.getClass().getResourceAsStream("/" + scriptName)) {
-            String script = TestingUtil.loadFileAsString(is);
-            scriptingManager.addScript(scriptName, script);
-         }
+         loadScript(scriptingManager, scriptName);
+      }
+   }
+
+   public static void loadScript(ScriptingManager scriptingManager, String scriptName) throws IOException {
+      try (InputStream is = ScriptingTest.class.getResourceAsStream("/" + scriptName)) {
+         String script = TestingUtil.loadFileAsString(is);
+         scriptingManager.addScript(scriptName, script);
       }
    }
 

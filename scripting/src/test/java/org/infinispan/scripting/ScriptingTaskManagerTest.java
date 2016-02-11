@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.io.InputStream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
@@ -16,7 +17,8 @@ import org.testng.annotations.Test;
 @Test(groups="functional", testName="scripting.ScriptingTaskManagerTest")
 public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
 
-   protected static final String SCRIPT_NAME = "test.js";
+   protected static final String TEST_SCRIPT = "test.js";
+   protected static final String BROKEN_SCRIPT = "brokenTest.js";
    protected TaskManager taskManager;
 
    @Override
@@ -28,15 +30,19 @@ public class ScriptingTaskManagerTest extends SingleCacheManagerTest {
    protected void setup() throws Exception {
       super.setup();
       taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
-      Cache<String, String> scriptCache = cacheManager.getCache(ScriptingManager.SCRIPT_CACHE);
-      try (InputStream is = this.getClass().getResourceAsStream("/test.js")) {
-         String script = TestingUtil.loadFileAsString(is);
-         scriptCache.put(SCRIPT_NAME, script);
-      }
    }
 
    public void testTask() throws Exception {
-      String result = (String) taskManager.runTask(SCRIPT_NAME, new TaskContext().addParameter("a", "a")).get();
+      ScriptingManager scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+      ScriptingTest.loadScript(scriptingManager, TEST_SCRIPT);
+      String result = (String) taskManager.runTask(TEST_SCRIPT, new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
+   }
+
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "ISPN026003.*")
+   public void testBrokenTask() throws Exception {
+      ScriptingManager scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+      ScriptingTest.loadScript(scriptingManager, BROKEN_SCRIPT);
+      taskManager.runTask(BROKEN_SCRIPT, new TaskContext()).get();
    }
 }
