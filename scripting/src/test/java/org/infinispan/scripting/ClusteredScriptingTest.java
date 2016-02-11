@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.Buffer;
 import java.nio.CharBuffer;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +19,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -46,14 +48,17 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
       executeScriptOnManager(1, "test.js");
    }
 
-   public void testClusteredScriptStream() throws IOException, InterruptedException, ExecutionException {
+   public void testDistExecScript() throws IOException, InterruptedException, ExecutionException {
       ScriptingManager scriptingManager = getScriptingManager(manager(0));
-      loadScript(scriptingManager, "/test.js");
-      executeScriptOnManager(0, "test.js");
-      executeScriptOnManager(1, "test.js");
+      loadScript(scriptingManager, "/distExec.js");
+      CompletableFuture<ArrayList<JGroupsAddress>> resultsFuture = scriptingManager.runScript("distExec.js", new TaskContext().cache(cache(0)));
+      ArrayList<JGroupsAddress> results = resultsFuture.get();
+      assertEquals(2, results.size());
+      assertTrue(results.contains(manager(0).getAddress()));
+      assertTrue(results.contains(manager(1).getAddress()));
    }
 
-   public void testDistExecScript() throws InterruptedException, ExecutionException, IOException {
+   public void testClusteredScriptStream() throws InterruptedException, ExecutionException, IOException {
       ScriptingManager scriptingManager = getScriptingManager(manager(0));
       Cache<String, String> cache = cache(0);
       loadData(cache, "/macbeth.txt");
