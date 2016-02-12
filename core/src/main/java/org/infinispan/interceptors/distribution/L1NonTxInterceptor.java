@@ -44,8 +44,9 @@ import java.util.concurrent.TimeoutException;
  *
  * @author Mircea Markus
  * @author William Burns
- * @since 5.2
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);

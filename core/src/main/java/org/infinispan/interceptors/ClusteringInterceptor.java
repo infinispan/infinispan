@@ -12,8 +12,9 @@ import org.infinispan.util.concurrent.locks.LockManager;
  * Base class for replication and distribution interceptors.
  *
  * @author anistor@redhat.com
- * @since 5.2
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
    protected CommandsFactory cf;

@@ -37,8 +37,9 @@ import org.infinispan.util.logging.LogFactory;
  * Captures cache management statistics
  *
  * @author Jerry Gauthier
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private final LongAdder hitTimes = new LongAdder();

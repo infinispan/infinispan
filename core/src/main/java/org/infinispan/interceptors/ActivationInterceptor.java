@@ -6,6 +6,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+/**
+ * @deprecated Since 8.2, no longer public API.
+ */
+@Deprecated
 public class ActivationInterceptor extends CacheLoaderInterceptor {
 
    private static final Log log = LogFactory.getLog(ActivationInterceptor.class);

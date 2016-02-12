@@ -41,8 +41,9 @@ import java.util.Set;
  * in the case of keys being locked.
  *
  * @author Mircea Markus
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private CommandsFactory cf;

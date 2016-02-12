@@ -80,8 +80,9 @@ import org.infinispan.util.logging.LogFactory;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.transaction.xa.TransactionXaAdapter
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
 public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatisticsExposer {
 

@@ -44,7 +44,9 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXEC
  * distributed processing through the cluster.
  * @param <K> The key type of entries
  * @param <V> The value type of entries
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
    private Cache<K, V> cache;
 

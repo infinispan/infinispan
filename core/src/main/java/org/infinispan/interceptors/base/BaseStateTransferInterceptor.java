@@ -25,8 +25,9 @@ import java.util.concurrent.TimeUnit;
  * Also, it has some utilities methods with the most common logic.
  *
  * @author Pedro Ruivo
- * @since 7.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public abstract class BaseStateTransferInterceptor extends CommandInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 

@@ -28,8 +28,9 @@ import java.util.Set;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
    protected boolean trace = getLog().isTraceEnabled();
 

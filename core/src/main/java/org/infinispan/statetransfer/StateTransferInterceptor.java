@@ -58,8 +58,9 @@ import java.util.function.Consumer;
  *
  * @author anistor@redhat.com
  * @author Dan Berindei
- * @since 5.2
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(StateTransferInterceptor.class);

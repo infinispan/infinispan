@@ -25,8 +25,9 @@ import org.infinispan.util.logging.LogFactory;
  * Note: for local caches, deadlock detection dos NOT work for aggregate operations (clear, putAll).
  *
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class DeadlockDetectingInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(DeadlockDetectingInterceptor.class);

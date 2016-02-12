@@ -55,8 +55,9 @@ import static org.infinispan.util.DeltaCompositeKeyUtil.getAffectedKeysFromConte
  * Handles the distribution of the transactional caches.
  *
  * @author Mircea Markus
- * @since 5.2
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(TxDistributionInterceptor.class);

@@ -29,8 +29,9 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Bela Ban
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class CallInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(CallInterceptor.class);

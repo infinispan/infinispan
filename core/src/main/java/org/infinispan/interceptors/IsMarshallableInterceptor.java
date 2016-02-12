@@ -38,8 +38,9 @@ import org.infinispan.util.logging.LogFactory;
  * with the original request thread.
  *
  * @author Galder Zamarreño
- * @since 4.2
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class IsMarshallableInterceptor extends CommandInterceptor {
 
    private StreamingMarshaller marshaller;

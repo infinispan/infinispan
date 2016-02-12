@@ -15,8 +15,9 @@ import org.infinispan.util.logging.LogFactory;
  * cache loader if needed on a remote node, in certain conditions.
  *
  * @author Manik Surtani
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
 
    private static final Log log = LogFactory.getLog(ClusteredActivationInterceptor.class);

@@ -9,8 +9,9 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * Base class for all the interceptors exposing management statistics.
  *
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public abstract class JmxStatsCommandInterceptor extends CommandInterceptor implements JmxStatisticsExposer {
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled = false;

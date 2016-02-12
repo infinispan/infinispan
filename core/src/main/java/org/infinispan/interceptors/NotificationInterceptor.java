@@ -14,8 +14,9 @@ import org.infinispan.util.logging.LogFactory;
  * The interceptor in charge of firing off notifications to cache listeners
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class NotificationInterceptor extends CommandInterceptor {
    private CacheNotifier notifier;
 

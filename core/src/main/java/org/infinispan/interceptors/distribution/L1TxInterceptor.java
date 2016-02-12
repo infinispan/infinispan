@@ -19,8 +19,9 @@ import static org.infinispan.commons.util.Util.toStr;
  * Interceptor that handles L1 logic for transactional caches.
  *
  * @author William Burns
- * @since 6.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class L1TxInterceptor extends L1NonTxInterceptor {
 
    @Override

@@ -51,8 +51,9 @@ import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
  *
  * @author Mircea Markus
  * @author Pedro Ruivo
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private EntryFactory entryFactory;

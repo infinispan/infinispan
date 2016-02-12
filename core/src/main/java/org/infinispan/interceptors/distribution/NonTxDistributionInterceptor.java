@@ -54,8 +54,9 @@ import java.util.concurrent.TimeoutException;
  * consistent-hash aware hotrod clients which connect directly to the lock owner.
  *
  * @author Mircea Markus
- * @since 5.2
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(NonTxDistributionInterceptor.class);
