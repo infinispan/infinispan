@@ -76,6 +76,10 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+/**
+ * @deprecated Since 8.2, no longer public API.
+ */
+@Deprecated
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheLoads = new AtomicLong(0);

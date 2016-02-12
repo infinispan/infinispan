@@ -35,8 +35,9 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
  *
  * @author Galder Zamarreño
  * @author Dan Berindei
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    private DistributionManager dm;
    private Transport transport;

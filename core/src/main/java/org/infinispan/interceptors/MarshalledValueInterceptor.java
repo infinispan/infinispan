@@ -60,8 +60,9 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  * @see org.infinispan.marshall.core.MarshalledValue
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class MarshalledValueInterceptor<K, V> extends CommandInterceptor {
    private StreamingMarshaller marshaller;
    private boolean wrapKeys = true;

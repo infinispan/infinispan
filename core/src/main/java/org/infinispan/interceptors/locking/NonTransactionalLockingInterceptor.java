@@ -13,8 +13,9 @@ import org.infinispan.util.logging.LogFactory;
  * Locking interceptor to be used for non-transactional caches.
  *
  * @author Mircea Markus
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class NonTransactionalLockingInterceptor extends AbstractLockingInterceptor {
 
    private static final Log log = LogFactory.getLog(NonTransactionalLockingInterceptor.class);

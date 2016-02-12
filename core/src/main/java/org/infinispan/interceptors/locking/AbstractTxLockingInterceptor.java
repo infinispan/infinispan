@@ -26,8 +26,9 @@ import java.util.concurrent.TimeUnit;
  * Base class for transaction based locking interceptors.
  *
  * @author Mircea.Markus@jboss.com
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
    private boolean trace = getLog().isTraceEnabled();
 

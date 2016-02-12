@@ -26,8 +26,9 @@ import java.util.Collection;
  * Locking interceptor to be used by optimistic transactional caches.
  *
  * @author Mircea Markus
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private boolean needToMarkReads;

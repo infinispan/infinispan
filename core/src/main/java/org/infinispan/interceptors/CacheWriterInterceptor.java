@@ -64,8 +64,9 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
  * @author Bela Ban
  * @author Dan Berindei
  * @author Mircea Markus
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    private final boolean trace = getLog().isTraceEnabled();

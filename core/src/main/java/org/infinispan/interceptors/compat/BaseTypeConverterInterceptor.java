@@ -51,8 +51,9 @@ import java.util.stream.StreamSupport;
  * to provide a suitable TypeConverter.
  *
  * @author Galder Zamarreño
- * @since 6.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public abstract class BaseTypeConverterInterceptor<K, V> extends CommandInterceptor {
 
    private InternalEntryFactory entryFactory;

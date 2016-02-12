@@ -17,8 +17,9 @@ import java.util.Collection;
  * order based protocol is enabled
  *
  * @author Pedro Ruivo
- * @since 5.3
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderDistributionInterceptor.class);

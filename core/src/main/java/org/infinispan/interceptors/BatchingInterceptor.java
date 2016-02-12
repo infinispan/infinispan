@@ -18,8 +18,9 @@ import javax.transaction.TransactionManager;
  * Interceptor that captures batched calls and attaches contexts.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class BatchingInterceptor extends CommandInterceptor {
    private BatchContainer batchContainer;
    private TransactionManager transactionManager;

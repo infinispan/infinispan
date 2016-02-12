@@ -21,8 +21,9 @@ import java.util.Collection;
  * (i.e., the write skew check passes in all keys owners)
  *
  * @author Pedro Ruivo
- * @since 5.3
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class TotalOrderVersionedDistributionInterceptor extends VersionedDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedDistributionInterceptor.class);

@@ -26,8 +26,9 @@ import java.util.ArrayList;
  *
  * @author Mircea.Markus@jboss.com
  * @author Pedro Ruivo
- * @since 5.3
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryWrappingInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedEntryWrappingInterceptor.class);

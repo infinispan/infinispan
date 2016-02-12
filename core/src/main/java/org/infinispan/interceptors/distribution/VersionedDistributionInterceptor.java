@@ -18,8 +18,9 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromRe
  * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
  *
  * @author Manik Surtani
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class VersionedDistributionInterceptor extends TxDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(VersionedDistributionInterceptor.class);

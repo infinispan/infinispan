@@ -12,8 +12,9 @@ import org.infinispan.util.logging.LogFactory;
  * Synchronizes the incoming totally ordered transactions with the state transfer.
  *
  * @author Pedro Ruivo
- * @since 5.3
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderStateTransferInterceptor.class);

@@ -37,7 +37,9 @@ import java.util.Collections;
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class InvocationContextInterceptor extends CommandInterceptor {
 
    private TransactionManager tm;

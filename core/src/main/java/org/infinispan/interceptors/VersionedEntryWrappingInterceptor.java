@@ -22,8 +22,9 @@ import org.infinispan.util.logging.LogFactory;
  * Interceptor in charge with wrapping entries and add them in caller's context.
  *
  * @author Mircea Markus
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
 
    protected VersionGenerator versionGenerator;

@@ -18,8 +18,9 @@ import org.infinispan.util.logging.LogFactory;
  * An interceptor that applies type conversion to the data stored in the cache.
  *
  * @author Galder Zamarreño
- * @since 5.3
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class TypeConverterInterceptor<K, V> extends BaseTypeConverterInterceptor<K, V> {
 
    // No need for a REST type converter since the REST server itself does

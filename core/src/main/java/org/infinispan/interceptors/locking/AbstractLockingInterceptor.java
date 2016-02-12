@@ -35,8 +35,9 @@ import java.util.stream.Stream;
  * Base class for various locking interceptors in this package.
  *
  * @author Mircea Markus
- * @since 5.1
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    private boolean trace = getLog().isTraceEnabled();
 

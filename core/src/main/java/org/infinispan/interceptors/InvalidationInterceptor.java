@@ -52,8 +52,9 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
 public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxStatisticsExposer {
    private final AtomicLong invalidations = new AtomicLong(0);

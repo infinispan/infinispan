@@ -35,8 +35,9 @@ import java.util.concurrent.Future;
  * container
  *
  * @author wburns
- * @since 6.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
    private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);

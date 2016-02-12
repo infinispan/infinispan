@@ -28,8 +28,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * added/removed during the processing of a {@link org.infinispan.commands.remote.GetKeysInGroupCommand}
  *
  * @author Pedro Ruivo
- * @since 7.0
+ * @deprecated Since 8.2, no longer public API.
  */
+@Deprecated
 public class GroupingInterceptor extends CommandInterceptor {
 
    private CacheNotifier<?, ?> cacheNotifier;
