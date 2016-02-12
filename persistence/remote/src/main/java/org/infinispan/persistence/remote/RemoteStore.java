@@ -218,7 +218,8 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       Long connectionTimeout = configuration.connectionTimeout();
       Long socketTimeout = configuration.socketTimeout();
 
-      builder.balancingStrategy(configuration.balancingStrategy())
+      builder.classLoader(configuration.getClass().getClassLoader())
+            .balancingStrategy(configuration.balancingStrategy())
             .connectionPool()
             .exhaustedAction(ExhaustedAction.valueOf(poolConfiguration.exhaustedAction().toString()))
             .maxActive(poolConfiguration.maxActive())
@@ -233,7 +234,6 @@ public class RemoteStore implements AdvancedLoadWriteStore {
             .keySizeEstimate(configuration.keySizeEstimate())
             .marshaller(marshaller)
             .asyncExecutorFactory().factoryClass(configuration.asyncExecutorFactory().factory().getClass())
-            .classLoader(configuration.getClass().getClassLoader())
             .pingOnStartup(configuration.pingOnStartup())
             .socketTimeout(socketTimeout.intValue())
             .tcpNoDelay(configuration.tcpNoDelay())
