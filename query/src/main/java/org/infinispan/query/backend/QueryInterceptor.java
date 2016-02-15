@@ -37,17 +37,12 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledValue;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
-import org.infinispan.registry.ClusterRegistry;
-import org.infinispan.registry.ScopedKey;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -68,10 +63,9 @@ public final class QueryInterceptor extends CommandInterceptor {
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
-   private final KnownClassesRegistryListener registryListener = new KnownClassesRegistryListener();
    private final AtomicBoolean stopping = new AtomicBoolean(false);
 
-   private ReadIntensiveClusterRegistryWrapper<String, Class<?>, Boolean> clusterRegistry;
+   private QueryKnownClasses queryKnownClasses;
 
    private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<>();
 
@@ -99,21 +93,22 @@ public final class QueryInterceptor extends CommandInterceptor {
    protected void injectDependencies(TransactionManager transactionManager,
                                      TransactionSynchronizationRegistry transactionSynchronizationRegistry,
                                      Cache cache,
-                                     ClusterRegistry<String, Class<?>, Boolean> clusterRegistry,
+                                     EmbeddedCacheManager cacheManager,
+                                     InternalCacheRegistry internalCacheRegistry,
                                      DataContainer dataContainer,
                                      @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
       this.transactionManager = transactionManager;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.asyncExecutor = e;
       this.dataContainer = dataContainer;
-      this.clusterRegistry = new ReadIntensiveClusterRegistryWrapper(clusterRegistry, "QueryKnownClasses#" + cache.getName());
-      this.searchFactoryHandler = new SearchFactoryHandler(this.searchFactory, this.clusterRegistry, new TransactionHelper(transactionManager));
+      this.queryKnownClasses = new QueryKnownClasses(cache.getName(), cacheManager, internalCacheRegistry);
+      this.searchFactoryHandler = new SearchFactoryHandler(this.searchFactory, this.queryKnownClasses, new TransactionHelper(transactionManager));
    }
 
    @Start
    protected void start() {
-      clusterRegistry.addListener(registryListener);
-      Set<Class<?>> keys = clusterRegistry.keys();
+      queryKnownClasses.start(searchFactoryHandler);
+      Set<Class<?>> keys = queryKnownClasses.keys();
       Class<?>[] array = keys.toArray(new Class<?>[keys.size()]);
       //Important to enable them all in a single call, much more efficient:
       enableClasses(array);
@@ -122,29 +117,11 @@ public final class QueryInterceptor extends CommandInterceptor {
 
    @Stop
    protected void stop() {
-      clusterRegistry.removeListener(registryListener);
+      queryKnownClasses.stop();
    }
 
    public void prepareForStopping() {
       stopping.set(true);
-   }
-
-   @Listener
-   class KnownClassesRegistryListener {
-
-      @CacheEntryCreated
-      public void created(CacheEntryCreatedEvent<ScopedKey<String, Class>, Boolean> e) {
-         if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            searchFactoryHandler.handleClusterRegistryRegistration(e.getKey().getKey());
-         }
-      }
-
-      @CacheEntryModified
-      public void modified(CacheEntryModifiedEvent<ScopedKey<String, Class>, Boolean> e) {
-         if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            searchFactoryHandler.handleClusterRegistryRegistration(e.getKey().getKey());
-         }
-      }
    }
 
    protected boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx) {
@@ -209,7 +186,7 @@ public final class QueryInterceptor extends CommandInterceptor {
 
    private void purgeIndex(TransactionContext transactionContext, Class<?> entityType) {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-      Boolean isIndexable = clusterRegistry.get(entityType);
+      Boolean isIndexable = queryKnownClasses.get(entityType);
       if (isIndexable != null && isIndexable.booleanValue()) {
          if (searchFactoryHandler.isIndexed(entityType)) {
             performSearchWorks(searchWorkCreator.createPerEntityTypeWorks((Class<Object>) entityType, WorkType.PURGE_ALL), transactionContext);
@@ -219,7 +196,7 @@ public final class QueryInterceptor extends CommandInterceptor {
 
    private void purgeAllIndexes(TransactionContext transactionContext) {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-      for (Class c : clusterRegistry.keys()) {
+      for (Class c : queryKnownClasses.keys()) {
          if (searchFactoryHandler.isIndexed(c)) {
             //noinspection unchecked
             performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(c, WorkType.PURGE_ALL), transactionContext);

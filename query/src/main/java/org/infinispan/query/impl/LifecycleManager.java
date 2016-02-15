@@ -53,7 +53,7 @@ import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterCo
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
-import org.infinispan.registry.impl.ClusterRegistryImpl;
+import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
@@ -109,7 +109,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, Properties properties) {
-      cacheManager.addCacheDependency(cacheStarting, ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
+      cacheManager.addCacheDependency(cacheStarting, QueryKnownClasses.QUERY_KNOWN_CLASSES_CACHE_NAME);
       if (hasInfinispanDirectory(properties) && !DEFAULT_CACHES.contains(cacheStarting)) {
          String metadataCacheName = getMetadataCacheName(properties);
          String lockingCacheName = getLockingCacheName(properties);
