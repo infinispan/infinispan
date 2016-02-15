@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mircea Markus
  * @since 6.0
- * @deprecated functionality replaced by {@link InternalCacheRegistry}
+ * @deprecated functionality replaced by {@link InternalCacheRegistry}; to be removed in ver. 9.0
  */
 @Deprecated
 @Scope(Scopes.GLOBAL)

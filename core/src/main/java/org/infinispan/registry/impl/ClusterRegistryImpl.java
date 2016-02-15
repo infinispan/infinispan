@@ -8,7 +8,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
@@ -38,6 +37,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mircea Markus
  * @since 6.0
+ * @deprecated functionality replaced by {@link InternalCacheRegistry}
  */
 @ThreadSafe
 public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
@@ -48,8 +48,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
    private EmbeddedCacheManager cacheManager;
    private InternalCacheRegistry internalCacheRegistry;
-   private volatile Cache<ScopedKey<S, K>, V> clusterRegistryCache;
-   private volatile AdvancedCache<ScopedKey<S, K>, V> clusterRegistryCacheWithoutReturn;
+   private volatile AdvancedCache<ScopedKey<S, K>, V> clusterRegistryCache;
    private volatile TransactionManager transactionManager;
 
    @Inject
@@ -89,7 +88,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
             @Override
             public void run() {
-               clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value);
+               clusterRegistryCache.put(new ScopedKey<S, K>(scope, key), value);
             }
          });
       } finally {
@@ -107,7 +106,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
             @Override
             public void run() {
-               clusterRegistryCacheWithoutReturn.put(new ScopedKey<S, K>(scope, key), value, lifespan, unit);
+               clusterRegistryCache.put(new ScopedKey<S, K>(scope, key), value, lifespan, unit);
             }
          });
       } finally {
@@ -124,7 +123,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
             @Override
             public void run() {
-               clusterRegistryCacheWithoutReturn.remove(new ScopedKey<S, K>(scope, key));
+               clusterRegistryCache.remove(new ScopedKey<S, K>(scope, key));
             }
          });
       } finally {
@@ -183,7 +182,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
                   @Override
                   public void run() {
-                     clusterRegistryCacheWithoutReturn.remove(key);
+                     clusterRegistryCache.remove(key);
                   }
                });
             }
@@ -213,12 +212,10 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
    @Override
    public void addListener(final S scope, final Object listener) {
       startRegistryCache();
-      clusterRegistryCache.addListener(listener, new KeyFilter() {
+      clusterRegistryCache.addListener(listener, new KeyFilter<ScopedKey<S, K>>() {
          @Override
-         public boolean accept(Object key) {
-            // All keys are known to be of type ScopedKey
-            ScopedKey<S, K> scopedKey = (ScopedKey<S, K>) key;
-            return scopedKey.hasScope(scope);
+         public boolean accept(ScopedKey<S, K> key) {
+            return key.hasScope(scope);
          }
       });
    }
@@ -226,12 +223,10 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
    @Override
    public void addListener(final S scope, final KeyFilter keyFilter, final Object listener) {
       startRegistryCache();
-      clusterRegistryCache.addListener(listener, new KeyFilter() {
+      clusterRegistryCache.addListener(listener, new KeyFilter<ScopedKey<S, K>>() {
          @Override
-         public boolean accept(Object key) {
-            // All keys are known to be of type ScopedKey
-            ScopedKey<S, K> scopedKey = (ScopedKey<S, K>) key;
-            return scopedKey.hasScope(scope) && keyFilter.accept(scopedKey.getKey());
+         public boolean accept(ScopedKey<S, K> key) {
+            return key.hasScope(scope) && keyFilter.accept(key.getKey());
          }
       });
    }
@@ -251,9 +246,9 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
          synchronized (this) {
             if (clusterRegistryCache != null) return;
             internalCacheRegistry.registerInternalCache(GLOBAL_REGISTRY_CACHE_NAME, getRegistryCacheConfig());
-            clusterRegistryCache = SecurityActions.getRegistryCache(cacheManager);
-            clusterRegistryCacheWithoutReturn = clusterRegistryCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
-            transactionManager = clusterRegistryCacheWithoutReturn.getTransactionManager();
+            Cache<ScopedKey<S, K>, V> clusterRegistryCache = SecurityActions.getRegistryCache(cacheManager);
+            this.clusterRegistryCache = clusterRegistryCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
+            transactionManager = this.clusterRegistryCache.getTransactionManager();
          }
       }
    }
@@ -277,8 +272,7 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
    }
 
    private boolean isClustered() {
-      GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
-      return globalConfiguration.isClustered();
+      return cacheManager.getGlobalComponentRegistry().getGlobalConfiguration().isClustered();
    }
 
    /**
