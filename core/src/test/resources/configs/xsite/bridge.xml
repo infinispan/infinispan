@@ -6,7 +6,6 @@
          recv_buf_size="20000000"
          send_buf_size="640000"
          max_bundle_size="64k"
-         use_send_queues="true"
          sock_conn_timeout="300"
          enable_diagnostics="false"
          bundler_type="sender-sends-with-timer"
