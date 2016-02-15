@@ -17,30 +17,30 @@ import static org.infinispan.query.backend.TransactionHelper.Operation;
 final class SearchFactoryHandler {
 
    private final SearchIntegrator searchFactory;
-   private final ReadIntensiveClusterRegistryWrapper<String, Class<?>, Boolean> clusterRegistry;
+   private final QueryKnownClasses queryKnownClasses;
    private final TransactionHelper transactionHelper;
 
    private final ReentrantLock mutating = new ReentrantLock();
 
    SearchFactoryHandler(final SearchIntegrator searchFactory,
-                        final ReadIntensiveClusterRegistryWrapper<String, Class<?>, Boolean> clusterRegistry,
+                        final QueryKnownClasses queryKnownClasses,
                         final TransactionHelper transactionHelper) {
       this.searchFactory = searchFactory;
-      this.clusterRegistry = clusterRegistry;
+      this.queryKnownClasses = queryKnownClasses;
       this.transactionHelper = transactionHelper;
    }
 
    boolean updateKnownTypesIfNeeded(final Object value) {
       if (value != null) {
          final Class<?> potentialNewType = value.getClass();
-         final Boolean existingBoolean = clusterRegistry.get(potentialNewType);
+         final Boolean existingBoolean = queryKnownClasses.get(potentialNewType);
          if (existingBoolean != null) {
-            return existingBoolean.booleanValue();
+            return existingBoolean;
          }
          else {
             handleOnDemandRegistration(potentialNewType);
-            Boolean isIndexable = clusterRegistry.get(potentialNewType);
-            return isIndexable != null ? isIndexable.booleanValue() : false;
+            Boolean isIndexable = queryKnownClasses.get(potentialNewType);
+            return isIndexable != null ? isIndexable : false;
          }
       } else {
          return false;
@@ -50,7 +50,7 @@ final class SearchFactoryHandler {
    private void handleOnDemandRegistration(Class<?>... classes) {
       List<Class<?>> reducedSet = new ArrayList<>(classes.length);
       for (Class<?> type : classes) {
-         if (!clusterRegistry.containsKey(type)) {
+         if (!queryKnownClasses.containsKey(type)) {
             reducedSet.add(type);
          }
       }
@@ -63,7 +63,7 @@ final class SearchFactoryHandler {
 
    private void updateClusterRegistry(final Class<?>... classes) {
       for (Class<?> c : classes) {
-         clusterRegistry.put(c, isIndexed(c));
+         queryKnownClasses.put(c, isIndexed(c));
       }
    }
 

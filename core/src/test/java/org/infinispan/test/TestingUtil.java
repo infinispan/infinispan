@@ -49,7 +49,6 @@ import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -104,7 +103,7 @@ public class TestingUtil {
          "      <stack-file name=\"tcp\" path=\"jgroups-tcp.xml\"/>\n" +
          "   </jgroups>";
 
-   public static enum InfinispanStartTag {
+   public enum InfinispanStartTag {
       START_40(4, 0),
       START_41(4, 1),
       START_42(4, 2),
