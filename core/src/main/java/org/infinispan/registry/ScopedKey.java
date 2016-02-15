@@ -14,7 +14,9 @@ import java.util.Set;
 *
 * @author Mircea Markus
 * @since 6.0
+* @deprecated in 8.2; functionality replaced by {@link InternalCacheRegistry}; to be removed in ver. 9.0
 */
+@Deprecated
 public final class ScopedKey<S,K> {
    public final S scope;
    public final K key;

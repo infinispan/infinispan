@@ -1,5 +1,5 @@
 /**
- * The Cluster Registry API
+ * The internal cache registry API
  *
  * @public
  */
