@@ -14,10 +14,13 @@ import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -45,7 +48,7 @@ public class DummyTransaction implements Transaction {
    private final Xid xid;
    private volatile int status = Status.STATUS_UNKNOWN;
    private final List<Synchronization> syncs;
-   private final List<XAResource> resources;
+   private final List<Map.Entry<XAResource, Integer>> resources;
    private RollbackException firstRollbackException;
 
    public DummyTransaction(DummyBaseTransactionManager tm) {
@@ -180,9 +183,9 @@ public class DummyTransaction implements Transaction {
       checkStatusBeforeRegister("resource");
 
       //avoid duplicates
-      for (XAResource otherResource : resources) {
+      for (Map.Entry<XAResource, Integer> otherResourceEntry : resources) {
          try {
-            if (otherResource.isSameRM(resource)) {
+            if (otherResourceEntry.getKey().isSameRM(resource)) {
                log.debug("Ignoring resource. It is already there.");
                return true;
             }
@@ -191,7 +194,7 @@ public class DummyTransaction implements Transaction {
          }
       }
 
-      resources.add(resource);
+      resources.add(new AbstractMap.SimpleEntry<>(resource, null));
 
       try {
          if (trace) {
@@ -247,7 +250,7 @@ public class DummyTransaction implements Transaction {
    }
 
    public Collection<XAResource> getEnlistedResources() {
-      return Collections.unmodifiableList(resources);
+      return Collections.unmodifiableList(resources.stream().map(e -> e.getKey()).collect(Collectors.toList()));
    }
 
    public boolean runPrepare() {
@@ -263,14 +266,18 @@ public class DummyTransaction implements Transaction {
 
       status = Status.STATUS_PREPARING;
 
-      for (XAResource res : getEnlistedResources()) {
+      for (Map.Entry<XAResource, Integer> resourceStatusEntry : resources) {
+         final XAResource res = resourceStatusEntry.getKey();
+
          //note: it is safe to return even if we don't prepare all the resources. rollback will be invoked.
          try {
             if (trace) {
                log.tracef("XaResource.prepare() for %s", res);
             }
-            //don't need to check return value. the only possible values are OK or READ_ONLY.
-            res.prepare(xid);
+            // Need to check return value: the only possible values are XA_OK or XA_RDONLY.
+            // We do *not* perform commit() on XA_RDONLY! See ISPN-6146.
+            int lastStatus = res.prepare(xid);
+            resourceStatusEntry.setValue(lastStatus);
          } catch (XAException e) {
             if (trace) {
                log.trace("The resource wants to rollback!", e);
@@ -379,11 +386,16 @@ public class DummyTransaction implements Transaction {
       boolean error = false;
       Exception cause = null;
 
-      for (XAResource res : getEnlistedResources()) {
+      for (Map.Entry<XAResource, Integer> resourceStatusEntry : resources) {
+         final XAResource res = resourceStatusEntry.getKey();
          try {
             if (commit) {
                if (trace) {
                   log.tracef("XaResource.commit() for %s", res);
+               }
+               if (resourceStatusEntry.getValue() == XAResource.XA_RDONLY) {
+                  log.tracef("Skipping XaResource.commit() since prepare status was XA_RDONLY for %s", res);
+                  continue;
                }
                //we only do 2-phase commits
                res.commit(xid, false);
@@ -415,6 +427,7 @@ public class DummyTransaction implements Transaction {
       }
 
       resources.clear();
+
       if (heuristic && !ok && !error) {
          //all the resources thrown an heuristic exception
          HeuristicRollbackException exception = new HeuristicRollbackException();
