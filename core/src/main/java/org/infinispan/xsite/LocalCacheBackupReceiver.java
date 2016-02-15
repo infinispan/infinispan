@@ -35,7 +35,7 @@ public class LocalCacheBackupReceiver extends BaseBackupReceiver {
          invokeCommand = command.copyForCache(cache.getName());
       }
       invokeCommand.setSiteName(command.getOriginSite());
-      LocalInvocation.newInstanceFromCache(cache, command).call();
+      LocalInvocation.newInstanceFromCache(cache, invokeCommand).call();
    }
 
    @Override

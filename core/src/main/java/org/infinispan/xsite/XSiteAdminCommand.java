@@ -104,8 +104,8 @@ public class XSiteAdminCommand extends BaseRpcCommand {
             return;
          case AMEND_TAKE_OFFLINE:
             output.writeUTF(siteName);
-            output.writeInt(afterFailures);
-            output.writeLong(minTimeToWait);
+            output.writeObject(afterFailures);
+            output.writeObject(minTimeToWait);
             return;
          case STATUS:
             return;
@@ -125,8 +125,8 @@ public class XSiteAdminCommand extends BaseRpcCommand {
             return;
          case AMEND_TAKE_OFFLINE:
             siteName = input.readUTF();
-            afterFailures = input.readInt();
-            minTimeToWait = input.readLong();
+            afterFailures = (Integer) input.readObject();
+            minTimeToWait = (Long) input.readObject();
             return;
          case STATUS:
             return;

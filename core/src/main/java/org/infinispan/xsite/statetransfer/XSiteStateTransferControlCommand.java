@@ -110,6 +110,8 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
             return;
          case START_RECEIVE:
          case FINISH_RECEIVE:
+            MarshallUtil.marshallString(siteName, output);
+            return;
          case STATUS_REQUEST:
          case CLEAR_STATUS:
             return;
@@ -136,6 +138,8 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
             return;
          case START_RECEIVE:
          case FINISH_RECEIVE:
+            siteName = MarshallUtil.unmarshallString(input);
+            return;
          case STATUS_REQUEST:
          case CLEAR_STATUS:
             return;
@@ -171,7 +175,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       copy.control = this.control;
       copy.provider = this.provider;
       copy.consumer = this.consumer;
-      copy. stateTransferManager = this.stateTransferManager;
+      copy.stateTransferManager = this.stateTransferManager;
       copy.siteName = this.siteName;
       copy.statusOk = this.statusOk;
       copy.topologyId = this.topologyId;
