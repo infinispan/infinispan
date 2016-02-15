@@ -28,6 +28,7 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -455,7 +456,10 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       await(map2.evalMany(data, setValueConsumer()));
       Traversable<String> currentValues = map1.evalMany(data.keySet(), ro -> ro.get());
       List<String> collectedValues = currentValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-      assertEquals(collectedValues, new ArrayList<>(data.values()));
+      Collections.sort(collectedValues);
+      List<String> dataValues = new ArrayList<>(data.values());
+      Collections.sort(dataValues);
+      assertEquals(collectedValues, dataValues);
 
       Map<K, String> newData = new HashMap<>();
       newData.put(key1, "bat");
@@ -463,11 +467,15 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       newData.put(key3, "hiru");
       Traversable<String> prevTraversable = map3.evalMany(newData, setValueReturnPrevOrNull());
       List<String> collectedPrev = prevTraversable.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-      assertEquals(new ArrayList<>(data.values()), collectedPrev);
+      Collections.sort(collectedPrev);
+      assertEquals(dataValues, collectedPrev);
 
       Traversable<String> updatedValues = map1.evalMany(data.keySet(), ro -> ro.get());
       List<String> collectedUpdates = updatedValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-      assertEquals(new ArrayList<>(newData.values()), collectedUpdates);
+      Collections.sort(collectedUpdates);
+      List<String> newDataValues = new ArrayList<>(newData.values());
+      Collections.sort(newDataValues);
+      assertEquals(newDataValues, collectedUpdates);
    }
 
    public void testLocalReadWriteToRemoveAllAndReturnPrevs() {

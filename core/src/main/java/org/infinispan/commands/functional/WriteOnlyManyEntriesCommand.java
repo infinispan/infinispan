@@ -2,7 +2,6 @@ package org.infinispan.commands.functional;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
@@ -11,7 +10,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -51,14 +49,14 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallMap(entries, output);
+      output.writeObject(entries);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      entries = MarshallUtil.unmarshallMap(input, HashMap::new);
+      entries = (Map<? extends K, ? extends V>) input.readObject();
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
    }

@@ -1,15 +1,14 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
@@ -136,7 +135,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallMap(map, output);
+      output.writeObject(map);
       output.writeObject(metadata);
       output.writeBoolean(isForwarded);
       output.writeObject(Flag.copyWithoutRemotableFlags(flags));
@@ -145,7 +144,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      map = MarshallUtil.unmarshallMap(input, HashMap::new);
+      map = (Map<Object, Object>) input.readObject();
       metadata = (Metadata) input.readObject();
       isForwarded = input.readBoolean();
       flags = (Set<Flag>) input.readObject();

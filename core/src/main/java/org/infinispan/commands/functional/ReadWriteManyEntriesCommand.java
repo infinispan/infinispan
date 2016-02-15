@@ -4,7 +4,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -16,7 +15,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,14 +61,14 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallMap(entries, output);
+      output.writeObject(entries);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      entries = MarshallUtil.unmarshallMap(input, HashMap::new);
+      entries = (Map<? extends K, ? extends V>) input.readObject();
       f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
    }
