@@ -9,6 +9,7 @@ import java.io.IOException;
 /**
  * @author anistor@redhat.com
  * @since 6.0
+ * @private
  */
 public final class MarshallerRegistration {
 
