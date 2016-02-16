@@ -67,7 +67,7 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
       <version.hibernate.core>5.0.4.Final</version.hibernate.core>
-      <version.hibernate.search>5.5.1.Final</version.hibernate.search>
+      <version.hibernate.search>5.6.0.Alpha1</version.hibernate.search>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.cdi>1.0-SP4</version.cdi>
       <version.jboss.marshalling>1.4.10.Final</version.jboss.marshalling>
