@@ -57,7 +57,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
             Assert.assertEquals(EvictionStrategy.NONE, cm.getCacheConfiguration(simpleCacheName).eviction().strategy());
 
             Configuration newConfig = new ConfigurationBuilder().eviction().strategy(EvictionStrategy.LRU)
-                  .maxEntries(5).build();
+                  .size(5).build();
 
             cm.defineConfiguration(simpleCacheName, newConfig);
 
