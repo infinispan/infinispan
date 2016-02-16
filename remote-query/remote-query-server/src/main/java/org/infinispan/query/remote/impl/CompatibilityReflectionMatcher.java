@@ -21,19 +21,14 @@ public final class CompatibilityReflectionMatcher extends ReflectionMatcher {
 
    private final SerializationContext serializationContext;
 
-   CompatibilityReflectionMatcher(SerializationContext serializationContext, SearchIntegrator searchFactory) {
-      super(new HibernateSearchPropertyHelper(searchFactory, getEntityNameResolver(serializationContext)));
+   CompatibilityReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext, SearchIntegrator searchFactory) {
+      super(new HibernateSearchPropertyHelper(searchFactory, entityNameResolver));
       this.serializationContext = serializationContext;
    }
 
-   CompatibilityReflectionMatcher(SerializationContext serializationContext) {
-      super(getEntityNameResolver(serializationContext));
+   CompatibilityReflectionMatcher(EntityNameResolver entityNameResolver, SerializationContext serializationContext) {
+      super(entityNameResolver);
       this.serializationContext = serializationContext;
-   }
-
-   private static EntityNameResolver getEntityNameResolver(SerializationContext serializationContext) {
-      return entityName -> serializationContext.canMarshall(entityName) ?
-            serializationContext.getMarshaller(entityName).getJavaClass() : null;
    }
 
    /**
@@ -44,10 +39,14 @@ public final class CompatibilityReflectionMatcher extends ReflectionMatcher {
     */
    @Override
    protected Object convert(Object instance) {
-      try {
-         return ProtobufUtil.toWrappedByteArray(serializationContext, instance);
-      } catch (IOException e) {
-         throw new CacheException(e);
+      if (serializationContext != null) {
+         try {
+            return ProtobufUtil.toWrappedByteArray(serializationContext, instance);
+         } catch (IOException e) {
+            throw new CacheException(e);
+         }
+      } else {
+         return instance;
       }
    }
 }

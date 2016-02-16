@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.WrappedMessage;
 
@@ -13,6 +14,7 @@ import org.infinispan.protostream.WrappedMessage;
  * @author anistor@redhat.com
  * @since 6.0
  */
+@SerializeWith(Externalizers.QueryRequestExternalizer.class)
 public final class QueryRequest {
 
    private String queryString;
@@ -97,6 +99,7 @@ public final class QueryRequest {
       }
    }
 
+   @SerializeWith(Externalizers.NamedParameterExternalizer.class)
    public static final class NamedParameter {
 
       private String name;
