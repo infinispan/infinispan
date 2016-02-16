@@ -21,7 +21,7 @@
             <eviction max-entries="-1" strategy="NONE"/>
             <expiration max-idle="-1"/>
             <persistence>
-                <file-store shared="false" preload="true" fetch-state="true" read-only="false" purge="false" path="${project.build.directory}" />
+                <file-store shared="false" preload="true" fetch-state="true" read-only="false" purge="false" path="${tempTestDataDir}" />
             </persistence>
          </local-cache>
 
@@ -35,7 +35,7 @@
             <eviction max-entries="-1" strategy="NONE"/>
             <expiration max-idle="-1"/>
             <persistence>
-                <file-store shared="false" preload="true" fetch-state="true" read-only="false" purge="false" path="${project.build.directory}" />
+                <file-store shared="false" preload="true" fetch-state="true" read-only="false" purge="false" path="${tempTestDataDir}" />
             </persistence>
          </local-cache>
 
