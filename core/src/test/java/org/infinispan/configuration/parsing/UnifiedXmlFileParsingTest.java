@@ -134,10 +134,19 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertCacheConfiguration(cm, "repl-instance");
       assertCacheConfiguration(cm, "dist-instance");
 
+      Configuration localTemplate = cm.getCacheConfiguration("local-template");
+      Configuration localConfiguration = cm.getCacheConfiguration("local-instance");
+      assertEquals(10000, localTemplate.expiration().wakeUpInterval());
+      assertEquals(11000, localConfiguration.expiration().wakeUpInterval());
+      assertEquals(10, localTemplate.expiration().lifespan());
+      assertEquals(10, localConfiguration.expiration().lifespan());
+
       Configuration replTemplate = cm.getCacheConfiguration("repl-template");
       Configuration replConfiguration = cm.getCacheConfiguration("repl-instance");
       assertEquals(31000, replTemplate.locking().lockAcquisitionTimeout());
       assertEquals(32000, replConfiguration.locking().lockAcquisitionTimeout());
+      assertEquals(3000, replTemplate.locking().concurrencyLevel());
+      assertEquals(3000, replConfiguration.locking().concurrencyLevel());
    }
 
    private static void configurationCheck70(EmbeddedCacheManager cm) {
