@@ -7,16 +7,15 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.search.FullTextQuery;
 import org.hibernate.search.FullTextSession;
 import org.hibernate.search.test.util.FullTextSessionBuilder;
-import org.hibernate.search.testsupport.TestConstants;
-import org.hibernate.search.util.impl.FileHelper;
 import org.infinispan.hibernate.search.impl.DefaultCacheManagerService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -28,6 +27,9 @@ import java.util.List;
 public class StoredIndexTest {
 
    private FullTextSessionBuilder node;
+
+   @ClassRule
+   public static TemporaryFolder temporaryFolderFolder = new TemporaryFolder();
 
    @Test
    public void testRestartingNode() {
@@ -143,7 +145,8 @@ public class StoredIndexTest {
     * database with all data we need for the second phase of the test.
     */
    @BeforeClass
-   public static void prepareConnectionPool() {
+   public static void prepareConnectionPool() throws IOException {
+      System.setProperty("tempTestDataDir", temporaryFolderFolder.newFolder().getAbsolutePath());
       ClusterSharedConnectionProvider.realStart();
    }
 
@@ -153,18 +156,6 @@ public class StoredIndexTest {
    @AfterClass
    public static void shutdownConnectionPool() {
       ClusterSharedConnectionProvider.realStop();
-   }
-
-   /**
-    * The test configuration for Infinispan is setup to offload indexes in java.io.tmpdir: clean them up. This is
-    * particularly important when changing Infinispan versions as the binary format is not necessarily compatible across
-    * releases.
-    */
-   @AfterClass
-   public static void removeFileSystemStoredIndexes() throws IOException {
-      Path targetDir = TestConstants.getTargetDir(StoredIndexTest.class);
-      FileHelper.delete(targetDir.resolve("LuceneIndexesData"));
-      FileHelper.delete(targetDir.resolve("LuceneIndexesMetaData"));
    }
 
 }
