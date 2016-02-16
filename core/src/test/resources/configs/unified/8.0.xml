@@ -189,7 +189,9 @@
             </file-store>
          </persistence>
       </local-cache-configuration>
-      <local-cache name="local-instance" configuration="local-template"/>
+      <local-cache name="local-instance" configuration="local-template">
+         <expiration interval="11000"/>
+      </local-cache>
 
       <invalidation-cache-configuration name="invalidation-template" mode="ASYNC" queue-flush-interval="10" queue-size="1000" start="LAZY" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>

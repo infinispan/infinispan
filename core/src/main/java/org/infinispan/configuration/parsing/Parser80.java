@@ -31,24 +31,7 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
-import org.infinispan.configuration.cache.BackupConfiguration;
-import org.infinispan.configuration.cache.BackupConfigurationBuilder;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
-import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
-import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
@@ -1531,9 +1514,9 @@ public class Parser80 implements ConfigurationParser {
 
    private void parseInvalidationCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
-      String extend = reader.getAttributeValue(null, Attribute.EXTENDS.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, extend);
-      CacheMode baseCacheMode = CacheMode.INVALIDATION_SYNC;
+      String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
+      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      CacheMode baseCacheMode = configuration == null ? CacheMode.INVALIDATION_SYNC : builder.clustering().cacheMode();
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -1582,9 +1565,9 @@ public class Parser80 implements ConfigurationParser {
 
    private void parseReplicatedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
-      String extend = reader.getAttributeValue(null, Attribute.EXTENDS.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, extend);
-      CacheMode baseCacheMode = CacheMode.REPL_SYNC;
+      String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
+      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      CacheMode baseCacheMode = configuration == null ? CacheMode.REPL_SYNC : builder.clustering().cacheMode();
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -1633,9 +1616,9 @@ public class Parser80 implements ConfigurationParser {
 
    private void parseDistributedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
-      String extend = reader.getAttributeValue(null, Attribute.EXTENDS.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, extend);
-      CacheMode baseCacheMode = CacheMode.DIST_SYNC;
+      String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
+      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      CacheMode baseCacheMode = configuration == null ? CacheMode.DIST_SYNC : builder.clustering().cacheMode();
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -1724,18 +1707,20 @@ public class Parser80 implements ConfigurationParser {
 
    }
 
-   private ConfigurationBuilder getConfigurationBuilder(ConfigurationBuilderHolder holder, String name, boolean template, String configuration) {
+   private ConfigurationBuilder getConfigurationBuilder(ConfigurationBuilderHolder holder, String name, boolean template, String baseConfigurationName) {
       ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(name);
       if (builder == null) {
          builder = holder.newConfigurationBuilder(name).template(template);
-         if (configuration != null) {
-            ConfigurationBuilder extendBuilder = holder.getNamedConfigurationBuilders().get(configuration);
-            if (extendBuilder == null) {
-               throw log.undeclaredConfiguration(configuration, name);
+         if (baseConfigurationName != null) {
+            ConfigurationBuilder baseConfigurationBuilder = holder.getNamedConfigurationBuilders().get(baseConfigurationName);
+            if (baseConfigurationBuilder == null) {
+               throw log.undeclaredConfiguration(baseConfigurationName, name);
             }
-            if (!extendBuilder.build().isTemplate()) {
-               throw log.noConfiguration(configuration);
+            Configuration baseConfiguration = baseConfigurationBuilder.build();
+            if (!baseConfiguration.isTemplate()) {
+               throw log.noConfiguration(baseConfigurationName);
             }
+            builder.read(baseConfiguration);
          }
       }
 
