@@ -8,6 +8,8 @@ import java.util.concurrent.BlockingQueue;
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.IndexManager;
+
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -42,7 +44,7 @@ public class LockAcquiringBackend implements IndexingBackend {
    }
 
    @Override
-   public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+   public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
       log.trace("Attempting backend upgrade...");
       if (clusteredSwitchingBackend.attemptUpgrade(this)) {
          log.trace("... backend upgrade succeeded.");
@@ -55,7 +57,7 @@ public class LockAcquiringBackend implements IndexingBackend {
    }
 
    @Override
-   public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+   public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
       log.trace("Attempting backend upgrade...");
       if (clusteredSwitchingBackend.attemptUpgrade(this)) {
          log.trace("... backend upgrade succeeded.");
@@ -112,9 +114,9 @@ public class LockAcquiringBackend implements IndexingBackend {
 
       private final LuceneWork singleOperation;
       private final IndexingMonitor monitor;
-      private final DirectoryBasedIndexManager indexManager;
+      private final IndexManager indexManager;
 
-      public StreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+      public StreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
          this.singleOperation = singleOperation;
          this.monitor = monitor;
          this.indexManager = indexManager;
@@ -130,9 +132,9 @@ public class LockAcquiringBackend implements IndexingBackend {
 
       private final List<LuceneWork> workList;
       private final IndexingMonitor monitor;
-      private final DirectoryBasedIndexManager indexManager;
+      private final IndexManager indexManager;
 
-      public TransactionWork(List<LuceneWork> workList, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+      public TransactionWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
          this.workList = workList;
          this.monitor = monitor;
          this.indexManager = indexManager;

@@ -5,6 +5,7 @@ import java.util.Properties;
 import org.hibernate.search.backend.BackendFactory;
 import org.hibernate.search.backend.spi.BackendQueueProcessor;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.WorkerBuildContext;
 
 /**
@@ -15,12 +16,12 @@ import org.hibernate.search.spi.WorkerBuildContext;
  */
 public class SimpleLocalBackendFactory implements LocalBackendFactory {
 
-   private final DirectoryBasedIndexManager indexManager;
+   private final IndexManager indexManager;
    private Properties cfg;
    private WorkerBuildContext buildContext;
 
 
-   SimpleLocalBackendFactory(DirectoryBasedIndexManager indexManager, Properties cfg, WorkerBuildContext buildContext) {
+   SimpleLocalBackendFactory(IndexManager indexManager, Properties cfg, WorkerBuildContext buildContext) {
       this.indexManager = indexManager;
       this.cfg = cfg;//TODO wrap to override some dangerous properties?
       this.buildContext = buildContext; //TODO deferring the buildContext in Hibernate Search is unexpected: think of a better way

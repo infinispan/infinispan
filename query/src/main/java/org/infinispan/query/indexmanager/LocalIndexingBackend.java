@@ -5,7 +5,8 @@ import java.util.List;
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.spi.BackendQueueProcessor;
-import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.IndexManager;
+
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -27,13 +28,13 @@ final class LocalIndexingBackend implements IndexingBackend {
    }
 
    @Override
-   public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+   public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
       log.applyingChangeListLocally(workList);
       localBackend.applyWork(workList, monitor);
    }
 
    @Override
-   public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+   public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
       localBackend.applyStreamWork(singleOperation, monitor);
    }
 
