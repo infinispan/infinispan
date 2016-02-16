@@ -369,9 +369,8 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       c.persistence().addStore(UnreliableCacheStoreConfigurationBuilder.class);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       try {
-         assertEquals(ComponentStatus.INSTANTIATED, cm.getStatus());
-         Cache<Integer, String> cache = cm.getCache();
          assertEquals(ComponentStatus.RUNNING, cm.getStatus());
+         Cache<Integer, String> cache = cm.getCache();
          cache.put(1, "v1");
       } finally {
          killCacheManagers(cm);

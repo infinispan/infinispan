@@ -94,7 +94,7 @@ public class JGroupsConfigBuilder {
       if (!flags.withFD())
          removeFailureDetection(jgroupsCfg);
 
-      if (!flags.isSiteIndexSpecified()) {
+      if (!flags.isRelayRequired()) {
          removeRelay2(jgroupsCfg);
       } else {
          ProtocolConfiguration protocol = jgroupsCfg.getProtocol(RELAY2);
@@ -130,7 +130,7 @@ public class JGroupsConfigBuilder {
       if (!flags.withMerge())
          removeMerge(jgroupsCfg);
 
-      if (!flags.isSiteIndexSpecified()) {
+      if (!flags.isRelayRequired()) {
          removeRelay2(jgroupsCfg);
       }
 
@@ -177,13 +177,13 @@ public class JGroupsConfigBuilder {
       Map<String, String> props = jgroupsCfg.getProtocol(transportProtocol).getProperties();
       Integer startPort = threadTcpStartPort.get();
       int portRange = TCP_PORT_RANGE_PER_THREAD;
-      if (transportFlags.isSiteIndexSpecified()) {
+      if (transportFlags.isPortRangeSpecified()) {
          portRange = 10;
          int maxIndex = TCP_PORT_RANGE_PER_THREAD / portRange - 1;
-         if (transportFlags.siteIndex() > maxIndex) {
-            throw new IllegalStateException("Currently we only support " + (maxIndex + 1) + " sites!");
+         if (transportFlags.portRange() > maxIndex) {
+            throw new IllegalStateException("Currently we only support " + (maxIndex + 1) + " ranges/sites!");
          }
-         startPort += transportFlags.siteIndex() * portRange;
+         startPort += transportFlags.portRange() * portRange;
       }
       props.put("bind_port", startPort.toString());
       // In JGroups, the port_range is inclusive

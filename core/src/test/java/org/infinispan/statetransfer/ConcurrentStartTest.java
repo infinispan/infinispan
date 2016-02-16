@@ -62,11 +62,11 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       // Create and connect both channels beforehand
       // We need both nodes in the view when the coordinator's ClusterTopologyManagerImpl starts
       // in order to reproduce the ISPN-5106 deadlock
-      JChannel ch1 = new JChannel(JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartTest.class.getName(), new TransportFlags()));
+      JChannel ch1 = new JChannel(JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartTest.class.getName(), new TransportFlags().withPortRange(0)));
       ch1.setName(TestResourceTracker.getNextNodeName());
       ch1.connect(ConcurrentStartTest.class.getSimpleName());
       log.tracef("Channel %s connected: %s", ch1, ch1.getViewAsString());
-      JChannel ch2 = new JChannel(JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartTest.class.getName(), new TransportFlags()));
+      JChannel ch2 = new JChannel(JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartTest.class.getName(), new TransportFlags().withPortRange(1)));
       ch2.setName(TestResourceTracker.getNextNodeName());
       ch2.connect(ConcurrentStartTest.class.getSimpleName());
       log.tracef("Channel %s connected: %s", ch2, ch2.getViewAsString());
@@ -75,12 +75,12 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb1 = new GlobalConfigurationBuilder();
       gcb1.globalJmxStatistics().allowDuplicateDomains(true);
       CustomChannelLookup.registerChannel(ch1, gcb1.transport());
-      EmbeddedCacheManager cm1 = new DefaultCacheManager(gcb1.build());
+      EmbeddedCacheManager cm1 = new DefaultCacheManager(gcb1.build(), false);
       registerCacheManager(cm1);
       GlobalConfigurationBuilder gcb2 = new GlobalConfigurationBuilder();
       gcb2.globalJmxStatistics().allowDuplicateDomains(true);
       CustomChannelLookup.registerChannel(ch2, gcb2.transport());
-      EmbeddedCacheManager cm2 = new DefaultCacheManager(gcb2.build());
+      EmbeddedCacheManager cm2 = new DefaultCacheManager(gcb2.build(), false);
       registerCacheManager(cm2);
 
       // Install the blocking invocation handlers
