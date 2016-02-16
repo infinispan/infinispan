@@ -26,7 +26,7 @@ public class ConcurrentJoinTest extends RehashTestBase {
       joiners = new CopyOnWriteArrayList<Cache<Object, String>>(new Cache[NUM_JOINERS]);
 
       for (int i = 0; i < NUM_JOINERS; i++) {
-         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(new TransportFlags().withFD(false));
+         EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager(new TransportFlags().withFD(false).withPortRange(i));
          joinerManager.defineConfiguration(cacheName, configuration.build());
          joinerManagers.add(joinerManager);
          joiners.set(i, null);

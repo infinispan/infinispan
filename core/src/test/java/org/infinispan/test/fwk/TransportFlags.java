@@ -12,7 +12,7 @@ public class TransportFlags {
 
    private boolean withFD;
    private boolean withMerge;
-   private int sideIndex = -1;
+   private int portRange = -1;
    private String siteName;
    private String relayConfig;
 
@@ -34,8 +34,8 @@ public class TransportFlags {
       return withMerge;
    }
 
-   public TransportFlags withSiteIndex(int siteIndex) {
-      this.sideIndex = siteIndex;
+   public TransportFlags withPortRange(int portRange) {
+      this.portRange = portRange;
       return this;
    }
 
@@ -57,11 +57,15 @@ public class TransportFlags {
       return relayConfig;
    }
 
-   public int siteIndex() {
-      return sideIndex;
+   public int portRange() {
+      return portRange;
    }
 
-   public boolean isSiteIndexSpecified() {
-      return siteIndex() >= 0;
+   public boolean isPortRangeSpecified() {
+      return portRange() >= 0;
+   }
+
+   public boolean isRelayRequired() {
+      return isPortRangeSpecified() && siteName != null;
    }
 }

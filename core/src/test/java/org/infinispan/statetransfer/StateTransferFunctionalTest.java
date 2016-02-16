@@ -78,7 +78,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    public static class DelayTransfer implements Serializable {
 
       private static final long serialVersionUID = 6361429803359702822L;
-      
+
       private volatile boolean doDelay = false;
 
       private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
