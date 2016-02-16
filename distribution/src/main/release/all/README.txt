@@ -31,7 +31,7 @@ and all additional optional modules.
 Requirements
 ------------
 
-Infinispan needs a JDK 7 compliant Java virtual machine.
+Infinispan needs a JDK 8 compliant Java virtual machine.
 
 Problems
 --------

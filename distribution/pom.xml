@@ -133,6 +133,13 @@
          <artifactId>cache-api</artifactId>
          <scope>provided</scope>
       </dependency>
+
+      <dependency>
+         <groupId>javax.enterprise</groupId>
+         <artifactId>cdi-api</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
    </dependencies>
 
    <build>
@@ -209,6 +216,7 @@
                <descriptors>
                   <descriptor>src/main/assemblies/minimal.xml</descriptor>
                   <descriptor>src/main/assemblies/all.xml</descriptor>
+                  <descriptor>src/main/assemblies/remote.xml</descriptor>
                   <descriptor>src/main/assemblies/src.xml</descriptor>
                </descriptors>
                <finalName>infinispan-${project.version}</finalName>
