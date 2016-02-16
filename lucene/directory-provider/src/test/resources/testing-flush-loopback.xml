@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config xmlns="urn:org:jgroups"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.5.xsd">
+		xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.6.xsd">
 
 	<SHARED_LOOPBACK
 		bind_addr="127.0.0.1"
@@ -9,16 +9,27 @@
 		enable_diagnostics="false" />
 	<SHARED_LOOPBACK_PING />
 
-	<MERGE2 max_interval="30000" min_interval="1000" />
+	<MERGE3 max_interval="30000" min_interval="1000"/>
 	<FD_SOCK bind_addr="127.0.0.1" />
 	<FD_ALL />
 	<VERIFY_SUSPECT timeout="500" bind_addr="127.0.0.1" />
-	<pbcast.NAKACK exponential_backoff="150" use_mcast_xmit="true"
-		retransmit_timeout="100,300,600" discard_delivered_msgs="false" />
-	<UNICAST timeout="300,600,1200" />
+	<pbcast.NAKACK2
+			use_mcast_xmit="false"
+			xmit_interval="1000"
+			xmit_table_num_rows="50"
+			xmit_table_msgs_per_row="1024"
+			xmit_table_max_compaction_time="30000"
+			max_msg_batch_size="100"/>
+	<UNICAST3
+			xmit_interval="500"
+			xmit_table_num_rows="50"
+			xmit_table_msgs_per_row="1024"
+			xmit_table_max_compaction_time="30000"
+			max_msg_batch_size="100"
+			conn_expiry_timeout="0"/>
 	<pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
 		max_bytes="400000" />
 	<pbcast.GMS print_local_addr="true" join_timeout="500"
 		view_bundling="true" />
-	<RSVP resend_interval="20" timeout="10000"/>
+	<RSVP resend_interval="20" timeout="10000" ack_on_delivery="false" />
 </config>
