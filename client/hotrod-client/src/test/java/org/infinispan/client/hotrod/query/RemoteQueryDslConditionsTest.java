@@ -51,6 +51,7 @@ import org.testng.annotations.Test;
 
 /**
  * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model.
+ * Uses Protobuf marshalling and Protobuf doc annotations for configuring indexing.
  *
  * @author anistor@redhat.com
  * @since 6.0

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.WrappedMessage;
 
@@ -11,6 +12,7 @@ import org.infinispan.protostream.WrappedMessage;
  * @author anistor@redhat.com
  * @since 6.0
  */
+@SerializeWith(Externalizers.QueryResponseExternalizer.class)
 public final class QueryResponse {
 
    private int numResults;
@@ -67,10 +69,10 @@ public final class QueryResponse {
 
       @Override
       public void writeTo(ProtoStreamWriter writer, QueryResponse queryResponse) throws IOException {
-         writer.writeInt("numResults", queryResponse.getNumResults());
-         writer.writeInt("projectionSize", queryResponse.getProjectionSize());
-         writer.writeCollection("results", queryResponse.getResults(), WrappedMessage.class);
-         writer.writeLong("totalResults", queryResponse.getTotalResults());
+         writer.writeInt("numResults", queryResponse.numResults);
+         writer.writeInt("projectionSize", queryResponse.projectionSize);
+         writer.writeCollection("results", queryResponse.results, WrappedMessage.class);
+         writer.writeLong("totalResults", queryResponse.totalResults);
       }
 
       @Override

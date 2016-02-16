@@ -30,8 +30,11 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
+import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
 import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
 import org.infinispan.query.remote.impl.filter.IckleBinaryProtobufFilterAndConverter;
@@ -175,12 +178,23 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
          cr.registerComponent(new ProtobufMatcher(serCtx, ProtobufFieldIndexingMetadata::new), ProtobufMatcher.class);
 
          if (isCompatMode) {
+            EntityNameResolver entityNameResolver;
+            if (cfg.compatibility().marshaller() instanceof BaseProtoStreamMarshaller) {
+               // we are running in compat mode and the remote side uses Protobuf
+               entityNameResolver = new ProtobufEntityNameResolver(serCtx);
+            } else {
+               // we're not using Protobuf, then use whatever marshaller is configured
+               serCtx = null;
+               ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
+               entityNameResolver = new ReflectionEntityNamesResolver(classLoader);
+            }
+
             SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
             CompatibilityReflectionMatcher compatibilityReflectionMatcher;
             if (searchFactory == null) {
-               compatibilityReflectionMatcher = new CompatibilityReflectionMatcher(serCtx);
+               compatibilityReflectionMatcher = new CompatibilityReflectionMatcher(entityNameResolver, serCtx);
             } else {
-               compatibilityReflectionMatcher = new CompatibilityReflectionMatcher(serCtx, searchFactory);
+               compatibilityReflectionMatcher = new CompatibilityReflectionMatcher(entityNameResolver, serCtx, searchFactory);
             }
             cr.registerComponent(compatibilityReflectionMatcher, CompatibilityReflectionMatcher.class);
          }

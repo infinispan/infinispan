@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
+import org.infinispan.query.dsl.impl.QueryStringCreator;
 
 /**
  * @author anistor@redhat.com
@@ -16,10 +17,10 @@ final class RemoteQueryBuilder extends BaseQueryBuilder {
    private static final Log log = LogFactory.getLog(RemoteQueryBuilder.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final RemoteCacheImpl cache;
+   private final RemoteCacheImpl<?, ?> cache;
    private final SerializationContext serializationContext;
 
-   RemoteQueryBuilder(RemoteQueryFactory queryFactory, RemoteCacheImpl cache, SerializationContext serializationContext, String rootType) {
+   RemoteQueryBuilder(RemoteQueryFactory queryFactory, RemoteCacheImpl<?, ?> cache, SerializationContext serializationContext, String rootType) {
       super(queryFactory, rootType);
       this.cache = cache;
       this.serializationContext = serializationContext;
@@ -27,7 +28,8 @@ final class RemoteQueryBuilder extends BaseQueryBuilder {
 
    @Override
    public Query build() {
-      RemoteQueryStringCreator generator = new RemoteQueryStringCreator(serializationContext);
+      QueryStringCreator generator = serializationContext != null ?
+            new RemoteQueryStringCreator(serializationContext) : new QueryStringCreator();
       String queryString = accept(generator);
       if (trace) {
          log.tracef("Query string : %s", queryString);
