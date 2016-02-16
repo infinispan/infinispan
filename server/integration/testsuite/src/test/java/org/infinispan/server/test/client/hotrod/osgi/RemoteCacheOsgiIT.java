@@ -258,10 +258,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
 
          Person person = (Person) o;
 
-         if (!name.equals(person.name))
-            return false;
-
-         return true;
+         return name.equals(person.name);
       }
 
       @Override

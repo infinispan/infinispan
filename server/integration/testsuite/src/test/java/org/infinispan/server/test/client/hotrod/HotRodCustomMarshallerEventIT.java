@@ -20,7 +20,6 @@ import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.server.test.category.HotRodLocal;
-import org.infinispan.server.test.category.Unstable;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OverProtocol;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
