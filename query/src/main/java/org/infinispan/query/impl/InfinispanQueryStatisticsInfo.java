@@ -4,12 +4,9 @@ import org.hibernate.search.spi.SearchIntegrator;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
- * This MBean accumulates query statistics from the Hibernate Search statistics object. The only difference is this
- * statistics continue to accumulate and are not reset when the Search Factory is reconfigured. They are still reset if
- * {@code clear()} is explicitly called though.
+ * This MBean exposes the query statistics from the Hibernate Search statistics object.
  *
  * @author anistor@redhat.com
  * @since 6.1
@@ -17,13 +14,6 @@ import java.util.concurrent.atomic.LongAdder;
 public class InfinispanQueryStatisticsInfo implements InfinispanQueryStatisticsInfoMBean {
 
    private final SearchIntegrator sf;
-   private final LongAdder searchQueryExecutionCount = new LongAdder();
-   private final LongAdder searchQueryTotalTime = new LongAdder();
-   private volatile long searchQueryExecutionMaxTime = 0;
-   private volatile String searchQueryExecutionMaxTimeQueryString = null;
-   private final LongAdder objectLoadingTotalTime = new LongAdder();
-   private volatile long objectLoadingExecutionMaxTime = 0;
-   private final LongAdder objectLoadedCount = new LongAdder();
 
    public InfinispanQueryStatisticsInfo(SearchIntegrator sf) {
       this.sf = sf;
@@ -31,83 +21,52 @@ public class InfinispanQueryStatisticsInfo implements InfinispanQueryStatisticsI
 
    @Override
    public void clear() {
-      searchQueryExecutionCount.reset();
-      searchQueryTotalTime.reset();
-      searchQueryExecutionMaxTime = 0;
-      searchQueryExecutionMaxTimeQueryString = null;
-      objectLoadingTotalTime.reset();
-      objectLoadingExecutionMaxTime = 0;
-      objectLoadedCount.reset();
       sf.getStatistics().clear();
    }
 
    @Override
    public long getSearchQueryExecutionCount() {
-      searchQueryExecutionCount.add(sf.getStatistics().getSearchQueryExecutionCount());
-      return searchQueryExecutionCount.sum();
+      return sf.getStatistics().getSearchQueryExecutionCount();
    }
 
    @Override
    public long getSearchQueryTotalTime() {
-      searchQueryTotalTime.add(sf.getStatistics().getSearchQueryTotalTime());
-      return searchQueryTotalTime.sum();
+      return sf.getStatistics().getSearchQueryTotalTime();
    }
 
    @Override
    public long getSearchQueryExecutionMaxTime() {
-      long temp = sf.getStatistics().getSearchQueryExecutionMaxTime();
-      if (searchQueryExecutionMaxTime < temp) {
-         searchQueryExecutionMaxTime = temp;
-      }
-      return searchQueryExecutionMaxTime;
+      return sf.getStatistics().getSearchQueryExecutionMaxTime();
    }
 
    @Override
    public long getSearchQueryExecutionAvgTime() {
-      long count = getSearchQueryExecutionCount();
-      if (count == 0) {
-         return 0;
-      }
-      return getSearchQueryTotalTime() / count;
+      return sf.getStatistics().getSearchQueryExecutionAvgTime();
    }
 
    @Override
    public String getSearchQueryExecutionMaxTimeQueryString() {
-      String temp = sf.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
-      if (temp != null) {
-         searchQueryExecutionMaxTimeQueryString = temp;
-      }
-      return searchQueryExecutionMaxTimeQueryString;
+      return sf.getStatistics().getSearchQueryExecutionMaxTimeQueryString();
    }
 
    @Override
    public long getObjectLoadingTotalTime() {
-      objectLoadingTotalTime.add(sf.getStatistics().getObjectLoadingTotalTime());
-      return objectLoadingTotalTime.sum();
+      return sf.getStatistics().getObjectLoadingTotalTime();
    }
 
    @Override
    public long getObjectLoadingExecutionMaxTime() {
-      long temp = sf.getStatistics().getObjectLoadingExecutionMaxTime();
-      if (objectLoadingExecutionMaxTime < temp) {
-         objectLoadingExecutionMaxTime = temp;
-      }
-      return objectLoadingExecutionMaxTime;
+      return sf.getStatistics().getObjectLoadingExecutionMaxTime();
    }
 
    @Override
    public long getObjectLoadingExecutionAvgTime() {
-      long count = getObjectsLoadedCount();
-      if (count == 0) {
-         return 0;
-      }
-      return getObjectLoadingTotalTime() / count;
+      return sf.getStatistics().getObjectLoadingExecutionAvgTime();
    }
 
    @Override
    public long getObjectsLoadedCount() {
-      objectLoadedCount.add(sf.getStatistics().getObjectsLoadedCount());
-      return objectLoadedCount.sum();
+      return sf.getStatistics().getObjectsLoadedCount();
    }
 
    @Override
