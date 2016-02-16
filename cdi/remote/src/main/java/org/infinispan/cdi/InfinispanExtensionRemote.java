@@ -1,10 +1,13 @@
 package org.infinispan.cdi;
 
+import org.infinispan.cdi.logging.RemoteLog;
 import org.infinispan.cdi.util.BeanBuilder;
 import org.infinispan.cdi.util.ContextualLifecycle;
 import org.infinispan.cdi.util.Reflections;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.logging.LogFactory;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.event.Observes;
@@ -18,6 +21,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class InfinispanExtensionRemote implements Extension {
+
+   private static final RemoteLog logger = LogFactory.getLog(InfinispanExtensionRemote.class, RemoteLog.class);
+
    private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
 
    private Producer<RemoteCache<?, ?>> remoteCacheProducer;
@@ -32,6 +38,17 @@ public class InfinispanExtensionRemote implements Extension {
       AnnotatedMember<?> member = event.getAnnotatedMember();
       if (RemoteCacheProducer.class.equals(member.getDeclaringType().getBaseType())) {
          remoteCacheProducer = (Producer<RemoteCache<?, ?>>) event.getProducer();
+      }
+   }
+
+   // This is a work around for CDI Uber Jar deployment. When Weld scans the classpath it  pick up RemoteCacheManager
+   // (this is an implementation, not an interface, so it gets instantiated). As a result we get duplicated classes
+   // in CDI BeanManager.
+   @SuppressWarnings("unused")
+   <T extends RemoteCacheManager> void removeDuplicatedRemoteCacheManager(@Observes ProcessAnnotatedType<T> bean) {
+      if(RemoteCacheManager.class.getCanonicalName().equals(bean.getAnnotatedType().getJavaClass().getCanonicalName())) {
+         logger.info("removing duplicated  RemoteCacheManager" + bean.getAnnotatedType());
+         bean.veto();
       }
    }
 

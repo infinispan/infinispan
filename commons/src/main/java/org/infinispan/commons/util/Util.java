@@ -116,7 +116,7 @@ public final class Util {
    public static ClassLoader[] getClassLoaders(ClassLoader appClassLoader) {
       if (isOSGiContext()) {
          return new ClassLoader[] { appClassLoader,   // User defined classes
-               OsgiClassLoader.getInstance(),         // OSGi bundle context needs to be on top of TCCL, system CL, etc.
+               getOSGiClassLoader(), // OSGi bundle context needs to be on top of TCCL, system CL, etc.
                Util.class.getClassLoader(),           // Infinispan classes (not always on TCCL [modular env])
                ClassLoader.getSystemClassLoader(),    // Used when load time instrumentation is in effect
                Thread.currentThread().getContextClassLoader() //Used by jboss-as stuff
@@ -129,6 +129,19 @@ public final class Util {
          };
       }
    }
+
+    private static ClassLoader getOSGiClassLoader() {
+        // Make loading class optional
+        try {
+            Class<?> osgiClassLoader = Class.forName("org.infinispan.commons.util.OsgiClassLoader");
+            return (ClassLoader) osgiClassLoader.getMethod("getInstance", null).invoke(null);
+        } catch (ClassNotFoundException e) {
+            // fall back option - it can't hurt if we scan ctx class loader 2 times.
+            return Thread.currentThread().getContextClassLoader();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to call getInstance on OsgiClassLoader", e);
+        }
+    }
 
    /**
     * <p>

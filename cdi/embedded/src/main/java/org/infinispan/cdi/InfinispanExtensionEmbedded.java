@@ -16,6 +16,7 @@ import org.infinispan.cdi.util.logging.EmbeddedLog;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.enterprise.context.spi.CreationalContext;
@@ -25,6 +26,7 @@ import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
@@ -65,6 +67,17 @@ public class InfinispanExtensionEmbedded implements Extension {
                Reflections.getQualifiers(beanManager, event.getAnnotatedMember().getAnnotations())
          ));
       }
+   }
+
+   // This is a work around for CDI Uber Jar deployment. When Weld scans the classpath it  pick up DefaultCacheManager
+   // (this is an implementation, not an interface, so it gets instantiated). As a result we get duplicated classes
+   // in CDI BeanManager.
+   @SuppressWarnings("unused")
+   <T extends DefaultCacheManager> void removeDuplicatedRemoteCacheManager(@Observes ProcessAnnotatedType<T> bean) {
+       if(DefaultCacheManager.class.getCanonicalName().equals(bean.getAnnotatedType().getJavaClass().getCanonicalName())) {
+          logger.info("removing duplicated  DefaultCacheManager" + bean.getAnnotatedType());
+          bean.veto();
+       }
    }
 
    @SuppressWarnings("unchecked")

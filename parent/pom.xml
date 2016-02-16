@@ -603,11 +603,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>org.wildfly.core</groupId>
-            <artifactId>wildfly-controller</artifactId>
-            <version>${version.org.wildfly.core}</version>
-         </dependency>
-         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
             <version>${version.arquillian.container.weld}</version>
@@ -1110,6 +1105,13 @@
                       <artifactId>xapool</artifactId>
                   </exclusion>
               </exclusions>
+          </dependency>
+          <dependency>
+             <groupId>org.wildfly.core</groupId>
+             <artifactId>wildfly-core-parent</artifactId>
+             <version>${version.org.wildfly.core}</version>
+             <scope>import</scope>
+             <type>pom</type>
           </dependency>
       </dependencies>
    </dependencyManagement>

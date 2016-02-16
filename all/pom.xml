@@ -3,9 +3,9 @@
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-bom</artifactId>
+      <artifactId>infinispan-parent</artifactId>
       <version>8.2.0-SNAPSHOT</version>
-      <relativePath>../bom/pom.xml</relativePath>
+      <relativePath>../parent/pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-all-parent</artifactId>
    <name>Parent pom for uberjar modules</name>
