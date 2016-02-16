@@ -84,10 +84,7 @@ final class SearchFactoryHandler {
          transactionHelper.runSuspendingTx(new Operation() {
             @Override
             public void execute() {
-               // we need to preserve the state of this flag manually because addClasses will cause reconfiguration and the flag is lost
-               boolean isStatisticsEnabled = searchFactory.getStatistics().isStatisticsEnabled();
                searchFactory.addClasses(newtypes);
-               searchFactory.getStatistics().setStatisticsEnabled(isStatisticsEnabled);
             }
          });
       } finally {

@@ -112,7 +112,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          QueryParser queryParser = createQueryParser("blurb");
          Query luceneQuery = queryParser.parse("value");
          CacheQuery cacheQuery = searchManager.getQuery(luceneQuery);
-         List<Object> found = cacheQuery.list();
+         List<Object> found = cacheQuery.list(); //Executing first query
 
          assertEquals(1L, server.getAttribute(name, "SearchQueryExecutionCount"));
 
@@ -128,7 +128,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          cache.put("key101", anotherGrassEater);
 
          cacheQuery = searchManager.getQuery(luceneQuery);
-         found = cacheQuery.list();
+         found = cacheQuery.list(); //Executing second query
          assertEquals(numberOfEntries, found.size());
 
          assertEquals(1, server.invoke(name, "getNumberOfIndexedEntities",
