@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.IndexManager;
 
 /**
  * The main IndexingBackend implementations are the one forwarding to another node, and the one applying to the local node.
@@ -28,12 +28,12 @@ interface IndexingBackend {
    /**
     * Receives transactional index update operations from the Search engine.
     */
-   void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager);
+   void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager);
 
    /**
     * Receives stream-style index update operations from the Search engine.
     */
-   void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager);
+   void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager);
 
    /**
     * Mostly useful for testing and diagnostics.

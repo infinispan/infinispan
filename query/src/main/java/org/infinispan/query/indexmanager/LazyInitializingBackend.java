@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.IndexManager;
 
 /**
  * This backend only triggers initialization of a different backend when
@@ -24,13 +24,13 @@ public class LazyInitializingBackend implements IndexingBackend {
    }
 
    @Override
-   public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+   public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
       backend.lazyInitialize();
       backend.getCurrentIndexingBackend().applyWork(workList, monitor, indexManager);
    }
 
    @Override
-   public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+   public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
       backend.lazyInitialize();
       backend.getCurrentIndexingBackend().applyStreamWork(singleOperation, monitor, indexManager);
 

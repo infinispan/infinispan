@@ -12,6 +12,8 @@ import org.hibernate.search.backend.spi.BackendQueueProcessor;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.infinispan.hibernate.search.spi.CacheManagerService;
+
+import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.WorkerBuildContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -33,11 +35,11 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
 
    private ServiceManager serviceManager;
    private String indexName;
-   private DirectoryBasedIndexManager indexManager;
+   private IndexManager indexManager;
    private SwitchingBackend fowardingBackend;
 
    @Override
-   public void initialize(Properties props, WorkerBuildContext context, DirectoryBasedIndexManager indexManager) {
+   public void initialize(Properties props, WorkerBuildContext context, IndexManager indexManager) {
       this.indexManager = indexManager;
       LocalBackendFactory localBackendFactory = new SimpleLocalBackendFactory(indexManager, props, context);
       serviceManager = context.getServiceManager();
@@ -49,7 +51,7 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
       log.commandsBackendInitialized(indexName);
    }
 
-   private static SwitchingBackend createForwardingBackend(Properties props, ComponentRegistry componentRegistry, String indexName, LocalBackendFactory localBackendFactory, CacheManagerService cacheManagerService, DirectoryBasedIndexManager indexManager) {
+   private static SwitchingBackend createForwardingBackend(Properties props, ComponentRegistry componentRegistry, String indexName, LocalBackendFactory localBackendFactory, CacheManagerService cacheManagerService, IndexManager indexManager) {
       RpcManager rpcManager = componentRegistry.getComponent(RpcManager.class);
       if (rpcManager == null) {
          //non-clustered case:
@@ -59,7 +61,12 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
       } else {
          EmbeddedCacheManager embeddedCacheManager = cacheManagerService.getEmbeddedCacheManager();
          TransactionManager transactionManager = componentRegistry.getComponent(TransactionManager.class);
-         IndexLockController lockControl = new IndexManagerBasedLockController(indexManager, transactionManager);
+         //The following cast is currently safe as the contract just changed from IndexManager to DirectoryBasedIndexManager
+         //but it was changed as the intention is to evolve on this introducing non-Directory based IndexManager implementations.
+         //FIXME: avoid the need for the cast or validate eagerly with a nicer error message.
+         //https://issues.jboss.org/browse/ISPN-6212
+         DirectoryBasedIndexManager directoryBasedIndexManager = (DirectoryBasedIndexManager)indexManager;
+         IndexLockController lockControl = new IndexManagerBasedLockController(directoryBasedIndexManager, transactionManager);
          ClusteredSwitchingBackend backend = new ClusteredSwitchingBackend(props, componentRegistry, indexName, localBackendFactory, lockControl);
          backend.initialize();
          embeddedCacheManager.addListener(backend);
@@ -95,6 +102,11 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
    @Override
    public void indexMappingChanged() {
       //FIXME implement me? Not sure it's needed.
+   }
+
+   @Override
+   public void closeIndexWriter() {
+      //Placeholder to implemenet Index Affinity: No-Op is ok until that's implemented.
    }
 
    boolean isMasterLocal() {

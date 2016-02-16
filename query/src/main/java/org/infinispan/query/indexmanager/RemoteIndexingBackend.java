@@ -9,7 +9,8 @@ import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.PurgeAllLuceneWork;
-import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.IndexManager;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.logging.Log;
@@ -59,7 +60,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
    }
 
    @Override
-   public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+   public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
       IndexUpdateCommand command = new IndexUpdateCommand(cacheName);
       //Use Search's custom Avro based serializer as it includes support for back/future compatibility
       byte[] serializedModel = indexManager.getSerializer().toSerializedModel(workList);
@@ -91,7 +92,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
 
    @Override
-   public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
+   public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
       final IndexUpdateStreamCommand streamCommand = new IndexUpdateStreamCommand(cacheName);
       final List<LuceneWork> operations = Collections.singletonList(singleOperation);
       final byte[] serializedModel = indexManager.getSerializer().toSerializedModel(operations);
