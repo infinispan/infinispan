@@ -54,24 +54,24 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-remote</artifactId>
          <optional>${uberjar.deps.optional}</optional>
-         <exclusions>
-            <exclusion>
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-client-hotrod</artifactId>
-            </exclusion>
-         </exclusions>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-query-dsl</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-remote-query-client</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cdi-embedded</artifactId>
          <optional>${uberjar.deps.optional}</optional>
-         <exclusions>
-            <exclusion>
-               <artifactId>infinispan-client-hotrod</artifactId>
-               <groupId>org.infinispan</groupId>
-            </exclusion>
-         </exclusions>
       </dependency>
 
       <dependency>
@@ -128,9 +128,15 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote</artifactId>
-         <scope>provided</scope>
+         <groupId>org.jboss.modules</groupId>
+         <artifactId>jboss-modules</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>com.mchange</groupId>
+         <artifactId>c3p0</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
    </dependencies>
 
@@ -165,7 +171,8 @@
                            <exclude>org.fusesource.hawtjni:hawtjni-runtime:jar:</exclude>
                            <exclude>org.fusesource.leveldbjni:leveldbjni:jar:</exclude>
                            <exclude>org.iq80.leveldb:leveldb-api:jar:</exclude>
-                           <exclude>log4j:log4j:jar:</exclude>
+                           <exclude>org.apache.logging.log4j:log4j-core:jar:*</exclude>
+                           <exclude>log4j:log4j:jar:*</exclude>
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
                            <exclude>org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.1_spec:jar:</exclude>
                            <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar:</exclude>
@@ -186,6 +193,12 @@
                            </excludes>
                         </filter>
                         <filter>
+                           <artifact>org.infinispan.protostream:protostream</artifact>
+                           <excludes>
+                              <exclude>protostream/javassist/util/HotSwapper*.class</exclude>
+                           </excludes>
+                        </filter>
+                        <filter>
                            <artifact>org.jgroups:jgroups</artifact>
                            <includes>
                               <include>org/jgroups/**</include>
@@ -196,10 +209,30 @@
                            </includes>
                         </filter>
                         <filter>
+                           <artifact>org.jboss.logging:jboss-logging</artifact>
+                           <excludes>
+                              <exclude>org/jboss/logging/JBossLogManagerLogger*.class</exclude>
+                              <exclude>org/jboss/logging/JBossLogManagerProvider*.class</exclude>
+                           </excludes>
+                        </filter>
+                        <filter>
+                           <artifact>org.infinispan:infinispan-commons</artifact>
+                           <excludes>
+                              <exclude>org/infinispan/commons/util/OsgiClassLoader*.class</exclude>
+                           </excludes>
+                        </filter>
+                        <filter>
+                           <artifact>com.mchange:mchange-commons-java</artifact>
+                           <excludes>
+                              <exclude>com/mchange/v3/hocon/*</exclude>
+                           </excludes>
+                        </filter>
+                        <filter>
                            <artifact>*:*</artifact>
                            <excludes>
                               <exclude>INSTALL.html</exclude>
                               <exclude>LICENSE</exclude>
+                              <exclude>XPP3-LICENSE.txt</exclude>
                               <exclude>README</exclude>
                               <exclude>META-INF/*.SF</exclude>
                               <exclude>META-INF/*.DSA</exclude>
@@ -211,6 +244,8 @@
                               <exclude>META-INF/LICENSE.txt</exclude>
                               <exclude>META-INF/NOTICE</exclude>
                               <exclude>META-INF/NOTICE.txt</exclude>
+                              <exclude>schema/*.xsd</exclude>
+                              <exclude>__redirected/*</exclude>
                            </excludes>
                         </filter>
                      </filters>
@@ -221,13 +256,22 @@
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
                         <relocation>
+                           <pattern>com.mchange</pattern>
+                           <shadedPattern>infinispan.com.mchange</shadedPattern>
+                        </relocation>
+                        <relocation>
                            <pattern>org.iq80</pattern>
                            <shadedPattern>infinispan.org.iq80</shadedPattern>
                         </relocation>
-                        <relocation>
+                        <!-- Unfortunatelly because of https://issues.jboss.org/browse/ISPN-6093
+                             and https://bugzilla.redhat.com/show_bug.cgi?id=1266831 we cannot relocate
+                             logging module, otherwise some integration modules might miss it
+                             when both Uber jar as well as ISPN commons are on classpath
+                          -->
+                        <!-- <relocation>
                            <pattern>org.jboss.logging</pattern>
                            <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
-                        </relocation>
+                        </relocation> -->
                      </relocations>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
@@ -261,13 +305,11 @@
                   </goals>
                   <configuration>
                      <instructions>
-                        
                         <Include-Resource>
                            @${intermediary_jar_path},
                            /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml,
                            /features.xml=${project.basedir}/target/classes/features.xml
                         </Include-Resource>
-                        
                         <_exportcontents>
                            org.infinispan.*,
                            org.jboss.marshalling.*;version=${version.jboss.marshalling},
@@ -299,6 +341,7 @@
                            *
                         </Import-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
+                        <Dependencies>org.hibernate</Dependencies>
                      </instructions>
                   </configuration>
                </execution>

@@ -52,10 +52,37 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jcache-remote</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+
+
+      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
+
+      <!-- Needed by JCache Remote -->
+      <dependency>
+         <groupId>org.wildfly.core</groupId>
+         <artifactId>wildfly-controller-client</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.modules</groupId>
+         <artifactId>jboss-modules</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-api</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+         <scope>compile</scope>
+      </dependency>
+
    </dependencies>
 
    <build>
@@ -64,9 +91,6 @@
          <resource>
             <directory>${project.basedir}/src/main/resources</directory>
             <filtering>true</filtering>
-            <includes>
-               <include>features.xml</include>
-            </includes>
          </resource>
       </resources>
       <plugins>
@@ -84,25 +108,61 @@
                      <finalName>${intermediary_jar_name}</finalName>
                      <artifactSet>
                         <excludes>
-                           <exclude>org.infinispan:infinispan-remote</exclude>
-                           <exclude>log4j:log4j:jar:</exclude>
-                           <exclude>net.jcip:jcip-annotations:jar:</exclude>
-                           <exclude>org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.1_spec:jar:</exclude>
-                           <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar:</exclude>
-                           <exclude>javax.annotation:jsr250-api:jar:</exclude>
-                           <exclude>javax.cache:cache-api:jar:</exclude>
-                           <exclude>javax.enterprise:cdi-api:jar:</exclude>
-                           <exclude>javax.inject:javax.inject:jar:</exclude>
-                           <exclude>org.osgi:org.osgi.core:jar:</exclude>
-                           <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
+                           <exclude>org.apache.logging.log4j:log4j-core:jar:*</exclude>
+                           <exclude>log4j:log4j:jar:*</exclude>
+                           <exclude>net.jcip:jcip-annotations:jar:*</exclude>
+                           <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:*</exclude>
+                           <exclude>org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.1_spec:*</exclude>
+                           <exclude>javax.cache:cache-api:*</exclude>
+                           <exclude>javax.enterprise:cdi-api:*</exclude>
+                           <exclude>org.jboss.spec.javax.annotation:jboss-annotations-api_1.1_spec:*</exclude>
+                           <exclude>javax.inject:javax.inject:*</exclude>
+                           <exclude>org.jgroups:jgroups:*</exclude>
+                           <exclude>org.osgi:org.osgi.core:*</exclude>
+                           <exclude>org.osgi:org.osgi.compendium:*</exclude>
                         </excludes>
                      </artifactSet>
                      <filters>
+                        <filter>
+                           <artifact>org.infinispan:infinispan-commons</artifact>
+                           <excludes>
+                              <exclude>org/infinispan/commons/util/OsgiClassLoader*.class</exclude>
+                           </excludes>
+                        </filter>
+                        <filter>
+                           <artifact>org.infinispan.protostream:protostream</artifact>
+                           <excludes>
+                              <exclude>protostream/javassist/util/HotSwapper*.class</exclude>
+                           </excludes>
+                        </filter>
+                        <filter>
+                           <artifact>org.jboss.marshalling:jboss-marshalling</artifact>
+                           <excludes>
+                              <exclude>org/jboss/marshalling/ModularClassTable*.class</exclude>
+                           </excludes>
+                        </filter>
+                        <filter>
+                           <artifact>org.apache.logging.log4j:log4j-api</artifact>
+                           <excludes>
+                              <exclude>org/apache/logging/log4j/util/Activator*.class</exclude>
+                           </excludes>
+                        </filter>
+                        <filter>
+                           <artifact>org.jboss.logging:jboss-logging</artifact>
+                           <excludes>
+                              <exclude>org/jboss/logging/JBossLogManagerLogger*.class</exclude>
+                              <exclude>org/jboss/logging/JBossLogManagerProvider*.class</exclude>
+                              <exclude>org/jboss/logging/Slf4jLogger*.class</exclude>
+                              <exclude>org/jboss/logging/Log4jLogger*.class</exclude>
+                              <exclude>org/jboss/logging/Slf4jLocationAwareLogger*.class</exclude>
+                           </excludes>
+                        </filter>
                         <filter>
                            <artifact>*:*</artifact>
                            <excludes>
                               <exclude>INSTALL.html</exclude>
                               <exclude>LICENSE</exclude>
+                              <exclude>XPP3-LICENSE.txt</exclude>
                               <exclude>README</exclude>
                               <exclude>META-INF/*.SF</exclude>
                               <exclude>META-INF/*.DSA</exclude>
@@ -114,34 +174,69 @@
                               <exclude>META-INF/LICENSE.txt</exclude>
                               <exclude>META-INF/NOTICE</exclude>
                               <exclude>META-INF/NOTICE.txt</exclude>
+                              <exclude>jboss-as-checkstyle/checkstyle.xml</exclude>
+                              <exclude>schema/*.xsd</exclude>
+                              <exclude>__redirected/*</exclude>
                            </excludes>
                         </filter>
                      </filters>
                      <createSourcesJar>true</createSourcesJar>
                      <relocations>
                         <relocation>
-                           <pattern>org.apache</pattern>
-                           <shadedPattern>infinispan.org.apache</shadedPattern>
+                           <pattern>org.apache.commons</pattern>
+                           <shadedPattern>infinispan.org.apache.commons</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>org.slf4j</pattern>
+                           <shadedPattern>infinispan.org.slf4j</shadedPattern>
                         </relocation>
                         <relocation>
                            <pattern>com.google</pattern>
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
-                        <!-- Unfortunatelly because of https://issues.jboss.org/browse/ISPN-5903
-                             and https://bugzilla.redhat.com/show_bug.cgi?id=1266831 we cannot relocate
-                             logging module, otherwise some integration modules might miss it
-                             when both Uber jar as well as ISPN commons are on classpath
-                          -->
-                        <!--<relocation>
+                        <relocation>
+                           <pattern>org.xnio</pattern>
+                           <shadedPattern>infinispan.org.xnio</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>org.jboss.threads</pattern>
+                           <shadedPattern>infinispan.org.jboss.threads</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>org.jboss.remoting3</pattern>
+                           <shadedPattern>infinispan.org.jboss.remoting3</shadedPattern>
+                        </relocation>
+                        <relocation>
                            <pattern>org.jboss.logging</pattern>
                            <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
-                        </relocation> -->
+                        </relocation>
+                        <relocation>
+                           <pattern>org.jboss.modules</pattern>
+                           <shadedPattern>infinispan.org.jboss.modules</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>org.jboss.dmr</pattern>
+                           <shadedPattern>infinispan.org.jboss.dmr</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>org.jboss.as</pattern>
+                           <shadedPattern>infinispan.org.jboss.as</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>com.squareup</pattern>
+                           <shadedPattern>infinispan.com.squareup</shadedPattern>
+                        </relocation>
+                        <!-- Unfortunately because of https://issues.apache.org/jira/browse/MSHADE-182 -->
+                        <!-- we can not relocate marshalling module. Even when trying manual fixes it still fails -->
+                        <!--<relocation>-->
+                           <!--<pattern>org.jboss.marshalling</pattern>-->
+                           <!--<shadedPattern>infinispan.org.jboss.marshalling</shadedPattern>-->
+                        <!--</relocation>-->
                      </relocations>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                            <resources>
                               <resource>blueprint.xml</resource>
-                              <resource>features.xml</resource>
                            </resources>
                         </transformer>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
@@ -162,7 +257,6 @@
                   <id>default-bundle</id>
                   <phase>none</phase>
                </execution>
-
                <execution>
                   <id>bundle-package</id>
                   <phase>package</phase>
@@ -171,12 +265,10 @@
                   </goals>
                   <configuration>
                      <instructions>
-                        
                         <Include-Resource>
                            @${intermediary_jar_path},
                            /features.xml=${project.basedir}/target/classes/features.xml
                         </Include-Resource>
-                        
                         <_exportcontents>
                            org.infinispan.client.hotrod.*,
                            org.infinispan.commons.*,
@@ -192,9 +284,11 @@
                            !javax.*,
                            !sun.misc,
                            !sun.reflect,
+                           !com.sun.jmx.*,
                            !com.sun.jdi.*,
                            !net.jcip.annotations,
                            !org.jboss.logmanager,
+                           !org.jboss.logging.annotations.*,
                            !org.jboss.modules,
                            *
                         </Import-Package>
