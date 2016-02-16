@@ -31,40 +31,10 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       TestingUtil.killCacheManagers(cm1, cm2);
    }
 
-   public void testMockViewChange() {
-      cm1 = TestCacheManagerFactory.createClusteredCacheManager();
-      cm2 = TestCacheManagerFactory.createClusteredCacheManager();
-      ConfigurationBuilder c = new ConfigurationBuilder();
-      c.clustering().cacheMode(CacheMode.REPL_SYNC)
-            .stateTransfer().fetchInMemoryState(false);
-      cm1.defineConfiguration("cache", c.build());
-      cm2.defineConfiguration("cache", c.build());
-
-      cm1.getCache("cache");
-
-      // this will mean only 1 cache in the cluster so far
-      assert cm1.getMembers().size() == 1;
-      Address myAddress = cm1.getAddress();
-      assert cm1.getMembers().contains(myAddress);
-
-      // now attach a mock notifier
-      CacheManagerNotifierWrapper nw = new CacheManagerNotifierWrapper(TestingUtil.extractComponent(cm1.getCache("cache"), CacheManagerNotifier.class));
-      CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, nw, true);
-      try {
-         // start a second cache.
-         Cache c2 = cm2.getCache("cache");
-         TestingUtil.blockUntilViewsReceived(60000, cm1, cm2);
-         assert nw.notifyView;
-         assertEquals(myAddress, nw.address);
-      } finally {
-         TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, origNotifier, true);
-      }
-   }
-   
    public static class CacheManagerNotifierWrapper implements CacheManagerNotifier {
 
       final CacheManagerNotifier realOne;
-      
+
       volatile boolean notifyView;
 
       volatile Address address;
