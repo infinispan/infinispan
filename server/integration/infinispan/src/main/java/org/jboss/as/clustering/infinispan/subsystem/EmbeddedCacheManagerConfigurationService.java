@@ -40,6 +40,8 @@ public class EmbeddedCacheManagerConfigurationService {
         ChannelFactory getChannelFactory();
         Channel getChannel();
         boolean isStrictPeerToPeer();
+        int getInitialClusterSize();
+        long getInitialClusterTimeout();
     }
 
     interface AuthorizationConfiguration {

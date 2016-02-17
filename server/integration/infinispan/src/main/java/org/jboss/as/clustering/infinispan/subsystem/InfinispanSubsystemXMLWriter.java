@@ -80,6 +80,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     this.writeOptional(writer, Attribute.CHANNEL, transport, ModelKeys.CHANNEL);
                     this.writeOptional(writer, Attribute.LOCK_TIMEOUT, transport, ModelKeys.LOCK_TIMEOUT);
                     this.writeOptional(writer, Attribute.STRICT_PEER_TO_PEER, transport, ModelKeys.STRICT_PEER_TO_PEER);
+                    this.writeOptional(writer, Attribute.INITIAL_CLUSTER_SIZE, transport, ModelKeys.INITIAL_CLUSTER_SIZE);
+                    this.writeOptional(writer, Attribute.INITIAL_CLUSTER_TIMEOUT, transport, ModelKeys.INITIAL_CLUSTER_TIMEOUT);
                     writer.writeEndElement();
                 }
 

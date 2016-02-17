@@ -451,6 +451,22 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                         break;
                     }
                 }
+                case INITIAL_CLUSTER_SIZE: {
+                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_2)) {
+                        TransportResource.INITIAL_CLUSTER_SIZE.parseAndSetParameter(value, transport, reader);
+                        break;
+                    } else {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    }
+                }
+                case INITIAL_CLUSTER_TIMEOUT: {
+                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_2)) {
+                        TransportResource.INITIAL_CLUSTER_TIMEOUT.parseAndSetParameter(value, transport, reader);
+                        break;
+                    } else {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    }
+                }
                 default: {
                     throw ParseUtils.unexpectedAttribute(reader, i);
                 }

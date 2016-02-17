@@ -23,6 +23,8 @@ public class TransportConfigurationBuilder implements Builder<TransportConfigura
 
     private Long lockTimeout;
     private boolean strictPeerToPeer;
+    private int initialClusterSize;
+    private long initialClusterTimeout;
 
     public TransportConfigurationBuilder(String name) {
         this.name = name;
@@ -35,6 +37,16 @@ public class TransportConfigurationBuilder implements Builder<TransportConfigura
 
     TransportConfigurationBuilder setStrictPeerToPeer(boolean strictPeerToPeer) {
         this.strictPeerToPeer = strictPeerToPeer;
+        return this;
+    }
+
+    TransportConfigurationBuilder setInitialClusterSize(int initialClusterSize) {
+        this.initialClusterSize = initialClusterSize;
+        return this;
+    }
+
+    TransportConfigurationBuilder setInitialClusterTimeout(long initialClusterTimeout) {
+        this.initialClusterTimeout = initialClusterTimeout;
         return this;
     }
 
@@ -56,6 +68,16 @@ public class TransportConfigurationBuilder implements Builder<TransportConfigura
     @Override
     public Long getLockTimeout() {
         return this.lockTimeout;
+    }
+
+    @Override
+    public int getInitialClusterSize() {
+       return this.initialClusterSize;
+    }
+
+    @Override
+    public long getInitialClusterTimeout() {
+       return this.initialClusterTimeout;
     }
 
     @Override

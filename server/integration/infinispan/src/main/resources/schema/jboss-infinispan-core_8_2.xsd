@@ -259,6 +259,20 @@
                 <xs:documentation>Defines the executor used for processing remote total order commands. Deprecated.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="initial-cluster-size" type="xs:int">
+            <xs:annotation>
+                <xs:documentation>
+                    The minimum number of nodes that must join the cluster for the cache manager to start
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="initial-cluster-timeout" type="xs:long">
+            <xs:annotation>
+                <xs:documentation>
+                    The amount of time in milliseconds to wait for a cluster with sufficient nodes to form. Defaults to 60000
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="global-security">
@@ -661,7 +675,7 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
-    
+
     <xs:complexType name="compatibility">
         <xs:attribute name="enabled" type="xs:boolean" default="false">
             <xs:annotation>
@@ -912,7 +926,7 @@
                         <xs:documentation>
                             Sets the maximum number of in-memory mappings between keys and their position in the store.
                             Normally this is unlimited, but to avoid excess memory usage, an upper bound can be configured.
-                            If this limit is exceeded, entries are removed permanently using the LRU algorithm both from 
+                            If this limit is exceeded, entries are removed permanently using the LRU algorithm both from
                             the in-memory index and the underlying file based cache store. Warning: setting this value
                             may cause data loss.
                         </xs:documentation>
@@ -993,7 +1007,7 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
-    
+
     <xs:complexType name="rest-store">
         <xs:complexContent>
             <xs:extension base="tns:store">
@@ -1001,7 +1015,7 @@
                     <xs:element name="remote-server" type="tns:remote-server" minOccurs="1" maxOccurs="unbounded"/>
                     <xs:element name="connection-pool" type="tns:rest-connection-pool" minOccurs="1" maxOccurs="unbounded"/>
                 </xs:sequence>
-                
+
                 <xs:attribute name="append-cache-name-to-path" type="xs:boolean" default="false">
                     <xs:annotation>
                         <xs:documentation>Whether to append the name of the cache to the path.</xs:documentation>
@@ -1015,7 +1029,7 @@
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
-    
+
     <xs:complexType name="rest-connection-pool">
         <xs:attribute name="buffer-size" type="xs:int" default="8192">
            <xs:annotation>
@@ -1376,7 +1390,7 @@
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
-    
+
     <xs:complexType name="backups">
         <xs:sequence>
             <xs:element name="backup" type="tns:backup" maxOccurs="unbounded">
@@ -1644,7 +1658,7 @@
         </xs:annotation>
         <xs:list itemType="xs:string"/>
     </xs:simpleType>
-    
+
     <xs:simpleType name="backup-failure-policy">
         <xs:restriction base="xs:token">
             <xs:enumeration value="IGNORE">
@@ -1664,7 +1678,7 @@
             </xs:enumeration>
         </xs:restriction>
     </xs:simpleType>
-    
+
     <xs:simpleType name="eviction-type">
         <xs:restriction base="xs:string">
             <xs:enumeration value="COUNT">
@@ -1828,8 +1842,8 @@
             <xs:enumeration value="SYBASE"/>
         </xs:restriction>
     </xs:simpleType>
-    
-    
+
+
     <xs:complexType name="thread-pool">
         <xs:attribute name="min-threads" type="xs:int" use="optional">
             <xs:annotation>
