@@ -21,7 +21,6 @@ import org.infinispan.commons.marshall.MarshallableFunctionExternalizers;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -336,10 +335,6 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new Flag.Externalizer());
       addInternalExternalizer(new ValueMatcher.Externalizer());
       addInternalExternalizer(new AvailabilityMode.Externalizer());
-
-      addInternalExternalizer(new InfinispanCollections.EmptySet.EmptySetExternalizer());
-      addInternalExternalizer(new InfinispanCollections.EmptyMap.EmptyMapExternalizer());
-      addInternalExternalizer(new InfinispanCollections.EmptyList.EmptyListExternalizer());
 
       addInternalExternalizer(new EmbeddedMetadata.Externalizer());
 

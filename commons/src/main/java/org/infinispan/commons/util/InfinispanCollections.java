@@ -1,21 +1,12 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
-
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.AbstractList;
-import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.RandomAccess;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -29,146 +20,10 @@ import static java.util.Collections.unmodifiableMap;
  * @author Manik Surtani
  * @since 4.0
  */
-public class InfinispanCollections {
+public final class InfinispanCollections {
 
-   private static final Set EMPTY_SET = new EmptySet();
-   private static final Map EMPTY_MAP = new EmptyMap();
-   private static final List EMPTY_LIST = new EmptyList();
-
-   public static final class EmptySet extends AbstractSet<Object> {
-
-      private static final Iterator<Object> EMPTY_ITERATOR =
-            new Iterator<Object>() {
-         @Override public boolean hasNext() { return false; }
-         @Override public Object next() { throw new NoSuchElementException(); }
-         @Override public void remove() { throw new UnsupportedOperationException(); }
-      };
-
-      @Override
-      public Iterator<Object> iterator() { return EMPTY_ITERATOR; }
-      @Override
-      public int size() { return 0; }
-      @Override
-      public boolean contains(Object obj) { return false; }
-
-      public static final class EmptySetExternalizer
-            extends AbstractExternalizer<Set> {
-
-         @Override public Integer getId() { return Ids.EMPTY_SET; }
-         @Override public void writeObject(ObjectOutput output, Set object) {}
-         @Override public Set readObject(ObjectInput input) { return EMPTY_SET; }
-
-         @Override
-         @SuppressWarnings("unchecked")
-         public Set<Class<? extends Set>> getTypeClasses() {
-            return Util.<Class<? extends Set>>asSet(EmptySet.class);
-         }
-      }
-   }
-
-   public static final class EmptyMap extends java.util.AbstractMap<Object,Object> {
-      @Override public int size() { return 0; }
-      @Override public boolean isEmpty() { return true; }
-      @Override public boolean containsKey(Object key) { return false; }
-      @Override public boolean containsValue(Object value) { return false; }
-      @Override public Object get(Object key) { return null; }
-      @Override public Set<Object> keySet() { return emptySet(); }
-      @Override public Collection<Object> values() { return emptySet(); }
-      @Override public Set<Entry<Object, Object>> entrySet() { return emptySet(); }
-      @Override public int hashCode() { return 0; }
-
-      @Override
-      public boolean equals(Object o) {
-         return (o instanceof Map) && ((Map) o).size() == 0;
-      }
-
-      public static final class EmptyMapExternalizer
-            extends AbstractExternalizer<Map> {
-
-         @Override public Integer getId() { return Ids.EMPTY_MAP; }
-         @Override public void writeObject(ObjectOutput output, Map object) {}
-         @Override public Map readObject(ObjectInput input) { return EMPTY_MAP; }
-
-         @Override
-         @SuppressWarnings("unchecked")
-         public Set<Class<? extends Map>> getTypeClasses() {
-            return Util.<Class<? extends Map>>asSet(EmptyMap.class);
-         }
-      }
-   }
-
-   public static final class EmptyList
-         extends AbstractList<Object> implements RandomAccess {
-
-      private static final Iterator<Object> EMPTY_ITERATOR =
-            new Iterator<Object>() {
-               @Override public boolean hasNext() { return false; }
-               @Override public Object next() { throw new NoSuchElementException(); }
-               @Override public void remove() { throw new UnsupportedOperationException(); }
-            };
-
-      @Override public int size() { return 0; }
-      @Override public boolean contains(Object obj) { return false; }
-      @Override public Iterator<Object> iterator() { return EMPTY_ITERATOR; }
-
-      @Override public Object get(int index) {
-         throw new IndexOutOfBoundsException("Index: " + index);
-      }
-
-      public static final class EmptyListExternalizer
-            extends AbstractExternalizer<List> {
-
-         @Override public Integer getId() { return Ids.EMPTY_LIST; }
-         @Override public void writeObject(ObjectOutput output, List object) {}
-         @Override public List readObject(ObjectInput input) { return EMPTY_LIST; }
-
-         @Override
-         @SuppressWarnings("unchecked")
-         public Set<Class<? extends List>> getTypeClasses() {
-            return Util.<Class<? extends List>>asSet(EmptyList.class);
-         }
-
-      }
-
-   }
-
-   private static final ReversibleOrderedSet<Object> EMPTY_ROS = new EmptyReversibleOrderedSet<Object>();
-
-   @SuppressWarnings("unchecked")
-   private static final class EmptyReversibleOrderedSet<E> extends AbstractSet<E> implements ReversibleOrderedSet<E> {
-
-      Iterator<E> it = new Iterator() {
-
-         @Override
-         public boolean hasNext() {
-            return false;
-         }
-
-         @Override
-         public E next() {
-            throw new NoSuchElementException();
-         }
-
-         @Override
-         public void remove() {
-            throw new UnsupportedOperationException();
-         }
-      };
-
-      @Override
-      public Iterator<E> iterator() {
-         return it;
-      }
-
-      @Override
-      public int size() {
-         return 0;
-      }
-
-      @Override
-      public Iterator<E> reverseIterator() {
-         return it;
-      }
+   private InfinispanCollections() {
+      // ensuring non-instantiability
    }
 
    /**
@@ -177,7 +32,7 @@ public class InfinispanCollections {
     * @param <E> Input type.
     * @param <T> Output type.
     */
-   public static interface Function<E, T> {
+   public interface Function<E, T> {
 
       /**
        * Transforms an instance of the given input into an instace of the
@@ -195,7 +50,7 @@ public class InfinispanCollections {
     * @param <V> generated value
     * @param <E> entry input
     */
-   public static interface MapMakerFunction<K, V, E> {
+   public interface MapMakerFunction<K, V, E> {
       /**
        * Transforms the given input into a key/value pair for use in a map
        * @param input instance of the input type
@@ -219,12 +74,12 @@ public class InfinispanCollections {
     */
    public static <K, V, E> Map<K, V> transformMapValue(Map<K, E> input, Function<E, V> f) {
       // This screams for a map function! Gimme functional programming pleasee...
-      if (input.isEmpty()) return InfinispanCollections.emptyMap();
+      if (input.isEmpty()) return Collections.emptyMap();
       if (input.size() == 1) {
          Map.Entry<K, E> single = input.entrySet().iterator().next();
          return singletonMap(single.getKey(), f.transform(single.getValue()));
       } else {
-         Map<K, V> copy = new HashMap<K, V>(input.size());
+         Map<K, V> copy = new HashMap<>(input.size());
          for (Map.Entry<K, E> entry : input.entrySet())
             copy.put(entry.getKey(), f.transform(entry.getValue()));
          return unmodifiableMap(copy);
@@ -243,13 +98,13 @@ public class InfinispanCollections {
     */
    public static <K, V, E> Map<K, V> transformCollectionToMap(Collection<? extends E> input, MapMakerFunction<K, V, ? super E> f) {
       // This screams for a map function! Gimme functional programming pleasee...
-      if (input.isEmpty()) return InfinispanCollections.emptyMap();
+      if (input.isEmpty()) return Collections.emptyMap();
       if (input.size() == 1) {
          E single = input.iterator().next();
          Map.Entry<K, V> entry = f.transform(single);
          return singletonMap(entry.getKey(), entry.getValue());
       } else {
-         Map<K, V> map = new HashMap<K, V>(input.size());
+         Map<K, V> map = new HashMap<>(input.size());
          for (E e : input) {
             Map.Entry<K, V> entry = f.transform(e);
             map.put(entry.getKey(), entry.getValue());
@@ -268,58 +123,43 @@ public class InfinispanCollections {
     * @return the elements in s1 that are not in s2
     */
    public static <E> Set<E> difference(Set<? extends E> s1, Set<? extends E> s2) {
-      Set<E> copy1 = new HashSet<E>(s1);
-      copy1.removeAll(new HashSet<E>(s2));
+      Set<E> copy1 = new HashSet<>(s1);
+      copy1.removeAll(new HashSet<>(s2));
       return copy1;
    }
 
    /**
-    * Returns the empty set (immutable). Contrary to {@link Collections#emptySet},
-    * the set returned returns a constant Iterator, rather than create a
-    * brand new one in each iterator call.
+    * Returns the empty set (immutable). Delegates to {@link Collections#emptySet()}.
     *
-    * This set is marshallable using Infinispan's
-    * {@link org.jboss.marshalling.Externalizer} framework.
-    *
-    * @see #EMPTY_SET
+    * @deprecated use {@link Collections#emptySet()} instead; to be removed in 9.0
     */
-   @SuppressWarnings("unchecked")
+   @Deprecated
    public static <T> Set<T> emptySet() {
-      return EMPTY_SET;
+      return Collections.emptySet();
    }
 
    /**
-    * Returns the empty map (immutable). Contrary to {@link Collections#emptyMap()},
-    * the map returned returns a constant Iterator, rather than create a
-    * brand new one in each iterator call.
+    * Returns the empty map (immutable). Delegates to {@link Collections#emptyMap()}.
     *
-    * This set is marshallable using Infinispan's
-    * {@link org.jboss.marshalling.Externalizer} framework.
-    *
-    * @see #EMPTY_MAP
+    * @deprecated use {@link Collections#emptyMap()} instead; to be removed in 9.0
     */
-   @SuppressWarnings("unchecked")
+   @Deprecated
    public static <K,V> Map<K,V> emptyMap() {
-      return EMPTY_MAP;
+      return Collections.emptyMap();
    }
 
    /**
-    * Returns the empty list (immutable). Contrary to {@link Collections#emptyList()}},
-    * the list returned returns a constant Iterator, rather than create a
-    * brand new one in each iterator call.
+    * Returns the empty list (immutable). Delegates to {@link Collections#emptyList()}.
     *
-    * This set is marshallable using Infinispan's
-    * {@link org.jboss.marshalling.Externalizer} framework.
-    *
-    * @see #EMPTY_LIST
+    * @deprecated use {@link Collections#emptyList()} instead; to be removed in 9.0
     */
-   @SuppressWarnings("unchecked")
+   @Deprecated
    public static <T> List<T> emptyList() {
-      return EMPTY_LIST;
+      return Collections.emptyList();
    }
 
-   public static <T> boolean containsAny(Collection<T> haystack, Collection<T> needle) {
-      for (T element : needle) {
+   public static <T> boolean containsAny(Collection<T> haystack, Collection<T> needles) {
+      for (T element : needles) {
          if (haystack.contains(element))
             return true;
       }
