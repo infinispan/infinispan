@@ -1,10 +1,7 @@
 package org.infinispan.scripting;
 
-import static org.infinispan.scripting.ScriptingTests.loadScript;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -91,11 +88,11 @@ public class SecureScriptingTest extends SingleCacheManagerTest {
       });
    }
 
-   public static void loadScript(ScriptingManager scriptingManager, String scriptName) throws Exception {
+   public static void secureLoadScript(ScriptingManager scriptingManager, String scriptName) throws Exception {
       Security.doAs(ADMIN, new PrivilegedExceptionAction<Object>() {
          @Override
          public Void run() throws Exception {
-            loadScript(scriptingManager, scriptName);
+            ScriptingTests.loadScript(scriptingManager, scriptName);
             return null;
          }
       });
@@ -103,13 +100,13 @@ public class SecureScriptingTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions= { SecurityException.class, CacheException.class} )
    public void testSimpleScript() throws Exception {
-      loadScript(scriptingManager, "test.js");
+      secureLoadScript(scriptingManager, "test.js");
       String result = (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a").cache(cache())).get();
       assertEquals("a", result);
    }
 
    public void testSimpleScriptWithEXECPermissions() throws Exception {
-      loadScript(scriptingManager, "test.js");
+      secureLoadScript(scriptingManager, "test.js");
       String result = Security.doAs(RUNNER, new PrivilegedExceptionAction<String>() {
          @Override
          public String run() throws Exception {
@@ -121,7 +118,7 @@ public class SecureScriptingTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions= { PrivilegedActionException.class, CacheException.class} )
    public void testSimpleScriptWithEXECPermissionsWrongRole() throws Exception {
-      loadScript(scriptingManager, "testRole.js");
+      secureLoadScript(scriptingManager, "testRole.js");
       String result = Security.doAs(RUNNER, new PrivilegedExceptionAction<String>() {
          @Override
          public String run() throws Exception {
@@ -132,7 +129,7 @@ public class SecureScriptingTest extends SingleCacheManagerTest {
    }
 
    public void testSimpleScriptWithEXECPermissionsRightRole() throws Exception {
-      loadScript(scriptingManager, "testRole.js");
+      secureLoadScript(scriptingManager, "testRole.js");
       String result = Security.doAs(PHEIDIPPIDES, new PrivilegedExceptionAction<String>() {
          @Override
          public String run() throws Exception {
