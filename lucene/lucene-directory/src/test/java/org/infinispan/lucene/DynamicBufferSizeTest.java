@@ -72,7 +72,7 @@ public class DynamicBufferSizeTest extends SingleCacheManagerTest {
       FileMetadata data4 = data1;
 
 
-      assert !data1.equals(new FileCacheKey("testIndex", "testFile"));
+      assert !data1.equals(new FileCacheKey("testIndex", "testFile", -1));
       AssertJUnit.assertNotNull(data1);
       assert data1.equals(data4);
 

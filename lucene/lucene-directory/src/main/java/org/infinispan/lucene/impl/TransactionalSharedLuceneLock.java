@@ -41,7 +41,7 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable, Obtainabl
       this.lockName = lockName;
       this.indexName = indexName;
       this.tm = tm;
-      this.keyOfLock = new FileCacheKey(indexName, lockName);
+      this.keyOfLock = new FileCacheKey(indexName, lockName, -1);
    }
 
    @Override

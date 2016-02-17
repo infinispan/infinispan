@@ -19,6 +19,7 @@ import org.infinispan.lucene.cacheloader.LuceneCacheLoader;
 @ConfigurationFor(LuceneCacheLoader.class)
 public class LuceneLoaderConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Integer> AUTO_CHUNK_SIZE = AttributeDefinition.builder("autoChunkSize", Integer.MAX_VALUE / 64).immutable().build();
+   static final AttributeDefinition<Integer> AFFINITY_SEGMENT_ID = AttributeDefinition.builder("affinitySegmentId", Integer.valueOf(-1)).immutable().build();
    static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-IndexStore").immutable().build();
 
    public LuceneLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
@@ -26,7 +27,7 @@ public class LuceneLoaderConfiguration extends AbstractStoreConfiguration {
    }
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(LuceneLoaderConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), AUTO_CHUNK_SIZE, LOCATION);
+      return new AttributeSet(LuceneLoaderConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), AUTO_CHUNK_SIZE, LOCATION, AFFINITY_SEGMENT_ID);
    }
 
    /**
@@ -46,6 +47,13 @@ public class LuceneLoaderConfiguration extends AbstractStoreConfiguration {
     */
    public String location() {
       return attributes.attribute(LOCATION).get();
+   }
+
+   /**
+    * When Index Affinity is enabled, this returns the segment id to which the current index is bound to.
+    */
+   public int affinitySegmentId() {
+      return attributes.attribute(AFFINITY_SEGMENT_ID).get();
    }
 
    @Override

@@ -16,13 +16,17 @@ import org.hibernate.search.engine.spi.SearchMappingHelper;
 import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.Service;
-import org.hibernate.search.store.DirectoryProvider;
 import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.affinity.AffinityShardIdentifierProvider;
+import org.infinispan.query.affinity.ShardIndexManager;
+
+import static org.hibernate.search.cfg.Environment.INDEX_MANAGER_IMPL_NAME;
 
 /**
- * Class that implements {@link org.hibernate.search.cfg.spi.SearchConfiguration} so that within Infinispan-Query, there is
+ * Class that implements {@link org.hibernate.search.cfg.spi.SearchConfiguration} so that within Infinispan-Query, there
+ * is
  * no need for a Hibernate Core configuration object.
  *
  * @author Navin Surtani
@@ -31,6 +35,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 public class SearchableCacheConfiguration extends SearchConfigurationBase implements SearchConfiguration {
 
    private static final String HSEARCH_PREFIX = "hibernate.search.";
+   private static final String SHARDING_STRATEGY = "sharding_strategy";
 
    private final Map<String, Class<?>> classes;
    private final Properties properties;
@@ -42,9 +47,8 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       this.providedServices = initializeProvidedServices(uninitializedCacheManager, cr);
       if (properties == null) {
          this.properties = new Properties();
-      }
-      else {
-         this.properties = rescopeProperties(properties);
+      } else {
+         this.properties = augment(properties);
       }
 
       classes = new HashMap<String, Class<?>>();
@@ -126,7 +130,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       return true;
    }
 
-   private static Properties rescopeProperties(Properties origin) {
+   private static Properties augment(Properties origin) {
       Properties target = new Properties();
       for (Entry<Object, Object> entry : origin.entrySet()) {
          Object key = entry.getKey();
@@ -134,6 +138,9 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
             key = HSEARCH_PREFIX + key.toString();
          }
          target.put(key, entry.getValue());
+         if (key.toString().endsWith(INDEX_MANAGER_IMPL_NAME) && entry.getValue().equals(ShardIndexManager.class.getName())) {
+            target.put(key.toString().replace(INDEX_MANAGER_IMPL_NAME, SHARDING_STRATEGY), AffinityShardIdentifierProvider.class.getName());
+         }
       }
       return target;
    }

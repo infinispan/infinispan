@@ -12,13 +12,15 @@ public final class IndexInputContext {
    final FileCacheKey fileKey;
    final FileMetadata fileMetadata;
    final SegmentReadLocker readLocks;
+   final int affinitySegmentId;
 
    public IndexInputContext(AdvancedCache<ChunkCacheKey, Object> chunksCache, FileCacheKey fileKey, FileMetadata fileMetadata,
-         SegmentReadLocker readLocks) {
+         SegmentReadLocker readLocks, int affinitySegmentId) {
             this.chunksCache = chunksCache;
             this.fileKey = fileKey;
             this.fileMetadata = fileMetadata;
             this.readLocks = readLocks;
+            this.affinitySegmentId = affinitySegmentId;
    }
 
 }

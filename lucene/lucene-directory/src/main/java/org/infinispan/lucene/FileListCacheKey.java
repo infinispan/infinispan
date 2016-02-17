@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 
@@ -18,10 +19,12 @@ import org.infinispan.commons.util.Util;
 public final class FileListCacheKey implements IndexScopedKey {
 
    private final String indexName;
+   private final int affinitySegmentId;
    private final int hashCode;
 
-   public FileListCacheKey(String indexName) {
+   public FileListCacheKey(String indexName, final int affinitySegmentId) {
       this.indexName = indexName;
+      this.affinitySegmentId = affinitySegmentId;
       this.hashCode = generatedHashCode();
    }
 
@@ -33,6 +36,11 @@ public final class FileListCacheKey implements IndexScopedKey {
    @Override
    public String getIndexName() {
       return indexName;
+   }
+
+   @Override
+   public int getAffinitySegmentId() {
+      return affinitySegmentId;
    }
 
    @Override
@@ -67,7 +75,7 @@ public final class FileListCacheKey implements IndexScopedKey {
     */
    @Override
    public String toString() {
-      return "*|" + indexName;
+      return "*|" + indexName + "|" + affinitySegmentId;
    }
 
    public static final class Externalizer extends AbstractExternalizer<FileListCacheKey> {
@@ -75,12 +83,14 @@ public final class FileListCacheKey implements IndexScopedKey {
       @Override
       public void writeObject(final ObjectOutput output, final FileListCacheKey key) throws IOException {
          output.writeUTF(key.indexName);
+         UnsignedNumeric.writeUnsignedInt(output, key.affinitySegmentId);
       }
 
       @Override
       public FileListCacheKey readObject(final ObjectInput input) throws IOException {
-         String indexName = input.readUTF();
-         return new FileListCacheKey(indexName);
+         final String indexName = input.readUTF();
+         final int affinitySegmentId = UnsignedNumeric.readUnsignedInt(input);
+         return new FileListCacheKey(indexName, affinitySegmentId);
       }
 
       @Override

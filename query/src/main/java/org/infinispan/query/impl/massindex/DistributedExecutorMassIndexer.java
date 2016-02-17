@@ -10,12 +10,14 @@ import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distexec.DistributedTask;
 import org.infinispan.query.MassIndexer;
+import org.infinispan.query.impl.massindex.MassIndexStrategy.CleanExecutionMode;
+import org.infinispan.query.impl.massindex.MassIndexStrategy.FlushExecutionMode;
+import org.infinispan.query.impl.massindex.MassIndexStrategy.IndexingExecutionMode;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.query.impl.massindex.MassIndexStrategyFactory.calculateStrategy;
 
 /**
  * @author gustavonalle
@@ -68,32 +72,31 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    private ExecutionResult<Void> executeInternal() {
       List<NotifyingFuture<Void>> futures = new ArrayList<>();
       Deque<Class<?>> toFlush = new LinkedList<>();
-      boolean replicated = cache.getAdvancedCache().getCacheConfiguration()
-            .clustering().cacheMode().isReplicated();
 
       for (Class<?> indexedType : searchIntegrator.getIndexedTypes()) {
          EntityIndexBinding indexBinding = searchIntegrator.getIndexBinding(indexedType);
-         IndexManager[] indexManagers = indexBinding.getIndexManagers();
-         boolean shared = isShared(indexManagers[0]);
-         boolean sharded = indexManagers.length > 1;
-         IndexWorker indexWork;
-         if (shared && !sharded) {
+         MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getAdvancedCache().getCacheConfiguration());
+         boolean workerClean = true, workerFlush = true;
+         if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
             indexUpdater.purge(indexedType);
-            indexWork = new IndexWorker(indexedType, false);
+            workerClean = false;
+         }
+         if (strategy.getFlushStrategy() == FlushExecutionMode.ONCE_AFTER) {
             toFlush.add(indexedType);
-         } else {
-            indexWork = new IndexWorker(indexedType, true);
+            workerFlush = false;
          }
+
+         IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
+         IndexWorker indexWork =
+                 new IndexWorker(indexedType, workerFlush, workerClean, indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER);
+
          DistributedTask<Void> task = executor
-               .createDistributedTaskBuilder(indexWork)
-               .timeout(0, TimeUnit.NANOSECONDS)
-               .build();
-         if (replicated && shared && !sharded) {
-            futures.add(executor.submit(task));
-         } else {
-            //needs casting as submitEverywhere declares a return type of `List<Future<T>>` but all those Future actually implement NotifyingFuture
-            futures.addAll((List) executor.submitEverywhere(task));
-         }
+                 .createDistributedTaskBuilder(indexWork)
+                 .timeout(0, TimeUnit.NANOSECONDS)
+                 .build();
+
+         futures.addAll((List) executor.submitEverywhere(task));
+
       }
       return new ExecutionResult<>(futures, toFlush);
 
