@@ -36,6 +36,7 @@ import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.xsite.XSiteAdminOperations;
@@ -435,6 +436,22 @@ public abstract class CacheCommands implements OperationStepHandler {
             SearchManager searchManager = SecurityActions.getSearchManager(cache.getAdvancedCache());
             if (searchManager != null) {
                 searchManager.getMassIndexer().start();
+            }
+            return null;
+        }
+    }
+
+    public static class CacheRebalanceCommand extends CacheCommands {
+
+        public static final CacheRebalanceCommand INSTANCE = new CacheRebalanceCommand();
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation, OperationContext operationContext) throws Exception {
+            boolean value = SharedCacheResource.BOOL_VALUE.resolveModelAttribute(operationContext, operation).asBoolean();
+            LocalTopologyManager topologyManager = SecurityActions.getComponentRegistry(cache.getAdvancedCache())
+                  .getComponent(LocalTopologyManager.class);
+            if (topologyManager != null) {
+                topologyManager.setCacheRebalancingEnabled(cache.getName(), value);
             }
             return null;
         }

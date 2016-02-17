@@ -101,6 +101,14 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(true))
                     .build();
 
+   static final SimpleAttributeDefinition CLUSTER_REBALANCE =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.CLUSTER_REBALANCE, ModelType.BOOLEAN, true)
+               .setAllowExpression(true)
+               .setFlags(AttributeAccess.Flag.RESTART_NONE)
+               .setDefaultValue(new ModelNode().set(true))
+               .setStorageRuntime()
+               .build();
+
     static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, CACHE_CONTAINER_MODULE, STATISTICS};
 
     // operations
@@ -281,7 +289,17 @@ public class CacheContainerResource extends SimpleResourceDefinition {
             .setRuntimeOnly()
             .build();
 
-    private final ResolvePathHandler resolvePathHandler;
+   static final SimpleAttributeDefinition BOOL_VALUE = SimpleAttributeDefinitionBuilder.create(ModelKeys.VALUE, ModelType.BOOLEAN, false)
+         .setDefaultValue(new ModelNode(true))
+         .build();
+
+   static final OperationDefinition CLUSTER_REBALANCE_OPERATION = new SimpleOperationDefinitionBuilder(ModelKeys.CLUSTER_REBALANCE, new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+         .setParameters(BOOL_VALUE)
+         .setRuntimeOnly()
+         .build();
+
+
+   private final ResolvePathHandler resolvePathHandler;
     private final boolean runtimeRegistration;
     public CacheContainerResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(CONTAINER_PATH,
@@ -303,6 +321,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         }
 
         if (runtimeRegistration) {
+            resourceRegistration.registerReadWriteAttribute(CLUSTER_REBALANCE, ClusterRebalanceAttributeHandler.INSTANCE, ClusterRebalanceAttributeHandler.INSTANCE);
             // register runtime cache container read-only metrics (attributes and handlers)
             CacheContainerMetricsHandler.INSTANCE.registerMetrics(resourceRegistration);
         }
@@ -331,6 +350,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerOperationHandler(TASK_LIST, CacheContainerCommands.TaskListCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(TASK_EXECUTE, CacheContainerCommands.TaskExecuteCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(TASK_STATUS, CacheContainerCommands.TaskStatusCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(CLUSTER_REBALANCE_OPERATION, CacheContainerCommands.ClusterRebalanceCommand.INSTANCE);
     }
 
     @Override
