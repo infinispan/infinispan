@@ -93,10 +93,19 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
             ModelNode transport = model.get(TransportResource.TRANSPORT_PATH.getKeyValuePair());
             String channel = ModelNodes.asString(TransportResource.CHANNEL.resolveModelAttribute(context, transport), ChannelServiceNameFactory.DEFAULT_CHANNEL);
 
-            configBuilder.setTransport()
+            TransportConfigurationBuilder transportBuilder = configBuilder.setTransport()
                     .setLockTimeout(TransportResource.LOCK_TIMEOUT.resolveModelAttribute(context, transport).asLong(), TimeUnit.MILLISECONDS)
-                    .setStrictPeerToPeer(TransportResource.STRICT_PEER_TO_PEER.resolveModelAttribute(context, transport).asBoolean())
-                    .build(target).install();
+                    .setStrictPeerToPeer(TransportResource.STRICT_PEER_TO_PEER.resolveModelAttribute(context, transport).asBoolean());
+
+            if (transport.hasDefined(ModelKeys.INITIAL_CLUSTER_SIZE)) {
+                transportBuilder.setInitialClusterSize(TransportResource.INITIAL_CLUSTER_SIZE.resolveModelAttribute(context, transport).asInt());
+            }
+
+            if (transport.hasDefined(ModelKeys.INITIAL_CLUSTER_TIMEOUT)) {
+                transportBuilder.setInitialClusterTimeout(TransportResource.INITIAL_CLUSTER_TIMEOUT.resolveModelAttribute(context, transport).asLong());
+            }
+
+            transportBuilder.build(target).install();
 
             if (!name.equals(channel)) {
                 new BinderServiceBuilder<>(JGroupsBindingFactory.createChannelBinding(name), ChannelServiceName.CHANNEL.getServiceName(name), Channel.class).build(target).install();

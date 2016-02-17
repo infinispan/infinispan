@@ -3,7 +3,7 @@
         <local-cache name="local"/>
     </cache-container>
     <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" jndi-name="java:global/infinispan/maximal" module="org.infinispan" statistics="false">
-        <transport channel="maximal-channel" lock-timeout="120000" strict-peer-to-peer="false"/>
+        <transport channel="maximal-channel" lock-timeout="120000" strict-peer-to-peer="false" initial-cluster-size="4" initial-cluster-timeout="20000"/>
         <global-state>
             <persistent-location path="path" relative-to="jboss.server.temp.dir"/>
             <temporary-location path="path" relative-to="jboss.server.temp.dir"/>

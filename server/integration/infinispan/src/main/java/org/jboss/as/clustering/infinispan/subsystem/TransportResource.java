@@ -54,6 +54,21 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
+    static final SimpleAttributeDefinition INITIAL_CLUSTER_SIZE =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.INITIAL_CLUSTER_SIZE, ModelType.INT, true)
+                    .setXmlName(Attribute.INITIAL_CLUSTER_SIZE.getLocalName())
+                    .setAllowExpression(true)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                    .build();
+
+    static final SimpleAttributeDefinition INITIAL_CLUSTER_TIMEOUT =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.INITIAL_CLUSTER_TIMEOUT, ModelType.LONG, true)
+                    .setXmlName(Attribute.INITIAL_CLUSTER_TIMEOUT.getLocalName())
+                    .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
+                    .setAllowExpression(true)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                    .build();
+
     static final SimpleAttributeDefinition LOCK_TIMEOUT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.LOCK_TIMEOUT, ModelType.LONG, true)
                     .setXmlName(Attribute.LOCK_TIMEOUT.getLocalName())
@@ -71,7 +86,7 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
-    static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {CHANNEL, LOCK_TIMEOUT, STRICT_PEER_TO_PEER};
+    static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {CHANNEL, INITIAL_CLUSTER_SIZE, INITIAL_CLUSTER_TIMEOUT, LOCK_TIMEOUT, STRICT_PEER_TO_PEER};
 
     public TransportResource() {
         super(TRANSPORT_PATH,
