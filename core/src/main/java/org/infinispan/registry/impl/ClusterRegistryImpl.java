@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @deprecated functionality replaced by {@link InternalCacheRegistry}
  */
 @ThreadSafe
+@Deprecated
 public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
    public static final String GLOBAL_REGISTRY_CACHE_NAME = "__cluster_registry_cache__";
