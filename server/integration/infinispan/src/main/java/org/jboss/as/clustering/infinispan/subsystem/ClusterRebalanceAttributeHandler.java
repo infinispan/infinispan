@@ -22,12 +22,10 @@ import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
 
-import org.infinispan.Cache;
-import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.infinispan.SecurityActions;
-import org.infinispan.server.infinispan.spi.service.CacheServiceName;
-import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.topology.LocalTopologyManagerImpl;
+import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
+import org.infinispan.topology.ClusterTopologyManager;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -41,30 +39,28 @@ import org.jboss.msc.service.ServiceController;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class RebalancingAttributeHandler extends AbstractRuntimeOnlyHandler {
+public class ClusterRebalanceAttributeHandler extends AbstractRuntimeOnlyHandler {
 
-    public static final RebalancingAttributeHandler INSTANCE = new RebalancingAttributeHandler();
+    public static final ClusterRebalanceAttributeHandler INSTANCE = new ClusterRebalanceAttributeHandler();
 
     @Override
     public void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
-        final String cacheContainerName = address.getElement(address.size() - 2).getValue();
-        final String cacheName = address.getElement(address.size() - 1).getValue();
+        final String cacheContainerName = address.getElement(address.size() - 1).getValue();
         final ServiceController<?> controller = context.getServiceRegistry(false).getService(
-                CacheServiceName.CACHE.getServiceName(cacheContainerName, cacheName));
+              CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
         if (controller != null) {
-            Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
-            if (cache != null) {
-                ComponentRegistry registry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
-                LocalTopologyManagerImpl localTopologyManager = (LocalTopologyManagerImpl) registry
-                      .getGlobalComponentRegistry().getComponent(LocalTopologyManager.class);
-                if (localTopologyManager != null) {
+            final EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
+            if (cacheContainerName != null) {
+                ClusterTopologyManager topologyManager = SecurityActions.getGlobalComponentRegistry(cacheManager)
+                      .getComponent(ClusterTopologyManager.class);
+                if (topologyManager != null) {
                     try {
                         if (operation.hasDefined(VALUE)) {
                             ModelNode newValue = operation.get(VALUE);
-                            localTopologyManager.setRebalancingEnabled(newValue.asBoolean());
+                            topologyManager.setRebalancingEnabled(newValue.asBoolean());
                         } else {
-                            context.getResult().set(new ModelNode().set(localTopologyManager.isRebalancingEnabled()));
+                            context.getResult().set(new ModelNode().set(topologyManager.isRebalancingEnabled()));
                         }
                     } catch (Exception e) {
                         throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));

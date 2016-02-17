@@ -65,7 +65,7 @@ public class CacheRebalanceAttributeHandler extends AbstractRuntimeOnlyHandler {
                             ModelNode newValue = operation.get(VALUE);
                             localTopologyManager.setCacheRebalancingEnabled(cacheName, newValue.asBoolean());
                         } else {
-                            context.getResult().set(new ModelNode().set(localTopologyManager.isRebalancingEnabled()));
+                            context.getResult().set(new ModelNode().set(localTopologyManager.isCacheRebalancingEnabled(cacheName)));
                         }
                     } catch (Exception e) {
                         throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));

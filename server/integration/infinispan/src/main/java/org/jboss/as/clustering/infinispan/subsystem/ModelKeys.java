@@ -67,6 +67,7 @@ public class ModelKeys {
     static final String CLUSTER = "cluster";
     static final String CLUSTER_LOADER = "cluster-loader";
     static final String CLUSTER_LOADER_NAME = "CLUSTER_LOADER";
+    static final String CLUSTER_REBALANCE = "cluster-rebalance";
     static final String CLUSTER_ROLE_MAPPER = "cluster-role-mapper";
     static final String COMMON_NAME_ROLE_MAPPER = "common-name-role-mapper";
     static final String COMPATIBILITY = "compatibility";
@@ -180,7 +181,6 @@ public class ModelKeys {
     static final String RACK = "rack";
     static final String RAW_VALUES = "raw-values";
     static final String READ_ONLY = "read-only";
-    static final String REBALANCING = "rebalancing";
     static final String RELATIVE_TO = "relative-to";
     static final String REMOTE_CACHE = "remote-cache";
     static final String REMOTE_COMMAND_EXECUTOR = "remote-command-executor";
@@ -236,6 +236,7 @@ public class ModelKeys {
     static final String TRANSPORT_NAME = "TRANSPORT";
     static final String TYPE = "type";
     static final String TX_INTERNAL_ID = "internal-id";
+    static final String VALUE = "value";
     static final String WAIT = "wait";
     static final String WAIT_TIME = "wait-time";
     static final String WRITE_BEHIND = "write-behind";

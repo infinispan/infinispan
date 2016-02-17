@@ -23,13 +23,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.SimpleAttributeDefinition;
-import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.registry.AttributeAccess;
-import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
-import org.jboss.dmr.ModelNode;
-import org.jboss.dmr.ModelType;
 
 /**
  * Resource description for the addressable resource /subsystem=infinispan/cache-container=X/distributed-cache=*
@@ -41,29 +35,10 @@ public class DistributedCacheResource extends SharedCacheResource {
 
     public static final PathElement PATH = PathElement.pathElement(ModelKeys.DISTRIBUTED_CACHE);
 
-    // attributes
-    static final SimpleAttributeDefinition REBALANCING =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.REBALANCING, ModelType.BOOLEAN, true)
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_NONE)
-                    .setDefaultValue(new ModelNode().set(true))
-                    .setStorageRuntime()
-                    .build();
-
     public DistributedCacheResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.DISTRIBUTED_CACHE),
                 DistributedCacheAdd.INSTANCE,
                 new CacheRemoveHandler(), resolvePathHandler, runtimeRegistration);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        if (runtimeRegistration) {
-            // register writable attributes available only at runtime
-            resourceRegistration.registerReadWriteAttribute(REBALANCING, RebalancingAttributeHandler.INSTANCE, RebalancingAttributeHandler.INSTANCE);
-        }
     }
 }

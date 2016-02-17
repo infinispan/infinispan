@@ -23,15 +23,18 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
+import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 /**
@@ -58,11 +61,26 @@ public class SharedCacheResource extends ClusteredCacheResource {
                    .setFlags(AttributeAccess.Flag.STORAGE_RUNTIME)
                    .build();
 
+   static final SimpleAttributeDefinition BOOL_VALUE = SimpleAttributeDefinitionBuilder.create(ModelKeys.VALUE, ModelType.BOOLEAN, false)
+         .setDefaultValue(new ModelNode(true))
+         .build();
+
+   static final OperationDefinition CACHE_REBALANCE_OPERATION = new SimpleOperationDefinitionBuilder(ModelKeys.CACHE_REBALANCE, new InfinispanResourceDescriptionResolver("clustered-cache"))
+         .setParameters(BOOL_VALUE)
+         .setRuntimeOnly()
+         .build();
+
     public SharedCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, addHandler, removeHandler, resolvePathHandler, runtimeRegistration);
     }
 
-    @Override
+   @Override
+   public void registerOperations(ManagementResourceRegistration resourceRegistration) {
+      super.registerOperations(resourceRegistration);
+      resourceRegistration.registerOperationHandler(CACHE_REBALANCE_OPERATION, CacheCommands.CacheRebalanceCommand.INSTANCE);
+   }
+
+   @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
         if (runtimeRegistration) {

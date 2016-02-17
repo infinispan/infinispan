@@ -2,11 +2,13 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecution;
 import org.infinispan.tasks.TaskManager;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -305,4 +307,24 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
             return null;
         }
     }
+
+   public static class ClusterRebalanceCommand extends CacheContainerCommands {
+
+      public static final ClusterRebalanceCommand INSTANCE = new ClusterRebalanceCommand();
+
+      private ClusterRebalanceCommand() {
+         super(0);
+      }
+
+      @Override
+      protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
+         boolean value = CacheContainerResource.BOOL_VALUE.resolveModelAttribute(context, operation).asBoolean();
+         LocalTopologyManager topologyManager = SecurityActions.getGlobalComponentRegistry(cacheManager)
+               .getComponent(LocalTopologyManager.class);
+         if (topologyManager != null) {
+            topologyManager.setRebalancingEnabled(value);
+         }
+         return null;
+      }
+   }
 }
