@@ -1,10 +1,10 @@
 package org.infinispan.lucene;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.lucene.impl.FileListCacheValue;
 import org.testng.AssertJUnit;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static org.testng.AssertJUnit.assertNotNull;
@@ -36,7 +36,7 @@ public class DirectoryIntegrityCheck {
     *           The name of the unique index stored in the cache
     */
    public static void verifyDirectoryStructure(Cache cache, String indexName) {
-      verifyDirectoryStructure(cache, indexName, false, InfinispanCollections.emptySet(), -1);
+      verifyDirectoryStructure(cache, indexName, false, Collections.emptySet(), -1);
    }
 
    public static void verifyDirectoryStructure(Cache cache, String indexName, Set<String> ignoreFiles) {
@@ -44,7 +44,7 @@ public class DirectoryIntegrityCheck {
    }
 
    public static void verifyDirectoryStructure(Cache cache, String indexName, boolean wasAStressTest, int affinitySegmentId) {
-      verifyDirectoryStructure(cache,indexName,wasAStressTest, InfinispanCollections.emptySet(), affinitySegmentId);
+      verifyDirectoryStructure(cache,indexName,wasAStressTest, Collections.emptySet(), affinitySegmentId);
    }
 
    public static void verifyDirectoryStructure(Cache cache, String indexName, boolean wasAStressTest, Set<String> ignoreFiles, int affinitySegmentId) {

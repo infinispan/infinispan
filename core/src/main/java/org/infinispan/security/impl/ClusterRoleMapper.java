@@ -1,7 +1,6 @@
 package org.infinispan.security.impl;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -77,7 +76,7 @@ public class ClusterRoleMapper implements PrincipalRoleMapper {
       if (roleSet != null) {
          return Collections.unmodifiableSet(roleSet);
       } else {
-         return InfinispanCollections.emptySet();
+         return Collections.emptySet();
       }
    }
 

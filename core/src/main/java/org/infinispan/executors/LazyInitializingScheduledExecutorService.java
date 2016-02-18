@@ -1,9 +1,9 @@
 package org.infinispan.executors;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -51,7 +51,7 @@ public class LazyInitializingScheduledExecutorService implements ScheduledExecut
    @Override
    public List<Runnable> shutdownNow() {
       if (delegate == null)
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
       else
          return delegate.shutdownNow();
    }

@@ -2,11 +2,11 @@ package org.infinispan.server.hotrod.iteration
 
 import java.util
 import java.util.stream.Collectors
-import java.util.{BitSet => JavaBitSet, UUID}
+import java.util.{BitSet => JavaBitSet, Collections, UUID}
 
 import org.infinispan.CacheStream
 import org.infinispan.commons.marshall.Marshaller
-import org.infinispan.commons.util.{CollectionFactory, InfinispanCollections}
+import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.filter.CacheFilters.filterAndConvert
@@ -123,7 +123,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
          val batch = state.batch
          val entries = for (i <- 0 to batch - 1; if iterator.hasNext) yield iterator.next
          new IterableIterationResult(listener.finished, OperationStatus.Success, entries.toList, state.compatInfo, state.metadata)
-      }.getOrElse(new IterableIterationResult(InfinispanCollections.emptySet(), OperationStatus.InvalidIteration, List.empty, null, false))
+      }.getOrElse(new IterableIterationResult(Collections.emptySet(), OperationStatus.InvalidIteration, List.empty, null, false))
    }
 
    override def close(cacheName: String, iterationId: IterationId): Boolean = {

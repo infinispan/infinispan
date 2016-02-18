@@ -4,7 +4,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.batch.AutoBatchSupport;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -19,6 +18,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -135,19 +135,19 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    @Override
    public Set<K> keySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? InfinispanCollections.<K>emptySet() : map.keySet();
+      return map == null ? Collections.<K>emptySet() : map.keySet();
    }
 
    @Override
    public Collection<V> values() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? InfinispanCollections.<V>emptySet() : map.values();
+      return map == null ? Collections.<V>emptySet() : map.values();
    }
 
    @Override
    public Set<Entry<K, V>> entrySet() {
       AtomicHashMap<K, V> map = getDeltaMapForRead();
-      return map == null ? InfinispanCollections.<Entry<K, V>>emptySet() :
+      return map == null ? Collections.<Entry<K, V>>emptySet() :
             map.entrySet();
    }
 

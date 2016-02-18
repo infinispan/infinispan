@@ -2,7 +2,6 @@ package org.infinispan.security;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.KeyFilter;
@@ -654,12 +653,12 @@ public class SecureCacheTestDriver {
 
    @TestCachePermission(AuthorizationPermission.BULK_READ)
    public void testGetAll_Set(SecureCache<String, String> cache) {
-      cache.getAll(InfinispanCollections.emptySet());
+      cache.getAll(Collections.emptySet());
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_READ)
    public void testGetAllCacheEntries_Set(SecureCache<String, String> cache) {
-      cache.getAllCacheEntries(InfinispanCollections.emptySet());
+      cache.getAllCacheEntries(Collections.emptySet());
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_READ)

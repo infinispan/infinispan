@@ -1,7 +1,6 @@
 package org.infinispan.transaction.xa.recovery;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -38,7 +37,7 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
    }
 
    public InDoubtTxInfoImpl(Xid xid, long internalId) {
-      this(xid, internalId, InfinispanCollections.<Integer>emptySet());
+      this(xid, internalId, Collections.<Integer>emptySet());
    }
 
    @Override

@@ -17,7 +17,6 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.PeekableMap;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.commons.util.concurrent.jdk8backported.StrippedConcurrentLinkedDeque.DequeNode;
@@ -481,7 +480,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public Set<Node<K, V>> findIfEntriesNeedEvicting() {
-         return InfinispanCollections.emptySet();
+         return Collections.emptySet();
       }
 
       @Override
@@ -705,7 +704,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             // can return a number greater than 1 most likely to occur very often
             incrementSizeEviction(currentSize, -decCreate, -extra);
          } else {
-            evictedEntries = InfinispanCollections.emptyList();
+            evictedEntries = Collections.emptyList();
          }
 
          return evictedEntries;
@@ -1411,7 +1410,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          // If this is non null it is also non empty
          Collection<LIRSNode<K, V>> tlEvicted = nodesToEvictTL.get();
          if (tlEvicted == null) {
-            tlEvicted = InfinispanCollections.emptyList();
+            tlEvicted = Collections.emptyList();
          } else {
             nodesToEvictTL.remove();
          }
@@ -1549,7 +1548,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
             return removedNodes;
          }
-         return InfinispanCollections.emptySet();
+         return Collections.emptySet();
       }
 
       @Override

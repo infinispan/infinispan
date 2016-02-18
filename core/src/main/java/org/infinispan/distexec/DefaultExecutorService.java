@@ -19,7 +19,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.commons.util.concurrent.NoOpFuture;
@@ -243,7 +242,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          else
             localExecutorService.shutdown();
       }
-      return InfinispanCollections.emptyList();
+      return Collections.emptyList();
    }
 
    @Override

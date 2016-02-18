@@ -1,13 +1,13 @@
 package org.infinispan.statetransfer;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -62,7 +62,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             } catch (Exception e) {
                log.error("Error in callOnStateResponseCommand", e);
             }
-            return CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+            return CompletableFuture.completedFuture(Collections.emptyMap());
          }
          return super.invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
       }

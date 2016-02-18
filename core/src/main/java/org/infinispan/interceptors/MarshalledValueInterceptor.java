@@ -4,19 +4,16 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import static org.infinispan.marshall.core.MarshalledValue.isTypeExcluded;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
-import org.infinispan.CacheStream;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -32,7 +29,6 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -302,7 +298,7 @@ public class MarshalledValueInterceptor<K, V> extends CommandInterceptor {
    protected Map<Object, Object> wrapMap(Map<Object, Object> m, Set<MarshalledValue> marshalledValues, InvocationContext ctx) {
       if (m == null) {
          if (trace) log.trace("Map is nul; returning an empty map.");
-         return InfinispanCollections.emptyMap();
+         return Collections.emptyMap();
       }
       if (trace) log.tracef("Wrapping map contents of argument %s", m);
       Map<Object, Object> copy = new HashMap(m.size());

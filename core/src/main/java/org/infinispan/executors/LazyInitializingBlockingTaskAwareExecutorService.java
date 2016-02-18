@@ -1,6 +1,5 @@
 package org.infinispan.executors;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.BlockingRunnable;
@@ -8,6 +7,7 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -61,7 +61,7 @@ public final class LazyInitializingBlockingTaskAwareExecutorService implements B
    @Override
    public List<Runnable> shutdownNow() {
       if (delegate == null)
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
       else
          return delegate.shutdownNow();
    }

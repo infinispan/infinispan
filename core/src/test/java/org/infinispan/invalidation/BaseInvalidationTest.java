@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -20,7 +21,6 @@ import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -203,7 +203,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
          when(mockTransport.invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
                eq(isSync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS), anyLong(), any(
                ResponseFilter.class), any(DeliverOrder.class), anyBoolean()))
-               .thenReturn(CompletableFuture.completedFuture(InfinispanCollections.emptyMap()));
+               .thenReturn(CompletableFuture.completedFuture(Collections.emptyMap()));
 
          cache1.put("k", "v");
 

@@ -4,7 +4,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -14,6 +13,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -45,7 +45,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
                             Equivalence<Object> keyEquivalence, long txCreationTime) {
       super(tx, topologyId, keyEquivalence, txCreationTime);
       this.modifications = modifications == null || modifications.length == 0
-            ? InfinispanCollections.<WriteCommand>emptyList()
+            ? Collections.<WriteCommand>emptyList()
             : Arrays.asList(modifications);
       lookedUpEntries = CollectionFactory.makeMap(
             this.modifications.size(), keyEquivalence, AnyEquivalence.<CacheEntry>getInstance());

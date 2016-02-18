@@ -3,7 +3,6 @@ package org.infinispan.distribution.group;
 import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
@@ -14,6 +13,7 @@ import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -85,7 +85,7 @@ public class GroupManagerImpl implements GroupManager {
         if (groupers != null)
             this.groupers = groupers;
         else
-            this.groupers = InfinispanCollections.emptyList();
+            this.groupers = Collections.emptyList();
     }
 
     @Inject

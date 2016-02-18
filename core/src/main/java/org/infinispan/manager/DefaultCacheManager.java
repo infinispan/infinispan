@@ -10,7 +10,6 @@ import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -58,6 +57,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -764,7 +764,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.filterPrivateCaches(names);
       if (names.isEmpty())
-         return InfinispanCollections.emptySet();
+         return Collections.emptySet();
       else
          return Immutables.immutableSetWrap(names);
    }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -15,7 +16,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
@@ -50,7 +50,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    public DistributedExecuteCommand(String cacheName, Collection<Object> inputKeys, Callable<V> callable) {
       super(cacheName);
       if (inputKeys == null || inputKeys.isEmpty())
-         this.keys = InfinispanCollections.emptySet();
+         this.keys = Collections.emptySet();
       else
          this.keys = new HashSet<Object>(inputKeys);
       this.callable = callable;

@@ -21,8 +21,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -233,7 +231,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    private void invalidateAcrossCluster(boolean synchronous, Object[] keys, InvocationContext ctx) throws Throwable {
       // increment invalidations counter if statistics maintained
       incrementInvalidations();
-      final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand(InfinispanCollections.<Flag>emptySet(), keys);
+      final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand(Collections.<Flag>emptySet(), keys);
       if (log.isDebugEnabled())
          log.debug("Cache [" + rpcManager.getAddress() + "] replicating " + invalidateCommand);
       

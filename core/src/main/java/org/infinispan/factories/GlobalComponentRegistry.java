@@ -6,7 +6,6 @@ import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -126,7 +125,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             registerNonVolatileComponent(factories, KnownComponentNames.MODULE_COMMAND_FACTORIES);
          else
             registerNonVolatileComponent(
-                  InfinispanCollections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
+                  Collections.<Object, Object>emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
          this.createdCaches = createdCaches;
 
          getOrCreateComponent(EventLogManager.class);

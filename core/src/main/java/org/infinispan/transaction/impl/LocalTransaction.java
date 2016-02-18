@@ -6,7 +6,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.remoting.transport.Address;
@@ -74,7 +73,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public Collection<Address> getRemoteLocksAcquired(){
-	   if (remoteLockedNodes == null) return InfinispanCollections.emptySet();
+	   if (remoteLockedNodes == null) return Collections.emptySet();
 	   return remoteLockedNodes;
    }
 
@@ -88,7 +87,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return lookedUpEntries == null ? InfinispanCollections.<Object, CacheEntry>emptyMap() : lookedUpEntries;
+      return lookedUpEntries == null ? Collections.<Object, CacheEntry>emptyMap() : lookedUpEntries;
    }
 
    public boolean isImplicitTransaction() {

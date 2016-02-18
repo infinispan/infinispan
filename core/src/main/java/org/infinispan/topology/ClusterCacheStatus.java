@@ -2,7 +2,6 @@ package org.infinispan.topology;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Immutables;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -67,9 +66,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       this.currentTopology = null;
       this.stableTopology = null;
-      this.expectedMembers = InfinispanCollections.emptyList();
-      this.capacityFactors = InfinispanCollections.emptyMap();
-      this.joiners = InfinispanCollections.emptyList();
+      this.expectedMembers = Collections.emptyList();
+      this.capacityFactors = Collections.emptyMap();
+      this.joiners = Collections.emptyList();
       if (trace) log.tracef("Cache %s initialized", cacheName);
    }
 
@@ -528,7 +527,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    private void recoverMembers(Map<Address, CacheJoinInfo> joinInfos,
          Collection<CacheTopology> currentTopologies, Collection<CacheTopology> stableTopologies) {
-      expectedMembers = InfinispanCollections.emptyList();
+      expectedMembers = Collections.emptyList();
 
       // Try to preserve the member order at least for the first partition
       for (CacheTopology topology : stableTopologies) {

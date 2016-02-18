@@ -3,7 +3,6 @@ package org.infinispan.persistence.cluster;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.configuration.ConfiguredBy;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
@@ -25,6 +24,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +58,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       if (!isCacheReady()) return null;
 
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
-            key, cache.getName(), InfinispanCollections.<Flag>emptySet(), false, null,
+            key, cache.getName(), Collections.<Flag>emptySet(), false, null,
             cache.getCacheConfiguration().dataContainer().keyEquivalence());
 
       Collection<Response> responses = doRemoteCall(clusteredGetCommand);

@@ -3,7 +3,6 @@ package org.infinispan.notifications.cachelistener.event.impl;
 import net.jcip.annotations.NotThreadSafe;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.MarshalledValue;
@@ -14,6 +13,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -263,12 +263,12 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    @Override
    public Collection<Address> getMembersAtStart() {
-      return consistentHashAtStart != null ? consistentHashAtStart.getMembers() : InfinispanCollections.<Address>emptySet();
+      return consistentHashAtStart != null ? consistentHashAtStart.getMembers() : Collections.<Address>emptySet();
    }
 
    @Override
    public Collection<Address> getMembersAtEnd() {
-      return consistentHashAtEnd != null ? consistentHashAtEnd.getMembers() : InfinispanCollections.<Address>emptySet();
+      return consistentHashAtEnd != null ? consistentHashAtEnd.getMembers() : Collections.<Address>emptySet();
    }
 
    @Override

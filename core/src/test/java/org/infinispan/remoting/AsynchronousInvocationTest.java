@@ -8,7 +8,6 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -35,6 +34,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.CountDownLatch;
@@ -232,7 +232,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
       @Override
       public List<Runnable> shutdownNow() {
-         return InfinispanCollections.emptyList(); //no-op
+         return Collections.emptyList(); //no-op
       }
 
       @Override

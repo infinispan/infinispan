@@ -1,7 +1,6 @@
 package org.infinispan.topology;
 
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -102,7 +101,7 @@ public class CacheTopology {
       else if (currentCH != null)
          return currentCH.getMembers();
       else
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
    }
 
    /**

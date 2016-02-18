@@ -1,7 +1,6 @@
 package org.infinispan.context;
 
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 
@@ -62,7 +61,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public Set<Object> getLockedKeys() {
-      return isLocked ? Collections.singleton(key) : InfinispanCollections.emptySet();
+      return isLocked ? Collections.singleton(key) : Collections.emptySet();
    }
 
    @Override
@@ -99,7 +98,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return cacheEntry == null ? InfinispanCollections.<Object, CacheEntry>emptyMap() : Collections.singletonMap(key, cacheEntry);
+      return cacheEntry == null ? Collections.<Object, CacheEntry>emptyMap() : Collections.singletonMap(key, cacheEntry);
    }
 
    @Override

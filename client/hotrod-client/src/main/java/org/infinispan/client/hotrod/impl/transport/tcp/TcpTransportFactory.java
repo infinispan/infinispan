@@ -40,7 +40,6 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 
@@ -354,7 +353,7 @@ public class TcpTransportFactory implements TransportFactory {
 
       if (failedServers.isEmpty() && addedServers.isEmpty()) {
          log.debug("Same list of servers, not changing the pool");
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
       }
 
       //1. first add new servers. For servers that went down, the returned transport will fail for now
@@ -609,7 +608,7 @@ public class TcpTransportFactory implements TransportFactory {
          if (cluster.clusterName.equals(clusterName))
             return cluster.clusterAddresses;
       }
-      return InfinispanCollections.emptyList();
+      return Collections.emptyList();
    }
 
    /**

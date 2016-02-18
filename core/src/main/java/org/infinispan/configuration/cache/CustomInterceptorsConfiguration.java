@@ -1,8 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import java.util.Collections;
 import java.util.List;
-
-import org.infinispan.commons.util.InfinispanCollections;
 
 /**
  * Configures custom interceptors to be added to the cache.
@@ -18,7 +17,7 @@ public class CustomInterceptorsConfiguration {
    }
 
    public CustomInterceptorsConfiguration() {
-      this.interceptors = InfinispanCollections.emptyList();
+      this.interceptors = Collections.emptyList();
    }
 
    /**

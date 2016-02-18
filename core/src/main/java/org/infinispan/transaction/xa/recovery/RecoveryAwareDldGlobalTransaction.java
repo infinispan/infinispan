@@ -1,6 +1,5 @@
 package org.infinispan.transaction.xa.recovery;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -12,6 +11,7 @@ import javax.transaction.xa.Xid;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -82,7 +82,7 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
          globalTransaction.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();
          if (locksAtOriginObj == null) {
-            globalTransaction.setLocksHeldAtOrigin(InfinispanCollections.emptySet());
+            globalTransaction.setLocksHeldAtOrigin(Collections.emptySet());
          } else {
             globalTransaction.setLocksHeldAtOrigin((Set<Object>) locksAtOriginObj);
          }

@@ -4,7 +4,6 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -60,7 +59,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          //building defensive copies is here in order to support replaceKey operation
          this.keys = new ArrayList<>(keys);
       } else {
-         this.keys = InfinispanCollections.emptyList();
+         this.keys = Collections.emptyList();
       }
       this.flags = flags;
       this.globalTx = gtx;

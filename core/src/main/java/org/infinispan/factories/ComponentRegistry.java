@@ -14,7 +14,6 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -27,6 +26,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
@@ -89,7 +89,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
             for (ModuleCommandInitializer mci: initializers.values()) registerNonVolatileComponent(mci, mci.getClass());
          } else
             registerNonVolatileComponent(
-                  InfinispanCollections.emptyMap(), MODULE_COMMAND_INITIALIZERS);
+                  Collections.emptyMap(), MODULE_COMMAND_INITIALIZERS);
       }
       catch (Exception e) {
          throw new CacheException("Unable to construct a ComponentRegistry!", e);

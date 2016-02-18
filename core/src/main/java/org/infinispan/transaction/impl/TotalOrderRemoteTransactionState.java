@@ -1,6 +1,5 @@
 package org.infinispan.transaction.impl;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -8,6 +7,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -213,7 +213,7 @@ public class TotalOrderRemoteTransactionState {
    }
 
    public synchronized Collection<TotalOrderLatch> getConflictingTransactionBlocks() {
-      return dependencies == null ? InfinispanCollections.<TotalOrderLatch>emptyList() : dependencies;
+      return dependencies == null ? Collections.<TotalOrderLatch>emptyList() : dependencies;
    }
 
    private static enum State {

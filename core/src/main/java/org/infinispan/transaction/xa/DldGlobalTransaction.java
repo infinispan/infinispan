@@ -1,6 +1,5 @@
 package org.infinispan.transaction.xa;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -11,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -27,11 +27,11 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    protected volatile long coinToss;
 
-   protected transient volatile Collection<Object> lockIntention = InfinispanCollections.emptySet();
+   protected transient volatile Collection<Object> lockIntention = Collections.emptySet();
 
-   protected volatile Collection<Object> remoteLockIntention = InfinispanCollections.emptySet();
+   protected volatile Collection<Object> remoteLockIntention = Collections.emptySet();
 
-   protected volatile Set<Object> locksAtOrigin = InfinispanCollections.emptySet();
+   protected volatile Set<Object> locksAtOrigin = Collections.emptySet();
 
    public DldGlobalTransaction() {
    }
@@ -159,7 +159,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
          ddGt.setCoinToss(input.readLong());
          Object locksAtOriginObj = input.readObject();
          if (locksAtOriginObj == null) {
-            ddGt.setLocksHeldAtOrigin(InfinispanCollections.emptySet());
+            ddGt.setLocksHeldAtOrigin(Collections.emptySet());
          } else {
             ddGt.setLocksHeldAtOrigin((Set<Object>) locksAtOriginObj);
          }

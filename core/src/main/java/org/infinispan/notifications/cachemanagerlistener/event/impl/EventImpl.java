@@ -1,14 +1,11 @@
 package org.infinispan.notifications.cachemanagerlistener.event.impl;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.notifications.cachemanagerlistener.event.Event.Type;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -74,7 +71,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    @Override
    public List<Address> getNewMembers() {
       if(newMembers == null){
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
       }
       return newMembers;
    }
@@ -90,7 +87,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    @Override
    public List<Address> getOldMembers() {
       if(oldMembers == null){
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
       }
       return this.oldMembers;
    }

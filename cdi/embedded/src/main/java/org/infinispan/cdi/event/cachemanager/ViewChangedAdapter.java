@@ -1,6 +1,5 @@
 package org.infinispan.cdi.event.cachemanager;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -8,6 +7,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 
 import javax.enterprise.event.Event;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,12 +30,12 @@ public class ViewChangedAdapter extends AbstractAdapter<ViewChangedEvent> {
 
       @Override
       public List<Address> getNewMembers() {
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
       }
 
       @Override
       public List<Address> getOldMembers() {
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
       }
 
       @Override

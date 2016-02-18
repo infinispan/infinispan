@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
@@ -114,7 +113,7 @@ public class ScriptMetadata implements Metadata {
       String extension;
       Optional<String> language = Optional.empty();
       ExecutionMode mode;
-      Set<String> parameters = InfinispanCollections.emptySet();
+      Set<String> parameters = Collections.emptySet();
       Optional<String> role = Optional.empty();
       Optional<String> combiner = Optional.empty();
       Optional<String> collator = Optional.empty();

@@ -2,7 +2,6 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -13,6 +12,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -103,7 +103,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
 
    @Override
    public Set<Object> getAffectedKeys() {
-      return InfinispanCollections.emptySet();
+      return Collections.emptySet();
    }
 
    @Override

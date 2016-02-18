@@ -6,7 +6,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -339,7 +338,7 @@ public class StateConsumerImpl implements StateConsumer {
                Set<Integer> removedSegments;
                if (newSegments.size() == newWriteCh.getNumSegments()) {
                   // Optimization for replicated caches
-                  removedSegments = InfinispanCollections.emptySet();
+                  removedSegments = Collections.emptySet();
                } else {
                   removedSegments = new HashSet<Integer>(previousSegments);
                   removedSegments.removeAll(newSegments);
@@ -496,7 +495,7 @@ public class StateConsumerImpl implements StateConsumer {
    private Set<Integer> getOwnedSegments(ConsistentHash consistentHash) {
       Address address = rpcManager.getAddress();
       return consistentHash.getMembers().contains(address) ? consistentHash.getSegmentsForOwner(address)
-            : InfinispanCollections.<Integer>emptySet();
+            : Collections.<Integer>emptySet();
    }
 
    @Override
@@ -919,7 +918,7 @@ public class StateConsumerImpl implements StateConsumer {
    private void removeStaleData(final Set<Integer> removedSegments) throws InterruptedException {
       log.debugf("Removing no longer owned entries for cache %s", cacheName);
       if (keyInvalidationListener != null) {
-         keyInvalidationListener.beforeInvalidation(removedSegments, InfinispanCollections.<Integer>emptySet());
+         keyInvalidationListener.beforeInvalidation(removedSegments, Collections.<Integer>emptySet());
       }
 
       if (removedSegments.isEmpty())

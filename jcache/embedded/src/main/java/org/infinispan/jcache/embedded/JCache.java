@@ -2,6 +2,7 @@ package org.infinispan.jcache.embedded;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -183,7 +184,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotClosed();
       verifyKeys(keys);
       if (keys.isEmpty()) {
-         return InfinispanCollections.emptyMap();
+         return Collections.emptyMap();
       }
 
       AdvancedCache<K, V> cache = configuration.isReadThrough() ? this.cache : 

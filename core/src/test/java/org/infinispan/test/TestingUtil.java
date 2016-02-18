@@ -7,7 +7,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -1474,7 +1473,7 @@ public class TestingUtil {
       for (String principal : principals) {
          set.add(new TestingUtil.TestPrincipal(principal));
       }
-      return new Subject(true, set, InfinispanCollections.emptySet(), InfinispanCollections.emptySet());
+      return new Subject(true, set, Collections.emptySet(), Collections.emptySet());
    }
 
 	public static String loadFileAsString(InputStream is) throws IOException {

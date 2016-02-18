@@ -10,7 +10,6 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -229,7 +228,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    public Set<Object> getAffectedKeys() {
       if (modifications == null || modifications.length == 0)
-         return InfinispanCollections.emptySet();
+         return Collections.emptySet();
 
       if (modifications.length == 1) return modifications[0].getAffectedKeys();
       Set<Object> keys = new HashSet<>(modifications.length);

@@ -18,7 +18,6 @@ import javax.cache.spi.CachingProvider;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -148,7 +147,7 @@ public abstract class AbstractJCacheManager implements CacheManager {
 
    @Override
    public Iterable<String> getCacheNames() {
-      return isClosed ? InfinispanCollections.<String>emptyList() : delegateCacheNames();
+      return isClosed ? Collections.<String>emptyList() : delegateCacheNames();
    }
 
    @Override

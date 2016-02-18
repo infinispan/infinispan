@@ -9,13 +9,13 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import static org.infinispan.commons.util.InfinispanCollections.emptySet;
 import static org.testng.Assert.assertFalse;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -39,7 +39,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest imple
    @Test
    public void testEmptySegments() {
       populateCache(1, i -> "value " + i, remoteCacheManager.getCache());
-      try (CloseableIterator<Entry<Object, Object>> iterator = remoteCacheManager.getCache().retrieveEntries(null, emptySet(), 100)) {
+      try (CloseableIterator<Entry<Object, Object>> iterator = remoteCacheManager.getCache().retrieveEntries(null, Collections.emptySet(), 100)) {
          assertFalse(iterator.hasNext());
       }
    }

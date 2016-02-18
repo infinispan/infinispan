@@ -1,6 +1,5 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.transport.BackupResponse;
@@ -11,6 +10,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.jgroups.UnreachableException;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -100,7 +100,7 @@ public class JGroupsBackupResponse implements BackupResponse {
    @Override
    public Set<String> getCommunicationErrors() {
       return communicationErrors == null ?
-            InfinispanCollections.<String>emptySet() : communicationErrors;
+            Collections.<String>emptySet() : communicationErrors;
    }
 
    @Override

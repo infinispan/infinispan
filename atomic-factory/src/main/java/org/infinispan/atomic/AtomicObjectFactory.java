@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.atomic.container.Container;
 import org.infinispan.atomic.container.ContainerSignature;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -184,7 +183,7 @@ public class AtomicObjectFactory {
 
          if( container==null){
 
-            List<String> methods = InfinispanCollections.emptyList();
+            List<String> methods = Collections.emptyList();
 
             if (Updatable.class.isAssignableFrom(clazz)) {
 

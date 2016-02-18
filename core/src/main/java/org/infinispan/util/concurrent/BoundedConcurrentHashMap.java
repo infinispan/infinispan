@@ -11,7 +11,6 @@
 package org.infinispan.util.concurrent;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.executors.ExecutorAllCompletionService;
@@ -381,7 +380,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
       @Override
       public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
-         return InfinispanCollections.emptySet();
+         return Collections.emptySet();
       }
 
       @Override
@@ -539,7 +538,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
             evicted.clear();
             return evictedCopy;
          } else {
-            return InfinispanCollections.emptySet();
+            return Collections.emptySet();
          }
       }
 
@@ -722,7 +721,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        * non-resident entry is re-computed.
        */
       private Set<HashEntry<K, V>> miss() {
-         Set<HashEntry<K, V>> evicted = InfinispanCollections.emptySet();
+         Set<HashEntry<K, V>> evicted = Collections.emptySet();
         if (owner.hotSize < owner.maximumHotSize) {
           warmupMiss();
         } else {

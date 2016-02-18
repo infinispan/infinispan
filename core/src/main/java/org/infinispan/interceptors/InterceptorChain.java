@@ -2,7 +2,6 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.context.InvocationContext;
@@ -161,7 +160,7 @@ public class InterceptorChain {
     * returned.
     */
    public List<CommandInterceptor> asList() {
-      if (firstInChain == null) return InfinispanCollections.emptyList();
+      if (firstInChain == null) return Collections.emptyList();
 
       List<CommandInterceptor> retval = new LinkedList<>();
       CommandInterceptor tmp = firstInChain;

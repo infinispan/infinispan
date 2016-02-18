@@ -3,10 +3,10 @@ package org.infinispan.context.impl;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.remoting.transport.Address;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,7 +58,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    public Map<Object, CacheEntry> getLookedUpEntries() {
       return (Map<Object, CacheEntry>)
             (lookedUpEntries == null ?
-                   InfinispanCollections.emptyMap() : lookedUpEntries);
+                   Collections.emptyMap() : lookedUpEntries);
    }
 
    @Override
@@ -93,7 +93,7 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public Set<Object> getLockedKeys() {
-      return lockedKeys == null ? InfinispanCollections.emptySet() : lockedKeys;
+      return lockedKeys == null ? Collections.emptySet() : lockedKeys;
    }
 
    @Override

@@ -3,7 +3,6 @@ package org.infinispan.statetransfer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -219,7 +218,7 @@ public class OutboundTransferTask implements Runnable {
          for (int segmentId : segments) {
             List<InternalCacheEntry> entries = entriesBySegment.get(segmentId);
             if (entries == null) {
-               chunks.add(new StateChunk(segmentId, InfinispanCollections.<InternalCacheEntry>emptyList(), true));
+               chunks.add(new StateChunk(segmentId, Collections.<InternalCacheEntry>emptyList(), true));
             }
          }
       }

@@ -16,6 +16,7 @@ import org.infinispan.commons.util.Immutables;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -25,7 +26,6 @@ import java.util.stream.Collectors;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.IntStream.range;
-import static org.infinispan.commons.util.InfinispanCollections.emptySet;
 
 /**
  * Maintains topology information about caches.
@@ -57,7 +57,7 @@ public final class TopologyInfo {
          Optional<Integer> numSegments = Optional.ofNullable(segmentsByCache.get(cacheName));
          Optional<Set<Integer>> segments = numSegments.map(n -> range(0, n).boxed().collect(Collectors.toSet()));
          return Immutables.immutableMapWrap(
-               servers.stream().collect(toMap(identity(), s -> segments.orElse(emptySet())))
+               servers.stream().collect(toMap(identity(), s -> segments.orElse(Collections.emptySet())))
          );
       }
    }

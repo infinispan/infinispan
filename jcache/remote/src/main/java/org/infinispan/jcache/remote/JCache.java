@@ -1,7 +1,7 @@
 package org.infinispan.jcache.remote;
 
 import java.lang.management.ManagementFactory;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -88,7 +88,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       InfinispanCollections.assertNotNullEntries(keys, "keys");
 
       if (keys.isEmpty()) {
-         return InfinispanCollections.emptyMap();
+         return Collections.emptyMap();
       }
 
       /**

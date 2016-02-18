@@ -1,6 +1,7 @@
 package org.infinispan.util;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,7 +12,6 @@ import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -77,8 +77,8 @@ public class ModuleProperties extends Properties {
          }
       } else {
          log.debugf("No module command extensions to load");
-         commandInitializers = InfinispanCollections.emptyMap();
-         commandFactories = InfinispanCollections.emptyMap();
+         commandInitializers = Collections.emptyMap();
+         commandFactories = Collections.emptyMap();
       }
    }
 
@@ -98,7 +98,7 @@ public class ModuleProperties extends Properties {
    public Collection<Class<? extends CacheRpcCommand>> moduleCacheRpcCommands() {
       Collection<Class<? extends ReplicableCommand>> cmds = moduleCommands();
       if (cmds == null || cmds.isEmpty())
-         return InfinispanCollections.emptySet();
+         return Collections.emptySet();
 
       Collection<Class<? extends CacheRpcCommand>> cacheRpcCmds = new HashSet<Class<? extends CacheRpcCommand>>(2);
       for (Class<? extends ReplicableCommand> moduleCmdClass : cmds) {
@@ -112,7 +112,7 @@ public class ModuleProperties extends Properties {
    public Collection<Class<? extends ReplicableCommand>> moduleOnlyReplicableCommands() {
       Collection<Class<? extends ReplicableCommand>> cmds = moduleCommands();
       if (cmds == null || cmds.isEmpty())
-         return InfinispanCollections.emptySet();
+         return Collections.emptySet();
 
       Collection<Class<? extends ReplicableCommand>> replicableOnlyCmds =
             new HashSet<Class<? extends ReplicableCommand>>(2);

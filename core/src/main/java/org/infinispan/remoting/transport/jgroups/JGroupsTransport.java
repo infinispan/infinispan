@@ -6,7 +6,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.TransportConfiguration;
@@ -46,7 +45,6 @@ import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.blocks.mux.Muxer;
 import org.jgroups.jmx.JmxConfigurator;
-import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.protocols.tom.TOA;
 import org.jgroups.stack.AddressGenerator;
@@ -301,7 +299,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       channel = null;
       viewId = -1;
-      members = InfinispanCollections.emptyList();
+      members = Collections.emptyList();
       coordinator = null;
       isCoordinator = false;
       dispatcher = null;
@@ -496,7 +494,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public List<Address> getMembers() {
-      return members != null ? members : InfinispanCollections.<Address>emptyList();
+      return members != null ? members : Collections.<Address>emptyList();
    }
 
    @Override
@@ -517,7 +515,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (physicalAddress == null && channel != null) {
          org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
          if (addr == null) {
-            return InfinispanCollections.emptyList();
+            return Collections.emptyList();
          }
          physicalAddress = new JGroupsAddress(addr);
       }
@@ -552,7 +550,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (recipients != null && recipients.isEmpty()) {
          // don't send if recipients list is empty
          log.trace("Destination list is empty: no need to send message");
-         return CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
+         return CompletableFuture.completedFuture(Collections.emptyMap());
       }
       boolean totalOrder = deliverOrder == DeliverOrder.TOTAL;
 
@@ -695,7 +693,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (rpcCommands == null || rpcCommands.isEmpty()) {
          // don't send if recipients list is empty
          log.trace("Destination list is empty: no need to send message");
-         return InfinispanCollections.emptyMap();
+         return Collections.emptyMap();
       }
 
       if (trace)
@@ -714,7 +712,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
 
       if (mode.isAsynchronous())
-         return InfinispanCollections.emptyMap();
+         return Collections.emptyMap();
 
       CompletableFuture<Void> bigFuture = CompletableFuture.allOf(futures);
       CompletableFutures.await(bigFuture);
@@ -929,7 +927,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (list == null)
          return null;
       if (list.isEmpty())
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
 
       List<org.jgroups.Address> retval = new ArrayList<>(list.size());
       boolean ignoreSelf = !totalOrder; //in total order, we need to send the message to ourselves!
@@ -947,7 +945,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
       if (list == null || list.isEmpty())
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
 
       List<Address> retval = new ArrayList<>(list.size());
       for (org.jgroups.Address a : list)

@@ -9,7 +9,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.IdentityEquivalence;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.Configuration;
@@ -224,7 +223,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    public Set<Object> getLockedKeysForRemoteTransaction(GlobalTransaction gtx) {
       RemoteTransaction transaction = remoteTransactions.get(gtx);
-      if (transaction == null) return InfinispanCollections.emptySet();
+      if (transaction == null) return Collections.emptySet();
       return transaction.getLockedKeys();
    }
 

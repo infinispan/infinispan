@@ -5,7 +5,6 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -124,7 +123,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (modifications instanceof ImmutableListCopy)
          return modifications;
       else if (modifications == null)
-         return InfinispanCollections.<WriteCommand>emptyList();
+         return Collections.<WriteCommand>emptyList();
       else
          return Immutables.immutableListCopy(modifications);
    }
@@ -161,7 +160,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       if (modifications != null) {
          modifications = Immutables.immutableListCopy(modifications);
       } else {
-         modifications = InfinispanCollections.emptyList();
+         modifications = Collections.emptyList();
       }
    }
 
@@ -227,13 +226,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public Set<Object> getLockedKeys() {
       final Set<Object> keys = lockedKeys.get();
-      return keys == null ? InfinispanCollections.emptySet() : keys;
+      return keys == null ? Collections.emptySet() : keys;
    }
 
    @Override
    public Set<Object> getBackupLockedKeys() {
       final Set<Object> keys = backupKeyLocks.get();
-      return keys == null ? InfinispanCollections.emptySet() : keys;
+      return keys == null ? Collections.emptySet() : keys;
    }
 
    @Override
@@ -265,7 +264,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    public Set<Object> getAffectedKeys() {
-      return affectedKeys == null ? InfinispanCollections.emptySet() : affectedKeys;
+      return affectedKeys == null ? Collections.emptySet() : affectedKeys;
    }
 
    public void addAffectedKey(Object key) {

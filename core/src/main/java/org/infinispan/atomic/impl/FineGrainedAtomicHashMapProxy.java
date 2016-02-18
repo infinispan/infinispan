@@ -3,12 +3,12 @@ package org.infinispan.atomic.impl;
 import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.atomic.FineGrainedAtomicMap;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +78,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       DeltaAwareCacheEntry entry = lookupEntry();
       return entry != null ?
             (Set<K>) entry.getUncommittedChages().keySet() :
-            InfinispanCollections.<K>emptySet();
+            Collections.<K>emptySet();
    }
 
    @Override
@@ -99,7 +99,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       DeltaAwareCacheEntry entry = lookupEntry();
       return entry != null ?
             (Collection<V>) entry.getUncommittedChages().values() :
-            InfinispanCollections.<V>emptySet();
+            Collections.<V>emptySet();
    }
 
    @Override
@@ -122,7 +122,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
       DeltaAwareCacheEntry entry = lookupEntry();
       return (Set<Entry<K, V>>)
             (entry != null ? entry.getUncommittedChages().entrySet()
-                   : InfinispanCollections.<V>emptySet());
+                   : Collections.<V>emptySet());
    }
 
    @Override
@@ -262,7 +262,7 @@ public class FineGrainedAtomicHashMapProxy<K, V> extends AtomicHashMapProxy<K, V
    }
 
    private void invokeApplyDelta(AtomicHashMapDelta delta) {
-      Collection<?> keys = InfinispanCollections.emptyList();
+      Collection<?> keys = Collections.emptyList();
       if (delta.hasClearOperation()) {
          // if it has clear op we need to lock all keys
          AtomicHashMap<?, ?> map = (AtomicHashMap<?, ?>) cache.get(deltaMapKey);

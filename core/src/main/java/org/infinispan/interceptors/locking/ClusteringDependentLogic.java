@@ -6,7 +6,6 @@ import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.Immutables;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -40,6 +39,7 @@ import org.infinispan.util.TimeService;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static org.infinispan.transaction.impl.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
@@ -558,7 +558,7 @@ public interface ClusteringDependentLogic {
       @Override
       public List<Address> getOwners(Collection<Object> affectedKeys) {
          if (affectedKeys.isEmpty()) {
-            return InfinispanCollections.emptyList();
+            return Collections.emptyList();
          }
          return Immutables.immutableListConvert(dm.locateAll(affectedKeys));
       }

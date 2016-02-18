@@ -3,12 +3,10 @@ package org.infinispan.util;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
