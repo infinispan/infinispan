@@ -118,6 +118,11 @@ public class DistributedExecutorBadResponseFailoverTest extends MultipleCacheMan
       }
 
       @Override
+      public void start() {
+         // Do not start the transport a second time
+      }
+
+      @Override
       public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
             ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast)
             throws Exception {
