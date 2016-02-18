@@ -306,12 +306,15 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       final TransportConfiguration transportCfg = configuration.transport();
       if (channel == null) {
          buildChannel();
-         String transportNodeName = transportCfg.nodeName();
-         if (transportNodeName != null && transportNodeName.length() > 0) {
-            long range = Short.MAX_VALUE * 2;
-            long randomInRange = (long) ((Math.random() * range) % range) + 1;
-            transportNodeName = transportNodeName + "-" + randomInRange;
-            channel.setName(transportNodeName);
+         if (connectChannel) {
+            // Cannot change the name if the channelLookup already connected the channel
+            String transportNodeName = transportCfg.nodeName();
+            if (transportNodeName != null && transportNodeName.length() > 0) {
+               long range = Short.MAX_VALUE * 2;
+               long randomInRange = (long) ((Math.random() * range) % range) + 1;
+               transportNodeName = transportNodeName + "-" + randomInRange;
+               channel.setName(transportNodeName);
+            }
          }
       }
 
