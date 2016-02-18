@@ -25,6 +25,7 @@
 -pageTracker._trackPageview();
 -} catch(err) {}&lt;/script&gt;
             </analytics.code>
+      <infinispan.distribution.assembly.attach>false</infinispan.distribution.assembly.attach>
    </properties>
 
    <dependencies>
@@ -223,8 +224,7 @@
                <outputDirectory>${buildDirectory}/distribution</outputDirectory>
                <workDirectory>${buildDirectory}/assembly/work</workDirectory>
 
-               
-               <attach>false</attach>
+               <attach>${infinispan.distribution.assembly.attach}</attach>
             </configuration>
          </plugin>
       </plugins>
