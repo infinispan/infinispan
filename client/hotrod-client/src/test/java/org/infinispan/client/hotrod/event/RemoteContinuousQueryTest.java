@@ -18,7 +18,7 @@ import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.query.remote.impl.filter.JPAContinuousQueryCacheEventFilterConverterFactory;
+import org.infinispan.query.remote.impl.filter.JPAContinuousQueryProtobufCacheEventFilterConverterFactory;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -54,8 +54,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
       // Register the filter/converter factory. This should normally be discovered by the server via class path instead
       // of being added manually here, but this is ok in a test.
-      JPAContinuousQueryCacheEventFilterConverterFactory factory = new JPAContinuousQueryCacheEventFilterConverterFactory();
-      server(0).addCacheEventFilterConverterFactory(JPAContinuousQueryCacheEventFilterConverterFactory.FACTORY_NAME, factory);
+      JPAContinuousQueryProtobufCacheEventFilterConverterFactory factory = new JPAContinuousQueryProtobufCacheEventFilterConverterFactory();
+      server(0).addCacheEventFilterConverterFactory(JPAContinuousQueryProtobufCacheEventFilterConverterFactory.FACTORY_NAME, factory);
 
       remoteCache = client(0).getCache();
 

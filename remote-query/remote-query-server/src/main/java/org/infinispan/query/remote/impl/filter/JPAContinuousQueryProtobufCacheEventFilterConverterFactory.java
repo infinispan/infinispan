@@ -15,9 +15,9 @@ import static org.infinispan.query.remote.impl.filter.JPAFilterConverterUtils.un
  * @author anistor@redhat.com
  * @since 8.0
  */
-@NamedFactory(name = JPAContinuousQueryCacheEventFilterConverterFactory.FACTORY_NAME)
+@NamedFactory(name = JPAContinuousQueryProtobufCacheEventFilterConverterFactory.FACTORY_NAME)
 @MetaInfServices
-public final class JPAContinuousQueryCacheEventFilterConverterFactory implements CacheEventFilterConverterFactory {
+public final class JPAContinuousQueryProtobufCacheEventFilterConverterFactory implements CacheEventFilterConverterFactory {
 
    public static final String FACTORY_NAME = "continuous-query-filter-converter-factory";
 
