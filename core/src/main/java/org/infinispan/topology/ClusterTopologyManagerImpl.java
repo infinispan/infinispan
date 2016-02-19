@@ -166,7 +166,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          int joinerViewId) throws Exception {
       ClusterCacheStatus cacheStatus;
       synchronized (clusterManagerLock) {
-         waitForView(joinerViewId, joinInfo.getTimeout());
+         waitForJoinerView(joiner, joinerViewId, joinInfo.getTimeout());
 
          if (!clusterManagerStatus.isRunning()) {
             log.debugf("Ignoring join request from %s for cache %s, the local cache manager is shutting down",
@@ -440,10 +440,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
     *
     * @throws TimeoutException if the timeout expired.
     */
-   private void waitForView(int joinerViewId, long timeout) throws InterruptedException {
-      if (joinerViewId > viewId) {
-         log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s",
-               joinerViewId, viewId);
+   private void waitForJoinerView(Address joiner, int joinerViewId, long timeout)
+         throws InterruptedException {
+      if (joinerViewId > viewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
+         if (trace) {
+            if (joinerViewId > viewId) {
+               log.tracef("Waiting to install view %s before processing join request from %s",
+                     joinerViewId, joiner);
+            } else {
+               log.tracef("Waiting to recover cluster status before processing join request from %s", joiner);
+            }
+         }
          long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
          synchronized (clusterManagerLock) {
             while (viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
