@@ -26,7 +26,6 @@ import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest")
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
@@ -66,7 +65,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
             .useSynchronization(false)
             .recovery().disable();
       configurationBuilder.clustering().sync().replTimeout(30000);
-      configurationBuilder.clustering().stateTransfer().chunkSize(50);
+      configurationBuilder.clustering().stateTransfer().chunkSize(20);
       configurationBuilder.locking().useLockStriping(false); // reduces the odd chance of a key collision and deadlock
    }
 
@@ -91,7 +90,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
          if (doDelay) {
             try {
                // Delay state transfer
-               Thread.sleep(2000);
+               Thread.sleep(1000);
             }
             catch (InterruptedException e) {
                Thread.currentThread().interrupt();
@@ -161,9 +160,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = cm1.getCache(cacheName);
       writeInitialData(cache1);
 
-      JoiningNode node = new JoiningNode(createCacheManager());
-      cache2 = node.getCache(cacheName);
-      node.waitForJoin(60000, cache1, cache2);
+      EmbeddedCacheManager cm2 = createCacheManager();
+      cache2 = cm2.getCache(cacheName);
+      TestingUtil.waitForRehashToComplete(cache1, cache2);
       verifyInitialData(cache2);
 
       logTestEnd(m);
@@ -177,9 +176,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = cacheManager1.getCache(cacheName);
       writeInitialData(cache1);
 
-      JoiningNode node = new JoiningNode(createCacheManager());
-      cache2 = node.getCache(cacheName);
-      node.waitForJoin(60000, cache1, cache2);
+      EmbeddedCacheManager cm2 = createCacheManager();
+      cache2 = cm2.getCache(cacheName);
+      TestingUtil.waitForRehashToComplete(cache1, cache2);
       verifyInitialData(cache2);
 
       cacheManager1.defineConfiguration("otherCache", configurationBuilder.build());
@@ -194,28 +193,28 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = createCacheManager().getCache(cacheName);
       writeInitialData(cache1);
 
-      JoiningNode node2 = new JoiningNode(createCacheManager());
-      cache2 = node2.getCache(cacheName);
+      EmbeddedCacheManager cm2 = createCacheManager();
+      cache2 = cm2.getCache(cacheName);
 
       cache1.put("delay", new DelayTransfer());
 
-      node2.waitForJoin(60000, cache1, cache2);
+      TestingUtil.waitForRehashToComplete(cache1, cache2);
       verifyInitialData(cache2);
 
-      final JoiningNode node3 = new JoiningNode(createCacheManager());
-      final JoiningNode node4 = new JoiningNode(createCacheManager());
+      EmbeddedCacheManager cm3 = createCacheManager();
+      EmbeddedCacheManager cm4 = createCacheManager();
 
-      Future<Cache> joinFuture1 = fork(() -> node3.getCache(cacheName));
-      Future<Cache> joinFuture2 = fork(() -> node4.getCache(cacheName));
+      Future<Cache> joinFuture1 = fork(() -> cm3.getCache(cacheName));
+      Future<Cache> joinFuture2 = fork(() -> cm4.getCache(cacheName));
 
       joinFuture1.get(30, SECONDS);
       joinFuture2.get(30, SECONDS);
 
-      cache3 = node3.getCache(cacheName);
-      cache4 = node4.getCache(cacheName);
+      cache3 = cm3.getCache(cacheName);
+      cache4 = cm4.getCache(cacheName);
 
-      node3.waitForJoin(120000, cache1, cache2, cache3, cache4);
-      node4.waitForJoin(120000, cache1, cache2, cache3, cache4);
+      TestingUtil.waitForRehashToComplete(cache1, cache2, cache3, cache4);
+      TestingUtil.waitForRehashToComplete(cache1, cache2, cache3, cache4);
 
       verifyInitialData(cache3);
       verifyInitialData(cache4);
@@ -260,9 +259,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache1 = createCacheManager().getCache(cacheName);
       writeInitialData(cache1);
 
-      JoiningNode node2 = new JoiningNode(createCacheManager());
-      cache2 = node2.getCache(cacheName);
-      node2.waitForJoin(60000, cache1, cache2);
+      EmbeddedCacheManager cm2 = createCacheManager();
+      cache2 = cm2.getCache(cacheName);
+      TestingUtil.waitForRehashToComplete(cache1, cache2);
       verifyInitialData(cache2);
 
       cache2.stop();
@@ -300,10 +299,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       WritingTask writingTask = new WritingTask(cache3, tx);
       Future<Integer> future = fork(writingTask);
 
-      JoiningNode node2 = new JoiningNode(createCacheManager());
-      cache2 = node2.getCache(cacheName);
+      EmbeddedCacheManager cm2 = createCacheManager();
+      cache2 = cm2.getCache(cacheName);
 
-      node2.waitForJoin(60000, cache1, cache2, cache3);
+      TestingUtil.waitForRehashToComplete(cache1, cache2, cache3);
 
       writingTask.stop();
       int count = future.get(60, SECONDS);
@@ -346,9 +345,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       Future<Integer> future = fork(writingTask);
       verifyInitialData(cache1);
 
-      JoiningNode node2 = new JoiningNode(createCacheManager());
-      cache2 = node2.getCache(cacheName);
-      node2.waitForJoin(60000, cache1, cache2);
+      EmbeddedCacheManager cm2 = createCacheManager();
+      cache2 = cm2.getCache(cacheName);
+      TestingUtil.waitForRehashToComplete(cache1, cache2);
 
       writingTask.stop();
       int count = future.get(60, SECONDS);
