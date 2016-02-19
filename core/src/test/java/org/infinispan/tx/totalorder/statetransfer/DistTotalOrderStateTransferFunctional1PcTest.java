@@ -40,7 +40,7 @@ public class DistTotalOrderStateTransferFunctional1PcTest extends StateTransferF
       } else {
          configurationBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false);
       }
-      configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
+      configurationBuilder.clustering().stateTransfer().chunkSize(20);
    }
 
 }

@@ -8,9 +8,9 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.test.Person;
-import org.infinispan.statetransfer.JoiningNode;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 
 import java.util.List;
@@ -95,9 +95,9 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
          @Override
          public void call() throws Exception {
             // New node joining
-            JoiningNode newNode = new JoiningNode(cm);
-            Cache<String, Person> newCache = newNode.getCache();
-            newNode.waitForJoin(120000, caches().get(0), caches().get(1), newCache);
+            EmbeddedCacheManager newManager = createCacheManager();
+            Cache<String, Person> newCache = newManager.getCache();
+            TestingUtil.waitForRehashToComplete(caches().get(0), caches().get(1), newCache);
 
             // Verify state transfer
             int size = newCache.size();
