@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "container.versioning.DistL1WriteSkewTest", groups = "functional")
-@CleanupAfterMethod
 public class DistL1WriteSkewTest extends DistWriteSkewTest {
    @Override
    protected void decorate(ConfigurationBuilder builder) {

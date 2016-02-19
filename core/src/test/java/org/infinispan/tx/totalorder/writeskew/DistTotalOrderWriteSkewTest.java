@@ -19,7 +19,6 @@ import static org.testng.Assert.assertEquals;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "tx.totalorder.DistTotalOrderWriteSkewTest")
-@CleanupAfterMethod
 public class DistTotalOrderWriteSkewTest extends DistWriteSkewTest {
    public void transactionCleanupWithWriteSkew() throws Exception {
       cache(0).put("k", "v");
