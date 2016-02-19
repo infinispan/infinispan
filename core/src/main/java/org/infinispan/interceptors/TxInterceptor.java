@@ -400,9 +400,15 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
    }
 
    private boolean isNotValid(int status) {
-      return status != Status.STATUS_ACTIVE
-            && status != Status.STATUS_PREPARING
-            && status != Status.STATUS_COMMITTING;
+      switch (status) {
+         case Status.STATUS_ACTIVE:
+         case Status.STATUS_MARKED_ROLLBACK:
+         case Status.STATUS_PREPARING:
+         case Status.STATUS_COMMITTING:
+            return false;
+         default:
+            return true;
+      }
    }
 
    private static boolean shouldEnlist(InvocationContext ctx) {
