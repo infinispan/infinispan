@@ -90,9 +90,8 @@ public class IterationNextOperation<E> extends HotRodOperation {
                entries.add(new SimpleEntry<>(unmarshall(key, status), (E) value));
             }
          }
-         segmentKeyTracker.segmentsFinished(finishedSegments);
-
       }
+      segmentKeyTracker.segmentsFinished(finishedSegments);
       if (HotRodConstants.isInvalidIteration(status)) {
          throw log.errorRetrievingNext(iterationId);
       }

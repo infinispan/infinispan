@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod.iteration
 
-import java.util.concurrent.atomic.AtomicReference
 import java.util.stream.{Collectors, Stream}
 import java.util.{BitSet => JavaBitSet, Set => JavaSet, UUID, Collections}
 
@@ -15,8 +14,8 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.hotrod.OperationStatus.OperationStatus
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.logging.Log
-import org.infinispan.util.concurrent.ConcurrentHashSet
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 /**
  * @author gustavonalle
@@ -34,11 +33,29 @@ trait IterationManager {
 }
 
 class IterationSegmentsListener extends CacheStream.SegmentCompletionListener {
-   private val finished = new AtomicReference(new ConcurrentHashSet[Integer]())
+   private val finished = mutable.Set[Integer]()
+   private var justFinished = mutable.Set[Integer]()
 
-   def getFinished = finished.getAndSet(new ConcurrentHashSet[Integer]())
+   def getFinished(endOfIteration: Boolean) = {
+      synchronized {
+         if (endOfIteration) finished ++ justFinished
+         else {
+            val diff = finished -- justFinished
+            finished.clear()
+            finished ++= justFinished
+            diff
+         }
+      }
+   }
 
-   override def segmentCompleted(segments: JavaSet[Integer]): Unit = segments.foreach(finished.get.add)
+   override def segmentCompleted(segments: JavaSet[Integer]): Unit = {
+      synchronized {
+         if (!segments.isEmpty) {
+            justFinished = segments
+            finished ++= segments
+         }
+      }
+   }
 }
 
 class IterationState(val listener: IterationSegmentsListener, val iterator: Iterator[CacheEntry[AnyRef, AnyRef]],
@@ -122,7 +139,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
          val listener = state.listener
          val batch = state.batch
          val entries = for (i <- 0 to batch - 1; if iterator.hasNext) yield iterator.next()
-         new IterableIterationResult(listener.getFinished, OperationStatus.Success, entries.toList, state.compatInfo, state.metadata)
+         new IterableIterationResult(listener.getFinished(entries.isEmpty), OperationStatus.Success, entries.toList, state.compatInfo, state.metadata)
       }.getOrElse(new IterableIterationResult(Collections.emptySet(), OperationStatus.InvalidIteration, List.empty, null, false))
    }
 
