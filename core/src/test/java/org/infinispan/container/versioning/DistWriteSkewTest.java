@@ -15,7 +15,6 @@ import javax.transaction.Transaction;
 import static org.testng.AssertJUnit.*;
 
 @Test(testName = "container.versioning.DistWriteSkewTest", groups = "functional")
-@CleanupAfterMethod
 public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {
 
    @Override
