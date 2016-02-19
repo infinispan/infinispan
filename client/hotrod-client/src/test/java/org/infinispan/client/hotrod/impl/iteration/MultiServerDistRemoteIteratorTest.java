@@ -10,8 +10,10 @@ import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,7 +43,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
 
    class TestSegmentKeyTracker implements KeyTracker {
 
-      Set<Integer> finished = new HashSet<>();
+      List<Integer> finished = new ArrayList<>();
 
       @Override
       public boolean track(byte[] key) {
