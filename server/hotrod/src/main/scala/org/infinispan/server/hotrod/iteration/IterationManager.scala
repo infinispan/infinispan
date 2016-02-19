@@ -1,8 +1,7 @@
 package org.infinispan.server.hotrod.iteration
 
-import java.util
-import java.util.stream.Collectors
-import java.util.{BitSet => JavaBitSet, Collections, UUID}
+import java.util.stream.{Collectors, Stream}
+import java.util.{BitSet => JavaBitSet, Set => JavaSet, UUID}
 
 import org.infinispan.CacheStream
 import org.infinispan.commons.marshall.Marshaller
@@ -34,22 +33,20 @@ trait IterationManager {
 }
 
 class IterationSegmentsListener extends CacheStream.SegmentCompletionListener {
-   var finished: util.Set[Integer] = new ConcurrentHashSet[Integer]()
+   var finished: JavaSet[Integer] = new ConcurrentHashSet[Integer]()
 
-   def clear() = finished.clear()
-
-   override def segmentCompleted(segments: util.Set[Integer]): Unit = segments.foreach(finished.add)
+   override def segmentCompleted(segments: JavaSet[Integer]): Unit = segments.foreach(finished.add)
 }
 
-class IterationState(val listener: IterationSegmentsListener, val iterator: java.util.Iterator[CacheEntry[AnyRef, AnyRef]],
+class IterationState(val listener: IterationSegmentsListener, val iterator: Iterator[CacheEntry[AnyRef, AnyRef]],
                      val stream: CacheStream[CacheEntry[AnyRef, AnyRef]], val batch: Integer, val compatInfo: CompatInfo, val metadata: Boolean)
 
-class IterableIterationResult(finishedSegments: util.Set[Integer], val statusCode: OperationStatus, val entries: List[CacheEntry[AnyRef, AnyRef]], compatInfo: CompatInfo, val metadata: Boolean) {
+class IterableIterationResult(finishedSegments: JavaSet[Integer], val statusCode: OperationStatus, val entries: List[CacheEntry[AnyRef, AnyRef]], compatInfo: CompatInfo, val metadata: Boolean) {
 
    lazy val compatEnabled = compatInfo.enabled
 
    def segmentsToBytes = {
-      val bs = new util.BitSet
+      val bs = new JavaBitSet()
       finishedSegments.stream().forEach((i: Integer) => bs.set(i))
       bs.toByteArray
    }
@@ -87,12 +84,12 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
          factory <- getFactory(name)
          (filter, isBinary) <- buildFilter(factory, params.toArray)
          iterationFilter <- Some(new IterationFilter(compatInfo.enabled, Some(filter), marshaller, isBinary))
-         stream <- Some(filterAndConvert(stream.asInstanceOf[util.stream.Stream[CacheEntry[Any, Any]]], iterationFilter.asInstanceOf[KeyValueFilterConverter[Any, Any, Any]]))
+         stream <- Some(filterAndConvert(stream.asInstanceOf[Stream[CacheEntry[Any, Any]]], iterationFilter.asInstanceOf[KeyValueFilterConverter[Any, Any, Any]]))
       } yield stream
 
       val iterator = filteredStream.getOrElse(stream).asInstanceOf[CacheStream[CacheEntry[AnyRef, AnyRef]]].segmentCompletionListener(segmentListener).iterator()
 
-      val iterationState = new IterationState(segmentListener, iterator.asInstanceOf[java.util.Iterator[CacheEntry[AnyRef, AnyRef]]], stream, batch, compatInfo, metadata)
+      val iterationState = new IterationState(segmentListener, iterator, stream, batch, compatInfo, metadata)
 
       iterationStateMap.put(iterationId, iterationState)
       iterationId
@@ -121,7 +118,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
          val iterator = state.iterator
          val listener = state.listener
          val batch = state.batch
-         val entries = for (i <- 0 to batch - 1; if iterator.hasNext) yield iterator.next
+         val entries = for (i <- 0 to batch - 1; if iterator.hasNext) yield iterator.next()
          new IterableIterationResult(listener.finished, OperationStatus.Success, entries.toList, state.compatInfo, state.metadata)
       }.getOrElse(new IterableIterationResult(Collections.emptySet(), OperationStatus.InvalidIteration, List.empty, null, false))
    }
