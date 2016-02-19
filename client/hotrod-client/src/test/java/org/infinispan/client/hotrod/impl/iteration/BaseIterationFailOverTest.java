@@ -32,7 +32,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
 
    @Test
    public void testFailOver() throws InterruptedException {
-      int cacheSize = 200;
+      int cacheSize = 10000;
       int batch = 17;
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
       populateCache(cacheSize, this::newAccount, cache);
