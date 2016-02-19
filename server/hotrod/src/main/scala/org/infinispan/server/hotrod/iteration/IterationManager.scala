@@ -1,7 +1,8 @@
 package org.infinispan.server.hotrod.iteration
 
+import java.util.concurrent.atomic.AtomicReference
 import java.util.stream.{Collectors, Stream}
-import java.util.{BitSet => JavaBitSet, Set => JavaSet, UUID}
+import java.util.{BitSet => JavaBitSet, Set => JavaSet, UUID, Collections}
 
 import org.infinispan.CacheStream
 import org.infinispan.commons.marshall.Marshaller
@@ -33,9 +34,11 @@ trait IterationManager {
 }
 
 class IterationSegmentsListener extends CacheStream.SegmentCompletionListener {
-   var finished: JavaSet[Integer] = new ConcurrentHashSet[Integer]()
+   private val finished = new AtomicReference(new ConcurrentHashSet[Integer]())
 
-   override def segmentCompleted(segments: JavaSet[Integer]): Unit = segments.foreach(finished.add)
+   def getFinished = finished.getAndSet(new ConcurrentHashSet[Integer]())
+
+   override def segmentCompleted(segments: JavaSet[Integer]): Unit = segments.foreach(finished.get.add)
 }
 
 class IterationState(val listener: IterationSegmentsListener, val iterator: Iterator[CacheEntry[AnyRef, AnyRef]],
@@ -119,7 +122,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
          val listener = state.listener
          val batch = state.batch
          val entries = for (i <- 0 to batch - 1; if iterator.hasNext) yield iterator.next()
-         new IterableIterationResult(listener.finished, OperationStatus.Success, entries.toList, state.compatInfo, state.metadata)
+         new IterableIterationResult(listener.getFinished, OperationStatus.Success, entries.toList, state.compatInfo, state.metadata)
       }.getOrElse(new IterableIterationResult(Collections.emptySet(), OperationStatus.InvalidIteration, List.empty, null, false))
    }
 
