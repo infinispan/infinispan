@@ -102,26 +102,16 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
 
       } catch (TransportException e) {
          log.warnf(e, "Error reaching the server during iteration");
-         restartIteration(segmentKeyTracker.missedSegments());
+         startInternal(segmentKeyTracker.missedSegments());
          fetch();
       }
    }
 
-   private void restartIteration(Set<Integer> missedSegments) {
-      startInternal(missedSegments);
-   }
-
-   private void start(Set<Integer> fromSegments) {
-      IterationStartResponse startResponse = startInternal(fromSegments);
-
-      this.segmentKeyTracker = KeyTrackerFactory.create(startResponse.getSegmentConsistentHash(), startResponse.getTopologyId());
-   }
-
-   private IterationStartResponse startInternal(Set<Integer> fromSegments) {
+   private IterationStartResponse startInternal(Set<Integer> segments) {
       if (log.isDebugEnabled()) {
-         log.debugf("Staring iteration with segments %s", fromSegments);
+         log.debugf("Starting iteration with segments %s", segments);
       }
-      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory, filterParams, fromSegments, batchSize, metadata);
+      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory, filterParams, segments, batchSize, metadata);
       IterationStartResponse startResponse = iterationStartOperation.execute();
       this.transport = startResponse.getTransport();
       if (log.isDebugEnabled()) {
@@ -135,6 +125,7 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
    }
 
    public void start() {
-      start(segments);
+      IterationStartResponse startResponse = startInternal(segments);
+      this.segmentKeyTracker = KeyTrackerFactory.create(startResponse.getSegmentConsistentHash(), startResponse.getTopologyId(), segments);
    }
 }
