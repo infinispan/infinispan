@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod.iteration
 
 import java.util.stream.{Collectors, Stream}
-import java.util.{BitSet => JavaBitSet, Set => JavaSet, UUID, Collections}
+import java.util.{BitSet => JavaBitSet, Collections, Set => JavaSet, UUID}
 
 import org.infinispan.CacheStream
 import org.infinispan.commons.marshall.Marshaller
@@ -14,6 +14,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.hotrod.OperationStatus.OperationStatus
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.logging.Log
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
@@ -49,8 +50,8 @@ class IterationSegmentsListener extends CacheStream.SegmentCompletionListener {
    }
 
    override def segmentCompleted(segments: JavaSet[Integer]): Unit = {
-      synchronized {
-         if (!segments.isEmpty) {
+      if (!segments.isEmpty) {
+         synchronized {
             justFinished = segments
             finished ++= segments
          }

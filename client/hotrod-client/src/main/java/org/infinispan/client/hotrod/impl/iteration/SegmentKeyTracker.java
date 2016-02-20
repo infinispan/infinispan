@@ -1,11 +1,5 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import java.util.BitSet;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.stream.IntStream;
-
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -13,24 +7,31 @@ import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 
+import java.util.BitSet;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.stream.IntStream;
+
 /**
  * @author gustavonalle
  * @since 8.0
  */
-public class SegmentKeyTracker implements KeyTracker {
+class SegmentKeyTracker implements KeyTracker {
 
    private static final Log log = LogFactory.getLog(SegmentKeyTracker.class);
 
    private final AtomicReferenceArray<Set<byte[]>> keysPerSegment;
    private final SegmentConsistentHash segmentConsistentHash;
 
-   public SegmentKeyTracker(SegmentConsistentHash segmentConsistentHash) {
+   public SegmentKeyTracker(SegmentConsistentHash segmentConsistentHash, Set<Integer> segments) {
       int numSegments = segmentConsistentHash.getNumSegments();
       keysPerSegment = new AtomicReferenceArray<>(numSegments);
       if (log.isDebugEnabled()) log.debugf("Created SegmentKeyTracker with %d segments", numSegments);
       this.segmentConsistentHash = segmentConsistentHash;
-      IntStream.range(0, segmentConsistentHash.getNumSegments())
-              .forEach(i -> keysPerSegment.set(i, CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE)));
+      IntStream segmentStream = segments == null ?
+              IntStream.range(0, segmentConsistentHash.getNumSegments()) : segments.stream().mapToInt(i -> i);
+      segmentStream.forEach(i -> keysPerSegment.set(i, CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE)));
    }
 
    public boolean track(byte[] key) {

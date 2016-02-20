@@ -12,7 +12,7 @@ import java.util.Set;
  * @author gustavonalle
  * @since 8.0
  */
-public class ReplKeyTracker implements KeyTracker {
+class ReplKeyTracker implements KeyTracker {
 
    private Set<byte[]> keys = CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE);
 
