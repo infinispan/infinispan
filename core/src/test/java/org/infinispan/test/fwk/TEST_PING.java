@@ -39,8 +39,6 @@ public class TEST_PING extends Discovery {
    // volatile in case resurrection happens from a different thread
    private volatile boolean stopped;
 
-   private volatile boolean forceCoordSingleMember = true;
-
    // Note: Thread locals could work but if two nodes of the same cluster are
    // started from different threads, a thread local based solution would not
    // work, so we're sticking to an static solution
@@ -62,9 +60,9 @@ public class TEST_PING extends Discovery {
          // configured but it's not discarding messages.
          boolean discardEnabled = isDiscardEnabled(this);
          if (!discardEnabled) {
-            if (!discoveries.isEmpty()) {
-               // Make sure that concurrent startups within a test won't mess up discovery
-               synchronized (discoveries) {
+            // Make sure that concurrent startups within a test won't mess up discovery
+            synchronized (discoveries) {
+               if (!discoveries.isEmpty()) {
                   boolean traceEnabled = log.isTraceEnabled();
                   for (TEST_PING discovery : discoveries.values()) {
                      // Avoid sending to self! Since there are single instances of
@@ -88,24 +86,16 @@ public class TEST_PING extends Discovery {
                            log.trace("Skipping sending discovery to self");
                      }
                   }
+               } else {
+                  log.debug("No other nodes yet, marking this node as coord");
+                  is_coord = true;
                }
-            } else {
-               log.debug("No other nodes yet, so skip sending get-members request");
             }
          } else {
             log.debug("Not sending discovery because DISCARD is on");
          }
       } else {
          log.debug("Discovery protocol already stopped, so don't look for members");
-      }
-
-      if (forceCoordSingleMember && pingDatas.size() == 1) {
-         // The other node might have replied just before it installed its first view
-         // If that happened and there is no coordinator, force isCoord on
-         PingData singlePingData = pingDatas.iterator().next();
-         if (!singlePingData.isCoord()) singlePingData.coord(true);
-         // Only do this the first time
-         forceCoordSingleMember = false;
       }
 
       pingDatas.done();
