@@ -40,6 +40,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
       cfgBuilder.indexing().index(Index.ALL)
+            .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfgBuilder;

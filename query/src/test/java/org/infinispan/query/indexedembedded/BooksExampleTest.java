@@ -26,6 +26,7 @@ public class BooksExampleTest extends SingleCacheManagerTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Book.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);

@@ -37,13 +37,7 @@ public final class Search {
       }
       AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
       ensureAccessPermissions(advancedCache);
-
-      QueryEngine queryEngine;
-      if (SecurityActions.getCacheConfiguration(advancedCache).indexing().index().isEnabled()) {
-         queryEngine = getSearchManager(advancedCache).unwrap(QueryEngine.class);
-      } else {
-         queryEngine = new QueryEngine(advancedCache, null);
-      }
+      QueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(QueryEngine.class);
       return new EmbeddedQueryFactory(queryEngine);
    }
 

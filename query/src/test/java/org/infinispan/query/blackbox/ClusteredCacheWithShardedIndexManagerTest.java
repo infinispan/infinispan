@@ -24,6 +24,7 @@ public class ClusteredCacheWithShardedIndexManagerTest extends ClusteredCacheTes
       cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
               .index(Index.ALL)
+              .addIndexedEntity(Person.class)
               .addProperty("default.indexmanager", ShardIndexManager.class.getName())
               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
               .addProperty("lucene_version", "LUCENE_CURRENT");

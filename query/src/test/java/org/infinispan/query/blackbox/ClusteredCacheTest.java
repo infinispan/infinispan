@@ -69,6 +69,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
          .index(Index.ALL)
+         .addIndexedEntity(Person.class)
          .addProperty("default.directory_provider", "ram")
          .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
          .addProperty("lucene_version", "LUCENE_CURRENT");

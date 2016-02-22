@@ -25,6 +25,7 @@ public class CompatModeClusteredCacheTest extends ClusteredCacheTest {
             .compatibility().enable()
             .indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");

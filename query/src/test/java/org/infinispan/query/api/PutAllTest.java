@@ -29,6 +29,8 @@ public class PutAllTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing()
             .index(Index.ALL)
+            .addIndexedEntity(TestEntity.class)
+            .addIndexedEntity(AnotherTestEntity.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");

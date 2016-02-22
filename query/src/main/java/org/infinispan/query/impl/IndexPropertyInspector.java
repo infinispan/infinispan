@@ -6,7 +6,12 @@ import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.infinispan.hibernate.search.spi.InfinispanIntegration.*;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DATA_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.LOCKING_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.METADATA_CACHENAME;
 
 /**
  * Extract useful information from indexing configuration
@@ -15,6 +20,9 @@ import static org.infinispan.hibernate.search.spi.InfinispanIntegration.*;
  * @since 7.0
  */
 public final class IndexPropertyInspector {
+
+   private IndexPropertyInspector() {
+   }
 
    public static String getLockingCacheName(Properties properties) {
       return getPropertyFor(LOCKING_CACHENAME, properties, DEFAULT_LOCKING_CACHENAME);
@@ -31,8 +39,7 @@ public final class IndexPropertyInspector {
    public static boolean hasInfinispanDirectory(Properties properties) {
       String indexManager = getPropertyFor(Environment.INDEX_MANAGER_IMPL_NAME, properties, null);
       String directoryProvider = getPropertyFor("directory_provider", properties, null);
-      return (directoryProvider != null && "infinispan".equals(directoryProvider)) ||
-            (indexManager != null && indexManager.equals(InfinispanIndexManager.class.getName()));
+      return "infinispan".equals(directoryProvider) || InfinispanIndexManager.class.getName().equals(indexManager);
    }
 
    private static String getPropertyFor(String suffix, Properties properties, String defaultValue) {

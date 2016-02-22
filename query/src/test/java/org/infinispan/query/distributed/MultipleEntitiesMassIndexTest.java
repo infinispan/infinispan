@@ -39,6 +39,8 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
       cacheCfg
             .indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Car.class)
+            .addIndexedEntity(Person.class)
             .addProperty("hibernate.search.person.directory_provider", "ram")
             .addProperty("hibernate.search.car.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

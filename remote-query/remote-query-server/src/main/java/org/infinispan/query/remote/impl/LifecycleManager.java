@@ -25,8 +25,6 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.impl.filter.JPABinaryProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.filter.JPAContinuousQueryProtobufCacheEventFilterConverter;
@@ -116,20 +114,25 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.QUERYABLE)) {
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
+         cr.registerComponent(new ProtobufMatcher(serCtx), ProtobufMatcher.class);
 
-         // ensure the protobuf metadata cache is created
-         protobufMetadataManager.getCache();
+         boolean isCompatMode = cfg.compatibility().enabled();
 
-         cr.registerComponent(new ProtobufMatcher(protobufMetadataManager.getSerializationContext()), ProtobufMatcher.class);
-
-         if (cfg.compatibility().enabled()) {
-            cr.registerComponent(new CompatibilityReflectionMatcher(protobufMetadataManager.getSerializationContext()), CompatibilityReflectionMatcher.class);
+         if (isCompatMode) {
+            cr.registerComponent(new CompatibilityReflectionMatcher(serCtx), CompatibilityReflectionMatcher.class);
          }
 
-         if (cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled()) {
+         boolean isIndexed = cfg.indexing().index().isEnabled();
+
+         if (isIndexed && !isCompatMode) {
             log.infof("Registering RemoteValueWrapperInterceptor for cache %s", cacheName);
             createRemoteValueWrapperInterceptor(cr, cfg);
          }
+
+         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache().withFlags(Flag.OPERATION_HOTROD);
+         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode, serCtx);
+         cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
       }
    }
 
@@ -163,24 +166,13 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
       Configuration configuration = cr.getComponent(Configuration.class);
-      boolean isIndexed = configuration.indexing().index().isEnabled();
-      boolean isCompatMode = configuration.compatibility().enabled();
-      boolean remoteValueWrappingEnabled = isIndexed && !isCompatMode;
+      boolean remoteValueWrappingEnabled = configuration.indexing().index().isEnabled() && !configuration.compatibility().enabled();
       if (remoteValueWrappingEnabled) {
          if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
             throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
          }
       } else if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
          throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
-      }
-
-      InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
-      if (!icr.isInternalCache(cacheName)) {
-         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache().withFlags(Flag.OPERATION_HOTROD);
-         SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
-         SearchManager searchManager = isIndexed ? Search.getSearchManager(cache) : null;
-         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, searchManager, isCompatMode, serCtx);
-         cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
       }
    }
 

@@ -15,7 +15,6 @@ import org.infinispan.lucene.IndexScopedKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
@@ -57,11 +56,11 @@ public class AffinityTest extends MultipleCacheManagersTest {
       cacheCfg.clustering().hash().numSegments(60).numOwners(2).keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
               .index(Index.ALL)
+              .addIndexedEntity(Entity.class)
               .addProperty("hibernate.search.default.directory_provider", "infinispan")
               .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
               .addProperty("entity.indexmanager", "org.infinispan.query.affinity.ShardIndexManager");
       createClusteredCaches(3, cacheCfg);
-      caches().forEach(c -> c.getAdvancedCache().getComponentRegistry().getComponent(QueryInterceptor.class).enableClasses(new Class[]{Entity.class}));
    }
 
    public void testConcurrentWrites() throws InterruptedException {

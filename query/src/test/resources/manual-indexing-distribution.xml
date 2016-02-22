@@ -15,6 +15,9 @@
          <eviction size="-1" strategy="NONE" />
          <expiration max-idle="-1" />
          <indexing index="ALL">
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
+            </indexed-entities>
             <!-- Use our custom IndexManager; TODO autoinject by default? -->
             <property name="hibernate.search.default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
             <property name="hibernate.search.indexing_strategy">manual</property>

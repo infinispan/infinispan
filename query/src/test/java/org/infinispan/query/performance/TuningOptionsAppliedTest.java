@@ -18,6 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
@@ -30,7 +31,7 @@ import org.testng.annotations.Test;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "query.performance.TuningOptionsAppliedTest")
-public class TuningOptionsAppliedTest {
+public class TuningOptionsAppliedTest extends AbstractInfinispanTest {
 
    public void verifyFSDirectoryOptions() throws IOException {
       EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.fromXml("nrt-performance-writer.xml");

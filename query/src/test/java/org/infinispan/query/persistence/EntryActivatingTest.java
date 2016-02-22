@@ -100,6 +100,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
             .purgeOnStartup(true)
          .indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Country.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT")
          ;

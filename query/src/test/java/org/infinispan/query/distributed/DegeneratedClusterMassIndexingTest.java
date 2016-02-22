@@ -26,6 +26,7 @@ public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTes
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cfg.indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Car.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

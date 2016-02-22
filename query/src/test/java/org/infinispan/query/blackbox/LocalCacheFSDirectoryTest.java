@@ -3,6 +3,8 @@ package org.infinispan.query.blackbox;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.test.AnotherGrassEater;
+import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -25,6 +27,8 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing().index(Index.ALL)
+         .addIndexedEntity(Person.class)
+         .addIndexedEntity(AnotherGrassEater.class)
          .addProperty("default.directory_provider", "filesystem")
          .addProperty("default.indexBase", indexDirectory)
          .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
@@ -34,6 +38,7 @@ public class LocalCacheFSDirectoryTest extends LocalCacheTest {
 
    @Override
    protected void setup() throws Exception {
+      TestingUtil.recursiveFileRemove(indexDirectory);
       new File(indexDirectory).mkdirs();
       super.setup();
    }

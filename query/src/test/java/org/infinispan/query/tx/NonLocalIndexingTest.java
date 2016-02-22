@@ -34,6 +34,8 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       builder.indexing().index(Index.ALL)
+            .addIndexedEntity(Person.class)
+            .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(2, builder);

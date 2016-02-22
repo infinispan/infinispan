@@ -4,7 +4,6 @@ import org.hibernate.hql.ParsingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -60,6 +59,9 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().index(Index.ALL)
+            .addIndexedEntity(UserHS.class)
+            .addIndexedEntity(AccountHS.class)
+            .addIndexedEntity(TransactionHS.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(1, cfg);
@@ -67,7 +69,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
 
    @BeforeClass(alwaysRun = true)
    protected void init() throws Exception {
-      qe = new QueryEngine(cache(0).getAdvancedCache(), Search.getSearchManager(cache(0)));
+      qe = new QueryEngine(cache(0).getAdvancedCache(), true);
 
       // create the test objects
       User user1 = new UserHS();

@@ -368,6 +368,19 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 .withProperties(indexingProperties)
                 .autoConfig(autoConfig)
         ;
+        final ModelNode indexedEntitiesModel = CacheConfigurationResource.INDEXED_ENTITIES.resolveModelAttribute(context, cache);
+        if (indexing.isEnabled() && indexedEntitiesModel.isDefined()) {
+            for (ModelNode indexedEntityNode : indexedEntitiesModel.asList()) {
+                String className = indexedEntityNode.asString();
+// TODO This is ignored for now because we do not have access to the proper ClassLoader
+//                try {
+//                    Class<?> entityClass = CacheConfigurationAdd.class.getClassLoader().loadClass(className);
+//                    builder.indexing().addIndexedEntity(entityClass);
+//                } catch (ClassNotFoundException e) {
+//                    throw InfinispanMessages.MESSAGES.unableToInstantiateClass(className);
+//                }
+            }
+        }
 
         if (cache.hasDefined(ModelKeys.REMOTE_CACHE)) {
              builder.sites().backupFor().remoteCache(CacheConfigurationResource.REMOTE_CACHE.resolveModelAttribute(context, cache).asString());

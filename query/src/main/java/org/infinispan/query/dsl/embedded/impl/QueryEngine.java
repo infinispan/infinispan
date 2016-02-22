@@ -22,6 +22,7 @@ import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.hql.RowPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.*;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -56,31 +57,52 @@ public class QueryEngine {
 
    protected final AdvancedCache<?, ?> cache;
 
+   protected final boolean isIndexed;
+
    /**
     * Optional cache for query objects.
     */
    protected final QueryCache queryCache;
 
    /**
-    * Optional. This is {@code null} if the cache is not indexed.
+    * Optional, lazily acquired. This is {@code null} if the cache is not indexed.
     */
-   protected final SearchManager searchManager;
+   private SearchManager searchManager;
 
    /**
-    * Optional. This is {@code null} if the cache is not indexed.
+    * Optional, lazily acquired. This is {@code null} if the cache is not indexed.
     */
-   protected final SearchIntegrator searchFactory;
+   private SearchIntegrator searchFactory;
 
    protected final QueryParser queryParser = new QueryParser();
 
    protected final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
-   public QueryEngine(AdvancedCache<?, ?> cache, SearchManager searchManager) {
+   public QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
       this.cache = cache;
+      this.isIndexed = isIndexed;
       this.queryCache = ComponentRegistryUtils.getQueryCache(cache);
-      this.searchManager = searchManager;
-      searchFactory = searchManager != null ? searchManager.unwrap(SearchIntegrator.class) : null;
       authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
+   }
+
+   protected SearchManager getSearchManager() {
+      if (!isIndexed) {
+         throw new IllegalStateException("Cache is not indexed");
+      }
+      if (searchManager == null) {
+         searchManager = Search.getSearchManager(cache);
+      }
+      return searchManager;
+   }
+
+   protected SearchIntegrator getSearchFactory() {
+      if (!isIndexed) {
+         throw new IllegalStateException("Cache is not indexed");
+      }
+      if (searchFactory == null) {
+         searchFactory = getSearchManager().unwrap(SearchIntegrator.class);
+      }
+      return searchFactory;
    }
 
    public BaseQuery buildQuery(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
@@ -483,7 +505,7 @@ public class QueryEngine {
          // the query is a contradiction, there are no matches
          return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
       }
-      if (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE || searchManager == null) {
+      if (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE || !isIndexed) {
          // fully non-indexed execution because the filter matches everything or there is no indexing at all
          return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
@@ -642,7 +664,7 @@ public class QueryEngine {
    }
 
    protected BooleShannonExpansion.IndexedFieldProvider getIndexedFieldProvider(FilterParsingResult<?> parsingResult) {
-      return new HibernateSearchIndexedFieldProvider(searchFactory, (Class<?>) parsingResult.getTargetEntityMetadata());
+      return new HibernateSearchIndexedFieldProvider(getSearchFactory(), (Class<?>) parsingResult.getTargetEntityMetadata());
    }
 
    protected JPAFilterAndConverter makeFilter(String jpaQuery, Map<String, Object> namedParameters) {
@@ -667,7 +689,7 @@ public class QueryEngine {
     * Build a Lucene index query.
     */
    protected CacheQuery buildLuceneQuery(String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
-      if (searchManager == null) {
+      if (!isIndexed) {
          throw log.cannotRunLuceneQueriesIfNotIndexed();
       }
 
@@ -675,7 +697,7 @@ public class QueryEngine {
 
       LuceneQueryParsingResult parsingResult = transformJpaToLucene(jpqlString, namedParameters);
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(parsingResult.getQuery(), parsingResult.getTargetEntityName());
-      CacheQuery cacheQuery = searchManager.getQuery(luceneQuery, parsingResult.getTargetEntity());
+      CacheQuery cacheQuery = getSearchManager().getQuery(luceneQuery, parsingResult.getTargetEntity());
 
       if (parsingResult.getSort() != null) {
          cacheQuery = cacheQuery.sort(parsingResult.getSort());
@@ -728,14 +750,14 @@ public class QueryEngine {
 
       FieldBridgeProvider fieldBridgeProvider = new FieldBridgeProvider() {
 
-         private final ClassBasedLucenePropertyHelper propertyHelper = new ClassBasedLucenePropertyHelper(searchFactory, entityNamesResolver);
+         private final ClassBasedLucenePropertyHelper propertyHelper = new ClassBasedLucenePropertyHelper(getSearchFactory(), entityNamesResolver);
 
          @Override
          public FieldBridge getFieldBridge(String type, String propertyPath) {
             return propertyHelper.getFieldBridge(type, Arrays.asList(propertyPath.split("[.]")));
          }
       };
-      return new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+      return new LuceneProcessingChain.Builder(getSearchFactory(), entityNamesResolver)
             .namedParameters(namedParameters)
             .buildProcessingChainForClassBasedEntities(fieldBridgeProvider);
    }

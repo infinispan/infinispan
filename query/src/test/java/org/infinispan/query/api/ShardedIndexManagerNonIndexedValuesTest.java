@@ -18,6 +18,8 @@ public class ShardedIndexManagerNonIndexedValuesTest extends NonIndexedValuesTes
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(isTransactional());
       c.indexing()
               .index(Index.LOCAL)
+              .addIndexedEntity(TestEntity.class)
+              .addIndexedEntity(AnotherTestEntity.class)
               .addProperty("default.indexmanager", ShardIndexManager.class.getName())
               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
               .addProperty("lucene_version", "LUCENE_CURRENT");

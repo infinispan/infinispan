@@ -3,8 +3,10 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.AUTO_CONFIG;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
+import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
 
 import java.util.Properties;
+import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -14,6 +16,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
 /**
  * Configures indexing of entries in the cache for searching.
  */
@@ -177,6 +180,17 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return attributes.attribute(AUTO_CONFIG).get();
    }
 
+   public IndexingConfigurationBuilder addIndexedEntity(Class<?> indexedEntity) {
+      Set<Class<?>> indexedEntities = indexedEntities();
+      indexedEntities.add(indexedEntity);
+      attributes.attribute(INDEXED_ENTITIES).set(indexedEntities);
+      return this;
+   }
+
+   Set<Class<?>> indexedEntities() {
+      return attributes.attribute(INDEXED_ENTITIES).get();
+   }
+
    @Override
    public void validate() {
       if (enabled()) {
@@ -184,7 +198,12 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          if (clustering().cacheMode().isInvalidation()) {
             throw log.invalidConfigurationIndexingWithInvalidation();
          }
+         if (indexedEntities().isEmpty()) {
+            //TODO [anistor] This warning will become a CacheConfigurationException in infinispan 9; do nothing if there are some programmatically defined entity mappings
+            log.noIndexableClassesDefined();
+         }
       }
+      //TODO [anistor] Infinispan 9 must not allow definition of indexed entities or properties if indexing not enabled
    }
 
    @Override

@@ -147,9 +147,7 @@ public class LocalCacheTest extends AbstractQueryTest {
 
    @Test
    public void testAdded() {
-      assertIndexingKnows(cache);
       loadTestingData();
-      assertIndexingKnows(cache, Person.class);
 
       CacheQuery cacheQuery = createCacheQuery(cache, "name", "Goat");
       List<Object> found = cacheQuery.list();
@@ -505,20 +503,7 @@ public class LocalCacheTest extends AbstractQueryTest {
       StaticTestingErrorHandler.assertAllGood(cache);
    }
 
-   @Test
-   public void testEntityDiscovery() {
-      assertIndexingKnows(cache);
-
-      Person p = new Person();
-      p.setName("Lucene developer");
-      p.setAge(30);
-      p.setBlurb("works best on weekends");
-      cache.put(p.getName(), p);
-      
-      assertIndexingKnows(cache, Person.class);
-   }
-
-   private void loadTestingData() {
+   protected void loadTestingData() {
       prepareTestingData();
 
       cache.put(key1, person1);

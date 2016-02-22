@@ -9,6 +9,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
@@ -45,22 +46,23 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().index(Index.ALL)
+            .addIndexedEntity(UserHS.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    public void testQueryCache() throws Exception {
-      // persist one User object to ensure the index exists and queries can be validated against it
       UserHS user = new UserHS();
       user.setId(1);
       user.setName("John");
       cache.put("user_" + user.getId(), user);
 
       // spy on the query cache
-      QueryCache queryCache = TestingUtil.extractGlobalComponent(cacheManager, QueryCache.class);
+      QueryEngine queryEngine = TestingUtil.extractComponent(cache, QueryEngine.class);
+      QueryCache queryCache = (QueryCache) TestingUtil.extractField(QueryEngine.class, queryEngine, "queryCache");
       QueryCache queryCacheSpy = spy(queryCache);
-      TestingUtil.replaceComponent(cacheManager, QueryCache.class, queryCacheSpy, true);
+      TestingUtil.replaceField(queryCacheSpy, "queryCache", queryEngine, QueryEngine.class);
 
       // obtain the query factory and create a query builder
       QueryFactory qf = Search.getQueryFactory(cache);

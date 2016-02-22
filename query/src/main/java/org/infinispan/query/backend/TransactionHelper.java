@@ -49,7 +49,7 @@ class TransactionHelper {
       }
    }
 
-   static interface Operation {
+   interface Operation {
       void execute();
    }
 

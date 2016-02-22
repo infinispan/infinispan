@@ -15,11 +15,15 @@
          <eviction size="-1" strategy="NONE" />
          <expiration max-idle="-1" />
             <indexing index="LOCAL">
+               <indexed-entities>
+                  <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+                  <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
+               </indexed-entities>
                <!-- Use our custom IndexManager; TODO autoinject by default? -->
                <property name="hibernate.search.default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                <!-- Enable error safety net -->
                <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
-                <property name="lucene_version">LUCENE_CURRENT</property>
+               <property name="lucene_version">LUCENE_CURRENT</property>
             </indexing>
          <state-transfer timeout="480000" enabled="true" />
        </distributed-cache>

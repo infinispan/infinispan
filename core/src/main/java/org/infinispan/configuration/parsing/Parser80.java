@@ -2311,35 +2311,17 @@ public class Parser80 implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-      Properties indexingProperties = parseProperties(reader);
-      builder.indexing().withProperties(indexingProperties);
-   }
 
-   public static Properties parseProperties(final XMLExtendedStreamReader reader) throws XMLStreamException {
-      Properties p = new Properties();
+      Properties indexingProperties = new Properties();
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case INDEXED_ENTITIES: {
+               parseIndexedEntities(reader, holder, builder);
+               break;
+            }
             case PROPERTY: {
-               int attributes = reader.getAttributeCount();
-               ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
-               String key = null;
-               String propertyValue;
-               for (int i = 0; i < attributes; i++) {
-                  String value = replaceProperties(reader.getAttributeValue(i));
-                  Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-                  switch (attribute) {
-                     case NAME: {
-                        key = value;
-                        break;
-                     }
-                     default: {
-                        throw ParseUtils.unexpectedAttribute(reader, i);
-                     }
-                  }
-               }
-               propertyValue = replaceProperties(reader.getElementText());
-               p.setProperty(key, propertyValue);
+               parseProperty(reader, indexingProperties);
                break;
             }
             default: {
@@ -2347,7 +2329,65 @@ public class Parser80 implements ConfigurationParser {
             }
          }
       }
-      return p;
+      builder.indexing().withProperties(indexingProperties);
+   }
+
+   private void parseIndexedEntities(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) throws XMLStreamException {
+      ParseUtils.requireNoAttributes(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case INDEXED_ENTITY: {
+               ParseUtils.requireNoAttributes(reader);
+               String className = reader.getElementText();
+               Class<?> indexedEntity = Util.loadClass(className, holder.getClassLoader());
+               builder.indexing().addIndexedEntity(indexedEntity);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private static void parseProperty(XMLExtendedStreamReader reader, Properties properties) throws XMLStreamException {
+      int attributes = reader.getAttributeCount();
+      ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
+      String key = null;
+      String propertyValue;
+      for (int i = 0; i < attributes; i++) {
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case NAME: {
+               key = value;
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      propertyValue = replaceProperties(reader.getElementText());
+      properties.setProperty(key, propertyValue);
+   }
+
+   public static Properties parseProperties(final XMLExtendedStreamReader reader) throws XMLStreamException {
+      Properties properties = new Properties();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PROPERTY: {
+               parseProperty(reader, properties);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+      return properties;
    }
 
    public enum TransactionMode {

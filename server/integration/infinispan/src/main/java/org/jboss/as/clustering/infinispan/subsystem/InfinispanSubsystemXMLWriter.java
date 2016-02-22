@@ -581,10 +581,16 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             }
         }
 
-        if (cache.get(ModelKeys.INDEXING).isDefined()|| cache.get(ModelKeys.INDEXING_PROPERTIES).isDefined()){
+        if (cache.get(ModelKeys.INDEXING).isDefined() || cache.get(ModelKeys.INDEXED_ENTITIES).isDefined()
+              || cache.get(ModelKeys.INDEXING_PROPERTIES).isDefined()){
             writer.writeStartElement(Element.INDEXING.getLocalName());
             CacheConfigurationResource.INDEXING.marshallAsAttribute(cache, writer);
             CacheConfigurationResource.INDEXING_AUTO_CONFIG.marshallAsAttribute(cache, writer);
+            if (cache.get(ModelKeys.INDEXED_ENTITIES).isDefined()) {
+                writer.writeStartElement(Element.INDEXED_ENTITIES.getLocalName());
+                CacheConfigurationResource.INDEXED_ENTITIES.marshallAsElement(cache,writer);
+                writer.writeEndElement();
+            }
             CacheConfigurationResource.INDEXING_PROPERTIES.marshallAsElement(cache,writer);
             writer.writeEndElement();
         }

@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.TestSegmentReadLocker;
+import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -53,6 +54,7 @@ public class IndexStoredIndexedCacheTest extends MultipleCacheManagersTest {
          .disable()
       .indexing()
          .index(Index.ALL)
+            .addIndexedEntity(Person.class)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(2, "lucene", configurationBuilder);

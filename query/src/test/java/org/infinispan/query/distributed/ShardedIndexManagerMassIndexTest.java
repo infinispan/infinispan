@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.query.affinity.ShardIndexManager;
+import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class ShardedIndexManagerMassIndexTest extends DistributedMassIndexingTes
       cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
               .index(Index.ALL)
+              .addIndexedEntity(Car.class)
               .addProperty("default.indexmanager", ShardIndexManager.class.getName())
               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
               .addProperty("lucene_version", "LUCENE_CURRENT");

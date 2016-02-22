@@ -115,7 +115,7 @@ public class QueryBox {
 
    public void setCache(AdvancedCache<?, ?> cache) {
       this.cache = cache;
-      keyTransformationHandler = KeyTransformationHandler.getInstance(cache.getAdvancedCache());
+      keyTransformationHandler = KeyTransformationHandler.getInstance(cache);
    }
 
 }

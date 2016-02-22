@@ -34,6 +34,7 @@ public class ClusteredCacheQueryTimeoutTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg.indexing()
             .index(Index.LOCAL)
+            .addIndexedEntity(Foo.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);

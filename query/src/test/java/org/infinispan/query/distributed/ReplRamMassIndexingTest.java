@@ -25,6 +25,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
       cacheCfg
             .indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Car.class)
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.default.exclusive_index_use", "true")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

@@ -9,6 +9,10 @@
       <local-cache name="queryCache_lucenestore_async_filestore">
          <transaction mode="NON_XA"/>
          <indexing index="ALL">
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+               <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
+            </indexed-entities>
             <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
             <!-- Enable error safety net -->
             <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>

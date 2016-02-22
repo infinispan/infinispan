@@ -45,6 +45,8 @@ public enum Element {
     HASH("hash"),
     JGROUPS("jgroups"),
     IDENTITY_ROLE_MAPPER("identity-role-mapper"),
+    INDEXED_ENTITIES("indexed-entities"),
+    INDEXED_ENTITY("indexed-entity"),
     INDEXING("indexing"),
     INTERCEPTOR("interceptor"),
     INVALIDATION_CACHE("invalidation-cache"),

@@ -73,6 +73,9 @@ public abstract class AbstractQueryDslTest extends MultipleCacheManagersTest {
       cfg.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().index(Index.ALL)
+            .addIndexedEntity(getModelFactory().getUserImplClass())
+            .addIndexedEntity(getModelFactory().getAccountImplClass())
+            .addIndexedEntity(getModelFactory().getTransactionImplClass())
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(1, cfg);

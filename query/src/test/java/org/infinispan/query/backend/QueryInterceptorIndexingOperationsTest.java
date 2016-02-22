@@ -115,6 +115,8 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       final ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().index(Index.ALL)
+            .addIndexedEntity(Entity1.class)
+            .addIndexedEntity(Entity2.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
@@ -143,7 +145,6 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    private Directory initializeAndExtractDirectory(Cache cache) {
       QueryInterceptor queryInterceptor = extractComponent(cache, QueryInterceptor.class);
       SearchIntegrator searchFactory = queryInterceptor.getSearchFactory();
-      searchFactory.addClasses(Entity1.class, Entity2.class);
       DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) searchFactory.getIndexBinding(Entity1.class).getIndexManagers()[0];
       return indexManager.getDirectoryProvider().getDirectory();
    }
@@ -155,7 +156,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
 
    @Indexed(index = "theIndex")
    @SuppressWarnings("unused")
-   class Entity1 {
+   static class Entity1 {
 
       @Field
       private final String attribute;
@@ -167,7 +168,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
 
    @Indexed(index = "theIndex")
    @SuppressWarnings("unused")
-   class Entity2 {
+   static class Entity2 {
 
       @Field
       private final String attribute;

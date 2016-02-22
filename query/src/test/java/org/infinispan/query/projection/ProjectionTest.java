@@ -32,6 +32,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg.indexing().index(Index.ALL)
+            .addIndexedEntity(Foo.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);

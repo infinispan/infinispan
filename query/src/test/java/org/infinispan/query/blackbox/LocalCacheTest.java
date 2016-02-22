@@ -1,12 +1,8 @@
 package org.infinispan.query.blackbox;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.lucene.index.Term;
@@ -22,14 +18,10 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.hibernate.search.filter.FullTextFilter;
-import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
-import org.hibernate.search.engine.spi.EntityIndexBinding;
-import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
@@ -183,9 +175,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
 
    public void testAdded() throws ParseException {
-      assertIndexingKnows(cache);
       loadTestingData();
-      assertIndexingKnows(cache, Person.class, AnotherGrassEater.class);
       queryParser = createQueryParser("name");
 
       Query luceneQuery = queryParser.parse("Goat");
@@ -674,39 +664,13 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cfg
          .indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Person.class)
+            .addIndexedEntity(AnotherGrassEater.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg);
-   }
-
-   public void testEntityDiscovery() {
-      assertIndexingKnows(cache);
-
-      Person p = new Person();
-      p.setName("Lucene developer");
-      p.setAge(30);
-      p.setBlurb("works best on weekends");
-      cache.put(p.getName(), p);
-
-      assertIndexingKnows(cache, Person.class);
-   }
-
-   /**
-    * Verifies if the indexing interceptor is aware of a specific list of types.
-    * @param cache the cache containing the indexes
-    * @param types vararg listing the types the indexing engine should know
-    */
-   private void assertIndexingKnows(Cache<Object, Object> cache, Class... types) {
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
-      assertNotNull(searchIntegrator);
-      Map<Class<?>, EntityIndexBinding> indexBindingForEntity = searchIntegrator.unwrap(ExtendedSearchIntegrator.class).getIndexBindings();
-      assertNotNull(indexBindingForEntity);
-      Set<Class<?>> keySet = indexBindingForEntity.keySet();
-      assertEquals(types.length, keySet.size());
-      assertTrue(keySet.containsAll(Arrays.asList(types)));
    }
 
    protected void loadTestingData() {

@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,6 +31,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
                .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing()
                .index(Index.ALL)
+               .addIndexedEntity(Person.class)
                .addProperty("default.directory_provider", "ram")
                .addProperty("lucene_version", "LUCENE_CURRENT");
          cc = TestCacheManagerFactory.createCacheManager(cfg);

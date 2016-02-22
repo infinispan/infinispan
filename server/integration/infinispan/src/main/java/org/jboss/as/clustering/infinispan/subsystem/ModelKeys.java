@@ -112,6 +112,8 @@ public class ModelKeys {
     static final String IMPLEMENTATION = "implementation";
     static final String IMPLEMENTATION_NAME = "IMPLEMENTATION";
     static final String INDEX = "index";
+    static final String INDEXED_ENTITIES = "indexed-entities";
+    static final String INDEXED_ENTITY = "indexed-entity";
     static final String INDEXING = "indexing";
     static final String INDEXING_PROPERTIES = "indexing-properties";
     static final String INITIAL_CLUSTER_SIZE = "initial-cluster-size";

@@ -9,6 +9,9 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.QueryBuilder;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
+import org.infinispan.all.embeddedquery.testdomain.Car;
+import org.infinispan.all.embeddedquery.testdomain.NumericType;
+import org.infinispan.all.embeddedquery.testdomain.Person;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -44,6 +47,9 @@ public abstract class AbstractQueryTest {
           .transactionMode(TransactionMode.TRANSACTIONAL)
           .indexing()
           .index(Index.ALL)
+          .addIndexedEntity(NumericType.class)
+          .addIndexedEntity(Person.class)
+          .addIndexedEntity(Car.class)
           .addProperty("default.directory_provider", "ram")
           .addProperty("error_handler", "org.infinispan.all.embeddedquery.testdomain.StaticTestingErrorHandler")
           .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -68,17 +74,4 @@ public abstract class AbstractQueryTest {
       HashSet<Class<?>> indexedTypes = new HashSet<Class<?>>(searchIntegrator.getIndexedTypes());
       assertEquals(expectedTypes,  indexedTypes);
    }
-
-   protected static BasicCache<Object, Object> getCacheForWrite() {
-      return getCacheForQuery();
-   }
-
-   protected static BasicCache<Object, Object> getCacheForQuery() {
-      return cache;
-   }
-
-   protected static QueryFactory getQueryFactory() {
-      return Search.getQueryFactory((Cache) getCacheForQuery());
-   }
-
 }

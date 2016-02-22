@@ -88,6 +88,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
              .purgeOnStartup(false)
           .indexing()
              .index(Index.LOCAL)
+             .addIndexedEntity(SEntity.class)
              .addProperty("default.directory_provider", "filesystem")
              .addProperty("lucene_version", "LUCENE_CURRENT")
              .addProperty("default.indexBase", TMP_DIR + File.separator + "idx");

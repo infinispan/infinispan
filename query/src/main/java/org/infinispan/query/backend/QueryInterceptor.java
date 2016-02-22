@@ -84,6 +84,12 @@ public final class QueryInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
 
+   /**
+    * The classes declared by the indexing config as indexable. In 8.2 this can be null, indicating that no classes
+    * were declared and we are running in the (deprecated) autodetect mode. Autodetect mode will be removed in 9.0.
+    */
+   private Class<?>[] indexedEntities;
+
    @Override
    protected Log getLog() {
       return log;
@@ -111,17 +117,21 @@ public final class QueryInterceptor extends CommandInterceptor {
       this.rpcManager = rpcManager;
       this.asyncExecutor = e;
       this.dataContainer = dataContainer;
-      this.queryKnownClasses = new QueryKnownClasses(cache.getName(), cacheManager, internalCacheRegistry);
+      Set<Class<?>> indexedEntities = cache.getCacheConfiguration().indexing().indexedEntities();
+      this.indexedEntities = indexedEntities.isEmpty() ? null : indexedEntities.toArray(new Class<?>[indexedEntities.size()]);
+      this.queryKnownClasses = indexedEntities.isEmpty() ? new QueryKnownClasses(cache.getName(), cacheManager, internalCacheRegistry) : new QueryKnownClasses(indexedEntities);
       this.searchFactoryHandler = new SearchFactoryHandler(this.searchFactory, this.queryKnownClasses, new TransactionHelper(transactionManager));
    }
 
    @Start
    protected void start() {
-      queryKnownClasses.start(searchFactoryHandler);
-      Set<Class<?>> keys = queryKnownClasses.keys();
-      Class<?>[] array = keys.toArray(new Class<?>[keys.size()]);
-      //Important to enable them all in a single call, much more efficient:
-      enableClasses(array);
+      if (indexedEntities == null) {
+         queryKnownClasses.start(searchFactoryHandler);
+         Set<Class<?>> classes = queryKnownClasses.keys();
+         Class<?>[] classesArray = classes.toArray(new Class<?>[classes.size()]);
+         //Important to enable them all in a single call, much more efficient:
+         enableClasses(classesArray);
+      }
       stopping.set(false);
    }
 
@@ -140,7 +150,6 @@ public final class QueryInterceptor extends CommandInterceptor {
 
    /**
     * Use this executor for Async operations
-    * @return
     */
    public ExecutorService getAsyncExecutor() {
       return asyncExecutor;
@@ -198,7 +207,7 @@ public final class QueryInterceptor extends CommandInterceptor {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
       Boolean isIndexable = queryKnownClasses.get(entityType);
       if (isIndexable != null && isIndexable.booleanValue()) {
-         if (searchFactoryHandler.isIndexed(entityType)) {
+         if (searchFactoryHandler.hasIndex(entityType)) {
             performSearchWorks(searchWorkCreator.createPerEntityTypeWorks((Class<Object>) entityType, WorkType.PURGE_ALL), transactionContext);
          }
       }
@@ -207,7 +216,7 @@ public final class QueryInterceptor extends CommandInterceptor {
    private void purgeAllIndexes(TransactionContext transactionContext) {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
       for (Class c : queryKnownClasses.keys()) {
-         if (searchFactoryHandler.isIndexed(c)) {
+         if (searchFactoryHandler.hasIndex(c)) {
             //noinspection unchecked
             performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(c, WorkType.PURGE_ALL), transactionContext);
          }
@@ -245,8 +254,8 @@ public final class QueryInterceptor extends CommandInterceptor {
       }
    }
 
-   public boolean isIndexed(final Class<?> c) {
-      return searchFactoryHandler.isIndexed(c);
+   public boolean hasIndex(final Class<?> c) {
+      return searchFactoryHandler.hasIndex(c);
    }
 
    private Object extractValue(Object wrappedValue) {
@@ -343,7 +352,7 @@ public final class QueryInterceptor extends CommandInterceptor {
    }
 
    private Map<Object, Object> getPreviousValues(Set<Object> keySet) {
-      HashMap<Object, Object> previousValues = new HashMap<Object, Object>();
+      HashMap<Object, Object> previousValues = new HashMap<>();
       for (Object key : keySet) {
          InternalCacheEntry internalCacheEntry = dataContainer.get(key);
          Object previousValue = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
@@ -406,7 +415,7 @@ public final class QueryInterceptor extends CommandInterceptor {
     * @param command the visited PutMapCommand
     * @param ctx the InvocationContext of the PutMapCommand
     * @param previousValues a map with the previous values, before processing the given PutMapCommand
-    * @param transactionContext
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, final Map<Object, Object> previousValues, TransactionContext transactionContext) {
       if (shouldModifyIndexes(command, ctx)) {

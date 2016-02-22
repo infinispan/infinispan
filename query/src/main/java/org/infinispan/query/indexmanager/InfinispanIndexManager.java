@@ -20,6 +20,7 @@ public class InfinispanIndexManager extends DirectoryBasedIndexManager {
    private static final Log log = LogFactory.getLog(InfinispanIndexManager.class, Log.class);
    private InfinispanBackendQueueProcessor remoteMaster;
 
+   @Override
    protected BackendQueueProcessor createBackend(String indexName, Properties cfg, WorkerBuildContext buildContext) {
       //Don't use the BackendFactory here as we want to override it;
       //the standard BackendFactory will be created on-demand on the node if/when it's elected as master.
@@ -28,6 +29,7 @@ public class InfinispanIndexManager extends DirectoryBasedIndexManager {
       return remoteMaster;
    }
 
+   @Override
    protected DirectoryProvider createDirectoryProvider(String indexName, Properties cfg, WorkerBuildContext buildContext) {
       //warn user we're overriding the configured DirectoryProvider - if anything different than Infinispan is selected.
       String directoryOption = cfg.getProperty("directory_provider", null);

@@ -10,6 +10,10 @@
       <replicated-cache name="JDBCBased_LocalIndex" mode="SYNC" remote-timeout="20000">
          <transaction mode="NON_XA" />
          <indexing index="ALL">
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+               <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
+            </indexed-entities>
             <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
             <property name="default.reader.strategy">shared</property>
             <property name="default.locking_cachename">LuceneIndexesLocking_custom1</property>

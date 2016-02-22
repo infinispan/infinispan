@@ -1,9 +1,7 @@
 package org.infinispan.query.distributed;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
@@ -34,6 +32,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.indexing()
             .index(Index.LOCAL)
+            .addIndexedEntity(Car.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");

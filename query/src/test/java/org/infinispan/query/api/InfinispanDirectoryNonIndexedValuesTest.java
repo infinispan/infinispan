@@ -18,6 +18,8 @@ public class InfinispanDirectoryNonIndexedValuesTest extends NonIndexedValuesTes
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(isTransactional());
       c.indexing()
             .index(Index.LOCAL)
+            .addIndexedEntity(TestEntity.class)
+            .addIndexedEntity(AnotherTestEntity.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");

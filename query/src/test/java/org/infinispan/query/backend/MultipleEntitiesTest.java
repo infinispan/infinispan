@@ -32,12 +32,15 @@ import static org.testng.Assert.assertTrue;
  * @author gustavonalle
  * @since 7.1
  */
+@Test(groups = "functional", testName = "query.backend.MultipleEntitiesTest")
 public class MultipleEntitiesTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
       cfg.indexing().index(Index.ALL)
+            .addIndexedEntity(Bond.class)
+            .addIndexedEntity(Debenture.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -72,7 +75,7 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
       LuceneBackendQueueProcessor bqp = (LuceneBackendQueueProcessor) im.getBackendQueueProcessor();
       LuceneBackendResources indexResources = bqp.getIndexResources();
       IndexWorkVisitor<Void, LuceneWorkExecutor> visitor = indexResources.getWorkVisitor();
-      assertTrue(TestingUtil.extractField(visitor, "updateDelegate") instanceof ByTermUpdateWorkExecutor);
+      assertTrue(TestingUtil.extractField(visitor, "updateExecutor") instanceof ByTermUpdateWorkExecutor);
    }
 }
 

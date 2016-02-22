@@ -3,6 +3,7 @@ package org.infinispan.query.blackbox;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -36,6 +37,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cb.indexing()
             .index(Index.ALL) //index also changes originated on other nodes, the index is not shared
+            .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "filesystem")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("default.indexBase", TMP_DIR + File.separator + indexName)

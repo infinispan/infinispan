@@ -1,6 +1,7 @@
 package org.infinispan.all.embeddedquery;
 
 import org.hibernate.hql.ParsingException;
+import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Account;
 import org.infinispan.all.embeddedquery.testdomain.Address;
 import org.infinispan.all.embeddedquery.testdomain.ModelFactory;
@@ -8,14 +9,22 @@ import org.infinispan.all.embeddedquery.testdomain.NotIndexed;
 import org.infinispan.all.embeddedquery.testdomain.Transaction;
 import org.infinispan.all.embeddedquery.testdomain.User;
 import org.infinispan.all.embeddedquery.testdomain.hsearch.ModelFactoryHS;
+import org.infinispan.commons.api.BasicCache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.text.DateFormat;
@@ -49,6 +58,43 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    private static Date makeDate(String dateStr) throws ParseException {
       DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
       return DATE_FORMAT.parse(dateStr);
+   }
+
+   protected static EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder gcfg = new GlobalConfigurationBuilder();
+      gcfg.globalJmxStatistics().allowDuplicateDomains(true);
+
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
+            .indexing()
+            .index(Index.ALL)
+            .addIndexedEntity(getModelFactory().getUserImplClass())
+            .addIndexedEntity(getModelFactory().getAccountImplClass())
+            .addIndexedEntity(getModelFactory().getTransactionImplClass())
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("error_handler", "org.infinispan.all.embeddedquery.testdomain.StaticTestingErrorHandler")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+
+      EmbeddedCacheManager cm = new DefaultCacheManager(gcfg.build(), cfg.build());
+
+      return cm;
+   }
+
+   private static ModelFactory getModelFactory() {
+      return ModelFactoryHS.INSTANCE;
+   }
+
+   protected static QueryFactory getQueryFactory() {
+      return Search.getQueryFactory((Cache) getCacheForQuery());
+   }
+
+   protected static BasicCache<Object, Object> getCacheForWrite() {
+      return cache;
+   }
+
+   protected static BasicCache<Object, Object> getCacheForQuery() {
+      return cache;
    }
 
    @BeforeClass
@@ -3036,9 +3082,4 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(1L, list.get(2)[0]);
       assertNull(list.get(2)[1]);
    }
-
-   private static ModelFactory getModelFactory() {
-      return ModelFactoryHS.INSTANCE;
-   }
-
 }

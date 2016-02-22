@@ -160,6 +160,8 @@ public class QueryInterceptorTest {
                       .persistence().passivation(true)
                       .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
                       .indexing().index(Index.ALL)
+                      .addIndexedEntity(Person.class)
+                      .addIndexedEntity(Car.class)
                       .addProperty("default.directory_provider", "filesystem")
                       .addProperty("default.indexBase", indexDir.getAbsolutePath())
                       .addProperty("lucene_version", "LUCENE_CURRENT")

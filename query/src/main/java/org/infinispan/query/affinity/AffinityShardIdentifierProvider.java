@@ -5,7 +5,6 @@ import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.filter.FullTextFilterImplementor;
 import org.hibernate.search.spi.BuildContext;
 import org.hibernate.search.store.ShardIdentifierProvider;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -17,6 +16,7 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,6 +30,9 @@ import java.util.stream.IntStream;
  */
 public class AffinityShardIdentifierProvider implements ShardIdentifierProvider {
 
+   // these are lazily initialized from ComponentRegistry
+   private RpcManager rpcManager;
+   private DistributionManager distributionManager;
    private KeyTransformationHandler keyTransformationHandler;
    private ComponentRegistry componentRegistry;
    private Set<String> identifiers;
@@ -44,12 +47,11 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
       String cacheName = componentRegistry.getCacheName();
       ClusteringConfiguration clusteringConfiguration = embeddedCacheManager.getCacheConfiguration(cacheName).clustering();
       int numSegments = clusteringConfiguration.cacheMode().isClustered() ? clusteringConfiguration.hash().numSegments() : 1;
-      keyTransformationHandler = componentRegistry.getComponent(QueryInterceptor.class).getKeyTransformationHandler();
       identifiers = IntStream.rangeClosed(0, numSegments - 1).boxed().map(String::valueOf).collect(Collectors.toSet());
    }
 
    private int getSegment(Object key) {
-      DistributionManager distributionManager = componentRegistry.getComponent(DistributionManager.class);
+      DistributionManager distributionManager = getDistributionManager();
       if (distributionManager == null) {
          return 0;
       }
@@ -62,7 +64,7 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
 
    @Override
    public String getShardIdentifier(Class<?> entityType, Serializable id, String idAsString, Document document) {
-      Object key = keyTransformationHandler.stringToKey(idAsString, null);
+      Object key = getKeyTransformationHandler().stringToKey(idAsString, null);
       int segment = getSegment(key);
       return String.valueOf(segment);
    }
@@ -74,18 +76,36 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
 
    @Override
    public Set<String> getShardIdentifiersForDeletion(Class<?> entity, Serializable id, String idInString) {
-      RpcManager rpcManager = componentRegistry.getComponent(RpcManager.class);
-      DistributionManager distributionManager = componentRegistry.getComponent(DistributionManager.class);
-      if(distributionManager == null) {
-         return Util.asSet("0");
+      if (getDistributionManager() == null) {
+         return Collections.singleton("0");
       }
-      Set<Integer> segmentsForOwner = distributionManager.getConsistentHash().getPrimarySegmentsForOwner(rpcManager.getAddress());
+      Set<Integer> segmentsForOwner = getDistributionManager().getConsistentHash().getPrimarySegmentsForOwner(getRpcManager().getAddress());
       return segmentsForOwner.stream().map(String::valueOf).collect(Collectors.toSet());
    }
-
 
    @Override
    public Set<String> getAllShardIdentifiers() {
       return getShards();
+   }
+
+   private KeyTransformationHandler getKeyTransformationHandler() {
+      if (keyTransformationHandler == null) {
+         keyTransformationHandler = componentRegistry.getComponent(QueryInterceptor.class).getKeyTransformationHandler();
+      }
+      return keyTransformationHandler;
+   }
+
+   private RpcManager getRpcManager() {
+      if (rpcManager == null) {
+         rpcManager = componentRegistry.getComponent(RpcManager.class);
+      }
+      return rpcManager;
+   }
+
+   private DistributionManager getDistributionManager() {
+      if (distributionManager == null) {
+         distributionManager = componentRegistry.getComponent(DistributionManager.class);
+      }
+      return distributionManager;
    }
 }

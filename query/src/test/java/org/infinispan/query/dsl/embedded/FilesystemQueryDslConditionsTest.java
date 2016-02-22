@@ -31,6 +31,9 @@ public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.indexing().index(Index.ALL)
+            .addIndexedEntity(getModelFactory().getUserImplClass())
+            .addIndexedEntity(getModelFactory().getAccountImplClass())
+            .addIndexedEntity(getModelFactory().getTransactionImplClass())
             .addProperty("default.directory_provider", "filesystem")
             .addProperty("default.indexBase", indexDirectory)
             .addProperty("lucene_version", "LUCENE_CURRENT");

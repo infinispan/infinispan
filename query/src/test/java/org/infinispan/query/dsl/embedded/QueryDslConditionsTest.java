@@ -3,6 +3,8 @@ package org.infinispan.query.dsl.embedded;
 import org.hibernate.hql.ParsingException;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
@@ -15,6 +17,8 @@ import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -41,6 +45,20 @@ import static org.junit.Assert.*;
  */
 @Test(groups = {"functional", "smoke"}, testName = "query.dsl.embedded.QueryDslConditionsTest")
 public class QueryDslConditionsTest extends AbstractQueryDslTest {
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+      cfg.transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
+            .indexing().index(Index.ALL)
+            .addIndexedEntity(getModelFactory().getUserImplClass())
+            .addIndexedEntity(getModelFactory().getAccountImplClass())
+            .addIndexedEntity(getModelFactory().getTransactionImplClass())
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      createClusteredCaches(1, cfg);
+   }
 
    @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {

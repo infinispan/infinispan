@@ -10,11 +10,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.TransactionMode;
@@ -26,8 +21,14 @@ import javax.transaction.InvalidTransactionException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+
+// TODO [anistor] This class should be removed in 9.0. Its purpose can be served by a simple Set after we remove autodetection.
 
 /**
  * Stores all entity classes known to query module in a replicated cache. The entry value is a boolean which indicates
@@ -40,15 +41,19 @@ import java.util.concurrent.atomic.AtomicReference;
  * This is not caching the fact that some key is not defined: that would be tricky to
  * get right and is not needed for our use case.
  *
+ * @deprecated To be removed in Infinispan 9.0
  * @author Sanne Grinovero (C) 2013 Red Hat Inc.
  * @author anistor@redhat.com
  */
 @ThreadSafe
+@Deprecated
 public final class QueryKnownClasses {
 
    private static final Log log = LogFactory.getLog(QueryKnownClasses.class);
 
    public static final String QUERY_KNOWN_CLASSES_CACHE_NAME = "___query_known_classes";
+
+   private final Set<Class<?>> indexedEntities;
 
    private final String cacheName;
 
@@ -66,48 +71,53 @@ public final class QueryKnownClasses {
    private volatile TransactionManager transactionManager;
 
    /**
-    * Not using a ConcurrentHashMap as this will degenerate into a read-only Map at runtime;
+    * A second level cache. Not using a ConcurrentHashMap as this will degenerate into a read-only Map at runtime;
     * in the Query specific case we're only adding new class types while they are being discovered,
     * after this initial phase this is supposed to be a read-only immutable map.
     */
-   private final AtomicReference<Map<Class<?>, Boolean>> localCache = new AtomicReference<>(Collections.emptyMap());
+   private final AtomicReference<Map<Class<?>, Boolean>> localCache;
 
    /**
-    * A listener used to update the SearchFactoryHandler when an indexable class is added to cache.
+    * Constructor used only in pre-declared mode.
     */
-   @Listener
-   final class CacheListener {
-
-      @CacheEntryCreated
-      public void created(CacheEntryCreatedEvent<KeyValuePair<String, Class>, Boolean> e) {
-         if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            searchFactoryHandler.handleClusterRegistryRegistration(e.getKey().getValue());
-         }
-      }
-
-      @CacheEntryModified
-      public void modified(CacheEntryModifiedEvent<KeyValuePair<String, Class>, Boolean> e) {
-         if (!e.isOriginLocal() && !e.isPre() && e.getValue()) {
-            searchFactoryHandler.handleClusterRegistryRegistration(e.getKey().getValue());
-         }
-      }
+   QueryKnownClasses(Set<Class<?>> indexedEntities) {
+      this.indexedEntities = Collections.unmodifiableSet(new HashSet<>(indexedEntities));
+      this.cacheName = null;
+      this.cacheManager = null;
+      this.internalCacheRegistry = null;
+      this.localCache = null;
    }
 
-   private final Object cacheListener = new CacheListener();
-
+   /**
+    * Constructor used only in autodetect mode.
+    */
+   @Deprecated
    QueryKnownClasses(String cacheName, EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
+      this.indexedEntities = null;
       this.cacheName = cacheName;
       this.cacheManager = cacheManager;
       this.internalCacheRegistry = internalCacheRegistry;
+      this.localCache = new AtomicReference<>(Collections.emptyMap());
+   }
+
+   String getCacheName() {
+      return cacheName;
+   }
+
+   boolean isAutodetectEnabled() {
+      return indexedEntities == null;
    }
 
    void start(SearchFactoryHandler searchFactoryHandler) {
+      if (indexedEntities != null) {
+         throw new IllegalStateException("Cannot start internal cache unless we are in autodetect mode");
+      }
       if (searchFactoryHandler == null) {
          throw new IllegalArgumentException("null argument not allowed");
       }
       this.searchFactoryHandler = searchFactoryHandler;
       startInternalCache();
-      knownClassesCache.addListener(cacheListener, new KeyFilter<KeyValuePair<String, Class<?>>>() {
+      knownClassesCache.addListener(searchFactoryHandler.getCacheListener(), new KeyFilter<KeyValuePair<String, Class<?>>>() {
          @Override
          public boolean accept(KeyValuePair<String, Class<?>> key) {
             return key.getKey().equals(cacheName);
@@ -118,7 +128,7 @@ public final class QueryKnownClasses {
    void stop() {
       if (knownClassesCache != null) {
          if (searchFactoryHandler != null) {
-            knownClassesCache.removeListener(cacheListener);
+            knownClassesCache.removeListener(searchFactoryHandler.getCacheListener());
             searchFactoryHandler = null;
          }
          knownClassesCache = null;
@@ -126,6 +136,10 @@ public final class QueryKnownClasses {
    }
 
    Set<Class<?>> keys() {
+      if (indexedEntities != null) {
+         return indexedEntities;
+      }
+
       startInternalCache();
       Set<Class<?>> result = new HashSet<>();
       Transaction tx = suspendTx();
@@ -142,14 +156,24 @@ public final class QueryKnownClasses {
    }
 
    boolean containsKey(final Class<?> clazz) {
+      if (indexedEntities != null) {
+         return indexedEntities.contains(clazz);
+      }
       return localCache.get().containsKey(clazz);
    }
 
    Boolean get(final Class<?> clazz) {
+      if (indexedEntities != null) {
+         return indexedEntities.contains(clazz);
+      }
       return localCache.get().get(clazz);
    }
 
    void put(final Class<?> clazz, final Boolean value) {
+      if (indexedEntities != null) {
+         throw new IllegalStateException("Autodetect mode is not enabled");
+      }
+
       if (value == null) {
          throw new IllegalArgumentException("Null values are not allowed");
       }

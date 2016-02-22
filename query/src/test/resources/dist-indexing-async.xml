@@ -10,8 +10,10 @@
 
         <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
             <indexing index="LOCAL">
-                <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager
-                </property>
+                <indexed-entities>
+                    <indexed-entity>org.infinispan.query.distributed.Transaction</indexed-entity>
+                </indexed-entities>
+                <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                 <property name="default.worker.execution">async</property>
                 <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
                 <property name="lucene_version">LUCENE_CURRENT</property>

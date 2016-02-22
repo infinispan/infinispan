@@ -18,7 +18,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -1402,5 +1401,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Timeout waiting for view %d. Current view is %d, current status is %s", id = 402)
    TimeoutException timeoutWaitingForView(int expectedViewId, int currentViewId,
          Object clusterManagerStatus);
-}
 
+   @LogMessage(level = WARN)
+   @Message(value = "No indexable classes were defined for this indexed cache; switching to autodetection (support for autodetection will be removed in Infinispan 9.0).", id = 403)
+   void noIndexableClassesDefined();
+
+   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
+   CacheConfigurationException classNotIndexable(String className);
+}

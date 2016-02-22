@@ -3,8 +3,12 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Configures indexing of entries in the cache for searching.
@@ -12,9 +16,16 @@ import org.infinispan.commons.util.TypedProperties;
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration {
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", Index.NONE).immutable().build();
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
+   public static final AttributeDefinition<Set<Class<?>>> INDEXED_ENTITIES = AttributeDefinition.builder("indexed-entities", null, (Class<Set<Class<?>>>) (Class<?>) Set.class)
+         .initializer(new AttributeInitializer<Set<Class<?>>>() {
+            @Override
+            public Set<Class<?>> initialize() {
+               return new HashSet<>(5);
+            }
+         }).immutable().build();
 
-   public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG);
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG, INDEXED_ENTITIES);
    }
 
    private static final String DIRECTORY_PROVIDER_KEY = "directory_provider";
@@ -22,11 +33,13 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    private final Attribute<Index> index;
    private final Attribute<Boolean> autoConfig;
+   private final Attribute<Set<Class<?>>> indexedEntities;
 
    public IndexingConfiguration(AttributeSet attributes) {
       super(attributes);
       index = attributes.attribute(INDEX);
       autoConfig = attributes.attribute(AUTO_CONFIG);
+      indexedEntities = attributes.attribute(INDEXED_ENTITIES);
    }
 
    /**
@@ -79,6 +92,10 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     */
    public boolean autoConfig() {
       return autoConfig.get();
+   }
+
+   public Set<Class<?>> indexedEntities() {
+      return indexedEntities.get();
    }
 
    public AttributeSet attributes() {

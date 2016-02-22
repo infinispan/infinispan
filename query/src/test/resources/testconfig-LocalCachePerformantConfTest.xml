@@ -18,6 +18,10 @@
          <!--  For our test we don't want to keep all data in memory: throw some away -->
          <eviction size="200" strategy="LIRS" />
          <indexing index="ALL">
+            <indexed-entities>
+               <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
+               <indexed-entity>org.infinispan.query.test.AnotherGrassEater</indexed-entity>
+            </indexed-entities>
             <!-- Enabled fastest writer: NRT backend -->
             <property name="default.indexmanager">near-real-time</property>
             <property name="default.indexBase">${java.io.tmpdir}/LocalCachePerformantConfTest</property>

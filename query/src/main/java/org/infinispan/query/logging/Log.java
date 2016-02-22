@@ -34,8 +34,8 @@ public interface Log extends org.infinispan.util.logging.Log {
    void couldNotInstantiaterTransformerClass(Class<?> transformer, @Cause Exception e);
 
    @LogMessage(level = INFO)
-   @Message(value = "Registering Query interceptor", id = 14003)
-   void registeringQueryInterceptor();
+   @Message(value = "Registering Query interceptor for cache %s", id = 14003)
+   void registeringQueryInterceptor(String cacheName);
 
    @LogMessage(level = DEBUG)
    @Message(value = "Custom commands backend initialized backing index %s", id = 14004)
@@ -55,7 +55,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = WARN)
    @Message(value = "Index named '%1$s' is ignoring configuration option 'directory_provider' set '%2$s':" +
-   		" overriden to use the Infinispan Directory", id = 14008)
+   		" overridden to use the Infinispan Directory", id = 14008)
    void ignoreDirectoryProviderProperty(String indexName, String directoryOption);
 
    @LogMessage(level = WARN)
@@ -122,4 +122,13 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "The property path '%s' cannot be projected because it is multi-valued", id = 14027)
    ParsingException multivaluedPropertyCannotBeProjected(String propertyPath);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Detected an undeclared indexed entity class in cache %s: %s. Autodetection support will be removed in Infinispan 9.0.", id = 14028)
+   void detectedUnknownIndexedEntity(String cacheName, String className);
+
+   //todo [anistor] This should become a CacheException in Infinispan 9.0
+   @LogMessage(level = WARN)
+   @Message(value = "Found undeclared indexable types in cache %s : %s. No indexes were created for these types because autodetection is not enabled for this cache.", id = 14029)
+   void detectedUnknownIndexedEntities(String cacheName, String classNames);
 }

@@ -1,0 +1,68 @@
+package org.infinispan.all.embeddedquery;
+
+import org.infinispan.all.embeddedquery.testdomain.Person;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.transaction.TransactionMode;
+import org.junit.Before;
+import org.junit.Test;
+
+/**
+ * Tests that undeclared indexed entities are autodetected.
+ *
+ * TODO [anistor] remove this test in infinispan 9.0
+ *
+ * @author anistor@redhat.com
+ * @since 8.2
+ */
+public class IndexedEntityAutodetectTest extends LocalCacheTest {
+
+   protected static EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder gcfg = new GlobalConfigurationBuilder();
+      gcfg.globalJmxStatistics().allowDuplicateDomains(true);
+
+      // this configuration does not declare any indexed types on purpose, so they are autodetected
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
+            .indexing()
+            .index(Index.ALL)
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("error_handler", "org.infinispan.all.embeddedquery.testdomain.StaticTestingErrorHandler")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+
+      EmbeddedCacheManager cm = new DefaultCacheManager(gcfg.build(), cfg.build());
+
+      return cm;
+   }
+
+   @Before
+   public void init() throws Exception {
+      cache = createCacheManager().getCache();
+   }
+
+   @Override
+   protected void loadTestingData() {
+      assertIndexingKnows(cache);
+
+      super.loadTestingData();
+
+      assertIndexingKnows(cache, Person.class);
+   }
+
+   @Test
+   public void testEntityDiscovery() {
+      assertIndexingKnows(cache);
+
+      Person p = new Person();
+      p.setName("Lucene developer");
+      p.setAge(30);
+      p.setBlurb("works best on weekends");
+      cache.put(p.getName(), p);
+
+      assertIndexingKnows(cache, Person.class);
+   }
+}

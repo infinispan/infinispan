@@ -38,6 +38,7 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
       cacheCfg
             .indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Car.class)
             .addProperty("hibernate.search.car.sharding_strategy.nbr_of_shards", "2")
             .addProperty("hibernate.search.car.1.directory_provider", "ram")
             .addProperty("hibernate.search.car.0.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")

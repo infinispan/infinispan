@@ -23,6 +23,7 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
             .index(Index.LOCAL)
+            .addIndexedEntity(Person.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");

@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
 
 /**
@@ -22,6 +23,7 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Person.class)
             .addProperty("default.indexmanager", "near-real-time")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("default.directory_provider", "infinispan")

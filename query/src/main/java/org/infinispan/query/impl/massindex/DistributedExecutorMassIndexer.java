@@ -1,7 +1,6 @@
 package org.infinispan.query.impl.massindex;
 
 import org.hibernate.search.engine.spi.EntityIndexBinding;
-import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.Futures;
@@ -13,7 +12,6 @@ import org.infinispan.query.MassIndexer;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.CleanExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.FlushExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.IndexingExecutionMode;
-import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -75,7 +73,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
 
       for (Class<?> indexedType : searchIntegrator.getIndexedTypes()) {
          EntityIndexBinding indexBinding = searchIntegrator.getIndexBinding(indexedType);
-         MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getAdvancedCache().getCacheConfiguration());
+         MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
          boolean workerClean = true, workerFlush = true;
          if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
             indexUpdater.purge(indexedType);
@@ -129,9 +127,4 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          }
       }
    }
-
-   private boolean isShared(IndexManager indexManager) {
-      return indexManager instanceof InfinispanIndexManager;
-   }
-
 }

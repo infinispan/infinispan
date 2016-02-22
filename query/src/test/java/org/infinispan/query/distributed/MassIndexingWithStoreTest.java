@@ -27,6 +27,7 @@ public class MassIndexingWithStoreTest extends DistributedMassIndexingTest {
       cacheCfg.storeAsBinary().enable();
       cacheCfg.indexing()
             .index(Index.ALL)
+            .addIndexedEntity(Car.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");

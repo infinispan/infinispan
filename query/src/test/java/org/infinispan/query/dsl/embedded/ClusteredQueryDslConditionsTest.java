@@ -46,6 +46,9 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
             .stateTransfer().fetchInMemoryState(true)
             .indexing()
             .index(Index.LOCAL)
+            .addIndexedEntity(getModelFactory().getUserImplClass())
+            .addIndexedEntity(getModelFactory().getAccountImplClass())
+            .addIndexedEntity(getModelFactory().getTransactionImplClass())
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

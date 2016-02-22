@@ -30,6 +30,8 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
       cacheCfg
             .indexing()
             .index(Index.LOCAL)
+            .addIndexedEntity(Transaction.class)
+            .addIndexedEntity(Block.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

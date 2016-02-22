@@ -22,7 +22,6 @@ import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
@@ -56,8 +55,8 @@ final class RemoteQueryEngine extends QueryEngine {
 
    private final SerializationContext serCtx;
 
-   public RemoteQueryEngine(AdvancedCache<?, ?> cache, SearchManager searchManager, boolean isCompatMode, SerializationContext serCtx) {
-      super(cache, searchManager);
+   public RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, boolean isCompatMode, SerializationContext serCtx) {
+      super(cache, isIndexed);
       this.isCompatMode = isCompatMode;
       this.serCtx = serCtx;
    }
@@ -116,7 +115,7 @@ final class RemoteQueryEngine extends QueryEngine {
 
    @Override
    protected JPAFilterAndConverter createFilter(String jpaQuery, Map<String, Object> namedParameters) {
-      return searchManager != null && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
+      return isIndexed && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
             new JPAFilterAndConverter(jpaQuery, namedParameters, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
    }
 
@@ -139,7 +138,7 @@ final class RemoteQueryEngine extends QueryEngine {
 
          FieldBridgeProvider fieldBridgeProvider = new FieldBridgeProvider() {
 
-            private final ClassBasedLucenePropertyHelper propertyHelper = new ClassBasedLucenePropertyHelper(searchFactory, entityNamesResolver);
+            private final ClassBasedLucenePropertyHelper propertyHelper = new ClassBasedLucenePropertyHelper(getSearchFactory(), entityNamesResolver);
 
             @Override
             public FieldBridge getFieldBridge(String type, String propertyPath) {
@@ -147,7 +146,7 @@ final class RemoteQueryEngine extends QueryEngine {
             }
          };
 
-         processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+         processingChain = new LuceneProcessingChain.Builder(getSearchFactory(), entityNamesResolver)
                .namedParameters(namedParameters)
                .buildProcessingChainForClassBasedEntities(fieldBridgeProvider);
       } else {
@@ -191,7 +190,7 @@ final class RemoteQueryEngine extends QueryEngine {
             }
          };
 
-         processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+         processingChain = new LuceneProcessingChain.Builder(getSearchFactory(), entityNamesResolver)
                .namedParameters(namedParameters)
                .buildProcessingChainForDynamicEntities(fieldBridgeProvider);
       }

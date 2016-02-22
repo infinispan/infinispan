@@ -181,6 +181,8 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    private ConfigurationBuilder getIndexedConfig() {
       ConfigurationBuilder cfg = getBaseConfig();
       cfg.indexing().index(Index.ALL)
+              .addIndexedEntity(Person.class)
+              .addIndexedEntity(AnotherGrassEater.class)
               .addProperty("default.directory_provider", "infinispan")
               .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;

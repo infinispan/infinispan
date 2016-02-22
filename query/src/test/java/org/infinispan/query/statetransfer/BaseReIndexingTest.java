@@ -37,6 +37,7 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
 
       builder.indexing().index(Index.ALL)
+            .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

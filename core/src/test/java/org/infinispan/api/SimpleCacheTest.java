@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.CustomInterceptorConfigTest;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -66,7 +65,7 @@ public class SimpleCacheTest extends APINonTxTest {
       new ConfigurationBuilder().simpleCache(true).invocationBatching().enable(true).build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000381: This configuration is not supported for simple cache")
    public void testIndexing() {
       new ConfigurationBuilder().simpleCache(true).indexing().index(Index.LOCAL).build();
    }

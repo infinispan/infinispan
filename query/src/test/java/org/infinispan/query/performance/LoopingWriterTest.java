@@ -11,6 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.commons.util.Util;
 import org.testng.Assert;
@@ -25,7 +26,7 @@ import org.testng.annotations.Test;
  * @since 5.3
  */
 @Test(groups = "performance", testName = "query.performance.LoopingWriterTest")
-public class LoopingWriterTest {
+public class LoopingWriterTest extends AbstractInfinispanTest {
 
    private static final int TOTAL_LOOPS = Integer.MAX_VALUE;
    private static final int TIMESAMPLE_PERIODICITY = 6000;

@@ -19,6 +19,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
@@ -69,11 +71,15 @@ public class TestQueryHelperFactory {
 
       if(isRamDirectoryProvider) {
          builder.indexing()
+            .addIndexedEntity(Person.class)
+            .addIndexedEntity(Car.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
       } else {
          builder.indexing()
+            .addIndexedEntity(Person.class)
+            .addIndexedEntity(Car.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("lucene_version", "LUCENE_CURRENT")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");

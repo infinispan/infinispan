@@ -14,7 +14,6 @@ import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.spi.SearchManagerImplementor;
 
@@ -31,7 +30,6 @@ public class SearchManagerImpl implements SearchManagerImplementor {
    private final AdvancedCache<?, ?> cache;
    private final SearchIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
-   private final QueryEngine queryEngine;
    private TimeoutExceptionFactory timeoutExceptionFactory;
 
    public SearchManagerImpl(AdvancedCache<?, ?> cache) {
@@ -41,7 +39,6 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       this.cache = cache;
       this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchIntegrator.class);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
-      queryEngine = new QueryEngine(cache, this);
    }
 
    /* (non-Javadoc)
@@ -118,9 +115,6 @@ public class SearchManagerImpl implements SearchManagerImplementor {
    public <T> T unwrap(Class<T> cls) {
       if (SearchIntegrator.class.isAssignableFrom(cls)) {
          return (T) this.searchFactory;
-      }
-      if (QueryEngine.class.isAssignableFrom(cls)) {
-         return (T) this.queryEngine;
       }
       if (SearchManagerImplementor.class.isAssignableFrom(cls)) {
          return (T) this;
