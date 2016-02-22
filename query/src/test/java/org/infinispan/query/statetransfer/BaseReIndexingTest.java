@@ -95,8 +95,7 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
          @Override
          public void call() throws Exception {
             // New node joining
-            EmbeddedCacheManager newManager = createCacheManager();
-            Cache<String, Person> newCache = newManager.getCache();
+            Cache<String, Person> newCache = cm.getCache();
             TestingUtil.waitForRehashToComplete(caches().get(0), caches().get(1), newCache);
 
             // Verify state transfer
