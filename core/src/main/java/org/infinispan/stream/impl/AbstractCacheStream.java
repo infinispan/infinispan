@@ -311,9 +311,13 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
             boolean localRun = ch.getMembers().contains(localAddress);
             if (localRun) {
                localValue = op.performOperation();
-               // TODO: we can do this more efficiently
+               // TODO: we can do this more efficiently - since we drop all results locally
                if (dm.getReadConsistentHash().equals(ch)) {
-                  remoteResults.onCompletion(null, ch.getPrimarySegmentsForOwner(localAddress), localValue);
+                  Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
+                  if (segmentsToProcess != null) {
+                     ourSegments.retainAll(segmentsToProcess);
+                  }
+                  remoteResults.onCompletion(null, ourSegments, localValue);
                } else {
                   if (segmentsToProcess != null) {
                      Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
@@ -343,6 +347,10 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
                remoteResults.lostSegments.clear();
                log.tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
             } else {
+               // If we didn't lose any segments we don't need to process anymore
+               if (segmentsToProcess != null) {
+                  segmentsToProcess = null;
+               }
                log.tracef("Finished rehash aware operation for id %s", id);
             }
          } finally {
