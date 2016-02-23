@@ -15,6 +15,13 @@
                         <authorization roles="admin reader writer supervisor" enabled="true" />
                     </security>
                 </local-cache>
+                <local-cache name="customTaskCache" start="EAGER" batching="false">
+                    <transaction mode="NONE" />
+                    <compatibility enabled="true" />
+                    <security>
+                        <authorization roles="admin reader writer supervisor" enabled="true" />
+                    </security>
+                </local-cache>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <local-cache name="memcachedCache" start="EAGER" batching="false">
                     <transaction mode="NONE" />

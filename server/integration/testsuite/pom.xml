@@ -118,6 +118,11 @@
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-scripting</artifactId>
+            <scope>test</scope>
+        </dependency>
        <dependency>
           <groupId>org.infinispan.server</groupId>
           <artifactId>infinispan-server-build</artifactId>
@@ -361,6 +366,12 @@
                                 <artifactItem>
                                     <groupId>com.h2database</groupId>
                                     <artifactId>h2</artifactId>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.infinispan</groupId>
+                                    <artifactId>infinispan-scripting</artifactId>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                 </artifactItem>

@@ -6,16 +6,21 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.HotRodLocal;
+import org.infinispan.tasks.TaskContext;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Collections.emptyMap;
@@ -32,6 +37,7 @@ import static org.junit.Assert.assertTrue;
 public class ScriptExecIT {
 
    private static final String SCRIPT_CACHE_NAME = "___script_cache";
+   private static final String COMPATIBILITY_CACHE_NAME = "compatibilityCache";
    private static final String STREAM = "stream.js";
 
    static RemoteCacheManager remoteCacheManager;
@@ -40,6 +46,9 @@ public class ScriptExecIT {
 
    @InfinispanResource("container1")
    RemoteInfinispanServer server1;
+
+   @Rule
+   public ExpectedException exceptionRule = ExpectedException.none();
 
    @Before
    public void initialize() {
@@ -57,6 +66,28 @@ public class ScriptExecIT {
               .host(server1.getHotrodEndpoint().getInetAddress().getHostName())
               .port(server1.getHotrodEndpoint().getPort());
       return config.build();
+   }
+
+   @Test
+   public void testRemovingNonExistentScript() {
+      exceptionRule.expect(HotRodClientException.class);
+      exceptionRule.expectMessage("Unknown task");
+      remoteCache.execute("nonExistent.js", new HashMap<>());
+   }
+
+   @Test
+   public void testSimpleScriptExecutionWithParams() throws IOException {
+      RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(COMPATIBILITY_CACHE_NAME);
+      addScripts("test.js");
+
+      Map<String, Object> parameters = new HashMap<>();
+      parameters.put("key", "parameter");
+      parameters.put("value", "value");
+
+      int result = remoteCache.execute("test.js", parameters);
+
+      assertEquals(1, result);
+      assertEquals("value", remoteCache.get("parameter"));
    }
 
    @Test
