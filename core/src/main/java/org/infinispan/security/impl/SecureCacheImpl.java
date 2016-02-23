@@ -57,6 +57,11 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
       this.delegate = delegate;
    }
 
+   public AdvancedCache<K, V> getDelegate() {
+      authzManager.checkPermission(AuthorizationPermission.ADMIN);
+      return delegate;
+   }
+
    @Override
    public boolean startBatch() {
       authzManager.checkPermission(AuthorizationPermission.WRITE);
@@ -309,13 +314,13 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
       authzManager.checkPermission(AuthorizationPermission.WRITE);
       delegate.putForExternalRead(key, value);
    }
-   
+
    @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
       authzManager.checkPermission(AuthorizationPermission.WRITE);
       delegate.putForExternalRead(key, value);
    }
-   
+
    @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       authzManager.checkPermission(AuthorizationPermission.WRITE);
