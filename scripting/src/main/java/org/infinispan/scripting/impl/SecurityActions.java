@@ -4,6 +4,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -12,6 +13,7 @@ import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
 import org.infinispan.security.actions.GetCacheEntryAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
+import org.infinispan.security.impl.SecureCacheImpl;
 
 /**
  * SecurityActions for the org.infinispan.scripting.impl package.
@@ -44,5 +46,13 @@ final class SecurityActions {
    static <K, V> CacheEntry<K, V> getCacheEntry(final AdvancedCache<K, V> cache, K key) {
       GetCacheEntryAction<K, V> action = new GetCacheEntryAction<K, V>(cache, key);
       return doPrivileged(action);
+   }
+
+   static <K, V> Cache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
+      if (cache instanceof SecureCacheImpl) {
+         return doPrivileged(() ->  ((SecureCacheImpl)cache).getDelegate() );
+      } else {
+         return cache;
+      }
    }
 }

@@ -107,7 +107,6 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
         });
     }
 
-    @Test(enabled = false, description = "Is disabled until the bug ISPN-6210 is fixed.")
     public void testTask() throws Exception {
         Security.doAs(PHEIDIPPIDES, new PrivilegedExceptionAction<Void>() {
             @Override
@@ -124,7 +123,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
         assertEquals(1, tasks.size());
 
         ScriptTask scriptTask = (ScriptTask) tasks.get(0);
-        assertEquals("testRole.js", scriptTask.getName());
+        assertEquals(SCRIPT_NAME, scriptTask.getName());
         assertEquals(TaskExecutionMode.ONE_NODE, scriptTask.getExecutionMode());
         assertEquals("Script", scriptTask.getType());
     }

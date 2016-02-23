@@ -51,7 +51,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = CollectionFactory.makeConcurrentMap(2);
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = CollectionFactory.makeConcurrentMap(2);
-   Cache<String, String> scriptCache;
+   private Cache<String, String> scriptCache;
    ConcurrentMap<String, CompiledScript> compiledScripts = CollectionFactory.makeConcurrentMap();
    private AuthorizationHelper globalAuthzHelper;
 
@@ -69,7 +69,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    Cache<String, String> getScriptCache() {
       if (scriptCache == null) {
-         scriptCache = cacheManager.getCache(SCRIPT_CACHE);
+         scriptCache = SecurityActions.getUnwrappedCache(cacheManager.getCache(SCRIPT_CACHE));
       }
       return scriptCache;
    }
