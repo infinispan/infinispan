@@ -60,7 +60,7 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
     */
    public void continueTaskInBackground() {
       if (trace) log.tracef("Moving task to background, available permits %d", semaphore.availablePermits());
-      //
+      // Prevent other tasks from running with this task's permit
       semaphore.removePermit();
    }
 
@@ -158,7 +158,6 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
             } while (next != null);
          } finally {
             semaphore.release();
-            if (trace) log.tracef("All queued tasks finished, available permits %d", semaphore.availablePermits());
 
             // In case we just got a new task between queue.poll() and semaphore.release()
             if (!queue.isEmpty()) {

@@ -91,7 +91,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   public static final int NO_REBALANCE_IN_PROGRESS = -1;
+   private static final int NO_REBALANCE_IN_PROGRESS = -1;
 
    private Cache cache;
    private StateTransferManager stateTransferManager;
@@ -356,7 +356,7 @@ public class StateConsumerImpl implements StateConsumer {
                // remove inbound transfers for segments we no longer own
                cancelTransfers(removedSegments);
 
-               if (!startRebalance) {
+               if (!startRebalance && !addedSegments.isEmpty()) {
                   // If the last owner of a segment leaves the cluster, a new set of owners is assigned,
                   // but the new owners should not try to retrieve the segment from each other.
                   // If this happens during a rebalance, we might have already sent our rebalance
@@ -1043,7 +1043,11 @@ public class StateConsumerImpl implements StateConsumer {
       stateRequestCompletionService.submit(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            inboundTransfer.requestSegments();
+            boolean transferStarted = inboundTransfer.requestSegments();
+
+            // Allow other transfers to start if the request wasn't successful
+            if (!transferStarted)
+               return null;
 
             if (trace)
                log.tracef("Waiting for inbound transfer to finish: %s", inboundTransfer);
@@ -1073,21 +1077,30 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    void onTaskCompletion(final InboundTransferTask inboundTransfer) {
+
+      if (!inboundTransfer.isStartedSuccessfully()) {
+         retryOrNotifyCompletion(inboundTransfer);
+      }
+
       // This will execute only after inboundTransfer.requestSegments() finished
       stateRequestCompletionService.backgroundTaskFinished(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            removeTransfer(inboundTransfer);
-
-            if (!inboundTransfer.isCompletedSuccessfully() && !inboundTransfer.isCancelled()) {
-               retryTransferTask(inboundTransfer);
-            } else {
-               if (trace) log.tracef("Inbound transfer finished: %s", inboundTransfer);
-               notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
-            }
+            retryOrNotifyCompletion(inboundTransfer);
             return null;
          }
       });
+   }
+
+   private void retryOrNotifyCompletion(InboundTransferTask inboundTransfer) {
+      removeTransfer(inboundTransfer);
+
+      if (!inboundTransfer.isCompletedSuccessfully() && !inboundTransfer.isCancelled()) {
+         retryTransferTask(inboundTransfer);
+      } else {
+         if (trace) log.tracef("Inbound transfer finished: %s", inboundTransfer);
+         notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+      }
    }
 
    public interface KeyInvalidationListener {
