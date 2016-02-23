@@ -9,5 +9,11 @@
                     <partition-handling enabled="false"/>
                 </replicated-cache>
                 <distributed-cache name="remoteTimeoutCache" start="EAGER" mode="SYNC" remote-timeout="1" />
+                <replicated-cache name="customTaskRepl" start="EAGER" mode="SYNC">
+                    <compatibility enabled="true"/>
+                </replicated-cache>
+                <distributed-cache name="customTaskDist" start="EAGER" mode="SYNC" remote-timeout="30000" owners="1">
+                    <compatibility enabled="true" />
+                </distributed-cache>
             </cache-container>
         </subsystem>

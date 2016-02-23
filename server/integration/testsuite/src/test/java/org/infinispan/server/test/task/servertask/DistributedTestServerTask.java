@@ -1,10 +1,11 @@
-package org.infinispan.server.test.task;
+package org.infinispan.server.test.task.servertask;
 
 
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -15,14 +16,22 @@ import java.util.Set;
 public class DistributedTestServerTask implements ServerTask {
 
    public static final String NAME = "serverTask777792";
+   public static final String EXCEPTION_MESSAGE = "Intentionally Thrown Exception";
+   private TaskContext taskContext;
 
    @Override
    public Object call() {
-      return System.getProperty("jboss.node.name");
+      Map<String, Boolean> parameters = (Map<String, Boolean>) taskContext.getParameters().get();
+      if (parameters == null || parameters.isEmpty()) {
+         return System.getProperty("jboss.node.name");
+      } else {
+         throw new RuntimeException(EXCEPTION_MESSAGE);
+      }
    }
 
    @Override
    public void setTaskContext(TaskContext taskContext) {
+      this.taskContext = taskContext;
    }
 
    @Override

@@ -20,6 +20,11 @@
                 <local-cache
                     name="namedCache"
                     start="EAGER" />
+                <local-cache
+                        name="compatibilityCache"
+                        start="EAGER" >
+                    <compatibility enabled="true"/>
+                        </local-cache>
             </cache-container>
             <cache-container name="security"/>
         </subsystem>

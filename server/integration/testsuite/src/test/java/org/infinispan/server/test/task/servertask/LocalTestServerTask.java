@@ -1,12 +1,14 @@
-package org.infinispan.server.test.task;
+package org.infinispan.server.test.task.servertask;
 
 
 import org.infinispan.Cache;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
@@ -17,13 +19,21 @@ public class LocalTestServerTask implements ServerTask {
 
    public static final String NAME = "serverTask8234892";
    public static final String TASK_EXECUTED = "taskExecuted";
+   public static final String CACHE_NAME = "taskAccessible";
+   public static final String MODIFIED_PREFIX = "modified:";
    private TaskContext taskContext;
 
    @Override
    @SuppressWarnings("unchecked")
-   public Object call() {
+   public Object call() throws IOException, ClassNotFoundException {
       Cache<Object, Object> cache = (Cache<Object, Object>) taskContext.getCache().get();
-      cache.getCacheManager().getCache("taskAccessible").put(TASK_EXECUTED, "true");
+      Map.Entry<Object, Object> entry = cache.entrySet().iterator().next();
+
+      String existingKey = (String) taskContext.getMarshaller().get().objectFromByteBuffer((byte[]) entry.getKey());
+      String existingValue = (String) taskContext.getMarshaller().get().objectFromByteBuffer((byte[]) entry.getValue());
+
+      cache.getCacheManager().getCache(CACHE_NAME).put(existingKey, MODIFIED_PREFIX + existingValue);
+
       return null;
    }
 
