@@ -124,13 +124,14 @@ public class InboundTransferTask {
 
    /**
     * Send START_STATE_TRANSFER request to source node.
+    *
+    * @return {@code true} if the transfer was started, otherwise {@code false}
     */
    public boolean requestSegments() {
       if (!isCancelled && isStarted.compareAndSet(false, true)) {
          Set<Integer> segmentsCopy = getSegments();
          if (segmentsCopy.isEmpty()) {
             log.tracef("Segments list is empty, skipping source %s", source);
-            return true;
          }
          if (trace) {
             log.tracef("Requesting segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
@@ -145,16 +146,13 @@ public class InboundTransferTask {
                if (trace) {
                   log.tracef("Successfully requested segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
                }
-               return true;
             }
             log.failedToRequestSegments(segmentsCopy, cacheName, source, new CacheException(String.valueOf(response)));
          } catch (Exception e) {
             log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
          }
-         return false;
-      } else {
-         return true;
       }
+      return isStartedSuccessfully;
    }
 
    /**
@@ -263,6 +261,10 @@ public class InboundTransferTask {
 
    public boolean isCompletedSuccessfully() {
       return isCompletedSuccessfully;
+   }
+
+   public boolean isStartedSuccessfully() {
+      return isStartedSuccessfully;
    }
 
    /**
