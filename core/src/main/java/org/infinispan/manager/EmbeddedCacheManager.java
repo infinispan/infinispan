@@ -155,12 +155,31 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     *
     * If no named caches are registered or no caches have been created, this
     * method returns an empty set.  The default cache is never included in this
-    * set of cache names.
+    * set of cache names, as well a caches for internal-only use {@link org.infinispan.registry.InternalCacheRegistry}
     *
     * @return an immutable set of non-default named caches registered or
     * created with this cache manager.
     */
    Set<String> getCacheNames();
+
+   /**
+    * This method returns a collection of cache configuration names which contains the
+    * cache configurations that have been defined via XML or programmatically, and the
+    * cache configurations that have been defined at runtime via this cache manager
+    * instance.
+    *
+    * If no cache configurations are registered or no caches have been created, this
+    * method returns an empty set.  The default cache is never included in this
+    * set of cache names, as well a caches for internal-only use {@link org.infinispan.registry.InternalCacheRegistry}
+    *
+    * @return an immutable set of non-default named caches registered or
+    * created with this cache manager.
+    *
+    * @since 8.2
+    */
+   default Set<String> getCacheConfigurationNames() {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * Tests whether a named cache is running.
@@ -216,7 +235,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * the same configuration.
     *
     * @param cacheName name of cache to retrieve
-    * @param configurationTemplate name of the configuration template to use
+    * @param configurationName name of the configuration template to use
     * @return null if no configuration exists as per rules set above, otherwise
     *         returns a cache instance identified by cacheName
     */

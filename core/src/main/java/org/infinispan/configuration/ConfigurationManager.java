@@ -8,9 +8,11 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
 
@@ -85,6 +87,14 @@ public class ConfigurationManager {
    }
 
    public Collection<String> getDefinedCaches() {
+      List<String> cacheNames = namedConfiguration.entrySet().stream()
+            .filter(entry -> !entry.getValue().isTemplate())
+            .map(entry -> entry.getKey())
+            .collect(Collectors.toList());
+      return Collections.unmodifiableCollection(cacheNames);
+   }
+
+   public Collection<String> getDefinedConfigurations() {
       return Collections.unmodifiableCollection(namedConfiguration.keySet());
    }
 }

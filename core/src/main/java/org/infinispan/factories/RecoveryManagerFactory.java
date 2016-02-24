@@ -45,7 +45,7 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
          //if use a defined cache
          if (!useDefaultCache) {
             // check to see that the cache is defined
-            if (!cm.getCacheNames().contains(recoveryCacheName)) {
+            if (!cm.getCacheConfigurationNames().contains(recoveryCacheName)) {
                throw new CacheConfigurationException("Recovery cache (" + recoveryCacheName + ") does not exist!!");
             }
          } else {
