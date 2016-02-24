@@ -726,6 +726,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
     private void addCacheConfiguration(String cacheType, PathAddress containerAddress, Map<PathAddress, ModelNode> operations,
             boolean configurationOnly, ModelNode cacheConfiguration,
             Map<PathAddress, ModelNode> additionalConfigurationOperations, PathAddress cacheConfigurationAddress) {
+        cacheConfiguration.get(CacheConfigurationResource.TEMPLATE.getName()).set(configurationOnly);
         if (configurationOnly) {
             // just create the configuration
             operations.put(cacheConfigurationAddress, cacheConfiguration);

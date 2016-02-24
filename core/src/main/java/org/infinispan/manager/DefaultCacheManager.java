@@ -381,6 +381,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          builder.read(defaultConfigIfNotPresent);
       }
       builder.read(configOverride);
+      builder.template(configOverride.isTemplate());
       return configurationManager.putConfiguration(cacheName, builder);
    }
 
@@ -770,6 +771,19 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    @Override
+   public Set<String> getCacheConfigurationNames() {
+      // Get the XML/programmatically defined caches
+      Set<String> names = new HashSet<>(configurationManager.getDefinedConfigurations());
+      names.remove(DEFAULT_CACHE_NAME);
+      InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      internalCacheRegistry.filterPrivateCaches(names);
+      if (names.isEmpty())
+         return Collections.emptySet();
+      else
+         return Immutables.immutableSetWrap(names);
+   }
+
+   @Override
    public boolean isRunning(String cacheName) {
       CacheWrapper w = caches.get(cacheName);
       try {
@@ -800,7 +814,22 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return result.toString();
    }
 
-   @ManagedAttribute(description = "The total number of defined caches, excluding the default cache.", displayName = "Number of caches defined", displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "The defined cache configuration names.", displayName = "List of defined cache configurations", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getDefinedCacheConfigurationNames() {
+      StringBuilder result = new StringBuilder("[");
+      boolean comma = false;
+      for (String cacheName : getCacheConfigurationNames()) {
+         if (comma)
+            result.append(",");
+         else
+            comma = true;
+         result.append(cacheName);
+      }
+      result.append("]");
+      return result.toString();
+   }
+
+   @ManagedAttribute(description = "The total number of defined cache configurations.", displayName = "Number of caches defined", displayType = DisplayType.SUMMARY)
    public String getDefinedCacheCount() {
       return String.valueOf(configurationManager.getDefinedCaches().size());
    }
