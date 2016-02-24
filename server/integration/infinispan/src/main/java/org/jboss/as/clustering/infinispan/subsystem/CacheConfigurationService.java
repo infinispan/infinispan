@@ -68,7 +68,10 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
         if (templateConfiguration != null) {
             builder.read(templateConfiguration);
         }
-        builder.read(this.builder.build());
+        Configuration configuration = this.builder.build();
+        builder.read(configuration);
+        builder.template(configuration.isTemplate());
+
         builder.jmxStatistics().enabled(this.dependencies.getCacheContainer().getCacheManagerConfiguration().globalJmxStatistics().enabled());
         TransactionManager tm = this.dependencies.getTransactionManager();
         if (tm != null) {

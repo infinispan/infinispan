@@ -225,6 +225,7 @@ public class ModelKeys {
     static final String TAKE_BACKUP_OFFLINE_MIN_WAIT = "min-wait";
     static final String TAKE_OFFLINE = "take-offline";
     static final String TCP_NO_DELAY = "tcp-no-delay";
+    static final String TEMPLATE = "template";
     static final String TEMPORARY_LOCATION = "temporary-location";
     static final String THREAD_POOL_SIZE = "thread-pool-size";
     static final String TIMEOUT = "timeout";

@@ -223,6 +223,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         List<Dependency<?>> dependencies = new LinkedList<>();
         // Infinispan Configuration to hold the operation data
         ConfigurationBuilder builder = new ConfigurationBuilder().read(getDefaultConfiguration(this.mode));
+        builder.template(CacheConfigurationResource.TEMPLATE.resolveModelAttribute(context, cacheModel).asBoolean());
 
         // process cache configuration ModelNode describing overrides to defaults
         processModelNode(context, containerName, cacheModel, builder, dependencies);
