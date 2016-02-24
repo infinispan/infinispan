@@ -20,6 +20,7 @@ import org.testng.annotations.Test;
 public class RolePermissionTest extends SingleCacheManagerTest {
    static final Subject ADMIN = TestingUtil.makeSubject("admin");
    static final Subject SUBJECT_A = TestingUtil.makeSubject("A", "role1");
+   static final Subject SUBJECT_WITHOUT_PRINCIPAL = TestingUtil.makeSubject();
    AuthorizationManager authzManager;
 
    @Override
@@ -116,6 +117,18 @@ public class RolePermissionTest extends SingleCacheManagerTest {
          @Override
          public Void run() {
             authzManager.checkPermission(AuthorizationPermission.LISTEN, "role2");
+            return null;
+         }
+      });
+   }
+
+   @Test(expectedExceptions=SecurityException.class)
+   public void testNoPrincipalInSubject() {
+      Security.doAs(SUBJECT_WITHOUT_PRINCIPAL, new PrivilegedAction<Void>() {
+
+         @Override
+         public Void run() {
+            authzManager.checkPermission(AuthorizationPermission.NONE);
             return null;
          }
       });

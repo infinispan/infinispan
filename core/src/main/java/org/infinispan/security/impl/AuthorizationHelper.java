@@ -99,8 +99,9 @@ public class AuthorizationHelper {
 
    private boolean checkSubjectPermissionAndRole(Subject subject, AuthorizationConfiguration configuration,
          AuthorizationPermission requiredPermission, String requestedRole) {
-      if (subject != null) {
-         CachePrincipalPair cpp = new CachePrincipalPair(getUserPrincipal(subject), name);
+      Principal userPrincipal = getUserPrincipal(subject);
+      if (userPrincipal != null) {
+         CachePrincipalPair cpp = new CachePrincipalPair(userPrincipal, name);
          SubjectACL subjectACL;
          if (aclCache != null)
             subjectACL = aclCache.computeIfAbsent(cpp, s -> {
