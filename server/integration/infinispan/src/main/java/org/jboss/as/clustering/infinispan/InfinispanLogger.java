@@ -130,4 +130,25 @@ public interface InfinispanLogger extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 10, value = "The '%s' attribute has been deprecated and is now ignored. Please use the '%s' configuration element instead")
     void deprecatedExecutor(String executorAttribute, String threadPoolElement);
+
+    /**
+     * Logs an info message about installing implementation service.
+     */
+    @LogMessage(level = INFO)
+    @Message(id = 11, value = "Installing ServerTask service implementation '%s'")
+    void installingDeployedTaskService(String implementationClassName);
+
+    /**
+     * Logs debug message when starting deployed task.
+     */
+    @LogMessage(level = DEBUG)
+    @Message(id = 12, value = "Registering task '%s'")
+    void registeringDeployedTask(String className);
+
+    /**
+     * Logs debug message when stopping deployed task.
+     */
+    @LogMessage(level = DEBUG)
+    @Message(id = 13, value = "Unregistering task '%s'")
+    void unregisteringDeployedTask(String className);
 }
