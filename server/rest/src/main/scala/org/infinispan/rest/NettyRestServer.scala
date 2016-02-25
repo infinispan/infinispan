@@ -74,7 +74,7 @@ object NettyRestServer extends Log {
    private def startCaches(cm: EmbeddedCacheManager) = {
       // Start defined caches to avoid issues with lazily started caches
       import scala.collection.JavaConversions._
-      cm.getCacheNames.foreach(x => cm.getCache(x))
+      cm.getCacheNames.foreach(x => SecurityActions.getCache(cm, x))
 
       // Finally, start default cache as well
       cm.getCache()
