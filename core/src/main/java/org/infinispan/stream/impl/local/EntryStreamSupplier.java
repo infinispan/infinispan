@@ -4,6 +4,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.util.logging.Log;
@@ -34,7 +35,8 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    public Stream<CacheEntry<K, V>> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
       Stream<CacheEntry<K, V>> stream;
       if (keysToFilter != null) {
-         AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
+         // Make sure we aren't going remote to retrieve these
+         AdvancedCache<K, V> advancedCache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
          log.tracef("Applying key filtering %s", keysToFilter);
          stream = keysToFilter.stream().map(advancedCache::getCacheEntry).filter(e -> e != null);
       } else {
