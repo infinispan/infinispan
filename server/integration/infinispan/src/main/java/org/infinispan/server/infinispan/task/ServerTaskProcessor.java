@@ -48,7 +48,7 @@ public class ServerTaskProcessor implements DeploymentUnitProcessor {
    public final void installService(DeploymentPhaseContext ctx, String implementationClassName, ServerTask instance) {
       TaskManagerService service = new TaskManagerService(implementationClassName, instance);
       ServiceName extensionServiceName = ServiceName.JBOSS.append(EXTERNAL_TASK, implementationClassName.replaceAll("\\.", "_"));
-      InfinispanLogger.ROOT_LOGGER.installDeployedCacheStore(implementationClassName);
+      InfinispanLogger.ROOT_LOGGER.installingDeployedTaskService(implementationClassName);
       ServiceBuilder<ServerTask> serviceBuilder = ctx.getServiceTarget().addService(extensionServiceName, service);
       serviceBuilder.setInitialMode(ServiceController.Mode.ACTIVE);
       serviceBuilder.addDependency(ServerTaskRegistryService.SERVICE_NAME, ServerTaskRegistry.class, service.getDeployedTaskManager());
@@ -72,13 +72,13 @@ public class ServerTaskProcessor implements DeploymentUnitProcessor {
 
       @Override
       public void start(StartContext context) {
-         InfinispanLogger.ROOT_LOGGER.deployedStoreStarted(className);
+         InfinispanLogger.ROOT_LOGGER.registeringDeployedTask(className);
          deployedTaskRegistry.getValue().addDeployedTask(extension);
       }
 
       @Override
       public void stop(StopContext context) {
-         InfinispanLogger.ROOT_LOGGER.deployedStoreStopped(className);
+         InfinispanLogger.ROOT_LOGGER.unregisteringDeployedTask(className);
          deployedTaskRegistry.getValue().removeDeployedTask(extension.getName());
       }
 
