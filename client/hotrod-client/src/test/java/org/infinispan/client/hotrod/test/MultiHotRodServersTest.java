@@ -116,7 +116,9 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    protected void defineInAll(String cacheName, ConfigurationBuilder builder) {
-      for (HotRodServer server : servers)
+      for (HotRodServer server : servers) {
          server.getCacheManager().defineConfiguration(cacheName, builder.build());
+         server.getCacheManager().getCache(cacheName);
+      }
    }
 }
