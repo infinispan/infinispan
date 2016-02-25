@@ -8,7 +8,7 @@ GREP="grep"
 ROOT="/"
 MVN="mvn"
 
-MAVEN_OPTS="$MAVEN_OPTS -Xmx768M"
+MAVEN_OPTS="$MAVEN_OPTS -Xmx1G"
 export MAVEN_OPTS
 
 #  Use the maximum available, or set MAX_FD != -1 to use that
