@@ -136,40 +136,6 @@
                </execution>
             </executions>
          </plugin>
-         
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-invoker-plugin</artifactId>
-            <version>${version.maven.invoker}</version>
-            <configuration>
-               <addTestClassPath>true</addTestClassPath>
-               <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-               <pomIncludes>
-                  <pomInclude>*/pom.xml</pomInclude>
-               </pomIncludes>
-               <postBuildHookScript>verify</postBuildHookScript>
-               <streamLogs>true</streamLogs>
-               <goals>
-                  <goal>clean</goal>
-                  <goal>package</goal>
-               </goals>
-               <properties>
-                  <maven.test.skip.exec>${maven.test.skip.exec}</maven.test.skip.exec>
-                  <skipTests>${skipTests}</skipTests>
-                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
-               </properties>
-            </configuration>
-            <executions>
-               <execution>
-                  <id>integration-test</id>
-                  <goals>
-                     <goal>install</goal>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
-
       </plugins>
    </build>
 
