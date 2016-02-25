@@ -82,7 +82,6 @@
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
 
-      <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <forkJvmArgs>-Xmx2G</forkJvmArgs>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
@@ -1583,7 +1582,7 @@
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
 
-                 <infinispan.module-name>${project.artifactId}</infinispan.module-name>
+                  <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>
@@ -1907,6 +1906,41 @@
          <forkJvmArgs>${env.MAVEN_FORK_OPTS}</forkJvmArgs>
        </properties>
      </profile>
+      <!-- Only one of the root-dirX profiles will be active, and it will set log4j.configurationFile
+           to $REACTOR_ROOT/etc/log4j2.xml -->
+      <profile>
+         <id>root-dir1</id>
+         <activation>
+            <file>
+               <exists>${basedir}/../etc/log4j2.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <log4j.configurationFile>${basedir}/../etc/log4j2.xml</log4j.configurationFile>
+         </properties>
+      </profile>
+      <profile>
+         <id>root-dir2</id>
+         <activation>
+            <file>
+               <exists>${basedir}/../../etc/log4j2.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <log4j.configurationFile>${basedir}/../../etc/log4j2.xml</log4j.configurationFile>
+         </properties>
+      </profile>
+      <profile>
+         <id>root-dir3</id>
+         <activation>
+            <file>
+               <exists>${basedir}/../../../etc/log4j2.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <log4j.configurationFile>${basedir}/../../../etc/log4j2.xml</log4j.configurationFile>
+         </properties>
+      </profile>
       <profile>
          <id>nonParallel</id>
          <activation>

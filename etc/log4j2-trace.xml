@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration name="CommandLineConfig" packages="org.infinispan.util.logging.log4j">
+  <Properties>
+    <Property name="infinispan.module-suffix"></Property>
+    <Property name="infinispan.log.path">.</Property>
+    <Property name="infinispan.log.thread-filter"></Property>
+  </Properties>
+
+  <Appenders>
+    <Console name="STDOUT">
+      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%n%throwable{10}"/>
+    </Console>
+    <CompressedFile name="CompressedFile"
+          filename="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log.gz" append="false">
+      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%n"/>
+    </CompressedFile>
+    <Async name="AsyncCompressedFile">
+      <AppenderRef ref="CompressedFile"/>
+    </Async>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="org.infinispan" level="TRACE"/>
+    <Logger name="com.mchange" level="WARN"/>
+    <Logger name="org.jgroups" level="DEBUG"/>
+    <Logger name="org.jgroups.protocols.pbcast.GMS" level="TRACE"/>
+
+    <Root level="DEBUG">
+      <AppenderRef ref="STDOUT" level="ERROR"/>
+      <AppenderRef ref="AsyncCompressedFile"/>
+      <!--
+   Uncomment the filter definition below to only allow TRACE and DEBUG messages from threads
+   whose names include the log4j.thread.filter system property. Useful to get TRACE logs
+   only for a test that we know is failing, instead of all the tests (although not all threads
+   follow the convention).
+   <ThreadNameFilter include="${sys:infinispan.log.thread-filter}" threshold="INFO"/>
+   -->
+    </Root>
+  </Loggers>
+</Configuration>
