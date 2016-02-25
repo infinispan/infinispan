@@ -52,6 +52,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory
             .createCacheManager(hotRodCacheConfiguration());
       cm.defineConfiguration(CACHE_NAME, builder.build());
+      cm.getCache(CACHE_NAME);
       return cm;
    }
 

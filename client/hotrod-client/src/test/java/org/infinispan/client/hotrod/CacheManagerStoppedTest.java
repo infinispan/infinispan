@@ -32,6 +32,7 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cacheManager.defineConfiguration(CACHE_NAME, hotRodCacheConfiguration().build());
+      cacheManager.getCache(CACHE_NAME);
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       remoteCacheManager = new RemoteCacheManager("localhost:" + hotrodServer.getPort(), true);
       return cacheManager;
