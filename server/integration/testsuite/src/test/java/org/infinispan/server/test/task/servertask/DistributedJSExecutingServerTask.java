@@ -21,4 +21,8 @@ public class DistributedJSExecutingServerTask extends JSExecutingServerTask {
     public String getName() {
         return NAME;
     }
+
+    public String getCacheName() {
+        return CACHE_NAME;
+    }
 }

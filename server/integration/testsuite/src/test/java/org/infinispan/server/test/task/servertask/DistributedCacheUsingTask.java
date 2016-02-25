@@ -30,7 +30,7 @@ public class DistributedCacheUsingTask implements ServerTask {
         Cache<Object, Object> cache = (Cache<Object, Object>) taskContext.getCache().get();
         Map<String, String> parameters = (Map<String, String>) taskContext.getParameters().get();
 
-        System.out.println(taskContext.getMarshaller());
+        assert taskContext.getMarshaller().isPresent();
         Map.Entry<Object, Object> entry = cache.getCacheManager().getCache(CACHE_NAME).entrySet().iterator().next();
 
         cache.getCacheManager().getCache(CACHE_NAME).put(entry.getKey(), VALUE_PREFIX + entry.getValue() + ":" + parameters.get(PARAM_KEY));
