@@ -9,11 +9,6 @@ Subsets of the testsuite are specified by profiles that switch off running of ce
 Currently these subsets are predefined:
 
   -P suite.client                    (Client tests, all local/dist/repl cachemode)
-  -P suite.client.{local|dist|repl}  (Client tests, only {local|dist|repl} cachemode)
-  -P suite.examples                  (Example config tests)
-  -P suite.leveldb-client            (LevelDB cache store tests - the whole suite.client with leveldb configs)
-  -P suite.cachestore                (Tests that use different cachestore configurations, remote, leveldb apod)
-
   -P suite.rolling.upgrades          (Rolling upgrades specific tests, mandatory specification of:
                                       -Dzip.dist.old=path/to/old_distro.zip
 
@@ -34,11 +29,6 @@ Currently these subsets are predefined:
                                            old Infinispan server based on JBoss AS)
   -P suite.rolling.upgrades.dist.jbossas  (Distribution case of Rolling upgrades with
                                            old Infinispan server based on JBoss AS)
-
-  -P suite.others                    (Tests that do not belong to any of the suites above. Useful when running a single test that's outside
-                                      of any pre-defined group)
-  -P suite.query                     (Query related tests, everything contained in the 'query' package)
-
   -P smoke                             (Smoke tests. A small subset of server mode tests)
 
 Running with specific server zip distribution
@@ -63,18 +53,14 @@ so besides the -Dit.test= directive it's useful to specify also the most specifi
 Also note that integration test classes need to be named ending "IT", not "TEST", as required by the maven-failsafe-plugin.
 
 
-Running tests for specific client 
+Running tests in OSGi
 ---------------------------------
-This is controlled by following profiles
+This is controlled by following profile
 
-  -P client.rest      (REST client)
-  -P client.memcached (Memcached client)
-  -P client.hotrod    (Hot Rod client)
   -P client.hotrod.osgi    These tests manage an Infinispan server through the maven-antrun-plugin.
 
   Tests for OSGi run by default in Karaf 2.3.3. A different version of Karaf may be specified via the command line:
   -Dversion.karaf=<version>
-
 
 Running client tests with TCP stack (UDP by default)
 ----------------------------------------------------

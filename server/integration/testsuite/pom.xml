@@ -23,26 +23,24 @@
             <artifactId>arquillian-junit-container</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wildfly.arquillian</groupId>
-            <artifactId>wildfly-arquillian-container-managed</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jboss.logmanager</groupId>
-                    <artifactId>jboss-logmanager</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.jboss.logmanager</groupId>
-                    <artifactId>log4j-jboss-logmanager</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>org.infinispan.arquillian.container</groupId>
             <artifactId>infinispan-arquillian-impl</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>org.jboss.logmanager</groupId>
                     <artifactId>jboss-logmanager</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.logging</groupId>
+                    <artifactId>jboss-logging-spi</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.remoting3</groupId>
+                    <artifactId>remoting-jmx</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.remoting3</groupId>
+                    <artifactId>jboss-remoting</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -189,7 +187,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
         <dependency>
             <groupId>org.apache.karaf</groupId>
             <artifactId>apache-karaf</artifactId>
@@ -215,10 +212,51 @@
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.arquillian</groupId>
+            <artifactId>wildfly-arquillian-common</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.arquillian</groupId>
+            <artifactId>wildfly-arquillian-common-domain</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-cli</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.extras.creaper</groupId>
+            <artifactId>creaper-core</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-controller-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-cli</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.extras.creaper</groupId>
+            <artifactId>creaper-commands</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.wildfly</groupId>
+                    <artifactId>wildfly-patching</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.aesh</groupId>
+            <artifactId>aesh</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -270,6 +308,9 @@
         <node1.ip>127.0.0.1</node1.ip>
         <node2.ip>127.0.0.1</node2.ip>
         <node3.ip>127.0.0.1</node3.ip>
+        <node0.mgmt.port>9990</node0.mgmt.port>
+        <node1.mgmt.port>10090</node1.mgmt.port>
+        <node2.mgmt.port>10190</node2.mgmt.port>
         <mcast.ip>234.99.54.14</mcast.ip> 
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false
             -Djboss.default.multicast.address=${mcast.ip}
@@ -280,9 +321,15 @@
         <suite.queries.phase>integration-test</suite.queries.phase>
         <suite.rollups.manual.phase>none</suite.rollups.manual.phase>
         <suite.rollups.manual.dist.phase>none</suite.rollups.manual.dist.phase>
+        <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
+        <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
+        <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
         <suite.client.local.phase>integration-test</suite.client.local.phase>
+        <suite.client.local.domain.phase>none</suite.client.local.domain.phase>
         <suite.client.dist.phase>integration-test</suite.client.dist.phase>
+        <suite.client.dist.domain.phase>none</suite.client.dist.domain.phase>
         <suite.client.repl.phase>integration-test</suite.client.repl.phase>
+        <suite.client.repl.domain.phase>none</suite.client.repl.domain.phase>
         <suite.security.phase>none</suite.security.phase>
         <suite.client.smoke.phase>none</suite.client.smoke.phase>
 
@@ -291,11 +338,27 @@
             org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.RollingUpgradesDist,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
             org.infinispan.server.test.category.Queries
         </suite.manual.exclude.groups>
-        <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
-        <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
-        <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
-        <groups.client.local>org.infinispan.server.test.category.ClientLocal</groups.client.local>
-        <groups.client.clustered>org.infinispan.server.test.category.ClientClustered</groups.client.clustered>
+        <suite.client.arq.domain>suite-client-domain</suite.client.arq.domain>
+        <groups.client.local>
+            org.infinispan.server.test.category.HotRodLocal,
+            org.infinispan.server.test.category.MemcachedLocal,
+            org.infinispan.server.test.category.RESTLocal
+        </groups.client.local>
+        <groups.client.local.domain>
+            org.infinispan.server.test.category.HotRodLocalDomain,
+            org.infinispan.server.test.category.MemcachedLocalDomain,
+            org.infinispan.server.test.category.RESTLocalDomain
+        </groups.client.local.domain>
+        <groups.client.clustered>
+            org.infinispan.server.test.category.HotRodClustered,
+            org.infinispan.server.test.category.MemcachedClustered,
+            org.infinispan.server.test.category.RESTClustered
+        </groups.client.clustered>
+        <groups.client.clustered.domain>
+            org.infinispan.server.test.category.HotRodClusteredDomain,
+            org.infinispan.server.test.category.MemcachedClusteredDomain,
+            org.infinispan.server.test.category.RESTClusteredDomain
+        </groups.client.clustered.domain>
         <groups.queries>org.infinispan.server.test.category.Queries</groups.queries>
         <groups.security>org.infinispan.server.test.category.Security</groups.security>
         <groups.unstable>
@@ -514,13 +577,8 @@
                         <hotrod.protocol.version>${hotrod.protocol.version}</hotrod.protocol.version>
                         <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <java.util.logging.config.file>${resources.dir}/jul.properties</java.util.logging.config.file>
-                        <suite.client.local.config>${suite.client.local.config}</suite.client.local.config>
-                        <suite.client.dist.config>${suite.client.dist.config}</suite.client.dist.config>
-                        <suite.client.repl.config>${suite.client.repl.config}</suite.client.repl.config>
                         <resources.dir>${project.build.directory}/test-classes</resources.dir>
                         <version.karaf>${version.karaf}</version.karaf>
-
-                        
                         <database>${database}</database>
                         <driver.dir>${driver.dir}</driver.dir>
                         <driver.jar>${driver.jar}</driver.jar>
@@ -538,6 +596,9 @@
                         <node0.ip>${node0.ip}</node0.ip>
                         <node1.ip>${node1.ip}</node1.ip>
                         <node2.ip>${node2.ip}</node2.ip>
+                        <node0.mgmt.port>${node0.mgmt.port}</node0.mgmt.port>
+                        <node1.mgmt.port>${node1.mgmt.port}</node1.mgmt.port>
+                        <node2.mgmt.port>${node2.mgmt.port}</node2.mgmt.port>
                         
                         <server.jmx.domain>jboss.datagrid-infinispan</server.jmx.domain>
                     </systemPropertyVariables>
@@ -631,6 +692,22 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>suite-client-local-domain</id>
+                        <phase>${suite.client.local.domain.phase}</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <reportNameSuffix>localmode-${default.transport.stack}</reportNameSuffix>
+                            <groups>${groups.client.local.domain}</groups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
+                            <systemPropertyVariables>
+                                <clustering.mode>local</clustering.mode>
+                                <arquillian.launch>${suite.client.arq.domain}</arquillian.launch>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>suite-client-dist</id>
                         <phase>${suite.client.dist.phase}</phase>
                         <goals>
@@ -647,6 +724,22 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>suite-client-dist-domain</id>
+                        <phase>${suite.client.dist.domain.phase}</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <reportNameSuffix>distmode-${default.transport.stack}</reportNameSuffix>
+                            <groups>${groups.client.clustered.domain}</groups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
+                            <systemPropertyVariables>
+                                <clustering.mode>dist</clustering.mode>
+                                <arquillian.launch>${suite.client.arq.domain}</arquillian.launch>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>suite-client-repl</id>
                         <phase>${suite.client.repl.phase}</phase>
                         <goals>
@@ -659,6 +752,22 @@
                             <systemPropertyVariables>
                                 <clustering.mode>repl</clustering.mode>
                                 <arquillian.launch>suite-client-repl</arquillian.launch>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>suite-client-repl-domain</id>
+                        <phase>${suite.client.repl.domain.phase}</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <reportNameSuffix>replmode-${default.transport.stack}</reportNameSuffix>
+                            <groups>${groups.client.clustered.domain}</groups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
+                            <systemPropertyVariables>
+                                <clustering.mode>repl</clustering.mode>
+                                <arquillian.launch>${suite.client.arq.domain}</arquillian.launch>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -694,7 +803,6 @@
         </plugins>
         <pluginManagement>
             <plugins>
-                
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
@@ -751,74 +859,54 @@
 
     <profiles>
         <profile>
+            <id>standalone</id>
+            <activation>
+                <property>
+                    <name>!domain</name>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-container-managed</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.remotingjmx</groupId>
+                    <artifactId>remoting-jmx</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>domain</id>
+            <activation>
+                <property>
+                    <name>domain</name>
+                </property>
+            </activation>
+            <properties>
+                <suite.queries.phase>none</suite.queries.phase>
+                <suite.manual.phase>none</suite.manual.phase>
+                <suite.client.local.phase>none</suite.client.local.phase>
+                <suite.client.dist.phase>none</suite.client.dist.phase>
+                <suite.client.repl.phase>none</suite.client.repl.phase>
+                <suite.client.local.domain.phase>integration-test</suite.client.local.domain.phase>
+                <suite.client.dist.domain.phase>integration-test</suite.client.dist.domain.phase>
+                <suite.client.repl.domain.phase>integration-test</suite.client.repl.domain.phase>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.wildfly.arquillian</groupId>
+                    <artifactId>wildfly-arquillian-container-domain-managed</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>suite.client</id>
             <properties>
                 <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
                 <suite.client.local.phase>integration-test</suite.client.local.phase>
                 <suite.client.dist.phase>integration-test</suite.client.dist.phase>
                 <suite.client.repl.phase>integration-test</suite.client.repl.phase>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.client.local</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>integration-test</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.client.dist</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>integration-test</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.client.repl</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>integration-test</suite.client.repl.phase>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.examples</id>
-            <properties>
-                <suite.manual.phase>integration-test</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-                <suite.manual.include>org/infinispan/server/test/configs/ExampleConfigsIT.java</suite.manual.include>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.query</id>
-            <properties>
-                <suite.manual.phase>integration-test</suite.manual.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-                <suite.manual.include>**/query/*.java</suite.manual.include>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.others</id>
-            <properties>
-                <suite.manual.phase>integration-test</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
             </properties>
         </profile>
         <profile>
@@ -826,38 +914,6 @@
             <properties>
                 <suite.manual.phase>none</suite.manual.phase>
                 <suite.manual.include.groups>org.infinispan.server.test.category.Smoke</suite.manual.include.groups>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.smoke.phase>integration-test</suite.client.smoke.phase>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.queries</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>integration-test</suite.queries.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.leveldb-client</id>
-            <properties>
-                <suite.client.local.phase>integration-test</suite.client.local.phase>
-                <suite.client.dist.phase>integration-test</suite.client.dist.phase>
-                <suite.client.repl.phase>integration-test</suite.client.repl.phase>
-                <suite.client.local.config>testsuite/standalone-leveldb-local.xml</suite.client.local.config>
-                <suite.client.dist.config>testsuite/clustered-leveldb-dist.xml</suite.client.dist.config>
-                <suite.client.repl.config>testsuite/clustered-leveldb-repl.xml</suite.client.repl.config>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.cachestore</id>
-            <properties>
-                <suite.manual.phase>integration-test</suite.manual.phase>
-                <suite.manual.include.groups>org.infinispan.server.test.category.CacheStore</suite.manual.include.groups>
                 <suite.queries.phase>none</suite.queries.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
@@ -897,7 +953,6 @@
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
-                
                 <start.jboss.as.manually>true</start.jboss.as.manually>
             </properties>
             <build>
@@ -954,7 +1009,6 @@
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
-                
                 <start.jboss.as.manually>true</start.jboss.as.manually>
             </properties>
             <build>
@@ -1036,42 +1090,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-        <profile>
-            <id>client.rest</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>integration-test</suite.client.local.phase>
-                <suite.client.dist.phase>integration-test</suite.client.dist.phase>
-                <suite.client.repl.phase>integration-test</suite.client.repl.phase>
-                <groups.client.local>org.infinispan.server.test.category.RESTLocal</groups.client.local>
-                <groups.client.clustered>org.infinispan.server.test.category.RESTClustered</groups.client.clustered>
-            </properties>
-        </profile>
-        <profile>
-            <id>client.hotrod</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>integration-test</suite.client.local.phase>
-                <suite.client.dist.phase>integration-test</suite.client.dist.phase>
-                <suite.client.repl.phase>integration-test</suite.client.repl.phase>
-                <groups.client.local>org.infinispan.server.test.category.HotRodLocal</groups.client.local>
-                <groups.client.clustered>org.infinispan.server.test.category.HotRodClustered</groups.client.clustered>
-            </properties>
-        </profile>
-        <profile>
-            <id>client.memcached</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>integration-test</suite.client.local.phase>
-                <suite.client.dist.phase>integration-test</suite.client.dist.phase>
-                <suite.client.repl.phase>integration-test</suite.client.repl.phase>
-                <groups.client.local>org.infinispan.server.test.category.MemcachedLocal</groups.client.local>
-                <groups.client.clustered>org.infinispan.server.test.category.MemcachedClustered</groups.client.clustered>
-            </properties>
         </profile>
         <profile>
             <id>suite.security</id>

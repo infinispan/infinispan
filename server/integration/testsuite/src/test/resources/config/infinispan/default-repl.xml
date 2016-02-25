@@ -1,11 +1,11 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
             <cache-container 
                 name="clustered"
-                default-cache="testcache">
+                default-cache="testCache">
                 <transport
                     lock-timeout="240000"/>
                 <replicated-cache 
-                    name="testcache"
+                    name="testCache"
                     start="EAGER" 
                     mode="SYNC"
                     batching="false"

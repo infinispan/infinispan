@@ -18,8 +18,20 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CloseableIterator;
+<<<<<<< HEAD
+=======
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.filter.KeyValueFilterConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
+>>>>>>> ISPN-6343 Domain mode support for server test suite
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -36,8 +48,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 import static org.junit.Assert.*;
+import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
 
 /**
  * Tests for HotRod client and its RemoteCache API. Subclasses must provide a
@@ -52,12 +66,10 @@ import static org.junit.Assert.*;
  * @author Jozef Vilkolak
  */
 public abstract class AbstractRemoteCacheIT {
-    private static final String TEST_CACHE_NAME = "testcache";
-
     private static final Log log = LogFactory.getLog(AbstractRemoteCacheIT.class);
-
-    protected RemoteCache remoteCache;
+    protected static String testCache = "testCache";
     protected static RemoteCacheManager remoteCacheManager = null;
+    protected RemoteCache remoteCache;
     protected final int ASYNC_OPS_ENTRY_LOAD = 10;
 
     protected abstract List<RemoteInfinispanServer> getServers();
@@ -68,7 +80,7 @@ public abstract class AbstractRemoteCacheIT {
             Configuration config = createRemoteCacheManagerConfiguration();
             remoteCacheManager = new RemoteCacheManager(config, true);
         }
-        remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
+        remoteCache = remoteCacheManager.getCache(testCache);
         remoteCache.clear();
     }
 
@@ -79,17 +91,54 @@ public abstract class AbstractRemoteCacheIT {
         }
     }
 
-    private Configuration createRemoteCacheManagerConfiguration() {
+    protected static Archive<?> createFilterArchive() {
+        return ShrinkWrap.create(JavaArchive.class, "filter.jar")
+                .addClasses(StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class,
+                        CustomPojoEventFilterFactory.class, Person.class)
+                .addAsServiceProvider(CacheEventFilterFactory.class,
+                        StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class,
+                        CustomPojoEventFilterFactory.class);
+    }
+
+    protected static Archive<?> createConverterArchive() {
+        return ShrinkWrap.create(JavaArchive.class, "converter.jar")
+                .addClasses(StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class,
+                        CustomPojoEventConverterFactory.class, Person.class, CustomEvent.class)
+                .addAsServiceProvider(CacheEventConverterFactory.class,
+                        StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class,
+                        CustomPojoEventConverterFactory.class);
+    }
+
+    protected static Archive<?> createFilterConverterArchive() {
+        return ShrinkWrap.create(JavaArchive.class, "filter-converter.jar")
+                .addClasses(FilterConverterFactory.class, CustomEvent.class,
+                        CustomPojoFilterConverterFactory.class, Person.class, Id.class)
+                .addAsServiceProvider(CacheEventFilterConverterFactory.class, FilterConverterFactory.class,
+                        CustomPojoFilterConverterFactory.class);
+    }
+
+    protected static Archive<?> createKeyValueFilterConverterArchive() {
+        return ShrinkWrap.create(JavaArchive.class, "key-value-filter-converter.jar")
+                .addClasses(TestKeyValueFilterConverterFactory.class, SampleEntity.class, Summary.class, SampleEntity.SampleEntityExternalizer.class, Summary.SummaryExternalizer.class)
+                .addAsServiceProvider(KeyValueFilterConverterFactory.class, TestKeyValueFilterConverterFactory.class);
+    }
+
+    private Configuration createRemoteCacheManagerConfiguration(int... hotrodPortOverrides) {
         ConfigurationBuilder config = new ConfigurationBuilder();
+        if (hotrodPortOverrides.length != 0 && getServers().size() != hotrodPortOverrides.length) {
+            throw new IllegalArgumentException("The number of defined ports is different from server count");
+        }
+        int index = 0;
         for (RemoteInfinispanServer server : getServers()) {
-            config.addServer().host(server.getHotrodEndpoint().getInetAddress().getHostName())
-                    .port(server.getHotrodEndpoint().getPort());
+            int port = hotrodPortOverrides.length != 0 ? hotrodPortOverrides[index] : server.getHotrodEndpoint().getPort();
+            config.addServer()
+                    .host(server.getHotrodEndpoint().getInetAddress().getHostName())
+                    .port(port);
+            ++index;
         }
         config.balancingStrategy("org.infinispan.server.test.client.hotrod.HotRodTestRequestBalancingStrategy")
                 // load balancing
                 .balancingStrategy("org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy")
-                        // list of HotRod servers available to connect to
-                        //.addServers(hotRodServerList)
                 .forceReturnValues(false)
                         // TCP stuff
                 .tcpNoDelay(true)
@@ -107,14 +156,10 @@ public abstract class AbstractRemoteCacheIT {
         return config.build();
     }
 
-    private boolean isDistributedMode() {
-        return "dist".equals(AbstractRemoteCacheManagerIT.getClusteringMode());
-    }
-
     private long numEntriesOnServer(int serverIndex) {
         return getServers().get(serverIndex).
-                getCacheManager(AbstractRemoteCacheManagerIT.isLocalMode() ? "local" : "clustered").
-                getCache(TEST_CACHE_NAME).getNumberOfEntries();
+                getCacheManager(isLocalMode() ? "local" : "clustered").
+                getCache(testCache).getNumberOfEntries();
     }
 
     @Test
@@ -135,7 +180,7 @@ public abstract class AbstractRemoteCacheIT {
     }
 
     @Test
-    public void testPut() throws IOException {
+    public void testPut() throws Exception {
         assertNull(remoteCache.put("aKey", "aValue"));
         assertTrue(remoteCache.containsKey("aKey"));
         assertEquals(remoteCache.get("aKey"), "aValue");
@@ -264,7 +309,7 @@ public abstract class AbstractRemoteCacheIT {
     @Test
     public void testGetName() {
         // in hotrod protocol specification, the default cache is identified by an empty string
-        assertEquals(TEST_CACHE_NAME, remoteCache.getName());
+        assertEquals(testCache, remoteCache.getName());
     }
 
     @Test

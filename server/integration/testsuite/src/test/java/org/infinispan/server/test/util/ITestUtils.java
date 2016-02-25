@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.server.test.client.hotrod.AbstractRemoteCacheManagerIT;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -32,11 +33,11 @@ public class ITestUtils {
     public static final String SERVER_CONFIG_DIR = System.getProperty("server1.dist") + File.separator + "standalone"
             + File.separator + "configuration";
     private static final String SERVER_CONFIG_PROPERTY = "serverConfig";
+    private static final String DEFAULT_CLUSTERING_MODE = "dist";
     
     public static final int SERVER1_MGMT_PORT = 9990;
     public static final int SERVER2_MGMT_PORT = 10090;
     public static final int SERVER3_MGMT_PORT = 10190;
-    public static final int SERVER4_MGMT_PORT = 10290;
 
     /**
      * Create {@link RemoteCacheManager} for given server.
@@ -174,4 +175,21 @@ public class ITestUtils {
         } catch (InterruptedException e) {
         }
     }
+
+    public static String getClusteringMode() {
+        return System.getProperty("clustering.mode", DEFAULT_CLUSTERING_MODE);
+    }
+
+    public static boolean isDistributedMode() {
+        return "dist".equals(getClusteringMode());
+    }
+
+    public static boolean isLocalMode() {
+        return getClusteringMode().contains("local");
+    }
+
+    public static boolean isReplicatedMode() {
+        return "repl".equals(getClusteringMode());
+    }
+
 }

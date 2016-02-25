@@ -2,8 +2,10 @@ package org.infinispan.server.test.client.rest;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.infinispan.server.test.util.ManagementClient;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.servlet.http.HttpServletResponse;
@@ -22,15 +24,12 @@ import static org.junit.Assert.*;
  *
  * @author <a href="mailto:jvilkola@redhat.com">Jozef Vilkolak</a>
  * @author <a href="mailto:mlinhard@redhat.com">Michal Linhard</a>
- * @version August 2011
- *          <p/>
- *          TODO test for https://issues.jboss.org/browse/ISPN-1193
  */
 public abstract class AbstractRESTClientIT {
 
     protected abstract void addRestServer();
 
-    private static final String DEFAULT_NAMED_CACHE = "namedCache";
+    protected static final String REST_NAMED_CACHE = "restNamedCache";
 
     public static class TestSerializable implements Serializable {
         private String content;
@@ -52,12 +51,12 @@ public abstract class AbstractRESTClientIT {
         delete(fullPathKey(KEY_A));
         delete(fullPathKey(KEY_B));
         delete(fullPathKey(KEY_C));
-        delete(fullPathKey(DEFAULT_NAMED_CACHE, KEY_A));
+        delete(fullPathKey(REST_NAMED_CACHE, KEY_A));
 
         head(fullPathKey(KEY_A), HttpServletResponse.SC_NOT_FOUND);
         head(fullPathKey(KEY_B), HttpServletResponse.SC_NOT_FOUND);
         head(fullPathKey(KEY_C), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(DEFAULT_NAMED_CACHE, KEY_A), HttpServletResponse.SC_NOT_FOUND);
+        head(fullPathKey(REST_NAMED_CACHE, KEY_A), HttpServletResponse.SC_NOT_FOUND);
     }
 
     @After
@@ -65,7 +64,7 @@ public abstract class AbstractRESTClientIT {
         delete(fullPathKey(KEY_A));
         delete(fullPathKey(KEY_B));
         delete(fullPathKey(KEY_C));
-        delete(fullPathKey(DEFAULT_NAMED_CACHE, KEY_A));
+        delete(fullPathKey(REST_NAMED_CACHE, KEY_A));
     }
 
     @Test
@@ -121,7 +120,7 @@ public abstract class AbstractRESTClientIT {
 
     @Test
     public void testGetNamedCache() throws Exception {
-        URI fullPathKey = fullPathKey(DEFAULT_NAMED_CACHE, KEY_A);
+        URI fullPathKey = fullPathKey(REST_NAMED_CACHE, KEY_A);
         post(fullPathKey, "data", "application/text");
         HttpResponse resp = get(fullPathKey, "data");
         assertNotNull(resp.getHeaders("ETag")[0].getValue());

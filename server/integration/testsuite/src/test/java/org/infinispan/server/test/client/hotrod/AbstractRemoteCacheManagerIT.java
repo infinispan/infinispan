@@ -27,14 +27,16 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
+import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 
 /**
  * Tests for HotRod client and its RemoteCacheManager API. Subclasses must provide
@@ -52,9 +54,7 @@ public abstract class AbstractRemoteCacheManagerIT {
     private static final String IPV6_REGEX = "\\A\\[(.*)\\]:([0-9]+)\\z";
     private static final String IPV4_REGEX = "\\A([^:]+):([0-9]+)\\z";
 
-    private static final String TEST_CACHE_NAME = "testcache";
-    private static final String DEFAULT_CLUSTERING_MODE = "dist";
-    protected static final String DEFAULT_NAMED_CACHE = "namedCache";
+    protected static String testCache = "testCache";
 
     private static final Log log = LogFactory.getLog(AbstractRemoteCacheManagerIT.class);
 
@@ -93,7 +93,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         assertTrue(rcm.isStarted());
         assertFalse(rcm2.isStarted());
 
-        RemoteCache rc = rcm.getCache(TEST_CACHE_NAME);
+        RemoteCache rc = rcm.getCache(testCache);
         assertEqualConfiguration(conf, rc);
     }
 
@@ -104,7 +104,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         RemoteCacheManager rcm2 = new RemoteCacheManager(conf, false);
         assertTrue(rcm.isStarted());
         assertFalse(rcm2.isStarted());
-        RemoteCache rc = rcm.getCache(TEST_CACHE_NAME);
+        RemoteCache rc = rcm.getCache(testCache);
         assertEqualConfiguration(conf, rc);
     }
 
@@ -113,7 +113,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         ConfigurationBuilder confBuilder = new ConfigurationBuilder();
         addServers(confBuilder);
         RemoteCacheManager rcm = new RemoteCacheManager(confBuilder.build());
-        RemoteCache rc = rcm.getCache(TEST_CACHE_NAME);
+        RemoteCache rc = rcm.getCache(testCache);
 
         ConfigurationBuilder builder = new ConfigurationBuilder();
         addServers(builder);
@@ -129,7 +129,6 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .valueSizeEstimate(512);
         Configuration defaultConf = builder.build();
         assertEqualConfiguration(defaultConf, rc);
-        assertTrue(putGetFromDefaultCache(rcm));
     }
 
     private void addServers(ConfigurationBuilder builder) {
@@ -137,10 +136,6 @@ public abstract class AbstractRemoteCacheManagerIT {
             builder.addServer().host(server.getHotrodEndpoint().getInetAddress().getHostName())
                     .port(server.getHotrodEndpoint().getPort());
         }
-    }
-
-    protected static boolean isDistributedMode() {
-        return getClusteringMode().contains("dist");
     }
 
     @Test
@@ -152,22 +147,10 @@ public abstract class AbstractRemoteCacheManagerIT {
         assertTrue("RemoteCacheManager should not be started initially", !rcm.isStarted());
         // check start status
         rcm.start();
-        assertTrue("RemoteCacheManager fails while trying to use it to put/retrieve value", putGetFromDefaultCache(rcm));
         assertTrue("RemoteCacheManager should be started after calling start()", rcm.isStarted());
         // check stopped status
         rcm.stop();
         assertTrue("RemoteCacheManager should be stopped after calling stop()", !rcm.isStarted());
-    }
-
-    @Test
-    public void testGetCache() {
-        RemoteCacheManager rcm = new RemoteCacheManager(createRemoteCacheManagerConfigurationBuilder().build());
-        RemoteCache rc1 = rcm.getCache(TEST_CACHE_NAME);
-
-        RemoteCache rc2 = rcm.getCache(DEFAULT_NAMED_CACHE);
-
-        assertNotNull(rc1);
-        assertNotNull(rc2);
     }
 
     @Test
@@ -224,7 +207,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         Configuration cfg = createRemoteCacheManagerConfigurationBuilder().build();
 
         RemoteCacheManager rcm = new RemoteCacheManager(cfg);
-        RemoteCache rc = rcm.getCache(TEST_CACHE_NAME);
+        RemoteCache rc = rcm.getCache(testCache);
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
 
         // the factory used to create all remote operations for this class
@@ -260,10 +243,6 @@ public abstract class AbstractRemoteCacheManagerIT {
         }
     }
 
-    protected static boolean isLocalMode() {
-        return getClusteringMode().contains("local");
-    }
-
     /*
      * Tests the load balancing feature
      *
@@ -294,7 +273,7 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .build();
 
         RemoteCacheManager rcm = new RemoteCacheManager(cfg);
-        RemoteCache rc = rcm.getCache(TEST_CACHE_NAME);
+        RemoteCache rc = rcm.getCache(testCache);
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         // the factory used to create all remote operations for this class
         OperationsFactory of = getOperationsFactoryField(rci);
@@ -311,14 +290,6 @@ public abstract class AbstractRemoteCacheManagerIT {
         ttf.releaseTransport(tt);
         assertEquals("load balancing second request: server address expected " + hostport0 + ", actual server address"
                 + sock_addr, sock_addr, hostport0);
-    }
-
-    private boolean putGetFromDefaultCache(RemoteCacheManager rcm) {
-        RemoteCache<String, Integer> rc = rcm.getCache();
-        rc.put("testKey", 139);
-        boolean success = rc.get("testKey") == 139;
-        rc.remove("testKey");
-        return success;
     }
 
     private void assertEqualConfiguration(Configuration config, RemoteCache rc) throws Exception {
@@ -486,10 +457,6 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         return getEstimateValueSizeField(rci);
-    }
-
-    protected static String getClusteringMode() {
-        return System.getProperty("clustering.mode", DEFAULT_CLUSTERING_MODE);
     }
 
     private OperationsFactory getOperationsFactoryField(RemoteCacheImpl rci) throws Exception {

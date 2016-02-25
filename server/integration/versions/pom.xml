@@ -36,17 +36,17 @@
       <version.junit>4.11</version.junit>
       <version.org.infinispan>${project.version}</version.org.infinispan>
       <version.org.infinispan.infinispan-management-console>8.2.0.Final</version.org.infinispan.infinispan-management-console>
-      <version.org.infinispan.arquillian.container>1.2.0.Alpha3</version.org.infinispan.arquillian.container>
+      <version.org.infinispan.arquillian.container>1.2.0.Beta1</version.org.infinispan.arquillian.container>
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.apache.logging.log4j>2.3</version.org.apache.logging.log4j>
 
       <version.org.wildfly>10.0.0.Final</version.org.wildfly>
       <version.org.wildfly.core>2.0.10.Final</version.org.wildfly.core>
-      <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
+      <version.org.wildfly.arquillian>1.1.0.Beta1</version.org.wildfly.arquillian>
+      <version.remoting.jmx.wildfly>2.0.1.Final</version.remoting.jmx.wildfly>
       <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
-      
       <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.0.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
-      
+      <version.org.wildfly.extras.creaper>0.9.5</version.org.wildfly.extras.creaper>
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
@@ -60,6 +60,8 @@
       <version.h2.database>1.3.173</version.h2.database>
       <version.resteasy>3.0.11.Final</version.resteasy>
       <version.lucene>5.5.0</version.lucene>
+      <checkstyle.config.location>${session.executionRootDirectory}/checkstyle/src/main/resources/checkstyle.xml</checkstyle.config.location>
+      <version.jboss.aesh>0.62</version.jboss.aesh>
    </properties>
 
    <dependencyManagement>
@@ -72,7 +74,6 @@
             <scope>import</scope>
          </dependency>
 
-         
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-parent</artifactId>
@@ -126,6 +127,61 @@
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller</artifactId>
             <version>${version.org.wildfly.core}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-controller-client</artifactId>
+            <version>${version.org.wildfly.core}</version>
+            <scope>provided</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly.extras.creaper</groupId>
+            <artifactId>creaper-core</artifactId>
+            <version>${version.org.wildfly.extras.creaper}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.jboss.as</groupId>
+                  <artifactId>jboss-as-controller-client</artifactId>
+               </exclusion>
+               <exclusion>
+                  <groupId>org.jboss.as</groupId>
+                  <artifactId>jboss-as-cli</artifactId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-cli</artifactId>
+            <version>${version.org.wildfly.core}</version>
+            <scope>compile</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.aesh</groupId>
+            <artifactId>aesh</artifactId>
+            <version>${version.jboss.aesh}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly.extras.creaper</groupId>
+            <artifactId>creaper-commands</artifactId>
+            <version>${version.org.wildfly.extras.creaper}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.wildfly</groupId>
+                  <artifactId>wildfly-patching</artifactId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.remotingjmx</groupId>
+            <artifactId>remoting-jmx</artifactId>
+            <version>${version.remoting.jmx.wildfly}</version>
          </dependency>
 
          <dependency>
@@ -396,14 +452,21 @@
             <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
             <version>${version.org.wildfly.arquillian}</version>
+            <scope>provided</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly.arquillian</groupId>
+            <artifactId>wildfly-arquillian-common-domain</artifactId>
+            <version>${version.org.wildfly.arquillian}</version>
             <scope>test</scope>
          </dependency>
 
          <dependency>
-            <groupId>org.infinispan.arquillian.container</groupId>
-            <artifactId>infinispan-arquillian-container-managed</artifactId>
-            <version>${version.org.infinispan.arquillian.container}</version>
+            <groupId>org.wildfly.arquillian</groupId>
+            <artifactId>wildfly-arquillian-container-domain-managed</artifactId>
             <scope>test</scope>
+            <version>${version.org.wildfly.arquillian}</version>
          </dependency>
 
          <dependency>

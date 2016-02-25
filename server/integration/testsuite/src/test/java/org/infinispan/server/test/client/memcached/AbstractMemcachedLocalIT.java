@@ -35,7 +35,7 @@ import static org.junit.Assert.assertTrue;
  * @author Martin Gencur
  * @author Jozef Vilkolak
  */
-public abstract class AbstractSingleNodeMemcachedIT {
+public abstract class AbstractMemcachedLocalIT {
 
     static final String ENCODING = "UTF-8";
 
@@ -44,11 +44,13 @@ public abstract class AbstractSingleNodeMemcachedIT {
     static final String KEY_B = "b";
     static final String KEY_C = "c";
 
-    private static final Log log = LogFactory.getLog(AbstractSingleNodeMemcachedIT.class);
+    private static final Log log = LogFactory.getLog(AbstractMemcachedLocalIT.class);
 
     MemcachedClient mc;
 
     protected abstract RemoteInfinispanServer getServer();
+
+    protected abstract int getMemcachedPort();
 
     public static class TestSerializable implements Serializable {
         private String content;
@@ -65,8 +67,8 @@ public abstract class AbstractSingleNodeMemcachedIT {
 
     @Before
     public void setUp() throws Exception {
-        mc = new MemcachedClient(MemcachedSingleNodeIT.ENCODING, getServer().getMemcachedEndpoint().getInetAddress()
-                .getHostName(), getServer().getMemcachedEndpoint().getPort(), 10000);
+        mc = new MemcachedClient(MemcachedLocalDomainIT.ENCODING, getServer().getMemcachedEndpoint().getInetAddress()
+                .getHostName(), getMemcachedPort(), 10000);
         mc.delete(KEY_A);
         mc.delete(KEY_B);
         mc.delete(KEY_C);
@@ -1010,7 +1012,7 @@ public abstract class AbstractSingleNodeMemcachedIT {
         assertEquals("END", mc.readln());
     }
 
-    @Test
+    @Test(timeout = 5000)
     public void testPipeliningStats() throws Exception {
         mc.writeln("stats");
         mc.writeln("get " + KEY_B);

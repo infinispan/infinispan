@@ -2,8 +2,6 @@
 <arquillian xmlns="http://www.jboss.org/arquillian-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.jboss.org/arquillian-1.0 http://jboss.org/schema/arquillian/arquillian-1.0.xsd">
 
-    <defaultProtocol type="jmx-as7" />
-
     <group qualifier="suite-manual">
         <container qualifier="hotrod-rolling-upgrade-1" mode="manual">
             <configuration>
@@ -1125,6 +1123,7 @@
             </configuration>
         </container>
     </group>
+
     <group qualifier="suite-client-dist">
         <container qualifier="container1" mode="suite">
             <configuration>
@@ -1158,6 +1157,7 @@
             </configuration>
         </container>
     </group>
+
     <group qualifier="suite-client-repl">
         <container qualifier="container1" mode="suite">
             <configuration>
@@ -1191,6 +1191,16 @@
             </configuration>
         </container>
     </group>
+
+    <container qualifier="suite-client-domain" default="true">
+            <configuration>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementPort">9990</property>
+                <property name="allowConnectingToRunningServer">true</property>
+                <property name="containerModeMap">master:.*=suite</property>
+            </configuration>
+    </container>
+
     <group qualifier="suite-rollups-manual">
          <!-- No dist case, just target: node0 and source: node1 -->
         <container qualifier="hotrod-rolling-upgrade-1" mode="manual">

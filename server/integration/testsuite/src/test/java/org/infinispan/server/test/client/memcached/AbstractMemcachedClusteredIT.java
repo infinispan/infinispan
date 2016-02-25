@@ -3,10 +3,15 @@ package org.infinispan.server.test.client.memcached;
 import java.util.List;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
+import org.infinispan.server.test.util.ManagementClient;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.infinispan.server.test.util.ITestUtils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -21,7 +26,7 @@ import static org.junit.Assert.assertNull;
  * @author Martin Gencur
  * @author Jozef Vilkolak
  */
-public abstract class AbstractClusteredMemcachedIT {
+public abstract class AbstractMemcachedClusteredIT {
 
     static final String ENCODING = "UTF-8";
     // keys used during tests
@@ -35,18 +40,23 @@ public abstract class AbstractClusteredMemcachedIT {
 
     protected abstract List<RemoteInfinispanServer> getServers();
 
+    protected abstract int getMemcachedPort1();
+    protected abstract int getMemcachedPort2();
+
     @Before
     public void setUp() throws Exception {
-        mc1 = new MemcachedClient(ENCODING, getServers().get(0).getMemcachedEndpoint().getInetAddress()
-                .getHostName(), getServers().get(0).getMemcachedEndpoint().getPort(), 10000); // to run against
-        // infinispan
-        // memcached
-        // server
-        mc2 = new MemcachedClient(ENCODING, getServers().get(1).getMemcachedEndpoint().getInetAddress()
-                .getHostName(), getServers().get(1).getMemcachedEndpoint().getPort(), 10000); // to run against
-        // infinispan
-        // memcached
-        // server
+        if (isReplicatedMode()) {
+            //set the memcached ports manually - workaround for https://issues.jboss.org/browse/ISPN-6310
+            mc1 = new MemcachedClient(ENCODING, getServers().get(0).getMemcachedEndpoint().getInetAddress()
+                    .getHostName(), getMemcachedPort1(), 10000);
+            mc2 = new MemcachedClient(ENCODING, getServers().get(1).getMemcachedEndpoint().getInetAddress()
+                    .getHostName(), getMemcachedPort2(), 10000);
+        } else {
+            mc1 = new MemcachedClient(ENCODING, getServers().get(0).getMemcachedEndpoint().getInetAddress()
+                    .getHostName(), getServers().get(0).getMemcachedEndpoint().getPort(), 10000);
+            mc2 = new MemcachedClient(ENCODING, getServers().get(1).getMemcachedEndpoint().getInetAddress()
+                    .getHostName(), getServers().get(1).getMemcachedEndpoint().getPort(), 10000);
+        }
         mc1.delete(KEY_A);
         mc1.delete(KEY_B);
         mc1.delete(KEY_C);

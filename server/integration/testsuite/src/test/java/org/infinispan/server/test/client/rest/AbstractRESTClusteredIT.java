@@ -2,16 +2,12 @@ package org.infinispan.server.test.client.rest;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.server.test.category.RESTClustered;
-import org.infinispan.server.test.category.Smoke;
-import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
+
+import java.util.List;
 
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
@@ -22,29 +18,31 @@ import static org.infinispan.server.test.client.rest.RESTHelper.get;
 import static org.infinispan.server.test.client.rest.RESTHelper.head;
 import static org.infinispan.server.test.client.rest.RESTHelper.post;
 import static org.infinispan.server.test.client.rest.RESTHelper.put;
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.infinispan.server.test.util.ITestUtils.*;
 
 /**
- * Tests for the REST client.
+ * Tests for the RESTLocal client.
  *
  * @author <a href="mailto:jvilkola@redhat.com">Jozef Vilkolak</a>
  * @author <a href="mailto:mlinhard@redhat.com">Michal Linhard</a>
- * @version August 2011
+ * @author mgencur
  */
-@RunWith(Arquillian.class)
-@Category({ RESTClustered.class, Smoke.class })
-public class RESTReplicationIT {
+public abstract class AbstractRESTClusteredIT {
 
-    @InfinispanResource("container1")
-    RemoteInfinispanServer server1;
+    protected abstract int getRestPort1();
+    protected abstract int getRestPort2();
 
-    @InfinispanResource("container2")
-    RemoteInfinispanServer server2;
+    protected abstract List<RemoteInfinispanServer> getServers();
 
     @Before
     public void setUp() throws Exception {
-        RESTHelper.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint().getContextPath());
-        RESTHelper.addServer(server2.getRESTEndpoint().getInetAddress().getHostName(), server2.getRESTEndpoint().getContextPath());
+        if (isReplicatedMode()) {
+            RESTHelper.addServer(getServers().get(0).getRESTEndpoint().getInetAddress().getHostName(), getRestPort1(), getServers().get(0).getRESTEndpoint().getContextPath());
+            RESTHelper.addServer(getServers().get(1).getRESTEndpoint().getInetAddress().getHostName(), getRestPort2(), getServers().get(1).getRESTEndpoint().getContextPath());
+        } else {
+            RESTHelper.addServer(getServers().get(0).getRESTEndpoint().getInetAddress().getHostName(), getServers().get(0).getRESTEndpoint().getContextPath());
+            RESTHelper.addServer(getServers().get(1).getRESTEndpoint().getInetAddress().getHostName(), getServers().get(1).getRESTEndpoint().getContextPath());
+        }
 
         delete(fullPathKey(KEY_A));
         delete(fullPathKey(KEY_B));

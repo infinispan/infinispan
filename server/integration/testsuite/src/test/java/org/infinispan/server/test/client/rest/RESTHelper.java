@@ -57,8 +57,8 @@ public class RESTHelper {
         servers.add(new Server(hostname, restServerPath));
     }
 
-    public static void addServer(String hostname, String port, String restServerPath) {
-        RESTHelper.port = Integer.parseInt(port);
+    public static void addServer(String hostname, int port, String restServerPath) {
+        RESTHelper.port = port;
         servers.add(new Server(hostname, restServerPath));
     }
 

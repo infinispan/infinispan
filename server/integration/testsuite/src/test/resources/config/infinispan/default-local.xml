@@ -1,9 +1,9 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
             <cache-container 
                 name="local"
-                default-cache="testcache">
+                default-cache="testCache">
                 <local-cache
-                    name="testcache"
+                    name="testCache"
                     start="EAGER"
                     batching="false"
                     >
@@ -20,6 +20,9 @@
                 <local-cache
                     name="namedCache"
                     start="EAGER" />
+                <local-cache
+                        name="restNamedCache"
+                        start="EAGER" />
                 <local-cache
                         name="compatibilityCache"
                         start="EAGER" >

@@ -8,14 +8,11 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- *
- * @author <a href="mailto:jvilkola@redhat.com">Jozef Vilkolak</a>
- * @author <a href="mailto:mlinhard@redhat.com">Michal Linhard</a>
- * @version November 2013
+ * @author mgencur
  */
 @RunWith(Arquillian.class)
 @Category({ RESTLocal.class })
-public class RESTClientIT extends AbstractRESTClientIT {
+public class RESTClientLocalIT extends AbstractRESTClientIT {
 
     @InfinispanResource("container1")
     RemoteInfinispanServer server1;
