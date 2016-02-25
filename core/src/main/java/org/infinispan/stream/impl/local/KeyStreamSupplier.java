@@ -1,8 +1,9 @@
 package org.infinispan.stream.impl.local;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.util.logging.Log;
@@ -11,7 +12,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 
 /**
@@ -36,7 +36,9 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
       Stream<K> stream;
       if (keysToFilter != null) {
          log.tracef("Applying key filtering %s", keysToFilter);
-         stream = (Stream<K>) keysToFilter.stream().filter(k -> cache.containsKey(k));
+         // Make sure we aren't going remote to retrieve these
+         AdvancedCache<K, V> advancedCache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+         stream = (Stream<K>) keysToFilter.stream().filter(k -> advancedCache.containsKey(k));
       } else {
          stream = supplier.get();
       }

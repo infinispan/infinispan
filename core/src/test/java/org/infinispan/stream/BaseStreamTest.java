@@ -13,7 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.Serializable;
@@ -1995,5 +1994,18 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       assertEquals(realCount.get(), createStream(entrySet).filterKeySegments(
               IntStream.range(0, segments).boxed().collect(Collectors.toSet())).count());
+   }
+
+   public void testKeyFilter() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 12;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      Set<Integer> keys = IntStream.of(2, 5, 8, 3, 1, range + 2).boxed().collect(Collectors.toSet());
+      assertEquals(keys.size() - 1, createStream(entrySet).filterKeys(keys).count());
    }
 }
