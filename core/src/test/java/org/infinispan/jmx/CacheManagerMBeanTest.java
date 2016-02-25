@@ -75,7 +75,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       attribute = (String) server.getAttribute(name, "DefinedCacheNames");
       assertTrue(attribute.contains("a("));
       assertTrue(attribute.contains("b("));
-      assertFalse(attribute.contains("c("));
+      assertTrue(attribute.contains("c("));
    }
 
    public void testJmxOperationMetadata() throws Exception {

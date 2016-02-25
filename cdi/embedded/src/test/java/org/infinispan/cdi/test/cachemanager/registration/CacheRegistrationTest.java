@@ -32,7 +32,7 @@ public class CacheRegistrationTest extends Arquillian {
 
    @Inject
    private EmbeddedCacheManager defaultCacheManager;
-   
+
    @Inject
    private Cache<String, String> cache;
 
@@ -43,8 +43,8 @@ public class CacheRegistrationTest extends Arquillian {
    public void testCacheRegistrationInDefaultCacheManager() {
        // Make sure the cache is registered
       cache.put("foo", "bar");
-      
-      final Set<String> cacheNames = defaultCacheManager.getCacheNames();
+
+      final Set<String> cacheNames = defaultCacheManager.getCacheConfigurationNames();
 
       assertEquals(cacheNames.size(), 2);
       assertTrue(cacheNames.contains("small"));
@@ -54,7 +54,7 @@ public class CacheRegistrationTest extends Arquillian {
    public void testCacheRegistrationInSpecificCacheManager() {
       // Make sure the cache is registered
       cache.put("foo", "bar");
-      final Set<String> cacheNames = specificCacheManager.getCacheNames();
+      final Set<String> cacheNames = specificCacheManager.getCacheConfigurationNames();
 
       assertEquals(cacheNames.size(), 1);
       assertTrue(cacheNames.contains("very-large"));

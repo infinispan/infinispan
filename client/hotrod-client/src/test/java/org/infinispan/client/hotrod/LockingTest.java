@@ -60,6 +60,7 @@ public class LockingTest extends SingleCacheManagerTest {
       for (CacheName cacheName : CacheName.values()) {
          cacheName.configure(builder);
          cacheManager.defineConfiguration(cacheName.name(), builder.build());
+         cacheManager.getCache(cacheName.name());
       }
       return cacheManager;
    }

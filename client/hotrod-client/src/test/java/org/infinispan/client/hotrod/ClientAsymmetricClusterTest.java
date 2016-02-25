@@ -28,6 +28,7 @@ public class ClientAsymmetricClusterTest extends MultiHotRodServersTest {
 
       // Define replicated cache in only one of the nodes
       manager(0).defineConfiguration(CACHE_NAME, builder.build());
+      manager(0).getCache(CACHE_NAME);
    }
 
    public void testAsymmetricCluster() {
