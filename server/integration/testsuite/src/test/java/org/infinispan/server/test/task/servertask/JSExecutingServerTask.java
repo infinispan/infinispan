@@ -22,6 +22,7 @@ import java.util.Map;
 public class JSExecutingServerTask implements ServerTask {
     public static final String NAME = "jsexecutor_task";
     public static final String CACHE_NAME = "taskAccessible";
+    public static final String CACHE_NAME_PARAMETER = "cacheName";
 
     private TaskContext taskContext;
 
@@ -39,7 +40,12 @@ public class JSExecutingServerTask implements ServerTask {
     public Object call() throws Exception {
         Cache cache = taskContext.getCache().get();
         EmbeddedCacheManager cacheManager = cache.getCacheManager();
-        Cache usedCache = cacheManager.getCache(CACHE_NAME);
+
+        String cacheName = getCacheName();
+        if (taskContext.getParameters().isPresent() && taskContext.getParameters().get().get(CACHE_NAME_PARAMETER) != null) {
+            cacheName = (String) taskContext.getParameters().get().get(CACHE_NAME_PARAMETER);
+        }
+        Cache usedCache = cacheManager.getCache(cacheName);
 
         ScriptingManager scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
         loadScript(scriptingManager, "/stream_serverTask.js");
@@ -47,6 +53,10 @@ public class JSExecutingServerTask implements ServerTask {
         Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("/stream_serverTask.js",
                 new TaskContext().cache(usedCache).marshaller(taskContext.getMarshaller().get())).get();
         return result;
+    }
+
+    public String getCacheName() {
+        return CACHE_NAME;
     }
 
     private void loadScript(ScriptingManager scriptingManager, String scriptName) throws IOException {

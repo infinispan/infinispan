@@ -172,7 +172,7 @@ public class DistributedServerTaskIT {
    }
 
    @Test
-   @Ignore(value="Is disabled until the issue ISPN-6248 is fixed.")
+   @Ignore(value="Is disabled until the issue ISPN-6303 is fixed.")
    public void shouldExecuteMapReduceViaJavaScriptInTask() throws Exception {
       RemoteCache remoteCache = rcm2.getCache(DistributedJSExecutingServerTask.CACHE_NAME);
       remoteCache.put(1, "word1 word2 word3");
@@ -186,14 +186,16 @@ public class DistributedServerTaskIT {
    }
 
    @Test
-   @Ignore(value="Is disabled until the issue ISPN-6248 is fixed.")
+   @Ignore(value="Is disabled until the issue ISPN-6303 and ISPN-6173 are fixed.")
    public void shouldExecuteMapReduceViaJavaScriptInTaskDistCache() throws Exception {
       RemoteCache remoteCache = rcm2.getCache(DistributedJSExecutingServerTask.DIST_CACHE_NAME);
       remoteCache.put(1, "word1 word2 word3");
       remoteCache.put(2, "word1 word2");
       remoteCache.put(3, "word1");
 
-      List<Map<String, Long>> result = (List<Map<String, Long>>)remoteCache.execute(DistributedJSExecutingServerTask.NAME, Collections.emptyMap());
+      Map<String, String> parameters = new HashMap<>();
+      parameters.put(JSExecutingServerTask.CACHE_NAME_PARAMETER, DistributedJSExecutingServerTask.DIST_CACHE_NAME);
+      List<Map<String, Long>> result = (List<Map<String, Long>>)remoteCache.execute(DistributedJSExecutingServerTask.NAME, parameters);
       assertEquals(2, result.size());
       verifyMapReduceResult(result.get(0));
       verifyMapReduceResult(result.get(1));
