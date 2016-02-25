@@ -699,12 +699,13 @@ Just like embedded mode, the server supports cache authorization using the same 
 ----
    <cache-container default-cache="secured">
       <security>
-         <authorization mapper="org.infinispan.security.IdentityRoleMapper">
+         <authorization>
+	    <identity-role-mapper/>
             <role name="admin" permissions="ALL" />
             <role name="reader" permissions="READ" />
             <role name="writer" permissions="WRITE" />
             <role name="supervisor" permissions="READ WRITE EXEC BULK"/>
-         </roles>
+         </authorization>
       </security>
       <local-cache name="secured">
          <security>
@@ -744,11 +745,11 @@ Infinispan Server comes with an add-user.sh script (add-user.bat for Windows) to
 
 +./bin/add-user.sh -a -u myuser -p "qwer1234!" -ro supervisor,reader,writer+
 
-It is also possible to authenticate/authorize against alternative sources, such as LDAP, JAAS, etc. Refer to the https://docs.jboss.org/author/display/WFLY8/Security+Realms[WildFly security realms guide] on how to configure the Security Realms. Bear in mind that the choice of authentication mechanism you select for the protocols limits the type of authentication sources, since the credentials must be in a format supported by the algorithm itself (e.g. pre-digested passwords for the digest algorithm)
+It is also possible to authenticate/authorize against alternative sources, such as LDAP, JAAS, etc. Refer to the https://docs.jboss.org/author/display/WFLY10/Security+Realms[WildFly security realms guide] on how to configure the Security Realms. Bear in mind that the choice of authentication mechanism you select for the protocols limits the type of authentication sources, since the credentials must be in a format supported by the algorithm itself (e.g. pre-digested passwords for the digest algorithm)
 
 === Security Audit
 
-The Infinispan subsystem security audit by default sends audit logs to the audit manager configured at the server level. Refer to the https://docs.jboss.org/author/display/WFLY8/Security+subsystem+configuration[WildFly security subsystem guide] on how to configure the server audit manager. Alternatively you can also set your custom audit logger by using the same configuration as for embedded mode.
+The Infinispan subsystem security audit by default sends audit logs to the audit manager configured at the server level. Refer to the https://docs.jboss.org/author/display/WFLY10/Security+subsystem+configuration[WildFly security subsystem guide] on how to configure the server audit manager. Alternatively you can also set your custom audit logger by using the same configuration as for embedded mode.
 Refer to the The link:../user_guide/user_guide.html#_Security_chapter[Security] chapter in the user guide for details.
 
 === Hot Rod authentication
