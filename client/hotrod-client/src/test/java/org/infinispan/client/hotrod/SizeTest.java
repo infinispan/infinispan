@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -46,20 +47,24 @@ public class SizeTest extends MultiHotRodServersTest {
    public void testPersistentDistributedCacheSize() {
       String cacheName = "persistent-distributed-size";
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.eviction().maxEntries(1);
+      builder.eviction().size(1);
+      builder.dataContainer().keyEquivalence(ByteArrayEquivalence.INSTANCE);
       builder.persistence()
             .passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(getClass().getName())
-            .shared(true);
+            .shared(true).purgeOnStartup(true);
       defineInAll(cacheName, builder);
+      assertEquals(0, clients.get(0).getCache(cacheName).size());
       populateCache(cacheName);
+      assertEquals(SIZE, server(0).getCacheManager().getCache(cacheName).size());
       assertEquals(SIZE, clients.get(0).getCache(cacheName).size());
    }
 
    private void populateCache(String cacheName) {
-      for (int i = 0; i < SIZE; i++)
+      for (int i = 0; i < SIZE; i++) {
          clients.get(i % NUM_SERVERS).getCache(cacheName).put(i, i);
+      }
    }
 
    private void populateCache(RemoteCache<Integer, Integer> remote) {

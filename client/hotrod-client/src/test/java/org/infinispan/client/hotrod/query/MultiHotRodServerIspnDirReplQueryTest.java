@@ -28,6 +28,7 @@ public class MultiHotRodServerIspnDirReplQueryTest extends MultiHotRodServerIspn
 
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(TEST_CACHE, builder.build());
+         cm.getCache(TEST_CACHE);
       }
 
       waitForClusterToForm();

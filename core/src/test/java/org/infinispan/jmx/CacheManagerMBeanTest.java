@@ -1,8 +1,10 @@
 package org.infinispan.jmx;
 
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertFalse;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import org.infinispan.Cache;
@@ -58,21 +60,22 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assert server.getAttribute(name, "CreatedCacheCount").equals("1");
       assert server.getAttribute(name, "DefinedCacheCount").equals("3");
       assert server.getAttribute(name, "RunningCacheCount").equals("1");
-      String attribute = (String) server.getAttribute(name, "DefinedCacheNames");
-      assert attribute.contains("a(");
-      assert attribute.contains("b(");
-      assert attribute.contains("c(");
+      String attribute = (String) server.getAttribute(name, "DefinedCacheConfigurationNames");
+      String names[] = attribute.substring(1, attribute.length()-1).split(",");
+      assertTrue(Arrays.binarySearch(names, "a") >= 0);
+      assertTrue(Arrays.binarySearch(names, "b") >= 0);
+      assertTrue(Arrays.binarySearch(names, "c") >= 0);
 
       //now start some caches
       server.invoke(name, "startCache", new Object[]{"a"}, new String[]{String.class.getName()});
       server.invoke(name, "startCache", new Object[]{"b"}, new String[]{String.class.getName()});
-      assert server.getAttribute(name, "CreatedCacheCount").equals("3");
-      assert server.getAttribute(name, "DefinedCacheCount").equals("3");
-      assert server.getAttribute(name, "RunningCacheCount").equals("3");
+      assertEquals("3", server.getAttribute(name, "CreatedCacheCount"));
+      assertEquals("3", server.getAttribute(name, "DefinedCacheCount"));
+      assertEquals("3", server.getAttribute(name, "RunningCacheCount"));
       attribute = (String) server.getAttribute(name, "DefinedCacheNames");
-      assert attribute.contains("a(");
-      assert attribute.contains("b(");
-      assert attribute.contains("c(");
+      assertTrue(attribute.contains("a("));
+      assertTrue(attribute.contains("b("));
+      assertTrue(attribute.contains("c("));
    }
 
    public void testJmxOperationMetadata() throws Exception {

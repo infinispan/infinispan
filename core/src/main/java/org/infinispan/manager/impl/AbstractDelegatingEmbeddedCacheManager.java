@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -95,6 +96,16 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public Set<String> getCacheNames() {
       return cm.getCacheNames();
+   }
+
+   @Override
+   public Set<String> getCacheConfigurationNames() {
+      return cm.getCacheConfigurationNames();
+   }
+
+   @Override
+   public ClusterExecutor executor() {
+      return cm.executor();
    }
 
    @Override

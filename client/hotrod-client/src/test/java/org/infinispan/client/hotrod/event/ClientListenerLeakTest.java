@@ -22,6 +22,7 @@ public class ClientListenerLeakTest extends SingleHotRodServerTest {
       ConfigurationBuilder cfg = hotRodCacheConfiguration();
       cacheName = this.getClass().getSimpleName();
       cm.defineConfiguration(cacheName, cfg.build());
+      cm.getCache(cacheName);
       return cm;
    }
 

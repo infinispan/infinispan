@@ -27,4 +27,10 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
       Map<Integer,AdvancedExternalizer<?>> externalizerMap = gc.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.SCRIPT_METADATA, new ScriptMetadata.Externalizer());
    }
+
+   @Override
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      ScriptingManagerImpl scriptingManager = (ScriptingManagerImpl) gcr.getComponent(ScriptingManager.class);
+      scriptingManager.getScriptCache(); // Initialize the cache
+   }
 }

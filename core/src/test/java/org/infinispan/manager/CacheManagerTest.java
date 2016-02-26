@@ -218,10 +218,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cm.defineConfiguration("two", new ConfigurationBuilder().build());
          cm.getCache("three");
          Set<String> cacheNames = cm.getCacheNames();
-         assert 3 == cacheNames.size();
-         assert cacheNames.contains("one");
-         assert cacheNames.contains("two");
-         assert cacheNames.contains("three");
+         assertEquals(3, cacheNames.size());
+         assertTrue(cacheNames.contains("one"));
+         assertTrue(cacheNames.contains("two"));
+         assertTrue(cacheNames.contains("three"));
       } finally {
          cm.stop();
       }
