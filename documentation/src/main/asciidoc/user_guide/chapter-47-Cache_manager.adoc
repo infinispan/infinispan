@@ -1,0 +1,97 @@
+== The CacheManager API
+Infinispan provides the `EmbeddedCacheManager`, as mentioned in the configuration section,
+as the API for exposing various operations related to the Infinispan cache container
+and its supporting elements.  This section is to go over some of these pieces
+as well as when you may need to use them.
+
+=== Clustering Information
+The `EmbeddedCacheManager` has quite a few methods to provide information
+as to how the cluster is operating.  The following methods only really make
+sense when being used in a clustered environment (that is when a Transport
+is configured).
+
+==== Member Information
+When you are using a cluster it is very important to be able to find information
+about membership in the cluster including who is the owner of the cluster.
+
+.link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/EmbeddedCacheManager.html#getMembers--[getMembers]
+The +getMembers()+ method returns all of the nodes in the current cluster.
+
+.link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/EmbeddedCacheManager.html#getCoordinator--[getCoordinator]
+The +getCoordinator()+ method will tell you which one of the members is the coordinator
+of the cluster.  For most intents you shouldn't need to care who the coordinator is.
+You can use link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/EmbeddedCacheManager.html#isCoordinator--[isCoordinator]
+method directly to see if the local node is the coordinator as well.
+
+==== Other methods
+
+.link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/EmbeddedCacheManager.html#getTransport--[getTransport]
+This method provides you access to the underlying Transport that is used to send
+messages to other nodes.  In most cases a user wouldn't ever need to go to
+this level, but if you want to get Transport specific information (in this
+case JGroups) you can use this mechanism.
+
+.link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/EmbeddedCacheManager.html#getStats--[getStats]
+The stats provided here are coalesced from all of the active caches in this manager.
+These stats can be useful to see if there is something wrong going on with your
+cluster overall.
+
+=== Cluster Executor
+The cache manager comes with a nice utility that allows you to execute arbitrary code in the cluster.
+Note this is unlike the Distributed Execution Service as this requires no Cache to be used.  This
+link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/ClusterExecutor.html[cluster executor]
+can be retrieved by calling +executor()+ of the `EmbeddedCacheManager`.
+
+This manager was built specifically using Java 8 and such has functional APIs in mind, thus all methods take a functional
+inteface as an argument.  Also since these arguments will be sent to other nodes they need to be serializable.  We even
+used a nice trick to ensure our lambdas are immediately Serializable.  That is by having the arguments implement both
+Serializable and the real argument type (ie. Runnable or Function).  The JRE will pick the most specific class when
+determining which method to invoke, so in that case your lambdas will always be serializable.
+
+Below you will see an example of how to use the new executor.
+
+==== Example: Dynamically Start and Stop Clustered Cache
+This example shows how you can use the ClusterExecutor to dynamically start and stop a cache.
+
+===== Non-Clustered
+
+Start start/stop cache in non-clustered mode is simple.  You can use _EmbeddedCacheManager.defineConfiguration(cacheName, configuration)_ to define a cache, and then call _EmbeddedCacheManager.getCache(cacheName)_. 
+
+If you don't define a specific configuration for the cache and directly call _EmbeddedCacheManager.getCache(...)_ , then a new cache would be created with default configurations. 
+
+To stop a cache, call _EmbeddedCacheManager.remove(cacheName)_  
+
+===== Clustered
+To start a clustered cache, you'll need to do the above on every clustered node, while making sure the cache mode is clustered, of course.
+
+You can start the cache by calling _EmbeddedCacheManager.getCache(...)_ 
+To do this on every single node though, you could write your own service to do that, or with JMX, or use the ClusterExecutor.
+
+[source,java]
+.StartCache.java
+----
+
+   EmbeddedCacheManager manager = null;
+   String cacheName = "start-this-cache";
+   manager.executor().submitConsumer(localManager -> {
+         localManager.getCache(cacheName);
+         return null;
+      }, (address, value, throwable) -> {
+      if (throwable != null) {
+         log.fatal("Cache startup encountered exception on node " + address, t);
+      }
+   }).join();
+
+----
+
+The first argument is a `Function` that when invoked will pass the `EmbeddedCacheManager` local to each
+node.  Normally this also allows for a return value to be sent back, but unfortunately a `Cache`
+instance is not serializable so we can't send that back to the calling node.  Thus we have to
+return null.
+In this case the second argument `TriConsumer` would be called back for each node and will contain
+who this response is from (address), the return value (if there was one, in our case this is always
+null), and a throwable if a problem occurred.  The value and throwable variables will never both
+be non null.  That is if the throwable is non null the value will always be null.  Lastly
+this returns a CompletableFuture that will be complete after all of the node's responses
+have been fully processed.
+
