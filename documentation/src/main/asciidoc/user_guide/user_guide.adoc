@@ -19,6 +19,7 @@ are also useful documents to have alongside this user guide.
 
 // The top-level chapter on config.  This will include other sub-chapters.
 include::chapter-46-Configuring_cache.adoc[]
+include::chapter-47-Cache_manager.adoc[]
 include::chapter-53-Using_the_Cache_API.adoc[]
 include::chapter-43-Eviction.adoc[]
 include::chapter-23-Persistence.adoc[]
