@@ -27,6 +27,10 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
    protected final int NUM_OWNERS = NUM_NODES - 1;
 
    protected abstract CacheMode getCacheMode();
+
+   public AbstractCQMultipleCachesTest() {
+      cleanup =  CleanupPhase.AFTER_METHOD;
+   }
    
    @Override
    protected void createCacheManagers() {
