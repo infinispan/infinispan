@@ -34,8 +34,8 @@ import org.apache.logging.log4j.core.appender.ManagerFactory;
  */
 public class CompressedFileManager extends FileManager {
 
-   protected CompressedFileManager(String fileName, OutputStream os, boolean append, boolean locking, String advertiseURI, Layout<? extends Serializable> layout, int bufferSize) {
-      super(fileName, os, append, locking, advertiseURI, layout, bufferSize);
+   protected CompressedFileManager(String fileName, OutputStream os, boolean append, boolean locking, String advertiseURI, Layout<? extends Serializable> layout, int bufferSize, boolean writerHeader) {
+      super(fileName, os, append, locking, advertiseURI, layout, bufferSize, writerHeader);
    }
 
    private static final CompressedFileManagerFactory FACTORY = new CompressedFileManagerFactory();
@@ -141,7 +141,8 @@ public class CompressedFileManager extends FileManager {
                   bufferSize = -1; // signals to RollingFileManager not to use BufferedOutputStream
                }
             }
-            return new CompressedFileManager(name, os, data.append, data.locking, data.advertiseURI, data.layout, bufferSize);
+            boolean writeHeader = !data.append || !file.exists();
+            return new CompressedFileManager(name, os, data.append, data.locking, data.advertiseURI, data.layout, bufferSize, writeHeader);
          } catch (final IOException ex) {
             LOGGER.error("FileManager (" + name + ") " + ex);
          }
