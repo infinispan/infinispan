@@ -446,6 +446,7 @@ public class AbstractInfinispanTest {
             log.debug("Exiting fork runnable.");
          } catch (Throwable e) {
             log.debug("Exiting fork runnable due to exception", e);
+            throw e;
          }
       }
    }

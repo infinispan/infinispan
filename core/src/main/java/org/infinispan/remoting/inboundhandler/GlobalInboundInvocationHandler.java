@@ -1,5 +1,6 @@
 package org.infinispan.remoting.inboundhandler;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -160,7 +161,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
                   retVal = SuccessfulResponse.create(retVal);
                }
                reply.reply(retVal);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IllegalLifecycleStateException e) {
                log.shutdownHandlingCommand(command);
                reply.reply(shuttingDownResponse());
             } catch (Throwable throwable) {

@@ -221,6 +221,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    @Override
    public synchronized void start() {
       try {
+         // Do nothing if the global components are already running
+         if (!state.startAllowed())
+            return;
+
          boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
          if (needToNotify) {
             for (ModuleLifecycle l : moduleLifecycles) {
