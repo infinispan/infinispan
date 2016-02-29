@@ -156,7 +156,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       });
 
       // Check that the user write is blocked by the state transfer write
-      boolean blocked = checkPoint.peek(3, SECONDS, "pre_commit_entry_" + key + "_from_" + address(0)) == null;
+      boolean blocked = checkPoint.peek(1, SECONDS, "pre_commit_entry_" + key + "_from_" + address(0)) == null;
       assertTrue(blocked);
 
       // Allow state transfer to commit
@@ -200,22 +200,27 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
                return;
             }
             final Address source = ctx.getOrigin();
-            CacheEntry newEntry = new CacheEntryDelegator(entry) {
-               @Override
-               public void commit(DataContainer container, Metadata metadata) {
-                  checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_" + source);
-                  try {
-                     checkPoint.awaitStrict("resume_commit_entry_" + getKey() + "_from_" + source, 10, SECONDS);
-                  } catch (InterruptedException e) {
-                     throw new RuntimeException(e);
-                  } catch (TimeoutException e) {
-                     throw new RuntimeException(e);
+            if (entry instanceof ClearCacheEntry) {
+               super.commitEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
+            } else {
+               CacheEntry newEntry = new CacheEntryDelegator(entry) {
+                  @Override
+                  public void commit(DataContainer container, Metadata metadata) {
+                     checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_" + source);
+                     try {
+                        checkPoint.awaitStrict("resume_commit_entry_" + getKey() + "_from_" + source, 10,
+                              SECONDS);
+                     } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                     } catch (TimeoutException e) {
+                        throw new RuntimeException(e);
+                     }
+                     super.commit(container, metadata);
+                     checkPoint.trigger("post_commit_entry_" + getKey() + "_from_" + source);
                   }
-                  super.commit(container, metadata);
-                  checkPoint.trigger("post_commit_entry_" + getKey() + "_from_" + source);
-               }
-            };
-            super.commitEntry(newEntry, metadata, command, ctx, trackFlag, l1Invalidation);
+               };
+               super.commitEntry(newEntry, metadata, command, ctx, trackFlag, l1Invalidation);
+            }
          }
       };
       TestingUtil.replaceComponent(cache, ClusteringDependentLogic.class, replaceCdl, true);
