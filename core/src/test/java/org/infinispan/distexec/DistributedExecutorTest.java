@@ -208,7 +208,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       assertEquals(caches(cacheName()).size(), members.size());
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
       
-      DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder( new LongRunningCallable());
+      DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
       final Future<Integer> future = des.submit(members.get(0),tb.build());
       
       future.cancel(true);
