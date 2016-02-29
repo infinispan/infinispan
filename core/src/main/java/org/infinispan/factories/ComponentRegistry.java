@@ -238,9 +238,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       super.start();
 
       if (needToNotify && state == ComponentStatus.RUNNING) {
-         for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
-            l.cacheStarted(this, cacheName);
-         }
          cacheManagerNotifier.notifyCacheStarted(cacheName);
       }
    }

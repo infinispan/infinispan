@@ -274,6 +274,13 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
+   public void notifyCacheStarted(String cacheName) {
+      ComponentRegistry cr = getNamedComponentRegistry(cacheName);
+      for (ModuleLifecycle l : moduleLifecycles) {
+         l.cacheStarted(cr, cacheName);
+      }
+   }
+
    public final GlobalConfiguration getGlobalConfiguration() {
       //this is final so no need to synchronise it
       return globalConfiguration;

@@ -591,7 +591,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     */
    private <K, V> Cache<K, V> wireAndStartCache(String cacheName, String configurationName) {
       CacheWrapper createdCacheWrapper = null;
-      Configuration c = null;
+      Configuration c;
+      boolean needToNotifyCacheStarted = false;
       try {
          synchronized (caches) {
             //fetch it again with the lock held
@@ -615,20 +616,26 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
          log.tracef("About to wire and start cache %s", cacheName);
          Cache<K, V> cache = new InternalCacheFactory<K, V>().createCache(c, globalComponentRegistry, cacheName);
+         ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
 
          if(cache.getAdvancedCache().getAuthorizationManager() != null) {
             cache = new SecureCacheImpl<K, V>(cache.getAdvancedCache());
          }
          createdCacheWrapper.setCache(cache);
 
+         boolean notStartedYet = cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
          // start the cache-level components
          cache.start();
+         needToNotifyCacheStarted = notStartedYet && cr.getStatus() == ComponentStatus.RUNNING;
          return cache;
       } finally {
          // allow other threads to access the cache
          if (createdCacheWrapper != null) {
             log.tracef("Closing latch for cache %s", cacheName);
             createdCacheWrapper.latch.countDown();
+            if (needToNotifyCacheStarted) {
+               globalComponentRegistry.notifyCacheStarted(cacheName);
+            }
          }
       }
    }
