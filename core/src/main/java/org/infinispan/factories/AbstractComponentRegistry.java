@@ -1,5 +1,6 @@
 package org.infinispan.factories;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
@@ -179,6 +180,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    protected synchronized void registerComponentInternal(Object component, String name, boolean nameIsFQCN) {
+      if (state.isStopping() || state.isTerminated()) {
+         throw new IllegalLifecycleStateException("Trying to register a component after stopping: " + name);
+      }
       if (component == null)
          throw new NullPointerException("Cannot register a null component under name [" + name + "]");
       Component old = componentLookup.get(name);
@@ -234,7 +238,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       if (dependencies.length > 0) {
          Object[] params = new Object[dependencies.length];
          if (trace)
-            getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].", injectMetadata.getMethod(), o.getClass().getName());
+            getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].", injectMetadata,
+                  o.getClass().getName());
          for (int i = 0; i < dependencies.length; i++) {
             String name = injectMetadata.getParameterName(i);
             boolean nameIsFQCN = !injectMetadata.isParameterNameSet(i);
@@ -532,17 +537,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    @Override
    public synchronized void start() {
-
-      if (!state.startAllowed()) {
-         if (state.needToDestroyFailedCache())
-            destroy(); // this will take us back to TERMINATED
-
-         if (state.needToInitializeBeforeStart()) {
-            rewire();
-         } else
-            return;
-      }
-
       state = ComponentStatus.INITIALIZING;
       try {
          internalStart();
@@ -579,28 +573,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
    }
 
-   /**
-    * Destroys the cache and frees up any resources.  Sets the cache status to {@link
-    * org.infinispan.lifecycle.ComponentStatus#TERMINATED} when it is done.
-    * <p/>
-    * If the cache is in {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} when this method is called, it will
-    * first call {@link #stop()} to stop the cache.
-    */
-   private void destroy() {
-      try {
-         if (state.stopAllowed())
-            stop();
-      } catch (CacheException e) {
-         getLog().stopBeforeDestroyFailed(e);
-      }
-
-      try {
-         resetVolatileComponents();
-      } finally {
-         // We always progress to destroyed
-         state = ComponentStatus.TERMINATED;
-      }
-   }
    // ------------------------------ END: Publicly available lifecycle methods -----------------------------
 
    // ------------------------------ START: Actual internal lifecycle methods --------------------------------
@@ -652,7 +624,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : startMethods) {
          if (traceEnabled)
-            getLog().tracef("Invoking start method %s on component %s", em.metadata.getMethod(), em.component.getName());
+            getLog().tracef("Invoking start method %s on component %s", em.metadata, em.component.getName());
          em.invoke();
       }
    }
@@ -687,7 +659,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       boolean traceEnabled = getLog().isTraceEnabled();
       for (PrioritizedMethod em : stopMethods) {
          if (traceEnabled)
-            getLog().tracef("Invoking stop method %s on component %s", em.metadata.getMethod(), em.component.getName());
+            getLog().tracef("Invoking stop method %s on component %s", em.metadata, em.component.getName());
          try {
             em.invoke();
          } catch (Throwable t) {
@@ -695,7 +667,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          }
       }
 
-      destroy();
+      resetVolatileComponents();
    }
 
    // ------------------------------ END: Actual internal lifecycle methods --------------------------------
@@ -890,7 +862,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       @Override
       public String toString() {
          return "PrioritizedMethod{" +
-               "method=" + metadata.getMethod().getName() +
+               "method=" + metadata +
                ", priority=" + metadata.getPriority() +
                '}';
       }

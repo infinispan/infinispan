@@ -212,7 +212,23 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       globalComponents.start();
       boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
 
-      // set this up *before* starting the components since some components - specifically state transfer - needs to be
+      // If FAILED, stop the existing components and transition to TERMINATED
+      if (state.needToDestroyFailedCache()) {
+         stop();
+      }
+
+      // If TERMINATED, rewire non-volatile components and transition to INSTANTIATED
+      if (state.needToInitializeBeforeStart()) {
+         state = ComponentStatus.INSTANTIATED;
+         rewire();
+      }
+
+      // Do nothing if the cache was already running
+      if (!state.startAllowed())
+         return;
+
+      // set this up *before* starting the components since some components - specifically state transfer -
+      // needs to be
       // able to locate this registry via the InboundInvocationHandler
       cacheComponents();
       this.globalComponents.registerNamedComponentRegistry(this, cacheName);

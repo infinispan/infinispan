@@ -14,7 +14,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -263,6 +262,11 @@ public class ComponentMetadata implements Serializable {
 
       public synchronized void setParameterClasses(Class<?>[] parameterClasses) {
          this.parameterClasses = parameterClasses;
+      }
+
+      @Override
+      public String toString() {
+         return methodName + "(" + String.join(", ", parameters) + ")";
       }
    }
 }
