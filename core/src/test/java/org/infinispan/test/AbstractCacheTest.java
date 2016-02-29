@@ -3,13 +3,10 @@ package org.infinispan.test;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 
 import java.util.concurrent.TimeUnit;
 
