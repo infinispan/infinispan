@@ -12,6 +12,7 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -110,6 +111,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1));
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));
+      stateResponseCommand.init(TestingUtil.extractComponent(cache(0), StateConsumer.class));
       handler.handle(stateResponseCommand, new Reply() {
          @Override
          public void reply(Object returnValue) {
