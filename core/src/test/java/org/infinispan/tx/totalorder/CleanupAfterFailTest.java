@@ -19,6 +19,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -113,6 +114,7 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
       dcc.clustering().hash()
             .numOwners(1)
             .numSegments(60);
+      dcc.clustering().sync().replTimeout(1, TimeUnit.SECONDS);
       dcc.versioning()
             .enable()
             .scheme(VersioningScheme.SIMPLE);

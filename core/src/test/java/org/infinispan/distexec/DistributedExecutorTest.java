@@ -220,7 +220,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       AdvancedCache<Object, Object> localCache = getCache().getAdvancedCache();      
       DistributedExecutorService des = createDES(localCache);      
       Future<Integer> future = des.submit(localCache.getRpcManager().getAddress(), new SleepingSimpleCallable());     
-      future.get(2000, TimeUnit.MILLISECONDS);
+      future.get(1000, TimeUnit.MILLISECONDS);
    }
    
    public void testBasicTargetDistributedCallableTargetSameNode() throws Exception {

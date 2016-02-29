@@ -320,14 +320,14 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    public void testSleepingCallableWithTimeoutOption() throws Exception {
       DistributedExecutorService des = createDES(getCache());
       Future<Integer> future = des.submit(new SleepingSimpleCallable());
-      Integer r = future.get(20, TimeUnit.SECONDS);
+      Integer r = future.get(10, TimeUnit.SECONDS);
       assert r == 1;
 
       //the same using DistributedTask API
       DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
       DistributedTask<Integer> distributedTask = taskBuilder.build();
       future = des.submit(distributedTask);
-      r = future.get(20, TimeUnit.SECONDS);
+      r = future.get(10, TimeUnit.SECONDS);
       assert r == 1;
    }
 
@@ -335,7 +335,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    public void testSleepingCallableWithTimeoutExc() throws Exception {
       DistributedExecutorService des = createDES(getCache());
       Future<Integer> future = des.submit(new SleepingSimpleCallable());     
-      future.get(2000, TimeUnit.MILLISECONDS);
+      future.get(1000, TimeUnit.MILLISECONDS);
    }
 
    @Test(expectedExceptions = TimeoutException.class)
@@ -344,7 +344,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
       DistributedTask<Integer> distributedTask = taskBuilder.build();
       Future<Integer> future = des.submit(distributedTask);
-      future.get(2000, TimeUnit.MILLISECONDS);
+      future.get(1000, TimeUnit.MILLISECONDS);
    }
 
    @Test(expectedExceptions = TimeoutException.class)
@@ -590,7 +590,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       @Override
       public Integer call() throws Exception {
-         Thread.sleep(10000);
+         Thread.sleep(2000);
 
          return 1;
       }
