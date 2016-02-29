@@ -181,6 +181,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
 
       cacheManagerNotifier.removeListener(viewListener);
+      viewHandlingCompletionService.cancelQueuedTasks();
    }
 
    @Override
@@ -364,7 +365,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          try {
             updateCacheMembers(transport.getMembers());
          } catch (Exception e) {
-            log.errorUpdatingMembersList(e);
+            if (!clusterManagerStatus.isRunning()) {
+               log.errorUpdatingMembersList(e);
+            }
          }
       }
    }
