@@ -143,6 +143,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          displayName = "Stops cache."
    )
    public void stop() {
+      if (log.isDebugEnabled())
+         log.debugf("Stopping cache %s on %s", getName(), getCacheManager().getAddress());
       dataContainer = null;
       componentRegistry.stop();
    }
