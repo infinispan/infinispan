@@ -1,5 +1,6 @@
 package org.infinispan.manager;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.Version;
@@ -118,13 +119,16 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAP
 public class DefaultCacheManager implements EmbeddedCacheManager {
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
+
    private final ConcurrentMap<String, CacheWrapper> caches = CollectionFactory.makeConcurrentMap();
    private final GlobalComponentRegistry globalComponentRegistry;
-   private volatile boolean stopping;
    private final AuthorizationHelper authzHelper;
    private final DependencyGraph<String> cacheDependencyGraph = new DependencyGraph<>();
    private final CacheContainerStats stats;
    private final ConfigurationManager configurationManager;
+
+   @GuardedBy("this")
+   private boolean stopping;
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
@@ -657,43 +661,36 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public void stop() {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
-      if (!stopping) {
-         synchronized (this) {
-            // DCL to make sure that only one thread calls stop at one time,
-            // and any other calls by other threads are ignored.
-            if (!stopping) {
-               log.debugf("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().clusterName(), getAddress());
-               stopping = true;
-               Set<String> cachesToStop = new LinkedHashSet<>(this.caches.size());
-               boolean defaultCacheHasDependency = false;
-               // stop ordered caches first
-               try {
-                  List<String> ordered = cacheDependencyGraph.topologicalSort();
-                  defaultCacheHasDependency = ordered.contains(DEFAULT_CACHE_NAME);
-                  cachesToStop.addAll(ordered);
-               } catch (CyclicDependencyException e) {
-                  log.stopOrderIgnored();
-               }
-               cachesToStop.addAll(caches.keySet());
-               // will be stopped by the GCR
-               InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
-               internalCacheRegistry.filterPrivateCaches(cachesToStop);
-               // make sure we stop the default cache LAST!
-               if(!defaultCacheHasDependency) {
-                  cachesToStop.add(DEFAULT_CACHE_NAME);
-               }
-               for (String cacheName : cachesToStop) {
-                  terminate(cacheName);
-               }
-               globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
-               globalComponentRegistry.stop();
 
-            } else {
-               log.trace("Ignore call to stop as the cache manager is stopping");
-            }
+      synchronized (this) {
+         if (stopping) {
+            log.trace("Ignore call to stop as the cache manager is stopping");
+            return;
          }
-      } else {
-         log.trace("Ignore call to stop as the cache manager is stopping");
+
+         log.debugf("Stopping cache manager %s on %s", configurationManager.getGlobalConfiguration().transport().clusterName(), getAddress());
+         stopping = true;
+         stopCaches();
+         globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
+         globalComponentRegistry.stop();
+      }
+   }
+
+   private void stopCaches() {
+      Set<String> cachesToStop = new LinkedHashSet<>(this.caches.size());
+      // stop ordered caches first
+      try {
+         List<String> ordered = cacheDependencyGraph.topologicalSort();
+         cachesToStop.addAll(ordered);
+      } catch (CyclicDependencyException e) {
+         log.stopOrderIgnored();
+      }
+      // The caches map includes the default cache
+      cachesToStop.addAll(caches.keySet());
+      log.tracef("Cache stop order: %s", cachesToStop);
+
+      for (String cacheName : cachesToStop) {
+         terminate(cacheName);
       }
    }
 
