@@ -785,7 +785,9 @@ public class StateConsumerImpl implements StateConsumer {
                failed = true;
                exclude = true;
             } catch (Exception e) {
-               log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, e);
+               if (!cache.getStatus().isTerminated()) {
+                  log.failedToRetrieveTransactionsForSegments(segments, cacheName, source, e);
+               }
                // The primary owner is still in the cluster, so we can't exclude it - see ISPN-4091
                failed = true;
             }
