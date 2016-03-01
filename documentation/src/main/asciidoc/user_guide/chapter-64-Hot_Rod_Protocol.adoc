@@ -1034,7 +1034,7 @@ Request (0x1D):
 | Header              | variable   | Request header
 | Scope               | vInt       |
 +0+ = Default Scope - This scope is used by RemoteCache.keySet() method.
-If the remote cache is a distributed cache, the server launch a map/reduce
+If the remote cache is a distributed cache, the server launch a stream
 operation to retrieve all keys from all of the nodes. (Remember, a
 topology-aware Hot Rod Client could be load balancing the request to any
 one node in the cluster). Otherwise, it'll get keys from the cache instance
@@ -1042,7 +1042,7 @@ local to the server receiving the request (that is because the keys should
 be the same across all nodes in a replicated cache). +
 +1+ = Global Scope - This scope behaves the same to Default Scope. +
 +2+ = Local Scope - In case when remote cache is a distributed cache,
-the server will not launch a map/reduce operation to retrieve keys from
+the server will not launch a stream operation to retrieve keys from
 all nodes. Instead, it'll only get keys local from the cache instance local
 to the server receiving the request. +
 |==============================================================================

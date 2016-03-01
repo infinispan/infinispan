@@ -87,6 +87,9 @@ advancedCache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_LOCKING)
 
 ==== Entry Retrieval
 
+WARNING: This has been deprecated and will be removed in Infinispan 9.  You should be using
+link:user_guide.html#_streams[Stream]s instead.
+
 It is possible to retrieve all of the entries stored in a given cache, irrespective of its clustering configuration.
 These entries are only retrieved through an iterator where each value is only returned one at a time.
 This is done because of the possible memory constraints of pulling all the values into a single node at the same time.
