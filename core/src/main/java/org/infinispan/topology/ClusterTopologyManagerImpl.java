@@ -91,7 +91,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private TimeService timeService;
    private ExecutorService asyncTransportExecutor;
    private SemaphoreCompletionService<Void> viewHandlingCompletionService;
-   private EventLogger eventLog;
+   private EventLogManager eventLogManager;
 
    // These need to be volatile because they are sometimes read without holding the view handling lock.
    private volatile int viewId = -1;
@@ -110,7 +110,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
                       GlobalConfiguration globalConfiguration, GlobalComponentRegistry gcr,
                       CacheManagerNotifier cacheManagerNotifier, EmbeddedCacheManager cacheManager,
-                      TimeService timeService) {
+                      TimeService timeService, EventLogManager eventLogManager) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.globalConfiguration = globalConfiguration;
@@ -118,12 +118,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       this.cacheManagerNotifier = cacheManagerNotifier;
       this.cacheManager = cacheManager;
       this.timeService = timeService;
+      this.eventLogManager = eventLogManager;
    }
 
    @Start(priority = 100)
    public void start() {
       viewHandlingCompletionService = new SemaphoreCompletionService<>(asyncTransportExecutor, 1);
-      eventLog = EventLogManager.getEventLogger(cacheManager);
 
       viewListener = new ClusterViewListener();
       cacheManagerNotifier.addListener(viewListener);
@@ -216,7 +216,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
 
       CLUSTER.rebalanceCompleted(cacheName, node, topologyId);
-      eventLog.context(cacheName).scope(node.toString()).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceCompleted());
+      eventLogManager.getEventLogger().context(cacheName).scope(node.toString()).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceCompleted());
 
 
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
@@ -363,9 +363,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          Configuration cacheConfiguration = cacheManager.getCacheConfiguration(cacheName);
          AvailabilityStrategy availabilityStrategy;
          if (cacheConfiguration != null && cacheConfiguration.clustering().partitionHandling().enabled()) {
-            availabilityStrategy = new PreferConsistencyStrategy(eventLog);
+            availabilityStrategy = new PreferConsistencyStrategy(eventLogManager);
          } else {
-            availabilityStrategy = new PreferAvailabilityStrategy(eventLog);
+            availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager);
          }
          return new ClusterCacheStatus(cacheName, availabilityStrategy, this, transport);
       });
@@ -374,7 +374,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Override
    public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
       CLUSTER.startRebalance(cacheName, cacheTopology);
-      eventLog.context(cacheName).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceStarted());
+      eventLogManager.getEventLogger().context(cacheName).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceStarted());
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology, null,
             viewId);

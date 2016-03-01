@@ -1,5 +1,6 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.codehaus.jackson.map.util.ISO8601DateFormat;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.infinispan.SecurityActions;
@@ -26,6 +27,9 @@ import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
 import static org.jboss.as.controller.PathAddress.pathAddress;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +42,6 @@ import java.util.concurrent.CompletableFuture;
  * @since 8.1
  */
 public abstract class CacheContainerCommands implements OperationStepHandler {
-
    final protected int pathOffset;
 
    CacheContainerCommands(int pathOffset) {
@@ -157,13 +160,14 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
        @Override
        protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
           int count = CacheContainerResource.COUNT.resolveModelAttribute(context, operation).asInt();
-          int offset = CacheContainerResource.OFFSET.resolveModelAttribute(context, operation).asInt();
+          ModelNode sinceNode = CacheContainerResource.SINCE.resolveModelAttribute(context, operation);
+          Instant since = sinceNode.isDefined() ? ZonedDateTime.parse(sinceNode.asString(), DateTimeFormatter.ISO_DATE_TIME).toInstant() : Instant.now();
           ModelNode categoryNode = CacheContainerResource.CATEGORY.resolveModelAttribute(context, operation);
           Optional<EventLogCategory> category = categoryNode.isDefined() ? Optional.of(EventLogCategory.valueOf(categoryNode.asString())) : Optional.empty();
           ModelNode levelNode = CacheContainerResource.LEVEL.resolveModelAttribute(context, operation);
           Optional<EventLogLevel> level = levelNode.isDefined() ? Optional.of(EventLogLevel.valueOf(levelNode.asString())) : Optional.empty();
           EventLogger eventLogger = EventLogManager.getEventLogger(cacheManager);
-          List<EventLog> events = eventLogger.getEvents(offset, count, category, level);
+          List<EventLog> events = eventLogger.getEvents(since, count, category, level);
           final ModelNode result = new ModelNode().setEmptyList();
           for (EventLog event : events) {
               ModelNode node = result.addEmptyObject();

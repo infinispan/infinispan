@@ -3,6 +3,7 @@ package org.infinispan.util.logging.events;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.security.Principal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -185,7 +186,7 @@ public interface EventLogger {
     * Retrieves the event logs from the cluster within the specified range
     *
     * @param start
-    *           the offset from which to retrieve the logs
+    *           the instant from which to retrieve the logs
     * @param count
     *           the number of logs to retrieve
     * @param category
@@ -194,5 +195,5 @@ public interface EventLogger {
     *           an optional level filter
     * @return a list of {@link EventLog}s
     */
-   List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level);
+   List<EventLog> getEvents(Instant start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level);
 }
