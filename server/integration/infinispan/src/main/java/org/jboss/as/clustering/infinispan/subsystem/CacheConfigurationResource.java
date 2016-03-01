@@ -153,7 +153,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
    static final SimpleAttributeDefinition TEMPLATE =
          new SimpleAttributeDefinitionBuilder(ModelKeys.TEMPLATE, ModelType.BOOLEAN, false)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .setDefaultValue(new ModelNode().set(true))
+               .setDefaultValue(new ModelNode().set(false))
                .build();
 
     static final SimpleAttributeDefinition REMOTE_CACHE =
