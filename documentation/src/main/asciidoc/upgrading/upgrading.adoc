@@ -31,13 +31,29 @@ The classes `TriConsumer`, `CloseableSupplier`, `SerializableRunnable`,
 `SerializableFunction` & `SerializableCallable` have all been moved from
 the `org.infinispan.util` package to the `org.infinispan.util.function` package.
 
+=== Spring module dependency changes
+All Infinispan dependencies from Spring modules (both embedded and remote) are now in provided scope. One can decide whether use small jars or uber jars but they need to be added to the classpath on client side. Here is an example:
+[source,xml]
+----
+<dependencies>
+   <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-embedded</artifactId>
+   </dependency>
+   <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-spring4-embedded</artifactId>
+   </dependency>
+</dependencies>
+----
+Additionally there is no Logger implementation specified (since this may vary depending on use case).
+
 == Upgrading from 8.1 to 8.2
 === Entry Retriever is deprecated
 Entry Retriever is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
 
 === Map / Reduce is deprecated
 Map reduce is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
-
 
 == Upgrading from 8.x to 8.1
 === Packaging changes

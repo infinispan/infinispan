@@ -1201,24 +1201,21 @@ public class Config {
 
 ----
 
-Now, assuming you've already got Infinispan and its dependencies on your classpath, all that's left to do is installing `infinispan-spring` and `spring`.
-For Maven users this translates into
+Now, you will need to add Infinispan and Spring integration module to your classpath. For Maven users this might be achieved by adding these dependencies:
 
-.pom.xml for Spring 4
+.pom.xml for Spring 4 (embedded mode)
 [source,xml]
 ----
-
-     <dependency>
-         <groupId>org.springframework</groupId>
-         <artifactId>spring-context</artifactId>
-         <version>4.1.1.RELEASE</version>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-spring4</artifactId>
-         <version>${infinispan.version}</version>
-      </dependency>
- 
+    <dependencies>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-embedded</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-spring4-embedded</artifactId>
+        </dependency>
+    </dependencies>
 ----
 
 ==== Telling Spring to use Infinispan as its caching provider
