@@ -53,19 +53,22 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    @Override
    public <U> Stream<U> mapToObj(DoubleFunction<? extends U> mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToObjDoubleOperation<>(mapper), cacheStream());
+      addIntermediateOperationMap(new MapToObjDoubleOperation<>(mapper));
+      return cacheStream();
    }
 
    @Override
    public IntStream mapToInt(DoubleToIntFunction mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToIntDoubleOperation(mapper), intCacheStream());
+      addIntermediateOperationMap(new MapToIntDoubleOperation(mapper));
+      return intCacheStream();
    }
 
    @Override
    public LongStream mapToLong(DoubleToLongFunction mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToLongDoubleOperation(mapper), longCacheStream());
+      addIntermediateOperationMap(new MapToLongDoubleOperation(mapper));
+      return longCacheStream();
    }
 
    @Override
@@ -108,7 +111,8 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public Stream<Double> boxed() {
-      return addIntermediateOperationMap(BoxedDoubleOperation.getInstance(), cacheStream());
+      addIntermediateOperationMap(BoxedDoubleOperation.getInstance());
+      return cacheStream();
    }
 
    // Rest are terminal operators
@@ -156,8 +160,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public double reduce(double identity, DoubleBinaryOperator op) {
-      return performOperation(TerminalFunctions.reduceFunction(identity, op), true,
-              (i1, i2) -> op.applyAsDouble(i1, i2), null);
+      return performOperation(TerminalFunctions.reduceFunction(identity, op), true, op::applyAsDouble, null);
    }
 
    @Override
@@ -240,7 +243,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
                  return a1;
               }, null);
       if (results[1] > 0) {
-         return OptionalDouble.of((double) results[0] / results[1]);
+         return OptionalDouble.of(results[0] / results[1]);
       } else {
          return OptionalDouble.empty();
       }
@@ -272,7 +275,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    @Override
    public OptionalDouble findFirst() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation(s -> s.findFirst());
+         return performIntermediateRemoteOperation(DoubleStream::findFirst);
       } else {
          return findAny();
       }

@@ -190,12 +190,6 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       }
    }
 
-   protected <T2, S2 extends BaseStream<T2, S2>, S3 extends S2> S3 addIntermediateOperationMap(
-           IntermediateOperation<T, S, T2, S2> intermediateOperation, S3 stream) {
-      addIntermediateOperationMap(intermediateOperation);
-      return stream;
-   }
-
    protected abstract S unwrap();
 
    @Override
@@ -250,7 +244,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    <R> R performOperation(Function<S, ? extends R> function, boolean retryOnRehash, BinaryOperator<R> accumulator,
            Predicate<? super R> earlyTerminatePredicate, boolean ignoreSorting) {
       // These operations are not affected by sorting, only by distinct
-      if (intermediateType.shouldUseIntermediate(ignoreSorting ? false : sorted, distinct)) {
+      if (intermediateType.shouldUseIntermediate(!ignoreSorting && sorted, distinct)) {
          return performIntermediateRemoteOperation(function);
       } else {
          ResultsAccumulator<R> remoteResults = new ResultsAccumulator<>(accumulator);
@@ -617,7 +611,6 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    static class CollectionConsumer<R> implements ClusterStreamManager.ResultsCallback<Collection<R>>,
            KeyTrackingTerminalOperation.IntermediateCollector<Collection<R>> {
       private final Consumer<R> consumer;
-      private final Set<Integer> lostSegments = new ConcurrentHashSet<>();
 
       CollectionConsumer(Consumer<R> consumer) {
          this.consumer = consumer;
@@ -638,10 +631,6 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
 
       @Override
       public void onSegmentsLost(Set<Integer> segments) {
-         // Have to use for loop since ConcurrentHashSet doesn't support addAll
-         for (Integer segment : segments) {
-            lostSegments.add(segment);
-         }
       }
 
       @Override
@@ -668,7 +657,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, Set<Integer> targetSegments,
                                                               Set<Object> excludedKeys, boolean usePrimary) {
       if (!ch.getMembers().contains(localAddress)) {
-         return () -> Stream.empty();
+         return Stream::empty;
       }
       Set<Integer> segments;
       if (usePrimary) {

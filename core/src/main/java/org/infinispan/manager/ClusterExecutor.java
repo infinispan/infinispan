@@ -1,16 +1,14 @@
 package org.infinispan.manager;
 
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.SerializableFunction;
-import org.infinispan.util.SerializableRunnable;
-import org.infinispan.util.TriConsumer;
+import org.infinispan.util.function.SerializableFunction;
+import org.infinispan.util.function.SerializableRunnable;
+import org.infinispan.util.function.TriConsumer;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;

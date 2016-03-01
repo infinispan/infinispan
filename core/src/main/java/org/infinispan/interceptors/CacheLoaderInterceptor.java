@@ -70,7 +70,7 @@ import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 import org.infinispan.util.CloseableSuppliedIterator;
-import org.infinispan.util.CloseableSupplier;
+import org.infinispan.util.function.CloseableSupplier;
 import org.infinispan.util.DistinctKeyDoubleEntryCloseableIterator;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;

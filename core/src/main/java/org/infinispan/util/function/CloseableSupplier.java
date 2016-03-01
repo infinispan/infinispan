@@ -1,4 +1,4 @@
-package org.infinispan.util;
+package org.infinispan.util.function;
 
 import java.util.function.Supplier;
 
