@@ -116,6 +116,7 @@ public class ServerManager {
                   .append("cache-container", cacheContainer)
                   .append("configurations", "CONFIGURATIONS")
                   .append("local-cache-configuration", cacheName).toModelNode());
+            configAddOp.get("template").set(false);
 
             final ModelNode cacheAddOp = steps.add();
             cacheAddOp.get(OP).set(ADD);
