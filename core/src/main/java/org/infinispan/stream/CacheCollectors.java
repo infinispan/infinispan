@@ -2,6 +2,7 @@ package org.infinispan.stream;
 
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.util.function.SerializableSupplier;
 
 import java.io.IOException;
 import java.io.ObjectInput;

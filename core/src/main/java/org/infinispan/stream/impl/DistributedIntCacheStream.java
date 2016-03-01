@@ -47,19 +47,22 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    @Override
    public <U> Stream<U> mapToObj(IntFunction<? extends U> mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToObjIntOperation<>(mapper), cacheStream());
+      addIntermediateOperationMap(new MapToObjIntOperation<>(mapper));
+      return cacheStream();
    }
 
    @Override
    public LongStream mapToLong(IntToLongFunction mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToLongIntOperation(mapper), longCacheStream());
+      addIntermediateOperationMap(new MapToLongIntOperation(mapper));
+      return longCacheStream();
    }
 
    @Override
    public DoubleStream mapToDouble(IntToDoubleFunction mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToDoubleIntOperation(mapper), doubleCacheStream());
+      addIntermediateOperationMap(new MapToDoubleIntOperation(mapper));
+      return doubleCacheStream();
    }
 
    @Override
@@ -102,17 +105,20 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
 
    @Override
    public LongStream asLongStream() {
-      return addIntermediateOperationMap(AsLongIntOperation.getInstance(), longCacheStream());
+      addIntermediateOperationMap(AsLongIntOperation.getInstance());
+      return longCacheStream();
    }
 
    @Override
    public DoubleStream asDoubleStream() {
-      return addIntermediateOperationMap(AsDoubleIntOperation.getInstance(), doubleCacheStream());
+      addIntermediateOperationMap(AsDoubleIntOperation.getInstance());
+      return doubleCacheStream();
    }
 
    @Override
    public Stream<Integer> boxed() {
-      return addIntermediateOperationMap(BoxedIntOperation.getInstance(), cacheStream());
+      addIntermediateOperationMap(BoxedIntOperation.getInstance());
+      return cacheStream();
    }
 
    // Rest are terminal operators
@@ -161,8 +167,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
 
    @Override
    public int reduce(int identity, IntBinaryOperator op) {
-      return performOperation(TerminalFunctions.reduceFunction(identity, op), true, (i1, i2) -> op.applyAsInt(i1, i2),
-              null);
+      return performOperation(TerminalFunctions.reduceFunction(identity, op), true, op::applyAsInt, null);
    }
 
    @Override
@@ -277,7 +282,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    @Override
    public OptionalInt findFirst() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation(s -> s.findFirst());
+         return performIntermediateRemoteOperation(IntStream::findFirst);
       } else {
          return findAny();
       }

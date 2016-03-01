@@ -1,6 +1,7 @@
 package org.infinispan.util;
 
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.util.function.CloseableSupplier;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;

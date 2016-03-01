@@ -8,14 +8,13 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.util.CloseableSupplier;
+import org.infinispan.util.function.CloseableSupplier;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;

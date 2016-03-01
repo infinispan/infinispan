@@ -54,19 +54,22 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
    @Override
    public <U> Stream<U> mapToObj(LongFunction<? extends U> mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToObjLongOperation<>(mapper), cacheStream());
+      addIntermediateOperationMap(new MapToObjLongOperation<>(mapper));
+      return cacheStream();
    }
 
    @Override
    public IntStream mapToInt(LongToIntFunction mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToIntLongOperation(mapper), intCacheStream());
+      addIntermediateOperationMap(new MapToIntLongOperation(mapper));
+      return intCacheStream();
    }
 
    @Override
    public DoubleStream mapToDouble(LongToDoubleFunction mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
-      return addIntermediateOperationMap(new MapToDoubleLongOperation(mapper), doubleCacheStream());
+      addIntermediateOperationMap(new MapToDoubleLongOperation(mapper));
+      return doubleCacheStream();
    }
 
    @Override
@@ -95,12 +98,14 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public DoubleStream asDoubleStream() {
-      return addIntermediateOperationMap(AsDoubleLongOperation.getInstance(), doubleCacheStream());
+      addIntermediateOperationMap(AsDoubleLongOperation.getInstance());
+      return doubleCacheStream();
    }
 
    @Override
    public Stream<Long> boxed() {
-      return addIntermediateOperationMap(BoxedLongOperation.getInstance(), cacheStream());
+      addIntermediateOperationMap(BoxedLongOperation.getInstance());
+      return cacheStream();
    }
 
    @Override
@@ -162,8 +167,7 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public long reduce(long identity, LongBinaryOperator op) {
-      return performOperation(TerminalFunctions.reduceFunction(identity, op), true, (i1, i2) -> op.applyAsLong(i1, i2),
-              null);
+      return performOperation(TerminalFunctions.reduceFunction(identity, op), true, op::applyAsLong, null);
    }
 
    @Override
@@ -278,7 +282,7 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
    @Override
    public OptionalLong findFirst() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation(s -> s.findFirst());
+         return performIntermediateRemoteOperation(LongStream::findFirst);
       } else {
          return findAny();
       }
