@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>8.2.0-SNAPSHOT</version>
+      <version>8.2.0.CR1</version>
       <relativePath>../bom/pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-parent</artifactId>
@@ -1688,14 +1688,12 @@
                   <phase>none</phase>
                   <configuration>
                      <target>
-                        <property name="classpath" refid="maven.compile.classpath"/>
-                        <java classname="org.infinispan.commons.util.BlueprintGenerator"
-                              fork="false"
-                              failonerror="true" >
-                           <arg value="${project.build.outputDirectory}"/>
+                        <property name="classpath" refid="maven.compile.classpath" />
+                        <java classname="org.infinispan.commons.util.BlueprintGenerator" failonerror="true" fork="false">
+                           <arg value="${project.build.outputDirectory}" />
                            <classpath>
-                              <pathelement path="${project.build.outputDirectory}"/>
-                              <pathelement path="${classpath}"/>
+                              <pathelement path="${project.build.outputDirectory}" />
+                              <pathelement path="${classpath}" />
                            </classpath>
                         </java>
                      </target>
@@ -1903,8 +1901,7 @@
          <forkJvmArgs>${env.MAVEN_FORK_OPTS}</forkJvmArgs>
        </properties>
      </profile>
-      <!-- Only one of the root-dirX profiles will be active, and it will set log4j.configurationFile
-           to $REACTOR_ROOT/etc/log4j2.xml -->
+      
       <profile>
          <id>root-dir1</id>
          <activation>
@@ -2035,7 +2032,7 @@
                         <configuration>
                            <target>
                               <echo>Copying test classes to jacoco folder.</echo>
-                              <copydir src="${project.build.directory}/classes" dest="${jacoco.reportPath}/classes" />
+                              <copydir dest="${jacoco.reportPath}/classes" src="${project.build.directory}/classes" />
                            </target>
                         </configuration>
                      </execution>
@@ -2083,11 +2080,11 @@
                         <configuration>
                            <target>
                               <echo>Deleting existing Jacoco Report Directory.</echo>
-                              <delete dir="${dir.jacoco.report}"/>
-                              <delete dir="${dir.jacoco.merged}"/>
+                              <delete dir="${dir.jacoco.report}" />
+                              <delete dir="${dir.jacoco.merged}" />
                               <delete dir="${project.build.directory}/classes" />
                               <echo>Copying the generated classes file to ${project.build.directory}/classes</echo>
-                              <copydir src="${jacoco.reportPath}/classes" dest="${project.build.directory}/classes"/>
+                              <copydir dest="${project.build.directory}/classes" src="${jacoco.reportPath}/classes" />
                            </target>
                         </configuration>
                      </execution>
