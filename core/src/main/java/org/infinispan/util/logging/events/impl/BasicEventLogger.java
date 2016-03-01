@@ -1,5 +1,6 @@
 package org.infinispan.util.logging.events.impl;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +48,7 @@ public class BasicEventLogger implements EventLogger {
     * The basic event logger doesn't collect anything.
     */
    @Override
-   public List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
+   public List<EventLog> getEvents(Instant start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
       return Collections.emptyList();
    }
 }

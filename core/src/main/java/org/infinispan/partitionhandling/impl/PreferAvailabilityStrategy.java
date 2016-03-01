@@ -9,7 +9,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
-import org.infinispan.util.logging.events.EventLogger;
+import org.infinispan.util.logging.events.EventLogManager;
 
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
@@ -20,10 +20,10 @@ import java.util.Objects;
 
 public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferAvailabilityStrategy.class);
-   private final EventLogger eventLog;
+   private final EventLogManager eventLogManager;
 
-   public PreferAvailabilityStrategy(EventLogger eventLog) {
-      this.eventLog = eventLog;
+   public PreferAvailabilityStrategy(EventLogManager eventLogManager) {
+      this.eventLogManager = eventLogManager;
    }
 
    @Override
@@ -42,7 +42,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          return;
       }
       if (context.getStableTopology() != null && isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
-         eventLog.context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfGracefulLeaver(leaver));
+         eventLogManager.getEventLogger().context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfGracefulLeaver(leaver));
       }
 
       // We have to do this in case rebalancing is disabled, or there is another rebalance in progress
@@ -72,9 +72,9 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
       if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
-         eventLog.context(context.getCacheName()).fatal(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfAbruptLeavers(lostMembers));
+         eventLogManager.getEventLogger().context(context.getCacheName()).fatal(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfAbruptLeavers(lostMembers));
       } else if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
-         eventLog.context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.minorityPartition(newMembers, lostMembers, stableMembers));
+         eventLogManager.getEventLogger().context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.minorityPartition(newMembers, lostMembers, stableMembers));
       }
    }
 

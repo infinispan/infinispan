@@ -7,6 +7,8 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogger;
 
+import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,8 +37,8 @@ public class MemoryEventLogger implements EventLogger {
     }
 
     @Override
-    public List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
-        return null;
+    public List<EventLog> getEvents(Instant start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
+        return Collections.emptyList();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.infinispan.util.logging.events.impl;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,8 +72,7 @@ public class DecoratedEventLogger implements EventLogger {
    }
 
    @Override
-   public List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
+   public List<EventLog> getEvents(Instant start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
       return delegate.getEvents(start, count, category, level);
    }
-
 }

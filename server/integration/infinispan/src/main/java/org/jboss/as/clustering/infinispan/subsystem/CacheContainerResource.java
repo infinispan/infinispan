@@ -32,6 +32,8 @@ import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
+import java.time.format.DateTimeFormatter;
+
 /**
  * Resource description for the addressable resource /subsystem=infinispan/cache-container=X
  *
@@ -197,10 +199,9 @@ public class CacheContainerResource extends SimpleResourceDefinition {
            .setValidator(new IntRangeValidator(-1, true))
            .build();
 
-   static final SimpleAttributeDefinition OFFSET = SimpleAttributeDefinitionBuilder.create("offset", ModelType.INT, true)
+   static final SimpleAttributeDefinition SINCE = SimpleAttributeDefinitionBuilder.create("since", ModelType.STRING, true)
            .setAllowExpression(true)
-           .setDefaultValue(new ModelNode(0))
-           .setValidator(new IntRangeValidator(0, true))
+           .setValidator(new DateTimeValidator(DateTimeFormatter.ISO_DATE_TIME, true, true))
            .build();
 
    static final SimpleAttributeDefinition CATEGORY = SimpleAttributeDefinitionBuilder.create("category", ModelType.STRING, true)
@@ -215,7 +216,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
 
    static final OperationDefinition READ_EVENT_LOG =
            new SimpleOperationDefinitionBuilder("read-event-log", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
-               .setParameters(COUNT, OFFSET, CATEGORY, LEVEL)
+               .setParameters(COUNT, SINCE, CATEGORY, LEVEL)
                .setReplyType(ModelType.LIST)
                .setReplyValueType(ModelType.OBJECT)
                .setReadOnly()

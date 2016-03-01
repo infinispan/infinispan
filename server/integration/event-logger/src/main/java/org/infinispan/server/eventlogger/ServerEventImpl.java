@@ -3,6 +3,7 @@ package org.infinispan.server.eventlogger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
@@ -85,6 +86,26 @@ public class ServerEventImpl implements EventLog {
    @Override
    public Optional<String> getScope() {
       return scope;
+   }
+
+   @Override
+   public int compareTo(EventLog that) {
+      // Intentionally backwards
+      return that.getWhen().compareTo(this.when);
+   }
+
+   @Override
+   public String toString() {
+      return "ServerEventImpl{" +
+            "level=" + level +
+            ", category=" + category +
+            ", when=" + when +
+            ", message='" + message + '\'' +
+            ", detail=" + detail +
+            ", context=" + context +
+            ", who=" + who +
+            ", scope=" + scope +
+            '}';
    }
 
    @SuppressWarnings("serial")

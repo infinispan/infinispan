@@ -9,7 +9,7 @@ import java.util.Optional;
  * @author Tristan Tarrant
  * @since 8.2
  */
-public interface EventLog {
+public interface EventLog extends Comparable<EventLog> {
    /**
     * @return the instant when the event occurred
     */

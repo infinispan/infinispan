@@ -1,26 +1,38 @@
 package org.infinispan.server.eventlogger;
 
-import java.security.cert.PKIXRevocationChecker;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogger;
+
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.jgroups.util.Util.assertNotNull;
 
 /**
  * ServerEventLogger. This event lgoger takes care of maintaining the server event log cache and
@@ -33,10 +45,10 @@ import org.infinispan.util.logging.events.EventLogger;
  */
 public class ServerEventLogger implements EventLogger {
    public static final String EVENT_LOG_CACHE = "___event_log_cache";
+   public static final Log log = LogFactory.getLog(ServerEventLogger.class);
    private final EmbeddedCacheManager cacheManager;
    private final TimeService timeService;
    private Cache<UUID, ServerEventImpl> eventCache;
-   private QueryFactory<Query> queryFactory;
 
    ServerEventLogger(EmbeddedCacheManager cacheManager, TimeService timeService) {
       this.cacheManager = cacheManager;
@@ -89,26 +101,35 @@ public class ServerEventLogger implements EventLogger {
    }
 
    @Override
-   public List<EventLog> getEvents(int start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
-      QueryBuilder query = getQueryFactory().from(ServerEventImpl.class).orderBy("when", SortOrder.DESC).maxResults(count).startOffset(start);
-      if (category.isPresent()) {
-         if (level.isPresent()) {
-            query.having("category").eq(category.get()).and().having("level").eq(level.get());
-         } else {
-            query.having("category").eq(category.get());
+   public List<EventLog> getEvents(Instant start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
+      List<EventLog> events = new ArrayList<>();
+      AtomicReference<Throwable> throwable = new AtomicReference<>();
+      try {
+         cacheManager.executor().submitConsumer(m -> {
+            Cache<Object, Object> cache = m.getCache(EVENT_LOG_CACHE);
+            QueryFactory<Query> queryFactory = Search.getQueryFactory(cache);
+            QueryBuilder query = queryFactory.from(ServerEventImpl.class).orderBy("when", SortOrder.DESC).maxResults(count);
+            FilterConditionContext filter = query.having("when").lte(start);
+            category.map(c -> filter.and(queryFactory.having("category").eq(c)));
+            level.map(l -> filter.and(queryFactory.having("level").eq(l)));
+            List<EventLog> nodeEvents = filter.toBuilder().build().list();
+            return nodeEvents;
+         }, (address, nodeEvents, t) -> {
+            if (t == null) {
+               events.addAll(nodeEvents);
+            } else {
+               throwable.set(t);
+            }
+         }).get(1, TimeUnit.MINUTES);
+         if (throwable.get() != null) {
+            throw new CacheException(throwable.get());
          }
-      } else if (level.isPresent()) {
-         query.having("level").eq(level.get());
+      } catch (Exception e) {
+         log.debug("Could not retrieve events", e);
+         throw new CacheException(e);
       }
-      return query.build().list();
-   }
-
-   private QueryFactory<Query> getQueryFactory() {
-      if (queryFactory == null) {
-         Cache<Object, Object> cache = cacheManager.getCache(EVENT_LOG_CACHE);
-         queryFactory = Search.getQueryFactory(cache);
-      }
-      return queryFactory;
+      Collections.sort(events);
+      return events.subList(0, Math.min(events.size(), count));
    }
 
 }
