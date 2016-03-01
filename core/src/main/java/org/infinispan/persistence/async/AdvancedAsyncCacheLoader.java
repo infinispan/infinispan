@@ -3,13 +3,14 @@ package org.infinispan.persistence.async;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.persistence.modifications.Store;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -74,14 +75,14 @@ public class AdvancedAsyncCacheLoader extends AsyncCacheLoader implements Advanc
       ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
       final TaskContext taskContext = new TaskContextImpl();
 
-      Set<Object> allKeys = new HashSet<Object>(batchSize);
+      Set<Object> allKeys = new ConcurrentHashSet<>();
       Set<Object> batch = new HashSet<Object>();
       loadAllKeys(state.get(), allKeys, keyFilter, executor);
       for (Iterator it = allKeys.iterator(); it.hasNext(); ) {
          batch.add(it.next());
          if (batch.size() == batchSize) {
             final Set<Object> toHandle = batch;
-            batch = new HashSet<Object>(batchSize);
+            batch = new HashSet<>(batchSize);
             submitProcessTask(cacheLoaderTask, eacs, taskContext, toHandle);
          }
       }
