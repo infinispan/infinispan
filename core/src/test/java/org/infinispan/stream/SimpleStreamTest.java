@@ -10,18 +10,9 @@ import org.infinispan.stream.BaseStreamTest;import org.testng.annotations.Test;i
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Test(groups = "functional", testName = "streams.LocalStreamTest")
-public class SimpleStreamTest extends BaseStreamTest {
-   public SimpleStreamTest() {
-      super(false, CacheMode.LOCAL);
-   }
-
+public class SimpleStreamTest extends LocalStreamTest {
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       builder.simpleCache(true);
-   }
-
-   @Override
-   protected <E> CacheStream<E> createStream(CacheCollection<E> cacheCollection) {
-      return cacheCollection.stream();
    }
 }

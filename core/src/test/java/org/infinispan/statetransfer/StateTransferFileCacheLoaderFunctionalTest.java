@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -112,7 +113,9 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          verifyInitialData(c1);
 
          verifyNoDataOnLoader(c2);
-         verifyNoData(c2);
+         // There shouldn't be any data locally since there was no entries in memory and the shared loader doesn't
+         // actually share entries
+         verifyNoData(c2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL));
       } finally {
          if (cm1 != null) cm1.stop();
          if (cm2 != null) cm2.stop();

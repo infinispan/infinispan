@@ -18,4 +18,10 @@ public class LocalStreamTest extends BaseStreamTest {
    protected <E> CacheStream<E> createStream(CacheCollection<E> entries) {
       return entries.stream();
    }
+
+   @Test(enabled = false)
+   @Override
+   public void testKeySegmentFilter() {
+
+   }
 }

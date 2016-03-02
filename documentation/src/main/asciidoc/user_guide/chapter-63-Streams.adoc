@@ -51,9 +51,9 @@ The segments can be filtered by invoking
 link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheStream.html#filterKeySegments-java.util.Set-[filterKeySegments]
 method on the `CacheStream`.  This is applied after the key filter but before any intermediate operations are performed.
 
-=== Local/Invalidation/Replication Cache
+=== Local/Invalidation
 
-A stream used with a local, invalidation or replication cache can be used just the same way you would use a stream on a
+A stream used with a local or invalidation cache can be used just the same way you would use a stream on a
 regular collection. Infinispan handles all of the translations if necessary behind the scenes and works with all
 of the more interesting options (ie. storeAsBinary, compatibility mode, and a cache loader).
 
@@ -67,7 +67,7 @@ Map<Object, String> jbossValues = cache.entrySet().stream()
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 ----
 
-=== Distribution Cache
+=== Distribution/Replication
 
 This is where streams come into their stride.  When a stream operation is performed it will
 send the various intermediate and terminal operations to each node that has pertinent data.
@@ -281,6 +281,13 @@ link:https://docs.jboss.org/infinispan/8.2/apidocs/org/infinispan/CacheStream.ht
 method on the `CacheStream`.  This value will default to the `chunkSize` configured in state transfer.
 Unfortunately this value is a tradeoff with memory usage vs performance vs at least once and your
 mileage may vary.
+
+===== Using `iterator` with a replication cache
+
+Currently if you are using a replicated cache the `iterator` or `spliterator`
+terminal operations will not perform any of the operations remotely
+and will instead perform everythign on the local node. This is for performance as doing a
+remote iteration process is very costly.
 
 ==== Intermediate operation exceptions
 

@@ -521,9 +521,14 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                boolean stayLocal = false;
                if (runLocal) {
                   Set<Integer> segmentsForOwner = ch.getSegmentsForOwner(localAddress);
-                  stayLocal = segmentsToFilter != null && segmentsForOwner.containsAll(segmentsToFilter);
-                  segments = stayLocal ? segmentsForOwner : ch.getPrimarySegmentsForOwner(localAddress);
-                  segments.retainAll(segmentsToProcess);
+                  // If we own all of the segments locally, even as backup, we don't want the iterator to go remotely
+                  stayLocal = segmentsForOwner.containsAll(segmentsToProcess);
+                  if (stayLocal) {
+                     segments = segmentsToProcess;
+                  } else {
+                     segments = ch.getPrimarySegmentsForOwner(localAddress);
+                     segments.retainAll(segmentsToProcess);
+                  }
 
                   excludedKeys = segments.stream().flatMap(s -> results.referenceArray.get(s).stream())
                           .collect(Collectors.toSet());
