@@ -1,7 +1,6 @@
-package org.infinispan.jcache;
+package org.infinispan.all.remote.jcache;
 
-import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.Assert;
 
 import javax.cache.event.CacheEntryCreatedListener;
 import javax.cache.event.CacheEntryEvent;
@@ -10,8 +9,8 @@ import javax.cache.event.CacheEntryListenerException;
 import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
 import javax.cache.event.EventType;
-
-import org.testng.Assert;
+import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Borrowed from TCK tests
