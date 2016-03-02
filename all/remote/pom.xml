@@ -75,6 +75,11 @@
          <artifactId>jboss-modules</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
+      <dependency>
+         <groupId>org.wildfly.core</groupId>
+         <artifactId>wildfly-controller</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
 
       <dependency>
          <groupId>org.slf4j</groupId>
@@ -194,10 +199,14 @@
                            <pattern>com.google</pattern>
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
-                        <relocation>
-                           <pattern>org.xnio</pattern>
-                           <shadedPattern>infinispan.org.xnio</shadedPattern>
-                        </relocation>
+                        <!-- XNIO is required by the remote JCache integration -->
+                        <!-- However we can not move it until https://issues.apache.org/jira/browse/MSHADE-182 is -->
+                        <!-- resolved and we also need to migrate to shade 3.0 -->
+                        <!-- Tracking JIRA: https://issues.jboss.org/browse/ISPN-6283 -->
+                        <!--<relocation>-->
+                           <!--<pattern>org.xnio</pattern>-->
+                           <!--<shadedPattern>infinispan.org.xnio</shadedPattern>-->
+                        <!--</relocation>-->
                         <relocation>
                            <pattern>org.jboss.threads</pattern>
                            <shadedPattern>infinispan.org.jboss.threads</shadedPattern>

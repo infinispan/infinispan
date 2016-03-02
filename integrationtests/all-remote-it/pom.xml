@@ -4,48 +4,37 @@
 
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-integrationtests-parent</artifactId>
+      <artifactId>infinispan-parent</artifactId>
       <version>8.2.0-SNAPSHOT</version>
+      <relativePath>../../parent/pom.xml</relativePath>
    </parent>
+
+   <properties>
+      <testNGListener></testNGListener>
+   </properties>
+
 
    <artifactId>infinispan-remote-it</artifactId>
    <name>Infinispan Remote Client Integration Tests</name>
    <description>Infinispan Remote Client All-in-One module Integration Tests</description>
 
-   <dependencyManagement>
-      <dependencies>
-         <dependency>
-            <groupId>org.jboss.arquillian</groupId>
-            <artifactId>arquillian-bom</artifactId>
-            <version>1.1.5.Final</version>
-            <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-      </dependencies>
-   </dependencyManagement>
-
    <dependencies>
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-api</artifactId>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-remote</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.spec</groupId>
-         <artifactId>jboss-javaee-6.0</artifactId>
-         <version>1.0.0.Final</version>
-         <type>pom</type>
          <scope>test</scope>
       </dependency>
+      <!-- Make sure this suite is triggered after full server build -->
       <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <version>4.11</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.weld</groupId>
-         <artifactId>weld-core</artifactId>
-         <version>1.1.13.Final</version>
+         <groupId>org.infinispan.server</groupId>
+         <artifactId>infinispan-server-build</artifactId>
+         <version>${project.version}</version>
+         <type>zip</type>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -54,10 +43,76 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.arquillian.container</groupId>
-         <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-         <version>1.0.0.CR8</version>
+         <groupId>org.wildfly.arquillian</groupId>
+         <artifactId>wildfly-arquillian-container-managed</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
+
+   <build>
+      <testResources>
+         <testResource>
+            <filtering>true</filtering>
+            <directory>src/test/resources</directory>
+         </testResource>
+      </testResources>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>integration-test</goal>
+                     <goal>verify</goal>
+                  </goals>
+                  <configuration>
+                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>unpack-server-1</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.infinispan.server</groupId>
+                           <artifactId>infinispan-server-build</artifactId>
+                           <version>${project.version}</version>
+                           <type>zip</type>
+                           <outputDirectory>${project.build.directory}/node1</outputDirectory>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.infinispan.server</groupId>
+                           <artifactId>infinispan-server-build</artifactId>
+                           <version>${project.version}</version>
+                           <type>zip</type>
+                           <outputDirectory>${project.build.directory}/node2</outputDirectory>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <parallel>none</parallel>
+               <systemPropertyVariables>
+                  <infinispan.jcache.mgmt.lookup.skip>true</infinispan.jcache.mgmt.lookup.skip>
+               </systemPropertyVariables>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>
