@@ -75,14 +75,14 @@ public interface ClusterExecutor extends Executor {
 
    /**
     * Submits the given command to the desired nodes and allows for handling of results as they return.  The user
-    * provides a {@link Consumer} which will be called back each time for each desired node.  Note that these callbacks
+    * provides a {@link TriConsumer} which will be called back each time for each desired node.  Note that these callbacks
     * can be called from different threads at the same time.  A completable future is returned to the caller used
     * for the sole purpose of being completed when all nodes have sent responses back.
     * <p>
-    * Note the {@link BiConsumer} is only ran on the node where the task was submitted and thus doesn't need to be
+    * Note the {@link TriConsumer} is only ran on the node where the task was submitted and thus doesn't need to be
     * serialized.
     * @param callable the task to execute
-    * @param triConsumer the consumer to be called back upon for each node's result
+    * @param triConsumer the tri-consumer to be called back upon for each node's result
     * @param <V> the type of the task's result
     * @return a completable future that will be completed after all results have been processed
     */
@@ -96,7 +96,7 @@ public interface ClusterExecutor extends Executor {
     * This method will be used automatically by lambdas, which prevents users from having to manually cast to
     * a Serializable lambda.
     * @param callable the task to execute
-    * @param triConsumer the consumer to be called back upon for each node's result
+    * @param triConsumer the tri-consumer to be called back upon for each node's result
     * @param <V> the type of the task's result
     * @return a completable future that will be completed after all results have been processed
     */
@@ -123,7 +123,7 @@ public interface ClusterExecutor extends Executor {
    /**
     * Allows for filtering of address nodes by only allowing addresses in this collection from being contacted.
     * Note that this method overrides any previous filtering that was done (ie. calling
-    * {@link ClusterExecutor#filterTargets(Collection)}.
+    * {@link ClusterExecutor#filterTargets(Predicate)}.
     * @param addresses which nodes the executor invocations should go to
     * @return this executor again which will only contact nodes whose address are in the given collection
     */
