@@ -1,6 +1,7 @@
 package org.infinispan.util.logging;
 
 import org.jboss.logging.Logger;
+import org.jboss.logging.NDC;
 
 /**
  * Factory that creates {@link Log} instances.
@@ -26,19 +27,13 @@ public class LogFactory {
    }
 
    public static void pushNDC(String cacheName, boolean isTrace) {
-      // Disabled NDC usage until https://issues.jboss.org/browse/JBLOGGING-106 is fixed or
-      // we introduce Log4j2 https://issues.jboss.org/browse/ISPN-3076
-      // See https://issues.jboss.org/browse/ISPN-4498 for more details
-//      if (isTrace)
-//         NDC.push(cacheName);
+      if (isTrace)
+         NDC.push(cacheName);
    }
 
    public static void popNDC(boolean isTrace) {
-      // Disabled NDC usage until https://issues.jboss.org/browse/JBLOGGING-106 is fixed or
-      // we introduce Log4j2 https://issues.jboss.org/browse/ISPN-3076
-      // See https://issues.jboss.org/browse/ISPN-4498 for more details
-//      if (isTrace)
-//         NDC.pop();
+      if (isTrace)
+         NDC.pop();
    }
 
 }
