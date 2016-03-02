@@ -9,11 +9,7 @@ import org.testng.annotations.Test;
  * Verifies stream tests work on a local parallel stream
  */
 @Test(groups = "functional", testName = "streams.LocalParallelStreamTest")
-public class LocalParallelStreamTest extends BaseStreamTest {
-   public LocalParallelStreamTest() {
-      super(false, CacheMode.LOCAL);
-   }
-
+public class LocalParallelStreamTest extends LocalStreamTest {
    @Override
    protected <E> CacheStream<E> createStream(CacheCollection<E> entries) {
       return entries.parallelStream();

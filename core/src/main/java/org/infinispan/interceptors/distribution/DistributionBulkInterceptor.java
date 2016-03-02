@@ -39,8 +39,8 @@ import java.util.function.Function;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 
 /**
- * Interceptor that handles bulk entrySet and keySet commands when using in a distributed environment.  This
- * interceptor produces backing collections for either method and a distributed stream for either which leverages
+ * Interceptor that handles bulk entrySet and keySet commands when using in a distributed/replicated environment.
+ * This interceptor produces backing collections for either method and a distributed stream for either which leverages
  * distributed processing through the cluster.
  * @param <K> The key type of entries
  * @param <V> The value type of entries
@@ -108,16 +108,6 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
             return cache.remove(entry.getKey(), entry.getValue());
          }
          return false;
-      }
-
-      @Override
-      public boolean add(CacheEntry<K, V> internalCacheEntry) {
-         V value = cache.put(internalCacheEntry.getKey(), internalCacheEntry.getValue());
-         // If the value was already there we can treat as if it wasn't added
-         if (value != null && value.equals(internalCacheEntry.getValue())) {
-            return false;
-         }
-         return true;
       }
 
       private Map.Entry<K, V> toEntry(Object obj) {

@@ -36,7 +36,7 @@ import static org.testng.AssertJUnit.*;
  * Base test class for streams to verify proper behavior of all of the terminal operations for all of the various
  * stream classes
  */
-@Test
+@Test(groups="functional")
 public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected ConfigurationBuilder builderUsed;

@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 /**
  * Verifies stream tests work when rehash is disabled on a parallel stream with parallel distribution
  */
-@Test(groups = "functional", testName = "streams.DistributedParallelStreamTest")
+@Test(groups = "functional", testName = "streams.DistributedParallelNonRehashStreamTest")
 public class DistributedParallelNonRehashStreamTest extends DistributedStreamTest {
    @Override
    protected <E> CacheStream<E> createStream(CacheCollection<E> entries) {

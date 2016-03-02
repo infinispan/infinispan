@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -94,7 +95,9 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
          verifyInitialData(c1);
 
          verifyNoDataOnLoader(c2);
-         verifyNoData(c2);
+         // There shouldn't be any data locally since there was no entries in memory and the shared loader doesn't
+         // actually share entries
+         verifyNoData(c2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL));
       } finally {
          sharedCacheLoader.set(false);
       }

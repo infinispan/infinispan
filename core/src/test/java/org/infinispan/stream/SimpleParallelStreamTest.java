@@ -9,19 +9,10 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "functional", testName = "streams.LocalStreamTest")
-public class SimpleParallelStreamTest extends BaseStreamTest {
-   public SimpleParallelStreamTest() {
-      super(false, CacheMode.LOCAL);
-   }
-
+@Test(groups = "functional", testName = "streams.SimpleParallelStreamTest")
+public class SimpleParallelStreamTest extends LocalParallelStreamTest {
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       builder.simpleCache(true);
-   }
-
-   @Override
-   protected <E> CacheStream<E> createStream(CacheCollection<E> cacheCollection) {
-      return cacheCollection.parallelStream();
    }
 }

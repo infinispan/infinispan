@@ -115,7 +115,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       boolean isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
       CacheMode cacheMode = configuration.clustering().cacheMode();
 
-      if (configuration.clustering().cacheMode().isDistributed()) {
+      if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
          interceptorChain.appendInterceptor(createInterceptor(new DistributionBulkInterceptor<>(),
                  DistributionBulkInterceptor.class), false);
       }

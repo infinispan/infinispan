@@ -550,8 +550,16 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          }
          Set<Integer> valueSegments = onIntermediateResult(address, results);
          if (valueSegments != null) {
-            completedSegments.removeAll(valueSegments);
-            listenerNotifier.completeSegmentsNoResults(completedSegments);
+            // We don't want to modify the completed segments as the caller may need it
+            Set<Integer> emptyCompletedSegments = new HashSet<>(completedSegments.size());
+            completedSegments.forEach(s -> {
+               // First complete the segments that didn't have any keys - completed segments have to wait
+               // until the user retrieves them
+               if (!valueSegments.contains(s)) {
+                  emptyCompletedSegments.add(s);
+               }
+            });
+            listenerNotifier.completeSegmentsNoResults(emptyCompletedSegments);
          }
       }
 
@@ -647,15 +655,29 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       return supplierForSegments(ch, targetSegments, excludedKeys, true);
    }
 
+   /**
+    * If <code>usePrimary</code> is true the segments are the primary segments but only those that exist in
+    * targetSegments.  However if <code>usePrimary</code> is false then <code>targetSegments</code> must be
+    * provided and non null and this will be used specifically.
+    * @param ch
+    * @param targetSegments
+    * @param excludedKeys
+    * @param usePrimary determines whether we should utilize the primary segments or not.
+    * @return
+    */
    protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, Set<Integer> targetSegments,
-                                                              Set<Object> excludedKeys, boolean primaryOwnerOnly) {
+                                                              Set<Object> excludedKeys, boolean usePrimary) {
       if (!ch.getMembers().contains(localAddress)) {
          return () -> Stream.empty();
       }
-      Set<Integer> segments = primaryOwnerOnly ? ch.getPrimarySegmentsForOwner(localAddress) :
-              ch.getSegmentsForOwner(localAddress);
-      if (targetSegments != null) {
-         segments.retainAll(targetSegments);
+      Set<Integer> segments;
+      if (usePrimary) {
+         segments = ch.getPrimarySegmentsForOwner(localAddress);
+         if (targetSegments != null) {
+            segments.retainAll(targetSegments);
+         }
+      } else {
+         segments = targetSegments;
       }
 
       return () -> {
