@@ -21,6 +21,7 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -39,6 +40,7 @@ import static org.junit.Assert.*;
 @RunWith(Arquillian.class)
 @Category({Task.class})
 @WithRunningServer({@RunningServer(name="clusteredcache-1"), @RunningServer(name = "clusteredcache-2")})
+@Ignore(value = "To be fixed by ISPN-6302")
 public class DistributedServerTaskDeploymentIT {
 
     @InfinispanResource("clusteredcache-1")
