@@ -1397,5 +1397,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Node %s timed out, time : %s %s", id = 401)
    TimeoutException remoteNodeTimedOut(Address address, long time, TimeUnit unit);
+
+   @Message(value = "Timeout waiting for view %d.")
+   TimeoutException timeoutWaitingForView(int viewId);
 }
 

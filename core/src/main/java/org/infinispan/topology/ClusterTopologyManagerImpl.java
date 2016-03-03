@@ -1,6 +1,7 @@
 package org.infinispan.topology;
 
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
@@ -32,13 +33,11 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
-import org.infinispan.util.logging.events.EventLogger;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +49,9 @@ import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.String.format;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
@@ -88,7 +90,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private GlobalComponentRegistry gcr;
    private CacheManagerNotifier cacheManagerNotifier;
    private EmbeddedCacheManager cacheManager;
-   private TimeService timeService;
    private ExecutorService asyncTransportExecutor;
    private SemaphoreCompletionService<Void> viewHandlingCompletionService;
    private EventLogManager eventLogManager;
@@ -96,7 +97,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    // These need to be volatile because they are sometimes read without holding the view handling lock.
    private volatile int viewId = -1;
    private volatile ClusterManagerStatus clusterManagerStatus = ClusterManagerStatus.INITIALIZING;
-   private final Object clusterManagerLock = new Object();
+   private final Lock clusterManagerLock = new ReentrantLock();
+   private final Condition clusterStateChanged = clusterManagerLock.newCondition();
 
 
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = CollectionFactory.makeConcurrentMap();
@@ -110,14 +112,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
                       GlobalConfiguration globalConfiguration, GlobalComponentRegistry gcr,
                       CacheManagerNotifier cacheManagerNotifier, EmbeddedCacheManager cacheManager,
-                      TimeService timeService, EventLogManager eventLogManager) {
+                      EventLogManager eventLogManager) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.globalConfiguration = globalConfiguration;
       this.gcr = gcr;
       this.cacheManagerNotifier = cacheManagerNotifier;
       this.cacheManager = cacheManager;
-      this.timeService = timeService;
       this.eventLogManager = eventLogManager;
    }
 
@@ -159,9 +160,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Stop(priority = 100)
    public void stop() {
       // Stop blocking cache topology commands.
-      synchronized (clusterManagerLock) {
+      clusterManagerLock.lock();
+      try {
          clusterManagerStatus = ClusterManagerStatus.STOPPING;
-         clusterManagerLock.notifyAll();
+         clusterStateChanged.signalAll();
+      } finally {
+         clusterManagerLock.unlock();
       }
 
       cacheManagerNotifier.removeListener(viewListener);
@@ -171,7 +175,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public CacheStatusResponse handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo,
          int joinerViewId) throws Exception {
       ClusterCacheStatus cacheStatus;
-      synchronized (clusterManagerLock) {
+      clusterManagerLock.lock();
+      try {
          waitForJoinerView(joiner, joinerViewId, joinInfo.getTimeout());
 
          if (!clusterManagerStatus.isRunning()) {
@@ -186,6 +191,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          }
 
          cacheStatus = initCacheStatusIfAbsent(cacheName);
+      } finally {
+         clusterManagerLock.unlock();
       }
       return cacheStatus.doJoin(joiner, joinInfo);
    }
@@ -285,7 +292,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void handleClusterView(boolean mergeView, int newViewId) {
-      synchronized (clusterManagerLock) {
+      clusterManagerLock.lock();
+      try {
          if (newViewId < transport.getViewId()) {
             log.tracef("Ignoring old cluster view notification: %s", newViewId);
             return;
@@ -308,7 +316,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
          // notify threads that might be waiting to join
          viewId = newViewId;
-         clusterManagerLock.notifyAll();
+         clusterStateChanged.signalAll();
+      } finally {
+         clusterManagerLock.unlock();
       }
 
       // The SemaphoreCompletionService acts as a critical section, so we don't need to worry about
@@ -321,14 +331,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          try {
             recoverClusterStatus(newViewId, mergeView, transport.getMembers());
 
-            synchronized (clusterManagerLock) {
+            clusterManagerLock.lock();
+            try {
                if (viewId != newViewId) {
                   log.debugf("View updated while we were recovering the cluster for view %d", newViewId);
                   return;
                }
                clusterManagerStatus = ClusterManagerStatus.COORDINATOR;
                // notify threads that might be waiting to join
-               clusterManagerLock.notifyAll();
+               clusterStateChanged.signalAll();
+            } finally {
+               clusterManagerLock.unlock();
             }
          } catch (InterruptedException e) {
             if (trace)
@@ -446,9 +459,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
     * Wait until we have received view {@code joinerViewId} and we have finished recovering the cluster state.
     * <p>
     * Returns early if the node is shutting down.
+    * <p>
+    * This method should be invoked with the lock hold.
     *
     * @throws TimeoutException if the timeout expired.
     */
+   @GuardedBy("clusterManagerLock")
    private void waitForJoinerView(Address joiner, int joinerViewId, long timeout)
          throws InterruptedException {
       if (joinerViewId > viewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
@@ -460,16 +476,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                log.tracef("Waiting to recover cluster status before processing join request from %s", joiner);
             }
          }
-         long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
-         synchronized (clusterManagerLock) {
-            while (viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) {
-               if (timeService.isTimeExpired(endTime) || !clusterManagerStatus.isRunning())
-                  break;
-               clusterManagerLock.wait(timeService.remainingTime(endTime, TimeUnit.MILLISECONDS));
+         long nanosTimeout = TimeUnit.MILLISECONDS.toNanos(timeout);
+         while ((viewId < joinerViewId || clusterManagerStatus == ClusterManagerStatus.RECOVERING_CLUSTER) &&
+               clusterManagerStatus.isRunning()) {
+            if (nanosTimeout <= 0) {
+               throw log.timeoutWaitingForView(joinerViewId);
             }
-         }
-         if (timeService.isTimeExpired(endTime)) {
-            throw new TimeoutException("Timed out waiting for view " + joinerViewId);
+            nanosTimeout = clusterStateChanged.awaitNanos(nanosTimeout);
          }
       }
    }
