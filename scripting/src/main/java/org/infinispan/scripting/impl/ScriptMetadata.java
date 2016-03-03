@@ -31,9 +31,11 @@ public class ScriptMetadata implements Metadata {
    private final Optional<String> reducer;
    private final Optional<String> collator;
    private final Optional<String> combiner;
+   private final DataType dataType;
 
    ScriptMetadata(String name, Optional<String> language, String extension, ExecutionMode mode, Set<String> parameters,
-         Optional<String> role, Optional<String> reducer, Optional<String> collator, Optional<String> combiner) {
+         Optional<String> role, Optional<String> reducer, Optional<String> collator, Optional<String> combiner,
+         DataType dataType) {
       this.name = name;
       this.language = language;
       this.extension = extension;
@@ -43,6 +45,7 @@ public class ScriptMetadata implements Metadata {
       this.reducer = reducer;
       this.collator = collator;
       this.combiner = combiner;
+      this.dataType = dataType;
    }
 
    public Optional<String> language() {
@@ -79,6 +82,10 @@ public class ScriptMetadata implements Metadata {
 
    public Optional<String> collator() {
       return collator;
+   }
+
+   public DataType dataType() {
+      return dataType;
    }
 
    @Override
@@ -118,6 +125,7 @@ public class ScriptMetadata implements Metadata {
       Optional<String> combiner = Optional.empty();
       Optional<String> collator = Optional.empty();
       Optional<String> reducer = Optional.empty();
+      DataType dataType = DataType.DEFAULT;
 
       public ScriptMetadata.Builder name(String name) {
          this.name = name;
@@ -164,6 +172,11 @@ public class ScriptMetadata implements Metadata {
          return this;
       }
 
+      public ScriptMetadata.Builder dataType(DataType dataType) {
+         this.dataType = dataType;
+         return this;
+      }
+
       @Override
       public ScriptMetadata.Builder lifespan(long time, TimeUnit unit) {
          return this;
@@ -191,7 +204,7 @@ public class ScriptMetadata implements Metadata {
 
       @Override
       public ScriptMetadata build() {
-         return new ScriptMetadata(name, language, extension, mode, parameters, role, reducer, collator, combiner);
+         return new ScriptMetadata(name, language, extension, mode, parameters, role, reducer, collator, combiner, dataType);
       }
 
       @Override
@@ -230,6 +243,7 @@ public class ScriptMetadata implements Metadata {
          output.writeObject(object.reducer);
          output.writeObject(object.collator);
          output.writeObject(object.combiner);
+         output.writeObject(object.dataType);
       }
 
       @Override
@@ -244,8 +258,9 @@ public class ScriptMetadata implements Metadata {
          Optional<String> reducer = (Optional<String>) input.readObject();
          Optional<String> collator = (Optional<String>) input.readObject();
          Optional<String> combiner = (Optional<String>) input.readObject();
+         DataType dataType = (DataType) input.readObject();
 
-         return new ScriptMetadata(name, language, extension, mode, parameters, role, reducer, collator, combiner);
+         return new ScriptMetadata(name, language, extension, mode, parameters, role, reducer, collator, combiner, dataType);
       }
    }
 }

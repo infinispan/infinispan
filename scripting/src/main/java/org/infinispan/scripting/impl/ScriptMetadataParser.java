@@ -67,6 +67,9 @@ public class ScriptMetadataParser {
                case "collator":
                   metadataBuilder.collator(value);
                   break;
+               case "datatype":
+                  metadataBuilder.dataType(DataType.fromMime(value));
+                  break;
                default:
                   throw log.unknownScriptProperty(key);
                }

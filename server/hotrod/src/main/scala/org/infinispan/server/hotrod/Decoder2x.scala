@@ -315,12 +315,12 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val params = new HashMap[String, Object]
             for (i <- 0 until paramCount) {
                val paramName = readString(buffer)
-               val paramValue = marshaller.objectFromByteBuffer(readRangedBytes(buffer))
+               val paramValue = readRangedBytes(buffer)
                params.put(paramName, paramValue)
             }
             val taskManager = SecurityActions.getCacheGlobalComponentRegistry(cache).getComponent(classOf[TaskManager])
-            val result: Any = taskManager.runTask(name, new TaskContext().marshaller(marshaller).cache(cache).parameters(params)).get
-            new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, marshaller.objectToByteBuffer(result))
+            val result: Array[Byte] = taskManager.runTask(name, new TaskContext().marshaller(marshaller).cache(cache).parameters(params)).get.asInstanceOf[Array[Byte]]
+            new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, result)
       }
    }
 

@@ -7,17 +7,8 @@ import java.io.ObjectOutput;
 import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.InvalidPropertiesFormatException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
@@ -226,6 +217,17 @@ public class Immutables {
       return new ImmutableEntry<K, V>(entry);
    }
 
+   /**
+    * Wraps a key and value with an immutable {@link Map.Entry}}. There is no copying involved.
+    *
+    * @param key the key to wrap.
+    * @param value the value to wrap.
+    * @return an immutable {@link Map.Entry}} wrapper that delegates to the original mapping.
+    */
+   public static <K, V> Map.Entry<K, V> immutableEntry(K key, V value) {
+      return new ImmutableEntry<K, V>(key, value);
+   }
+
    public interface  Immutable {
    }
 
@@ -361,6 +363,12 @@ public class Immutables {
          this.key = entry.getKey();
          this.value = entry.getValue();
          this.hash = entry.hashCode();
+      }
+
+      ImmutableEntry(K key, V value) {
+         this.key = key;
+         this.value = value;
+         this.hash = Objects.hashCode(key) ^ Objects.hashCode(value);
       }
 
       @Override
