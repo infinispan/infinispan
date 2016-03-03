@@ -90,7 +90,7 @@ Infinispan is a complete, separate and standalone project.
 Some may consider this a fork, but the people behind Infinispan and JBoss Cache see it as an evolution, since all future effort will be on Infinispan and not JBoss Cache. 
 
 === What version of Java does Infinispan need to run? Does Infinispan need an application server to run?
-All that is needed is a Java 7.0 compatible JVM.
+All that is needed is a Java 8 compatible JVM.
 An application server is _not_ a requirement. 
 
 === Will there be a POJO Cache replacement in Infinispan?
@@ -130,9 +130,9 @@ link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/tree/TreeCach
 link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/tree/TreeCache.html$$[TreeCache] should be considered as a compatibility API, if you are migrating from JBoss Cache and cannot invest the time in rewriting your application, or your application specifically relies on a tree structure.
 
 ==== Which JVMs (JDKs) does Infinispan work with?
-Infinispan is developed and primarily tested against Oracle's Java SE 7.
-It should work with most Java SE 7 implementations, including those from IBM, HP, Apple, Oracle, and OpenJDK.
-We also build/test against JDK 8.
+Infinispan is developed and primarily tested against Oracle Java SE 8.
+It should work with most Java SE 9 implementations, including those from IBM, HP, Apple, Oracle, and OpenJDK.
+We also build/test against JDK 9.
 
 ==== Does Infinispan store data by value or by reference?
 
