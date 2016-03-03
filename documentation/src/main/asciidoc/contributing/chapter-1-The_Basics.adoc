@@ -3,9 +3,9 @@ In this chapter we quickly walk through the basics on contributing; future chapt
 
 === Prequisites
 |=============
-| Java 7  | Infinispan is baselined on Java 7 (we build with Oracle JDK, OpenJDK and IBM JDK)
-| Maven 3 | The Infinispan build uses Maven, and we recommend using Maven 3.
-| Git     | The Infinispan source code is stored in Git.
+| Java 8    | Infinispan is baselined on Java 8 (we build with Oracle JDK, OpenJDK and IBM JDK)
+| Maven 3.2 | The Infinispan build uses Maven, and you should be using at least Maven 3.2
+| Git       | The Infinispan source code is stored in Git.
 |=============
 
 === Issue Management
