@@ -5,7 +5,6 @@ import static org.junit.Assert.assertEquals;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
@@ -128,15 +127,14 @@ public abstract class AbstractAuthentication {
       Security.doAs(admin, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             assertEquals(TEST_ENTRY_VALUE, secureCache.get(TEST_ENTRY_KEY));
-            secureCache.put("test", "test value");
+            secureCache.putIfAbsent("test", "test value");
             assertEquals("test value", secureCache.get("test"));
-            Cache<Object, Object> c = manager.getCache("adminCache");
-            c.start();
-            c.put("test", "value");
-            assertEquals("value", c.get("test"));
-            c.remove("test");
-            assertEquals(null, c.get("test"));
-            c.stop();
+            secureCache.put("test", "test value2");
+            assertEquals("test value2", secureCache.get("test"));
+            secureCache.remove("test");
+            assertEquals(null, secureCache.get("test"));
+            secureCache.clear();
+            assertEquals(0, secureCache.size());
             return null;
          }
       });
@@ -148,18 +146,6 @@ public abstract class AbstractAuthentication {
       Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
          public Void run() throws Exception {
             secureCache.put("test", "test value");
-            return null;
-         }
-      });
-   }
-
-   @Test
-   public void testWriterCreateWrite() throws Exception {
-      Subject writer = getWriterSubject();
-      Security.doAs(writer, new PrivilegedExceptionAction<Void>() {
-         public Void run() throws Exception {
-            Cache<Object, Object> c = manager.getCache("writerCache");
-            c.put("test", "value");
             return null;
          }
       });
