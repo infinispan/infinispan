@@ -40,6 +40,7 @@ public class HotRodClientIT {
    public void testCacheManager() {
       RemoteCacheManager rcm = createCacheManager();
       RemoteCache<String, String> cache = rcm.getCache();
+      cache.clear();
       cache.put("a", "a");
       assertEquals("a", cache.get("a"));
       rcm.stop();
