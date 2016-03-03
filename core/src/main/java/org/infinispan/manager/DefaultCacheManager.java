@@ -56,12 +56,13 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -468,36 +469,38 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public EmbeddedCacheManager startCaches(final String... cacheNames) {
       authzHelper.checkPermission(AuthorizationPermission.LIFECYCLE);
-      List<Thread> threads = new ArrayList<Thread>(cacheNames.length);
+      Map<String, Thread> threads = new HashMap<>(cacheNames.length);
       final AtomicReference<RuntimeException> exception = new AtomicReference<RuntimeException>(null);
       for (final String cacheName : cacheNames) {
-
-         String threadName = "CacheStartThread," + configurationManager.getGlobalConfiguration().transport().nodeName() + "," + cacheName;
-         Thread thread = new Thread(threadName) {
-            @Override
-            public void run() {
-               try {
-                  createCache(cacheName, cacheName);
-               } catch (RuntimeException e) {
-                  exception.set(e);
-               } catch (Throwable t) {
-                  exception.set(new RuntimeException(t));
+         if (!threads.containsKey(cacheName)) {
+            String threadName = "CacheStartThread," + configurationManager.getGlobalConfiguration().transport().nodeName() + "," + cacheName;
+            Thread thread = new Thread(threadName) {
+               @Override
+               public void run() {
+                  try {
+                     createCache(cacheName, cacheName);
+                  } catch (RuntimeException e) {
+                     exception.set(e);
+                  } catch (Throwable t) {
+                     exception.set(new RuntimeException(t));
+                  }
                }
-            }
-         };
-         thread.start();
-         threads.add(thread);
+            };
+            thread.start();
+            threads.put(cacheName, thread);
+         }
       }
       try {
-         for (Thread thread : threads) {
+         for (Thread thread : threads.values()) {
             thread.join();
          }
       } catch (InterruptedException e) {
          throw new CacheException("Interrupted while waiting for the caches to start");
       }
 
-      if (exception.get() != null) {
-         throw exception.get();
+      RuntimeException runtimeException = exception.get();
+      if (runtimeException != null) {
+         throw runtimeException;
       }
 
       return this;
