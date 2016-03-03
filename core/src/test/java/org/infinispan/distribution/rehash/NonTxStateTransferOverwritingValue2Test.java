@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClearCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -193,6 +194,11 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
          @Override
          public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
                                  InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+            //skip for clear command!
+            if (entry instanceof ClearCacheEntry) {
+               super.commitEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
+               return;
+            }
             final Address source = ctx.getOrigin();
             CacheEntry newEntry = new CacheEntryDelegator(entry) {
                @Override
