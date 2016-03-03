@@ -2,8 +2,8 @@
 
 To run Infinispan, you'll need
 
-* A Java 1.7.0 JDK
-* Maven 3, if you wish to use the quickstart examples or create a new project using Infinispan link:../getting_started/getting_started.html#_maven_archetypes[archetype] 
+* A Java 1.8 JDK
+* Maven 3.2+, if you wish to use the quickstart examples or create a new project using Infinispan link:../getting_started/getting_started.html#_maven_archetypes[archetype] 
 * the Infinispan link:http://infinispan.org/download/[distribution zip], if you wish to use Infinispan in server mode, or want to use the jars in an ant project
 
 TIP: If you already have any of these pieces of software, there is no need to install them again!
@@ -16,8 +16,8 @@ Choose your Java runtime, and follow their installation instructions. For exampl
 *  link:$$http://download.oracle.com/docs/cd/E15289_01/doc.40/e15065/toc.htm$$[Oracle JRockit] 
 
 === Maven
-Follow the official Maven installation guide if you don't already have Maven 3 installed.
-You can check which version of Maven you have installed (if any) by running mvn --version . If you see a version newer than 3.0.0, you are ready to go. 
+Follow the official Maven installation guide if you don't already have Maven 3.2 installed.
+You can check which version of Maven you have installed (if any) by running mvn --version . If you see a version newer than 3.2, you are ready to go. 
 
 TIP: You can also deploy the examples using your favorite IDE. We provide instructions for using Eclipse only.
 
@@ -30,7 +30,7 @@ Add to your pom:
 <dependency>
 	<groupId>org.infinispan</groupId>
 	<artifactId>infinispan-embedded</artifactId>
-	<version>7.0.0.Final</version>
+	<version>8.2.0.Final</version>
 </dependency>
 
 ==== Installing Infinispan inside Apache Karaf
