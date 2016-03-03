@@ -41,6 +41,13 @@ The following metadata property keys are available
 * collator: this property is only valid for +mapper+ scripts, and specifies the name of another script that will be used for the collation phase of a map/reduce job. This property will be removed in Infinispan 9.
 * combiner: this property is only valid for +mapper+ scripts, and specifies the name of another script that will be used for the combine phase of a map/reduce job. This property will be removed in Infinispan 9.
 * parameters: an array of valid parameter names for this script. Invocations which specify parameter names not included in this list will cause an exception.
+* datatype: optional property providing information, in the form of
+Media Types (also known as MIME) about the type of the data stored in the
+caches, as well as parameter and return values. Currently it only accepts a
+single value which is `text/plain; charset=utf-8`, indicating that data is
+String UTF-8 format. This metadata parameter is designed for remote clients
+that only support a particular type of data, making it easy for them to
+retrieve, store and work with parameters.
 
 Since the execution mode is a characteristic of the script, nothing special needs to be done on the client to invoke scripts in different modes.
 

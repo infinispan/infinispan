@@ -4,6 +4,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -156,8 +157,11 @@ public class ScriptingManagerImpl implements ScriptingManager {
       }
 
       Bindings userBindings = context.getParameters()
-            .map(p -> new SimpleBindings((Map<String, Object>) p))
-            .orElseGet(() -> new SimpleBindings());
+         .map(p -> {
+            Map<String, ?> params = metadata.dataType().transformer.toDataType(context.getParameters().get(), context.getMarshaller());
+            return new SimpleBindings((Map<String, Object>) params);
+         })
+         .orElseGet(() -> new SimpleBindings());
 
       SimpleBindings systemBindings = new SimpleBindings();
       systemBindings.put(SystemBindings.CACHE_MANAGER.toString(), cacheManager);
@@ -174,7 +178,8 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
       ScriptRunner runner = metadata.mode().getRunner();
 
-      return runner.runScript(this, metadata, bindings);
+      return runner.runScript(this, metadata, bindings).thenApply(t ->
+            (T) metadata.dataType().transformer.fromDataType(t, context.getMarshaller()));
    }
 
    ScriptMetadata getScriptMetadata(String scriptName) {
