@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.assertEquals;
@@ -64,6 +65,8 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    private ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.clustering().hash().numOwners(NUM_OWNERS);
+      //playing with OOM - weird things might happen when JVM will struggle for life
+      builder.clustering().sync().replTimeout(5, TimeUnit.MINUTES);
       return hotRodCacheConfiguration(builder);
    }
 
