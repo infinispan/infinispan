@@ -95,39 +95,6 @@ public class ExampleConfigsIT {
         rcmFactory = null;
     }
 
-    /**
-     * Create a 2 node cluster and check that state transfer does not take place.
-     */
-    @Test
-    @WithRunningServer({@RunningServer(name = "clustered-ccl-1")})
-    public void testClusterCacheLoaderConfigExample() throws Exception {
-        try {
-            RemoteInfinispanMBeans s1 = createRemotes("clustered-ccl-1", "clustered", DEFAULT_CACHE_NAME);
-            RemoteCache<Object, Object> s1Cache = createCache(s1);
-            s1Cache.put("key", "value");
-            assertEquals(1, s1.cache.getNumberOfEntries());
-            assertEquals(1, s1.manager.getClusterSize());
-
-            controller.start("clustered-ccl-2");
-            RemoteInfinispanMBeans s2 = createRemotes("clustered-ccl-2", "clustered", DEFAULT_CACHE_NAME);
-            RemoteCache<Object, Object> s2Cache = createCache(s2);
-
-            assertEquals(2, s2.manager.getClusterSize());
-            // state transfer didn't happen
-            assertEquals(0, s2.cache.getNumberOfEntries());
-            s2Cache.get("key");
-            // the entry is obtained
-            assertEquals(1, s2.cache.getNumberOfEntries());
-            s2Cache.put("key2", "value2");
-            assertEquals(2, s1.cache.getNumberOfEntries());
-            assertEquals(2, s2.cache.getNumberOfEntries());
-        } finally {
-            if (controller.isStarted("clustered-ccl-2")) {
-                controller.stop("clustered-ccl-2");
-            }
-        }
-    }
-
     @Test
     @WithRunningServer({@RunningServer(name = "hotrod-rolling-upgrade-2"),@RunningServer(name = "hotrod-rolling-upgrade-1")})
     public void testHotRodRollingUpgrades() throws Exception {
