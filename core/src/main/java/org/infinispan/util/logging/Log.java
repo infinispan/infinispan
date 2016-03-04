@@ -18,6 +18,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -1398,7 +1399,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Node %s timed out, time : %s %s", id = 401)
    TimeoutException remoteNodeTimedOut(Address address, long time, TimeUnit unit);
 
-   @Message(value = "Timeout waiting for view %d.")
-   TimeoutException timeoutWaitingForView(int viewId);
+   @Message(value = "Timeout waiting for view %d. Current view is %d, current status is %s", id = 402)
+   TimeoutException timeoutWaitingForView(int expectedViewId, int currentViewId,
+         Object clusterManagerStatus);
 }
 
