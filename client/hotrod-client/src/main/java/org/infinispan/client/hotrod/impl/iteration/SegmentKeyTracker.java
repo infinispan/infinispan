@@ -37,8 +37,8 @@ class SegmentKeyTracker implements KeyTracker {
    public boolean track(byte[] key) {
       int segment = segmentConsistentHash.getSegment(key);
       boolean result = keysPerSegment.get(segment).add(key);
-      if (log.isDebugEnabled())
-         log.debugf("Tracking key %s belonging to segment %d, seenBefore? = %s", Util.printArray(key), segment, !result);
+      if (log.isTraceEnabled())
+         log.trackingSegmentKey(Util.printArray(key), segment, !result);
       return result;
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.logging;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheListenerException;
@@ -15,8 +16,8 @@ import org.jboss.logging.annotations.MessageLogger;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -238,4 +239,21 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Query parameter '%s' was not set", id = 4060)
    IllegalStateException queryParameterNotSet(String filterConverterFactoryName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Server not reachable whilst closing iteration '%s'", id = 4061)
+   void ignoringServerUnreachable(String iterationId);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Started iteration '%s'", id = 4062)
+   void startedIteration(String iterationId);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Transport '%s' obtained for iteration '%s'", id = 4063)
+   void iterationTransportObtained(Transport transport, String iterationId);
+
+   @LogMessage(level = TRACE)
+   @Message(value = "Tracking key %s belonging to segment %d, already tracked? = %b", id = 4064)
+   void trackingSegmentKey(String key, int segment, boolean isTracked);
+
 }

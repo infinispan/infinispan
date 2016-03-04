@@ -60,16 +60,21 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
    @Override
    public void close() {
       if (!closed) {
-         IterationEndResponse endResponse = operationsFactory.newIterationEndOperation(iterationId, transport).execute();
-         short status = endResponse.getStatus();
+         try {
+            IterationEndResponse endResponse = operationsFactory.newIterationEndOperation(iterationId, transport).execute();
+            short status = endResponse.getStatus();
 
-         if (HotRodConstants.isSuccess(status)) {
-            log.iterationClosed(iterationId);
+            if (HotRodConstants.isSuccess(status)) {
+               log.iterationClosed(iterationId);
+            }
+            if (HotRodConstants.isInvalidIteration(status)) {
+               throw log.errorClosingIteration(iterationId);
+            }
+         } catch (TransportException te) {
+            log.ignoringServerUnreachable(iterationId);
+         } finally {
+            closed = true;
          }
-         if (HotRodConstants.isInvalidIteration(status)) {
-            throw log.errorClosingIteration(iterationId);
-         }
-         closed = true;
       }
    }
 
@@ -115,11 +120,11 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
       IterationStartResponse startResponse = iterationStartOperation.execute();
       this.transport = startResponse.getTransport();
       if (log.isDebugEnabled()) {
-         log.debugf("Obtained transport", this.transport);
+         log.iterationTransportObtained(transport, iterationId);
       }
       this.iterationId = startResponse.getIterationId();
       if (log.isDebugEnabled()) {
-         log.debugf("IterationId:", this.iterationId);
+         log.startedIteration(iterationId);
       }
       return startResponse;
    }
