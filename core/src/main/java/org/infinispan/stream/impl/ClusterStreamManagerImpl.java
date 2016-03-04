@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * @param <K> the cache key type
  */
 public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
-   protected final Map<Integer, RequestTracker> currentlyRunning = new ConcurrentHashMap<>();
+   protected final Map<String, RequestTracker> currentlyRunning = new ConcurrentHashMap<>();
    protected final AtomicInteger requestId = new AtomicInteger();
    protected RpcManager rpc;
    protected CommandsFactory factory;
@@ -78,9 +78,9 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
            boolean includeLoader, SegmentAwareOperation operation, ResultsCallback<R> callback,
            StreamRequestCommand.Type type, Predicate<? super R> earlyTerminatePredicate) {
       Map<Address, Set<Integer>> targets = determineTargets(ch, segments);
-      Integer id;
+      String id;
       if (!targets.isEmpty()) {
-         id = requestId.getAndIncrement();
+         id = localAddress.toString() + requestId.getAndIncrement();
          log.tracef("Performing remote operations %s for id %s", targets, id);
          RequestTracker<R> tracker = new RequestTracker<>(callback, targets, earlyTerminatePredicate);
          currentlyRunning.put(id, tracker);
@@ -118,9 +118,9 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
            boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation,
            ResultsCallback<Map<K, R2>> callback) {
       Map<Address, Set<Integer>> targets = determineTargets(ch, segments);
-      Integer id;
+      String id;
       if (!targets.isEmpty()) {
-         id = requestId.getAndIncrement();
+         id = localAddress.toString() + requestId.getAndIncrement();
          log.tracef("Performing remote rehash key aware operations %s for id %s", targets, id);
          RequestTracker<Map<K, R2>> tracker = new RequestTracker<>(callback, targets, null);
          currentlyRunning.put(id, tracker);
@@ -165,7 +165,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       return id;
    }
 
-   private void submitAsyncTasks(Integer id, Map<Address, Set<Integer>> targets, Map<Integer, Set<K>> keysToExclude,
+   private void submitAsyncTasks(String id, Map<Address, Set<Integer>> targets, Map<Integer, Set<K>> keysToExclude,
                                  boolean parallelStream, Set<K> keysToInclude, boolean includeLoader,
                                  StreamRequestCommand.Type type, Object operation) {
       for (Map.Entry<Address, Set<Integer>> targetInfo : targets.entrySet()) {
