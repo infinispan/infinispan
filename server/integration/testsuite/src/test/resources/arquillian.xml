@@ -5,32 +5,6 @@
     <defaultProtocol type="jmx-as7" />
 
     <group qualifier="suite-manual">
-        <container qualifier="clustered-ccl-1" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">examples/clustered-ccl.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-            </configuration>
-        </container>
-        <container qualifier="clustered-ccl-2" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server2.dist}</property>
-                <property name="managementAddress">${node1.ip}</property>
-                <property name="serverConfig">examples/clustered-ccl.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
-                </property>
-                <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-            </configuration>
-        </container>
         <container qualifier="hotrod-rolling-upgrade-1" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>

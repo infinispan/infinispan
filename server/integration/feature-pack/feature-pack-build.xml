@@ -31,10 +31,6 @@
         <!-- Example configs -->
         <standalone
            template="configuration/standalone/template.xml"
-           subsystems="configuration/examples/subsystems-ccl-clustered.xml"
-           output-file="docs/examples/configs/clustered-ccl.xml"/>
-        <standalone
-           template="configuration/standalone/template.xml"
            subsystems="configuration/examples/subsystems-fcs-local.xml"
            output-file="docs/examples/configs/standalone-fcs-local.xml"/>
         <standalone

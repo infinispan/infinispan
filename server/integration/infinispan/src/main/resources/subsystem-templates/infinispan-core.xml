@@ -94,36 +94,10 @@
                <transaction mode="NONE" />
             </distributed-cache>
 
-            
          </cache-container>
       </replacement>
    </supplement>
    <!-- Examples -->
-   <supplement name="ccl-clustered">
-      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
-      <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="clustered" default-cache="default" >
-            <transport lock-timeout="60000" />
-            <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <state-transfer enabled="false" />
-               <cluster-loader remote-timeout="60000" />
-            </distributed-cache>
-
-            <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <state-transfer enabled="false" />
-               <cluster-loader remote-timeout="60000" />
-            </distributed-cache>
-
-            <distributed-cache name="namedCache" mode="SYNC" start="EAGER">
-               <expiration lifespan="2000" max-idle="1000" />
-               <state-transfer enabled="false" />
-               <cluster-loader remote-timeout="60000" />
-            </distributed-cache>
-         </cache-container>
-      </replacement>
-   </supplement>
    <supplement name="fcs-local">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
