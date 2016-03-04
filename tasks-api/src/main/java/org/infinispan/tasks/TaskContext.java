@@ -18,6 +18,7 @@ public class TaskContext {
    private Optional<Marshaller> marshaller = Optional.empty();
    private Optional<Cache<?, ?>> cache = Optional.empty();
    private Optional<Map<String, ?>> parameters = Optional.empty();
+   private boolean logEvent;
 
    public TaskContext() {
    }
@@ -61,6 +62,14 @@ public class TaskContext {
    }
 
    /**
+    * Whether execution will generate an event in the event log
+    */
+   public TaskContext logEvent(boolean logEvent) {
+      this.logEvent = logEvent;
+      return this;
+   }
+
+   /**
     * Marshaller for this task execution
     * @return optional marshaller
     */
@@ -84,4 +93,11 @@ public class TaskContext {
       return parameters;
    }
 
+   /**
+    * Whether executing this task will generate an event in the event log
+    * @return true if an event will be logged, false otherwise
+    */
+   public boolean isLogEvent() {
+      return logEvent;
+   }
 }

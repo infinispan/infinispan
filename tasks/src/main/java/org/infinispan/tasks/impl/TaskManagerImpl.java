@@ -86,15 +86,17 @@ public class TaskManagerImpl implements TaskManager {
             runningTasks.put(exec.getUUID(), exec);
             CompletableFuture<T> task = engine.runTask(name, context);
             return task.whenComplete((r, e) -> {
-               EventLogger eventLog = EventLogManager.getEventLogger(cacheManager).scope(cacheManager.getAddress());
-               who.ifPresent(s -> eventLog.who(s));
-               context.getCache().ifPresent(cache -> eventLog.context(cache));
-               if (e != null) {
-                  eventLog.detail(e)
-                          .error(EventLogCategory.TASKS, MESSAGES.taskFailure(name));
-               } else {
-                  eventLog.detail(String.valueOf(r))
-                          .info(EventLogCategory.TASKS, MESSAGES.taskSuccess(name));
+               if (context.isLogEvent()) {
+                  EventLogger eventLog = EventLogManager.getEventLogger(cacheManager).scope(cacheManager.getAddress());
+                  who.ifPresent(s -> eventLog.who(s));
+                  context.getCache().ifPresent(cache -> eventLog.context(cache));
+                  if (e != null) {
+                     eventLog.detail(e)
+                           .error(EventLogCategory.TASKS, MESSAGES.taskFailure(name));
+                  } else {
+                     eventLog.detail(String.valueOf(r))
+                           .info(EventLogCategory.TASKS, MESSAGES.taskSuccess(name));
+                  }
                }
                runningTasks.remove(exec.getUUID());
             });

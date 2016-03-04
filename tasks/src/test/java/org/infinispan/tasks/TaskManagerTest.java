@@ -63,7 +63,7 @@ public class TaskManagerTest extends SingleCacheManagerTest {
 
    public void testRunTask() throws InterruptedException, ExecutionException {
       memoryLogger.reset();
-      CompletableFuture<String> okTask = taskManager.runTask(DummyTaskTypes.SUCCESSFUL_TASK.name(), new TaskContext());
+      CompletableFuture<String> okTask = taskManager.runTask(DummyTaskTypes.SUCCESSFUL_TASK.name(), new TaskContext().logEvent(true));
       assertEquals("result", okTask.get());
       assertEquals(0, taskManager.getCurrentTasks().size());
       assertEquals(Messages.MESSAGES.taskSuccess(DummyTaskTypes.SUCCESSFUL_TASK.name()), memoryLogger.getMessage());
@@ -72,7 +72,7 @@ public class TaskManagerTest extends SingleCacheManagerTest {
       assertEquals(EventLogLevel.INFO, memoryLogger.getLevel());
 
       memoryLogger.reset();
-      CompletableFuture<Object> koTask = taskManager.runTask(DummyTaskTypes.FAILING_TASK.name(), new TaskContext());
+      CompletableFuture<Object> koTask = taskManager.runTask(DummyTaskTypes.FAILING_TASK.name(), new TaskContext().logEvent(true));
       String message = koTask.handle((r, e) -> { return e.getCause().getMessage(); }).get();
       assertEquals(0, taskManager.getCurrentTasks().size());
       assertEquals("exception", message);
@@ -82,7 +82,7 @@ public class TaskManagerTest extends SingleCacheManagerTest {
       assertEquals(EventLogLevel.ERROR, memoryLogger.getLevel());
 
       memoryLogger.reset();
-      CompletableFuture<Object> slowTask = taskManager.runTask(DummyTaskTypes.SLOW_TASK.name(), new TaskContext());
+      CompletableFuture<Object> slowTask = taskManager.runTask(DummyTaskTypes.SLOW_TASK.name(), new TaskContext().logEvent(true));
       Collection<TaskExecution> currentTasks = taskManager.getCurrentTasks();
       assertEquals(1, currentTasks.size());
       TaskExecution execution = currentTasks.iterator().next();

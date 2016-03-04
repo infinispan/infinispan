@@ -228,6 +228,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
             if (parameters.isDefined()) {
                 parameters.asPropertyList().forEach(property -> taskContext.addParameter(property.getName(), property.getValue().asString()));
             }
+            taskContext.logEvent(true);
             CompletableFuture<Object> taskFuture = taskManager.runTask(taskName, taskContext);
             if(taskAsync) {
                 return new ModelNode();
