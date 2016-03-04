@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -132,6 +133,7 @@ public class InboundTransferTask {
          Set<Integer> segmentsCopy = getSegments();
          if (segmentsCopy.isEmpty()) {
             log.tracef("Segments list is empty, skipping source %s", source);
+            return false;
          }
          if (trace) {
             log.tracef("Requesting segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
@@ -146,8 +148,11 @@ public class InboundTransferTask {
                if (trace) {
                   log.tracef("Successfully requested segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
                }
+            } else {
+               Exception e = response instanceof ExceptionResponse ?
+                       ((ExceptionResponse) response).getException() : new CacheException(String.valueOf(response));
+               log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
             }
-            log.failedToRequestSegments(segmentsCopy, cacheName, source, new CacheException(String.valueOf(response)));
          } catch (Exception e) {
             log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
          }
