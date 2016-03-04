@@ -133,6 +133,7 @@ public class ExecTest extends MultiHotRodServersTest {
       assertTrue(results.get("macbeth").equals(Long.valueOf(287)));
    }
 
+   @Test(enabled = false, description = "Disabling this test until the distributed scripts in DIST mode are fixed - ISPN-6173")
    public void testRemoteMapReduceWithStreams_DistributedMode() throws Exception {
       String cacheName = "testRemoteMapReduce_Streams_dist";
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);

@@ -60,6 +60,7 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
       scriptingManager.runScript("distExec.js").get();
    }
 
+   @Test(enabled = false, description = "Disabled due to ISPN-6173.")
    public void testClusteredScriptStream() throws InterruptedException, ExecutionException, IOException {
       ScriptingManager scriptingManager = getScriptingManager(manager(0));
       Cache<String, String> cache = cache(0);
@@ -71,6 +72,7 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
       assertEquals(results.get("macbeth"), Long.valueOf(287));
    }
 
+   @Test(enabled = false, description = "Disabled due to ISPN-6173.")
    public void testDistributedMapReduceStream() throws IOException, ExecutionException, InterruptedException {
       ScriptingManager scriptingManager = getScriptingManager(manager(0));
       Cache cache = cache(0);
