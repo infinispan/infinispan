@@ -14,7 +14,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = "functional", testName = "client.hotrod.ClientAsymmetricClusterTest")
+@Test(groups = "functional", testName = "client.hotrod.ClientAsymmetricClusterTest", enabled = false, description = "To be enabled with ISPN-6038 fix")
 public class ClientAsymmetricClusterTest extends MultiHotRodServersTest {
 
    private static final String CACHE_NAME = "asymmetricCache";
