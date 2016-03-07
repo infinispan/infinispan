@@ -29,6 +29,12 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
@@ -124,6 +130,15 @@
                      </artifactSet>
                      <filters>
                         <filter>
+                           <artifact>org.infinispan:infinispan-core</artifact>
+                           <includes>
+                              <include>org/infinispan/atomic/Delta.class</include>
+                              <include>org/infinispan/atomic/DeltaAware.class</include>
+                              <include>org/infinispan/factories/AutoInstantiableFactory.class</include>
+                              <include>org/infinispan/lifecycle/Lifecycle.class</include>
+                           </includes>
+                        </filter>
+                        <filter>
                            <artifact>org.infinispan:infinispan-commons</artifact>
                            <excludes>
                               <exclude>org/infinispan/commons/util/OsgiClassLoader*.class</exclude>
@@ -207,13 +222,20 @@
                            <shadedPattern>infinispan.org.jboss.remoting3</shadedPattern>
                         </relocation>
                         <relocation>
-                           <pattern>org.jboss.logging</pattern>
-                           <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
-                        </relocation>
-                        <relocation>
                            <pattern>org.jboss.modules</pattern>
                            <shadedPattern>infinispan.org.jboss.modules</shadedPattern>
                         </relocation>
+                        <!-- Unfortunately because of https://bugzilla.redhat.com/show_bug.cgi?id=1266831 -->
+                        <!-- We can not relocate logging module (and SLF). Otherwise some integration modules might miss it -->
+                        <!-- when both Uber jar as well as ISPN commons are on classpath -->
+                        <!--<relocation>-->
+                           <!--<pattern>org.jboss.logging</pattern>-->
+                           <!--<shadedPattern>infinispan.org.jboss.logging</shadedPattern>-->
+                        <!--</relocation>-->
+                           <!--<relocation>-->
+                           <!--<pattern>org.slf4j</pattern>-->
+                           <!--<shadedPattern>infinispan.org.slf4j</shadedPattern>-->
+                        <!--</relocation>-->
                         <relocation>
                            <pattern>org.jboss.dmr</pattern>
                            <shadedPattern>infinispan.org.jboss.dmr</shadedPattern>
@@ -231,6 +253,11 @@
                         <!--<relocation>-->
                            <!--<pattern>org.jboss.marshalling</pattern>-->
                            <!--<shadedPattern>infinispan.org.jboss.marshalling</shadedPattern>-->
+                        <!--</relocation>-->
+                        <!-- We can not move Log4j since some appenders won't be found -->
+                        <!--<relocation>-->
+                           <!--<pattern>org.apache.log4j</pattern>-->
+                           <!--<shadedPattern>infinispan.org.apache.log4j</shadedPattern>-->
                         <!--</relocation>-->
                      </relocations>
                      <transformers>
