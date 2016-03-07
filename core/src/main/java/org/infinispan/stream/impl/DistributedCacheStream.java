@@ -526,8 +526,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                   if (stayLocal) {
                      segments = segmentsToProcess;
                   } else {
-                     segments = ch.getPrimarySegmentsForOwner(localAddress);
-                     segments.retainAll(segmentsToProcess);
+                     segments = ch.getPrimarySegmentsForOwner(localAddress).stream()
+                             .filter(segmentsToProcess::contains).collect(Collectors.toSet());
                   }
 
                   excludedKeys = segments.stream().flatMap(s -> results.referenceArray.get(s).stream())
@@ -608,9 +608,9 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
          results.onCompletion(null, segments, localValue);
       } else {
          Set<Integer> ourSegments = ownedSegmentsSupplier.get();
-         ourSegments.retainAll(segmentsToProcess);
-         log.tracef("CH changed - making %s segments suspect for identifier %s", ourSegments, id);
-         results.onSegmentsLost(ourSegments);
+         Set<Integer> lostSegments = ourSegments.stream().filter(segmentsToProcess::contains).collect(Collectors.toSet());
+         log.tracef("CH changed - making %s segments suspect for identifier %s", lostSegments, id);
+         results.onSegmentsLost(lostSegments);
       }
    }
 
