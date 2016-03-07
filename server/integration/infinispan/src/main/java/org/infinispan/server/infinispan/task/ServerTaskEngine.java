@@ -1,5 +1,7 @@
 package org.infinispan.server.infinispan.task;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -9,6 +11,7 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.spi.TaskEngine;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -48,7 +51,37 @@ public class ServerTaskEngine implements TaskEngine {
 
    private <T> CompletableFuture<T> invokeTask(TaskContext context, ServerTaskWrapper<T> task) {
       ServerTaskRunner runner = runnerFactory.getRunner(task.getExecutionMode());
-      return runner.execute(task.getName(), context);
+      launderParameters(context);
+      return runner.execute(task.getName(), context).thenApply(r ->
+            (T) context.getMarshaller().map(m -> toBytes(r, m)).orElse(r));
+   }
+
+   private static Object toBytes(Object obj, Marshaller marshaller) {
+      try {
+         return marshaller.objectToByteBuffer(obj);
+      } catch (Exception e) {
+         throw new CacheException(e);
+      }
+   }
+
+   private void launderParameters(TaskContext context) {
+      if (context.getParameters().isPresent() && context.getMarshaller().isPresent()) {
+         Map<String, ?> params = context.getParameters().get();
+         Marshaller m = context.getMarshaller().get();
+         for (Map.Entry<String, ?> e : params.entrySet()) {
+            Object v = e.getValue();
+            Object entryValue = v instanceof byte[] ? fromBytes(v, m) : v;
+            context.addParameter(e.getKey(), entryValue);
+         }
+      }
+   }
+
+   private static Object fromBytes(Object obj, Marshaller marshaller) {
+      try {
+         return marshaller.objectFromByteBuffer((byte[]) obj);
+      } catch (Exception e) {
+         throw new CacheException(e);
+      }
    }
 
    private <T> void checkPermissions(TaskContext context, ServerTaskWrapper<T> task) {
