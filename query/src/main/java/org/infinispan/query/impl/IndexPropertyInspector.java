@@ -1,6 +1,7 @@
 package org.infinispan.query.impl;
 
 import org.hibernate.search.cfg.Environment;
+import org.infinispan.query.affinity.ShardIndexManager;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 
 import java.util.Properties;
@@ -39,7 +40,7 @@ public final class IndexPropertyInspector {
    public static boolean hasInfinispanDirectory(Properties properties) {
       String indexManager = getPropertyFor(Environment.INDEX_MANAGER_IMPL_NAME, properties, null);
       String directoryProvider = getPropertyFor("directory_provider", properties, null);
-      return "infinispan".equals(directoryProvider) || InfinispanIndexManager.class.getName().equals(indexManager);
+      return "infinispan".equals(directoryProvider) || InfinispanIndexManager.class.getName().equals(indexManager) || ShardIndexManager.class.getName().equals(indexManager);
    }
 
    private static String getPropertyFor(String suffix, Properties properties, String defaultValue) {
