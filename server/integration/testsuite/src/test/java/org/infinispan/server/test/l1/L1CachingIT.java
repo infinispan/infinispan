@@ -13,6 +13,7 @@ import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests for L1 caching.
@@ -74,53 +75,65 @@ public class L1CachingIT {
     @Test
     public void testL1CachingEnabled() throws Exception {
 
-        // NOTE
-        // after https://issues.jboss.org/browse/ISPN-2120 (= 6.0.1 ER1)
         // I put to server1, then I issue get on server2 -> number of hits on server1 should be still 0
-        // but number of hits on server2 should increase (entry was fetched from server1 to server2 for this get)
-        mc1.set("KeyA", "A");
-        mc1.set("KeyB", "B");
-        mc1.set("KeyC", "C");
+        // but number of hits on server2 should increase (entry was fetched from server1 to server2 for
+        // this get)
+        int numKeys = 10;
+        for (int i = 0; i < numKeys; i++) {
+            mc1.set("Key" + i, "Value" + i);
+        }
 
-        assertTrue("Distribution of entries is wrong (at least unexpected).",
+        assumeTrue("Distribution of entries is wrong (at least unexpected).",
                 server1.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() > 0);
-        assertTrue("Distribution of entries is wrong (at least unexpected).",
+        assumeTrue("Distribution of entries is wrong (at least unexpected).",
                 server2.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() > 0);
 
-        assertEquals("More entries in caches than expected.", 3, server1.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() +
-                server2.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries());
+        assertEquals("More entries in caches than expected.", numKeys,
+                server1.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() +
+                        server2.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries());
 
-        assertTrue("A".equals(mc2.get("KeyA")));
-        assertTrue("B".equals(mc2.get("KeyB")));
-        assertTrue("C".equals(mc2.get("KeyC")));
+        for (int i = 0; i < numKeys; i++) {
+            assertEquals("Value" + i, mc2.get("Key" + i));
+        }
 
-        assertEquals("Number of hits on server 1 is wrong.", 0, server1.getCacheManager("clustered").getCache("memcachedCache").getHits());
-        assertEquals("Number of hits on server 2 is wrong.", 3, server2.getCacheManager("clustered").getCache("memcachedCache").getHits());
+        assertEquals("Number of hits on server 1 is wrong.", 0,
+                server1.getCacheManager("clustered").getCache("memcachedCache").getHits());
+        assertEquals("Number of hits on server 2 is wrong.", numKeys,
+                server2.getCacheManager("clustered").getCache("memcachedCache").getHits());
 
-        assertEquals("Number of stores on server 1 is wrong.", 3, server1.getCacheManager("clustered").getCache("memcachedCache").getStores());
-        assertEquals("Number of stores on server 2 is wrong.", 0, server2.getCacheManager("clustered").getCache("memcachedCache").getStores());
+        assertEquals("Number of stores on server 1 is wrong.", numKeys,
+                server1.getCacheManager("clustered").getCache("memcachedCache").getStores());
+        assertEquals("Number of stores on server 2 is wrong.", 0,
+                server2.getCacheManager("clustered").getCache("memcachedCache").getStores());
 
         // main condition (some entries are in the L1 cache - its copy is there)
-        assertTrue("The are no entries in L1 cache! L1 seems to be disabled! Check TRACE [org.infinispan.factories.ComponentRegistry] output.",
+        assertTrue("The are no entries in L1 cache! L1 seems to be disabled! Check TRACE [org.infinispan" +
+                        ".factories.ComponentRegistry] output.",
                 server1.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() +
-                        server2.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() > 3);
+                        server2.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() >
+                        numKeys);
 
         // *****************************
         // do the same round for server1
-        assertTrue("A".equals(mc1.get("KeyA")));
-        assertTrue("B".equals(mc1.get("KeyB")));
-        assertTrue("C".equals(mc1.get("KeyC")));
+        for (int i = 0; i < numKeys; i++) {
+            assertEquals("Value" + i, mc1.get("Key" + i));
+        }
 
-        assertEquals("Number of hits on server 1 is wrong.", 3, server1.getCacheManager("clustered").getCache("memcachedCache").getHits());
-        assertEquals("Number of hits on server 2 is wrong.", 3, server2.getCacheManager("clustered").getCache("memcachedCache").getHits());
+        assertEquals("Number of hits on server 1 is wrong.", numKeys,
+                server1.getCacheManager("clustered").getCache("memcachedCache").getHits());
+        assertEquals("Number of hits on server 2 is wrong.", numKeys,
+                server2.getCacheManager("clustered").getCache("memcachedCache").getHits());
 
         // should be still the same as on the start
-        assertEquals("Number of stores on server 1 is wrong.", 3, server1.getCacheManager("clustered").getCache("memcachedCache").getStores());
-        assertEquals("Number of stores on server 2 is wrong.", 0, server2.getCacheManager("clustered").getCache("memcachedCache").getStores());
+        assertEquals("Number of stores on server 1 is wrong.", numKeys,
+                server1.getCacheManager("clustered").getCache("memcachedCache").getStores());
+        assertEquals("Number of stores on server 2 is wrong.", 0,
+                server2.getCacheManager("clustered").getCache("memcachedCache").getStores());
 
-        // main condition (there should be server1 - 1 entry + 2 in L1, server2 - 2 entries + 1 in L1 = 3x2 = 6 num of entries JMX stat.
-        assertEquals("The are no entries in L1 cache! L1 seems to be disabled! Check TRACE [org.infinispan.factories.ComponentRegistry] output.",
-                6, server1.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() +
-                server2.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries());
+        // main condition: each key should exist as a proper entry on one node and as an L1 entry in the other
+        assertEquals("The are no entries in L1 cache! L1 seems to be disabled! Check TRACE [org.infinispan" +
+                        ".factories.ComponentRegistry] output.", 2 * numKeys,
+                server1.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries() +
+                        server2.getCacheManager("clustered").getCache("memcachedCache").getNumberOfEntries());
     }
 }
