@@ -49,8 +49,14 @@ The example showcases the distribution capabilities of Infinispan memcached seve
 * Start two clustered nodes: 
 This configuration is the same one used for the GUI demo:
  
- $ ./bin/clustered.sh -Djboss.node.name=nodeA
- $ ./bin/clustered.sh -Djboss.node.name=nodeB -Djboss.socket.binding.port-offset=100
+ $ ./bin/standalone.sh -c clustered.xml -Djboss.node.name=nodeA
+ $ ./bin/standalone.sh -c clustered.xml -Djboss.node.name=nodeB -Djboss.socket.binding.port-offset=100
+ 
+Alternatively use
+
+ $ ./bin/domain.sh
+ 
+Which automatically starts two nodes.
 
 *  Execute link:$$https://github.com/infinispan/infinispan/tree/master/server/memcached/src/test/resources/test_memcached_write.py$$[test_memcached_write.py] script which basically executes several write operations against the Infinispan memcached server bound to port 11211. If the script is executed successfully, you should see an output similar to this: 
 
