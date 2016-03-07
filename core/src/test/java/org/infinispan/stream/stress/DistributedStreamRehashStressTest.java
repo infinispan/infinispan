@@ -1,5 +1,6 @@
 package org.infinispan.stream.stress;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
@@ -51,11 +52,21 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
    protected final static int THREAD_MULTIPLIER = 5;
    protected final static long CACHE_ENTRY_COUNT = 250000;
    protected ConfigurationBuilder builderUsed;
+   protected final CacheMode cacheMode;
+
+   public DistributedStreamRehashStressTest() {
+      this(CacheMode.DIST_SYNC);
+   }
+
+   protected DistributedStreamRehashStressTest(CacheMode cacheMode) {
+      this.cacheMode = cacheMode;
+   }
+
 
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
-      builderUsed.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builderUsed.clustering().cacheMode(cacheMode);
       builderUsed.clustering().hash().numOwners(3);
       builderUsed.clustering().stateTransfer().chunkSize(25000);
       // This is increased just for the put all command when doing full tracing
@@ -125,23 +136,60 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
             seenValues.put(entry.getKey(), entry.getValue());
          }
          if (seenValues.size() != masterValues.size()) {
-            Map<Integer, Set<Map.Entry<Integer, Integer>>> target = generateEntriesPerSegment(cache.getAdvancedCache().getDistributionManager().getConsistentHash(), masterValues.entrySet());
-            Map<Integer, Set<Map.Entry<Integer, Integer>>> actual = generateEntriesPerSegment(cache.getAdvancedCache().getDistributionManager().getConsistentHash(), seenValues.entrySet());
-            for (Map.Entry<Integer, Set<Map.Entry<Integer, Integer>>> entry : target.entrySet()) {
-               Set<Map.Entry<Integer, Integer>> entrySet = entry.getValue();
-               Set<Map.Entry<Integer, Integer>> actualEntries = actual.get(entry.getKey());
-               if (actualEntries != null) {
-                  entrySet.removeAll(actualEntries);
-               }
-               if (!entrySet.isEmpty()) {
-                  throw new IllegalArgumentException(Thread.currentThread() + "-Found incorrect amount " +
-                          (actualEntries != null ? actualEntries.size() : 0) + " of entries, expected " +
-                          entrySet.size() + " for segment " + entry.getKey() + " missing entries " + entrySet
-                          + " on iteration " + iteration);
-               }
-            }
+            findMismatchedSegments(cache.getAdvancedCache().getDistributionManager().getConsistentHash(),
+                    masterValues, seenValues, iteration);
          }
       });
+   }
+
+   public void testStressNodesLeavingWhileMultipleIteratorsLocalSegments() throws InterruptedException, ExecutionException,
+           TimeoutException {
+      testStressNodesLeavingWhilePerformingCallable((masterValues, cache, iteration) -> {
+         Map<Integer, Integer> seenValues = new HashMap<>();
+         AdvancedCache<Integer, Integer> advancedCache = cache.getAdvancedCache();
+         ConsistentHash ch = advancedCache.getDistributionManager().getConsistentHash();
+         Set<Integer> targetSegments = ch.getSegmentsForOwner(advancedCache.getCacheManager().getAddress());
+         masterValues = masterValues.entrySet().stream()
+                 .filter(e -> targetSegments.contains(ch.getSegment(e.getKey())))
+                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+         Iterator<Map.Entry<Integer, Integer>> iterator = cache.entrySet().stream()
+                 .distributedBatchSize(50000)
+                 .filterKeySegments(targetSegments)
+                 .iterator();
+         while (iterator.hasNext()) {
+            Map.Entry<Integer, Integer> entry = iterator.next();
+            if (seenValues.containsKey(entry.getKey())) {
+               log.tracef("Seen values were: %s", seenValues);
+               throw new IllegalArgumentException(Thread.currentThread() + "-Found duplicate value: " + entry.getKey() + " on iteration " + iteration);
+            } else if (!masterValues.get(entry.getKey()).equals(entry.getValue())) {
+               log.tracef("Seen values were: %s", seenValues);
+               throw new IllegalArgumentException(Thread.currentThread() + "-Found incorrect value: " + entry.getKey() + " with value " + entry.getValue() + " on iteration " + iteration);
+            }
+            seenValues.put(entry.getKey(), entry.getValue());
+         }
+         if (seenValues.size() != masterValues.size()) {
+            findMismatchedSegments(ch, masterValues, seenValues, iteration);
+         }
+      });
+   }
+
+   private void findMismatchedSegments(ConsistentHash ch, Map<Integer, Integer> masterValues,
+           Map<Integer, Integer> seenValues, int iteration) {
+      Map<Integer, Set<Map.Entry<Integer, Integer>>> target = generateEntriesPerSegment(ch, masterValues.entrySet());
+      Map<Integer, Set<Map.Entry<Integer, Integer>>> actual = generateEntriesPerSegment(ch, seenValues.entrySet());
+      for (Map.Entry<Integer, Set<Map.Entry<Integer, Integer>>> entry : target.entrySet()) {
+         Set<Map.Entry<Integer, Integer>> entrySet = entry.getValue();
+         Set<Map.Entry<Integer, Integer>> actualEntries = actual.get(entry.getKey());
+         if (actualEntries != null) {
+            entrySet.removeAll(actualEntries);
+         }
+         if (!entrySet.isEmpty()) {
+            throw new IllegalArgumentException(Thread.currentThread() + "-Found incorrect amount " +
+                    (actualEntries != null ? actualEntries.size() : 0) + " of entries, expected " +
+                    entrySet.size() + " for segment " + entry.getKey() + " missing entries " + entrySet
+                    + " on iteration " + iteration);
+         }
+      }
    }
 
    void testStressNodesLeavingWhilePerformingCallable(final PerformOperation operation)
@@ -243,7 +291,8 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
       void perform(Map<Integer, Integer> masterValues, Cache<Integer, Integer> cacheToUse, int iteration);
    }
 
-   private <K, V> Map<Integer, Set<Map.Entry<K, V>>> generateEntriesPerSegment(ConsistentHash hash, Iterable<Map.Entry<K, V>> entries) {
+   private <K, V> Map<Integer, Set<Map.Entry<K, V>>> generateEntriesPerSegment(ConsistentHash hash,
+           Iterable<Map.Entry<K, V>> entries) {
       Map<Integer, Set<Map.Entry<K, V>>> returnMap = new HashMap<Integer, Set<Map.Entry<K, V>>>();
 
       for (Map.Entry<K, V> value : entries) {
