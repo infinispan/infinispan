@@ -644,7 +644,7 @@ public class StateConsumerImpl implements StateConsumer {
             .timeout(timeout, TimeUnit.MILLISECONDS).build();
    }
 
-   @Stop(priority = 20)
+   @Stop(priority = 0)
    @Override
    public void stop() {
       if (trace) {
