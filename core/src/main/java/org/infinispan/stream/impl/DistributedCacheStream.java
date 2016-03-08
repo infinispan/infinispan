@@ -5,7 +5,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -733,13 +732,24 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
             if (completed.get()) {
                if (exception != null) {
                   throw exception;
+               } else if ((entry = queue.poll()) != null) {
+                  // We check the queue one last time to make sure we didn't have a concurrent queue addition and
+                  // completed iterator
+                  if (consumer != null) {
+                     consumer.accept(entry);
+                  }
+                  return entry;
                }
                return null;
             }
             nextLock.lock();
             try {
                boolean interrupted = false;
-               while ((entry = queue.poll()) == null && !completed.get()) {
+               while (!completed.get()) {
+                  // We should check to make sure nothing was added to the queue as well before sleeping
+                  if ((entry = queue.poll()) != null) {
+                     break;
+                  }
                   try {
                      nextCondition.await(100, TimeUnit.MILLISECONDS);
                   } catch (InterruptedException e) {
@@ -748,10 +758,19 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                   }
                }
                if (entry == null) {
-                  if (exception != null) {
-                     throw exception;
+                  // If there is no entry and we are completed check one last time if there are entries in the queue
+                  // It is possible for entries to be added to the queue and the iterator completed at the same time.
+                  // Completed is a sign of either 3 things: all entries have been retrieved (what this case is for),
+                  // an exception has been found in processing, or the user has manually closed the iterator.  In the
+                  // latter 2 cases no additional entries are added to the queue since processing is stopped, therefore
+                  // we can just process the rest of the elements in the queue with no worry.
+                  entry = queue.poll();
+                  if (entry == null) {
+                     if (exception != null) {
+                        throw exception;
+                     }
+                     return null;
                   }
-                  return null;
                } else if (interrupted) {
                   // Now reset the interrupt state before returning
                   Thread.currentThread().interrupt();
