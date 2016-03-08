@@ -181,7 +181,7 @@
                               <exclude>META-INF/NOTICE.txt</exclude>
                               <exclude>jboss-as-checkstyle/checkstyle.xml</exclude>
                               <exclude>schema/*.xsd</exclude>
-                              <exclude>__redirected/*</exclude>
+                              <exclude>__redirected*</exclude>
                            </excludes>
                         </filter>
                      </filters>
@@ -296,9 +296,12 @@
                            !com.sun.jmx.*,
                            !com.sun.jdi.*,
                            !net.jcip.annotations,
-                           !org.jboss.logmanager,
+                           !org.jboss.logmanager.*,
                            !org.jboss.logging.annotations.*,
                            !org.jboss.modules,
+                           !org.w3c.*,
+                           !org.wildfly.*,
+                           !org.xml.*,
                            *
                         </Import-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>
