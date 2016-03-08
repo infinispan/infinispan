@@ -1,11 +1,12 @@
 package org.infinispan.rest
 
 import java.io.IOException
+import javax.ws.rs.container.{ContainerRequestFilter, ContainerResponseFilter}
 
 import org.infinispan.commons.api.Lifecycle
 import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import org.infinispan.rest.configuration.{RestServerConfiguration, RestServerConfigurationBuilder}
-import org.infinispan.rest.logging.Log
+import org.infinispan.rest.logging.{LoggingFilter, Log}
 import org.infinispan.server.core.CacheIgnoreAware
 import org.jboss.resteasy.plugins.server.netty.NettyJaxrsServer
 import org.jboss.resteasy.spi.ResteasyDeployment
@@ -22,6 +23,8 @@ final class NettyRestServer (
       val restCacheManager = new RestCacheManager(cacheManager, isCacheIgnored)
       val server = new Server(configuration, restCacheManager)
       deployment.getRegistry.addSingletonResource(server)
+      deployment.getProviderFactory.register(new LoggingFilter, classOf[ContainerResponseFilter],
+         classOf[ContainerRequestFilter])
       logStartRestServer(configuration.host(), configuration.port())
    }
 
