@@ -117,9 +117,6 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
       if (!icr.isInternalCache(cacheName)) {
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
 
-         // ensure the protobuf metadata cache is created
-         protobufMetadataManager.getCache();
-
          cr.registerComponent(new ProtobufMatcher(protobufMetadataManager.getSerializationContext()), ProtobufMatcher.class);
 
          if (cfg.compatibility().enabled()) {
