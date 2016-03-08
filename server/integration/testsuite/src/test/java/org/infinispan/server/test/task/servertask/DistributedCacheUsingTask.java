@@ -19,8 +19,8 @@ public class DistributedCacheUsingTask implements ServerTask {
 
     public static final String NAME = "serverTask_distributed_cacheUsage";
     public static final String CACHE_NAME = "customTaskRepl";
-    public static final String VALUE_PREFIX = "modified:";
     public static final String PARAM_KEY = "param";
+    public static final String NEW_VALUE = "newValue";
 
     private TaskContext taskContext;
 
@@ -28,12 +28,11 @@ public class DistributedCacheUsingTask implements ServerTask {
     @SuppressWarnings("unchecked")
     public Object call() throws IOException, ClassNotFoundException {
         Cache<Object, Object> cache = (Cache<Object, Object>) taskContext.getCache().get();
-        Map<String, String> parameters = (Map<String, String>) taskContext.getParameters().get();
 
         assert taskContext.getMarshaller().isPresent();
         Map.Entry<Object, Object> entry = cache.getCacheManager().getCache(CACHE_NAME).entrySet().iterator().next();
 
-        cache.getCacheManager().getCache(CACHE_NAME).put(entry.getKey(), VALUE_PREFIX + entry.getValue() + ":" + parameters.get(PARAM_KEY));
+        cache.getCacheManager().getCache(CACHE_NAME).put(entry.getKey(), NEW_VALUE);
         return null;
     }
 
