@@ -17,20 +17,38 @@
            <suffix value=".yyyy-MM-dd"/>
            <append value="@@append@@"/>
        </periodic-rotating-file-handler>
-       <size-rotating-file-handler name="ACCESS-FILE" autoflush="true">
+       <size-rotating-file-handler name="HR-ACCESS-FILE" autoflush="true">
            <formatter>
                <pattern-formatter pattern="(%t) %s%e%n"/>
            </formatter>
-           <file relative-to="jboss.server.log.dir" path="server-access.log"/>
+           <file relative-to="jboss.server.log.dir" path="hotrod-access.log"/>
+           <append value="@@append@@"/>
+           <rotate-size value="10M"/>
+           <max-backup-index value="10"/>
+       </size-rotating-file-handler>
+       <size-rotating-file-handler name="REST-ACCESS-FILE" autoflush="true">
+           <formatter>
+               <pattern-formatter pattern="(%t) %s%e%n"/>
+           </formatter>
+           <file relative-to="jboss.server.log.dir" path="rest-access.log"/>
            <append value="@@append@@"/>
            <rotate-size value="10M"/>
            <max-backup-index value="10"/>
        </size-rotating-file-handler>
 
        <?LOGGERS?>
-       <logger category="org.infinispan.server.hotrod.logging.HotRodLoggingHandler">
+       <logger category="org.infinispan.server.hotrod.logging.HotRodAccessLoggingHandler">
+           <!-- Set to TRACE to enable access logging for hot rod or use DMR -->
+           <level name="INFO"/>
            <handlers>
-               <handler name="ACCESS-FILE"/>
+               <handler name="HR-ACCESS-FILE"/>
+           </handlers>
+       </logger>
+       <logger category="org.infinispan.rest.logging.RestAccessLoggingHandler">
+           <!-- Set to TRACE to enable access logging for rest or use DMR -->
+           <level name="INFO"/>
+           <handlers>
+               <handler name="REST-ACCESS-FILE"/>
            </handlers>
        </logger>
        <root-logger>
