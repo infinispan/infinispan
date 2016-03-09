@@ -8,10 +8,12 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
 import static org.junit.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -199,5 +201,16 @@ public class ScriptingTest extends AbstractScriptingTest {
               "   }");
 
       scriptingManager.runScript("Test.java");
+   }
+
+   public void testMapReduceScript() throws IOException, ExecutionException, InterruptedException {
+      InputStream is = this.getClass().getResourceAsStream("/wordCountStream.js");
+      String script = TestingUtil.loadFileAsString(is);
+      loadData(cache(), "/macbeth.txt");
+
+      scriptingManager.addScript("wordCountStream.js", script);
+      Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache())).get();
+      assertEquals(3209, result.size());
+      assertEquals(Long.valueOf(287), result.get("macbeth"));
    }
 }

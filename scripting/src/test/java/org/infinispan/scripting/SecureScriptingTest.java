@@ -19,6 +19,7 @@ import javax.security.auth.Subject;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.concurrent.ExecutionException;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -124,6 +125,29 @@ public class SecureScriptingTest extends AbstractScriptingTest {
          }
       });
       assertEquals("a", result);
+   }
+
+   @Test(enabled = false, description = "Disabled until ISPN-6363 is fixed. ")
+   public void testScriptOnNonSecuredCache() throws ExecutionException, InterruptedException, PrivilegedActionException {
+      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
+         @Override
+         public Void run() {
+            cacheManager.defineConfiguration("nonSecuredCache", TestCacheManagerFactory.getDefaultCacheConfiguration(true).build());
+            return null;
+         }
+      });
+
+      cache("nonSecuredCache").put("a", "value");
+      assertEquals("value", cacheManager.getCache("nonSecuredCache").get("a"));
+
+      String result = Security.doAs(RUNNER, new PrivilegedExceptionAction<String>() {
+         @Override
+         public String run() throws Exception {
+            return (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a").cache(cache("nonSecuredCache"))).get();
+         }
+      });
+      assertEquals("a", result);
+      assertEquals("a", cacheManager.getCache("nonSecuredCache").get("a"));
    }
 
 }

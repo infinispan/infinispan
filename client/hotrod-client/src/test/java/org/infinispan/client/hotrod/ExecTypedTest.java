@@ -39,6 +39,15 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       assertEquals("typed-value", result);
    }
 
+   public void testRemoteTypedScriptPutGetExecute1() throws Exception {
+      loadScript("testRemoteTypedScriptPutGetExecute.js", "/typed-put-get.js");
+      Map<String, String> params = new HashMap<>();
+      params.put("k", "բարև");
+      params.put("v", "привет");
+      String result = clients.get(0).getCache().execute("testRemoteTypedScriptPutGetExecute.js", params);
+      assertEquals("привет", result);
+   }
+
    private void loadScript(String name, String scriptName) throws IOException {
       try (InputStream is = this.getClass().getResourceAsStream(scriptName)) {
          String script = TestingUtil.loadFileAsString(is);

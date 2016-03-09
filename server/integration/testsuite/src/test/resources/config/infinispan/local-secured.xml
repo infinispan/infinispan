@@ -6,7 +6,7 @@
                         <role name="admin" permissions="ALL" />
                         <role name="reader" permissions="READ" />
                         <role name="writer" permissions="WRITE" />
-                        <role name="supervisor" permissions="READ WRITE EXEC BULK_READ"/>
+                        <role name="supervisor" permissions="READ WRITE EXEC BULK_READ ADMIN"/>
                     </authorization>
                 </security>
                 <local-cache name="testcache" start="EAGER" batching="false">

@@ -1,22 +1,20 @@
 package org.infinispan.server.test.task.servertask;
 
-import org.infinispan.Cache;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
+import org.infinispan.tasks.TaskExecutionMode;
 
 import java.util.Optional;
 
 /**
- * Server task which requires specific role.
+ * Server task working in Dist mode for specified role.
  *
- * @author amanukya
+ * @author Anna Manukyan
  */
-public class LocalAuthTestServerTask implements ServerTask {
-    public static final String NAME = "localAuthTest";
+public class DistributedAuthServerTask implements ServerTask {
+    public static final String NAME = "serverTask_distributed_authentication";
     public static final String CACHE_NAME = "customTaskCache";
-    public static final String KEY = "actionPerformed";
     public static final String ALLOWED_ROLE = "supervisor";
-    public static final String EXECUTED_VALUE = "executed";
 
     private TaskContext taskContext;
 
@@ -31,17 +29,17 @@ public class LocalAuthTestServerTask implements ServerTask {
     }
 
     @Override
+    public TaskExecutionMode getExecutionMode() {
+        return TaskExecutionMode.ALL_NODES;
+    }
+
+    @Override
     public Optional<String> getAllowedRole() {
         return Optional.of(ALLOWED_ROLE);
     }
 
     @Override
     public Object call() throws Exception {
-        Cache cache = taskContext.getCache().get();
-
-        cache.put(KEY, true);
-
-        return EXECUTED_VALUE;
+        return System.getProperty("jboss.node.name");
     }
-
 }

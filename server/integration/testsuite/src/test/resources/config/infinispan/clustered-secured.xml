@@ -6,7 +6,7 @@
                         <role name="admin" permissions="ALL" />
                         <role name="reader" permissions="READ" />
                         <role name="writer" permissions="WRITE" />
-                        <role name="supervisor" permissions="READ WRITE EXEC BULK_READ BULK_WRITE"/>
+                        <role name="supervisor" permissions="READ WRITE EXEC BULK_READ BULK_WRITE ADMIN"/>
                     </authorization>
                 </security>
                 <transport lock-timeout="240000"/>
@@ -15,6 +15,13 @@
                     <security>
                         <authorization roles="admin reader writer supervisor" enabled="true" />
                     </security>
+                </distributed-cache>
+                <distributed-cache name="customTaskCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
+                    <transaction mode="NONE" />
+                    <security>
+                        <authorization roles="admin reader writer supervisor" enabled="true" />
+                    </security>
+                    <compatibility enabled="true" />
                 </distributed-cache>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <local-cache name="memcachedCache" start="EAGER" batching="false">
