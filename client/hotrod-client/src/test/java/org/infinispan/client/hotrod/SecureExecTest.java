@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.equivalence.AnyServerEquivalence;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -36,9 +39,7 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(testName = "client.hotrod.SecureExecTest", groups = "functional")
 @CleanupAfterMethod
 public class SecureExecTest extends AuthenticationTest {
-    static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManagerImpl.SCRIPT_MANAGER_ROLE);
-    static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
-    static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
+    static final Subject ADMIN = TestingUtil.makeSubject("user", ScriptingManagerImpl.SCRIPT_MANAGER_ROLE);
 
     private RemoteCacheManager remoteCacheManager;
 
@@ -47,21 +48,16 @@ public class SecureExecTest extends AuthenticationTest {
         GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
         GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper());
         globalRoles
-                .role("runner")
-                .permission(AuthorizationPermission.EXEC)
-                .permission(AuthorizationPermission.READ)
-                .permission(AuthorizationPermission.WRITE)
-                .permission(AuthorizationPermission.ADMIN)
-                .role("pheidippides")
-                .permission(AuthorizationPermission.READ)
-                .permission(AuthorizationPermission.WRITE)
-                .permission(AuthorizationPermission.ADMIN)
-                .role("admin")
-                .permission(AuthorizationPermission.ALL);
+                .role("user")
+                .permission(AuthorizationPermission.ALL)
+                .permission(AuthorizationPermission.EXEC);
 
         ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-        config.security().authorization().enable().role("runner").role("pheidippides").role("admin");
-        cacheManager = TestCacheManagerFactory.createCacheManager(global, hotRodCacheConfiguration());
+        config.dataContainer().keyEquivalence(new AnyServerEquivalence())
+                .valueEquivalence(new AnyServerEquivalence()).compatibility().enable()
+                .marshaller(new GenericJBossMarshaller())
+                .security().authorization().enable().role("user");
+        cacheManager = TestCacheManagerFactory.createCacheManager(global, config);
         cacheManager.getCache();
 
         return cacheManager;
@@ -91,13 +87,7 @@ public class SecureExecTest extends AuthenticationTest {
 
     @Override
     protected void clearContent() {
-        Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                cacheManager.getCache().clear();
-                return null;
-            }
-        });
+        cacheManager.getCache().clear();
     }
 
     protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder initServerAndClient() {
@@ -109,50 +99,38 @@ public class SecureExecTest extends AuthenticationTest {
         });
     }
 
-    @Test(enabled = false, description = "Disabled until issue ISPN-6210 is fixed.")
     public void testSimpleScriptExecutionWithValidAuth() throws IOException, PrivilegedActionException {
         org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = initServerAndClient();
         clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "password".toCharArray()));
 
-        runTestWithGivenConfig(clientBuilder.build(), RUNNER);
+        runTestWithGivenScript(clientBuilder.build(), "/testRole_hotrod.js");
     }
 
-    @Test(enabled = false, description = "Disabled until issue ISPN-6210 is fixed.")
+    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
     public void testSimpleScriptExecutionWithInValidAuth() throws IOException, PrivilegedActionException {
         org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = initServerAndClient();
         clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "password".toCharArray()));
 
-        runTestWithGivenConfig(clientBuilder.build(), PHEIDIPPIDES);
+        runTestWithGivenScript(clientBuilder.build(), "/testRole.js");
     }
 
-    private void runTestWithGivenConfig(Configuration config, Subject subject) throws IOException, PrivilegedActionException {
+    private void runTestWithGivenScript(Configuration config, String scriptPath) throws IOException, PrivilegedActionException {
         remoteCacheManager = new RemoteCacheManager(config);
         Map<String, String> params = new HashMap<>();
         params.put("a", "guinness");
 
-        Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                ScriptingManager scriptingManager = hotrodServer.getCacheManager().getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+        ScriptingManager scriptingManager = hotrodServer.getCacheManager().getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+        String scriptName = null;
+        try (InputStream is = this.getClass().getResourceAsStream(scriptPath)) {
+            String script = TestingUtil.loadFileAsString(is);
 
-                try (InputStream is = this.getClass().getResourceAsStream("/testRole.js")) {
-                    String script = TestingUtil.loadFileAsString(is);
-                    scriptingManager.addScript("testRole.js", script);
-                }
+            scriptName = scriptPath.substring(1);
+            scriptingManager.addScript(scriptName, script);
+        }
 
-                return null;
-            }
-        });
-
-        Security.doAs(subject, new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-                Integer result = remoteCacheManager.getCache().execute("testRole.js", params);
-                assertEquals("guinness", remoteCacheManager.getCache().get("a"));
-
-                return null;
-            }
-        });
+        String result = remoteCacheManager.getCache().execute(scriptName, params);
+        assertEquals("guinness", result);
+        assertEquals("guinness", remoteCacheManager.getCache().get("a"));
     }
 
 }

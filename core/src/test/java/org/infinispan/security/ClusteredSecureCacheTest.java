@@ -22,10 +22,14 @@ import org.testng.annotations.Test;
 public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
    final static Subject ADMIN = TestingUtil.makeSubject("admin");
 
+   public CacheMode getCacheMode() {
+      return CacheMode.REPL_SYNC;
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       final GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      final ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
+      final ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode());
       global.security().authorization().enable()
             .principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL);
       builder.security().authorization().enable().role("admin");

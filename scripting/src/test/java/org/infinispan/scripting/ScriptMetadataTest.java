@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Arrays;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.scripting.impl.DataType;
 import org.infinispan.scripting.impl.ScriptMetadata;
 import org.infinispan.scripting.impl.ScriptMetadataParser;
 import org.testng.annotations.Test;
@@ -61,6 +62,22 @@ public class ScriptMetadataTest {
       assertEquals("te,st", metadata.name());
       assertEquals("scala", metadata.language().get());
       assertEquals("scala", metadata.extension());
+   }
+
+   public void testDataTypeUtf8() throws Exception {
+      ScriptMetadata metadata = ScriptMetadataParser.parse("test", "// name='test',language=javascript,datatype='text/plain; charset=utf-8'");
+      assertEquals("test", metadata.name());
+      assertEquals("javascript", metadata.language().get());
+      assertEquals("js", metadata.extension());
+      assertEquals(DataType.UTF8, metadata.dataType());
+   }
+
+   public void testDataTypeOther() throws Exception {
+      ScriptMetadata metadata = ScriptMetadataParser.parse("test", "// name='test',language=javascript,datatype='text/plain; charset=us-ascii'");
+      assertEquals("test", metadata.name());
+      assertEquals("javascript", metadata.language().get());
+      assertEquals("js", metadata.extension());
+      assertEquals(DataType.DEFAULT, metadata.dataType());
    }
 
    public void testArrayValues() throws Exception {

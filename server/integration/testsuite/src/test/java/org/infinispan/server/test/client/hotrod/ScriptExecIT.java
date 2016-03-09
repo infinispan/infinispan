@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.HotRodLocal;
 import org.infinispan.tasks.TaskContext;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
@@ -60,6 +61,12 @@ public class ScriptExecIT {
       remoteCache = remoteCacheManager.getCache();
    }
 
+   @After
+   public void clearCache() {
+      remoteCache.clear();
+      remoteCacheManager.getCache(COMPATIBILITY_CACHE_NAME).clear();
+   }
+
    private Configuration createRemoteCacheManagerConfiguration() {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.addServer()
@@ -88,6 +95,22 @@ public class ScriptExecIT {
 
       assertEquals(1, result);
       assertEquals("value", remoteCache.get("parameter"));
+   }
+
+   @Test
+   public void testMapReduceScriptExecution() throws IOException {
+      RemoteCache<String, String> remoteCache = remoteCacheManager.getCache(COMPATIBILITY_CACHE_NAME);
+      addScripts("stream_serverTask.js");
+      remoteCache.put("1", "word1 word2 word3");
+      remoteCache.put("2", "word1 word2");
+      remoteCache.put("3", "word1");
+
+      Map<String, Long> results = remoteCache.execute("stream_serverTask.js", emptyMap());
+
+      assertEquals(3, results.size());
+      assertTrue(results.get("word1").equals(Long.valueOf(3)));
+      assertTrue(results.get("word2").equals(Long.valueOf(2)));
+      assertTrue(results.get("word3").equals(Long.valueOf(1)));
    }
 
    @Test
