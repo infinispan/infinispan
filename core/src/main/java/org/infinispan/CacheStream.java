@@ -37,9 +37,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /**
- * A {@link Stream} that has additional operations to monitor or control behavior when used from a {@link Cache}.  Note that
- * you may only use these additional methods on the CacheStream before any intermediate operations are performed as
- * a {@link Stream} is returned from those methods.
+ * A {@link Stream} that has additional operations to monitor or control behavior when used from a {@link Cache}.
  *
  * <p>Whenever the iterator or spliterator methods are used the user <b>must</b> close the {@link Stream}
  * that the method was invoked on after completion of its operation.  Failure to do so may cause a thread leakage if
@@ -532,6 +530,15 @@ public interface CacheStream<R> extends Stream<R> {
    <R1> CacheStream<R1> map(SerializableFunction<? super R, ? extends R1> mapper);
 
    /**
+    * {@inheritDoc}
+    * @param mapper a non-interfering, stateless
+    *               function to apply to each element
+    * @return the new double cache stream
+    */
+   @Override
+   DoubleCacheStream mapToDouble(ToDoubleFunction<? super R> mapper);
+
+   /**
     * Same as {@link CacheStream#mapToDouble(ToDoubleFunction)}  except that the ToDoubleFunction must also
     * implement <code>Serializable</code>
     * <p>
@@ -540,7 +547,16 @@ public interface CacheStream<R> extends Stream<R> {
     *               function to apply to each element
     * @return the new stream
     */
-   DoubleStream mapToDouble(SerializableToDoubleFunction<? super R> mapper);
+   DoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper);
+
+   /**
+    * {@inheritDoc}
+    * @param mapper a non-interfering, stateless
+    *               function to apply to each element
+    * @return the new int cache stream
+    */
+   @Override
+   IntCacheStream mapToInt(ToIntFunction<? super R> mapper);
 
    /**
     * Same as {@link CacheStream#mapToInt(ToIntFunction)}  except that the ToIntFunction must also
@@ -551,7 +567,16 @@ public interface CacheStream<R> extends Stream<R> {
     *               function to apply to each element
     * @return the new stream
     */
-   IntStream mapToInt(SerializableToIntFunction<? super R> mapper);
+   IntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper);
+
+   /**
+    * {@inheritDoc}
+    * @param mapper a non-interfering, stateless
+    *               function to apply to each element
+    * @return the new long cache stream
+    */
+   @Override
+   LongCacheStream mapToLong(ToLongFunction<? super R> mapper);
 
    /**
     * Same as {@link CacheStream#mapToLong(ToLongFunction)}  except that the ToLongFunction must also
@@ -562,7 +587,7 @@ public interface CacheStream<R> extends Stream<R> {
     *               function to apply to each element
     * @return the new stream
     */
-   LongStream mapToLong(SerializableToLongFunction<? super R> mapper);
+   LongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper);
 
    /**
     * {@inheritDoc}
@@ -589,7 +614,7 @@ public interface CacheStream<R> extends Stream<R> {
     * @return the new cache stream
     */
    @Override
-   DoubleStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper);
+   DoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper);
 
    /**
     * Same as {@link CacheStream#flatMapToDouble(Function)} except that the Function must also
@@ -601,14 +626,14 @@ public interface CacheStream<R> extends Stream<R> {
     *               of new values
     * @return the new stream
     */
-   DoubleStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper);
+   DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper);
 
    /**
     * {@inheritDoc}
     * @return the new cache stream
     */
    @Override
-   IntStream flatMapToInt(Function<? super R, ? extends IntStream> mapper);
+   IntCacheStream flatMapToInt(Function<? super R, ? extends IntStream> mapper);
 
    /**
     * Same as {@link CacheStream#flatMapToInt(Function)} except that the Function must also
@@ -620,14 +645,14 @@ public interface CacheStream<R> extends Stream<R> {
     *               of new values
     * @return the new stream
     */
-   IntStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper);
+   IntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper);
 
    /**
     * {@inheritDoc}
     * @return the new cache stream
     */
    @Override
-   LongStream flatMapToLong(Function<? super R, ? extends LongStream> mapper);
+   LongCacheStream flatMapToLong(Function<? super R, ? extends LongStream> mapper);
 
    /**
     * Same as {@link CacheStream#flatMapToLong(Function)} except that the Function must also
@@ -639,5 +664,34 @@ public interface CacheStream<R> extends Stream<R> {
     *               of new values
     * @return the new stream
     */
-   LongStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper);
+   LongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper);
+
+   /**
+    * {@inheritDoc}
+    * @return a parallel cache stream
+    */
+   @Override
+   CacheStream<R> parallel();
+
+   /**
+    * {@inheritDoc}
+    * @return a sequential cache stream
+    */
+   @Override
+   CacheStream<R> sequential();
+
+   /**
+    * {@inheritDoc}
+    * @return an unordered cache stream
+    */
+   @Override
+   CacheStream<R> unordered();
+
+   /**
+    * {@inheritDoc}
+    * @param closeHandler
+    * @return a cache stream with the handler applied
+    */
+   @Override
+   CacheStream<R> onClose(Runnable closeHandler);
 }

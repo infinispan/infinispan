@@ -1,6 +1,9 @@
 package org.infinispan.stream.impl;
 
 import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.IntCacheStream;
+import org.infinispan.LongCacheStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -11,7 +14,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.object.*;
 import org.infinispan.stream.impl.termop.SingleRunOperation;
 import org.infinispan.stream.impl.termop.object.ForEachOperation;
@@ -58,7 +60,7 @@ import java.util.stream.StreamSupport;
  * nodes
  * @param <R> The type of the stream
  */
-public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>, Consumer<? super R>>
+public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>, CacheStream<R>, Consumer<? super R>>
         implements CacheStream<R> {
 
    // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
@@ -122,11 +124,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       return this;
    }
 
-   protected CacheStream<R> addIntermediateOperation(IntermediateOperation<R, Stream<R>, R, Stream<R>> intermediateOperation) {
-      super.addIntermediateOperation(intermediateOperation);
-      return this;
-   }
-
    // Intermediate operations that are stored for lazy evalulation
 
    @Override
@@ -154,7 +151,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public IntStream mapToInt(ToIntFunction<? super R> mapper) {
+   public IntCacheStream mapToInt(ToIntFunction<? super R> mapper) {
       if (iteratorOperation != IteratorOperation.FLAT_MAP) {
          iteratorOperation = IteratorOperation.MAP;
       }
@@ -163,12 +160,12 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public IntStream mapToInt(SerializableToIntFunction<? super R> mapper) {
+   public IntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper) {
       return mapToInt((ToIntFunction<? super R>) mapper);
    }
 
    @Override
-   public LongStream mapToLong(ToLongFunction<? super R> mapper) {
+   public LongCacheStream mapToLong(ToLongFunction<? super R> mapper) {
       if (iteratorOperation != IteratorOperation.FLAT_MAP) {
          iteratorOperation = IteratorOperation.MAP;
       }
@@ -177,12 +174,12 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public LongStream mapToLong(SerializableToLongFunction<? super R> mapper) {
+   public LongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper) {
       return mapToLong((ToLongFunction<? super R>) mapper);
    }
 
    @Override
-   public DoubleStream mapToDouble(ToDoubleFunction<? super R> mapper) {
+   public DoubleCacheStream mapToDouble(ToDoubleFunction<? super R> mapper) {
       if (iteratorOperation != IteratorOperation.FLAT_MAP) {
          iteratorOperation = IteratorOperation.MAP;
       }
@@ -191,7 +188,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public DoubleStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
+   public DoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
       return mapToDouble((ToDoubleFunction<? super R>) mapper);
    }
 
@@ -208,38 +205,38 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public IntStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
+   public IntCacheStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
       addIntermediateOperationMap(new FlatMapToIntOperation<>(mapper));
       return intCacheStream();
    }
 
    @Override
-   public IntStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
+   public IntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
       return flatMapToInt((Function<? super R, ? extends IntStream>) mapper);
    }
 
    @Override
-   public LongStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
+   public LongCacheStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
       addIntermediateOperationMap(new FlatMapToLongOperation<>(mapper));
       return longCacheStream();
    }
 
    @Override
-   public LongStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
+   public LongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
       return flatMapToLong((Function<? super R, ? extends LongStream>) mapper);
    }
 
    @Override
-   public DoubleStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
+   public DoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
       addIntermediateOperationMap(new FlatMapToDoubleOperation<>(mapper));
       return doubleCacheStream();
    }
 
    @Override
-   public DoubleStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
+   public DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
       return flatMapToDouble((Function<? super R, ? extends DoubleStream>) mapper);
    }
 

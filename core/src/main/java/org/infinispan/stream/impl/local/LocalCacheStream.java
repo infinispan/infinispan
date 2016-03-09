@@ -2,6 +2,9 @@ package org.infinispan.stream.impl.local;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.IntCacheStream;
+import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.factories.ComponentRegistry;
@@ -37,13 +40,13 @@ import java.util.stream.Stream;
  * to filter by keys and other functionality.
  * @param <R> type of the stream
  */
-public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>> implements CacheStream<R> {
+public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, CacheStream<R>> implements CacheStream<R> {
 
    public LocalCacheStream(StreamSupplier<R> streamSupplier, boolean parallel, ComponentRegistry registry) {
       super(streamSupplier, parallel, registry);
    }
 
-   public LocalCacheStream(AbstractLocalCacheStream<?, ?> other) {
+   public LocalCacheStream(AbstractLocalCacheStream<?, ?, ?> other) {
       super(other);
    }
 
@@ -112,35 +115,35 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>> 
    }
 
    @Override
-   public IntStream mapToInt(ToIntFunction<? super R> mapper) {
+   public IntCacheStream mapToInt(ToIntFunction<? super R> mapper) {
       intermediateOperations.add(new MapToIntOperation<>(mapper));
       return new LocalIntCacheStream(this);
    }
 
    @Override
-   public IntStream mapToInt(SerializableToIntFunction<? super R> mapper) {
+   public IntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper) {
       return mapToInt((ToIntFunction<? super R>) mapper);
    }
 
    @Override
-   public LongStream mapToLong(ToLongFunction<? super R> mapper) {
+   public LongCacheStream mapToLong(ToLongFunction<? super R> mapper) {
       intermediateOperations.add(new MapToLongOperation<>(mapper));
       return new LocalLongCacheStream(this);
    }
 
    @Override
-   public LongStream mapToLong(SerializableToLongFunction<? super R> mapper) {
+   public LongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper) {
       return mapToLong((ToLongFunction<? super R>) mapper);
    }
 
    @Override
-   public DoubleStream mapToDouble(ToDoubleFunction<? super R> mapper) {
+   public DoubleCacheStream mapToDouble(ToDoubleFunction<? super R> mapper) {
       intermediateOperations.add(new MapToDoubleOperation<>(mapper));
       return new LocalDoubleCacheStream(this);
    }
 
    @Override
-   public DoubleStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
+   public DoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
       return mapToDouble((ToDoubleFunction<? super R>) mapper);
    }
 
@@ -156,35 +159,35 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>> 
    }
 
    @Override
-   public IntStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
+   public IntCacheStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
       intermediateOperations.add(new FlatMapToIntOperation<>(mapper));
       return new LocalIntCacheStream(this);
    }
 
    @Override
-   public IntStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
+   public IntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
       return flatMapToInt((Function<? super R, ? extends IntStream>) mapper);
    }
 
    @Override
-   public LongStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
+   public LongCacheStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
       intermediateOperations.add(new FlatMapToLongOperation<>(mapper));
       return new LocalLongCacheStream(this);
    }
 
    @Override
-   public LongStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
+   public LongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
       return flatMapToLong((Function<? super R, ? extends LongStream>) mapper);
    }
 
    @Override
-   public DoubleStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
+   public DoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
       intermediateOperations.add(new FlatMapToDoubleOperation<>(mapper));
       return new LocalDoubleCacheStream(this);
    }
 
    @Override
-   public DoubleStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
+   public DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
       return flatMapToDouble((Function<? super R, ? extends DoubleStream>) mapper);
    }
 
