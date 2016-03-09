@@ -131,7 +131,6 @@ public class DistributedServerTaskIT {
       String key = "key";
       String value = "value";
       String paramValue = "parameter";
-      String modifiedValue = "modified:value";
 
       Map<String, String> params = new HashMap<>();
       params.put(DistributedCacheUsingTask.PARAM_KEY, paramValue);
@@ -139,7 +138,7 @@ public class DistributedServerTaskIT {
       rcm1.getCache(DistributedCacheUsingTask.CACHE_NAME).put(key, value);
 
       rcm1.getCache(DistributedCacheUsingTask.CACHE_NAME).execute(DistributedCacheUsingTask.NAME, params);
-      assertEquals(modifiedValue + ":" + paramValue, rcm1.getCache(DistributedCacheUsingTask.CACHE_NAME).get(key));
+      assertEquals("newValue", rcm1.getCache(DistributedCacheUsingTask.CACHE_NAME).get(key));
    }
 
    @Test
