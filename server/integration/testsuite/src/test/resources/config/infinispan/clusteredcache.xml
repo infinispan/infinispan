@@ -12,6 +12,10 @@
                 <replicated-cache name="customTaskRepl" start="EAGER" mode="SYNC">
                     <compatibility enabled="true"/>
                 </replicated-cache>
+                <replicated-cache name="customTaskReplTx" start="EAGER" mode="SYNC">
+                    <transaction mode="NON_XA" locking="PESSIMISTIC"/>
+                    <compatibility enabled="true"/>
+                </replicated-cache>
                 <distributed-cache name="customTaskDist" start="EAGER" mode="SYNC" remote-timeout="30000" owners="1">
                     <compatibility enabled="true" />
                 </distributed-cache>
