@@ -133,7 +133,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       } catch (Exception x) {
          // Only cache entry-related listeners should be able to throw an exception to veto the operation.
          // Just log the exception thrown by the invoker, it should contain all the relevant information.
-         log.error(x);
+         log.failedInvokingCacheManagerListener(x);
       }
    }
 
