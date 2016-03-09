@@ -317,10 +317,26 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
                   cm1.executor().timeout(10, TimeUnit.MILLISECONDS).submitConsumer(m -> {
                      TestingUtil.sleepThread(100);
                      return null;
-                  }, (a, i, t) -> {
-                  });
-            Exceptions
-                  .expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, future);
+                  }, (a, i, t) -> { });
+            Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, future);
+         }
+      });
+   }
+
+   public void testExecutorTriConsumerExceptionFromConsumer() {
+      withCacheManagers(new MultiCacheManagerCallable(
+              TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
+              TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+         @Override
+         public void call() throws InterruptedException, ExecutionException, TimeoutException {
+            EmbeddedCacheManager cm1 = cms[0];
+
+            CompletableFuture<Void> future =
+                    cm1.executor().timeout(10, TimeUnit.MILLISECONDS).submitConsumer(m -> null,
+                            (a, i, t) -> {
+                               throw new NullPointerException();
+                            });
+            Exceptions.expectExecutionException(NullPointerException.class, future);
          }
       });
    }
