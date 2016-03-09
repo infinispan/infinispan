@@ -13,5 +13,6 @@
                  <local-cache name="lru" start="EAGER">
                      <eviction strategy="LRU" max-entries="3"/>
                  </local-cache>
+                 <replicated-cache name="memcachedCache" mode="SYNC"/>
              </cache-container>
         </subsystem>
