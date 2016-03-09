@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:8.0">
+        <subsystem xmlns="urn:infinispan:server:core:8.2">
             <cache-container name="clustered" default-cache="default">
                 <transport lock-timeout="240000"/>
                 <replicated-cache name="hotrodExpiration" start="EAGER" mode="SYNC" batching="false" remote-timeout="30000">
@@ -9,5 +9,6 @@
                     <file-store name="expirationCacheStore" passivation="false" path="rest-expiration-cache-store" purge="true" />
                     <expiration lifespan="2000" max-idle="2000" />
                 </replicated-cache>
+                <replicated-cache name="memcachedCache" mode="SYNC"/>
             </cache-container>
         </subsystem>
