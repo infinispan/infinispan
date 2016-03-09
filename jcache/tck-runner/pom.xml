@@ -53,6 +53,16 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.wildfly.core</groupId>
          <artifactId>wildfly-controller</artifactId>
          <scope>test</scope>
