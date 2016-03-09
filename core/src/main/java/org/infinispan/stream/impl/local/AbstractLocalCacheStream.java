@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * Implements the base operations required for a local stream.
  * stream is populated
  */
-public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>> implements BaseStream<T, S> {
+public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2 extends S> implements BaseStream<T, S> {
    protected final Log log = LogFactory.getLog(getClass());
 
    protected final StreamSupplier<T> streamSupplier;
@@ -53,7 +53,7 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>> im
       this.parallel = parallel;
    }
 
-   AbstractLocalCacheStream(AbstractLocalCacheStream<?, ?> original) {
+   AbstractLocalCacheStream(AbstractLocalCacheStream<?, ?, ?> original) {
       this.streamSupplier = (StreamSupplier<T>) original.streamSupplier;
       this.registry = original.registry;
 
@@ -83,27 +83,27 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>> im
    }
 
    @Override
-   public S sequential() {
+   public S2 sequential() {
       this.parallel = false;
-      return (S) this;
+      return (S2) this;
    }
 
    @Override
-   public S parallel() {
+   public S2 parallel() {
       this.parallel = true;
-      return (S) this;
+      return (S2) this;
    }
 
    @Override
-   public S unordered() {
+   public S2 unordered() {
       intermediateOperations.add(new UnorderedOperation<>());
-      return (S) this;
+      return (S2) this;
    }
 
    @Override
-   public S onClose(Runnable closeHandler) {
+   public S2 onClose(Runnable closeHandler) {
       onCloseRunnables.add(closeHandler);
-      return (S) this;
+      return (S2) this;
    }
 
    @Override

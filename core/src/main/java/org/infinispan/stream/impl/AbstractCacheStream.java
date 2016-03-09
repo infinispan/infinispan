@@ -1,6 +1,5 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -25,7 +24,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,7 +45,7 @@ import java.util.stream.StreamSupport;
  * @param <S> The stream interface
  * @param <T_CONS> The consumer for this stream
  */
-public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS> implements BaseStream<T, S> {
+public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 extends S, T_CONS> implements BaseStream<T, S> {
    protected final Log log = LogFactory.getLog(getClass());
 
    protected final Queue<IntermediateOperation> intermediateOperations;
@@ -102,7 +100,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       intermediateOperations = new ArrayDeque<>();
    }
 
-   protected AbstractCacheStream(AbstractCacheStream<T, S, T_CONS> other) {
+   protected AbstractCacheStream(AbstractCacheStream<T, S, S2, T_CONS> other) {
       this.intermediateOperations = other.intermediateOperations;
       this.localIntermediateOperations = other.localIntermediateOperations;
       this.localAddress = other.localAddress;
@@ -171,7 +169,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       distinct = true;
    }
 
-   protected S addIntermediateOperation(IntermediateOperation<T, S, T, S> intermediateOperation) {
+   protected S2 addIntermediateOperation(IntermediateOperation<T, S, T, S> intermediateOperation) {
       intermediateOperation.handleInjection(registry);
       if (localIntermediateOperations == null) {
          intermediateOperations.add(intermediateOperation);
@@ -190,7 +188,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       }
    }
 
-   protected abstract S unwrap();
+   protected abstract S2 unwrap();
 
    @Override
    public boolean isParallel() {
@@ -202,25 +200,25 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    }
 
    @Override
-   public S sequential() {
+   public S2 sequential() {
       parallel = false;
       return unwrap();
    }
 
    @Override
-   public S parallel() {
+   public S2 parallel() {
       parallel = true;
       return unwrap();
    }
 
    @Override
-   public S unordered() {
+   public S2 unordered() {
       sorted = false;
       return unwrap();
    }
 
    @Override
-   public S onClose(Runnable closeHandler) {
+   public S2 onClose(Runnable closeHandler) {
       if (this.closeRunnable == null) {
          this.closeRunnable = closeHandler;
       } else {

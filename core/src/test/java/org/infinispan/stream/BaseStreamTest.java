@@ -610,12 +610,9 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
-      assertFalse(createStream(entrySet).mapToInt(toInt).allMatch(
-              (Serializable & IntPredicate) i -> i % 2 == 0));
-      assertFalse(createStream(entrySet).mapToInt(toInt).allMatch(
-              (Serializable & IntPredicate) i -> i > 10 && i < 0));
-      assertTrue(createStream(entrySet).mapToInt(toInt).allMatch(
-              (Serializable & IntPredicate) i -> i < 12));
+      assertFalse(createStream(entrySet).mapToInt(toInt).allMatch(i -> i % 2 == 0));
+      assertFalse(createStream(entrySet).mapToInt(toInt).allMatch(i -> i > 10 && i < 0));
+      assertTrue(createStream(entrySet).mapToInt(toInt).allMatch(i -> i < 12));
    }
 
    public void testIntAnyMatch() {
@@ -627,12 +624,9 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
-      assertTrue(createStream(entrySet).mapToInt(toInt).anyMatch(
-              (Serializable & IntPredicate) i -> i % 2 == 0));
-      assertFalse(createStream(entrySet).mapToInt(toInt).anyMatch(
-              (Serializable & IntPredicate) i -> i > 10 && i < 0));
-      assertTrue(createStream(entrySet).mapToInt(toInt).anyMatch(
-              (Serializable & IntPredicate) i -> i < 12));
+      assertTrue(createStream(entrySet).mapToInt(toInt).anyMatch(i -> i % 2 == 0));
+      assertFalse(createStream(entrySet).mapToInt(toInt).anyMatch(i -> i > 10 && i < 0));
+      assertTrue(createStream(entrySet).mapToInt(toInt).anyMatch(i -> i < 12));
    }
 
    public void testIntAverage() {
@@ -656,10 +650,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
-      HashSet<Integer> set = createStream(entrySet).mapToInt(toInt).collect(
-              (Serializable & Supplier<HashSet<Integer>>) HashSet::new,
-              (Serializable & ObjIntConsumer<HashSet<Integer>>) (s, i) -> s.add(i),
-              (Serializable & BiConsumer<HashSet<Integer>, HashSet<Integer>>) (s1, s2) -> s1.addAll(s2));
+      HashSet<Integer> set = createStream(entrySet).mapToInt(toInt).collect(HashSet::new, Set::add, Set::addAll);
       assertEquals(10, set.size());
 
    }
@@ -686,9 +677,9 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToInt(toInt).findAny().isPresent());
-      assertTrue(createStream(entrySet).mapToInt(toInt).filter((Serializable & IntPredicate) e -> e % 2 == 0).findAny().isPresent());
-      assertTrue(createStream(entrySet).mapToInt(toInt).filter((Serializable & IntPredicate) e -> e < 10 && e >= 0).findAny().isPresent());
-      assertFalse(createStream(entrySet).mapToInt(toInt).filter((Serializable & IntPredicate) e -> e > 12).findAny().isPresent());
+      assertTrue(createStream(entrySet).mapToInt(toInt).filter(e -> e % 2 == 0).findAny().isPresent());
+      assertTrue(createStream(entrySet).mapToInt(toInt).filter(e -> e < 10 && e >= 0).findAny().isPresent());
+      assertFalse(createStream(entrySet).mapToInt(toInt).filter(e -> e > 12).findAny().isPresent());
    }
 
    public void testIntFindFirst() {
@@ -709,11 +700,10 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int offset = populateNextForEachStructure(new AtomicInteger());
       try {
          testIntOperation(() -> {
-            createStream(cache.entrySet()).mapToInt(toInt).forEach(
-                    (Serializable & IntConsumer) e -> {
-                       AtomicInteger atomic = getForEachObject(offset);
-                       atomic.addAndGet(e);
-                    });
+            createStream(cache.entrySet()).mapToInt(toInt).forEach(e -> {
+               AtomicInteger atomic = getForEachObject(offset);
+               atomic.addAndGet(e);
+            });
             return ((AtomicInteger) getForEachObject(offset)).get();
          }, cache);
       } finally {
@@ -732,11 +722,12 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       int offset = populateNextForEachStructure(new AtomicInteger());
       try {
-         createStream(entrySet).distributedBatchSize(5).mapToInt(toInt).flatMap((Serializable & IntFunction<IntStream>)
-                 i -> IntStream.of(i, 2)).forEach((Serializable & IntConsumer) e -> {
-            AtomicInteger atomic = getForEachObject(offset);
-            atomic.addAndGet(e);
-         });
+         createStream(entrySet).distributedBatchSize(5).mapToInt(toInt).flatMap(i -> IntStream.of(i, 2))
+                 .forEach(e -> {
+
+                    AtomicInteger atomic = getForEachObject(offset);
+                    atomic.addAndGet(e);
+                 });
          AtomicInteger atomic = getForEachObject(offset);
          assertEquals((range - 1) * (range / 2) + 2 * range, atomic.get());
       } finally {
@@ -764,7 +755,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       }
    }
 
-private static class ForEachIntInjected<E> implements IntConsumer,
+private static class ForEachIntInjected implements IntConsumer,
         CacheAware<Integer, String>, Serializable {
    private transient Cache<?, ?> cache;
    private final int cacheOffset;
@@ -854,12 +845,11 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       PrimitiveIterator.OfInt iterator = createStream(entrySet).flatMapToInt(
                       e -> IntStream.of(e.getKey(), e.getValue().length())).iterator();
 
-      int[] results = new int[range * 2];
       int pos = 0;
       int halfCount = 0;
       while (iterator.hasNext()) {
          int next = iterator.nextInt();
-         results[pos++] = next;
+         pos++;
          if (next == 7) {
             halfCount++;
          }
@@ -879,12 +869,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
-      assertFalse(createStream(entrySet).mapToInt(toInt).noneMatch(
-              (Serializable & IntPredicate) i -> i % 2 == 0));
-      assertTrue(createStream(entrySet).mapToInt(toInt).noneMatch(
-              (Serializable & IntPredicate) i -> i > 10 && i < 0));
-      assertFalse(createStream(entrySet).mapToInt(toInt).noneMatch(
-              (Serializable & IntPredicate) i -> i < 12));
+      assertFalse(createStream(entrySet).mapToInt(toInt).noneMatch(i -> i % 2 == 0));
+      assertTrue(createStream(entrySet).mapToInt(toInt).noneMatch(i -> i > 10 && i < 0));
+      assertFalse(createStream(entrySet).mapToInt(toInt).noneMatch(i -> i < 12));
    }
 
    public void testIntReduce1() {
@@ -897,12 +884,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // One value is 0 so multiplying them together should be 0
-      assertEquals(0, createStream(entrySet).mapToInt(toInt).reduce(1,
-              (Serializable & IntBinaryOperator) (i1, i2) -> i1 * i2));
+      assertEquals(0, createStream(entrySet).mapToInt(toInt).reduce(1, (i1, i2) -> i1 * i2));
 
-      assertEquals(362880, createStream(entrySet).mapToInt(toInt).filter(
-              (Serializable & IntPredicate) i -> i != 0).reduce(1,
-              (Serializable & IntBinaryOperator) (i1, i2) -> i1 * i2));
+      assertEquals(362880, createStream(entrySet).mapToInt(toInt).filter(i -> i != 0).reduce(1, (i1, i2) -> i1 * i2));
    }
 
    public void testIntReduce2() {
@@ -915,12 +899,10 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       // One value is 0 so multiplying them together should be 0
-      assertEquals(0, createStream(entrySet).mapToInt(toInt).reduce(
-              (Serializable & IntBinaryOperator) (i1, i2) -> i1 * i2).getAsInt());
+      assertEquals(0, createStream(entrySet).mapToInt(toInt).reduce((i1, i2) -> i1 * i2).getAsInt());
 
-      assertEquals(362880, createStream(entrySet).mapToInt(toInt).filter(
-              (Serializable & IntPredicate) i -> i != 0).reduce(
-              (Serializable & IntBinaryOperator) (i1, i2) -> i1 * i2).getAsInt());
+      assertEquals(362880, createStream(entrySet).mapToInt(toInt).filter(i -> i != 0).reduce((i1, i2) -> i1 * i2)
+              .getAsInt());
    }
 
    public void testIntSummaryStatistics() {
@@ -1007,12 +989,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
-      assertFalse(createStream(entrySet).mapToLong(toLong).allMatch(
-              (Serializable & LongPredicate) i -> i % 2 == 0));
-      assertFalse(createStream(entrySet).mapToLong(toLong).allMatch(
-              (Serializable & LongPredicate) i -> i > 10 && i < 0));
-      assertTrue(createStream(entrySet).mapToLong(toLong).allMatch(
-              (Serializable & LongPredicate) i -> i < 12));
+      assertFalse(createStream(entrySet).mapToLong(toLong).allMatch(i -> i % 2 == 0));
+      assertFalse(createStream(entrySet).mapToLong(toLong).allMatch(i -> i > 10 && i < 0));
+      assertTrue(createStream(entrySet).mapToLong(toLong).allMatch(i -> i < 12));
    }
 
    public void testLongAnyMatch() {
@@ -1024,12 +1003,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
-      assertTrue(createStream(entrySet).mapToLong(toLong).anyMatch(
-              (Serializable & LongPredicate) i -> i % 2 == 0));
-      assertFalse(createStream(entrySet).mapToLong(toLong).anyMatch(
-              (Serializable & LongPredicate) i -> i > 10 && i < 0));
-      assertTrue(createStream(entrySet).mapToLong(toLong).anyMatch(
-              (Serializable & LongPredicate) i -> i < 12));
+      assertTrue(createStream(entrySet).mapToLong(toLong).anyMatch(i -> i % 2 == 0));
+      assertFalse(createStream(entrySet).mapToLong(toLong).anyMatch(i -> i > 10 && i < 0));
+      assertTrue(createStream(entrySet).mapToLong(toLong).anyMatch(i -> i < 12));
    }
 
    public void testLongAverage() {
@@ -1053,10 +1029,7 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
-      HashSet<Long> set = createStream(entrySet).mapToLong(toLong).collect(
-              (Serializable & Supplier<HashSet<Long>>) HashSet::new,
-              (Serializable & ObjLongConsumer<HashSet<Long>>) (s, i) -> s.add(i),
-              (Serializable & BiConsumer<HashSet<Long>, HashSet<Long>>) (s1, s2) -> s1.addAll(s2));
+      HashSet<Long> set = createStream(entrySet).mapToLong(toLong).collect(HashSet::new, Set::add, Set::addAll);
       assertEquals(10, set.size());
    }
 
@@ -1082,9 +1055,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToLong(toLong).findAny().isPresent());
-      assertTrue(createStream(entrySet).mapToLong(toLong).filter((Serializable & LongPredicate) e -> e % 2 == 0).findAny().isPresent());
-      assertTrue(createStream(entrySet).mapToLong(toLong).filter((Serializable & LongPredicate) e -> e < 10 && e >= 0).findAny().isPresent());
-      assertFalse(createStream(entrySet).mapToLong(toLong).filter((Serializable & LongPredicate) e -> e > 12).findAny().isPresent());
+      assertTrue(createStream(entrySet).mapToLong(toLong).filter(e -> e % 2 == 0).findAny().isPresent());
+      assertTrue(createStream(entrySet).mapToLong(toLong).filter(e -> e < 10 && e >= 0).findAny().isPresent());
+      assertFalse(createStream(entrySet).mapToLong(toLong).filter(e -> e > 12).findAny().isPresent());
    }
 
    public void testLongFindFirst() {
@@ -1105,11 +1078,11 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       int offset = populateNextForEachStructure(new AtomicLong());
       try {
          testLongOperation(() -> {
-            createStream(cache.entrySet()).mapToLong(toLong).forEach(
-                    (Serializable & LongConsumer) e -> {
-                       AtomicLong atomic = getForEachObject(offset);
-                       atomic.addAndGet(e);
-                    });
+            createStream(cache.entrySet()).mapToLong(toLong).forEach(e -> {
+
+               AtomicLong atomic = getForEachObject(offset);
+               atomic.addAndGet(e);
+            });
             return ((AtomicLong) getForEachObject(offset)).get();
          }, cache);
       } finally {
@@ -1128,9 +1101,8 @@ private static class ForEachIntInjected<E> implements IntConsumer,
 
       int offset = populateNextForEachStructure(new AtomicLong());
       try {
-         createStream(entrySet).distributedBatchSize(5).mapToLong(toLong).flatMap((Serializable & LongFunction<LongStream>)
-                 i -> LongStream.of(i, 2))
-                 .forEach((Serializable & LongConsumer) e -> {
+         createStream(entrySet).distributedBatchSize(5).mapToLong(toLong).flatMap(i -> LongStream.of(i, 2))
+                 .forEach(e -> {
                     AtomicLong atomic = getForEachObject(offset);
                     atomic.addAndGet(e);
                  });
@@ -1161,7 +1133,7 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       }
    }
 
-   private static class ForEachLongInjected<E> implements LongConsumer,
+   private static class ForEachLongInjected implements LongConsumer,
            CacheAware<Long, String>, Serializable {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
@@ -1251,12 +1223,11 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       PrimitiveIterator.OfLong iterator = createStream(entrySet).flatMapToLong(
                       e -> LongStream.of(e.getKey(), e.getValue().length())).iterator();
 
-      long[] results = new long[range * 2];
       int pos = 0;
       int halfCount = 0;
       while (iterator.hasNext()) {
          long next = iterator.nextLong();
-         results[pos++] = next;
+         pos++;
          if (next == 7) {
             halfCount++;
          }
@@ -1276,12 +1247,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
-      assertFalse(createStream(entrySet).mapToLong(toLong).noneMatch(
-              (Serializable & LongPredicate) i -> i % 2 == 0));
-      assertTrue(createStream(entrySet).mapToLong(toLong).noneMatch(
-              (Serializable & LongPredicate) i -> i > 10 && i < 0));
-      assertFalse(createStream(entrySet).mapToLong(toLong).noneMatch(
-              (Serializable & LongPredicate) i -> i < 12));
+      assertFalse(createStream(entrySet).mapToLong(toLong).noneMatch(i -> i % 2 == 0));
+      assertTrue(createStream(entrySet).mapToLong(toLong).noneMatch(i -> i > 10 && i < 0));
+      assertFalse(createStream(entrySet).mapToLong(toLong).noneMatch(i -> i < 12));
    }
 
    public void testLongReduce1() {
@@ -1294,12 +1262,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       // One value is 0 so multiplying them together should be 0
-      assertEquals(0, createStream(entrySet).mapToLong(toLong).reduce(1,
-              (Serializable & LongBinaryOperator) (i1, i2) -> i1 * i2));
+      assertEquals(0, createStream(entrySet).mapToLong(toLong).reduce(1, (i1, i2) -> i1 * i2));
 
-      assertEquals(362880, createStream(entrySet).mapToLong(toLong).filter(
-              (Serializable & LongPredicate) i -> i != 0).reduce(1,
-              (Serializable & LongBinaryOperator) (i1, i2) -> i1 * i2));
+      assertEquals(362880, createStream(entrySet).mapToLong(toLong).filter(i -> i != 0).reduce(1, (i1, i2) -> i1 * i2));
    }
 
    public void testLongReduce2() {
@@ -1312,12 +1277,10 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       // One value is 0 so multiplying them together should be 0
-      assertEquals(0, createStream(entrySet).mapToLong(toLong).reduce(
-              (Serializable & LongBinaryOperator) (i1, i2) -> i1 * i2).getAsLong());
+      assertEquals(0, createStream(entrySet).mapToLong(toLong).reduce((i1, i2) -> i1 * i2).getAsLong());
 
-      assertEquals(362880, createStream(entrySet).mapToLong(toLong).filter(
-              (Serializable & LongPredicate) i -> i != 0).reduce(
-              (Serializable & LongBinaryOperator) (i1, i2) -> i1 * i2).getAsLong());
+      assertEquals(362880, createStream(entrySet).mapToLong(toLong).filter(i -> i != 0).reduce((i1, i2) -> i1 * i2)
+              .getAsLong());
    }
 
    public void testLongSummaryStatistics() {
@@ -1403,14 +1366,10 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
-      assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(
-              (Serializable & DoublePredicate) i -> i % 2 == 0));
-      assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(
-              (Serializable & DoublePredicate) i -> i > 5 && i < 0));
-      assertTrue(createStream(entrySet).mapToDouble(toDouble).allMatch(
-              (Serializable & DoublePredicate) i -> i < 5));
-      assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(
-              (Serializable & DoublePredicate) i -> Math.floor(i) == i));
+      assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> i % 2 == 0));
+      assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> i > 5 && i < 0));
+      assertTrue(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> i < 5));
+      assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> Math.floor(i) == i));
    }
 
    public void testDoubleAnyMatch() {
@@ -1422,14 +1381,10 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
-      assertTrue(createStream(entrySet).mapToDouble(toDouble).anyMatch(
-              (Serializable & DoublePredicate) i -> i % 2 == 0));
-      assertFalse(createStream(entrySet).mapToDouble(toDouble).anyMatch(
-              (Serializable & DoublePredicate) i -> i > 5 && i < 0));
-      assertTrue(createStream(entrySet).mapToDouble(toDouble).anyMatch(
-              (Serializable & DoublePredicate) i -> i < 5));
-      assertTrue(createStream(entrySet).mapToDouble(toDouble).anyMatch(
-              (Serializable & DoublePredicate) i -> Math.floor(i) == i));
+      assertTrue(createStream(entrySet).mapToDouble(toDouble).anyMatch(i -> i % 2 == 0));
+      assertFalse(createStream(entrySet).mapToDouble(toDouble).anyMatch(i -> i > 5 && i < 0));
+      assertTrue(createStream(entrySet).mapToDouble(toDouble).anyMatch(i -> i < 5));
+      assertTrue(createStream(entrySet).mapToDouble(toDouble).anyMatch(i -> Math.floor(i) == i));
    }
 
    public void testDoubleAverage() {
@@ -1453,10 +1408,8 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
-      HashSet<Double> set = createStream(entrySet).mapToDouble(toDouble).collect(
-              (Serializable & Supplier<HashSet<Double>>) HashSet::new,
-              (Serializable & ObjDoubleConsumer<HashSet<Double>>) (s, i) -> s.add(i),
-              (Serializable & BiConsumer<HashSet<Double>, HashSet<Double>>) (s1, s2) -> s1.addAll(s2));
+      HashSet<Double> set = createStream(entrySet).mapToDouble(toDouble).collect(HashSet::new,
+              Set::add, Set::addAll);
       assertEquals(10, set.size());
    }
 
@@ -1482,9 +1435,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertTrue(createStream(entrySet).mapToDouble(toDouble).findAny().isPresent());
-      assertTrue(createStream(entrySet).mapToDouble(toDouble).filter((Serializable & DoublePredicate) e -> e % 2 == 0).findAny().isPresent());
-      assertTrue(createStream(entrySet).mapToDouble(toDouble).filter((Serializable & DoublePredicate) e -> e < 5 && e >= 0).findAny().isPresent());
-      assertFalse(createStream(entrySet).mapToDouble(toDouble).filter((Serializable & DoublePredicate) e -> e > 5).findAny().isPresent());
+      assertTrue(createStream(entrySet).mapToDouble(toDouble).filter(e -> e % 2 == 0).findAny().isPresent());
+      assertTrue(createStream(entrySet).mapToDouble(toDouble).filter(e -> e < 5 && e >= 0).findAny().isPresent());
+      assertFalse(createStream(entrySet).mapToDouble(toDouble).filter(e -> e > 5).findAny().isPresent());
    }
 
    public void testDoubleFindFirst() {
@@ -1505,13 +1458,12 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       int offset = populateNextForEachStructure(new DoubleSummaryStatistics());
       try {
          testDoubleOperation(() -> {
-            createStream(cache.entrySet()).mapToDouble(toDouble).forEach(
-                    (Serializable & DoubleConsumer) e -> {
-                       DoubleSummaryStatistics stats = getForEachObject(offset);
-                       synchronized (stats) {
-                          stats.accept(e);
-                       }
-                    });
+            createStream(cache.entrySet()).mapToDouble(toDouble).forEach(e -> {
+               DoubleSummaryStatistics stats = getForEachObject(offset);
+               synchronized (stats) {
+                  stats.accept(e);
+               }
+            });
             return getForEachObject(offset);
          }, cache);
       } finally {
@@ -1530,10 +1482,8 @@ private static class ForEachIntInjected<E> implements IntConsumer,
 
       int offset = populateNextForEachStructure(new DoubleSummaryStatistics());
       try {
-         createStream(entrySet).distributedBatchSize(5).mapToDouble(toDouble).flatMap(
-                 (Serializable & DoubleFunction<DoubleStream>)
-                         e -> DoubleStream.of(e, 2.25)).forEach(
-                 (Serializable & DoubleConsumer) e -> {
+         createStream(entrySet).distributedBatchSize(5).mapToDouble(toDouble).flatMap(e -> DoubleStream.of(e, 2.25))
+                 .forEach(e -> {
                     DoubleSummaryStatistics stats = getForEachObject(offset);
                     synchronized (stats) {
                        stats.accept(e);
@@ -1671,12 +1621,11 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       PrimitiveIterator.OfDouble iterator = createStream(entrySet).flatMapToDouble(
                       e -> DoubleStream.of(e.getKey(), .5)).iterator();
 
-      double[] results = new double[range * 2];
       int pos = 0;
       int halfCount = 0;
       while (iterator.hasNext()) {
          double next = iterator.nextDouble();
-         results[pos++] = next;
+         pos++;
          if (next == 0.5) {
             halfCount++;
          }
@@ -1696,12 +1645,9 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       // This isn't the best usage of this, but should be a usable example
-      assertFalse(createStream(entrySet).mapToDouble(toDouble).noneMatch(
-              (Serializable & DoublePredicate) i -> i % 2 == 0));
-      assertTrue(createStream(entrySet).mapToDouble(toDouble).noneMatch(
-              (Serializable & DoublePredicate) i -> i > 5 && i < 0));
-      assertFalse(createStream(entrySet).mapToDouble(toDouble).noneMatch(
-              (Serializable & DoublePredicate) i -> i < 5));
+      assertFalse(createStream(entrySet).mapToDouble(toDouble).noneMatch(i -> i % 2 == 0));
+      assertTrue(createStream(entrySet).mapToDouble(toDouble).noneMatch(i -> i > 5 && i < 0));
+      assertFalse(createStream(entrySet).mapToDouble(toDouble).noneMatch(i -> i < 5));
    }
 
    public void testDoubleReduce1() {
@@ -1714,12 +1660,10 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       // One value is 0.0 so multiplying them together should be 0.0
-      assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).reduce(1.0,
-              (Serializable & DoubleBinaryOperator) (i1, i2) -> i1 * i2));
+      assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).reduce(1.0, (i1, i2) -> i1 * i2));
 
-      assertEquals(708.75, createStream(entrySet).mapToDouble(toDouble).filter(
-              (Serializable & DoublePredicate) i -> i != 0).reduce(1.0,
-              (Serializable & DoubleBinaryOperator) (i1, i2) -> i1 * i2));
+      assertEquals(708.75, createStream(entrySet).mapToDouble(toDouble).filter(i -> i != 0).reduce(1.0,
+              (i1, i2) -> i1 * i2));
    }
 
    public void testDoubleReduce2() {
@@ -1732,12 +1676,10 @@ private static class ForEachIntInjected<E> implements IntConsumer,
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       // One value is 0.0 so multiplying them together should be 0.0
-      assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).reduce(
-              (Serializable & DoubleBinaryOperator) (i1, i2) -> i1 * i2).getAsDouble());
+      assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).reduce((i1, i2) -> i1 * i2).getAsDouble());
 
-      assertEquals(708.75, createStream(entrySet).mapToDouble(toDouble).filter(
-              (Serializable & DoublePredicate) i -> i != 0).reduce(
-              (Serializable & DoubleBinaryOperator) (i1, i2) -> i1 * i2).getAsDouble());
+      assertEquals(708.75, createStream(entrySet).mapToDouble(toDouble).filter(i -> i != 0)
+              .reduce((i1, i2) -> i1 * i2).getAsDouble());
    }
 
    public void testDoubleSummaryStatistics() {
