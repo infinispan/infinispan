@@ -1,9 +1,10 @@
-        <subsystem xmlns="urn:infinispan:server:core:8.0">
+        <subsystem xmlns="urn:infinispan:server:core:8.2">
             <cache-container name="local" default-cache="default">
                 <local-cache name="default" start="EAGER">
                     <store name="customStore" class="org.infinispan.persistence.cluster.MyCustomCacheStore">
                         <property name="customProperty">10</property>
                     </store>
                 </local-cache>
+                <replicated-cache name="memcachedCache" mode="SYNC"/>
             </cache-container>
         </subsystem>

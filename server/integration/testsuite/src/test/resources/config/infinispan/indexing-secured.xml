@@ -2,6 +2,7 @@
 
             <cache-container name="clustered" default-cache="test_cache_not_indexed">
                 <transport lock-timeout="240000"/>
+
                 <security>
                     <authorization>
                         <identity-role-mapper/>
@@ -11,7 +12,8 @@
                         <role name="supervisor" permissions="READ WRITE EXEC BULK_READ"/>
                     </authorization>
                 </security>
-                <distributed-cache name="test_cache_indexed" mode="SYNC" start="EAGER" module="org.infinispan.remote-query.server">
+
+                <distributed-cache name="test_cache_indexed" mode="SYNC" start="EAGER">
                     <indexing index="ALL">
                         <property name="default.directory_provider">ram</property>
                     </indexing>
@@ -19,11 +21,14 @@
                         <authorization roles="admin reader writer supervisor" enabled="true"/>
                     </security>
                 </distributed-cache>
-                <distributed-cache name="test_cache_not_indexed" mode="SYNC" start="EAGER" module="org.infinispan.remote-query.server">
+
+                <distributed-cache name="test_cache_not_indexed" mode="SYNC" start="EAGER">
                     <security>
                         <authorization roles="admin reader writer supervisor" enabled="true"/>
                     </security>
                 </distributed-cache>
+
+                <replicated-cache name="memcachedCache" mode="SYNC"/>
             </cache-container>
 
             <cache-container name="security"/>
