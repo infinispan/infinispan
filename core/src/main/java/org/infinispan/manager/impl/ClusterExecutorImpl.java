@@ -233,13 +233,7 @@ public class ClusterExecutorImpl implements ClusterExecutor {
                                                      TriConsumer<? super Address, ? super V, ? super Throwable> triConsumer) {
       CompletableFuture<V> localFuture = startLocalInvocation(function);
       if (localFuture != null) {
-         localFuture.whenComplete((r, t) -> {
-              if (t != null) {
-                 triConsumer.accept(me, null, t);
-              } else {
-                 triConsumer.accept(me, r, null);
-              }
-         });
+         localFuture = localFuture.whenComplete((r, t) -> triConsumer.accept(me, r, t));
       }
       List<org.jgroups.Address> targets = getJGroupsTargets();
       int size = targets.size();
