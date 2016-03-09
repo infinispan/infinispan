@@ -1408,4 +1408,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
    CacheConfigurationException classNotIndexable(String className);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Caught exception while invoking a cache manager listener!", id = 405)
+   void failedInvokingCacheManagerListener(@Cause Exception e);
 }
