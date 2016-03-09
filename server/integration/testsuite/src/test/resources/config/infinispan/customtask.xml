@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:infinispan:server:core:8.0" >
+<subsystem xmlns="urn:infinispan:server:core:8.2" >
     <cache-container
             name="local"
             default-cache="taskAccessible">
@@ -13,6 +13,7 @@
             <transaction mode="NONE" />
             <compatibility enabled="true"/>
         </local-cache>
+        <replicated-cache name="memcachedCache" mode="SYNC"/>
     </cache-container>
 </subsystem>
 
