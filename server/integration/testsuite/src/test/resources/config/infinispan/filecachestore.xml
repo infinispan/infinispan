@@ -1,8 +1,9 @@
-        <subsystem xmlns="urn:infinispan:server:core:8.0">
+        <subsystem xmlns="urn:infinispan:server:core:8.1">
             <cache-container name="local" default-cache="default">
                 <local-cache name="default" start="EAGER">
                     <file-store name="myFileStore" passivation="false" purge="false" max-entries="2" />
                 </local-cache>
+                <replicated-cache name="memcachedCache" mode="SYNC"/>
             </cache-container>
             <cache-container name="security"/>
         </subsystem>
