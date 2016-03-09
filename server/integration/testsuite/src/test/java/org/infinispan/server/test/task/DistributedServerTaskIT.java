@@ -139,7 +139,7 @@ public class DistributedServerTaskIT {
       rcm1.getCache(DistributedCacheUsingTask.CACHE_NAME).put(key, value);
 
       rcm1.getCache(DistributedCacheUsingTask.CACHE_NAME).execute(DistributedCacheUsingTask.NAME, params);
-      assertEquals(modifiedValue + ":" + paramValue, rcm1.getCache(DistributedCacheUsingTask.CACHE_NAME).get(key));
+      assertEquals("modified:modified:value:parameter:parameter", rcm1.getCache(DistributedCacheUsingTask.CACHE_NAME).get(key));
    }
 
    @Test
