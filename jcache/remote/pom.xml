@@ -21,12 +21,13 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-query-dsl</artifactId>
-         <optional>true</optional>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
