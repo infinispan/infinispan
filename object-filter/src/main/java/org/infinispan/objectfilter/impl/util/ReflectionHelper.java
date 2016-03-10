@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.util;
 
+import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
@@ -12,7 +13,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-//todo [anistor] ideally, try to reuse stuff from org.infinispan.commons.util.ReflectionUtil
 /**
  * @author anistor@redhat.com
  * @since 7.0
@@ -34,18 +34,25 @@ public final class ReflectionHelper {
       /**
        * Obtains an Iterator over the values of an array, collection or map attribute.
        *
-       * @param instance
+       * @param instance the target instance for accessing the attribute
        * @return the Iterator or null if the attribute is null
        */
       Iterator<Object> getValueIterator(Object instance);
 
-      PropertyAccessor getAccessor(String propName);
+      /**
+       * Get the accessor of a nested property.
+       *
+       * @param propName the name of the nested property
+       * @return the accessor of the nested property
+       * @throws IntrospectionException if the nested property was not found
+       */
+      PropertyAccessor getAccessor(String propName) throws IntrospectionException;
    }
 
    private static abstract class BasePropertyAccessor implements PropertyAccessor {
 
       @Override
-      public PropertyAccessor getAccessor(String propName) {
+      public PropertyAccessor getAccessor(String propName) throws IntrospectionException {
          return ReflectionHelper.getAccessor(getPropertyType(), propName);
       }
    }
@@ -92,7 +99,7 @@ public final class ReflectionHelper {
 
       public Iterator<Object> getValueIterator(Object instance) {
          Object value = getValue(instance);
-         return value == null ? null : new ArrayIterator<Object>(value);
+         return value == null ? null : new ArrayIterator<>(value);
       }
 
       @Override
@@ -163,9 +170,7 @@ public final class ReflectionHelper {
       public Object getValue(Object instance) {
          try {
             return method.invoke(instance);
-         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-         } catch (InvocationTargetException e) {
+         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
          }
       }
@@ -187,7 +192,7 @@ public final class ReflectionHelper {
 
       public Iterator<Object> getValueIterator(Object instance) {
          Object value = getValue(instance);
-         return value == null ? null : new ArrayIterator<Object>(value);
+         return value == null ? null : new ArrayIterator<>(value);
       }
 
       @Override
@@ -241,7 +246,7 @@ public final class ReflectionHelper {
    private ReflectionHelper() {
    }
 
-   public static PropertyAccessor getAccessor(Class<?> clazz, String propertyName) {
+   public static PropertyAccessor getAccessor(Class<?> clazz, String propertyName) throws IntrospectionException {
       if (propertyName == null || propertyName.length() == 0) {
          throw new IllegalArgumentException("Property name cannot be null or empty");
       }
@@ -278,7 +283,7 @@ public final class ReflectionHelper {
          // ignored, continue
       }
 
-      return null;  //todo throw property not found exception
+      throw new IntrospectionException("Property not found: " + propertyName);
    }
 
    private static PropertyAccessor getFieldAccessor(Field f) {
