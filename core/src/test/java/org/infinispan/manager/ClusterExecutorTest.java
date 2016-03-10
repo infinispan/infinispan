@@ -332,7 +332,7 @@ public class ClusterExecutorTest extends AbstractInfinispanTest {
             EmbeddedCacheManager cm1 = cms[0];
 
             CompletableFuture<Void> future =
-                    cm1.executor().timeout(10, TimeUnit.MILLISECONDS).submitConsumer(m -> null,
+                    cm1.executor().submitConsumer(m -> null,
                             (a, i, t) -> {
                                throw new NullPointerException();
                             });
