@@ -254,15 +254,13 @@ public final class ReflectionHelper {
       String propertyNameSuffix = Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
       try {
          Method m = clazz.getDeclaredMethod("get" + propertyNameSuffix);
-         if (Modifier.isPublic(m.getModifiers()) && !m.isSynthetic() && !m.isBridge()
-               && !m.getReturnType().equals(Void.class)) {
+         if (Modifier.isPublic(m.getModifiers()) && !m.getReturnType().equals(Void.class)) {
             return getMethodAccessor(m);
          }
       } catch (NoSuchMethodException e) {
          try {
             Method m = clazz.getDeclaredMethod("is" + propertyNameSuffix);
-            if (Modifier.isPublic(m.getModifiers()) && !m.isSynthetic() && !m.isBridge()
-                  && (m.getReturnType().equals(boolean.class) || m.getReturnType().equals(Boolean.class))) {
+            if (Modifier.isPublic(m.getModifiers()) && (m.getReturnType().equals(boolean.class) || m.getReturnType().equals(Boolean.class))) {
                return getMethodAccessor(m);
             }
          } catch (NoSuchMethodException e1) {
