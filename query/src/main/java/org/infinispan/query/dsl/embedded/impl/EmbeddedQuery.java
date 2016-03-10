@@ -2,12 +2,16 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.dsl.QueryFactory;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.stream.Stream;
 
 
 /**
@@ -35,7 +39,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
       filter = null;
    }
 
-   private JPAFilterAndConverter<?, ?> createFilter() {
+   private JPAFilterAndConverter createFilter() {
       // filter is created first time only
       if (filter == null) {
          filter = queryEngine.makeFilter(jpaQuery, namedParameters);
@@ -46,11 +50,6 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
       return filter;
    }
 
-   private CloseableIterator<Map.Entry<?, ObjectFilter.FilterResult>> createFilteredIterator() {
-      JPAFilterAndConverter f = createFilter();
-      return cache.filterEntries(f).converter(f).iterator();
-   }
-
    @Override
    protected Comparator<Comparable[]> getComparator() {
       return createFilter().getObjectFilter().getComparator();
@@ -58,30 +57,8 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
-      return new CloseableIterator<ObjectFilter.FilterResult>() {
-
-         private final CloseableIterator<Map.Entry<?, ObjectFilter.FilterResult>> it = createFilteredIterator();
-
-         @Override
-         public void remove() {
-            throw new UnsupportedOperationException("remove");
-         }
-
-         @Override
-         public boolean hasNext() {
-            return it.hasNext();
-         }
-
-         @Override
-         public ObjectFilter.FilterResult next() {
-            return it.next().getValue();
-         }
-
-         @Override
-         public void close() {
-            it.close();
-         }
-      };
+      Stream<CacheEntry<?, ObjectFilter.FilterResult>> stream = CacheFilters.filterAndConvert(cache.cacheEntrySet().stream(), createFilter());
+      return Closeables.iterator(stream.map(e -> e.getValue()));
    }
 
    @Override
