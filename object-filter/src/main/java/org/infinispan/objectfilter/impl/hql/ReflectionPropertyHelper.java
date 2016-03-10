@@ -1,10 +1,9 @@
 package org.infinispan.objectfilter.impl.hql;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
-import org.jboss.logging.Logger;
 
+import java.beans.IntrospectionException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -16,9 +15,7 @@ import java.util.Map;
  */
 public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ReflectionPropertyHelper.class.getName());
-
-   private static final Map<Class<?>, Class<?>> primitives = new HashMap<Class<?>, Class<?>>();
+   private static final Map<Class<?>, Class<?>> primitives = new HashMap<>();
 
    static {
       primitives.put(java.util.Date.class, java.util.Date.class);
@@ -58,12 +55,16 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
          throw new IllegalStateException("Unknown entity name " + entityType);
       }
 
-      Class<?> propType = getPropertyAccessor(type, propertyPath).getPropertyType();
-      if (propType.isEnum()) {
-         return propType;
-      }
-      if (primitives.containsKey(propType)) {
-         return primitives.get(propType);
+      try {
+         Class<?> propType = getPropertyAccessor(type, propertyPath).getPropertyType();
+         if (propType.isEnum()) {
+            return propType;
+         }
+         if (primitives.containsKey(propType)) {
+            return primitives.get(propType);
+         }
+      } catch (IntrospectionException e) {
+         // ignored
       }
       return null;
    }
@@ -83,8 +84,8 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
       try {
          Class<?> propType = getPropertyAccessor(entity, propertyPath).getPropertyType();
          return propType != null && !propType.isEnum() && !primitives.containsKey(propType);
-      } catch (Exception e) {
-         return false; // todo [anistor] need clean solution
+      } catch (IntrospectionException e) {
+         return false;
       }
    }
 
@@ -94,15 +95,19 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
       if (entity == null) {
          throw new IllegalStateException("Unknown entity name " + entityType);
       }
-      ReflectionHelper.PropertyAccessor a = ReflectionHelper.getAccessor(entity, propertyPath.get(0));
-      if (a.isMultiple()) {
-         return true;
-      }
-      for (int i = 1; i < propertyPath.size(); i++) {
-         a = a.getAccessor(propertyPath.get(i));
+      try {
+         ReflectionHelper.PropertyAccessor a = ReflectionHelper.getAccessor(entity, propertyPath.get(0));
          if (a.isMultiple()) {
             return true;
          }
+         for (int i = 1; i < propertyPath.size(); i++) {
+            a = a.getAccessor(propertyPath.get(i));
+            if (a.isMultiple()) {
+               return true;
+            }
+         }
+      } catch (IntrospectionException e) {
+         // ignored
       }
       return false;
    }
@@ -116,12 +121,12 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
       try {
          Class<?> propType = getPropertyAccessor(entity, Arrays.asList(propertyPath)).getPropertyType();
          return propType != null;
-      } catch (Exception e) {
-         return false; // todo [anistor] need clean solution
+      } catch (IntrospectionException e) {
+         return false;
       }
    }
 
-   private ReflectionHelper.PropertyAccessor getPropertyAccessor(Class<?> entityClass, List<String> propertyPath) {
+   private ReflectionHelper.PropertyAccessor getPropertyAccessor(Class<?> entityClass, List<String> propertyPath) throws IntrospectionException {
       ReflectionHelper.PropertyAccessor accessor = ReflectionHelper.getAccessor(entityClass, propertyPath.get(0));
       for (int i = 1; i < propertyPath.size(); i++) {
          accessor = accessor.getAccessor(propertyPath.get(i));

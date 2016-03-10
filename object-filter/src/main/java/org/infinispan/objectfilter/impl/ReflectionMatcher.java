@@ -7,6 +7,7 @@ import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
+import java.beans.IntrospectionException;
 import java.util.List;
 import java.util.Map;
 
@@ -97,8 +98,12 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
 
       @Override
       public ReflectionHelper.PropertyAccessor makeChildAttributeMetadata(ReflectionHelper.PropertyAccessor parentAttributeMetadata, String attribute) {
-         return parentAttributeMetadata == null ?
-               ReflectionHelper.getAccessor(clazz, attribute) : parentAttributeMetadata.getAccessor(attribute);
+         try {
+            return parentAttributeMetadata == null ?
+                  ReflectionHelper.getAccessor(clazz, attribute) : parentAttributeMetadata.getAccessor(attribute);
+         } catch (IntrospectionException e) {
+            return null;
+         }
       }
 
       @Override
