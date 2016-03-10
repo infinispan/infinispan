@@ -1,7 +1,10 @@
 package org.infinispan.objectfilter.impl.util;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
+import java.beans.IntrospectionException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +16,9 @@ import static org.junit.Assert.assertEquals;
  * @since 7.0
  */
 public class ReflectionHelperTest {
+
+   @Rule
+   public ExpectedException expectedException = ExpectedException.none();
 
    // start of test dummies
 
@@ -62,20 +68,27 @@ public class ReflectionHelperTest {
    // end of dummies
 
    @Test
-   public void testGetSimpleProperty() {
+   public void testGetSimpleProperty() throws Exception {
       assertEquals(int.class, ReflectionHelper.getAccessor(Base.class, "prop1").getPropertyType());
       assertEquals(float.class, ReflectionHelper.getAccessor(Base.class, "prop2").getPropertyType());
    }
 
    @Test
-   public void testGetNestedProperty() {
+   public void testPropertyNotFound() throws Exception {
+      expectedException.expect(IntrospectionException.class);
+      expectedException.expectMessage("Property not found: unknown");
+      ReflectionHelper.getAccessor(Base.class, "unknown");
+   }
+
+   @Test
+   public void testGetNestedProperty() throws Exception {
       ReflectionHelper.PropertyAccessor prop3 = ReflectionHelper.getAccessor(Base.class, "prop3");
       assertEquals(Base.class, prop3.getPropertyType());
       assertEquals(int.class, prop3.getAccessor("prop1").getPropertyType());
    }
 
    @Test
-   public void testGetMultipleProperty() {
+   public void testGetMultipleProperty() throws Exception {
       assertEquals(Base.class, ReflectionHelper.getAccessor(A.class, "array").getPropertyType());
       assertEquals(Float.class, ReflectionHelper.getAccessor(A.class, "array2").getPropertyType());
       assertEquals(float.class, ReflectionHelper.getAccessor(A.class, "array3").getPropertyType());
