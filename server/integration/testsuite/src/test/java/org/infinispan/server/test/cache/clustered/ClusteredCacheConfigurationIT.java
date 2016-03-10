@@ -92,27 +92,17 @@ public class ClusteredCacheConfigurationIT {
                 .getPort());
         final MemcachedClient mc2 = new MemcachedClient(server2.getMemcachedEndpoint().getInetAddress().getHostName(), server2.getMemcachedEndpoint()
                 .getPort());
-        // Because the ReplicatedConsistentHashFactory is deterministic, we know server2 is always the primary owner
-        // If server1 was the primary owner, we would not find the value on server2.
-        mc2.set("k1", "v1");
-        assertNotNull(mc2.get("k1"));
-        String value = mc1.get("k1");
-        if (value == null) {
-            eventually(new ITestUtils.Condition() {
-                @Override
-                public boolean isSatisfied() throws Exception {
-                    return mc1.get("k1") != null && mc2.get("k1") != null;
-                }
-            }, 3000, 10);
-        } else {
-            // we were unlucky - we did the put right before the flush, and did the get right after it
-            // this means that the next interval window starts now and we can do another check
-            mc2.set("k2", "v2");
-            assertNotNull(mc2.get("k2"));
-            assertNull(mc1.get("k2"));
-            sleepForSecs(3.0);
-            assertNotNull(mc1.get("k2"));
-        }
+        // The write is going to happen immediately on the primary owner and after 3000ms on the other node,
+        // but we don't know which node is the primary because SyncConsistentHashFactory is non-deterministic.
+        mc1.set("k1", "v1");
+        eventually(new ITestUtils.Condition() {
+            @Override
+            public boolean isSatisfied() throws Exception {
+                return mc1.get("k1") != null && mc2.get("k1") != null;
+            }
+        }, 3100, 10);
+        assertEquals("v1", mc1.get("k1"));
+        assertEquals("v1", mc2.get("k1"));
     }
 
     // test queue-size=5 with hotrod
