@@ -7,7 +7,6 @@ import java.util.List;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.HotRodClusteredDomain;
-import org.infinispan.server.test.category.HotRodLocalDomain;
 import org.infinispan.server.test.category.Smoke;
 import org.infinispan.server.test.util.ManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -37,6 +36,7 @@ public class HotRodRemoteCacheManagerDomainIT extends AbstractRemoteCacheManager
     @BeforeClass
     public static void beforeClass() throws Exception {
         ManagementClient client = ManagementClient.getInstance();
+        client.enableJmx();
         if (isDistributedMode()) {
             testCache = "cmDistTestCache";
             client.addDistributedCache(testCache, "clustered", "distCacheConfiguration");
@@ -58,6 +58,7 @@ public class HotRodRemoteCacheManagerDomainIT extends AbstractRemoteCacheManager
         } else {
             client.removeReplicatedCache(testCache, "clustered");
         }
+        client.disableJmx();
     }
 
     @Override

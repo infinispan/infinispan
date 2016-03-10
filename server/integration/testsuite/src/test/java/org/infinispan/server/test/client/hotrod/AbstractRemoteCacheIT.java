@@ -18,9 +18,6 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CloseableIterator;
-<<<<<<< HEAD
-=======
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
@@ -28,7 +25,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
->>>>>>> ISPN-6343 Domain mode support for server test suite
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -124,10 +120,10 @@ public abstract class AbstractRemoteCacheIT {
     }
 
     private Configuration createRemoteCacheManagerConfiguration(int... hotrodPortOverrides) {
-        ConfigurationBuilder config = new ConfigurationBuilder();
-        if (hotrodPortOverrides.length != 0 && getServers().size() != hotrodPortOverrides.length) {
-            throw new IllegalArgumentException("The number of defined ports is different from server count");
+        if (hotrodPortOverrides.length != 0) {
+            assert getServers().size() == hotrodPortOverrides.length : "The number of defined ports is different from server count";
         }
+        ConfigurationBuilder config = new ConfigurationBuilder();
         int index = 0;
         for (RemoteInfinispanServer server : getServers()) {
             int port = hotrodPortOverrides.length != 0 ? hotrodPortOverrides[index] : server.getHotrodEndpoint().getPort();

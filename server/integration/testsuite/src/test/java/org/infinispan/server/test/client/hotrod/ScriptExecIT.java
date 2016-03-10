@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.server.test.category.HotRodLocal;
+import org.infinispan.server.test.category.HotRodSingleNode;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue;
  * @since 8.0
  */
 @RunWith(Arquillian.class)
-@Category(HotRodLocal.class)
+@Category(HotRodSingleNode.class)
 public class ScriptExecIT {
 
    private static final String SCRIPT_CACHE_NAME = "___script_cache";

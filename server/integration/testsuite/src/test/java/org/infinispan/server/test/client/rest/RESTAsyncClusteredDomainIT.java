@@ -23,13 +23,14 @@ import static org.infinispan.server.test.util.ITestUtils.*;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Tests for the REST client putAsync header.
+ * Test asynchronous REST operations through a custom REST client.
+ * The servers are running in domain mode.
  *
- * @author <a href="mailto:jvilkola@redhat.com">Jozef Vilkolak</a>
+ * @author mgencur
  */
 @RunWith(Arquillian.class)
 @Category({ RESTClusteredDomain.class })
-public class RESTAsyncDomainIT extends AbstractRESTAsyncIT {
+public class RESTAsyncClusteredDomainIT extends AbstractRESTAsyncIT {
 
     private static final int REST_PORT1 = 8081;
     private static final int REST_PORT2 = 8231;
@@ -41,8 +42,9 @@ public class RESTAsyncDomainIT extends AbstractRESTAsyncIT {
     RemoteInfinispanServer server2;
 
     @BeforeClass
-    public static void beforeClass() {
+    public static void beforeClass() throws Exception {
         ManagementClient client = ManagementClient.getInstance();
+        client.enableJmx();
         try {
             //do nothing in dist mode, the cache is already there
             if (isReplicatedMode()) {
@@ -64,6 +66,7 @@ public class RESTAsyncDomainIT extends AbstractRESTAsyncIT {
             client.removeReplicatedCache("restCache", "clustered");
             client.removeSocketBinding("rest-repl", "clustered-sockets");
         }
+        client.disableJmx();
     }
 
     @Override

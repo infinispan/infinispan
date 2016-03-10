@@ -3,7 +3,7 @@ package org.infinispan.server.test.client.hotrod;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.HotRodClustered;
-import org.infinispan.server.test.category.HotRodLocal;
+import org.infinispan.server.test.category.HotRodSingleNode;
 import org.infinispan.server.test.category.Smoke;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.experimental.categories.Category;
@@ -21,7 +21,7 @@ import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
  * @author mgencur
  */
 @RunWith(Arquillian.class)
-@Category({ HotRodLocal.class, HotRodClustered.class, Smoke.class })
+@Category({ HotRodSingleNode.class, HotRodClustered.class, Smoke.class })
 public class HotRodRemoteCacheManagerIT extends AbstractRemoteCacheManagerIT {
 
     @InfinispanResource("container1")

@@ -9,9 +9,19 @@ import org.wildfly.extras.creaper.core.online.operations.Values;
 import java.io.IOException;
 
 /**
+ * The client connects to a running WildFly/EAP server and performs operations on DMR using
+ * a helper project Creaper (https://github.com/wildfly-extras/creaper/). The operations include
+ * adding and removing caches, endpoints, sockets-bindings etc.
+ *
  * @author mgencur
  */
 public class ManagementClient {
+
+    public static final String NODE0_ADDRESS = System.getProperty("node0.ip", "127.0.0.1");
+    public static final int NODE0_PORT = Integer.valueOf(System.getProperty("node0.mgmt.port", "9990"));
+    public static final String LOGIN = System.getProperty("login", "admin");
+    public static final String PASSWORD = System.getProperty("password", "admin9Pass!");
+    private static final int DEFAULT_JMX_PORT = 4447;
 
     private static ManagementClient client;
     private Operations ops;
@@ -23,7 +33,7 @@ public class ManagementClient {
                              .forProfile("clustered")
                              .build()
                              .hostAndPort(mgmtAddress, mgmtPort)
-                             .auth(Constants.LOGIN, Constants.PASSWORD)
+                             .auth(LOGIN, PASSWORD)
                              .build()
                             );
        } catch (IOException ex) {
@@ -40,7 +50,7 @@ public class ManagementClient {
 
     public static ManagementClient getInstance() {
         if (client == null)
-            client = new ManagementClient(Constants.NODE0_ADDRESS, Constants.NODE0_PORT);
+            client = new ManagementClient(NODE0_ADDRESS, NODE0_PORT);
         return client;
     }
 
@@ -140,6 +150,35 @@ public class ManagementClient {
                 .and("socket-binding", name));
     }
 
+    public void addRemotingConnector(String socketBinding) throws Exception {
+        ops.add(Address.subsystem("remoting")
+                        .and("connector", "remoting-connector"),
+                Values.empty()
+                        .and("socket-binding", socketBinding)
+                        .and("security-realm", "ApplicationRealm"));
+        ops.add(Address.subsystem("jmx")
+                        .and("remoting-connector", "jmx"), //this has to be "jmx" name
+                Values.empty()
+                        .and("use-management-endpoint", "false"));
+    }
+
+    public void removeRemotingConnector(String socketBinding) throws Exception {
+        ops.removeIfExists(Address.subsystem("jmx")
+                .and("remoting-connector", "jmx"));
+        ops.removeIfExists(Address.subsystem("remoting")
+                .and("connector", "remoting-connector"));
+    }
+
+    public void enableJmx() throws Exception {
+        addSocketBinding("remoting", "clustered-sockets", DEFAULT_JMX_PORT);
+        addRemotingConnector("remoting");
+    }
+
+    public void disableJmx() throws Exception {
+        removeRemotingConnector("remoting");
+        removeSocketBinding("remoting", "clustered-sockets");
+    }
+
     public void addMemcachedEndpoint(String name, String cacheContainer, String cache, String socketBinding) throws Exception {
         ops.add(Address.subsystem("datagrid-infinispan-endpoint")
                         .and("memcached-connector", name),
@@ -209,13 +248,6 @@ public class ManagementClient {
         public String getType() {
             return type;
         }
-    }
-
-    public static class Constants {
-        public static final String NODE0_ADDRESS = System.getProperty("node0.ip", "127.0.0.1");
-        public static final int NODE0_PORT = Integer.valueOf(System.getProperty("node0.mgmt.port", "9990"));
-        public static final String LOGIN = System.getProperty("login", "admin");
-        public static final String PASSWORD = System.getProperty("password", "admin9Pass!");
     }
 
 }

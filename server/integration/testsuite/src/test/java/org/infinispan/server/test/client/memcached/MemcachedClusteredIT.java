@@ -14,6 +14,7 @@ import java.util.List;
 
 /**
  * Tests for the Memcached client. Clustered test cases.
+ * The servers are running in standalone mode.
  *
  * @author Martin Gencur
  */

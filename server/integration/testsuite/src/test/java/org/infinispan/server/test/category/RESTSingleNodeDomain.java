@@ -8,6 +8,6 @@ import org.junit.experimental.categories.Category;
  * @author mgencur
  * 
  */
-public class RESTLocalDomain extends ClientLocal {
+public class RESTSingleNodeDomain extends ClientSingleNode {
 
 }

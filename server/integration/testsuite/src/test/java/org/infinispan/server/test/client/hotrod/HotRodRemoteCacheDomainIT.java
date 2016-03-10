@@ -24,7 +24,7 @@ import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 /**
  * Tests for the HotRod client RemoteCache class in domain mode.
  *
- * TODO: Run this in local mode too (by adding HotRodLocalDomain.class category)
+ * TODO: Run this in local mode too (by adding HotRodSingleNodeDomain.class category)
  *       Currently blocked by https://issues.jboss.org/browse/ISPN-6321
  *
  * @author Martin Gencur
@@ -66,6 +66,7 @@ public class HotRodRemoteCacheDomainIT extends AbstractRemoteCacheIT {
     @BeforeClass
     public static void beforeClass() throws Exception {
         ManagementClient client = ManagementClient.getInstance();
+        client.enableJmx();
         if (isDistributedMode()) {
             testCache = "distTestCache";
             client.addDistributedCache(testCache, "clustered", "distCacheConfiguration");
@@ -100,6 +101,7 @@ public class HotRodRemoteCacheDomainIT extends AbstractRemoteCacheIT {
         } else {
             client.removeReplicatedCache(testCache, "clustered");
         }
+        client.disableJmx();
     }
 
     @Override

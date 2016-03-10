@@ -40,6 +40,7 @@ public class RESTClusteredDomainIT extends AbstractRESTClusteredIT {
     @BeforeClass
     public static void beforeClass() throws Exception {
         ManagementClient client = ManagementClient.getInstance();
+        client.enableJmx();
         //do nothing in dist mode, the cache is already there
         if (isReplicatedMode()) {
             client.addSocketBinding("rest-repl", "clustered-sockets", REST_PORT1);
@@ -57,6 +58,7 @@ public class RESTClusteredDomainIT extends AbstractRESTClusteredIT {
             client.removeReplicatedCache("restReplCache", "clustered");
             client.removeSocketBinding("rest-repl", "clustered-sockets");
         }
+        client.disableJmx();
     }
 
     @Override

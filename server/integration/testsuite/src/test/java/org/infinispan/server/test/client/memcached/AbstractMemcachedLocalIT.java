@@ -67,7 +67,7 @@ public abstract class AbstractMemcachedLocalIT {
 
     @Before
     public void setUp() throws Exception {
-        mc = new MemcachedClient(MemcachedLocalDomainIT.ENCODING, getServer().getMemcachedEndpoint().getInetAddress()
+        mc = new MemcachedClient(MemcachedSingleNodeDomainIT.ENCODING, getServer().getMemcachedEndpoint().getInetAddress()
                 .getHostName(), getMemcachedPort(), 10000);
         mc.delete(KEY_A);
         mc.delete(KEY_B);

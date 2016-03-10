@@ -3,11 +3,11 @@ package org.infinispan.server.test.category;
 import org.junit.experimental.categories.Category;
 
 /**
- * {@link Category} tag for local-mode client tests.
+ * {@link Category} tag for single-node client tests.
  * 
  * @author <a href="mailto:mlinhard@redhat.com">Michal Linhard</a>
  * 
  */
-public class ClientLocal {
+public class ClientSingleNode {
 
 }

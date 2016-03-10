@@ -335,19 +335,19 @@
 
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
-            org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.RollingUpgradesDist,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
+            org.infinispan.server.test.category.ClientSingleNode,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.RollingUpgradesDist,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
             org.infinispan.server.test.category.Queries
         </suite.manual.exclude.groups>
         <suite.client.arq.domain>suite-client-domain</suite.client.arq.domain>
         <groups.client.local>
-            org.infinispan.server.test.category.HotRodLocal,
-            org.infinispan.server.test.category.MemcachedLocal,
-            org.infinispan.server.test.category.RESTLocal
+            org.infinispan.server.test.category.HotRodSingleNode,
+            org.infinispan.server.test.category.MemcachedSingleNode,
+            org.infinispan.server.test.category.RESTSingleNode
         </groups.client.local>
         <groups.client.local.domain>
-            org.infinispan.server.test.category.HotRodLocalDomain,
-            org.infinispan.server.test.category.MemcachedLocalDomain,
-            org.infinispan.server.test.category.RESTLocalDomain
+            org.infinispan.server.test.category.HotRodSingleNodeDomain,
+            org.infinispan.server.test.category.MemcachedSingleNodeDomain,
+            org.infinispan.server.test.category.RESTSingleNodeDomain
         </groups.client.local.domain>
         <groups.client.clustered>
             org.infinispan.server.test.category.HotRodClustered,

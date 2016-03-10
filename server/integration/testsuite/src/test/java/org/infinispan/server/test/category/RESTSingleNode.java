@@ -3,11 +3,11 @@ package org.infinispan.server.test.category;
 import org.junit.experimental.categories.Category;
 
 /**
- * {@link Category} tag for local hot rod tests.
+ * {@link Category} tag for local RESTLocal tests.
  * 
  * @author <a href="mailto:mlinhard@redhat.com">Michal Linhard</a>
  * 
  */
-public class HotRodLocal extends ClientLocal {
+public class RESTSingleNode extends ClientSingleNode {
 
 }

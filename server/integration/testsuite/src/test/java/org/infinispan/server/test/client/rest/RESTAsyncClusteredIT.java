@@ -12,13 +12,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Tests for the RESTLocal client putAsync header.
+ * Test asynchronous REST operations through a custom REST client.
+ * The servers are running in standalone mode.
  *
  * @author mgencur
  */
 @RunWith(Arquillian.class)
 @Category({ RESTClustered.class })
-public class RESTAsyncLocalIT extends AbstractRESTAsyncIT {
+public class RESTAsyncClusteredIT extends AbstractRESTAsyncIT {
 
     private static final int REST_PORT1 = 8080;
     private static final int REST_PORT2 = 8180;

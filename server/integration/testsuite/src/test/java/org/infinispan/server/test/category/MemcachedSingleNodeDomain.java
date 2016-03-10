@@ -8,6 +8,6 @@ import org.junit.experimental.categories.Category;
  * @author mgencur
  * 
  */
-public class MemcachedLocalDomain extends ClientLocal {
+public class MemcachedSingleNodeDomain extends ClientSingleNode {
 
 }

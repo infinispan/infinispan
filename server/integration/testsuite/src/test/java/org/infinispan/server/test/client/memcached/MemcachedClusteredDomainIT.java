@@ -19,6 +19,7 @@ import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
 
 /**
  * Tests for the Memcached client. Clustered test cases.
+ * The servers are running in domain mode.
  *
  * @author Martin Gencur
  */
@@ -38,6 +39,7 @@ public class MemcachedClusteredDomainIT extends AbstractMemcachedClusteredIT {
     @BeforeClass
     public static void beforeClass() throws Exception {
         ManagementClient client = ManagementClient.getInstance();
+        client.enableJmx();
         if (isReplicatedMode()) {
             client.addSocketBinding("memcached-repl", "clustered-sockets", MEMCACHED_PORT1);
             client.addReplicatedCache("memcachedReplCache", "clustered", "replicated");
@@ -53,6 +55,7 @@ public class MemcachedClusteredDomainIT extends AbstractMemcachedClusteredIT {
             client.removeReplicatedCache("memcachedReplCache", "clustered");
             client.removeSocketBinding("memcached-repl", "clustered-sockets");
         }
+        client.disableJmx();
     }
 
     @Override

@@ -8,6 +8,6 @@ import org.junit.experimental.categories.Category;
  * @author mgencur
  * 
  */
-public class HotRodLocalDomain extends ClientLocal {
+public class HotRodSingleNodeDomain extends ClientSingleNode {
 
 }
