@@ -20,7 +20,7 @@ import java.util.Set;
  * @since 7.0
  */
 @Indexed
-public class UserHS implements User, Serializable {
+public class UserHS extends UserBase {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int id;
@@ -28,9 +28,6 @@ public class UserHS implements User, Serializable {
    @Field(store = Store.YES, analyze = Analyze.NO)
    @FieldBridge(impl = BuiltinIterableBridge.class)
    private Set<Integer> accountIds;
-
-   @Field(store = Store.YES, analyze = Analyze.NO)
-   private String name;
 
    @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private String surname;
@@ -64,14 +61,6 @@ public class UserHS implements User, Serializable {
 
    public void setAccountIds(Set<Integer> accountIds) {
       this.accountIds = accountIds;
-   }
-
-   public String getName() {
-      return name;
-   }
-
-   public void setName(String name) {
-      this.name = name;
    }
 
    public String getSurname() {
@@ -161,5 +150,21 @@ public class UserHS implements User, Serializable {
             ", notes=" + notes +
             '}';
    }
+}
 
+/**
+ * Parent class for UserHS to demonstrate inheritance of indexed attributes.
+ */
+abstract class UserBase implements User, Serializable {
+
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   protected String name;
+
+   public String getName() {
+      return name;
+   }
+
+   public void setName(String name) {
+      this.name = name;
+   }
 }
