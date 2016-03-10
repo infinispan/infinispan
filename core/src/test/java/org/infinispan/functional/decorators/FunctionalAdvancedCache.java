@@ -26,12 +26,10 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.iteration.EntryIterable;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -426,11 +424,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
       return null;  // TODO: Customise this generated block
    }
 

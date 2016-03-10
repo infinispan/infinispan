@@ -18,9 +18,6 @@ import org.infinispan.CacheSet;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.iteration.EntryIterable;
-import org.infinispan.iteration.impl.EntryIterableFromStreamImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.KeyFilter;
@@ -566,10 +563,5 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public CacheEntry getCacheEntry(Object key) {
       return cacheImplementation.getCacheEntry(key, flags, classLoader.get());
-   }
-
-   @Override
-   public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
-      return new EntryIterableFromStreamImpl<>(filter, flags, this);
    }
 }

@@ -15,14 +15,14 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 
 /**
- * Tests to make sure that entry retriever pays attention to partition status
+ * Tests to make sure that replicated stream pays attention to partition status
  *
  * @author wburns
  * @since 7.0
  */
-@Test(groups = "functional", testName = "partitionhandling.EntryRetrieverReplPartitionHandlingTest")
-public class EntryRetrieverReplPartitionHandlingTest extends EntryRetrieverDistPartitionHandlingTest {
-   public EntryRetrieverReplPartitionHandlingTest() {
+@Test(groups = "functional", testName = "partitionhandling.StreamReplPartitionHandlingTest")
+public class StreamReplPartitionHandlingTest extends StreamDistPartitionHandlingTest {
+   public StreamReplPartitionHandlingTest() {
       cacheMode = CacheMode.REPL_SYNC;
    }
 

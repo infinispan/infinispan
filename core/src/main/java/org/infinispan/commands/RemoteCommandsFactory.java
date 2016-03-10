@@ -1,7 +1,5 @@
 package org.infinispan.commands;
 
-import java.util.Map;
-
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -53,8 +51,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.iteration.impl.EntryRequestCommand;
-import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
 import org.infinispan.manager.impl.ReplicableCommandRunnable;
@@ -68,6 +64,8 @@ import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.XSiteAdminCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
+
+import java.util.Map;
 
 /**
  * Specifically used to create un-initialized {@link org.infinispan.commands.ReplicableCommand}s from a byte stream.
@@ -297,12 +295,6 @@ public class RemoteCommandsFactory {
                break;
             case SingleXSiteRpcCommand.COMMAND_ID:
                command = new SingleXSiteRpcCommand(cacheName);
-               break;
-            case EntryRequestCommand.COMMAND_ID:
-               command = new EntryRequestCommand(cacheName);
-               break;
-            case EntryResponseCommand.COMMAND_ID:
-               command = new EntryResponseCommand(cacheName);
                break;
             case ClusteredGetAllCommand.COMMAND_ID:
                command = new ClusteredGetAllCommand(cacheName);

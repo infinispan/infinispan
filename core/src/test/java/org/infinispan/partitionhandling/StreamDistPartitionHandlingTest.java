@@ -1,44 +1,35 @@
 package org.infinispan.partitionhandling;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.filter.AcceptAllKeyValueFilter;
-import org.infinispan.iteration.EntryIterable;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.ClusterStreamManager;
-import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.mockito.AdditionalAnswers;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static org.mockito.Mockito.*;
 import static org.testng.AssertJUnit.*;
 
 /**
- * Tests to make sure that entry retriever pays attention to partition status
+ * Tests to make sure that distributed stream pays attention to partition status
  *
  * @author wburns
  * @since 7.0
  */
-@Test(groups = "functional", testName = "partitionhandling.EntryRetrieverDistPartitionHandlingTest")
-public class EntryRetrieverDistPartitionHandlingTest extends BasePartitionHandlingTest {
+@Test(groups = "functional", testName = "partitionhandling.StreamDistPartitionHandlingTest")
+public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
    @Test( expectedExceptions = AvailabilityException.class)
    public void testRetrievalWhenPartitionIsDegraded() {
       Cache<MagicKey, String> cache0 = cache(0);
@@ -79,8 +70,8 @@ public class EntryRetrieverDistPartitionHandlingTest extends BasePartitionHandli
       cache0.put(new MagicKey(cache(0), cache(1)), "local");
 
       CheckPoint cp = new CheckPoint();
-      // This must be before the entry retriever is generated or else it won't see the update
-      blockEntryRetrieverResponse(cp, cache0);
+      // This must be before the stream is generated or else it won't see the update
+      blockStreamResponse(cp, cache0);
       // we have to enable parallel distribution since single distribution uses the async thread to send requests and
       // it can't complete since we are blocking the response
       try (CloseableIterator<?> iterator = Closeables.iterator(cache0.entrySet().stream().parallelDistribution())) {
@@ -120,8 +111,8 @@ public class EntryRetrieverDistPartitionHandlingTest extends BasePartitionHandli
       cache0.put(new MagicKey(cache(0), cache(1)), "local");
 
       CheckPoint cp = new CheckPoint();
-      // This must be before the entry retriever is generated or else it won't see the update
-      blockEntryRetrieverResponse(cp, cache0);
+      // This must be before the stream is generated or else it won't see the update
+      blockStreamResponse(cp, cache0);
       // we have to enable parallel distribution since single distribution uses the async thread to send requests and
       // it can't complete since we are blocking the response
       try (CloseableIterator<?> iterator = Closeables.iterator(cache0.entrySet().stream().parallelDistribution())) {
@@ -171,7 +162,7 @@ public class EntryRetrieverDistPartitionHandlingTest extends BasePartitionHandli
       return notifier;
    }
 
-   private static <K> ClusterStreamManager<K> blockEntryRetrieverResponse(final CheckPoint checkPoint, Cache<K, ?> cache) {
+   private static <K> ClusterStreamManager<K> blockStreamResponse(final CheckPoint checkPoint, Cache<K, ?> cache) {
       ClusterStreamManager<K> manager = TestingUtil.extractComponent(cache, ClusterStreamManager.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(manager);
       ClusterStreamManager mockManager = mock(ClusterStreamManager.class, withSettings().defaultAnswer(i -> {

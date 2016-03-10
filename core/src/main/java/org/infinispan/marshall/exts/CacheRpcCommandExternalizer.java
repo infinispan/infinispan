@@ -26,18 +26,16 @@ import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareComman
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
-import org.infinispan.commons.marshall.DelegatingObjectInput;
-import org.infinispan.commons.marshall.DelegatingObjectOutput;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
+import org.infinispan.commons.marshall.DelegatingObjectInput;
+import org.infinispan.commons.marshall.DelegatingObjectOutput;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.iteration.impl.EntryRequestCommand;
-import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -103,7 +101,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                TotalOrderVersionedPrepareCommand.class, TotalOrderCommitCommand.class,
                TotalOrderVersionedCommitCommand.class, TotalOrderRollbackCommand.class,
                XSiteStateTransferControlCommand.class, XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
-               EntryRequestCommand.class, EntryResponseCommand.class, ClusteredGetAllCommand.class,
+               ClusteredGetAllCommand.class,
                StreamRequestCommand.class, StreamSegmentResponseCommand.class, StreamResponseCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());

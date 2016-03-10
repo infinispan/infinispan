@@ -1,38 +1,31 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.functional.*;
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.LambdaExternalizer;
-import org.infinispan.commons.marshall.SerializeFunctionWith;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.distribution.group.GroupManager;
-import org.infinispan.functional.impl.Params;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.iteration.impl.EntryRequestCommand;
-import org.infinispan.iteration.impl.EntryResponseCommand;
-import org.infinispan.iteration.impl.EntryRetriever;
-import org.infinispan.marshall.core.ExternalizerTable;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -49,23 +42,43 @@ import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareComman
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
-import org.infinispan.commands.write.*;
-import org.infinispan.commons.CacheException;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.LambdaExternalizer;
+import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.marshall.core.ExternalizerTable;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
@@ -149,7 +162,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private XSiteStateProvider xSiteStateProvider;
    private XSiteStateConsumer xSiteStateConsumer;
    private XSiteStateTransferManager xSiteStateTransferManager;
-   private EntryRetriever entryRetriever;
    private GroupManager groupManager;
    private LocalStreamManager localStreamManager;
    private ClusterStreamManager clusterStreamManager;
@@ -168,7 +180,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
                                  TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
-                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever,
+                                 XSiteStateTransferManager xSiteStateTransferManager,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
                                  ClusteringDependentLogic clusteringDependentLogic, ExternalizerTable externalizerTable) {
@@ -193,7 +205,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.xSiteStateConsumer = xSiteStateConsumer;
       this.xSiteStateProvider = xSiteStateProvider;
       this.xSiteStateTransferManager = xSiteStateTransferManager;
-      this.entryRetriever = entryRetriever;
       this.groupManager = groupManager;
       this.localStreamManager = localStreamManager;
       this.clusterStreamManager = clusterStreamManager;
@@ -491,14 +502,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             XSiteStatePushCommand xSiteStatePushCommand = (XSiteStatePushCommand) c;
             xSiteStatePushCommand.initialize(xSiteStateConsumer);
             break;
-         case EntryRequestCommand.COMMAND_ID:
-            EntryRequestCommand entryRequestCommand = (EntryRequestCommand) c;
-            entryRequestCommand.init(entryRetriever);
-            break;
-         case EntryResponseCommand.COMMAND_ID:
-            EntryResponseCommand entryResponseCommand = (EntryResponseCommand) c;
-            entryResponseCommand.init(entryRetriever);
-            break;
          case GetKeysInGroupCommand.COMMAND_ID:
             GetKeysInGroupCommand getKeysInGroupCommand = (GetKeysInGroupCommand) c;
             getKeysInGroupCommand.setGroupManager(groupManager);
@@ -647,24 +650,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command) {
       return new SingleXSiteRpcCommand(cacheName, command);
-   }
-
-   @Override
-   public <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments,
-                                                                    Set<K> keysToFilter,
-                                                                    KeyValueFilter<? super K, ? super V> filter,
-                                                                    Converter<? super K, ? super V, C> converter,
-                                                                    Set<Flag> flags) {
-      return new EntryRequestCommand<K, V, C>(cacheName, identifier, cache.getCacheManager().getAddress(), segments,
-                                              keysToFilter, filter, converter, flags);
-   }
-
-   @Override
-   public <K, C> EntryResponseCommand<K, C> buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
-                                                                Set<Integer> inDoubtSegments,
-                                                                Collection<CacheEntry<K, C>> values, CacheException e) {
-      return new EntryResponseCommand<>(cache.getCacheManager().getAddress(), cacheName, identifier, completedSegments,
-                                      inDoubtSegments, values, e);
    }
 
    @Override

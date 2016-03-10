@@ -8,6 +8,11 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 8.x to 9.0
+=== Entry Retriever is now removed
+The entry retriever feature has been removed.  Please update to use the new Streams feature detailed in the User Guide.
+The `org.infinispan.filter.CacheFilters` class can be used to convert `KeyValueFilter` and `Converter` instances
+into proper Stream operations that are able to be marshalled.
+
 === Function classes have moved packages
 The class `SerializableSupplier` has moved from the `org.infinispan.stream`
 package to the `org.infinispan.util.function` package.

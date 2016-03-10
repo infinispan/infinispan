@@ -10,8 +10,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
@@ -51,11 +51,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.iteration.EntryIterable;
-import org.infinispan.iteration.impl.EntryIterableFromStreamImpl;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -90,7 +87,6 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -461,16 +457,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          }
       }
       return map;
-   }
-
-   @Override
-   public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
-      return filterEntries(filter, null, null);
-   }
-
-   protected EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter, EnumSet<Flag> explicitFlags,
-                                               ClassLoader explicitClassLoader) {
-      return new EntryIterableFromStreamImpl<>(filter, explicitFlags, this);
    }
 
    @Override

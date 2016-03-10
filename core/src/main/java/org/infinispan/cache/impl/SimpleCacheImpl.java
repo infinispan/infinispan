@@ -10,7 +10,14 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.*;
+import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorCollectionAdapter;
+import org.infinispan.commons.util.CloseableIteratorSetAdapter;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.concurrent.NoOpFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.Configuration;
@@ -27,11 +34,8 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.iteration.EntryIterable;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -42,7 +46,13 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.annotation.*;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -59,10 +69,17 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -254,16 +271,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
-      if (filter != null) {
-         componentRegistry.wireDependencies(filter);
-      }
-      return new FilteredEntryIterable(filter);
-   }
-
-   @Override
    public Map<K, V> getGroup(String groupName) {
-      return Collections.EMPTY_MAP;
+      return Collections.emptyMap();
    }
 
    @Override
@@ -954,7 +963,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public List<CommandInterceptor> getInterceptorChain() {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
    }
 
    @Override
@@ -1376,28 +1385,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    protected class EntrySet extends EntrySetBase<Entry<K, V>> implements CacheSet<Entry<K, V>> {
       @Override
       public CloseableIterator<Entry<K, V>> iterator() {
-         return new CloseableIterator<Entry<K, V>>() {
-            private final Iterator<? extends Entry<K, V>> iterator = new FilteringIterator((key, value, metadata) -> true);
-
-            @Override
-            public boolean hasNext() {
-               return iterator.hasNext();
-            }
-
-            @Override
-            public Entry<K, V> next() {
-               return iterator.next();
-            }
-
-            @Override
-            public void remove() {
-               iterator.remove();
-            }
-
-            @Override
-            public void close() {
-            }
-         };
+         return Closeables.iterator(dataContainer.iterator());
       }
 
       @Override
@@ -1437,28 +1425,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    protected class CacheEntrySet extends EntrySetBase<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new CloseableIterator<CacheEntry<K, V>>() {
-            private final Iterator<? extends CacheEntry<K, V>> iterator = new FilteringIterator((key, value, metadata) -> true);
-
-            @Override
-            public boolean hasNext() {
-               return iterator.hasNext();
-            }
-
-            @Override
-            public CacheEntry<K, V> next() {
-               return iterator.next();
-            }
-
-            @Override
-            public void remove() {
-               iterator.remove();
-            }
-
-            @Override
-            public void close() {
-            }
-         };
+         return Closeables.iterator(dataContainer.iterator());
       }
 
       @Override
@@ -1546,23 +1513,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableIterator<V> iterator() {
-         return new CloseableIterator<V>() {
-            FilteringIterator iterator = new FilteringIterator((key, value, metadata) -> true);
-
-            @Override
-            public void close() {
-            }
-
-            @Override
-            public boolean hasNext() {
-               return iterator.hasNext();
-            }
-
-            @Override
-            public V next() {
-               return iterator.next().getValue();
-            }
-         };
+         return Closeables.iterator(new IteratorMapper<>(dataContainer.iterator(), Map.Entry::getValue));
       }
 
       @Override
@@ -1629,23 +1580,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CloseableIterator<K> iterator() {
-         return new CloseableIterator<K>() {
-            private final FilteringIterator iterator = new FilteringIterator((key, value, metadata) -> true);
-
-            @Override
-            public void close() {
-            }
-
-            @Override
-            public boolean hasNext() {
-               return iterator.hasNext();
-            }
-
-            @Override
-            public K next() {
-               return iterator.next().getKey();
-            }
-         };
+         return Closeables.iterator(new IteratorMapper<>(dataContainer.iterator(), Map.Entry::getKey));
       }
 
       @Override
@@ -1677,118 +1612,5 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       CloseableSpliterator<CacheEntry<K, V>> spliterator = Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
             Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       return () -> StreamSupport.stream(spliterator, parallel);
-   }
-
-   protected class FilteredEntryIterable implements EntryIterable<K, V> {
-      private final KeyValueFilter filter;
-
-      public FilteredEntryIterable(KeyValueFilter<? super K, ? super V> filter) {
-         this.filter = filter;
-      }
-
-      @Override
-      public void close() {
-      }
-
-      @Override
-      public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new FilteringIterator(filter);
-      }
-
-      @Override
-      public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, C> converter) {
-         Objects.requireNonNull(converter);
-         if (converter != filter) {
-            componentRegistry.wireDependencies(converter);
-         }
-         return new ConvertedIterable<>(iterator(), converter);
-      }
-   }
-
-   protected class FilteringIterator implements CloseableIterator<CacheEntry<K, V>> {
-      private final KeyValueFilter filter;
-      private Iterator<InternalCacheEntry<K, V>> iterator = getDataContainer().iterator();
-      private InternalCacheEntry<K, V> last = null;
-
-      private FilteringIterator(KeyValueFilter filter) {
-         this.filter = filter;
-      }
-
-      @Override
-      public boolean hasNext() {
-         if (last == null) {
-            while (iterator.hasNext()) {
-               last = iterator.next();
-               if (last.canExpire() && checkExpiration(last, timeService.wallClockTime())) continue;
-               if (filter == null || filter.accept(last.getKey(), last.getValue(), last.getMetadata())) {
-                  return true;
-               }
-            }
-            last = null;
-            return false;
-         }
-         return true;
-      }
-
-      @Override
-      public CacheEntry<K, V> next() {
-         if (last == null) {
-            if (!hasNext()) {
-               throw new NoSuchElementException();
-            }
-         }
-         CacheEntry<K, V> tmp = last;
-         last = null;
-         return tmp;
-      }
-
-      @Override
-      public void close() {
-      }
-   }
-
-   protected class ConvertedIterable<C> implements CloseableIterable<CacheEntry<K, C>> {
-      private final Iterator<CacheEntry<K, V>> iterator;
-      private final Converter<? super K, ? super V, ? extends C> converter;
-
-
-      public ConvertedIterable(Iterator<CacheEntry<K, V>> iterator, Converter<? super K, ? super V, ? extends C> converter) {
-         this.iterator = iterator;
-         this.converter = converter;
-      }
-
-      @Override
-      public void close() {
-      }
-
-      @Override
-      public CloseableIterator<CacheEntry<K, C>> iterator() {
-         return new ConvertingIterator<C>(iterator, converter);
-      }
-   }
-
-   protected class ConvertingIterator<C> implements CloseableIterator<CacheEntry<K, C>> {
-      private final Iterator<CacheEntry<K, V>> iterator;
-      private final Converter<? super K, ? super V, ? extends C> converter;
-
-      private ConvertingIterator(Iterator<CacheEntry<K, V>> iterator, Converter<? super K, ? super V, ? extends C> converter) {
-         this.iterator = iterator;
-         this.converter = converter;
-      }
-
-      @Override
-      public void close() {
-      }
-
-      @Override
-      public boolean hasNext() {
-         return iterator.hasNext();
-      }
-
-      @Override
-      public CacheEntry<K, C> next() {
-         CacheEntry<K, V> entry = iterator.next();
-         return entryFactory.create(entry.getKey(), converter.convert(entry.getKey(), entry.getValue(), entry.getMetadata()), entry.getMetadata());
-      }
    }
 }

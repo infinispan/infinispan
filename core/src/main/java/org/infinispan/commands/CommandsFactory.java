@@ -1,29 +1,29 @@
 package org.infinispan.commands;
 
-import org.infinispan.commands.functional.*;
-import org.infinispan.commons.api.functional.EntryView;
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.functional.impl.Params;
-import org.infinispan.iteration.impl.EntryRequestCommand;
-import org.infinispan.iteration.impl.EntryResponseCommand;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -35,19 +35,30 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.*;
-import org.infinispan.commons.CacheException;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.functional.impl.Params;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -58,7 +69,6 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 import javax.transaction.xa.Xid;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -70,8 +80,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.infinispan.xsite.XSiteAdminCommand.*;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.*;
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
 /**
  * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
@@ -452,40 +462,6 @@ public interface CommandsFactory {
     * @return the SingleXSiteRpcCommand created
     */
    SingleXSiteRpcCommand buildSingleXSiteRpcCommand(VisitableCommand command);
-
-   /**
-    * Builds {@link org.infinispan.iteration.impl.EntryRequestCommand} used to request entries from a remote node for
-    * given segments
-    * @param identifier The unique identifier for this entry retrieval request
-    * @param segments The segments this request should retrieve
-    * @param filter The filter to apply to any found values to limit response data
-    * @param converter The converter to apply to any found values
-    * @param flags The flags used to modify behavior
-    * @param <K> The key type of the stored key
-    * @param <V> The value type of the stored values
-    * @param <C> The converted type after the value is applied from the converter
-    * @return the EntryRequestCommand created
-    */
-   <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments, Set<K> keysToFilter,
-                                                KeyValueFilter<? super K, ? super V> filter,
-                                                Converter<? super K, ? super V, C> converter, Set<Flag> flags);
-
-   /**
-    * Builds {@link org.infinispan.iteration.impl.EntryResponseCommand} use to respond with retrieved entries for
-    * given segments
-    * @param identifier The unique identifier for this entry retrieval request
-    * @param completedSegments The segments that are now completed per this response
-    * @param inDoubtSegments The segements that are now in doubt meaning they must be retrieved again from another
-    *                        node due to rehash
-    * @param values The entries retrieved from the remote node
-    * @param e If an exception occurred while running the processing on the remote node
-    * @param <K> The key type of the stored key
-    * @param <C> The converted type after the value is applied from the converter
-    * @return The EntryResponseCommand created
-    */
-   <K, C> EntryResponseCommand<K, C> buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
-                                                         Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values,
-                                                         CacheException e);
 
    /**
     * Builds {@link org.infinispan.commands.remote.GetKeysInGroupCommand} used to fetch all the keys belonging to a group.
