@@ -2,17 +2,16 @@ package org.infinispan.cdi;
 
 import org.infinispan.Cache;
 import org.infinispan.distexec.DistributedExecutorService;
-import org.infinispan.distexec.mapreduce.Mapper;
 
 /**
  * ContextInputCache keeps track of {@link Input} cache to be injected into Callables from
- * {@link DistributedExecutorService} and {@link Mapper} from {@link MapReduceTask} using CDI
+ * {@link DistributedExecutorService} using CDI
  * mechanism. The cache injected will be the cache used to construct
- * {@link DistributedExecutorService} and/or {@link MapReduceTask}
- * 
+ * {@link DistributedExecutorService}
+ *
  * @author Vladimir Blagoejvic
  * @since 5.2
- * @see InfinispanExtension#registerInputCacheCustomBean(javax.enterprise.inject.spi.AfterBeanDiscovery,
+ * @see InfinispanExtensionEmbedded#registerInputCacheCustomBean(javax.enterprise.inject.spi.AfterBeanDiscovery,
  *      javax.enterprise.inject.spi.BeanManager)
  * 
  */

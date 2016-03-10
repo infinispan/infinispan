@@ -8,15 +8,7 @@ package org.infinispan.scripting.impl;
  */
 public enum ExecutionMode {
    LOCAL(LocalRunner.INSTANCE, false),
-   DISTRIBUTED(DistributedRunner.INSTANCE, true),
-   @Deprecated
-   MAPPER(MapReduceRunner.INSTANCE, true),
-   @Deprecated
-   REDUCER(NullRunner.INSTANCE, false),
-   @Deprecated
-   COLLATOR(NullRunner.INSTANCE, false),
-   @Deprecated
-   COMBINER(NullRunner.INSTANCE, false);
+   DISTRIBUTED(DistributedRunner.INSTANCE, true);
 
    private final ScriptRunner runner;
    private final boolean clustered;

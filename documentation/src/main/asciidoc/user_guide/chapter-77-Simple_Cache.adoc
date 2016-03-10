@@ -17,7 +17,6 @@ So, which features are stripped away? From the configuration perspective, simple
 From the API perspective these features throw an exception:
 
 * adding custom interceptors
-* Map Reduce Framework
 * Distributed Executors Framework
 
 So, what's left?

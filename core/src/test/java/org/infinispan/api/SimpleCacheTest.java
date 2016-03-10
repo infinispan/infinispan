@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -36,11 +35,6 @@ public class SimpleCacheTest extends APINonTxTest {
    @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testAddInterceptor() {
       cache().getAdvancedCache().addInterceptor(new CustomInterceptorConfigTest.DummyInterceptor(), 0);
-   }
-
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testMapReduce() {
-      new MapReduceTask<>(cache()).execute();
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

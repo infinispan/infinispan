@@ -87,27 +87,4 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
       assertEquals(resultsFuture.get(0).get("macbeth"), Long.valueOf(287));
       assertEquals(resultsFuture.get(1).get("macbeth"), Long.valueOf(287));
    }
-
-   public void testMapReduce() throws Exception {
-      ScriptingManager scriptingManager = getScriptingManager(manager(0));
-      Cache<String, String> cache = cache(0);
-      loadData(cache, "/macbeth.txt");
-      loadScript(scriptingManager, "/wordCountMapper.js");
-      loadScript(scriptingManager, "/wordCountReducer.js");
-      loadScript(scriptingManager, "/wordCountCollator.js");
-      CompletableFuture<Object> future = scriptingManager.runScript("wordCountMapper.js", new TaskContext().cache(cache));
-      LinkedHashMap<String, Double> results = (LinkedHashMap<String, Double>)future.get();
-      assertEquals(20, results.size());
-      assertTrue(results.get("macbeth").equals(Double.valueOf(287)));
-   }
-
-   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*cannot be invoked directly since it specifies mode 'REDUCER'")
-   public void testOnlyReduceTaskRun() throws Exception {
-      ScriptingManager scriptingManager = getScriptingManager(manager(0));
-      Cache<String, String> cache = cache(0);
-      loadData(cache, "/macbeth.txt");
-      loadScript(scriptingManager, "/wordCountReducer.js");
-
-      scriptingManager.runScript("wordCountReducer.js", new TaskContext().cache(cache));
-   }
 }

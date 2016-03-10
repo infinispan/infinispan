@@ -24,8 +24,6 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.MapCombineCommand;
-import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -53,8 +51,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.context.Flag;
-import org.infinispan.distexec.mapreduce.Mapper;
-import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -317,16 +313,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public <T> DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys) {
       return actual.buildDistributedExecuteCommand(callable, sender, keys);
-   }
-
-   @Override
-   public <KIn, VIn, KOut, VOut> MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r, Collection<KIn> keys) {
-      return actual.buildMapCombineCommand(taskId, m, r, keys);
-   }
-
-   @Override
-   public <KOut, VOut> ReduceCommand<KOut, VOut> buildReduceCommand(String taskId, String destinationCache, Reducer<KOut, VOut> r, Collection<KOut> keys) {
-      return actual.buildReduceCommand(taskId, destinationCache, r, keys);
    }
 
    @Override

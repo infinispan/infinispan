@@ -101,22 +101,6 @@ public class ExecTest extends MultiHotRodServersTest {
          clients.get(i % NUM_SERVERS).getCache(cacheName).put(String.format("Key %d", i), String.format("Value %d", i));
    }
 
-   public void testRemoteMapReduce() throws Exception {
-      String cacheName = "testRemoteMapReduce";
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      builder.dataContainer().keyEquivalence(new AnyServerEquivalence()).valueEquivalence(new AnyServerEquivalence()).compatibility().enable().marshaller(new GenericJBossMarshaller());
-      defineInAll(cacheName, builder);
-      RemoteCache<String, String> cache = clients.get(0).getCache(cacheName);
-      RemoteCache<String, String> scriptCache = clients.get(0).getCache(SCRIPT_CACHE);
-      loadData(cache, "/macbeth.txt");
-      loadScript(scriptCache, "/wordCountMapper.js");
-      loadScript(scriptCache, "/wordCountReducer.js");
-      loadScript(scriptCache, "/wordCountCollator.js");
-      Map<String, Double> results = cache.execute("wordCountMapper.js", new HashMap<String, String>());
-      assertEquals(20, results.size());
-      assertTrue(results.get("macbeth").equals(Double.valueOf(287)));
-   }
-
    @Test(enabled = false, description = "Disabling this test until the distributed scripts in DIST mode are fixed - ISPN-6173")
    public void testRemoteMapReduceWithStreams() throws Exception {
       String cacheName = "testRemoteMapReduce_Streams";

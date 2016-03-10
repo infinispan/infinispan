@@ -30,16 +30,9 @@ The following metadata property keys are available
 * mode: defines the mode of execution of a script. Can be one of the following values:
 ** local: the script will be executed only by the node handling the request. The script itself however can invoke clustered operations
 ** distributed: runs the script using the Distributed Executor Service
-** mapper: runs the script as the mapper of map/reduce job. This property also requires that the user specify a +reducer+ property and optional +collator+ and +combiner+ properties. This mode is deprecated and will be removed in Infinispan 9. Use local mode and the distributed streams API instead.
-** reducer: this type of script can't be executed directly, but must be specified as a +reducer+ property on a script of type +mapper+. This mode is deprecated and will be removed in Infinispan 9. Use local mode and the distributed streams API instead.
-** collator: this type of script can't be executed directly, but must be specified as a +collator+ property on a script of type +mapper+. This mode is deprecated and will be removed in Infinispan 9. Use local mode and the distributed streams API instead.
-** combiner: this type of script can't be executed directly, but must be specified as a +combiner+ property on a script of type +mapper+. This mode is deprecated and will be removed in Infinispan 9. Use local mode and the distributed streams API instead.
 * language: defines the script engine that will be used to execute the script, e.g. Javascript
 * extension: an alternative method of specifying the script engine that will be used to execute the script, e.g. js
 * role: a specific role which is required to execute the script
-* reducer: this property is only valid for +mapper+ scripts, and specifies the name of another script that will be used for the reduce phase of a map/reduce job. This property will be removed in Infinispan 9.
-* collator: this property is only valid for +mapper+ scripts, and specifies the name of another script that will be used for the collation phase of a map/reduce job. This property will be removed in Infinispan 9.
-* combiner: this property is only valid for +mapper+ scripts, and specifies the name of another script that will be used for the combine phase of a map/reduce job. This property will be removed in Infinispan 9.
 * parameters: an array of valid parameter names for this script. Invocations which specify parameter names not included in this list will cause an exception.
 * datatype: optional property providing information, in the form of
 Media Types (also known as MIME) about the type of the data stored in the

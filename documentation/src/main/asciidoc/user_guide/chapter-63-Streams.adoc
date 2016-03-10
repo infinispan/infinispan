@@ -321,8 +321,7 @@ Then finally all of those results have a distinct operation performed upon them.
 The rest of the intermediate operations are fully distributed as one would expect.
 
 === Examples
-Using the existing Map/Reduce example link:user_guide.html#examples_2[example],
-it has been adapted for Streams. Word count is a classic, if overused, example
+Word count is a classic, if overused, example
 of map/reduce paradigm. Assume we have a mapping of key -> sentence stored on
 Infinispan nodes. Key is a String, each sentence is also a String, and we have
 to count occurrence of all words in all sentences available. The implementation
@@ -375,8 +374,9 @@ However what if we want to find the most frequent word in the example?  If you t
 to think about this case you will realize you need to have all words counted  and available
 locally first. Thus we actually have a few options.
 
-We can use something akin to the old Collator from Map/Reduce by slightly tweaking
-our collector.  Some redundant lines have been removed from the previous example.
+We could use a finisher on the collector, which is invoked on the user thread
+after all the results have been collected.
+Some redundant lines have been removed from the previous example.
 
 [source,java]
 ----

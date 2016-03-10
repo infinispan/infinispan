@@ -13,6 +13,10 @@ The entry retriever feature has been removed.  Please update to use the new Stre
 The `org.infinispan.filter.CacheFilters` class can be used to convert `KeyValueFilter` and `Converter` instances
 into proper Stream operations that are able to be marshalled.
 
+=== Map / Reduce is now removed
+Map reduce has been removed in favor of the new Streams feature which should provide more features and performance.
+There are no bridge classes to convert to the new streams and all references must be rewritten.
+
 === Function classes have moved packages
 The class `SerializableSupplier` has moved from the `org.infinispan.stream`
 package to the `org.infinispan.util.function` package.

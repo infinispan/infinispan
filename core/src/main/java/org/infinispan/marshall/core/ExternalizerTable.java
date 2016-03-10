@@ -41,7 +41,6 @@ import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheVal
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.Flag;
-import org.infinispan.distexec.mapreduce.MapReduceManagerImpl;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -352,8 +351,6 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer());
       addInternalExternalizer(new CompositeKeyFilter.Externalizer());
       addInternalExternalizer(new CompositeKeyValueFilter.Externalizer());
-      addInternalExternalizer(new MapReduceManagerImpl.DeltaListExternalizer());
-      addInternalExternalizer(new MapReduceManagerImpl.DeltaAwareListExternalizer());
       addInternalExternalizer(new CacheStatusResponse.Externalizer());
       addInternalExternalizer(new CacheEventConverterAsConverter.Externalizer());
       addInternalExternalizer(new CacheEventFilterAsKeyValueFilter.Externalizer());

@@ -1,7 +1,6 @@
 package org.infinispan.cdi;
 
 import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.mapreduce.MapReduceTask;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Documented;
@@ -13,7 +12,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Qualifier indicating the injected Cache should be the input Cache used to create
- * {@link DefaultExecutorService} or {@link MapReduceTask}
+ * {@link DefaultExecutorService}
  * 
  * @author Vladimir Blagojevic
  * @since 5.2
