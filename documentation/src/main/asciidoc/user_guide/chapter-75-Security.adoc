@@ -31,7 +31,7 @@ Access to a cache manager or a cache is controlled by using a list of required p
 ===== Cache permissions
 * READ (get, contains): whether entries can be retrieved from the cache
 * WRITE (put, putIfAbsent, replace, remove, evict): whether data can be written/replaced/removed/evicted from the cache
-* EXEC (distexec, mapreduce): whether code execution can be run against the cache
+* EXEC (distexec, streams): whether code execution can be run against the cache
 * LISTEN (addListener): whether listeners can be registered against a cache
 * BULK_READ (keySet, values, entrySet, query): whether bulk retrieve operations can be executed
 * BULK_WRITE (clear, putAll): whether bulk write operations can be executed

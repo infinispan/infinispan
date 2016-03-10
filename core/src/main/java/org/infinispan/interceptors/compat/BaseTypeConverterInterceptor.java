@@ -286,7 +286,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
                        () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
                        cache.getAdvancedCache().getComponentRegistry());
                // We rely on the fact that on close returns the same instance
-               stream.onClose(() -> closeableSpliterator.close());
+               stream.onClose(closeableSpliterator::close);
                return new TypeConverterStream(stream, converter, entryFactory);
             }
          };
@@ -324,7 +324,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
                        () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
                        cache.getAdvancedCache().getComponentRegistry());
                // We rely on the fact that on close returns the same instance
-               stream.onClose(() -> closeableSpliterator.close());
+               stream.onClose(closeableSpliterator::close);
                return new TypeConverterStream(stream, converter, entryFactory);
             }
          };

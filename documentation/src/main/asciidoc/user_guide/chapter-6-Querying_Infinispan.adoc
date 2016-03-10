@@ -330,8 +330,7 @@ WARNING: This is a new API undergoing refinements and changes that might break c
 Starting with 6.0 Infinispan provides its own query DSL, independent of Lucene and Hibernate Search.
 Decoupling the query API from the underlying query and indexing mechanism makes it possible to introduce new alternative
 engines in the future, besides Lucene, and still being able to use the same uniform query API.
-This opens up the possibility of introducing a future index-less searching engine based on Map/Reduce that will be
-accessible exclusively via the new query API. The current implementation of indexing and searching is still based on
+The current implementation of indexing and searching is still based on
 Hibernate Search and Lucene so all indexing related aspects presented in this chapter still apply.
 
 The new API simplifies the writing of queries by not exposing the user to the low level details of constructing Lucene
@@ -440,10 +439,6 @@ qb2.having("title").like("%Infinispan%");
 qb2.having("description").like("%clustering%");   // will throw java.lang.IllegalStateException: Sentence already started. Cannot use 'having(..)' again.
 Query q2 = qb2.build();
 ----
-
-NOTE: All fields participating in the query need to be indexed by Hibernate Search for querying to work in embedded
-mode. We plan to add index-less searching with Map/Reduce in future versions
-(see link:$$https://issues.jboss.org/browse/ISPN-3717$$[ISPN-3717]).
 
 ==== Filtering based on attributes of embedded entities
 

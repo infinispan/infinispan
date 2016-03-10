@@ -18,8 +18,6 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.MapCombineCommand;
-import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -49,8 +47,6 @@ import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.context.Flag;
-import org.infinispan.distexec.mapreduce.Mapper;
-import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.impl.Params;
@@ -361,28 +357,6 @@ public interface CommandsFactory {
     * @return a DistributedExecuteCommand
     */
    <T>DistributedExecuteCommand<T> buildDistributedExecuteCommand(Callable<T> callable, Address sender, Collection keys);
-
-   /**
-    * Builds a MapCombineCommand used for migration and map phase execution of MapReduce tasks.
-    *
-    * @param m Mapper for MapReduceTask
-    * @param r Combiner for MapReduceTask
-    * @param keys keys used in MapReduceTask
-    * @return created MapCombineCommand
-    */
-   <KIn, VIn, KOut, VOut> MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
-            String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r,
-            Collection<KIn> keys);
-
-   /**
-    * Builds a ReduceCommand used for migration and reduce phase execution of MapReduce tasks.
-    *
-    * @param r Reducer for MapReduceTask
-    * @param keys keys used in MapReduceTask
-    * @return created ReduceCommand
-    */
-   <KOut, VOut> ReduceCommand<KOut, VOut> buildReduceCommand(String taskId,
-            String destinationCache, Reducer<KOut, VOut> r, Collection<KOut> keys);
 
    /**
     * @see GetInDoubtTxInfoCommand

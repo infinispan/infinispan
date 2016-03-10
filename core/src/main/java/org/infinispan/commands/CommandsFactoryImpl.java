@@ -20,8 +20,6 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.MapCombineCommand;
-import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -65,9 +63,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.distexec.mapreduce.MapReduceManager;
-import org.infinispan.distexec.mapreduce.Mapper;
-import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
@@ -155,7 +150,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private StateConsumer stateConsumer;
    private LockManager lockManager;
    private InternalEntryFactory entryFactory;
-   private MapReduceManager mapReduceManager;
    private StateTransferManager stateTransferManager;
    private BackupSender backupSender;
    private CancellationService cancellationService;
@@ -177,7 +171,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  InvocationContextFactory icf, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
-                                 LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
+                                 LockManager lockManager, InternalEntryFactory entryFactory,
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
                                  TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
                                  XSiteStateTransferManager xSiteStateTransferManager,
@@ -198,7 +192,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.stateConsumer = stateConsumer;
       this.lockManager = lockManager;
       this.entryFactory = entryFactory;
-      this.mapReduceManager = mapReduceManager;
       this.stateTransferManager = stm;
       this.backupSender = backupSender;
       this.cancellationService = cancellationService;
@@ -460,14 +453,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             TxCompletionNotificationCommand ftx = (TxCompletionNotificationCommand) c;
             ftx.init(txTable, lockManager, recoveryManager, stateTransferManager);
             break;
-         case MapCombineCommand.COMMAND_ID:
-            MapCombineCommand mrc = (MapCombineCommand)c;
-            mrc.init(mapReduceManager);
-            break;
-         case ReduceCommand.COMMAND_ID:
-            ReduceCommand reduceCommand = (ReduceCommand)c;
-            reduceCommand.init(mapReduceManager);
-            break;
          case DistributedExecuteCommand.COMMAND_ID:
             DistributedExecuteCommand dec = (DistributedExecuteCommand)c;
             dec.init(cache);
@@ -588,13 +573,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <KIn, VIn, KOut, VOut> MapCombineCommand<KIn, VIn, KOut, VOut> buildMapCombineCommand(
-            String taskId, Mapper<KIn, VIn, KOut, VOut> m, Reducer<KOut, VOut> r,
-            Collection<KIn> keys) {
-      return new MapCombineCommand<KIn, VIn, KOut, VOut>(taskId, m, r, cacheName, keys);
-   }
-
-   @Override
    public GetInDoubtTxInfoCommand buildGetInDoubtTxInfoCommand() {
       return new GetInDoubtTxInfoCommand(cacheName);
    }
@@ -617,12 +595,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName, int size) {
       return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName, size);
-   }
-
-   @Override
-   public <KOut, VOut> ReduceCommand<KOut, VOut> buildReduceCommand(String taskId,
-            String destintationCache, Reducer<KOut, VOut> r, Collection<KOut> keys) {
-      return new ReduceCommand<KOut, VOut>(taskId, r, destintationCache, keys);
    }
 
    @Override

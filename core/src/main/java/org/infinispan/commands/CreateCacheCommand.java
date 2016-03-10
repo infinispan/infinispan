@@ -1,18 +1,9 @@
 package org.infinispan.commands;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -22,6 +13,11 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Command to create/start a cache on a subset of Infinispan cluster nodes
@@ -70,16 +66,9 @@ public class CreateCacheCommand extends BaseRpcCommand {
 
       Configuration cacheConfig = cacheManager.getCacheConfiguration(cacheConfigurationName);
       if (cacheConfig == null) {
-         // Special case for the default temporary cache, which may or may not have been defined by the user
-         if (MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME.equals(cacheConfigurationName)) {
-            cacheConfig = new ConfigurationBuilder().unsafe().unreliableReturnValues(true).clustering()
-                  .cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build(); log.debugf(
-                  "Using default tmp cache configuration, defined as ", cacheNameToCreate);
-         } else {
-            throw new IllegalStateException(
-                  "Cache configuration " + cacheConfigurationName + " is not defined on node " +
-                  this.cacheManager.getAddress());
-         }
+         throw new IllegalStateException(
+               "Cache configuration " + cacheConfigurationName + " is not defined on node " +
+               this.cacheManager.getAddress());
       }
 
       cacheManager.defineConfiguration(cacheNameToCreate, cacheConfig);

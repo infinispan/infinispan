@@ -13,8 +13,6 @@ import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.MapCombineCommand;
-import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -262,12 +260,6 @@ public class RemoteCommandsFactory {
                break;
             case GetInDoubtTransactionsCommand.COMMAND_ID:
                command = new GetInDoubtTransactionsCommand(cacheName);
-               break;
-            case MapCombineCommand.COMMAND_ID:
-               command = new MapCombineCommand(cacheName);
-               break;
-            case ReduceCommand.COMMAND_ID:
-               command = new ReduceCommand(cacheName);
                break;
             case DistributedExecuteCommand.COMMAND_ID:
                command = new DistributedExecuteCommand(cacheName);

@@ -3,7 +3,6 @@ package org.infinispan.remoting;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -18,6 +17,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
@@ -113,7 +113,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       ReplicableCommand blockingReplicableCommand = mockReplicableCommand(true);
 
       //populate commands
-      blockingCacheRpcCommand = new ReduceCommand<>("task", null, cacheName, null);
+      blockingCacheRpcCommand = new StreamRequestCommand<>(cacheName);
       nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, null, false, null, null);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()

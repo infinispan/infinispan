@@ -1322,9 +1322,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Invocation batching not enabled in current configuration! Please enable it.", id = 378)
    CacheConfigurationException invocationBatchingNotEnabled();
 
-   @Message(value = "Map Reduce Framework is not supported in simple cache", id = 379)
-   CacheConfigurationException mapReduceNotSupported();
-
    @Message(value = "Distributed Executors Framework is not supported in simple cache", id = 380)
    CacheConfigurationException distributedExecutorsNotSupported();
 
