@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Test to verify entry retriever behavior for a local cache
+ * Test to verify stream behavior for an invalidation cache
  *
  * @author wburns
  * @since 7.0

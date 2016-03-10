@@ -5,7 +5,6 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -18,7 +17,6 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
-
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -613,16 +611,6 @@ public class SecureCacheTestDriver {
    public void testAddInterceptorBefore_CommandInterceptor_Class(SecureCache<String, String> cache) {
       cache.addInterceptorBefore(interceptor, InvocationContextInterceptor.class);
       cache.removeInterceptor(interceptor.getClass());
-   }
-
-   @TestCachePermission(AuthorizationPermission.BULK_READ)
-   public void testFilterEntries_KeyValueFilter(SecureCache<String, String> cache) {
-      cache.filterEntries(new KeyValueFilter<String, String>() {
-         @Override
-         public boolean accept(String key, String value, Metadata metadata) {
-            return true;
-         }
-      });
    }
 
    @TestCachePermission(AuthorizationPermission.READ)

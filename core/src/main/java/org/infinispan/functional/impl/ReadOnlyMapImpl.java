@@ -11,7 +11,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -74,8 +73,7 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
    @Override
    public Traversable<ReadEntryView<K, V>> entries() {
       log.tracef("Invoked entries(%s)", params);
-      CloseableIterator<CacheEntry<K, V>> it = fmap.cache
-            .filterEntries(AcceptAllKeyValueFilter.getInstance()).iterator();
+      CloseableIterator<CacheEntry<K, V>> it = fmap.cache.cacheEntrySet().iterator();
       // TODO: Don't really need a Stream here...
       Stream<CacheEntry<K, V>> stream = StreamSupport.stream(
             Spliterators.spliteratorUnknownSize(it, Spliterator.IMMUTABLE), false);
