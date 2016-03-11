@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.junit.AfterClass;
@@ -95,7 +96,8 @@ public abstract class AbstractRemoteCacheIT {
                 .pingOnStartup(true)
                 .transportFactory("org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory")
                         // marshalling
-                .marshaller("org.infinispan.commons.marshall.jboss.GenericJBossMarshaller")
+                        // FIXME Workaround for ISPN-6367
+                .marshaller(new GenericJBossMarshaller(Thread.currentThread().getContextClassLoader()))
                         // executors
                 .asyncExecutorFactory().factoryClass("org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory")
                 .addExecutorProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "10")
