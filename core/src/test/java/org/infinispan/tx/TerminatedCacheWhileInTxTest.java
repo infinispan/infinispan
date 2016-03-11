@@ -81,13 +81,11 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
       latch.countDown(); // now that cache has been stopped, let the thread continue
 
       waitAfterModFuture.get();
-      if (callStoppingCacheFuture != null) {
-         try {
-            callStoppingCacheFuture.get();
-            fail("Should have thrown an IllegalLifecycleStateException");
-         } catch (ExecutionException e) {
-            assertTrue(e.toString(), e.getCause() instanceof IllegalLifecycleStateException);
-         }
+      try {
+         callStoppingCacheFuture.get();
+         fail("Should have thrown an IllegalLifecycleStateException");
+      } catch (ExecutionException e) {
+         assertTrue(e.toString(), e.getCause() instanceof IllegalLifecycleStateException);
       }
    }
 }
