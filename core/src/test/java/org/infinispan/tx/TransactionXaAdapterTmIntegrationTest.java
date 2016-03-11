@@ -47,7 +47,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       Configuration configuration = new ConfigurationBuilder().build();
       XaTransactionTable txTable = new XaTransactionTable();
       txTable.initialize(null, configuration, null, null, null, null,
-                         null, null, null, null, mockCache, null, null, null);
+                         null, null, null, null, mockCache, null, null, null, null);
       txTable.start();
       txTable.startXidMapping();
       TransactionFactory gtf = new TransactionFactory();
