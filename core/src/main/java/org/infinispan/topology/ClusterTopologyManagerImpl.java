@@ -352,7 +352,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                log.tracef("Cluster state recovery interrupted because a member was lost. Will retry.");
          } catch (Exception e) {
             if (clusterManagerStatus.isRunning()) {
-               log.failedToRecoverClusterState(e);
+               CLUSTER.failedToRecoverClusterState(e);
+               eventLogManager.getEventLogger().detail(e)
+                     .fatal(EventLogCategory.CLUSTER, MESSAGES.clusterRecoveryFailed(transport.getMembers()));
             } else {
                log.tracef("Cluster state recovery failed because the coordinator is shutting down");
             }
@@ -660,11 +662,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private static void addResponseValue(Address origin, Response response, Map<Address, Object> values) {
-      if (!response.isSuccessful()) {
+      if (response == CacheNotFoundResponse.INSTANCE) {
+         return;
+      } else if (!response.isSuccessful()) {
          Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
          throw new CacheException(format("Unsuccessful response received from node '%s': %s", origin, response), cause);
-      } else if (response == CacheNotFoundResponse.INSTANCE) {
-         return;
       }
       values.put(origin, ((SuccessfulResponse) response).getResponseValue());
    }
