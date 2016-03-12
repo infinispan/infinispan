@@ -21,6 +21,7 @@ import java.util.stream.Stream;
  */
 public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<K> {
    private static final Log log = LogFactory.getLog(KeyStreamSupplier.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
    private final ConsistentHash hash;
@@ -36,7 +37,9 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
    public Stream<K> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter) {
       Stream<K> stream;
       if (keysToFilter != null) {
-         log.tracef("Applying key filtering %s", keysToFilter);
+         if (trace) {
+            log.tracef("Applying key filtering %s", keysToFilter);
+         }
          // Make sure we aren't going remote to retrieve these
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
          stream = (Stream<K>) keysToFilter.stream().filter(k -> advancedCache.containsKey(k));
@@ -44,7 +47,9 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
          stream = supplier.get();
       }
       if (segmentsToFilter != null && hash != null) {
-         log.tracef("Applying segment filter %s", segmentsToFilter);
+         if (trace) {
+            log.tracef("Applying segment filter %s", segmentsToFilter);
+         }
          BitSet bitSet = new BitSet(hash.getNumSegments());
          segmentsToFilter.forEach(bitSet::set);
          stream = stream.filter(k -> bitSet.get(hash.getSegment(k)));
