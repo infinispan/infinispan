@@ -10,6 +10,7 @@ import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.BitSet;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -44,7 +45,9 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
       }
       if (segmentsToFilter != null && hash != null) {
          log.tracef("Applying segment filter %s", segmentsToFilter);
-         stream = stream.filter(k -> segmentsToFilter.contains(hash.getSegment(k.getKey())));
+         BitSet bitSet = new BitSet(hash.getNumSegments());
+         segmentsToFilter.forEach(bitSet::set);
+         stream = stream.filter(k -> bitSet.get(hash.getSegment(k.getKey())));
       }
       return stream;
    }

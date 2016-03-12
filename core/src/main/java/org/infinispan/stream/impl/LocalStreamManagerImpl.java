@@ -198,9 +198,12 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          Iterator<Integer> iterator = segments.iterator();
          while (iterator.hasNext()) {
             Integer segment = iterator.next();
+            // This is to ensure we only unbox the value once, as below will happen most times (happy path) and we
+            // don't want to unbox twice in that case
+            int intSegment = segment.intValue();
             // If the segment is not owned by both CHs we can't use it during rehash
-            if (!pendingCH.locateOwnersForSegment(segment).contains(localAddress)
-                    || !readCH.locateOwnersForSegment(segment).contains(localAddress)) {
+            if (!pendingCH.locateOwnersForSegment(intSegment).contains(localAddress)
+                    || !readCH.locateOwnersForSegment(intSegment).contains(localAddress)) {
                iterator.remove();
                lostSegments.add(segment);
             }
