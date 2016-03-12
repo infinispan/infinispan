@@ -77,7 +77,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       public void localSegments(Set<Integer> localSegments) {
          segments.forEach(s -> {
             if (!localSegments.contains(s)) {
-               log.tracef("Could not process segment %s", s);
+               if (trace) {
+                  log.tracef("Could not process segment %s", s);
+               }
                segmentsLost.add(s);
             }
          });
@@ -86,10 +88,14 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       public void lostSegments(Set<Integer> lostSegments) {
          for (Integer segment : lostSegments) {
             if (segments.contains(segment)) {
-               log.tracef("Lost segment %s", segment);
+               if (trace) {
+                  log.tracef("Lost segment %s", segment);
+               }
                if (op.lostSegment(false)) {
                   if (segmentsLost.add(segment) && segmentsLost.size() == segments.size()) {
-                     log.tracef("All segments %s are now lost", segments);
+                     if (trace) {
+                        log.tracef("All segments %s are now lost", segments);
+                     }
                      op.lostSegment(true);
                   }
                }
@@ -129,8 +135,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       ConsistentHash endHash = event.getConsistentHashAtEnd();
       boolean trace = log.isTraceEnabled();
       if (startHash != null && endHash != null) {
-         log.tracef("Data rehash occurred startHash: %s and endHash: %s with new topology %s and was pre %s", startHash, endHash,
-                 event.getNewTopologyId(), event.isPre());
+         if (trace) {
+            log.tracef("Data rehash occurred startHash: %s and endHash: %s with new topology %s and was pre %s", startHash, endHash,
+                    event.getNewTopologyId(), event.isPre());
+         }
 
          if (!changeListener.isEmpty()) {
             if (trace) {
@@ -154,7 +162,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
             } else if (trace) {
                log.tracef("No segments have been removed from data rehash, no notification required");
             }
-         } else {
+         } else if (trace) {
             log.tracef("No change listeners present!");
          }
       }
@@ -190,7 +198,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
            SegmentListener listener, boolean parallelStream, Set<Integer> segments, Set<K> keysToInclude,
            Set<K> keysToExclude) {
       CacheTopology topology = stm.getCacheTopology();
-      log.tracef("Topology for supplier is %s for id %s", topology, requestId);
+      if (trace) {
+         log.tracef("Topology for supplier is %s for id %s", topology, requestId);
+      }
       ConsistentHash readCH = topology.getCurrentCH();
       ConsistentHash pendingCH = topology.getPendingCH();
       if (pendingCH != null) {
@@ -198,25 +208,31 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          Iterator<Integer> iterator = segments.iterator();
          while (iterator.hasNext()) {
             Integer segment = iterator.next();
+            // This is to ensure we only unbox the value once, as below will twice most times (happy path)
+            int intSegment = segment.intValue();
             // If the segment is not owned by both CHs we can't use it during rehash
-            if (!pendingCH.locateOwnersForSegment(segment).contains(localAddress)
-                    || !readCH.locateOwnersForSegment(segment).contains(localAddress)) {
+            if (!pendingCH.locateOwnersForSegment(intSegment).contains(localAddress)
+                    || !readCH.locateOwnersForSegment(intSegment).contains(localAddress)) {
                iterator.remove();
                lostSegments.add(segment);
             }
          }
          if (!lostSegments.isEmpty()) {
-            log.tracef("Lost segments %s during rehash for id %s", lostSegments, requestId);
+            if (trace) {
+               log.tracef("Lost segments %s during rehash for id %s", lostSegments, requestId);
+            }
             listener.lostSegments(lostSegments);
-         } else {
+         } else if (trace) {
             log.tracef("Currently in the middle of a rehash for id %s", requestId);
          }
       } else {
          Set<Integer> ourSegments = readCH.getSegmentsForOwner(localAddress);
          if (segments.retainAll(ourSegments)) {
-            log.tracef("We found to be missing some segments requested for id %s", requestId);
+            if (trace) {
+               log.tracef("We found to be missing some segments requested for id %s", requestId);
+            }
             listener.localSegments(ourSegments);
-         } else {
+         } else if (trace) {
             log.tracef("Hash %s for id %s", readCH, requestId);
          }
       }
@@ -227,7 +243,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    @Override
    public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, TerminalOperation<R> operation) {
-      log.tracef("Received operation request for id %s from %s for segments %s", requestId, origin, segments);
+      if (trace) {
+         log.tracef("Received operation request for id %s from %s for segments %s", requestId, origin, segments);
+      }
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
       operation.setSupplier(() -> getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude));
       operation.handleInjection(registry);
@@ -240,7 +258,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    public <R> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
            Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            TerminalOperation<R> operation) {
-      log.tracef("Received rehash aware operation request for id %s from %s for segments %s", requestId, origin, segments);
+      if (trace) {
+         log.tracef("Received rehash aware operation request for id %s from %s for segments %s", requestId, origin,
+                 segments);
+      }
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
       SegmentListener listener = new SegmentListener(segments, operation);
       R value;
@@ -248,16 +269,22 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       operation.handleInjection(registry);
       // We currently only allow 1 request per id (we may change this later)
       changeListener.put(requestId, listener);
-      log.tracef("Registered change listener for %s", requestId);
+      if (trace) {
+         log.tracef("Registered change listener for %s", requestId);
+      }
       try {
          operation.setSupplier(() -> getRehashStream(cacheEntrySet, requestId, listener, parallelStream, segments,
                  keysToInclude, keysToExclude));
          value = operation.performOperation();
-         log.tracef("Request %s completed for segments %s with %s suspected segments", requestId, segments,
-                 listener.segmentsLost);
+         if (trace) {
+            log.tracef("Request %s completed for segments %s with %s suspected segments", requestId, segments,
+                    listener.segmentsLost);
+         }
       } finally {
          changeListener.remove(requestId);
-         log.tracef("UnRegistered change listener for %s", requestId);
+         if (trace) {
+            log.tracef("UnRegistered change listener for %s", requestId);
+         }
       }
       if (cache.getStatus() != ComponentStatus.RUNNING) {
          if (trace) {
@@ -267,17 +294,24 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          value = null;
       }
 
-      log.tracef("Sending response for %s", requestId);
+      if (trace) {
+         log.tracef("Sending response for %s", requestId);
+      }
       rpc.invokeRemotely(Collections.singleton(origin), factory.buildStreamResponseCommand(requestId, true,
               listener.segmentsLost, value), rpc.getDefaultRpcOptions(true));
-      log.tracef("Sent response for %s", requestId);
+      if (trace) {
+         log.tracef("Sent response for %s", requestId);
+      }
    }
 
    @Override
    public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, R, ?> operation) {
-      log.tracef("Received key aware operation request for id %s from %s for segments %s", requestId, origin, segments);
+      if (trace) {
+         log.tracef("Received key aware operation request for id %s from %s for segments %s", requestId, origin,
+                 segments);
+      }
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
       operation.setSupplier(() -> getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude));
       operation.handleInjection(registry);
@@ -291,7 +325,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    public <R2> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream,
            Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, ?, R2> operation) {
-      log.tracef("Received key rehash aware operation request for id %s from %s for segments %s", requestId, origin, segments);
+      if (trace) {
+         log.tracef("Received key rehash aware operation request for id %s from %s for segments %s", requestId, origin,
+                 segments);
+      }
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
       SegmentListener listener = new SegmentListener(segments, operation);
       Collection<CacheEntry<K, R2>> results;
@@ -299,18 +336,23 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       operation.handleInjection(registry);
       // We currently only allow 1 request per id (we may change this later)
       changeListener.put(requestId, listener);
-      if (trace) log.tracef("Registered change listener for %s", requestId);
+      if (trace) {
+         log.tracef("Registered change listener for %s", requestId);
+      }
       try {
          operation.setSupplier(() -> getRehashStream(cacheEntrySet, requestId, listener, parallelStream, segments,
                  keysToInclude, keysToExclude));
          results = operation.performOperationRehashAware(new NonRehashIntermediateCollector<>(origin, requestId,
                  parallelStream));
-         // TODO: need to remove the full trace later
-         if (trace) log.tracef("Request %s completed segments %s with %s suspected segments", requestId, segments,
-                 listener.segmentsLost);
+         if (trace) {
+            log.tracef("Request %s completed segments %s with %s suspected segments", requestId, segments,
+                    listener.segmentsLost);
+         }
       } finally {
          changeListener.remove(requestId);
-         if (trace) log.tracef("UnRegistered change listener for %s", requestId);
+         if (trace) {
+            log.tracef("UnRegistered change listener for %s", requestId);
+         }
       }
       if (cache.getStatus() != ComponentStatus.RUNNING) {
          if (trace) {

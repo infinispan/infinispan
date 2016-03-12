@@ -10,6 +10,7 @@ import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.BitSet;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -20,6 +21,7 @@ import java.util.stream.Stream;
  */
 public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>> {
    private static final Log log = LogFactory.getLog(EntryStreamSupplier.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
    private final ConsistentHash hash;
@@ -37,14 +39,20 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
       if (keysToFilter != null) {
          // Make sure we aren't going remote to retrieve these
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
-         log.tracef("Applying key filtering %s", keysToFilter);
+         if (trace) {
+            log.tracef("Applying key filtering %s", keysToFilter);
+         }
          stream = keysToFilter.stream().map(advancedCache::getCacheEntry).filter(e -> e != null);
       } else {
          stream = supplier.get();
       }
       if (segmentsToFilter != null && hash != null) {
-         log.tracef("Applying segment filter %s", segmentsToFilter);
-         stream = stream.filter(k -> segmentsToFilter.contains(hash.getSegment(k.getKey())));
+         if (trace) {
+            log.tracef("Applying segment filter %s", segmentsToFilter);
+         }
+         BitSet bitSet = new BitSet(hash.getNumSegments());
+         segmentsToFilter.forEach(bitSet::set);
+         stream = stream.filter(k -> bitSet.get(hash.getSegment(k.getKey())));
       }
       return stream;
    }
