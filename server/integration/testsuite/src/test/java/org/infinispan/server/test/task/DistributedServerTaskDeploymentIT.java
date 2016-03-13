@@ -40,7 +40,6 @@ import static org.junit.Assert.*;
 @RunWith(Arquillian.class)
 @Category({Task.class})
 @WithRunningServer({@RunningServer(name="clusteredcache-1"), @RunningServer(name = "clusteredcache-2")})
-@Ignore(value = "To be fixed by ISPN-6302")
 public class DistributedServerTaskDeploymentIT {
 
     @InfinispanResource("clusteredcache-1")
@@ -61,7 +60,7 @@ public class DistributedServerTaskDeploymentIT {
     @TargetsContainer("clusteredcache-1")
     @OverProtocol("jmx-as7")
     public static JavaArchive create1() {
-        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "custom-distributed-task.jar");
+        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "custom-task-deployment.jar");
         jar.addClass(DistributedTestServerTask.class);
         jar.addAsServiceProvider(ServerTask.class, DistributedTestServerTask.class);
 
@@ -72,7 +71,7 @@ public class DistributedServerTaskDeploymentIT {
     @TargetsContainer("clusteredcache-2")
     @OverProtocol("jmx-as7")
     public static JavaArchive create2() {
-        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "custom-distributed-task.jar");
+        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "custom-task-deployment.jar");
         jar.addClass(DistributedTestServerTask.class);
         jar.addAsServiceProvider(ServerTask.class, DistributedTestServerTask.class);
 
