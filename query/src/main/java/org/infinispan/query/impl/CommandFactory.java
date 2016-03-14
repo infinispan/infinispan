@@ -28,14 +28,14 @@ public class CommandFactory implements ExtendedModuleCommandFactory {
    }
 
    @Override
-   public ReplicableCommand fromStream(byte commandId, Object[] args) {
+   public ReplicableCommand fromStream(byte commandId) {
       // Should not be called while this factory only
       // provides cache specific replicable commands.
       return null;
    }
 
    @Override
-   public CacheRpcCommand fromStream(byte commandId, Object[] args, String cacheName) {
+   public CacheRpcCommand fromStream(byte commandId, String cacheName) {
       CacheRpcCommand c;
       switch (commandId) {
          case ClusteredQueryCommand.COMMAND_ID:
@@ -50,7 +50,6 @@ public class CommandFactory implements ExtendedModuleCommandFactory {
          default:
             throw new IllegalArgumentException("Not registered to handle command id " + commandId);
       }
-      c.setParameters(commandId, args);
       return c;
    }
 

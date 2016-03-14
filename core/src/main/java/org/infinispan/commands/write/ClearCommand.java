@@ -131,4 +131,22 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
       return false;
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ClearCommand)) return false;
+
+      ClearCommand that = (ClearCommand) o;
+
+      if (getTopologyId() != that.getTopologyId()) return false;
+      if (flags != null ? !flags.equals(that.flags) : that.flags != null) return false;
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = getTopologyId();
+      result = 31 * result + (flags != null ? flags.hashCode() : 0);
+      return result;
+   }
 }

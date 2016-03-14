@@ -219,10 +219,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
 
       GetKeyValueCommand c4 = new GetKeyValueCommand("key", Collections.<Flag>emptySet());
-      byte[] bytes = marshaller.objectToByteBuffer(c4);
-      GetKeyValueCommand rc4 = (GetKeyValueCommand) marshaller.objectFromByteBuffer(bytes);
-      assert rc4.getCommandId() == c4.getCommandId() : "Writen[" + c4.getCommandId() + "] and read[" + rc4.getCommandId() + "] objects should be the same";
-      assert Arrays.equals(rc4.getParameters(), c4.getParameters()) : "Writen[" + c4.getParameters() + "] and read[" + rc4.getParameters() + "] objects should be the same";
+      marshallAndAssertEquality(c4);
 
       PutKeyValueCommand c5 = new PutKeyValueCommand("k", "v", false, null,
             new EmbeddedMetadata.Builder().build(), Collections.<Flag>emptySet(), AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
@@ -234,26 +231,17 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       // EvictCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
 
       InvalidateCommand c7 = new InvalidateCommand(null, null, CommandInvocationId.generateId(null), "key1", "key2");
-      bytes = marshaller.objectToByteBuffer(c7);
-      InvalidateCommand rc7 = (InvalidateCommand) marshaller.objectFromByteBuffer(bytes);
-      assert rc7.getCommandId() == c7.getCommandId() : "Writen[" + c7.getCommandId() + "] and read[" + rc7.getCommandId() + "] objects should be the same";
-      assert Arrays.equals(rc7.getParameters(), c7.getParameters()) : "Writen[" + c7.getParameters() + "] and read[" + rc7.getParameters() + "] objects should be the same";
+      marshallAndAssertEquality(c7);
 
-      InvalidateCommand c71 = new InvalidateL1Command(null, null, null, Collections.<Flag>emptySet(), CommandInvocationId.generateId(null), "key1", "key2");
-      bytes = marshaller.objectToByteBuffer(c71);
-      InvalidateCommand rc71 = (InvalidateCommand) marshaller.objectFromByteBuffer(bytes);
-      assert rc71.getCommandId() == c71.getCommandId() : "Writen[" + c71.getCommandId() + "] and read[" + rc71.getCommandId() + "] objects should be the same";
-      assert Arrays.equals(rc71.getParameters(), c71.getParameters()) : "Writen[" + c71.getParameters() + "] and read[" + rc71.getParameters() + "] objects should be the same";
+      InvalidateCommand c71 = new InvalidateL1Command(null, null, null, null, CommandInvocationId.generateId(null), "key1", "key2");
+      marshallAndAssertEquality(c71);
 
       ReplaceCommand c8 = new ReplaceCommand("key", "oldvalue", "newvalue",
             null, new EmbeddedMetadata.Builder().build(), Collections.EMPTY_SET, AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
       marshallAndAssertEquality(c8);
 
       ClearCommand c9 = new ClearCommand();
-      bytes = marshaller.objectToByteBuffer(c9);
-      ClearCommand rc9 = (ClearCommand) marshaller.objectFromByteBuffer(bytes);
-      assert rc9.getCommandId() == c9.getCommandId() : "Writen[" + c9.getCommandId() + "] and read[" + rc9.getCommandId() + "] objects should be the same";
-      assert Arrays.equals(rc9.getParameters(), c9.getParameters()) : "Writen[" + c9.getParameters() + "] and read[" + rc9.getParameters() + "] objects should be the same";
+      marshallAndAssertEquality(c9);
 
       Map<Integer, GlobalTransaction> m1 = new HashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
@@ -572,6 +560,14 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
       log.debugf("Payload size for object=%s : %s", writeObj, bytes.length);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
+      assert readObj.equals(writeObj) : "Writen[" + writeObj + "] and read[" + readObj + "] objects should be the same";
+   }
+
+   protected void marshallAndAssertEquality(ReplicableCommand writeObj) throws Exception {
+      byte[] bytes = marshaller.objectToByteBuffer(writeObj);
+      log.debugf("Payload size for object=%s : %s", writeObj, bytes.length);
+      ReplicableCommand readObj = (ReplicableCommand) marshaller.objectFromByteBuffer(bytes);
+      assert readObj.getCommandId() == writeObj.getCommandId() : "Writen[" + writeObj.getCommandId() + "] and read[" + readObj.getCommandId() + "] objects should be the same";
       assert readObj.equals(writeObj) : "Writen[" + writeObj + "] and read[" + readObj + "] objects should be the same";
    }
 

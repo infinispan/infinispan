@@ -16,7 +16,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.*;
-import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
@@ -57,13 +56,6 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       DeltaAwareObjectOutput deltaAwareObjectOutput = output instanceof DeltaAwareObjectOutput ?
             (DeltaAwareObjectOutput) output :
             new DeltaAwareObjectOutput(output);
-      Object[] args = command.getParameters();
-      int numArgs = (args == null ? 0 : args.length);
-
-      UnsignedNumeric.writeUnsignedInt(output, numArgs);
-      for (int i = 0; i < numArgs; i++) {
-         deltaAwareObjectOutput.writeObject(args[i]);
-      }
       command.writeTo(deltaAwareObjectOutput);
       if (command instanceof TopologyAffectedCommand) {
          output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
@@ -93,20 +85,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    protected ReplicableCommand readCommandHeader(ObjectInput input) throws IOException, ClassNotFoundException {
       byte type = input.readByte();
       short methodId = input.readShort();
-      return cmdFactory.fromStream((byte) methodId, readLegacyParameters(input), type);
-   }
-
-   protected Object[] readLegacyParameters(ObjectInput input) throws IOException, ClassNotFoundException {
-      int numArgs = UnsignedNumeric.readUnsignedInt(input);
-      Object[] args = null;
-      if (numArgs > 0) {
-         args = new Object[numArgs];
-         // For DeltaAware instances, nothing special to be done here.
-         // Do not merge here since the cache contents are required.
-         // Instead, merge in PutKeyValueCommand.perform
-         for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
-      }
-      return args;
+      return cmdFactory.fromStream((byte) methodId, type);
    }
 
    void readCommandParameters(ObjectInput input, ReplicableCommand command) throws IOException, ClassNotFoundException {
@@ -116,8 +95,8 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       }
    }
 
-   protected CacheRpcCommand fromStream(byte id, Object[] parameters, byte type, String cacheName) {
-      return cmdFactory.fromStream(id, parameters, type, cacheName);
+   protected CacheRpcCommand fromStream(byte id, byte type, String cacheName) {
+      return cmdFactory.fromStream(id, type, cacheName);
    }
 
    @Override
