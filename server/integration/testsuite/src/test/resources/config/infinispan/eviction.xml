@@ -5,14 +5,14 @@
                  </local-cache>
                  <local-cache name="unordered" start="EAGER">
                      <!-- UNORDERED is deprecated and uses LRU instead -->
-                     <eviction strategy="UNORDERED" max-entries="3"/>
+                     <eviction strategy="UNORDERED" size="3"/>
                  </local-cache>
                  <local-cache name="lirs" start="EAGER">
-                     <eviction strategy="LIRS" max-entries="5"/>
+                     <eviction strategy="LIRS" size="5"/>
                  </local-cache>
                  <local-cache name="lru" start="EAGER">
-                     <eviction strategy="LRU" max-entries="3"/>
+                     <eviction strategy="LRU" size="3"/>
                  </local-cache>
-                 <replicated-cache name="memcachedCache" mode="SYNC"/>
+                 <local-cache name="memcachedCache"/>
              </cache-container>
         </subsystem>
