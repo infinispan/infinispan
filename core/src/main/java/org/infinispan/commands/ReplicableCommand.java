@@ -1,6 +1,5 @@
 package org.infinispan.commands;
 
-import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 
 import java.io.IOException;
@@ -35,31 +34,6 @@ public interface ReplicableCommand {
    byte getCommandId();
 
    /**
-    * Used by marshallers to stream this command across a network
-    *
-    * @return an object array of arguments, compatible with pre-2.2.0 MethodCall args.
-    * @deprecated will be replaced by {@link #writeTo(ObjectOutput)}. Note: don't implement both since they are used
-    * during the transition period.
-    */
-   @Deprecated
-   default Object[] getParameters() {
-      return Util.EMPTY_OBJECT_ARRAY;
-   }
-
-   /**
-    * Used by the {@link CommandsFactory} to create a command from raw data read off a stream.
-    *
-    * @param commandId  command id to set.  This is usually unused but *could* be used in the event of a command having
-    *                   multiple IDs, such as {@link org.infinispan.commands.write.PutKeyValueCommand}.
-    * @param parameters object array of args
-    * @deprecated will be replaced by {@link #readFrom(ObjectInput)}. Note: don't implement both since they are used
-    * during the transition period.
-    */
-   @Deprecated
-   default void setParameters(int commandId, Object[] parameters) {
-   }
-
-   /**
     * If true, a return value will be provided when performed remotely.  Otherwise, a remote {@link org.infinispan.remoting.responses.ResponseGenerator}
     * may choose to simply return null to save on marshalling costs.
     * @return true or false
@@ -84,9 +58,7 @@ public interface ReplicableCommand {
     * @param output the stream.
     * @throws IOException if an error occurred during the I/O.
     */
-   default void writeTo(ObjectOutput output) throws IOException {
-      //no-op by default
-   }
+   void writeTo(ObjectOutput output) throws IOException;
 
    /**
     * Reads this instance from the stream written by {@link #writeTo(ObjectOutput)}.
@@ -95,7 +67,5 @@ public interface ReplicableCommand {
     * @throws IOException            if an error occurred during the I/O.
     * @throws ClassNotFoundException if it tries to load an undefined class.
     */
-   default void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      //no-op by default
-   }
+   void readFrom(ObjectInput input) throws IOException, ClassNotFoundException;
 }

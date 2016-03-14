@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandExtensions;
-import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
@@ -31,7 +30,7 @@ public class TestModuleCommandExtensions implements ModuleCommandExtensions {
          }
 
          @Override
-         public ReplicableCommand fromStream(byte commandId, Object[] args) {
+         public ReplicableCommand fromStream(byte commandId) {
             ReplicableCommand c;
             switch (commandId) {
                case CustomReplicableCommand.COMMAND_ID:
@@ -40,12 +39,11 @@ public class TestModuleCommandExtensions implements ModuleCommandExtensions {
                default:
                   throw new IllegalArgumentException("Not registered to handle command id " + commandId);
             }
-            c.setParameters(commandId, args);
             return c;
          }
 
          @Override
-         public CacheRpcCommand fromStream(byte commandId, Object[] args, String cacheName) {
+         public CacheRpcCommand fromStream(byte commandId, String cacheName) {
             CacheRpcCommand c;
             switch (commandId) {
                case CustomCacheRpcCommand.COMMAND_ID:
@@ -57,7 +55,6 @@ public class TestModuleCommandExtensions implements ModuleCommandExtensions {
                default:
                   throw new IllegalArgumentException("Not registered to handle command id " + commandId);
             }
-            c.setParameters(commandId, args);
             return c;
          }
       };

@@ -167,7 +167,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
 
       CacheRpcCommand cacheRpcCommand;
       try {
-         cacheRpcCommand = cmdExt.fromStream(methodId, cmdExt.readLegacyParameters(paramsInput), type, cacheName);
+         cacheRpcCommand = cmdExt.fromStream(methodId, type, cacheName);
          cmdExt.readCommandParameters(paramsInput, cacheRpcCommand);
       } finally {
          if (firsTime) {
