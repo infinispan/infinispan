@@ -38,7 +38,6 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
@@ -670,10 +669,6 @@ public class TestingUtil {
 
          if (!cacheContainer.getStatus().allowInvocations()) return;
 
-         Cache<?, ?> registryCache = cacheContainer.getCache(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME, false);
-         if (registryCache != null && registryCache.getStatus().allowInvocations()) {
-            runningCaches.add(registryCache);
-         }
          for (Cache cache : runningCaches) {
             clearReplicationQueues(cache);
             clearCacheLoader(cache);

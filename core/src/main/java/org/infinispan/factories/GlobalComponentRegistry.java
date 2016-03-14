@@ -20,9 +20,7 @@ import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
-import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.registry.impl.InternalCacheRegistryImpl;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.ClusterTopologyManager;
@@ -115,7 +113,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
          registerComponent(new InternalCacheRegistryImpl(), InternalCacheRegistry.class);
-         registerComponent(new ClusterRegistryImpl(), ClusterRegistry.class);
          registerComponent(new CacheStoreFactoryRegistry(), CacheStoreFactoryRegistry.class);
          registerComponent(new GlobalXSiteAdminOperations(), GlobalXSiteAdminOperations.class);
 

@@ -7,7 +7,6 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategyContext;
-import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
@@ -632,7 +631,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
 
          CacheTopology cacheTopology = getCurrentTopology();
-         if (!isRebalanceEnabled() && !cacheName.equals(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME)) {
+         if (!isRebalanceEnabled()) {
             log.tracef("Postponing rebalance for cache %s, rebalancing is disabled", cacheName);
             return;
          }

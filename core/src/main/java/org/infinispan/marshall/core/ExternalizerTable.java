@@ -85,7 +85,6 @@ import org.infinispan.notifications.cachelistener.filter.ConverterAsCacheEventCo
 import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.registry.ScopedKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -339,7 +338,6 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new EmbeddedMetadata.Externalizer());
 
       addInternalExternalizer(new NumericVersion.Externalizer());
-      addInternalExternalizer(new ScopedKey.Externalizer());
       addInternalExternalizer(new KeyValuePair.Externalizer());
       addInternalExternalizer(new InternalMetadataImpl.Externalizer());
       addInternalExternalizer(new MarshalledEntryImpl.Externalizer(globalMarshaller));

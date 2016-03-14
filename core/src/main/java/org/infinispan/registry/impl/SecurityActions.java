@@ -27,14 +27,4 @@ final class SecurityActions {
          Security.doPrivileged(action);
       }
    }
-
-   @SuppressWarnings("unchecked")
-   static <K, V> Cache<K, V> getRegistryCache(EmbeddedCacheManager cacheManager) {
-      GetCacheAction action = new GetCacheAction(cacheManager, ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
-      if (System.getSecurityManager() != null) {
-         return (Cache<K, V>) AccessController.doPrivileged(action);
-      } else {
-         return (Cache<K, V>) Security.doPrivileged(action);
-      }
-   }
 }
