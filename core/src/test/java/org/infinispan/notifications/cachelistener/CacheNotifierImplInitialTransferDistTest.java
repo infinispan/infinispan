@@ -91,18 +91,22 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
    private void testSimpleCacheStarting(final StateListener<String, String> listener) {
       final Map<String, String> expectedValues = new HashMap<String, String>(10);
       Cache<String, String> cache = cache(0, CACHE_NAME);
-      for (int i = 0; i < 10; i++) {
-         String key = "key-" + i;
-         String value = "value-" + i;
-         expectedValues.put(key, value);
-         cache.put(key, value);
-      }
+      populateCache(cache, expectedValues);
 
       cache.addListener(listener);
       try {
          verifyEvents(isClustered(listener), listener, expectedValues);
       } finally {
          cache.removeListener(listener);
+      }
+   }
+
+   private void populateCache(Cache<String, String> cache, Map<String, String> expectedValues) {
+      for (int i = 0; i < 10; i++) {
+         String key = "key-" + i;
+         String value = "value-" + i;
+         expectedValues.put(key, value);
+         cache.put(key, value);
       }
    }
 
@@ -202,12 +206,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          throws InterruptedException, TimeoutException, BrokenBarrierException, ExecutionException {
       final Map<String, String> expectedValues = new HashMap<>(10);
       final Cache<String, String> cache = cache(0, CACHE_NAME);
-      for (int i = 0; i < 10; i++) {
-         String key = "key-" + i;
-         String value = "value-" + i;
-         expectedValues.put(key, value);
-         cache.put(key, value);
-      }
+      populateCache(cache, expectedValues);
 
       final CheckPoint checkPoint = new CheckPoint();
 
@@ -220,36 +219,20 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
                  return i.getMethod().invoke(real, i.getArguments());
               }).when(mock).iterator());
       try {
+         String keyToChange = findKeyBasedOnOwnership("key-to-change",
+               cache.getAdvancedCache().getDistributionManager().getConsistentHash(), shouldBePrimaryOwner,
+               cache.getCacheManager().getAddress());
+         String value = prepareOperation(operation, cache, keyToChange);
+         if (value != null) {
+            expectedValues.put(keyToChange, value);
+         }
+
          Future<Void> future = fork(() -> {
             cache.addListener(listener);
             return null;
          });
 
          checkPoint.awaitStrict("pre_retrieve_entry_invoked", 10000, TimeUnit.SECONDS);
-
-         String value;
-         String keyToChange = findKeyBasedOnOwnership(expectedValues.keySet(),
-               cache.getAdvancedCache().getDistributionManager().getConsistentHash(),
-               shouldBePrimaryOwner, cache.getCacheManager().getAddress());
-
-         switch (operation) {
-            case CREATE:
-               keyToChange = "new-key";
-               value = "new-value";
-               expectedValues.put(keyToChange, value);
-               break;
-            case PUT:
-               value =  cache.get(keyToChange) + "-changed";
-               // Now remove the old value and put in the new one
-               expectedValues.put(keyToChange, value);
-               break;
-            case REMOVE:
-               value = null;
-               expectedValues.remove(keyToChange);
-               break;
-            default:
-               throw new IllegalArgumentException("Unsupported Operation provided " + operation);
-         }
 
          operation.perform(cache, keyToChange, value);
 
@@ -265,6 +248,26 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       }
    }
 
+   private String prepareOperation(Operation operation, Cache<String, String> cache, String keyToChange) {
+      String value;
+      switch (operation) {
+         case CREATE:
+            value = "new-value";
+            break;
+         case PUT:
+            cache.put(keyToChange, "initial-value");
+            value = "changed-value";
+            break;
+         case REMOVE:
+            cache.put(keyToChange, "initial-value");
+            value = null;
+            break;
+         default:
+            throw new IllegalArgumentException("Unsupported Operation provided " + operation);
+      }
+      return value;
+   }
+
    /**
     * This test is to verify that the modification event is sent after the creation event is done
     */
@@ -274,12 +277,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          throws IOException, InterruptedException, TimeoutException, BrokenBarrierException, ExecutionException {
       final Map<String, String> expectedValues = new HashMap<String, String>(10);
       final Cache<String, String> cache = cache(0, CACHE_NAME);
-      for (int i = 0; i < 10; i++) {
-         String key = "key-" + i;
-         String value = "value-" + i;
-         expectedValues.put(key, value);
-         cache.put(key, value);
-      }
+      populateCache(cache, expectedValues);
 
       CheckPoint checkPoint = new CheckPoint();
 
@@ -296,32 +294,20 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       });
 
       try {
+         String keyToChange = findKeyBasedOnOwnership("key-to-change",
+               cache.getAdvancedCache().getDistributionManager().getConsistentHash(), shouldBePrimaryOwner,
+               cache.getCacheManager().getAddress());
+         String value = prepareOperation(operation, cache, keyToChange);
+         if (cache.get(keyToChange) != null) {
+            expectedValues.put(keyToChange, cache.get(keyToChange));
+         }
+
          Future<Void> future = fork(() -> {
             cache.addListener(listener);
             return null;
          });
 
          checkPoint.awaitStrict("pre_close_iter_invoked", 10, TimeUnit.SECONDS);
-
-         String value;
-         String keyToChange = findKeyBasedOnOwnership(expectedValues.keySet(),
-                                                      cache.getAdvancedCache().getDistributionManager().getConsistentHash(),
-                                                      shouldBePrimaryOwner, cache.getCacheManager().getAddress());
-
-         switch (operation) {
-            case CREATE:
-               keyToChange = "new-key";
-               value = "new-value";
-               break;
-            case PUT:
-               value =  cache.get(keyToChange) + "-changed";
-               break;
-            case REMOVE:
-               value = null;
-               break;
-            default:
-               throw new IllegalArgumentException("Unsupported Operation provided " + operation);
-         }
 
          Object oldValue = operation.perform(cache, keyToChange, value);
 
@@ -386,9 +372,10 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       }
    }
 
-   private <K> K findKeyBasedOnOwnership(Iterable<? extends K> keys, ConsistentHash hash, boolean shouldBePrimaryOwner,
+   private String findKeyBasedOnOwnership(String keyPrefix, ConsistentHash hash, boolean shouldBePrimaryOwner,
                                          Address address) {
-      for (K key : keys) {
+      for (int i = 0; i < 1000; i++) {
+         String key = keyPrefix + i;
          boolean isPrimaryOwner = hash.locatePrimaryOwner(key).equals(address);
          if (isPrimaryOwner == shouldBePrimaryOwner) {
             if (shouldBePrimaryOwner) {
@@ -473,31 +460,14 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          throws TimeoutException, InterruptedException, ExecutionException {
       final Map<String, String> expectedValues = new HashMap<String, String>(10);
       final Cache<String, String> cache = cache(0, CACHE_NAME);
-      for (int i = 0; i < 10; i++) {
-         String key = "key-" + i;
-         String value = "value-" + i;
-         expectedValues.put(key, value);
-         cache.put(key, value);
-      }
+      populateCache(cache, expectedValues);
 
-      String value;
-      String keyToChange = findKeyBasedOnOwnership(expectedValues.keySet(),
-                                                   cache.getAdvancedCache().getDistributionManager().getConsistentHash(),
-                                                   shouldBePrimaryOwner, cache.getCacheManager().getAddress());
-
-      switch (operation) {
-         case CREATE:
-            keyToChange = "new-key";
-            value = "new-value";
-            break;
-         case PUT:
-            value = cache.get(keyToChange) + "-changed";
-            break;
-         case REMOVE:
-            value = null;
-            break;
-         default:
-            throw new IllegalArgumentException("Unsupported Operation provided " + operation);
+      String keyToChange = findKeyBasedOnOwnership("key-to-change-",
+            cache.getAdvancedCache().getDistributionManager().getConsistentHash(), shouldBePrimaryOwner,
+            cache.getCacheManager().getAddress());
+      String value = prepareOperation(operation, cache, keyToChange);
+      if (cache.get(keyToChange) != null) {
+         expectedValues.put(keyToChange, cache.get(keyToChange));
       }
 
       CheckPoint checkPoint = new CheckPoint();
