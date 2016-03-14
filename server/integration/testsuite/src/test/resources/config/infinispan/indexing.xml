@@ -48,8 +48,8 @@
                 <local-cache name="localnotindexed" start="EAGER" />
 
                 <!-- Keep REST and Memcached services happy by providing the needed caches -->
-                <replicated-cache name="rest" mode="SYNC"/>
-                <replicated-cache name="memcachedCache" mode="SYNC"/>
+                <replicated-cache name="rest" mode="SYNC" start="EAGER"/>
+                <replicated-cache name="memcachedCache" mode="SYNC" start="EAGER"/>
             </cache-container>
 
             <cache-container name="security"/>

@@ -3,7 +3,7 @@
                 <local-cache name="default" start="EAGER">
                     <file-store name="myFileStore" passivation="false" purge="false" max-entries="2" />
                 </local-cache>
-                <replicated-cache name="memcachedCache" mode="SYNC"/>
+                <local-cache name="memcachedCache"/>
             </cache-container>
             <cache-container name="security"/>
         </subsystem>
