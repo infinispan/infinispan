@@ -5,6 +5,6 @@
                         <property name="customProperty">10</property>
                     </store>
                 </local-cache>
-                <replicated-cache name="memcachedCache" mode="SYNC"/>
+                <local-cache name="memcachedCache"/>
             </cache-container>
         </subsystem>
