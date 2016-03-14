@@ -1,6 +1,6 @@
 /**
  * The internal cache registry API
  *
- * @public
+ * @private
  */
 package org.infinispan.registry;
