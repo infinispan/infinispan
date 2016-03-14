@@ -61,8 +61,8 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       if (flags.contains(Flag.PERSISTENT) && globalConfiguration.globalState().enabled()) {
          builder.persistence().addSingleFileStore().location(globalConfiguration.globalState().persistentLocation()).purgeOnStartup(false).preload(true);
       }
-      SecurityActions.defineConfiguration(cacheManager, name, builder.build());
       internalCaches.put(name, flags);
+      SecurityActions.defineConfiguration(cacheManager, name, builder.build());
       if (!flags.contains(Flag.USER)) {
          privateCaches.add(name);
       }
