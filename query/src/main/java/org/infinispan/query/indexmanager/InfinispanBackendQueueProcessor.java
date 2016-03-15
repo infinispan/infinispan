@@ -105,8 +105,8 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
    }
 
    @Override
-   public void closeIndexWriter() {
-      //Placeholder to implemenet Index Affinity: No-Op is ok until that's implemented.
+   public void flushAndReleaseResources() {
+      //Placeholder to implement Index Affinity: No-Op is ok until that's implemented.
    }
 
    boolean isMasterLocal() {
