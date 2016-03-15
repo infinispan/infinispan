@@ -1,6 +1,5 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.codehaus.jackson.map.util.ISO8601DateFormat;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.infinispan.SecurityActions;
@@ -202,6 +201,8 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
                 node.get("name").set(task.getName());
                 node.get("type").set(task.getType());
                 node.get("mode").set(task.getExecutionMode().toString());
+                ModelNode parameters = node.get("parameters").setEmptyList();
+                task.getParameters().forEach(p -> parameters.add(new ModelNode().set(p)));
             }
             return result;
         }
