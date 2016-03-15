@@ -14,7 +14,6 @@ import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.junit.Ignore;
 import org.testng.annotations.Test;
 
 import javax.security.auth.Subject;

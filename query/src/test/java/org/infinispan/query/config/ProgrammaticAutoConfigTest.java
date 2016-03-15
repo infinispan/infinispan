@@ -19,7 +19,7 @@ public class ProgrammaticAutoConfigTest {
    public void testWithoutAutoConfig() {
       IndexingConfiguration cfg = new ConfigurationBuilder()
               .indexing().index(Index.ALL).create();
-      
+
       assertTrue(cfg.properties().isEmpty());
    }
 

@@ -30,7 +30,7 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * ClusteredQueryTest.
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
@@ -231,7 +231,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       }
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
-   
+
    public void testGetResultSizeList() throws ParseException {
       populateCache();
       assertEquals(4, cacheQuery.getResultSize());

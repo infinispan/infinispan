@@ -64,4 +64,3 @@ public class ShardIndexManager extends DirectoryBasedIndexManager {
       }
    }
 }
-

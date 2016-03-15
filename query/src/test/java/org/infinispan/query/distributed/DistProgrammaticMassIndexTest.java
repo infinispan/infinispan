@@ -43,7 +43,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
          ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
          cacheCfg1.clustering().stateTransfer().fetchInMemoryState(true);
          cacheManagers.get(i).defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, cacheCfg1.build());
-         cacheManagers.get(i).defineConfiguration( InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
+         cacheManagers.get(i).defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
       }
 
       waitForClusterToForm(neededCacheNames);

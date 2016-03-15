@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 /**
  * Tests for testing clustered queries functionality on multiple cache instances
  * (In these tests we have two caches in each CacheManager)
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.2
  */

@@ -35,37 +35,37 @@ public class LuceneWorkTransformationVisitor implements IndexWorkVisitor<KeyTran
 
    @Override
    public LuceneWork visitAddWork(AddLuceneWork addLuceneWork, KeyTransformationHandler keyTransformationHandler) {
-      return addDuplicator.cloneOverridingIdString( addLuceneWork, keyTransformationHandler );
+      return addDuplicator.cloneOverridingIdString(addLuceneWork, keyTransformationHandler);
    }
 
    @Override
    public LuceneWork visitDeleteWork(DeleteLuceneWork deleteLuceneWork, KeyTransformationHandler keyTransformationHandler) {
-      return deleteDuplicator.cloneOverridingIdString( deleteLuceneWork, keyTransformationHandler );
+      return deleteDuplicator.cloneOverridingIdString(deleteLuceneWork, keyTransformationHandler);
    }
 
    @Override
    public LuceneWork visitUpdateWork(UpdateLuceneWork updateLuceneWork, KeyTransformationHandler keyTransformationHandler) {
-      return updateDuplicator.cloneOverridingIdString( updateLuceneWork, keyTransformationHandler );
+      return updateDuplicator.cloneOverridingIdString(updateLuceneWork, keyTransformationHandler);
    }
 
    @Override
    public LuceneWork visitOptimizeWork(OptimizeLuceneWork optimizeLuceneWork, KeyTransformationHandler keyTransformationHandler) {
-      return returnSameDuplicator.cloneOverridingIdString( optimizeLuceneWork, keyTransformationHandler );
+      return returnSameDuplicator.cloneOverridingIdString(optimizeLuceneWork, keyTransformationHandler);
    }
 
    @Override
    public LuceneWork visitFlushWork(FlushLuceneWork flushLuceneWork, KeyTransformationHandler keyTransformationHandler) {
-      return returnSameDuplicator.cloneOverridingIdString( flushLuceneWork, keyTransformationHandler );
+      return returnSameDuplicator.cloneOverridingIdString(flushLuceneWork, keyTransformationHandler);
    }
 
    @Override
    public LuceneWork visitPurgeAllWork(PurgeAllLuceneWork purgeAllLuceneWork, KeyTransformationHandler keyTransformationHandler) {
-      return returnSameDuplicator.cloneOverridingIdString( purgeAllLuceneWork, keyTransformationHandler );
+      return returnSameDuplicator.cloneOverridingIdString(purgeAllLuceneWork, keyTransformationHandler);
    }
 
    @Override
    public LuceneWork visitDeleteByQueryWork(DeleteByQueryLuceneWork work, KeyTransformationHandler p) {
-	   throw new UnsupportedOperationException( "delete-by-query is not supported" );
+      throw new UnsupportedOperationException("delete-by-query is not supported");
    }
 
    private static class AddWorkDuplicator implements LuceneWorkIdTransformer<AddLuceneWork> {

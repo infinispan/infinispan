@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
-import org.infinispan.commons.util.Util;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -27,7 +26,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.infinispan.commons.util.Util.*;
+import static org.infinispan.commons.util.Util.hexDump;
+import static org.infinispan.commons.util.Util.printArray;
 
 /**
  * A Hot Rod encoder/decoder for version 2.0 of the protocol.
@@ -221,7 +221,7 @@ public class Codec20 implements Codec, HotRodConstants {
       Marshaller marshaller = transport.getTransportFactory().getMarshaller();
       if (HotRodConstants.hasPrevious(status)) {
          byte[] bytes = transport.readArray();
-         if (trace) getLog().tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
+         if (trace) getLog().tracef("Previous value bytes is: %s", printArray(bytes, false));
          //0-length response means null
          return bytes.length == 0 ? null : MarshallerUtil.bytes2obj(marshaller, bytes, status);
       } else {

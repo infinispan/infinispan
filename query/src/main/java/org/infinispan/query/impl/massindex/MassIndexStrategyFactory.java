@@ -13,6 +13,9 @@ import org.infinispan.query.indexmanager.InfinispanIndexManager;
  */
 final class MassIndexStrategyFactory {
 
+   private MassIndexStrategyFactory() {
+   }
+
    static MassIndexStrategy calculateStrategy(EntityIndexBinding indexBinding, Configuration cacheConfiguration) {
       IndexManager[] indexManagers = indexBinding.getIndexManagers();
       IndexManager indexManager = indexBinding.getIndexManagers()[0];

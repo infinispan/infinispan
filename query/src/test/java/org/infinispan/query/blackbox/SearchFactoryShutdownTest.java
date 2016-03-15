@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "query.blackbox.SearchFactoryShutdownTest", groups = "functional")
 public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
-   
+
    public void testCorrectShutdown() {
       CacheContainer cc = null;
 

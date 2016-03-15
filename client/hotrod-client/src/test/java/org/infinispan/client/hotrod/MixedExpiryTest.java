@@ -6,10 +6,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 

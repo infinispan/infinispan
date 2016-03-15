@@ -11,10 +11,10 @@ import org.infinispan.query.clustered.QueryResponse;
 
 /**
  * ClusteredQueryCommandWorker.
- * 
+ *
  * Add specific behavior for ClusteredQueryCommand. Each ClusteredQueryCommandType links to a
  * ClusteredQueryCommandWorker
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */

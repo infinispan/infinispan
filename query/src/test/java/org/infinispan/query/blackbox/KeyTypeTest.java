@@ -74,7 +74,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key9, person1);
 
       // Going to search the 'blurb' field for 'owns'
-      Term term = new Term ("blurb", "owns");
+      Term term = new Term("blurb", "owns");
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(new TermQuery(term));
       assert cacheQuery.getResultSize() == 9;
 

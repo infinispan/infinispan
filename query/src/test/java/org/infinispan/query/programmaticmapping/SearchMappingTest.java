@@ -25,7 +25,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 /**
  * Verify programmatic configuration of indexing properties via SearchMapping
  * is properly enabled in the Search engine. See also ISPN-1820.
- * 
+ *
  * @author Michael Wittig
  * @author Sanne Grinovero
  * @since 5.1.1

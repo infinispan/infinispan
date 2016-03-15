@@ -80,7 +80,7 @@ public class EagerIteratorTest {
    }
 
    protected String resultAt(int index) {
-      return dummyResults.get(keys.get( index ));
+      return dummyResults.get(keys.get(index));
    }
 
    public void testNextAndHasNext() {

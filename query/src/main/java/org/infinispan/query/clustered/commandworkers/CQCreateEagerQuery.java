@@ -8,9 +8,9 @@ import org.infinispan.query.clustered.QueryResponse;
 
 /**
  * CQCreateEagerQuery.
- * 
+ *
  * Returns the results of a node to create a eager distributed iterator.
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
@@ -26,8 +26,7 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
          QueryResponse queryResponse = new QueryResponse(eagerTopDocs, getQueryBox().getMyId(), resultSize);
          queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
          return queryResponse;
-      }
-      finally {
+      } finally {
          extractor.close();
       }
    }

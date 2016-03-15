@@ -8,7 +8,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.testng.annotations.Test;
 

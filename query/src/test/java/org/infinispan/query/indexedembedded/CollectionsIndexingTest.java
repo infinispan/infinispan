@@ -44,12 +44,12 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
    public void prepareSearchFactory() throws Exception {
       qf = Search.getSearchManager(cache);
    }
-   
+
    @AfterMethod
    public void cleanupData() {
       cache.clear();
    }
-   
+
    @Test
    public void searchOnEmptyIndex() throws ParseException {
       QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
@@ -57,7 +57,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       List<Object> list = qf.getQuery(query, Country.class, City.class).list();
       assertEquals(0, list.size());
    }
-   
+
    @Test
    public void searchOnAllTypes() throws ParseException {
       QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
@@ -69,10 +69,10 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       assertEquals(1, list.size());
       list = qf.getQuery(query).list();
       assertEquals(1, list.size());
-      list = qf.getQuery( new MatchAllDocsQuery() ).list();
+      list = qf.getQuery(new MatchAllDocsQuery()).list();
       assertEquals(1, list.size());
    }
-   
+
    @Test
    public void searchOnSimpleField() throws ParseException {
       QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
@@ -83,12 +83,12 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       List<Object> list = qf.getQuery(query, Country.class, City.class).list();
       assertEquals(1, list.size());
    }
-   
+
    @Test
    public void searchOnEmbeddedField() throws ParseException {
       QueryParser queryParser = TestQueryHelperFactory.createQueryParser("cities.name");
       Query query = queryParser.parse("Newcastle");
-      
+
       Country uk = new Country();
       City london = new City();
       london.name = "London";
@@ -97,7 +97,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       uk.countryName = "United Kingdom";
       uk.cities.add(newcastle);
       uk.cities.add(london);
-      
+
       //verify behaviour on multiple insertions as well:
       cache.put("UK", uk);
       cache.put("UK", uk);

@@ -35,13 +35,13 @@ import java.util.List;
  * @since 4.0
  */
 public class TestQueryHelperFactory {
-   
+
    public static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer();
-   
+
    public static QueryParser createQueryParser(String defaultFieldName) {
       return new QueryParser(defaultFieldName, STANDARD_ANALYZER);
    }
-   
+
    public static Version getLuceneVersion() {
       return Version.LATEST; //Change as needed
    }
@@ -53,7 +53,7 @@ public class TestQueryHelperFactory {
       CacheQuery cacheQuery = queryFactory.getQuery(parsedQuery);
       return cacheQuery;
    }
-   
+
    public static SearchIntegrator extractSearchFactory(Cache cache) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       SearchIntegrator component = componentRegistry.getComponent(SearchIntegrator.class);
@@ -69,7 +69,7 @@ public class TestQueryHelperFactory {
 
       builder.indexing().index(indexLocalOnly ? Index.LOCAL : Index.ALL);
 
-      if(isRamDirectoryProvider) {
+      if (isRamDirectoryProvider) {
          builder.indexing()
             .addIndexedEntity(Person.class)
             .addIndexedEntity(Car.class)
@@ -88,7 +88,7 @@ public class TestQueryHelperFactory {
          }
       }
 
-      for(int i = 0; i < numberOfNodes; i++) {
+      for (int i = 0; i < numberOfNodes; i++) {
          GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder
                .defaultClusteredBuilder();
          globalConfigurationBuilder.transport().machineId("a" + i).rackId("b" + i).siteId("test" + i);
@@ -101,5 +101,5 @@ public class TestQueryHelperFactory {
 
       return caches;
    }
-   
+
 }

@@ -14,7 +14,7 @@ import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker
 /**
  * Types of ClusteredQueryCommandWorker. Each type defines a different behavior for a
  * ClusteredQueryCommand...
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */

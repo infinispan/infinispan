@@ -22,7 +22,7 @@ public class Car implements Serializable {
 
    @Field(store = Store.YES)
    private String make;
-   
+
    @Field(analyze = Analyze.NO, bridge = @FieldBridge(impl = IntegerBridge.class))
    @Facet(encoding = FacetEncodingType.STRING)
    private int cubicCapacity;

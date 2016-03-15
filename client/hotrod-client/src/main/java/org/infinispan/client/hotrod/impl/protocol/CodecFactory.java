@@ -1,11 +1,18 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.commons.marshall.Marshaller;
-
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_10;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_11;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_12;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_13;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_20;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_21;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_22;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_23;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_24;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION_25;
 
 /**
  * Code factory.

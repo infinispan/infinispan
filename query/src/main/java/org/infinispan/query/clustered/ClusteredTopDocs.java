@@ -7,9 +7,9 @@ import org.infinispan.remoting.transport.Address;
 
 /**
  * ClusteredTopDocs.
- * 
+ *
  * A TopDocs with UUID and address of node who has the doc.
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */

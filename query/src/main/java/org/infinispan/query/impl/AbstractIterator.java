@@ -82,7 +82,7 @@ public abstract class AbstractIterator implements ResultIterator {
 
    private void fillBuffer(int startIndex) {
       bufferIndex = startIndex;
-      int resultsToLoad = Math.min( buffer.length, lastIndex + 1 - bufferIndex);
+      int resultsToLoad = Math.min(buffer.length, lastIndex + 1 - bufferIndex);
       for (int i = 0; i < resultsToLoad; i++) {
          buffer[i] = loadResult(bufferIndex + i);
       }

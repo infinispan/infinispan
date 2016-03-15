@@ -29,7 +29,7 @@ public class DefaultMassIndexerProgressMonitor implements MassIndexerProgressMon
    /**
     * Logs progress of indexing job every <code>logAfterNumberOfDocuments</code>
     * documents written.
-    * 
+    *
     * @param logAfterNumberOfDocuments
     *           log each time the specified number of documents has been added
     */
