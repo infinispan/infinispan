@@ -11,6 +11,9 @@ import java.util.List;
  */
 public final class StringHelper {
 
+   private StringHelper() {
+   }
+
    public static String join(String[] array, String separator) {
       return Strings.join(array, separator);
    }

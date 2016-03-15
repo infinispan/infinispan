@@ -16,13 +16,13 @@ import org.testng.annotations.Test;
 
 /**
  * Base class for continuous query tests with multiple caches.
- * 
+ *
  * @author vjuranek
  * @since 8.0
  */
 @Test(groups = "functional")
 public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagersTest {
-   
+
    protected final int NUM_NODES = 3;
    protected final int NUM_OWNERS = NUM_NODES - 1;
 
@@ -31,7 +31,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
    public AbstractCQMultipleCachesTest() {
       cleanup =  CleanupPhase.AFTER_METHOD;
    }
-   
+
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder c = buildConfiguration();
@@ -44,7 +44,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
       c.clustering().hash().numOwners(NUM_OWNERS);
       return c;
    }
-   
+
    protected CallCountingCQResultListener<Object, Object> createContinuousQuery() {
       QueryFactory<?> qf = Search.getQueryFactory(cache(0));
 
@@ -57,7 +57,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
       cq.addContinuousQueryListener(query, listener);
       return listener;
    }
-   
+
    public void testContinuousQueryMultipleCaches() {
       for (int i = 0; i < 2; i++) {
          Person value = new Person();
@@ -69,7 +69,7 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
       CallCountingCQResultListener<Object, Object> listener = createContinuousQuery();
       final Map<Object, Integer> joined = listener.getJoined();
       final Map<Object, Integer> left = listener.getLeft();
-      
+
       assertEquals(2, joined.size());
       assertEquals(0, left.size());
       joined.clear();
@@ -98,8 +98,8 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
          assertEquals(1, joined.get(i).intValue());
       }
       joined.clear();
-      
-      cache(0).clear(); 
+
+      cache(0).clear();
 
       assertEquals(0, joined.size());
       assertEquals(6, left.size());
@@ -108,12 +108,12 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
       }
       left.clear();
    }
-   
+
    public void testCQCacheLeavesAndJoins() {
       CallCountingCQResultListener<Object, Object> listener = createContinuousQuery();
       final Map<Object, Integer> joined = listener.getJoined();
       final Map<Object, Integer> left = listener.getLeft();
-      
+
       assertEquals(0, joined.size());
       assertEquals(0, left.size());
 
@@ -142,12 +142,12 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
          assertEquals(1, joined.get(i).intValue());
       }
       joined.clear();
-      
+
       cache(0).clear();
       assertEquals(0, joined.size());
       assertEquals(6, left.size());
       left.clear();
-      
+
       for (int i = 0; i < 10; i++) {
          Person value = new Person();
          value.setName("John");

@@ -3,7 +3,6 @@ package org.infinispan.objectfilter.impl.hql;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.test.model.MarshallerRegistration;
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -22,7 +21,7 @@ import static org.junit.Assert.assertNull;
 public class ProtobufParsingTest extends AbstractParsingTest {
 
    @Override
-   protected FilterProcessingChain<Descriptor> createFilterProcessingChain() throws IOException, DescriptorParserException {
+   protected FilterProcessingChain<Descriptor> createFilterProcessingChain() throws IOException {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
       MarshallerRegistration.registerMarshallers(serCtx);
       EntityNamesResolver entityNamesResolver = new ProtobufEntityNamesResolver(serCtx);

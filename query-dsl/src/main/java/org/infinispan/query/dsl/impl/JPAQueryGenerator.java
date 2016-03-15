@@ -25,9 +25,9 @@ public class JPAQueryGenerator implements Visitor<String> {
 
    private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
 
-   private DateFormat dateFormat;
-
    protected Map<String, Object> namedParameters;
+
+   private DateFormat dateFormat;
 
    public JPAQueryGenerator() {
    }

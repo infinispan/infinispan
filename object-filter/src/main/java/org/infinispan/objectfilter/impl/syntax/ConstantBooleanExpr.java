@@ -12,11 +12,11 @@ public final class ConstantBooleanExpr implements PrimaryPredicateExpr {
 
    public static final ConstantBooleanExpr FALSE = new ConstantBooleanExpr(false);
 
+   private final boolean constantValue;
+
    public static ConstantBooleanExpr forBoolean(boolean value) {
       return value ? TRUE : FALSE;
    }
-
-   private final boolean constantValue;
 
    private ConstantBooleanExpr(boolean constantValue) {
       this.constantValue = constantValue;

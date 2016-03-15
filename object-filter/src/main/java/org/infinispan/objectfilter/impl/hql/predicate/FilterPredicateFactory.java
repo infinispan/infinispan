@@ -1,8 +1,17 @@
 package org.infinispan.objectfilter.impl.hql.predicate;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.hibernate.hql.ast.spi.predicate.*;
+import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate;
 import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate.Type;
+import org.hibernate.hql.ast.spi.predicate.ConjunctionPredicate;
+import org.hibernate.hql.ast.spi.predicate.DisjunctionPredicate;
+import org.hibernate.hql.ast.spi.predicate.InPredicate;
+import org.hibernate.hql.ast.spi.predicate.IsNullPredicate;
+import org.hibernate.hql.ast.spi.predicate.LikePredicate;
+import org.hibernate.hql.ast.spi.predicate.NegationPredicate;
+import org.hibernate.hql.ast.spi.predicate.PredicateFactory;
+import org.hibernate.hql.ast.spi.predicate.RangePredicate;
+import org.hibernate.hql.ast.spi.predicate.RootPredicate;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;

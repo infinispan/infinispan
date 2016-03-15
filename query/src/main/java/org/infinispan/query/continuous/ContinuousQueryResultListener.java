@@ -5,5 +5,6 @@ package org.infinispan.query.continuous;
  * @since 8.0
  * @deprecated replaced by {@link org.infinispan.query.api.continuous.ContinuousQueryListener}; to be removed in 8.3
  */
+@Deprecated
 public interface ContinuousQueryResultListener<K, V> extends ContinuousQueryListener<K, V> {
 }

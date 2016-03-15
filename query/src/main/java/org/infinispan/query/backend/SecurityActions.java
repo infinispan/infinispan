@@ -18,6 +18,9 @@ import java.security.AccessController;
  */
 final class SecurityActions {
 
+   private SecurityActions() {
+   }
+
    @SuppressWarnings("unchecked")
    static <K, V> Cache<K, V> getCache(EmbeddedCacheManager cacheManager, String cacheName) {
       GetCacheAction action = new GetCacheAction(cacheManager, cacheName);

@@ -90,6 +90,7 @@ public final class QueryKnownClasses {
 
    /**
     * Constructor used only in autodetect mode.
+    * @deprecated will be removed in Infinispan 9.0
     */
    @Deprecated
    QueryKnownClasses(String cacheName, EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {

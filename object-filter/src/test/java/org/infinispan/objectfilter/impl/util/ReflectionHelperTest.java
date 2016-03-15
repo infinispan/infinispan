@@ -33,19 +33,19 @@ public class ReflectionHelperTest {
       private Base prop3 = null;
    }
 
-   private static abstract class X {
+   private abstract static class X {
    }
 
-   private static abstract class Y extends X implements Comparable<String>, List<Long> {
+   private abstract static class Y extends X implements Comparable<String>, List<Long> {
    }
 
-   private static abstract class Z extends Y {
+   private abstract static class Z extends Y {
    }
 
-   private static abstract class Q extends X implements Map<String, Double> {
+   private abstract static class Q extends X implements Map<String, Double> {
    }
 
-   private static abstract class W extends Q {
+   private abstract static class W extends Q {
    }
 
    @SuppressWarnings("unused")
