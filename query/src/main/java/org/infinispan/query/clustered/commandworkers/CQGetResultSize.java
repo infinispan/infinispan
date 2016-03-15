@@ -5,9 +5,9 @@ import org.infinispan.query.clustered.QueryResponse;
 
 /**
  * CQGetResultSize.
- * 
+ *
  * Get the result size of this query on current node
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */

@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.transport.Transport;

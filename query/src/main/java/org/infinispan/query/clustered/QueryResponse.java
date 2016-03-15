@@ -7,9 +7,9 @@ import org.infinispan.remoting.transport.Address;
 
 /**
  * QueryResponse.
- * 
+ *
  * A response of a request to create a new distributed lazy iterator
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */

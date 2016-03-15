@@ -10,9 +10,9 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * QueryExtractorUtil.
- * 
+ *
  * Utility to extract the cache key of a DocumentExtractor.
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @author Marko Luksa
  * @since 5.1

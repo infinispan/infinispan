@@ -11,9 +11,9 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * DistributedLazyIterator.
- * 
+ *
  * Lazily iterates on a distributed query
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */

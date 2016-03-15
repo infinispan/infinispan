@@ -1,10 +1,6 @@
 package org.infinispan.client.hotrod.configuration;
 
-import java.util.Arrays;
-
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 
 /**
  * SslConfiguration.

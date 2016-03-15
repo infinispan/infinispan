@@ -31,6 +31,6 @@ public class ServerStatisticsImpl implements ServerStatistics {
    @Override
    public Integer getIntStatistic(String statsName) {
       String value = stats.get(statsName);
-      return value == null ? null : Integer.parseInt(value); 
+      return value == null ? null : Integer.parseInt(value);
    }
 }

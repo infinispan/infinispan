@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 /**
  * Verifies it's possible to store an index in an indexed Cache.
  * I don't think this should be encouraged, but should at least be handled appropriately.
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.2
  */

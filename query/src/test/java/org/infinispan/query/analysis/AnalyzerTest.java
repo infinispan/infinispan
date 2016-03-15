@@ -52,30 +52,30 @@ public class AnalyzerTest extends SingleCacheManagerTest {
    public void testAnalyzerDef() throws Exception {
       // create the test instance
       Team team = new Team();
-      team.setDescription( "This is a D\u00E0scription" );  // \u00E0 == � - ISOLatin1AccentFilterFactory should strip of diacritic
-      team.setLocation( "Atlanta" );
-      team.setName( "ATL team" );
+      team.setDescription("This is a D\u00E0scription");  // \u00E0 == � - ISOLatin1AccentFilterFactory should strip of diacritic
+      team.setLocation("Atlanta");
+      team.setName("ATL team");
 
       // persist and index the test object
       cache.put("id", team);
       SearchManager searchManager = Search.getSearchManager(cache);
 
       // execute several search to show that the right tokenizers were applies
-      TermQuery query = new TermQuery( new Term( "description", "D\u00E0scription" ) );
+      TermQuery query = new TermQuery(new Term("description", "D\u00E0scription"));
       assertEquals(
-            "iso latin filter should work.  � should be a now", 0, searchManager.getQuery( query ).list().size()
+            "iso latin filter should work.  � should be a now", 0, searchManager.getQuery(query).list().size()
       );
 
-      query = new TermQuery( new Term( "description", "is" ) );
+      query = new TermQuery(new Term("description", "is"));
       assertEquals(
-            "stop word filter should work. is should be removed", 0, searchManager.getQuery( query ).list().size()
+            "stop word filter should work. is should be removed", 0, searchManager.getQuery(query).list().size()
       );
 
-      query = new TermQuery( new Term( "description", "dascript" ) );
+      query = new TermQuery(new Term("description", "dascript"));
       assertEquals(
             "snowball stemmer should work. 'dascription' should be stemmed to 'dascript'",
             1,
-            searchManager.getQuery( query ).list().size()
+            searchManager.getQuery(query).list().size()
       );
    }
 
@@ -87,59 +87,59 @@ public class AnalyzerTest extends SingleCacheManagerTest {
    public void testAnalyzers() throws Exception {
       SearchManager search = Search.getSearchManager(cache);
 
-      Analyzer analyzer = search.getAnalyzer( "standard_analyzer" );
+      Analyzer analyzer = search.getAnalyzer("standard_analyzer");
       String text = "This is just FOOBAR's";
       assertEquals(asList("This", "is", "just", "FOOBAR's"), terms(analyzer, "name", text));
 
-      analyzer = search.getAnalyzer( "html_standard_analyzer" );
+      analyzer = search.getAnalyzer("html_standard_analyzer");
       text = "This is <b>foo</b><i>bar's</i>";
       assertEquals(asList("This", "is", "foobar's"), terms(analyzer, "name", text));
 
-      analyzer = search.getAnalyzer( "html_whitespace_analyzer" );
+      analyzer = search.getAnalyzer("html_whitespace_analyzer");
       text = "This is <b>foo</b><i>bar's</i>";
       assertEquals(asList("This", "is", "foobar's"), terms(analyzer, "name", text));
 
-      analyzer = search.getAnalyzer( "length_analyzer" );
-      text = "ab abc abcd abcde abcdef";
-      assertEquals(asList("abc", "abcd", "abcde" ), terms(analyzer, "name", text));
-
-      analyzer = search.getAnalyzer( "length_analyzer" );
+      analyzer = search.getAnalyzer("length_analyzer");
       text = "ab abc abcd abcde abcdef";
       assertEquals(asList("abc", "abcd", "abcde"), terms(analyzer, "name", text));
 
-      analyzer = search.getAnalyzer( "porter_analyzer" );
+      analyzer = search.getAnalyzer("length_analyzer");
+      text = "ab abc abcd abcde abcdef";
+      assertEquals(asList("abc", "abcd", "abcde"), terms(analyzer, "name", text));
+
+      analyzer = search.getAnalyzer("porter_analyzer");
       text = "bikes bikes biking";
       assertEquals(asList("bike", "bike", "bike"), terms(analyzer, "name", text));
 
-      analyzer = search.getAnalyzer( "word_analyzer" );
+      analyzer = search.getAnalyzer("word_analyzer");
       text = "CamelCase";
       assertEquals(asList("Camel", "Case"), terms(analyzer, "name", text));
 
-      analyzer = search.getAnalyzer( "synonym_analyzer" );
+      analyzer = search.getAnalyzer("synonym_analyzer");
       text = "ipod cosmos";
       assertEquals(asList("ipod", "i-pod", "cosmos", "universe"), terms(analyzer, "name", text));
 
-      analyzer = search.getAnalyzer( "shingle_analyzer" );
+      analyzer = search.getAnalyzer("shingle_analyzer");
       text = "please divide this sentence into shingles";
       assertEquals(asList(
-              "please",
-              "please divide",
-              "divide",
-              "divide this",
-              "this",
-              "this sentence",
-              "sentence",
-              "sentence into",
-              "into",
-              "into shingles",
-              "shingles"), terms(analyzer, "name", text));
+            "please",
+            "please divide",
+            "divide",
+            "divide this",
+            "this",
+            "this sentence",
+            "sentence",
+            "sentence into",
+            "into",
+            "into shingles",
+            "shingles"), terms(analyzer, "name", text));
 
-      analyzer = search.getAnalyzer( "pattern_analyzer" );
+      analyzer = search.getAnalyzer("pattern_analyzer");
       text = "foo,bar";
       assertEquals(asList("foo", "bar"), terms(analyzer, "name", text));
 
       // CharStreamFactories test
-      analyzer = search.getAnalyzer( "mapping_char_analyzer" );
+      analyzer = search.getAnalyzer("mapping_char_analyzer");
       text = "CORA\u00C7\u00C3O DE MEL\u00C3O";
       assertEquals(asList("CORACAO", "DE", "MELAO"), terms(analyzer, "name", text));
    }
@@ -150,7 +150,7 @@ public class AnalyzerTest extends SingleCacheManagerTest {
       tokenStream.addAttribute(CharTermAttribute.class);
       CharTermAttribute attribute = tokenStream.getAttribute(CharTermAttribute.class);
       tokenStream.reset();
-      while(tokenStream.incrementToken()) {
+      while (tokenStream.incrementToken()) {
          terms.add(attribute.toString());
       }
       tokenStream.close();
@@ -158,7 +158,7 @@ public class AnalyzerTest extends SingleCacheManagerTest {
    }
 
    protected Class<?>[] getAnnotatedClasses() {
-      return new Class[] {
+      return new Class[]{
             Team.class
       };
    }

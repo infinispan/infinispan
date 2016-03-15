@@ -7,28 +7,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.nio.Buffer;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.stream.CacheCollectors;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 

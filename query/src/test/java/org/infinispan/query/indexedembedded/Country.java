@@ -13,11 +13,11 @@ import org.hibernate.search.annotations.IndexedEmbedded;
  */
 @Indexed
 public class Country implements Serializable {
-   
+
    public Long id;
-   
+
    public @Field String countryName;
-   
+
    public final @IndexedEmbedded Set<City> cities = new HashSet<City>();
 
 }

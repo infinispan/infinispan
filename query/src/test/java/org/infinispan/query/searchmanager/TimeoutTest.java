@@ -26,30 +26,30 @@ public class TimeoutTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig( true );
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
          .indexing()
             .index(Index.ALL)
             .addIndexedEntity(Foo.class)
-            .addProperty( "default.directory_provider", "ram" )
-            .addProperty( "lucene_version", "LUCENE_CURRENT" );
-      return TestCacheManagerFactory.createCacheManager( cfg );
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    @Test
    public void timeoutExceptionIsThrownAndIsProducedByMyFactory() throws Exception {
-      SearchManagerImplementor searchManager = (SearchManagerImplementor) Search.getSearchManager( cache );
-      searchManager.setTimeoutExceptionFactory( new MyTimeoutExceptionFactory() );
-      Query query = searchManager.buildQueryBuilderForClass( Foo.class ).get()
-            .keyword().onField( "bar" ).matching( "1" )
+      SearchManagerImplementor searchManager = (SearchManagerImplementor) Search.getSearchManager(cache);
+      searchManager.setTimeoutExceptionFactory(new MyTimeoutExceptionFactory());
+      Query query = searchManager.buildQueryBuilderForClass(Foo.class).get()
+            .keyword().onField("bar").matching("1")
             .createQuery();
 
-      CacheQuery cacheQuery = searchManager.getQuery( query );
-      cacheQuery.timeout( 1, TimeUnit.NANOSECONDS );
+      CacheQuery cacheQuery = searchManager.getQuery(query);
+      cacheQuery.timeout(1, TimeUnit.NANOSECONDS);
 
       try {
          cacheQuery.list();
-         fail( "Expected MyTimeoutException" );
+         fail("Expected MyTimeoutException");
       } catch (MyTimeoutException e) {
       }
    }

@@ -42,7 +42,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
          }
       });
    }
-   
+
    public void testTimeOrderedEvents() {
       final StaticCustomEventLogListener eventListener = new StaticCustomEventLogListener();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {

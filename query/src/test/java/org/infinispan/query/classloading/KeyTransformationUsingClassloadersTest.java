@@ -37,15 +37,15 @@ public class KeyTransformationUsingClassloadersTest extends SingleCacheManagerTe
 
    @Test
    public void searchWithCustomClassLoader() {
-      cache.put( new CustomKey(1,2,3),
+      cache.put(new CustomKey(1,2,3),
             new Book("Seam in Action",
                      "Dan Allen",
                      "Manning"));
-      cache.put( new CustomKey(4,5,6),
+      cache.put(new CustomKey(4,5,6),
             new Book("Hibernate Search in Action",
                      "Emmanuel Bernard and John Griffin",
                      "Manning"));
-      cache.put( "simple-3",
+      cache.put("simple-3",
             new Book("Megaprogramming Ruby",
                      "Paolo Perrotta",
                      "The Pragmatic Programmers"));

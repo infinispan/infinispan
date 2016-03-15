@@ -18,7 +18,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 /**
  * Similar to QueryParsingTest but that one only looks at the configuration; in this case we check the components are actually
  * started as expected (or not at all, if so expected). See also ISPN-2065.
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.2
  */

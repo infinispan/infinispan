@@ -5,9 +5,9 @@ import org.infinispan.query.clustered.QueryResponse;
 
 /**
  * CQLazyFetcher.
- * 
+ *
  * Fetch a new result for a lazy iterator
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */

@@ -18,7 +18,7 @@ import java.util.UUID;
 
 /**
  * Encapsulates all rpc calls for distributed queries actions
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */
@@ -100,7 +100,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
 
    /**
     * Invokes a query on a (remote) cache and returns results (list of keys).
-    * 
+    *
     * @param context
     *           invocation context, ignored.
     * @return returns an <code>List<Object></code>.

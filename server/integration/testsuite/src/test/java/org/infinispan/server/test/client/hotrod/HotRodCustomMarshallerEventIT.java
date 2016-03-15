@@ -169,9 +169,8 @@ public class HotRodCustomMarshallerEventIT {
 
             Id id1 = (Id) o;
 
-            if (id != id1.id) return false;
+            return id == id1.id;
 
-            return true;
         }
 
         @Override
@@ -190,8 +189,7 @@ public class HotRodCustomMarshallerEventIT {
 
         @Override
         public Object objectFromByteBuffer(byte[] buf, int offset, int length) {
-            Id id = new Id(buf[0]);
-            return id;
+            return new Id(buf[0]);
         }
 
         @Override

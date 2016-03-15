@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;

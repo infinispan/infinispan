@@ -129,7 +129,7 @@ import org.hibernate.search.annotations.TokenizerDef;
                   @CharFilterDef(factory = MappingCharFilterFactory.class, params = {
                         @Parameter(name = "mapping", value = "analysis/mapping-chars.properties")
                   })
-            },    
+            },
             tokenizer = @TokenizerDef(factory = StandardTokenizerFactory.class)
       )
 })

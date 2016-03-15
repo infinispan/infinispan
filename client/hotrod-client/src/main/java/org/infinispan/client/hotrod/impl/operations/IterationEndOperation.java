@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;

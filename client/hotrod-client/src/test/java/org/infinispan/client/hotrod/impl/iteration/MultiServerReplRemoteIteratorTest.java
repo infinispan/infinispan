@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.iteration;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.testng.annotations.Test;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;

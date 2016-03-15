@@ -6,9 +6,9 @@ import org.apache.lucene.search.ScoreDoc;
 
 /**
  * ClusteredScoreDoc.
- * 
+ *
  * A scoreDoc with his index and the uuid of the node who has the value.
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @since 5.1
  */

@@ -24,7 +24,7 @@ public class TopologyAwareClusteredQueryTest extends ClusteredQueryTest {
       for(Object cache : caches) {
          cacheManagers.add(((Cache) cache).getCacheManager());
       }
-      
+
       cacheAMachine1 = (Cache<String, Person>) caches.get(0);
       cacheAMachine2 = (Cache<String, Person>) caches.get(1);
 
