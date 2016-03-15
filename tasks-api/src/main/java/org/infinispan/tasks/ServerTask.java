@@ -1,7 +1,9 @@
 package org.infinispan.tasks;
 
 
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -56,5 +58,14 @@ public interface ServerTask<V> extends Callable<V> {
     */
    default Optional<String> getAllowedRole() {
       return Optional.empty();
+   }
+
+   /**
+    * The named parameters accepted by this task
+    *
+    * @return a java.util.Set of parameter names
+    */
+   default Set<String> getParameters() {
+      return Collections.emptySet();
    }
 }

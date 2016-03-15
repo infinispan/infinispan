@@ -1,5 +1,8 @@
 package org.infinispan.tasks;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class DummyTask implements Task {
 
    private final String name;
@@ -23,4 +26,8 @@ public class DummyTask implements Task {
       return TaskExecutionMode.ONE_NODE;
    }
 
+   @Override
+   public Set<String> getParameters() {
+      return Collections.emptySet();
+   }
 }

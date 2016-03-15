@@ -46,4 +46,9 @@ public class ServerTaskWrapper<T> implements Task {
    public Optional<String> getRole() {
       return task.getAllowedRole();
    }
+
+   @Override
+   public Set<String> getParameters() {
+      return task.getParameters();
+   }
 }

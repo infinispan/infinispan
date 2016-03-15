@@ -202,6 +202,8 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
                 node.get("name").set(task.getName());
                 node.get("type").set(task.getType());
                 node.get("mode").set(task.getExecutionMode().toString());
+                ModelNode parameters = node.get("parameters").setEmptyList();
+                task.getParameters().forEach(p -> parameters.add(new ModelNode().set(p)));
             }
             return result;
         }
