@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
 
-import static org.infinispan.query.helper.TestQueryHelperFactory.*;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
 import static org.infinispan.test.TestingUtil.withTx;
 
 @Test(groups = "functional", testName = "query.tx.TransactionalQueryTest")

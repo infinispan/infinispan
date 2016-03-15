@@ -775,7 +775,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       List<User> list = q.list();
       assertEquals(1, list.size());
-      assertTrue(list.get(0).getSurname().equals("Woman"));
+      assertEquals("Woman", list.get(0).getSurname());
    }
 
    @Test

@@ -24,7 +24,9 @@ import org.testng.annotations.BeforeClass;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests for remote queries over HotRod on a local cache using RAM directory.

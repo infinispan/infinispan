@@ -8,6 +8,9 @@ import java.util.List;
  */
 final class PredicateOptimisations {
 
+   private PredicateOptimisations() {
+   }
+
    /**
     * Checks if two predicates are identical or opposite.
     *

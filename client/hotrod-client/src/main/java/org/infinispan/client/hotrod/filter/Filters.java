@@ -21,6 +21,9 @@ public final class Filters {
 
    public static final String CONTINUOUS_QUERY_FILTER_FACTORY_NAME = "continuous-query-filter-converter-factory";
 
+   private Filters() {
+   }
+
    public static Object[] makeFactoryParams(Query query) {
       BaseQuery baseQuery = (BaseQuery) query;
       Map<String, Object> namedParameters = baseQuery.getNamedParameters();

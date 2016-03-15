@@ -29,7 +29,9 @@ import java.util.concurrent.atomic.LongAdder;
 
 import static org.infinispan.test.TestingUtil.recursiveFileRemove;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Test for interaction of activation and preload on indexing

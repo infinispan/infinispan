@@ -97,9 +97,9 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
       }
 
       if (propertyType == Boolean.class || propertyType == boolean.class) {
-         if (value.equalsIgnoreCase("true")) {
+         if ("true".equalsIgnoreCase(value)) {
             return true;
-         } else if (value.equalsIgnoreCase("false")) {
+         } else if ("false".equalsIgnoreCase(value)) {
             return false;
          } else {
             throw log.getInvalidBooleanLiteralException(value);

@@ -1,7 +1,6 @@
 package org.infinispan.query.remote.impl;
 
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
@@ -42,7 +41,7 @@ final class DelegatingSerializationContext implements SerializationContext {
    }
 
    @Override
-   public void registerProtoFiles(FileDescriptorSource source) throws IOException, DescriptorParserException {
+   public void registerProtoFiles(FileDescriptorSource source) throws IOException {
       Map<String, char[]> fileDescriptors = source.getFileDescriptors();
       Map<String, String> files = new HashMap<String, String>(fileDescriptors.size());
       for (String key : fileDescriptors.keySet()) {

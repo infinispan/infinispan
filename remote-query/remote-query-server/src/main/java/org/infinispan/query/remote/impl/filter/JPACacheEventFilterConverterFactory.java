@@ -28,4 +28,3 @@ public final class JPACacheEventFilterConverterFactory implements CacheEventFilt
       return new JPAProtobufCacheEventFilterConverter(new JPAProtobufFilterAndConverter(jpql, namedParams));
    }
 }
-

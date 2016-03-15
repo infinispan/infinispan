@@ -37,7 +37,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       assert diskCfg.indexing().properties().size() == 3;
       assert diskCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider").equals("filesystem");
       assert diskCfg.indexing().properties().getProperty("hibernate.search.cats.exclusive_index_use").equals("true");
-      
+
       final Configuration replDefaults = namedConfigurations.get("repl-with-default").build();
       assert replDefaults.indexing().index().isEnabled();
       assert !replDefaults.indexing().properties().isEmpty();

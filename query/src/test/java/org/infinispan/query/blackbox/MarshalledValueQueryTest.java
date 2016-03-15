@@ -16,4 +16,3 @@ public class MarshalledValueQueryTest extends LocalCacheTest {
       c.storeAsBinary().enabled(true);
    }
 }
-

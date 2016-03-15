@@ -19,6 +19,9 @@ import java.security.PrivilegedAction;
 final class SecurityActions {
    private static final Log log = LogFactory.getLog(SecurityActions.class);
 
+   private SecurityActions() {
+   }
+
    static void setAccessible(final Method m) {
       try {
          if (System.getSecurityManager() != null) {

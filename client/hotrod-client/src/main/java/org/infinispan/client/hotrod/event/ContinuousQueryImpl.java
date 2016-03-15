@@ -1,7 +1,11 @@
 package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.annotation.*;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.ProtobufUtil;

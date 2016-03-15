@@ -19,7 +19,10 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @Test(groups = "functional", testName = "query.remote.ProtobufMetadataManagerInterceptorTest")
 public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManagersTest {

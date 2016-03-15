@@ -18,6 +18,13 @@ import java.util.Map;
  */
 final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements ObjectFilter {
 
+   private static final FilterCallback emptyCallback = new FilterCallback() {
+      @Override
+      public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
+         // do nothing
+      }
+   };
+
    private final BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher;
 
    private final FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription;
@@ -25,13 +32,6 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
    private final AttributeNode<AttributeMetadata, AttributeId> root;
 
    private final FieldAccumulator[] acc;
-
-   private static final FilterCallback emptyCallback = new FilterCallback() {
-      @Override
-      public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-         // do nothing
-      }
-   };
 
    ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
                     MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,

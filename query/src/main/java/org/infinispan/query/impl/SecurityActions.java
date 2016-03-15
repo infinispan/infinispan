@@ -3,12 +3,10 @@ package org.infinispan.query.impl;
 import java.security.AccessController;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
-import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
 
 /**
@@ -21,6 +19,10 @@ import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
  * @since 7.0
  */
 final class SecurityActions {
+
+   private SecurityActions() {
+   }
+
    static ComponentRegistry getCacheComponentRegistry(final AdvancedCache<?, ?> cache) {
       GetCacheComponentRegistryAction action = new GetCacheComponentRegistryAction(cache);
       if (System.getSecurityManager() != null) {

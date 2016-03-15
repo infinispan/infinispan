@@ -72,7 +72,10 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
-import static org.infinispan.query.impl.IndexPropertyInspector.*;
+import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
+import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down

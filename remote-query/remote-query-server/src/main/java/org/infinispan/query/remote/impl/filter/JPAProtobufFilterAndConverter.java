@@ -29,13 +29,13 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
 
    private boolean usesValueWrapper;
 
+   public JPAProtobufFilterAndConverter(String jpaQuery, Map<String, Object> namedParameters) {
+      super(jpaQuery, namedParameters, ProtobufMatcher.class);
+   }
+
    @Inject
    protected void injectDependencies(Configuration cfg) {
       usesValueWrapper = cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled();
-   }
-
-   public JPAProtobufFilterAndConverter(String jpaQuery, Map<String, Object> namedParameters) {
-      super(jpaQuery, namedParameters, ProtobufMatcher.class);
    }
 
    @Override

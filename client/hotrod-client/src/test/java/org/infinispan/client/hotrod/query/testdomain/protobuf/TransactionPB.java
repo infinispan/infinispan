@@ -102,4 +102,3 @@ public class TransactionPB implements Transaction {
             '}';
    }
 }
-

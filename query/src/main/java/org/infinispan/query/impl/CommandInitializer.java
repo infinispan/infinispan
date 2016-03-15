@@ -6,7 +6,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Initializes query module remote commands
- * 
+ *
  * @author Israel Lacerra <israeldl@gmail.com>
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
  * @since 5.1
@@ -16,7 +16,7 @@ public final class CommandInitializer implements ModuleCommandInitializer {
    private EmbeddedCacheManager cacheManager;
 
    public void setCacheManager(EmbeddedCacheManager cacheManager) {
-	   this.cacheManager = cacheManager;
+      this.cacheManager = cacheManager;
    }
 
    @Override

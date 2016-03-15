@@ -59,11 +59,11 @@ public class CacheQueryImpl implements CacheQuery {
       this.cache = cache;
       hSearchQuery = searchFactory.createHSQuery();
       hSearchQuery
-         .luceneQuery( luceneQuery )
-         .targetedEntities( Arrays.asList( classes ) );
+         .luceneQuery(luceneQuery)
+         .targetedEntities(Arrays.asList(classes));
 
       if (timeoutExceptionFactory != null) {
-         hSearchQuery.timeoutExceptionFactory( timeoutExceptionFactory );
+         hSearchQuery.timeoutExceptionFactory(timeoutExceptionFactory);
       }
    }
 

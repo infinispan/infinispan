@@ -36,10 +36,10 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
       ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg1.clustering().stateTransfer().fetchInMemoryState(true);
       cacheManagers.get(0).defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, cacheCfg1.build());
-      cacheManagers.get(0).defineConfiguration( InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
+      cacheManagers.get(0).defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
 
       cacheManagers.get(1).defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, cacheCfg1.build());
-      cacheManagers.get(1).defineConfiguration( InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
+      cacheManagers.get(1).defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
    }
 
 }
