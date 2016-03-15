@@ -190,6 +190,8 @@
       <version.pax.url>2.2.0</version.pax.url>
       <version.karaf>3.0.4</version.karaf>
       <version.pax.exam>4.5.0</version.pax.exam>
+      <version.ant-nodeps>1.8.1</version.ant-nodeps>
+      <version.ant-contrib>1.0b3</version.ant-contrib>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
@@ -2033,6 +2035,29 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-antrun-plugin</artifactId>
+                  <dependencies>
+                     <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant</artifactId>
+                        <version>${version.ant}</version>
+                     </dependency>
+                     <dependency>
+                        <groupId>ant-contrib</groupId>
+                        <artifactId>ant-contrib</artifactId>
+                        <version>${version.ant-contrib}</version>
+                        <exclusions>
+                           <exclusion>
+                              <groupId>ant</groupId>
+                              <artifactId>ant</artifactId>
+                           </exclusion>
+                        </exclusions>
+                     </dependency>
+                     <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant-nodeps</artifactId>
+                        <version>${version.ant-nodeps}</version>
+                     </dependency>
+                  </dependencies>
                   <executions>
                      <execution>
                         <id>copy-generated-classes</id>
@@ -2042,8 +2067,13 @@
                         </goals>
                         <configuration>
                            <target>
+                              <ac:if xmlns:ac="antlib:net.sf.antcontrib">
+                                 <ac:available file="${project.build.directory}/classes" type="dir"/>
+                                 <ac:then>
                               <echo>Copying test classes to jacoco folder.</echo>
                               <copydir dest="${jacoco.reportPath}/classes" src="${project.build.directory}/classes" />
+                                 </ac:then>
+                              </ac:if>
                            </target>
                         </configuration>
                      </execution>
@@ -2097,6 +2127,70 @@
                               <echo>Copying the generated classes file to ${project.build.directory}/classes</echo>
                               <copydir dest="${project.build.directory}/classes" src="${jacoco.reportPath}/classes" />
                            </target>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>build-helper-maven-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                           <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                           <sources>
+                              <source>${dir.ispn}/atomic-factory/src/main/java</source>
+                              <source>${dir.ispn}/cdi/common/src/main/java</source>
+                              <source>${dir.ispn}/cdi/embedded/src/main/java</source>
+                              <source>${dir.ispn}/cdi/remote/src/main/java</source>
+                              <source>${dir.ispn}/checkstyle/src/main/java</source>
+                              <source>${dir.ispn}/cli/cli-client/src/main/java</source>
+                              <source>${dir.ispn}/cli/cli-interpreter/src/main/java</source>
+                              <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
+                              <source>${dir.ispn}/commons/src/main/java</source>
+                              <source>${dir.ispn}/core/src/main/java</source>
+                              <source>${dir.ispn}/demos/distexec/src/main/java</source>
+                              <source>${dir.ispn}/demos/gridfs-webdav//src/main/java</source>
+                              <source>${dir.ispn}/demos/gui/src/main/java</source>
+                              <source>${dir.ispn}/demos/lucene-directory-demo/src/main/java</source>
+                              <source>${dir.ispn}/demos/nearcache/src/main/java</source>
+                              <source>${dir.ispn}/demos/nearcache-client/src/main/java</source>
+                              <source>${dir.ispn}/extended-statistics/src/main/java</source>
+                              <source>${dir.ispn}/jcache/commons/src/main/java</source>
+                              <source>${dir.ispn}/jcache/embedded/src/main/java</source>
+                              <source>${dir.ispn}/jcache/remote/src/main/java</source>
+                              <source>${dir.ispn}/lucene/directory-provider/src/main/java</source>
+                              <source>${dir.ispn}/lucene/lucene-directory/src/main/java</source>
+                              <source>${dir.ispn}/object-filter/src/main/java</source>
+                              <source>${dir.ispn}/osgi/src/main/java</source>
+                              <source>${dir.ispn}/persistence/cli/src/main/java</source>
+                              <source>${dir.ispn}/persistence/jdbc/src/main/java</source>
+                              <source>${dir.ispn}/persistence/jpa/src/main/java</source>
+                              <source>${dir.ispn}/persistence/leveldb/src/main/java</source>
+                              <source>${dir.ispn}/persistence/remote/src/main/java</source>
+                              <source>${dir.ispn}/persistence/rest/src/main/java</source>
+                              <source>${dir.ispn}/persistence/soft-index/src/main/java</source>
+                              <source>${dir.ispn}/query/src/main/java</source>
+                              <source>${dir.ispn}/query-dsl/src/main/java</source>
+                              <source>${dir.ispn}/remote-query/remote-query-client/src/main/java</source>
+                              <source>${dir.ispn}/remote-query/remote-query-server/src/main/java</source>
+                              <source>${dir.ispn}/rhq-plugin/src/main/java</source>
+                              <source>${dir.ispn}/scripting/src/main/java</source>
+                              <source>${dir.ispn}/server/websocket/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring4/spring4-common/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring4/spring4-embedded/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring4/spring4-remote/src/main/java</source>
+                              <source>${dir.ispn}/tasks/src/main/java</source>
+                              <source>${dir.ispn}/tasks-api/src/main/java</source>
+                              <source>${dir.ispn}/tools/src/main/java</source>
+                              <source>${dir.ispn}/tree/src/main/java</source>
+                           </sources>
                         </configuration>
                      </execution>
                   </executions>
