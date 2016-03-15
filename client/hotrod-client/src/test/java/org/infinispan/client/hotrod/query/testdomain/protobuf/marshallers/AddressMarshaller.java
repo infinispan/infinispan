@@ -41,4 +41,3 @@ public class AddressMarshaller implements MessageMarshaller<AddressPB> {
       writer.writeInt("number", address.getNumber());
    }
 }
-

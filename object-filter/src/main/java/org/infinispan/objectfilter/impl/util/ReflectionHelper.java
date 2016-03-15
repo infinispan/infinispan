@@ -49,7 +49,7 @@ public final class ReflectionHelper {
       PropertyAccessor getAccessor(String propName) throws IntrospectionException;
    }
 
-   private static abstract class BasePropertyAccessor implements PropertyAccessor {
+   private abstract static class BasePropertyAccessor implements PropertyAccessor {
 
       @Override
       public PropertyAccessor getAccessor(String propName) throws IntrospectionException {
@@ -265,7 +265,7 @@ public final class ReflectionHelper {
       } catch (NoSuchMethodException e) {
          try {
             Method m = clazz.getDeclaredMethod("is" + propertyNameSuffix);
-            if (Modifier.isPublic(m.getModifiers()) && (m.getReturnType().equals(boolean.class) || m.getReturnType().equals(Boolean.class))) {
+            if (Modifier.isPublic(m.getModifiers()) && (boolean.class.equals(m.getReturnType()) || Boolean.class.equals(m.getReturnType()))) {
                return getMethodAccessor(m);
             }
          } catch (NoSuchMethodException e1) {

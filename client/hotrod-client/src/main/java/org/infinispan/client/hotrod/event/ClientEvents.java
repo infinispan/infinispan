@@ -18,7 +18,7 @@ import org.infinispan.query.remote.client.ContinuousQueryResult;
 
 import java.io.IOException;
 
-import static org.infinispan.client.hotrod.filter.Filters.*;
+import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
 public class ClientEvents {
 
@@ -103,6 +103,9 @@ public class ClientEvents {
       return eventListener;
    }
 
+   /**
+    * @deprecated replaced by org.infinispan.client.hotrod.event.ContinuousQueryImpl.ClientEntryListener
+    */
    @ClientListener(filterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          converterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)

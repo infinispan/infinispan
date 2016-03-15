@@ -36,7 +36,7 @@ public class BooleShannonExpansionTest {
          @Override
          public boolean isIndexed(List<String> propertyPath) {
             String last = propertyPath.get(propertyPath.size() - 1);
-            return !last.equals("number") && !last.equals("license");
+            return !"number".equals(last) && !"license".equals(last);
          }
 
          @Override

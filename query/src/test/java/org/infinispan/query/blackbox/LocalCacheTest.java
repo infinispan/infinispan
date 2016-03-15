@@ -545,8 +545,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       queryParser = createQueryParser("blurb");
       Query luceneQuery = queryParser.parse("playing");
 
-      Search search = new Search();
-      CacheQuery cacheQuery = search.getSearchManager(cache).getQuery(luceneQuery);
+      CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
       ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.valueOf("LAZY")));
 

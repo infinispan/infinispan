@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl.hql;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.SingleEntityHavingQueryBuilder;
 import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
 import org.infinispan.objectfilter.PropertyPath;
@@ -95,7 +94,7 @@ public final class FilterParsingResult<TypeMetadata> {
 
    /**
     * Returns the entity type of the parsed query as derived from the queried entity name via the configured {@link
-    * EntityNamesResolver}.
+    * org.hibernate.hql.ast.spi.EntityNamesResolver}.
     *
     * @return the entity type of the parsed query
     */

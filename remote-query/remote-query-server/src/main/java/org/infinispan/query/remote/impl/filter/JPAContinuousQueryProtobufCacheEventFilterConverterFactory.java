@@ -28,4 +28,3 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverterFactory im
       return new JPAContinuousQueryProtobufCacheEventFilterConverter(jpql, namedParams, ProtobufMatcher.class);
    }
 }
-

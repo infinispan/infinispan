@@ -17,7 +17,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author anistor@redhat.com
@@ -25,10 +28,10 @@ import static org.junit.Assert.*;
  */
 public class RowMatcherTest {
 
-   private final FilterQueryFactory queryFactory = new FilterQueryFactory();
-
    @Rule
    public ExpectedException expectedException = ExpectedException.none();
+
+   private final FilterQueryFactory queryFactory = new FilterQueryFactory();
 
    private Object[] createPerson1() throws Exception {
       // id, name, surname, age, gender

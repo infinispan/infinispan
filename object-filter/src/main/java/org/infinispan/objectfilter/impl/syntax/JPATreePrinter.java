@@ -11,6 +11,9 @@ import org.infinispan.objectfilter.SortField;
  */
 public final class JPATreePrinter {
 
+   private JPATreePrinter() {
+   }
+
    public static String printTree(BooleanExpr whereClause) {
       StringBuilder sb = new StringBuilder();
       if (whereClause != null) {

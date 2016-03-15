@@ -5,14 +5,12 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
-import org.infinispan.query.impl.SearchManagerImpl;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A cache-query is what will be returned when the getQuery() method is run on {@link SearchManagerImpl}. This object can
+ * A cache-query is what will be returned when the getQuery() method is run on {@link org.infinispan.query.impl.SearchManagerImpl}. This object can
  * have methods such as list, setFirstResult,setMaxResults, setFetchSize, getResultSize and setSort.
  * <p/>
  *
@@ -20,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  * @author Navin Surtani
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @author Marko Luksa
- * @see SearchManagerImpl#getQuery(org.apache.lucene.search.Query)
+ * @see org.infinispan.query.impl.SearchManagerImpl#getQuery(org.apache.lucene.search.Query, Class...)
  */
 public interface CacheQuery extends Iterable<Object> {
 
@@ -34,7 +32,7 @@ public interface CacheQuery extends Iterable<Object> {
    /**
     * Returns the results of a search as a {@link ResultIterator}.
     *
-    * Warning: the return type is an extension of {@link Iterator} which introduces a {@link ResultIterator#close()}
+    * Warning: the return type is an extension of {@link java.util.Iterator} which introduces a {@link ResultIterator#close()}
     * method. This close method needs to be invoked when the iteration is complete to avoid resource leakage.
     *
     * @param fetchOptions how to fetch results (see @link FetchOptions)

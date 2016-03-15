@@ -5,7 +5,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests continuous query with multiple caches in distribute mode.
- * 
+ *
  * @author vjuranek
  * @since 8.0
  */

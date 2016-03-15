@@ -15,7 +15,6 @@ import java.util.Map;
  */
 class JPAFilterConverterUtils {
 
-
    private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
 
       private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
@@ -25,6 +24,9 @@ class JPAFilterConverterUtils {
          return serializationContext;
       }
    };
+
+   private JPAFilterConverterUtils() {
+   }
 
    static String unmarshallJPQL(Object[] params) {
       try {
