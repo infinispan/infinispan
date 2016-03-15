@@ -392,7 +392,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Override
    public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
       CLUSTER.startRebalance(cacheName, cacheTopology);
-      eventLogManager.getEventLogger().context(cacheName).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceStarted());
+      eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress()).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceStarted());
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology, null,
             viewId);
