@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
@@ -20,7 +21,9 @@ import org.infinispan.stream.impl.intops.primitive.i.PeekIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.SkipIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.SortedIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapIntOperation;
+import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachIntOperation;
+import org.infinispan.stream.impl.termop.primitive.ForEachObjIntOperation;
 import org.infinispan.util.function.SerializableIntBinaryOperator;
 import org.infinispan.util.function.SerializableIntConsumer;
 import org.infinispan.util.function.SerializableIntPredicate;
@@ -60,7 +63,7 @@ import java.util.stream.Stream;
  * class is only able to be created using {@link org.infinispan.CacheStream#mapToInt(ToIntFunction)} or similar
  * methods from the {@link org.infinispan.CacheStream} interface.
  */
-public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntStream, IntCacheStream, IntConsumer>
+public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntStream, IntCacheStream>
         implements IntCacheStream {
    /**
     * This constructor is to be used only when a user calls a map or flat map method changing to an IntStream
@@ -182,11 +185,6 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    }
 
    @Override
-   public void forEach(SerializableIntConsumer action) {
-      forEach((IntConsumer) action);
-   }
-
-   @Override
    public LongCacheStream asLongStream() {
       addIntermediateOperationMap(AsLongIntOperation.getInstance());
       return longCacheStream();
@@ -212,11 +210,29 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
-         performRehashForEach(action);
+         performRehashKeyTrackingOperation(s -> getForEach(action, s));
       }
    }
 
    @Override
+   public void forEach(SerializableIntConsumer action) {
+      forEach((IntConsumer) action);
+   }
+
+   @Override
+   public <K, V> void forEach(ObjIntConsumer<Cache<K, V>> action) {
+      if (!rehashAware) {
+         performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
+      } else {
+         performRehashKeyTrackingOperation(s -> getForEach(action, s));
+      }
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableObjIntConsumer<Cache<K, V>> action) {
+      forEach((ObjIntConsumer<Cache<K, V>>) action);
+   }
+
    KeyTrackingTerminalOperation<Object, Integer, Object> getForEach(IntConsumer consumer,
            Supplier<Stream<CacheEntry>> supplier) {
       if (iteratorOperation == IteratorOperation.FLAT_MAP) {
@@ -226,10 +242,19 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
       }
    }
 
+   <K, V> KeyTrackingTerminalOperation<Object, Integer, Object> getForEach(ObjIntConsumer<Cache<K, V>> consumer,
+           Supplier<Stream<CacheEntry>> supplier) {
+      if (iteratorOperation == IteratorOperation.FLAT_MAP) {
+         return new ForEachFlatMapObjIntOperation(intermediateOperations, supplier, distributedBatchSize, consumer);
+      } else {
+         return new ForEachObjIntOperation(intermediateOperations, supplier, distributedBatchSize, consumer);
+      }
+   }
+
    @Override
    public void forEachOrdered(IntConsumer action) {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         performIntermediateRemoteOperation(s -> {
+         performIntermediateRemoteOperation((IntStream s) -> {
             s.forEachOrdered(action);
             return null;
          });
@@ -396,7 +421,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    @Override
    public OptionalInt findFirst() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation(IntStream::findFirst);
+         return performIntermediateRemoteOperation((IntStream s) -> s.findFirst());
       } else {
          return findAny();
       }

@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
@@ -19,6 +20,8 @@ import org.infinispan.stream.impl.intops.primitive.d.SkipDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.SortedDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapDoubleOperation;
+import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjDoubleOperation;
+import org.infinispan.stream.impl.termop.primitive.ForEachObjDoubleOperation;
 import org.infinispan.util.function.SerializableDoubleBinaryOperator;
 import org.infinispan.util.function.SerializableDoubleConsumer;
 import org.infinispan.util.function.SerializableDoubleFunction;
@@ -57,7 +60,7 @@ import java.util.stream.Stream;
  * class is only able to be created using {@link org.infinispan.CacheStream#mapToDouble(ToDoubleFunction)} or similar
  * methods from the {@link org.infinispan.CacheStream} interface.
  */
-public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, DoubleStream, DoubleCacheStream, DoubleConsumer>
+public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, DoubleStream, DoubleCacheStream>
         implements DoubleCacheStream {
    /**
     * This constructor is to be used only when a user calls a map or flat map method changing to a DoubleStream
@@ -191,7 +194,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
-         performRehashForEach(action);
+         performRehashKeyTrackingOperation(s -> getForEach(action, s));
       }
    }
 
@@ -201,6 +204,19 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    }
 
    @Override
+   public <K, V> void forEach(ObjDoubleConsumer<Cache<K, V>> action) {
+      if (!rehashAware) {
+         performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
+      } else {
+         performRehashKeyTrackingOperation(s -> getForEach(action, s));
+      }
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableObjDoubleConsumer<Cache<K, V>> action) {
+      forEach((ObjDoubleConsumer<Cache<K, V>>) action);
+   }
+
    KeyTrackingTerminalOperation<Object, Double, Object> getForEach(DoubleConsumer consumer,
            Supplier<Stream<CacheEntry>> supplier) {
       if (iteratorOperation == IteratorOperation.FLAT_MAP) {
@@ -210,10 +226,19 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
       }
    }
 
+   <K, V> KeyTrackingTerminalOperation<Object, Double, Object> getForEach(ObjDoubleConsumer<Cache<K, V>> consumer,
+           Supplier<Stream<CacheEntry>> supplier) {
+      if (iteratorOperation == IteratorOperation.FLAT_MAP) {
+         return new ForEachFlatMapObjDoubleOperation(intermediateOperations, supplier, distributedBatchSize, consumer);
+      } else {
+         return new ForEachObjDoubleOperation(intermediateOperations, supplier, distributedBatchSize, consumer);
+      }
+   }
+
    @Override
    public void forEachOrdered(DoubleConsumer action) {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         performIntermediateRemoteOperation(s -> {
+         performIntermediateRemoteOperation((DoubleStream s) -> {
             s.forEachOrdered(action);
             return null;
          });
@@ -380,7 +405,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    @Override
    public OptionalDouble findFirst() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation(DoubleStream::findFirst);
+         return performIntermediateRemoteOperation((DoubleStream s) -> s.findFirst());
       } else {
          return findAny();
       }

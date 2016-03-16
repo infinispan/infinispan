@@ -171,6 +171,17 @@ public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStr
    }
 
    @Override
+   public <K, V> void forEach(ObjLongConsumer<Cache<K, V>> action) {
+      Cache<K, V> cache = registry.getComponent(Cache.class);
+      createStream().forEach(l -> action.accept(cache, l));
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableObjLongConsumer<Cache<K, V>> action) {
+      forEach((ObjLongConsumer<Cache<K, V>>) action);
+   }
+
+   @Override
    public void forEachOrdered(LongConsumer action) {
       injectCache(action);
       createStream().forEachOrdered(action);

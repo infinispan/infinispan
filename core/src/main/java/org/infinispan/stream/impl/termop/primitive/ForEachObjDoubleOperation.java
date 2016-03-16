@@ -3,10 +3,9 @@ package org.infinispan.stream.impl.termop.primitive;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
-import java.util.function.DoubleConsumer;
+import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
@@ -16,11 +15,12 @@ import java.util.stream.Stream;
  * {@link DoubleStream}. Note this means it is an implied map intermediate operation.
  * @param <K> key type of the supplied stream
  */
-public class ForEachDoubleOperation<K> extends AbstractForEachDoubleOperation<K> {
-   private final DoubleConsumer consumer;
+public class ForEachObjDoubleOperation<K> extends AbstractForEachDoubleOperation<K> {
+   private final ObjDoubleConsumer<Cache<K, ?>> consumer;
+   private transient Cache<K, ?> cache;
 
-   public ForEachDoubleOperation(Iterable<IntermediateOperation> intermediateOperations,
-           Supplier<Stream<CacheEntry>> supplier, int batchSize, DoubleConsumer consumer) {
+   public ForEachObjDoubleOperation(Iterable<IntermediateOperation> intermediateOperations,
+           Supplier<Stream<CacheEntry>> supplier, int batchSize, ObjDoubleConsumer<Cache<K, ?>> consumer) {
       super(intermediateOperations, supplier, batchSize);
       this.consumer = consumer;
    }
@@ -28,19 +28,17 @@ public class ForEachDoubleOperation<K> extends AbstractForEachDoubleOperation<K>
    @Override
    protected void handleArray(double[] array, int size) {
       for (int i = 0; i < size; ++i) {
-         consumer.accept(array[i]);
+         consumer.accept(cache, array[i]);
       }
    }
 
-   public DoubleConsumer getConsumer() {
+   public ObjDoubleConsumer<Cache<K, ?>> getConsumer() {
       return consumer;
    }
 
    @Override
    public void handleInjection(ComponentRegistry registry) {
       super.handleInjection(registry);
-      if (consumer instanceof CacheAware) {
-         ((CacheAware) consumer).injectCache(registry.getComponent(Cache.class));
-      }
+      cache = registry.getComponent(Cache.class);
    }
 }

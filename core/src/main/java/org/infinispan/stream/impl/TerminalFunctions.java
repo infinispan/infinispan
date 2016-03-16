@@ -1,5 +1,10 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.Cache;
+import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.IntCacheStream;
+import org.infinispan.LongCacheStream;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 
@@ -130,16 +135,32 @@ final class TerminalFunctions {
       return new ForEachFunction<>(consumer);
    }
 
+   public static <K, V, T> Function<CacheStream<T>, Void> forEachFunction(BiConsumer<Cache<K, V>, ? super T> consumer) {
+      return new ForEachBiConsumerFunction<>(consumer);
+   }
+
    public static Function<DoubleStream, Void> forEachFunction(DoubleConsumer consumer) {
       return new ForEachDoubleFunction<>(consumer);
+   }
+
+   public static <K, V, T> Function<DoubleCacheStream, Void> forEachFunction(ObjDoubleConsumer<Cache<K, V>> consumer) {
+      return new ForEachObjDoubleFunction<>(consumer);
    }
 
    public static Function<IntStream, Void> forEachFunction(IntConsumer consumer) {
       return new ForEachIntFunction<>(consumer);
    }
 
+   public static <K, V, T> Function<IntCacheStream, Void> forEachFunction(ObjIntConsumer<Cache<K, V>> consumer) {
+      return new ForEachObjIntFunction<>(consumer);
+   }
+
    public static Function<LongStream, Void> forEachFunction(LongConsumer consumer) {
       return new ForEachLongFunction<>(consumer);
+   }
+
+   public static <K, V, T> Function<LongCacheStream, Void> forEachFunction(ObjLongConsumer<Cache<K, V>> consumer) {
+      return new ForEachObjLongFunction<>(consumer);
    }
 
    public static <T> Function<Stream<T>, T> maxFunction(Comparator<? super T> comparator) {
@@ -1087,6 +1108,33 @@ final class TerminalFunctions {
       }
    }
 
+   @SerializeWith(value = ForEachBiConsumerFunction.ForEachBiConsumerFunctionExternalizer.class)
+   private static final class ForEachBiConsumerFunction<K, V, T> implements Function<CacheStream<T>, Void> {
+      private final BiConsumer<Cache<K, V>, ? super T> consumer;
+
+      private ForEachBiConsumerFunction(BiConsumer<Cache<K, V>, ? super T> consumer) {
+         this.consumer = consumer;
+      }
+
+      @Override
+      public Void apply(CacheStream<T> stream) {
+         stream.forEach(consumer);
+         return null;
+      }
+
+      public static final class ForEachBiConsumerFunctionExternalizer implements Externalizer<ForEachBiConsumerFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, ForEachBiConsumerFunction object) throws IOException {
+            output.writeObject(object.consumer);
+         }
+
+         @Override
+         public ForEachBiConsumerFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new ForEachBiConsumerFunction((BiConsumer) input.readObject());
+         }
+      }
+   }
+
    @SerializeWith(value = ForEachDoubleFunction.ForEachDoubleFunctionExternalizer.class)
    private static final class ForEachDoubleFunction<T> implements Function<DoubleStream, Void> {
       private final DoubleConsumer consumer;
@@ -1110,6 +1158,33 @@ final class TerminalFunctions {
          @Override
          public ForEachDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachDoubleFunction((DoubleConsumer) input.readObject());
+         }
+      }
+   }
+
+   @SerializeWith(value = ForEachObjDoubleFunction.ForEachObjDoubleFunctionExternalizer.class)
+   private static final class ForEachObjDoubleFunction<K, V> implements Function<DoubleCacheStream, Void> {
+      private final ObjDoubleConsumer<Cache<K, V>> consumer;
+
+      private ForEachObjDoubleFunction(ObjDoubleConsumer<Cache<K, V>> consumer) {
+         this.consumer = consumer;
+      }
+
+      @Override
+      public Void apply(DoubleCacheStream stream) {
+         stream.forEach(consumer);
+         return null;
+      }
+
+      public static final class ForEachObjDoubleFunctionExternalizer implements Externalizer<ForEachObjDoubleFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, ForEachObjDoubleFunction object) throws IOException {
+            output.writeObject(object.consumer);
+         }
+
+         @Override
+         public ForEachObjDoubleFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new ForEachObjDoubleFunction((ObjDoubleConsumer) input.readObject());
          }
       }
    }
@@ -1141,6 +1216,33 @@ final class TerminalFunctions {
       }
    }
 
+   @SerializeWith(value = ForEachObjIntFunction.ForEachObjIntFunctionExternalizer.class)
+   private static final class ForEachObjIntFunction<K, V> implements Function<IntCacheStream, Void> {
+      private final ObjIntConsumer<Cache<K, V>> consumer;
+
+      private ForEachObjIntFunction(ObjIntConsumer<Cache<K, V>> consumer) {
+         this.consumer = consumer;
+      }
+
+      @Override
+      public Void apply(IntCacheStream stream) {
+         stream.forEach(consumer);
+         return null;
+      }
+
+      public static final class ForEachObjIntFunctionExternalizer implements Externalizer<ForEachObjIntFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, ForEachObjIntFunction object) throws IOException {
+            output.writeObject(object.consumer);
+         }
+
+         @Override
+         public ForEachObjIntFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new ForEachObjIntFunction((ObjIntConsumer) input.readObject());
+         }
+      }
+   }
+
    @SerializeWith(value = ForEachLongFunction.ForEachLongFunctionExternalizer.class)
    private static final class ForEachLongFunction<T> implements Function<LongStream, Void> {
       private final LongConsumer consumer;
@@ -1164,6 +1266,33 @@ final class TerminalFunctions {
          @Override
          public ForEachLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             return new ForEachLongFunction((LongConsumer) input.readObject());
+         }
+      }
+   }
+
+   @SerializeWith(value = ForEachObjLongFunction.ForEachObjLongFunctionExternalizer.class)
+   private static final class ForEachObjLongFunction<K, V> implements Function<LongCacheStream, Void> {
+      private final ObjLongConsumer<Cache<K, V>> consumer;
+
+      private ForEachObjLongFunction(ObjLongConsumer<Cache<K, V>> consumer) {
+         this.consumer = consumer;
+      }
+
+      @Override
+      public Void apply(LongCacheStream stream) {
+         stream.forEach(consumer);
+         return null;
+      }
+
+      public static final class ForEachObjLongFunctionExternalizer implements Externalizer<ForEachObjLongFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, ForEachObjLongFunction object) throws IOException {
+            output.writeObject(object.consumer);
+         }
+
+         @Override
+         public ForEachObjLongFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new ForEachObjLongFunction((ObjLongConsumer) input.readObject());
          }
       }
    }

@@ -170,6 +170,17 @@ public class LocalDoubleCacheStream extends AbstractLocalCacheStream<Double, Dou
    }
 
    @Override
+   public <K, V> void forEach(ObjDoubleConsumer<Cache<K, V>> action) {
+      Cache<K, V> cache = registry.getComponent(Cache.class);
+      createStream().forEach(d -> action.accept(cache, d));
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableObjDoubleConsumer<Cache<K, V>> action) {
+      forEach((ObjDoubleConsumer<Cache<K, V>>) action);
+   }
+
+   @Override
    public void forEachOrdered(DoubleConsumer action) {
       injectCache(action);
       createStream().forEachOrdered(action);

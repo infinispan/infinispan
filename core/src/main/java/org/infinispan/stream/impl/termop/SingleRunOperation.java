@@ -15,13 +15,13 @@ import java.util.stream.BaseStream;
  * @param <R> type of the stream entries
  * @param <S> type of the stream itself
  */
-public class SingleRunOperation<E, R, S extends BaseStream<R, S>> extends BaseTerminalOperation
+public class SingleRunOperation<E, R, S extends BaseStream<R, S>, S2 extends S> extends BaseTerminalOperation
         implements TerminalOperation<E> {
-   private final Function<S, ? extends E> function;
+   private final Function<? super S2, ? extends E> function;
    private transient AtomicBoolean complete;
 
    public SingleRunOperation(Iterable<IntermediateOperation> intermediateOperations,
-                             Supplier<? extends BaseStream<?, ?>> supplier, Function<S, ? extends E> function) {
+                             Supplier<? extends BaseStream<?, ?>> supplier, Function<? super S2, ? extends E> function) {
       super(intermediateOperations, supplier);
       this.function = function;
       this.complete = new AtomicBoolean();
@@ -38,12 +38,12 @@ public class SingleRunOperation<E, R, S extends BaseStream<R, S>> extends BaseTe
       for (IntermediateOperation intOp : intermediateOperations) {
          stream = intOp.perform(stream);
       }
-      E value = function.apply((S) stream);
+      E value = function.apply((S2) stream);
       complete.set(true);
       return value;
    }
 
-   public Function<S, ? extends E> getFunction() {
+   public Function<? super S2, ? extends E> getFunction() {
       return function;
    }
 }

@@ -249,6 +249,17 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
    }
 
    @Override
+   public <K, V> void forEach(BiConsumer<Cache<K, V>, ? super R> action) {
+      Cache<K, V> cache = registry.getComponent(Cache.class);
+      createStream().forEach(e -> action.accept(cache, e));
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableBiConsumer<Cache<K, V>, ? super R> action) {
+      forEach((BiConsumer<Cache<K, V>, ? super R>) action);
+   }
+
+   @Override
    public void forEachOrdered(Consumer<? super R> action) {
       injectCache(action);
       createStream().forEachOrdered(action);

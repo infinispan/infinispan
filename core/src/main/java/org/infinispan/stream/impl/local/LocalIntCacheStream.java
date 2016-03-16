@@ -171,6 +171,17 @@ public class LocalIntCacheStream extends AbstractLocalCacheStream<Integer, IntSt
    }
 
    @Override
+   public <K, V> void forEach(ObjIntConsumer<Cache<K, V>> action) {
+      Cache<K, V> cache = registry.getComponent(Cache.class);
+      createStream().forEach(i -> action.accept(cache, i));
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableObjIntConsumer<Cache<K, V>> action) {
+      forEach((ObjIntConsumer<Cache<K, V>>) action);
+   }
+
+   @Override
    public void forEachOrdered(IntConsumer action) {
       injectCache(action);
       createStream().forEachOrdered(action);

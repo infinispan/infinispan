@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
@@ -16,6 +17,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.object.*;
 import org.infinispan.stream.impl.termop.SingleRunOperation;
+import org.infinispan.stream.impl.termop.object.ForEachBiOperation;
 import org.infinispan.stream.impl.termop.object.ForEachOperation;
 import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
 import org.infinispan.util.*;
@@ -60,7 +62,7 @@ import java.util.stream.StreamSupport;
  * nodes
  * @param <R> The type of the stream
  */
-public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>, CacheStream<R>, Consumer<? super R>>
+public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>, CacheStream<R>>
         implements CacheStream<R> {
 
    // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
@@ -506,9 +508,10 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    public Optional<R> findFirst() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
          Iterator<R> iterator = iterator();
-         SingleRunOperation<Optional<R>, R, Stream<R>> op = new SingleRunOperation<>(localIntermediateOperations,
+         SingleRunOperation<Optional<R>, R, Stream<R>, Stream<R>> op = new SingleRunOperation<>(localIntermediateOperations,
                  () -> StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                         iterator, Spliterator.CONCURRENT | Spliterator.NONNULL), parallel), Stream::findFirst);
+                         iterator, Spliterator.CONCURRENT | Spliterator.NONNULL), parallel),
+                 (Stream<R> r) -> r.findFirst());
          return op.performOperation();
       } else {
          return findAny();
@@ -533,7 +536,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    @Override
    public Iterator<R> iterator() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation(Stream::iterator);
+         return performIntermediateRemoteOperation((Stream<R> s) -> s.iterator());
       } else {
          return remoteIterator();
       }
@@ -924,7 +927,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
-         performRehashForEach(action);
+         performRehashKeyTrackingOperation(s -> new ForEachOperation<>(intermediateOperations, s, distributedBatchSize,
+                 action));
       }
    }
 
@@ -934,17 +938,27 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   KeyTrackingTerminalOperation getForEach(Consumer<? super R> consumer, Supplier<Stream<CacheEntry>> supplier) {
-      return new ForEachOperation<>(intermediateOperations, supplier, distributedBatchSize, consumer);
+   public <K, V> void forEach(BiConsumer<Cache<K, V>, ? super R> action) {
+      if (!rehashAware) {
+         performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
+      } else {
+         performRehashKeyTrackingOperation(s -> new ForEachBiOperation(intermediateOperations, s,
+                 distributedBatchSize, action));
+      }
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableBiConsumer<Cache<K, V>, ? super R> action) {
+      forEach((BiConsumer<Cache<K, V>, ? super R>) action);
    }
 
    @Override
    public void forEachOrdered(Consumer<? super R> action) {
       if (sorted) {
          Iterator<R> iterator = iterator();
-         SingleRunOperation<Void, R,Stream<R>> op = new SingleRunOperation<>(localIntermediateOperations,
+         SingleRunOperation<Void, R,Stream<R>, Stream<R>> op = new SingleRunOperation<>(localIntermediateOperations,
                  () -> StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                         iterator, Spliterator.CONCURRENT | Spliterator.NONNULL), parallel), s -> {
+                         iterator, Spliterator.CONCURRENT | Spliterator.NONNULL), parallel), (Stream<R> s) -> {
             s.forEachOrdered(action);
             return null;
          });
