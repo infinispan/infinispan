@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
@@ -100,7 +101,17 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public void forEach(SerializableConsumer<? super R> action) {
-      forEach((Consumer<? super R>) action);
+      castStream(underlyingStream).forEach(action);
+   }
+
+   @Override
+   public <K, V> void forEach(BiConsumer<Cache<K, V>, ? super R> action) {
+      castStream(underlyingStream).forEach(action);
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableBiConsumer<Cache<K, V>, ? super R> action) {
+      castStream(underlyingStream).forEach(action);
    }
 
    @Override
@@ -120,7 +131,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public <A> A[] toArray(SerializableIntFunction<A[]> generator) {
-      return toArray((IntFunction<A[]>) generator);
+      return underlyingStream.toArray(generator);
    }
 
    @Override
@@ -130,7 +141,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public R reduce(R identity, SerializableBinaryOperator<R> accumulator) {
-      return reduce(identity, (BinaryOperator<R>) accumulator);
+      return castStream(underlyingStream).reduce(identity, accumulator);
    }
 
    @Override
@@ -140,7 +151,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public Optional<R> reduce(SerializableBinaryOperator<R> accumulator) {
-      return reduce((BinaryOperator<R>) accumulator);
+      return castStream(underlyingStream).reduce(accumulator);
    }
 
    @Override
@@ -150,7 +161,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public <U> U reduce(U identity, SerializableBiFunction<U, ? super R, U> accumulator, SerializableBinaryOperator<U> combiner) {
-      return reduce(identity, (BiFunction<U, ? super R, U>) accumulator, combiner);
+      return castStream(underlyingStream).reduce(identity, accumulator, combiner);
    }
 
    @Override
@@ -160,7 +171,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public <R1> R1 collect(SerializableSupplier<R1> supplier, SerializableBiConsumer<R1, ? super R> accumulator, SerializableBiConsumer<R1, R1> combiner) {
-      return collect((Supplier<R1>) supplier, accumulator, combiner);
+      return castStream(underlyingStream).collect(supplier, accumulator, combiner);
    }
 
    @Override
@@ -221,7 +232,8 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public CacheStream<R> sorted(SerializableComparator<? super R> comparator) {
-      return sorted((Comparator<? super R>) comparator);
+      underlyingStream = castStream(underlyingStream).sorted(comparator);
+      return this;
    }
 
    @Override
@@ -232,7 +244,8 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public CacheStream<R> peek(SerializableConsumer<? super R> action) {
-      return peek((Consumer<? super R>) action);
+      underlyingStream = castStream(underlyingStream).peek(action);
+      return this;
    }
 
    @Override
@@ -255,7 +268,8 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public CacheStream<R> filter(SerializablePredicate<? super R> predicate) {
-      return filter((Predicate<? super R>) predicate);
+      underlyingStream = castStream(underlyingStream).filter(predicate);
+      return this;
    }
 
    @Override
@@ -266,7 +280,8 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public <R1> CacheStream<R1> map(SerializableFunction<? super R, ? extends R1> mapper) {
-      return map((Function<? super R, ? extends R1>) mapper);
+      underlyingStream = castStream(underlyingStream).map(mapper);
+      return (CacheStream<R1>) this;
    }
 
    @Override
@@ -277,7 +292,8 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public <R1> CacheStream<R1> flatMap(SerializableFunction<? super R, ? extends Stream<? extends R1>> mapper) {
-      return flatMap((Function<? super R, ? extends Stream<? extends R1>>) mapper);
+      underlyingStream = castStream(underlyingStream).flatMap(mapper);
+      return (CacheStream<R1>) this;
    }
 
    @Override
@@ -298,7 +314,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public Optional<R> min(SerializableComparator<? super R> comparator) {
-      return min((Comparator<? super R>) comparator);
+      return castStream(underlyingStream).min(comparator);
    }
 
    @Override
@@ -308,7 +324,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public Optional<R> max(SerializableComparator<? super R> comparator) {
-      return max((Comparator<? super R>) comparator);
+      return castStream(underlyingStream).max(comparator);
    }
 
    @Override
@@ -323,7 +339,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public boolean anyMatch(SerializablePredicate<? super R> predicate) {
-      return anyMatch((Predicate<? super R>) predicate);
+      return castStream(underlyingStream).anyMatch(predicate);
    }
 
    @Override
@@ -333,7 +349,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public boolean allMatch(SerializablePredicate<? super R> predicate) {
-      return allMatch((Predicate<? super R>) predicate);
+      return castStream(underlyingStream).allMatch(predicate);
    }
 
    @Override
@@ -343,7 +359,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public boolean noneMatch(SerializablePredicate<? super R> predicate) {
-      return noneMatch((Predicate<? super R>) predicate);
+      return castStream(underlyingStream).noneMatch(predicate);
    }
 
    @Override

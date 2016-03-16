@@ -207,6 +207,27 @@ public interface LongCacheStream extends LongStream {
    void forEach(SerializableLongConsumer action);
 
    /**
+    * Same as {@link LongCacheStream#forEach(LongConsumer)} except that it takes an {@link ObjLongConsumer} that
+    * provides access to the underlying {@link Cache} that is backing this stream.
+    * <p>
+    * Note that the <code>CacheAware</code> interface is not supported for injection using this method as the cache
+    * is provided in the consumer directly.
+    * @param action consumer to be ran for each element in the stream
+    * @param <K> key type of the cache
+    * @param <V> value type of the cache
+    */
+   <K, V> void forEach(ObjLongConsumer<Cache<K, V>> action);
+
+   /**
+    * Same as {@link LongCacheStream#forEach(ObjLongConsumer)} except that the <code>BiConsumer</code> must also implement
+    * <code>Serializable</code>
+    * @param action consumer to be ran for each element in the stream
+    * @param <K> key type of the cache
+    * @param <V> value type of the cache
+    */
+   <K, V> void forEach(SerializableObjLongConsumer<Cache<K, V>> action);
+
+   /**
     * Same as {@link LongCacheStream#reduce(long, LongBinaryOperator)} except that the LongBinaryOperator must
     * also implement Serializable.
     * <p>

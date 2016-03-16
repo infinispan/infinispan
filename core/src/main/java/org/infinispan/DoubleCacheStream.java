@@ -1,5 +1,6 @@
 package org.infinispan;
 
+import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableDoubleBinaryOperator;
 import org.infinispan.util.function.SerializableDoubleConsumer;
 import org.infinispan.util.function.SerializableDoubleFunction;
@@ -8,7 +9,6 @@ import org.infinispan.util.function.SerializableDoubleToIntFunction;
 import org.infinispan.util.function.SerializableDoubleToLongFunction;
 import org.infinispan.util.function.SerializableDoubleUnaryOperator;
 import org.infinispan.util.function.SerializableObjDoubleConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableSupplier;
 
 import java.util.OptionalDouble;
@@ -197,6 +197,27 @@ public interface DoubleCacheStream extends DoubleStream {
     * @param action a non-interfering action to perform on the elements
     */
    void forEach(SerializableDoubleConsumer action);
+
+   /**
+    * Same as {@link DoubleCacheStream#forEach(DoubleConsumer)} except that it takes an {@link ObjDoubleConsumer} that
+    * provides access to the underlying {@link Cache} that is backing this stream.
+    * <p>
+    * Note that the <code>CacheAware</code> interface is not supported for injection using this method as the cache
+    * is provided in the consumer directly.
+    * @param action consumer to be ran for each element in the stream
+    * @param <K> key type of the cache
+    * @param <V> value type of the cache
+    */
+   <K, V> void forEach(ObjDoubleConsumer<Cache<K, V>> action);
+
+   /**
+    * Same as {@link DoubleCacheStream#forEach(ObjDoubleConsumer)} except that the <code>BiConsumer</code> must also implement
+    * <code>Serializable</code>
+    * @param action consumer to be ran for each element in the stream
+    * @param <K> key type of the cache
+    * @param <V> value type of the cache
+    */
+   <K, V> void forEach(SerializableObjDoubleConsumer<Cache<K, V>> action);
 
    /**
     * Same as {@link DoubleCacheStream#reduce(double, DoubleBinaryOperator)} except that the DoubleBinaryOperator must

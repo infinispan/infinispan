@@ -218,6 +218,27 @@ public interface CacheStream<R> extends Stream<R> {
    void forEach(SerializableConsumer<? super R> action);
 
    /**
+    * Same as {@link CacheStream#forEach(Consumer)} except that it takes a {@link BiConsumer} that provides access
+    * to the underlying {@link Cache} that is backing this stream.
+    * <p>
+    * Note that the <code>CacheAware</code> interface is not supported for injection using this method as the cache
+    * is provided in the consumer directly.
+    * @param action consumer to be ran for each element in the stream
+    * @param <K> key type of the cache
+    * @param <V> value type of the cache
+    */
+   <K, V> void forEach(BiConsumer<Cache<K, V>, ? super R> action);
+
+   /**
+    * Same as {@link CacheStream#forEach(BiConsumer)} except that the <code>BiConsumer</code> must also implement
+    * <code>Serializable</code>
+    * @param action consumer to be ran for each element in the stream
+    * @param <K> key type of the cache
+    * @param <V> value type of the cache
+    */
+   <K, V> void forEach(SerializableBiConsumer<Cache<K, V>, ? super R> action);
+
+   /**
     * {@inheritDoc}
     * <p>Usage of this operator requires closing this stream after you are done with the iterator.  The preferred
     * usage is to use a try with resource block on the stream.</p>

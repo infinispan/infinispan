@@ -21,18 +21,18 @@ import java.util.stream.Stream;
  * @param <T> type of the stream entries
  * @param <S> type of the stream itself
  */
-public class SegmentRetryingOperation<E, T, S extends BaseStream<T, S>> extends BaseTerminalOperation
+public class SegmentRetryingOperation<E, T, S extends BaseStream<T, S>, S2 extends S> extends BaseTerminalOperation
         implements TerminalOperation<E> {
    private static final Log log = LogFactory.getLog(SegmentRetryingOperation.class);
 
    private static final BaseStream<?, ?> EMPTY = Stream.empty();
 
-   private final Function<S, ? extends E> function;
+   private final Function<? super S2, ? extends E> function;
    private transient AtomicReference<BaseStream<?, ?>> streamRef = new AtomicReference<>(EMPTY);
    private transient AtomicBoolean continueTrying = new AtomicBoolean(true);
 
    public SegmentRetryingOperation(Iterable<IntermediateOperation> intermediateOperations,
-           Supplier<? extends Stream<?>> supplier, Function<S, ? extends E> function) {
+           Supplier<? extends Stream<?>> supplier, Function<? super S2, ? extends E> function) {
       super(intermediateOperations, supplier);
       this.function = function;
    }
@@ -65,7 +65,7 @@ public class SegmentRetryingOperation<E, T, S extends BaseStream<T, S>> extends 
       for (IntermediateOperation intOp : intermediateOperations) {
          stream = intOp.perform(stream);
       }
-      return function.apply((S) stream);
+      return function.apply((S2) stream);
    }
 
    @Override
@@ -83,7 +83,7 @@ public class SegmentRetryingOperation<E, T, S extends BaseStream<T, S>> extends 
       return keepTrying ? value : null;
    }
 
-   public Function<S, ? extends E> getFunction() {
+   public Function<? super S2, ? extends E> getFunction() {
       return function;
    }
 }

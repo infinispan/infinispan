@@ -55,10 +55,10 @@ public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>>
    @Override
    public Collection<CacheEntry<K, K>> performOperationRehashAware(
            IntermediateCollector<Collection<CacheEntry<K, K>>> response) {
-      // We only support sequential streams for iterator rehash aware
+      // We only support sequential streams for forEach rehash aware
       BaseStream<?, ?> stream = supplier.get().sequential();
 
-      List<CacheEntry<K, K>> collectedValues = new ArrayList(batchSize);
+      List<CacheEntry<K, K>> collectedValues = new ArrayList<>(batchSize);
 
       List<V> currentList = new ArrayList<>();
       ByRef<K> currentKey = new ByRef<>(null);
@@ -79,7 +79,7 @@ public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>>
       }
 
       S convertedStream = ((S) stream);
-      // We rely on the fact that iterator processes 1 entry at a time
+      // We rely on the fact that forEach processes 1 entry at a time
       handleStreamForEach(convertedStream, currentList);
       if (!currentList.isEmpty()) {
          handleList(currentList);

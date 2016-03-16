@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
@@ -18,7 +19,9 @@ import org.infinispan.stream.impl.intops.primitive.l.MapToObjLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.PeekLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.SortedLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapLongOperation;
+import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachLongOperation;
+import org.infinispan.stream.impl.termop.primitive.ForEachObjLongOperation;
 import org.infinispan.util.function.SerializableLongBinaryOperator;
 import org.infinispan.util.function.SerializableLongConsumer;
 import org.infinispan.util.function.SerializableLongFunction;
@@ -58,7 +61,7 @@ import java.util.stream.Stream;
  * class is only able to be created using {@link org.infinispan.CacheStream#mapToInt(ToIntFunction)} or similar
  * methods from the {@link org.infinispan.CacheStream} interface.
  */
-public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongStream, LongCacheStream, LongConsumer>
+public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongStream, LongCacheStream>
         implements LongCacheStream {
    /**
     * This constructor is to be used only when a user calls a map or flat map method changing to an IntStream
@@ -198,7 +201,7 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
-         performRehashForEach(action);
+         performRehashKeyTrackingOperation(s -> getForEach(action, s));
       }
    }
 
@@ -208,6 +211,19 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
    }
 
    @Override
+   public <K, V> void forEach(ObjLongConsumer<Cache<K, V>> action) {
+      if (!rehashAware) {
+         performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
+      } else {
+         performRehashKeyTrackingOperation(s -> getForEach(action, s));
+      }
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableObjLongConsumer<Cache<K, V>> action) {
+      forEach((ObjLongConsumer<Cache<K, V>>) action);
+   }
+
    KeyTrackingTerminalOperation<Object, Long, Object> getForEach(LongConsumer consumer,
            Supplier<Stream<CacheEntry>> supplier) {
       if (iteratorOperation == IteratorOperation.FLAT_MAP) {
@@ -217,10 +233,19 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
       }
    }
 
+   <K, V> KeyTrackingTerminalOperation<Object, Long, Object> getForEach(ObjLongConsumer<Cache<K, V>> consumer,
+           Supplier<Stream<CacheEntry>> supplier) {
+      if (iteratorOperation == IteratorOperation.FLAT_MAP) {
+         return new ForEachFlatMapObjLongOperation(intermediateOperations, supplier, distributedBatchSize, consumer);
+      } else {
+         return new ForEachObjLongOperation(intermediateOperations, supplier, distributedBatchSize, consumer);
+      }
+   }
+
    @Override
    public void forEachOrdered(LongConsumer action) {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         performIntermediateRemoteOperation(s -> {
+         performIntermediateRemoteOperation((LongStream s) -> {
             s.forEachOrdered(action);
             return null;
          });
@@ -387,7 +412,7 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
    @Override
    public OptionalLong findFirst() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation(LongStream::findFirst);
+         return performIntermediateRemoteOperation((LongStream s) -> s.findFirst());
       } else {
          return findAny();
       }

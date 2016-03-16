@@ -317,6 +317,29 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       }
    }
 
+   public void testObjForEachBiConsumer() {
+      Cache<Integer, String> cache = getCache(0);
+
+      int cacheOffset = populateNextForEachStructure(cache);
+      int atomicOffset = populateNextForEachStructure(new AtomicInteger());
+      try {
+         testIntOperation(() -> {
+            createStream(cache.entrySet()).forEach((c, e) -> {
+               Cache<?, ?> localCache = getForEachObject(cacheOffset);
+               if (c != null && localCache != null && c.getName().equals(localCache.getName())) {
+                  ((AtomicInteger) getForEachObject(atomicOffset)).addAndGet(e.getKey());
+               } else {
+                  fail("Did not receive correct cache!");
+               }
+            });
+            return ((AtomicInteger) getForEachObject(atomicOffset)).get();
+         }, cache);
+      } finally {
+         clearForEachObject(cacheOffset);
+         clearForEachObject(atomicOffset);
+      }
+   }
+
    public void testObjKeySetForEachCacheInjected() {
       Cache<Integer, String> cache = getCache(0);
 
@@ -808,6 +831,53 @@ private static class ForEachIntInjected implements IntConsumer,
       }
    }
 
+   public void testIntForEachBiConsumer() {
+      Cache<Integer, String> cache = getCache(0);
+      int cacheOffset = populateNextForEachStructure(cache);
+      int atomicOffset = populateNextForEachStructure(new AtomicInteger());
+
+      try {
+         testIntOperation(() -> {
+            createStream(cache.entrySet()).mapToInt(toInt).forEach((c, i) -> {
+               Cache<?, ?> localCache = getForEachObject(cacheOffset);
+               if (c != null && localCache != null && c.getName().equals(localCache.getName())) {
+                  AtomicInteger atomicInteger = getForEachObject(atomicOffset);
+                  atomicInteger.addAndGet(i);
+               }
+            });
+            return ((AtomicInteger) getForEachObject(atomicOffset)).get();
+         }, cache);
+      } finally {
+         clearForEachObject(cacheOffset);
+         clearForEachObject(atomicOffset);
+      }
+   }
+
+   public void testIntFlatMapObjConsumerForEach() {
+      Cache<Integer, String> cache = getCache(0);
+      String cacheName = cache.getName();
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      int offset = populateNextForEachStructure(new AtomicInteger());
+      try {
+         createStream(entrySet).distributedBatchSize(5).mapToInt(toInt).flatMap(i -> IntStream.of(i, 2))
+                 .forEach((c, e) -> {
+                    assertEquals(cacheName, c.getName());
+                    AtomicInteger atomic = getForEachObject(offset);
+                    atomic.addAndGet(e);
+                 });
+         AtomicInteger atomic = getForEachObject(offset);
+         assertEquals((range - 1) * (range / 2) + 2 * range, atomic.get());
+      } finally {
+         clearForEachObject(offset);
+      }
+   }
+
    public void testIntIterator() {
       Cache<Integer, String> cache = getCache(0);
 
@@ -1183,6 +1253,53 @@ private static class ForEachIntInjected implements IntConsumer,
       } finally {
          clearForEachObject(cacheOffset);
          clearForEachObject(atomicOffset);
+      }
+   }
+
+   public void testLongForEachBiConsumer() {
+      Cache<Long, String> cache = getCache(0);
+      int cacheOffset = populateNextForEachStructure(cache);
+      int atomicOffset = populateNextForEachStructure(new AtomicLong());
+
+      try {
+         testLongOperation(() -> {
+            createStream(cache.entrySet()).mapToLong(toLong).forEach((c, i) -> {
+               Cache<?, ?> localCache = getForEachObject(cacheOffset);
+               if (c != null && localCache != null && c.getName().equals(localCache.getName())) {
+                  AtomicLong atomicLong = getForEachObject(atomicOffset);
+                  atomicLong.addAndGet(i);
+               }
+            });
+            return ((AtomicLong) getForEachObject(atomicOffset)).get();
+         }, cache);
+      } finally {
+         clearForEachObject(cacheOffset);
+         clearForEachObject(atomicOffset);
+      }
+   }
+
+   public void testLongFlatMapObjConsumerForEach() {
+      Cache<Long, String> cache = getCache(0);
+      String cacheName = cache.getName();
+      int range = 10;
+      // First populate the cache with a bunch of values
+      LongStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
+
+      int offset = populateNextForEachStructure(new AtomicLong());
+      try {
+         createStream(entrySet).distributedBatchSize(5).mapToLong(toLong).flatMap(i -> LongStream.of(i, 2))
+                 .forEach((c, e) -> {
+                    assertEquals(cacheName, c.getName());
+                    AtomicLong atomic = getForEachObject(offset);
+                    atomic.addAndGet(e);
+                 });
+         AtomicLong atomic = getForEachObject(offset);
+         assertEquals((range - 1) * (range / 2) + 2 * range, atomic.get());
+      } finally {
+         clearForEachObject(offset);
       }
    }
 
@@ -1578,6 +1695,62 @@ private static class ForEachIntInjected implements IntConsumer,
          }, cache);
       } finally {
          clearForEachObject(cacheOffset);
+         clearForEachObject(offset);
+      }
+   }
+
+   public void testDoubleForEachBiConsumer() {
+      Cache<Double, String> cache = getCache(0);
+      int cacheOffset = populateNextForEachStructure(cache);
+      int offset = populateNextForEachStructure(new DoubleSummaryStatistics());
+
+      try {
+         testDoubleOperation(() -> {
+            createStream(cache.entrySet()).mapToDouble(toDouble).forEach((c, d) -> {
+               Cache<?, ?> localCache = getForEachObject(cacheOffset);
+               if (c != null && localCache != null && c.getName().equals(localCache.getName())) {
+                  DoubleSummaryStatistics stats = getForEachObject(offset);
+                  synchronized (stats) {
+                     stats.accept(d);
+                  }
+               }
+            });
+            DoubleSummaryStatistics stats = getForEachObject(offset);
+            return stats;
+         }, cache);
+      } finally {
+         clearForEachObject(cacheOffset);
+         clearForEachObject(offset);
+      }
+   }
+
+   public void testDoubleFlatMapObjConsumerForEach() {
+      Cache<Double, String> cache = getCache(0);
+      String cacheName = cache.getName();
+      int range = 10;
+      // First populate the cache with a bunch of values
+      DoubleStream.iterate(0.0, d -> d + .5).limit(10).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
+
+      int offset = populateNextForEachStructure(new DoubleSummaryStatistics());
+      try {
+         createStream(entrySet).distributedBatchSize(5).mapToDouble(toDouble).flatMap(e -> DoubleStream.of(e, 2.25))
+                 .forEach((c, e) -> {
+                    assertEquals(cacheName, c.getName());
+                    DoubleSummaryStatistics stats = getForEachObject(offset);
+                    synchronized (stats) {
+                       stats.accept(e);
+                    }
+                 });
+         DoubleSummaryStatistics stats = getForEachObject(offset);
+         assertEquals(2.25, stats.getAverage());
+         assertEquals(0.0, stats.getMin());
+         assertEquals(4.5, stats.getMax());
+         assertEquals(20, stats.getCount());
+         assertEquals(45.0, stats.getSum());
+      } finally {
          clearForEachObject(offset);
       }
    }
