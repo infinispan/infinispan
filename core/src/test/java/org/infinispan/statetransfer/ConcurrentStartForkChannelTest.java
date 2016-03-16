@@ -150,7 +150,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       });
       channel.getProtocolStack().addProtocol(fork);
       ForkChannel fch = new ForkChannel(channel, "stack1", "channel1");
-      CustomChannelLookup.registerChannel(name, fch, gcb, true);
+      CustomChannelLookup.registerChannel(gcb, fch, name, true);
 
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), cacheCfg.build(), false);
       registerCacheManager(cm);
