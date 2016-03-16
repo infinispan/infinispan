@@ -243,16 +243,15 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             }
          }
       } catch (RuntimeException rte) {
+         EmbeddedCacheManagerStartupException exception = new EmbeddedCacheManagerStartupException(rte);
+         state = ComponentStatus.FAILED;
+
          try {
-            resetVolatileComponents();
-            rewire();
+            super.stop();
          } catch (Exception e) {
-            if (log.isDebugEnabled())
-               log.unableToResetGlobalComponentRegistryAfterRestart(e);
-            else
-               log.unableToResetGlobalComponentRegistryAfterRestart(e.getClass().getSimpleName(), e.getMessage(), e);
+            exception.addSuppressed(e);
          }
-         throw new EmbeddedCacheManagerStartupException(rte);
+         throw exception;
       }
    }
 
