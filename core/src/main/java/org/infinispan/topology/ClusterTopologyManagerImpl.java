@@ -33,6 +33,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,6 +46,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +62,10 @@ import static org.infinispan.util.logging.LogFactory.CLUSTER;
  * @since 5.2
  */
 public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
+
+   public static final int INITIAL_CONNECTION_ATTEMPTS = 10;
+   public static final int CLUSTER_RECOVERY_ATTEMPTS = 10;
+
    private enum ClusterManagerStatus {
       INITIALIZING,
       REGULAR_MEMBER,
@@ -132,20 +138,33 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    protected void fetchRebalancingStatusFromCoordinator() {
       if (!transport.isCoordinator()) {
+         // Assume any timeout is because the coordinator doesn't have a CommandAwareRpcDispatcher yet
+         // (possible with a JGroupsChannelLookup and shouldConnect = false), and retry.
          ReplicableCommand command = new CacheTopologyControlCommand(null,
                CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), -1);
-         Address coordinator = transport.getCoordinator();
-         try {
-            Map<Address, Response> responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
-                  command, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
-            Response response = responseMap.get(coordinator);
-            if (response instanceof SuccessfulResponse) {
-               globalRebalancingEnabled = ((Boolean) ((SuccessfulResponse) response).getResponseValue());
-            } else {
-               log.errorReadingRebalancingStatus(coordinator, null);
+         Address coordinator = null;
+         Response response = null;
+         for (int i = INITIAL_CONNECTION_ATTEMPTS - 1; i >= 0; i--) {
+            try {
+               coordinator = transport.getCoordinator();
+               Map<Address, Response> responseMap = transport
+                     .invokeRemotely(Collections.singleton(coordinator), command, ResponseMode.SYNCHRONOUS,
+                           getGlobalTimeout() / INITIAL_CONNECTION_ATTEMPTS, null, DeliverOrder.NONE, false);
+               response = responseMap.get(coordinator);
+               break;
+            } catch (Exception e) {
+               if (i == 0 || !(e instanceof TimeoutException)) {
+                  log.errorReadingRebalancingStatus(coordinator, e);
+                  response = SuccessfulResponse.create(Boolean.TRUE);
+               }
+               log.debug("Timed out waiting for rebalancing status from coordinator, trying again");
             }
-         } catch (Exception e) {
-            log.errorReadingRebalancingStatus(coordinator, e);
+         }
+
+         if (response instanceof SuccessfulResponse) {
+            globalRebalancingEnabled = ((Boolean) ((SuccessfulResponse) response).getResponseValue());
+         } else {
+            log.errorReadingRebalancingStatus(coordinator, new CacheException(response.toString()));
          }
       }
    }
@@ -376,8 +395,21 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       log.debugf("Recovering cluster status for view %d", newViewId);
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress(), newViewId);
-      Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false,
-            new CacheTopologyFilterReuser());
+      Map<Address, Object> statusResponses = null;
+      // Assume any timeout is because one of the nodes didn't have a CommandAwareRpcDispatcher
+      // installed at the time (possible with JGroupsChannelLookup and shouldConnect == false), and retry.
+      for (int i = CLUSTER_RECOVERY_ATTEMPTS - 1; i >= 0; i--) {
+         try {
+            statusResponses =
+                  executeOnClusterSync(command, getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS, false, false,
+                        new CacheTopologyFilterReuser());
+            break;
+         } catch (ExecutionException e) {
+            if (i == 0 || !(e.getCause() instanceof TimeoutException))
+               throw e;
+            log.debug("Timed out waiting for cluster status responses, trying again");
+         }
+      }
 
       log.debugf("Got %d status responses. members are %s", statusResponses.size(), clusterMembers);
       Map<String, Map<Address, CacheStatusResponse>> responsesByCache = new HashMap<>();
@@ -490,7 +522,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          throw new Exception(throwable);
       }
 
-      return extractResponseValues(remoteFuture.get(timeout, TimeUnit.MILLISECONDS), localResponse);
+      return extractResponseValues(CompletableFutures.await(remoteFuture), localResponse);
    }
 
    private int getGlobalTimeout() {
