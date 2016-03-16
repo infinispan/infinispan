@@ -221,14 +221,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
-   /**
-    * @deprecated Use security().ssl() instead
-    */
-   @Deprecated
-   public SslConfigurationBuilder ssl() {
-      return security.ssl();
-   }
-
    @Override
    public ConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
       this.tcpNoDelay = tcpNoDelay;
