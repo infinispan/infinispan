@@ -93,7 +93,6 @@ public abstract class AbstractRemoteCacheIT {
                 .forceReturnValues(false)
                         // TCP stuff
                 .tcpNoDelay(true)
-                .pingOnStartup(true)
                 .transportFactory("org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory")
                         // marshalling
                         // FIXME Workaround for ISPN-6367

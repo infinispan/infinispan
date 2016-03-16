@@ -68,7 +68,6 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .forceReturnValues(true)
                 .tcpNoDelay(false)
                 .tcpKeepAlive(true)
-                .pingOnStartup(false)
                 .transportFactory("org.infinispan.server.test.client.hotrod.HotRodTestTransportFactory")
                 .marshaller("org.infinispan.server.test.client.hotrod.HotRodTestMarshaller")
                 .asyncExecutorFactory().factoryClass("org.infinispan.server.test.client.hotrod.HotRodTestExecutorFactory")
@@ -126,7 +125,6 @@ public abstract class AbstractRemoteCacheManagerIT {
         builder.balancingStrategy("org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy")
                 .forceReturnValues(false)
                 .tcpNoDelay(true)
-                .pingOnStartup(true)
                 .transportFactory("org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory")
                 .marshaller("org.infinispan.commons.marshall.jboss.GenericJBossMarshaller")
                 .asyncExecutorFactory().factoryClass("org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory")
@@ -369,8 +367,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         assertEquals(config.tcpKeepAlive(), Boolean.parseBoolean(getTcpKeepAliveProperty(rc)));
         assertEquals(config.maxRetries(), Integer.parseInt(getMaxRetries(rc)));
 
-        // pingOnStartup and asyncExecutorFactory compared only with the configuration itself
-        assertEquals(config.pingOnStartup(), rc.getRemoteCacheManager().getConfiguration().pingOnStartup());
+        // asyncExecutorFactory compared only with the configuration itself
         assertEquals(config.asyncExecutorFactory().factoryClass().getName(),
                 rc.getRemoteCacheManager().getConfiguration().asyncExecutorFactory().factoryClass().getName());
 

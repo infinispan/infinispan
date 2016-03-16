@@ -69,11 +69,6 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    }
 
    @Override
-   public RemoteStoreConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
-      return builder.pingOnStartup(pingOnStartup);
-   }
-
-   @Override
    public RemoteStoreConfigurationBuilder protocolVersion(String protocolVersion) {
       return builder.protocolVersion(protocolVersion);
    }

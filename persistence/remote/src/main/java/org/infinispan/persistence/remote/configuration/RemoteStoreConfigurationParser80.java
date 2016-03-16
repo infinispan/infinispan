@@ -206,7 +206,7 @@ public class RemoteStoreConfigurationParser80 implements ConfigurationParser {
                break;
             }
             case PING_ON_STARTUP: {
-               builder.pingOnStartup(Boolean.parseBoolean(value));
+               log.ignoreXmlAttribute(attribute);
                break;
             }
             case PROTOCOL_VERSION: {

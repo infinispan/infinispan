@@ -93,7 +93,6 @@ public class TcpTransportFactory implements TransportFactory {
       synchronized (lock) {
          this.listenerNotifier = listenerNotifier;
          this.configuration = configuration;
-         boolean pingOnStartup = configuration.pingOnStartup();
          Collection<SocketAddress> servers = new ArrayList<>();
          initialServers = new ArrayList<>();
          for(ServerConfiguration server : configuration.servers()) {
@@ -135,9 +134,9 @@ public class TcpTransportFactory implements TransportFactory {
          }
          TransportObjectFactory connectionFactory;
          if (configuration.security().authentication().enabled()) {
-            connectionFactory = new SaslTransportObjectFactory(codec, this, defaultCacheTopologyId, pingOnStartup, configuration.security().authentication());
+            connectionFactory = new SaslTransportObjectFactory(codec, this, defaultCacheTopologyId, configuration.security().authentication());
          } else {
-            connectionFactory = new TransportObjectFactory(codec, this, defaultCacheTopologyId, pingOnStartup);
+            connectionFactory = new TransportObjectFactory(codec, this, defaultCacheTopologyId);
          }
          PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory =
                new PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport>(
@@ -147,8 +146,7 @@ public class TcpTransportFactory implements TransportFactory {
          balancers = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
          addBalancer(RemoteCacheManager.cacheNameBytes());
 
-         if (configuration.pingOnStartup())
-            pingServersIgnoreException();
+         pingServersIgnoreException();
       }
    }
 

@@ -47,7 +47,6 @@ public class ConfigurationTest {
          .consistentHashImpl(1, SomeCustomConsistentHashV1.class)
          .socketTimeout(100)
          .tcpNoDelay(false)
-         .pingOnStartup(false)
          .keySizeEstimate(128)
          .valueSizeEstimate(1024)
          .maxRetries(0)
@@ -176,7 +175,6 @@ public class ConfigurationTest {
       assertEquals(100, configuration.socketTimeout());
       assertFalse(configuration.tcpNoDelay());
       assertTrue(configuration.tcpKeepAlive());
-      assertTrue(configuration.pingOnStartup());
       assertEquals(128, configuration.keySizeEstimate());
       assertEquals(1024, configuration.valueSizeEstimate());
       assertEquals(0, configuration.maxRetries());

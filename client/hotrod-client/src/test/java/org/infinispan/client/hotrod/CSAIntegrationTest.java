@@ -84,7 +84,6 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder
-            .pingOnStartup(true)
             .addServers("localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();

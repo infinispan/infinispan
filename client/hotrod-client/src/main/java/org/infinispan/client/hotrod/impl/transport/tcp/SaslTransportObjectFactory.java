@@ -37,8 +37,8 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    private final AuthenticationConfiguration configuration;
 
    public SaslTransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory,
-         AtomicInteger defaultCacheTopologyId, boolean pingOnStartup, AuthenticationConfiguration configuration) {
-      super(codec, tcpTransportFactory, defaultCacheTopologyId, pingOnStartup);
+         AtomicInteger defaultCacheTopologyId, AuthenticationConfiguration configuration) {
+      super(codec, tcpTransportFactory, defaultCacheTopologyId);
       this.configuration = configuration;
    }
 
@@ -93,7 +93,7 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
          saslClient.dispose();
       }
 
-      if (pingOnStartup && !firstPingExecuted) {
+      if (!firstPingExecuted) {
          log.trace("Executing first ping!");
          firstPingExecuted = true;
 

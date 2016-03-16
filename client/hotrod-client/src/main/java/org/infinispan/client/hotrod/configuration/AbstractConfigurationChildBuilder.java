@@ -107,11 +107,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
-   public ConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
-      return builder.pingOnStartup(pingOnStartup);
-   }
-
-   @Override
    public ConfigurationBuilder protocolVersion(String protocolVersion) {
       return builder.protocolVersion(protocolVersion);
    }

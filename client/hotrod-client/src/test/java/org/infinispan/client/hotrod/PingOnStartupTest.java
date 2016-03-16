@@ -39,7 +39,6 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder
-            .pingOnStartup(true)
             .addServers("localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new InternalRemoteCacheManager(clientBuilder.build())) {
@@ -64,7 +63,6 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder
-            .pingOnStartup(false)
             .addServers("boomoo:12345;localhost:" + hotRodServer2.getPort());
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(clientBuilder.build())) {
@@ -81,7 +79,6 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder
-            .pingOnStartup(true)
             .addServers("boomoo:12345;localhost:" + hotRodServer2.getPort());
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(clientBuilder.build())) {
@@ -97,7 +94,6 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder
-            .pingOnStartup(true)
             .addServers("localhost:" + hotRodServer2.getPort());
       withRemoteCacheManager(new RemoteCacheManagerCallable(
             new RemoteCacheManager(clientBuilder.build())) {

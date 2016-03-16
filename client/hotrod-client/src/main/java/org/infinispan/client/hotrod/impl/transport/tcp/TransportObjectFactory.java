@@ -20,15 +20,13 @@ public class TransportObjectFactory
    private static final boolean trace = log.isTraceEnabled();
    protected final TcpTransportFactory tcpTransportFactory;
    protected final AtomicInteger defaultCacheTopologyId;
-   protected final boolean pingOnStartup;
    protected volatile boolean firstPingExecuted = false;
    protected final Codec codec;
 
    public TransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory,
-         AtomicInteger defaultCacheTopologyId, boolean pingOnStartup) {
+         AtomicInteger defaultCacheTopologyId) {
       this.tcpTransportFactory = tcpTransportFactory;
       this.defaultCacheTopologyId = defaultCacheTopologyId;
-      this.pingOnStartup = pingOnStartup;
       this.codec = codec;
    }
 
@@ -36,7 +34,7 @@ public class TransportObjectFactory
    public TcpTransport makeObject(SocketAddress address) throws Exception {
       TcpTransport tcpTransport = new TcpTransport(address, tcpTransportFactory);
       if (trace) log.tracef("Created tcp transport: %s", tcpTransport);
-      if (pingOnStartup && !firstPingExecuted) {
+      if (!firstPingExecuted) {
          if (trace) log.trace("Executing first ping!");
          firstPingExecuted = true;
 

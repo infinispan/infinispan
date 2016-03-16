@@ -24,8 +24,7 @@ public class TransportObjectFactoryTest {
 
    public void testValidate() {
       Codec codec = mock(Codec.class);
-      TransportObjectFactory objectFactory = new TransportObjectFactory(codec, null,
-                                                                        new AtomicInteger(), false);
+      TransportObjectFactory objectFactory = new TransportObjectFactory(codec, null, new AtomicInteger());
       doThrow(new TransportException("induced!", null))
             .when(codec).writeHeader(any(Transport.class), any(HeaderParams.class));
 

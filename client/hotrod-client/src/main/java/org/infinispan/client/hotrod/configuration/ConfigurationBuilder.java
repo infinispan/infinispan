@@ -58,7 +58,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
    private Class<? extends Marshaller> marshallerClass = GenericJBossMarshaller.class;
    private Marshaller marshaller;
-   private boolean pingOnStartup = true;
    private String protocolVersion = ConfigurationProperties.DEFAULT_PROTOCOL_VERSION;
    private final List<ServerConfigurationBuilder> servers = new ArrayList<ServerConfigurationBuilder>();
    private int socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
@@ -205,15 +204,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return nearCache;
    }
 
-   /**
-    * @deprecated No longer in effect, ping always happens on startup now.
-    */
-   @Deprecated
-   @Override
-   public ConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
-      return this;
-   }
-
    @Override
    public ConfigurationBuilder protocolVersion(String protocolVersion) {
       this.protocolVersion = protocolVersion;
@@ -341,11 +331,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
       if (marshaller == null) {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
+               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
                valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
       } else {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
+               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
                valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
       }
    }

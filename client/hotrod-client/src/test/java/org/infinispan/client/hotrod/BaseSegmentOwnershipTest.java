@@ -46,7 +46,7 @@ public abstract class BaseSegmentOwnershipTest extends MultiHotRodServersTest {
 
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
-      return super.createHotRodClientConfigurationBuilder(serverPort).pingOnStartup(true);
+      return super.createHotRodClientConfigurationBuilder(serverPort);
    }
 
 }
