@@ -599,7 +599,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          return singleResponseFuture.thenApply(rsp -> {
             if (trace) log.tracef("Response: %s", rsp);
             Address sender = fromJGroupsAddress(rsp.getSender());
-            Response response = checkRsp(rsp, sender, responseFilter != null, ignoreLeavers);
+            Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), ignoreLeavers);
             return Collections.singletonMap(sender, response);
          });
       } else if (rspListFuture != null) {
@@ -612,7 +612,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             for (Rsp<Response> rsp : rsps.values()) {
                hasResponses |= rsp.wasReceived();
                Address sender = fromJGroupsAddress(rsp.getSender());
-               Response response = checkRsp(rsp, sender, responseFilter != null, ignoreLeavers);
+               Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), ignoreLeavers);
                if (response != null) {
                   hasValidResponses = true;
                   retval.put(sender, response);
@@ -642,6 +642,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       } else {
          throw new IllegalStateException("Should have one remote invocation future");
       }
+   }
+
+   private boolean ignoreTimeout(ResponseFilter responseFilter) {
+      return responseFilter != null && !responseFilter.needMoreResponses();
    }
 
    @Override
@@ -697,7 +701,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       boolean hasResponses = false;
       for (Rsp<Response> rsp : rsps) {
          Address sender = fromJGroupsAddress(rsp.getSender());
-         Response response = checkRsp(rsp, sender, responseFilter != null, ignoreLeavers);
+         Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), ignoreLeavers);
          if (response != null) {
             retval.put(sender, response);
             hasResponses = true;
@@ -765,7 +769,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       } else if (rsp.wasSuspected()) {
          response = checkResponse(CacheNotFoundResponse.INSTANCE, sender, ignoreLeavers);
       } else {
-         if (!ignoreTimeout) throw new TimeoutException("Replication timeout for " + sender);
+         if (!ignoreTimeout) {
+            throw new TimeoutException("Replication timeout for " + sender);
+         }
          response = null;
       }
 
