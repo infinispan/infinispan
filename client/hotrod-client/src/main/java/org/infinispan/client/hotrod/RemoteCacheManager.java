@@ -55,7 +55,7 @@ import org.infinispan.commons.util.Util;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager implements BasicCacheContainer {
+public class RemoteCacheManager implements RemoteCacheContainer {
 
    private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
@@ -101,39 +101,17 @@ public class RemoteCacheManager implements BasicCacheContainer {
    }
 
    /**
-    * Retrieves the configuration currently in use. The configuration object is immutable. If you wish to change configuration,
-    * you should use the following pattern:
-    *
-    * <pre><code>
-    * ConfigurationBuilder builder = new ConfigurationBuilder();
-    * builder.read(remoteCacheManager.getConfiguration());
-    * // modify builder
-    * remoteCacheManager.stop();
-    * remoteCacheManager = new RemoteCacheManager(builder.build());
-    * </code></pre>
-    *
     * @since 5.3
-    * @return The configuration of this RemoteCacheManager
     */
+   @Override
    public Configuration getConfiguration() {
       return configuration;
    }
 
    /**
-    * Retrieves a clone of the properties currently in use.  Note that making any changes to the properties instance
-    * retrieved will not affect an already-running RemoteCacheManager.  If you wish to make changes to an already-running
-    * RemoteCacheManager, you should use the following pattern:
-    *
-    * <pre><code>
-    * Properties p = remoteCacheManager.getProperties();
-    * // update properties
-    * remoteCacheManager.stop();
-    * remoteCacheManager = new RemoteCacheManager(p);
-    * </code></pre>
-    *
-    * @return a clone of the properties used to configure this RemoteCacheManager
     * @since 4.2
     */
+   @Override
    @Deprecated
    public Properties getProperties() {
       Properties properties = new Properties();
@@ -235,6 +213,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       return getCache(cacheName, configuration.forceReturnValues());
    }
 
+   @Override
    public <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue) {
       return createRemoteCache(cacheName, forceReturnValue);
    }
@@ -250,6 +229,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       return getCache(configuration.forceReturnValues());
    }
 
+   @Override
    public <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
       //As per the HotRod protocol specification, the default cache is identified by an empty string
       return createRemoteCache("", forceReturnValue);
@@ -309,29 +289,17 @@ public class RemoteCacheManager implements BasicCacheContainer {
       started = false;
    }
 
+   @Override
    public boolean isStarted() {
       return started;
    }
 
-   /**
-    * Switch remote cache manager to a different cluster, previously
-    * declared via configuration. If the switch was completed successfully,
-    * this method returns {@code true}, otherwise it returns {@code false}.
-    *
-    * @param clusterName name of the cluster to which to switch to
-    * @return {@code true} if the cluster was switched, {@code false} otherwise
-    */
+   @Override
    public boolean switchToCluster(String clusterName) {
       return transportFactory.switchToCluster(clusterName);
    }
 
-   /**
-    * Switch remote cache manager to a the default cluster, previously
-    * declared via configuration. If the switch was completed successfully,
-    * this method returns {@code true}, otherwise it returns {@code false}.
-    *
-    * @return {@code true} if the cluster was switched, {@code false} otherwise
-    */
+   @Override
    public boolean switchToDefaultCluster() {
       return transportFactory.switchToCluster(TcpTransportFactory.DEFAULT_CLUSTER_NAME);
    }
@@ -400,6 +368,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
       remoteCache.init(marshaller, asyncExecutorService, operationsFactory, configuration.keySizeEstimate(), configuration.valueSizeEstimate());
    }
 
+   @Override
    public Marshaller getMarshaller() {
       return marshaller;
    }
