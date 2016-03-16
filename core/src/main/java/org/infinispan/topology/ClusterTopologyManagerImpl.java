@@ -168,8 +168,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          clusterManagerLock.unlock();
       }
 
-      cacheManagerNotifier.removeListener(viewListener);
-      viewHandlingCompletionService.cancelQueuedTasks();
+      if (viewListener != null) {
+         cacheManagerNotifier.removeListener(viewListener);
+      }
+      if (viewHandlingCompletionService != null) {
+         viewHandlingCompletionService.cancelQueuedTasks();
+      }
    }
 
    @Override
