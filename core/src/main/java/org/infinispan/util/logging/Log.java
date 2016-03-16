@@ -965,14 +965,6 @@ public interface Log extends BasicLogger {
    void warnL1NotHavingReaperThread();
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to reset GlobalComponentRegistry after a failed restart!", id = 265)
-   void unableToResetGlobalComponentRegistryAfterRestart(@Cause Exception e);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to reset GlobalComponentRegistry after a failed restart due to an exception of type %s with message %s. Use DEBUG level logging for full exception details.", id = 266)
-   void unableToResetGlobalComponentRegistryAfterRestart(String type, String message, @Cause Exception e);
-
-   @LogMessage(level = WARN)
    @Message(value = "Problems creating interceptor %s", id = 267)
    void unableToCreateInterceptor(Class type, @Cause Exception e);
 
