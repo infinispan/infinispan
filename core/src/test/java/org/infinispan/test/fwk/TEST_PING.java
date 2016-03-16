@@ -53,52 +53,73 @@ public class TEST_PING extends Discovery {
 
    @Override
    protected void findMembers(List<Address> addresses, boolean initialDiscovery, Responses pingDatas) {
-      if (!stopped) {
-         Map<Address, TEST_PING> discoveries = registerInDiscoveries();
-
-         // Only send message if DISCARD is not used, or if DISCARD is
-         // configured but it's not discarding messages.
-         boolean discardEnabled = isDiscardEnabled(this);
-         if (!discardEnabled) {
-            // Make sure that concurrent startups within a test won't mess up discovery
-            synchronized (discoveries) {
-               if (!discoveries.isEmpty()) {
-                  boolean traceEnabled = log.isTraceEnabled();
-                  for (TEST_PING discovery : discoveries.values()) {
-                     // Avoid sending to self! Since there are single instances of
-                     // discovery protocol in each node, just compare them by ref.
-                     if (discovery != this) {
-                        boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
-                        if (!remoteDiscardEnabled && !discovery.stopped) {
-                           addPingRsp(pingDatas, discovery);
-                        } else if (discovery.stopped) {
-                           log.debug(String.format(
-                                 "%s is stopped, so no ping responses will be received",
-                                 discovery.getLocalAddr()));
-                        } else {
-                           if (traceEnabled)
-                              log.trace("Skipping sending response cos DISCARD is on");
-                           // If discard is enabled, add an empty response
-                           addPingRsp(null, discovery);
-                        }
-                     } else {
-                        if (traceEnabled)
-                           log.trace("Skipping sending discovery to self");
-                     }
-                  }
-               } else {
-                  log.debug("No other nodes yet, marking this node as coord");
-                  is_coord = true;
-               }
-            }
-         } else {
-            log.debug("Not sending discovery because DISCARD is on");
-         }
-      } else {
-         log.debug("Discovery protocol already stopped, so don't look for members");
-      }
+      doFindMembers(initialDiscovery, pingDatas);
 
       pingDatas.done();
+   }
+
+   private void doFindMembers(boolean initialDiscovery, Responses pingDatas) {
+      boolean trace = log.isTraceEnabled();
+      if (stopped) {
+         log.debug("Discovery protocol already stopped, so don't look for members");
+         return;
+      }
+
+      // Only send message if DISCARD is not used, or if DISCARD is
+      // configured but it's not discarding messages.
+      boolean discardEnabled = isDiscardEnabled(this);
+      if (discardEnabled) {
+         log.debug("Not sending discovery because DISCARD is on");
+         return;
+      }
+
+      Map<Address, TEST_PING> discoveries = getTestDiscoveries();
+
+      // Make sure that concurrent startups within a test won't mess up discovery
+      synchronized (discoveries) {
+         if (initialDiscovery) {
+            boolean firstNode = discoveries.isEmpty();
+
+            TEST_PING prev = discoveries.putIfAbsent(local_addr, this);
+            if (prev == null) {
+               if (trace)
+                  log.trace("Added discovery for %s. Registered discoveries: %s", local_addr, discoveries);
+            } else {
+               if (prev != this) {
+                  throw new IllegalStateException(
+                        "Trying to add two discoveries for the same address: " + local_addr);
+               }
+            }
+
+            if (firstNode) {
+               log.debug("No other nodes yet, marking this node as coord");
+               is_coord = true;
+               return;
+            }
+         }
+
+         for (TEST_PING discovery : discoveries.values()) {
+            // Avoid sending to self! Since there are single instances of
+            // discovery protocol in each node, just compare them by ref.
+            if (discovery != this) {
+               boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
+               if (!remoteDiscardEnabled && !discovery.stopped) {
+                  addPingRsp(pingDatas, discovery);
+               } else if (discovery.stopped) {
+                  log.debug(String.format("%s is stopped, so no ping responses will be received",
+                        discovery.getLocalAddr()));
+               } else {
+                  if (trace)
+                     log.trace("Ignoring discovery for %s because DISCARD is on", discovery.getLocalAddr());
+                  // If discard is enabled, add an empty response
+                  addPingRsp(null, discovery);
+               }
+            } else {
+               if (trace)
+                  log.trace("Skipping sending discovery to self");
+            }
+         }
+      }
    }
 
    private boolean isDiscardEnabled(TEST_PING discovery) {
@@ -150,7 +171,7 @@ public class TEST_PING extends Discovery {
                remote.getLocalAddr(), physical_addr, local));
    }
 
-   private Map<Address, TEST_PING> registerInDiscoveries() {
+   private Map<Address, TEST_PING> getTestDiscoveries() {
       DiscoveryKey key = new DiscoveryKey(testName, cluster_name);
       ConcurrentMap<Address, TEST_PING> discoveries = all.get(key);
       if (discoveries == null) {
@@ -159,15 +180,6 @@ public class TEST_PING extends Discovery {
          if (ret != null)
             discoveries = ret;
       }
-      boolean traceEnabled = log.isTraceEnabled();
-      if (traceEnabled)
-         log.trace(sf("Discoveries for %s are : %s", key, discoveries));
-
-      TEST_PING prev = discoveries.putIfAbsent(local_addr, this);
-      if (prev == null && traceEnabled)
-         log.trace(sf("Add discovery for %s to cache.  The cache now contains: %s",
-               local_addr, discoveries));
-
       return discoveries;
    }
 
@@ -239,10 +251,6 @@ public class TEST_PING extends Discovery {
    @Override
    public String toString() {
       return "TEST_PING@" + local_addr;
-   }
-
-   private static String sf(String format, Object ... args) {
-      return String.format(format, args);
    }
 
    static private class DiscoveryKey {
