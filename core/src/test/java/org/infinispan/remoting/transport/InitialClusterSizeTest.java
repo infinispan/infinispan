@@ -1,21 +1,27 @@
 package org.infinispan.remoting.transport;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import org.apache.commons.math.FieldElement;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManagerStartupException;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 @Test(testName = "transport.InitialClusterSizeTest", groups = "functional")
 @CleanupAfterMethod
@@ -47,22 +53,29 @@ public class InitialClusterSizeTest extends MultipleCacheManagersTest {
       assertEquals(CLUSTER_SIZE, manager(0).getMembers().size());
    }
 
-   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "ISPN000399:.*")
-   public void testInitialClusterSizeFail() throws Throwable {
-      try {
-         Future<?>[] threads = new Future[CLUSTER_SIZE - 1];
-         for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
-            final int index = i;
-            threads[i] = fork(() -> {
-               manager(index).start();
-               return true;
-            });
+   public <T extends FieldElement<T>> void testInitialClusterSizeFail() throws Throwable {
+      List<Future<Void>> futures = new ArrayList<>();
+      for (int i = 0; i < CLUSTER_SIZE - 1; i++) {
+         EmbeddedCacheManager manager = manager(i);
+         futures.add(fork(() -> {
+            manager.start();
+            return null;
+         }));
+      }
+
+      for (Future<Void> future : futures) {
+         try {
+            // JGroupsTransport only starts counting down on initialClusterTimeout *after* it connects.
+            // The initial connection may take take 3 seconds (GMS.join_timeout) because of JGRP-2028
+            // Shutdown may also take 2 seconds (GMS.view_ack_collection_timeout) because of JGRP-2030
+            future.get(CLUSTER_TIMEOUT_SECONDS + 5, TimeUnit.SECONDS);
+            fail("Should have thrown an exception");
+         } catch (ExecutionException ee) {
+            Exceptions.assertException(EmbeddedCacheManagerStartupException.class, ee.getCause());
+            Exceptions.assertException(CacheException.class,
+                  org.infinispan.util.concurrent.TimeoutException.class, "ISPN000399:.*",
+                  ee.getCause().getCause());
          }
-         for (Future<?> f : threads) {
-            f.get(CLUSTER_TIMEOUT_SECONDS + 1, TimeUnit.SECONDS);
-         }
-      } catch (ExecutionException e) {
-         throw e.getCause().getCause().getCause();
       }
    }
 
