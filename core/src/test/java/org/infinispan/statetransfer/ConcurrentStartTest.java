@@ -116,7 +116,7 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.transport().nodeName(name);
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
-      CustomChannelLookup.registerChannel(channel.getName(), channel, gcb, false);
+      CustomChannelLookup.registerChannel(gcb, channel, channel.getName(), false);
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), false);
       Configuration replCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
       cm.defineConfiguration(REPL_CACHE_NAME, replCfg);
