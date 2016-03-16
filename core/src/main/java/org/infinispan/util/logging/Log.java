@@ -1390,7 +1390,7 @@ public interface Log extends BasicLogger {
    IllegalStateException persistentConsistentHashMismatch(String hashFactory, String consistentHashClass);
 
    @Message(value = "Timeout while waiting for %d members in cluster. Last view had %s", id = 399)
-   CacheException timeoutWaitingForInitialNodes(int initialClusterSize, List<?> members);
+   TimeoutException timeoutWaitingForInitialNodes(int initialClusterSize, List<?> members);
 
    @Message(value = "Node %s was suspected", id = 400)
    SuspectException remoteNodeSuspected(Address address);
