@@ -15,14 +15,13 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.test.fwk.JGroupsConfigBuilder;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteReplicateCommand;
-import org.jgroups.JChannel;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
@@ -58,24 +57,14 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       TestResourceTracker.testThreadStarted(this);
       final CheckPoint checkPoint = new CheckPoint();
 
-      String name1 = TestResourceTracker.getNextNodeName();
-      String name2 = TestResourceTracker.getNextNodeName();
-
-      // Create and connect both channels beforehand
-      // We need both nodes in the view when the coordinator's ClusterTopologyManagerImpl starts
-      // in order to reproduce the ISPN-5106 deadlock
-      JChannel ch1 = createChannel(name1, 0);
-      JChannel ch2 = createChannel(name2, 1);
-
-      // Use a JGroupsChannelLookup to pass the created channels to the transport
-      EmbeddedCacheManager cm1 = createCacheManager(name1, ch1);
-      EmbeddedCacheManager cm2 = createCacheManager(name2, ch2);
+      EmbeddedCacheManager cm1 = createCacheManager(0);
+      EmbeddedCacheManager cm2 = createCacheManager(1);
 
       // Install the blocking invocation handlers
       assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm1).getStatus());
-      replaceInboundInvocationHandler(cm1, checkPoint);
+      replaceInboundInvocationHandler(cm1, checkPoint, 0);
       assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm2).getStatus());
-      replaceInboundInvocationHandler(cm2, checkPoint);
+      replaceInboundInvocationHandler(cm2, checkPoint, 1);
 
       log.debugf("Cache managers created. Starting the caches");
       Future<Object> repl1Future = fork(new CacheStartCallable(cm1, "repl"));
@@ -83,13 +72,14 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       Future<Object> dist1Future = fork(new CacheStartCallable(cm1, "dist"));
       Future<Object> dist2Future = fork(new CacheStartCallable(cm2, "dist"));
 
-      // Wait for the POLICY_GET_STATUS/GET_STATUS commands to block
-      checkPoint.awaitStrict("blocked_" + ch1.getAddress(), 10, SECONDS);
-      checkPoint.awaitStrict("blocked_" + ch2.getAddress(), 10, SECONDS);
-      // And trigger the deadlock
-      // StateTransferManagerImpl.waitForInitialStateTransferToComplete also uses POLICY_GET_STATUS
-      checkPoint.trigger("unblocked_" + cm1.getAddress(), CheckPoint.INFINITE);
-      checkPoint.trigger("unblocked_" + cm2.getAddress(), CheckPoint.INFINITE);
+      // The joiner always sends a POLICY_GET_STATUS command to the coordinator.
+      // The coordinator may or may not send a GET_STATUS command to the other node,
+      // depending on whether the second node joined the cluster quickly enough.
+      // Wait for at least one of the POLICY_GET_STATUS/GET_STATUS commands to block
+      checkPoint.peek(2, SECONDS, "blocked_0", "blocked_1");
+      // Now allow both to continue.
+      checkPoint.trigger("unblocked_0", CheckPoint.INFINITE);
+      checkPoint.trigger("unblocked_1", CheckPoint.INFINITE);
 
       repl1Future.get(10, SECONDS);
       repl2Future.get(10, SECONDS);
@@ -112,33 +102,24 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       assertEquals("value", c2d.get("key"));
    }
 
-   private EmbeddedCacheManager createCacheManager(String name, JChannel channel) {
+   private EmbeddedCacheManager createCacheManager(int index) {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.transport().nodeName(name);
-      gcb.globalJmxStatistics().allowDuplicateDomains(true);
-      CustomChannelLookup.registerChannel(gcb, channel, channel.getName(), false);
+      gcb.globalJmxStatistics().disable().allowDuplicateDomains(true);
+      gcb.transport().defaultTransport();
+      TestCacheManagerFactory.amendGlobalConfiguration(gcb, new TransportFlags().withPortRange(index));
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), false);
+      registerCacheManager(cm);
       Configuration replCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
       cm.defineConfiguration(REPL_CACHE_NAME, replCfg);
       Configuration distCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
       cm.defineConfiguration(DIST_CACHE_NAME, distCfg);
-      registerCacheManager(cm);
       return cm;
    }
 
-   private JChannel createChannel(String name, int portRange) throws Exception {
-      JChannel channel = new JChannel(JGroupsConfigBuilder
-            .getJGroupsConfig(ConcurrentStartTest.class.getName(),
-                  new TransportFlags().withPortRange(portRange)));
-      channel.setName(name);
-      channel.connect(ConcurrentStartTest.class.getSimpleName());
-      log.tracef("Channel %s connected: %s", channel, channel.getViewAsString());
-      return channel;
-   }
-
-   private void replaceInboundInvocationHandler(EmbeddedCacheManager cm, CheckPoint checkPoint) {
+   private void replaceInboundInvocationHandler(EmbeddedCacheManager cm, CheckPoint checkPoint, int index) {
       InboundInvocationHandler handler = extractGlobalComponent(cm, InboundInvocationHandler.class);
-      BlockingInboundInvocationHandler ourHandler = new BlockingInboundInvocationHandler(handler, checkPoint);
+      BlockingInboundInvocationHandler ourHandler =
+            new BlockingInboundInvocationHandler(handler, checkPoint, index);
       replaceComponent(cm, InboundInvocationHandler.class, ourHandler, true);
    }
 
@@ -163,18 +144,21 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       private Log log = LogFactory.getLog(ConcurrentStartTest.class);
       private final CheckPoint checkPoint;
       private final InboundInvocationHandler delegate;
+      private final int index;
 
-      public BlockingInboundInvocationHandler(InboundInvocationHandler delegate, CheckPoint checkPoint) {
+      public BlockingInboundInvocationHandler(InboundInvocationHandler delegate, CheckPoint checkPoint,
+            int index) {
          this.delegate = delegate;
          this.checkPoint = checkPoint;
+         this.index = index;
       }
 
       @Override
       public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
          if (command instanceof CacheTopologyControlCommand) {
             try {
-               checkPoint.trigger("blocked_" + origin);
-               checkPoint.awaitStrict("unblocked_" + origin, 10, SECONDS);
+               checkPoint.trigger("blocked_" + index);
+               checkPoint.awaitStrict("unblocked_" + index, 10, SECONDS);
             } catch (Exception e) {
                log.warnf(e, "Error while blocking before command %s", command);
             }
