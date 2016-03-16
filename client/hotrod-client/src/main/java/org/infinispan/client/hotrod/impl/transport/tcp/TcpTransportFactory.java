@@ -306,14 +306,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public void invalidateTransport(SocketAddress serverAddress, Transport transport) {
-      KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
-      try {
-         // Transport could be null, in which case all connections
-         // to the server address will be invalidated
-         pool.invalidateObject(serverAddress, (TcpTransport) transport);
-      } catch (Exception e) {
-         log.unableToInvalidateTransport(serverAddress);
-      }
+      transport.invalidate();
    }
 
    @Override
