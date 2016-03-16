@@ -5,10 +5,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.fail;
-
 /**
  * Utility methods for testing expected exceptions.
  *
@@ -21,8 +17,13 @@ public class Exceptions {
    }
 
    public static void assertException(Class<? extends Throwable> exceptionClass, Throwable t) {
-      assertNotNull("Should have thrown an " + exceptionClass, t);
-      assertEquals("Wrong exception: " + t, exceptionClass, t.getClass());
+      if (t == null) {
+         throw new AssertionError("Should have thrown an " + exceptionClass, t);
+      }
+      if (t.getClass() != exceptionClass) {
+         throw new AssertionError(
+               "Wrong exception thrown: expected:<" + exceptionClass + ">, actual:<" + t.getClass() + ">", t);
+      }
    }
 
    public static void assertException(Class<? extends Throwable> exceptionClass, String messageRegex,
@@ -30,7 +31,9 @@ public class Exceptions {
       assertException(exceptionClass, t);
       Pattern pattern = Pattern.compile(messageRegex);
       if (!pattern.matcher(t.getMessage()).matches()) {
-         fail("Wrong exception message: " + t.getMessage());
+         throw new AssertionError(
+               "Wrong exception message: expected:<" + messageRegex + ">, actual:<" + t.getMessage() + ">",
+               t);
       }
    }
 
@@ -87,6 +90,15 @@ public class Exceptions {
       assertException(exceptionClass, messageRegex, t.getCause().getCause());
    }
 
+   public static void expectExecutionException(Class<? extends Throwable> wrapperExceptionClass2,
+         Class<? extends Throwable> wrapperExceptionClass, Class<? extends Throwable> exceptionClass,
+         String messageRegex, Future<?> future) {
+      Throwable t = extractException(() -> future.get(10, TimeUnit.SECONDS));
+      assertException(ExecutionException.class, t);
+      assertException(wrapperExceptionClass2, t.getCause());
+      assertException(wrapperExceptionClass, exceptionClass, messageRegex, t.getCause().getCause());
+   }
+
    public static void expectExecutionException(Class<? extends Throwable> exceptionClass, Future<?> future) {
       Throwable t = extractException(() -> future.get(10, TimeUnit.SECONDS));
       assertException(ExecutionException.class, t);
@@ -99,6 +111,15 @@ public class Exceptions {
       assertException(ExecutionException.class, t);
       assertException(wrapperExceptionClass, t.getCause());
       assertException(exceptionClass, t.getCause().getCause());
+   }
+
+   public static void expectExecutionException(Class<? extends Throwable> wrapperExceptionClass2,
+         Class<? extends Throwable> wrapperExceptionClass, Class<? extends Throwable> exceptionClass,
+         Future<?> future) {
+      Throwable t = extractException(() -> future.get(10, TimeUnit.SECONDS));
+      assertException(ExecutionException.class, t);
+      assertException(wrapperExceptionClass2, t.getCause());
+      assertException(wrapperExceptionClass, exceptionClass, t.getCause().getCause());
    }
 
    private static Throwable extractException(ExceptionRunnable runnable) {
