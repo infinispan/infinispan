@@ -69,11 +69,17 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       targetServerAltCache = targetContainer.getCache(ALT_CACHE_NAME);
       targetServer = HotRodClientTestingUtil.startHotRodServer(targetContainer);
 
-      sourceRemoteCacheManager = new RemoteCacheManager("localhost", sourceServer.getPort());
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilderSource =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilderSource.addServer().host("localhost").port(sourceServer.getPort());
+      sourceRemoteCacheManager = new RemoteCacheManager(clientBuilderSource.build());
       sourceRemoteCacheManager.start();
       sourceRemoteDefaultCache = sourceRemoteCacheManager.getCache();
       sourceRemoteAltCache = sourceRemoteCacheManager.getCache(ALT_CACHE_NAME);
-      targetRemoteCacheManager = new RemoteCacheManager("localhost", targetServer.getPort());
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilderTarget =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilderTarget.addServer().host("localhost").port(targetServer.getPort());
+      targetRemoteCacheManager = new RemoteCacheManager(clientBuilderTarget.build());
       targetRemoteCacheManager.start();
       targetRemoteDefaultCache = targetRemoteCacheManager.getCache();
       targetRemoteAltCache = targetRemoteCacheManager.getCache(ALT_CACHE_NAME);

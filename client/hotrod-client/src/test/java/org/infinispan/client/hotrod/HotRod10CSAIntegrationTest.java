@@ -15,8 +15,8 @@ import java.util.Properties;
 public class HotRod10CSAIntegrationTest extends CSAIntegrationTest {
 
    @Override
-   protected void setHotRodProtocolVersion(Properties props) {
-      props.setProperty("infinispan.client.hotrod.protocol_version", "1.0");
+   protected void setHotRodProtocolVersion(org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder) {
+      clientBuilder.protocolVersion("1.0");
    }
 
 }

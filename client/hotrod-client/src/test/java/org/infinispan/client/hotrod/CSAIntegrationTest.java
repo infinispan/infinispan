@@ -81,17 +81,18 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
 
       //Important: this only connects to one of the two servers!
-      Properties props = new Properties();
-      props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
-      props.put("infinispan.client.hotrod.ping_on_startup", "true");
-      setHotRodProtocolVersion(props);
-      remoteCacheManager = new InternalRemoteCacheManager(props);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder
+            .pingOnStartup(true)
+            .addServers("localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
 
       tcpTransportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
    }
 
-   protected void setHotRodProtocolVersion(Properties props) {
+   protected void setHotRodProtocolVersion(org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder) {
       // No-op, use default Hot Rod protocol version
    }
 

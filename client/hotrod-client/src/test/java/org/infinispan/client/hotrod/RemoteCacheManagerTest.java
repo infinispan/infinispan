@@ -72,48 +72,11 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       assertTrue(remoteCacheManager.isStarted());
    }
 
-   public void testUrlAndBooleanConstructor() throws Exception {
-      URL resource = Thread.currentThread().getContextClassLoader().getResource("empty-config.properties");
-      assert resource != null;
-      remoteCacheManager = new RemoteCacheManager(resource, false);
-      assert !remoteCacheManager.isStarted();
-      Properties properties = remoteCacheManager.getProperties();
-      properties.setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
-      remoteCacheManager = new RemoteCacheManager(properties, false);
-      assert !remoteCacheManager.isStarted();
-      remoteCacheManager.start();
-      assertWorks(remoteCacheManager);
-   }
-
-   public void testPropertiesConstructor() {
-      Properties p = new Properties();
-      p.setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
-      remoteCacheManager = new RemoteCacheManager(p);
-      assert remoteCacheManager.isStarted();
-      assertWorks(remoteCacheManager);
-      remoteCacheManager.stop();
-   }
-
-   public void testPropertiesAndBooleanConstructor() {
-      Properties p = new Properties();
-      p.setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
-      remoteCacheManager = new RemoteCacheManager(p, false);
-      assert !remoteCacheManager.isStarted();
-      remoteCacheManager.start();
-      assertWorks(remoteCacheManager);
-   }
-
-   public void testStringAndBooleanConstructor() {
-      remoteCacheManager = new RemoteCacheManager("localhost:"+hotrodServer.getPort(), false);
-      assert !remoteCacheManager.isStarted();
-      remoteCacheManager.start();
-      assertWorks(remoteCacheManager);
-   }
-
    public void testGetUndefinedCache() {
-      Properties p = new Properties();
-      p.setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
-      remoteCacheManager = new RemoteCacheManager(p, false);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(port);
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build(), false);
       assert !remoteCacheManager.isStarted();
       remoteCacheManager.start();
       assert null == remoteCacheManager.getCache("Undefined1234");

@@ -41,7 +41,10 @@ public class HotRodStatisticsTest extends AbstractInfinispanTest {
 
       hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);
       startTime = System.currentTimeMillis();
-      rcm = new RemoteCacheManager("localhost", hotrodServer.getPort());
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
+      rcm = new RemoteCacheManager(clientBuilder.build());
       remoteCache = rcm.getCache();
    }
 

@@ -13,10 +13,12 @@ public class HotRod1xIntegrationTest extends HotRodIntegrationTest {
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
-      Properties config = new Properties();
-      config.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
-      config.put("infinispan.client.hotrod.protocol_version", "1.3");
-      return new RemoteCacheManager(config);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder
+            .protocolVersion("1.3")
+            .addServer().host("localhost").port(hotrodServer.getPort());
+      return new RemoteCacheManager(clientBuilder.build());
    }
 
 }

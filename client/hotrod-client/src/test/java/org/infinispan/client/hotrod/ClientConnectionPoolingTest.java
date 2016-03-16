@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
@@ -76,22 +77,27 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(c2.getCacheManager());
 
       String servers = HotRodClientTestingUtil.getServersString(hotRodServer1, hotRodServer2);
-      Properties hotrodClientConf = new Properties();
-      hotrodClientConf.setProperty(ConfigurationProperties.SERVER_LIST, servers);
-      hotrodClientConf.setProperty("maxActive", "2");
-      hotrodClientConf.setProperty("maxTotal", "8");
-      hotrodClientConf.setProperty("maxIdle", "6");
-      hotrodClientConf.setProperty("whenExhaustedAction", "1");
-      hotrodClientConf.setProperty("testOnBorrow", "false");
-      hotrodClientConf.setProperty("testOnReturn", "false");
-      hotrodClientConf.setProperty("timeBetweenEvictionRunsMillis", "-2");
-      hotrodClientConf.setProperty("minEvictableIdleTimeMillis", "7");
-      hotrodClientConf.setProperty("testWhileIdle", "true");
-      hotrodClientConf.setProperty("minIdle", "-5");
-      hotrodClientConf.setProperty("lifo", "true");
-      hotrodClientConf.setProperty("infinispan.client.hotrod.ping_on_startup", "false");
 
-      remoteCacheManager = new InternalRemoteCacheManager(hotrodClientConf);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+
+      clientBuilder
+         .connectionPool()
+            .maxActive(2)
+            .maxTotal(8)
+            .maxIdle(6)
+            .exhaustedAction(ExhaustedAction.WAIT)
+            .testOnBorrow(false)
+            .testOnReturn(false)
+            .timeBetweenEvictionRuns(-2)
+            .minEvictableIdleTime(7)
+            .testWhileIdle(true)
+            .minIdle(-5)
+            .lifo(true)
+            .pingOnStartup(false)
+         .addServers(servers);
+
+      remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
 
       TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();

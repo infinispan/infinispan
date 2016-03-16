@@ -27,9 +27,10 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
-      Properties hotrodClientConf = new Properties();
-      hotrodClientConf.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer.getPort());
-      remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(hotRodServer.getPort());
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       return cacheManager;
    }
 

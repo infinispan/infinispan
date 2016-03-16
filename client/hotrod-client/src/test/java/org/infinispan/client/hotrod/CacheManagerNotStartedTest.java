@@ -39,8 +39,10 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
    protected void setup() throws Exception {
       super.setup();
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
-      remoteCacheManager = new RemoteCacheManager(
-            "127.0.0.1:" + hotrodServer.getPort(), false);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build(), false);
    }
 
    @AfterClass

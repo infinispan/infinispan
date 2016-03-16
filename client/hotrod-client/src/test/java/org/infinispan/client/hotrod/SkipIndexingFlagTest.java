@@ -96,7 +96,10 @@ public class SkipIndexingFlagTest extends SingleCacheManagerTest {
 
       Properties hotRodClientConf = new Properties();
       hotRodClientConf.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer.getPort());
-      remoteCacheManager = new RemoteCacheManager(hotRodClientConf);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(hotRodServer.getPort());
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
       return cacheManager;
    }

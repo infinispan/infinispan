@@ -61,10 +61,10 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
 
       waitForClusterToForm();
 
-      Properties clientConfig = new Properties();
-      clientConfig.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort());
-
-      remoteCacheManager = new RemoteCacheManager(clientConfig);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(hotRodServer2.getPort());
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
       assert super.cacheManagers.size() == 4;
 
