@@ -94,7 +94,6 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
             .testWhileIdle(true)
             .minIdle(-5)
             .lifo(true)
-            .pingOnStartup(false)
          .addServers(servers);
 
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());

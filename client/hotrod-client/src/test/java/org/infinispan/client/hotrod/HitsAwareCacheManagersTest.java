@@ -71,8 +71,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder.addServer()
          .host("localhost")
-         .port(serverPort)
-         .pingOnStartup(false);
+         .port(serverPort);
       return clientBuilder;
    }
 

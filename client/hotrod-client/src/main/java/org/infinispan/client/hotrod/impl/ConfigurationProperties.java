@@ -124,10 +124,6 @@ public class ConfigurationProperties {
       return props.getBooleanProperty(TCP_KEEP_ALIVE, false);
    }
 
-   public boolean getPingOnStartup() {
-      return props.getBooleanProperty(PING_ON_STARTUP, true);
-   }
-
    public String getRequestBalancingStrategy() {
       return props.getProperty(REQUEST_BALANCING_STRATEGY, RoundRobinBalancingStrategy.class.getName());
    }

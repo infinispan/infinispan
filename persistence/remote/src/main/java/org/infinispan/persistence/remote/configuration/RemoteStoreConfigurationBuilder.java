@@ -6,7 +6,6 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.HOTROD_WRAPPING;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.KEY_SIZE_ESTIMATE;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.MARSHALLER;
-import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.PING_ON_STARTUP;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.PROTOCOL_VERSION;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.RAW_VALUES;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.REMOTE_CACHE_NAME;
@@ -101,12 +100,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public RemoteStoreConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller) {
       marshaller(marshaller.getName());
-      return this;
-   }
-
-   @Override
-   public RemoteStoreConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
-      attributes.attribute(PING_ON_STARTUP).set(pingOnStartup);
       return this;
    }
 

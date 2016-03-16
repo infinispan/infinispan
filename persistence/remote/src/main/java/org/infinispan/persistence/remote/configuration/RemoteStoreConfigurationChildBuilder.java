@@ -65,11 +65,6 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    RemoteStoreConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller);
 
    /**
-    * If true, a ping request is sent to a back end server in order to fetch cluster's topology.
-    */
-   RemoteStoreConfigurationBuilder pingOnStartup(boolean pingOnStartup);
-
-   /**
     * This property defines the protocol version that this client should use. Defaults to 1.1. Other
     * valid values include 1.0.
     */

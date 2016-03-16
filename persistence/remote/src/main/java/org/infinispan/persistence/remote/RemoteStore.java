@@ -234,7 +234,6 @@ public class RemoteStore implements AdvancedLoadWriteStore {
             .keySizeEstimate(configuration.keySizeEstimate())
             .marshaller(marshaller)
             .asyncExecutorFactory().factoryClass(configuration.asyncExecutorFactory().factory().getClass())
-            .pingOnStartup(configuration.pingOnStartup())
             .socketTimeout(socketTimeout.intValue())
             .tcpNoDelay(configuration.tcpNoDelay())
             .valueSizeEstimate(configuration.valueSizeEstimate());

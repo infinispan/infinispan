@@ -168,14 +168,6 @@ public abstract class AbstractRemoteCacheManagerFactory {
    }
 
    /**
-    * @param pingOnStartup
-    * @see org.infinispan.spring.ConfigurationPropertiesOverrides#setPingOnStartup(boolean)
-    */
-   public void setPingOnStartup(final boolean pingOnStartup) {
-      this.configurationPropertiesOverrides.setPingOnStartup(pingOnStartup);
-   }
-
-   /**
     * @param requestBalancingStrategy
     * @see org.infinispan.spring.ConfigurationPropertiesOverrides#setRequestBalancingStrategy(java.lang.String)
     */

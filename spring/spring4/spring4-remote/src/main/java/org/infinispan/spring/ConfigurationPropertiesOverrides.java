@@ -74,14 +74,6 @@ public class ConfigurationPropertiesOverrides {
    }
 
    /**
-    * @deprecated No longer in effect, ping always happens on startup now.
-    */
-   @Deprecated
-   public void setPingOnStartup(final boolean pingOnStartup) {
-      // No-op
-   }
-
-   /**
     * @param requestBalancingStrategy
     */
    public void setRequestBalancingStrategy(final String requestBalancingStrategy) {

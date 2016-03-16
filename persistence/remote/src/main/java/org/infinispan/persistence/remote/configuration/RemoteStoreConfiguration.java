@@ -28,7 +28,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Integer> KEY_SIZE_ESTIMATE = AttributeDefinition.builder("keySizeEstimate", ConfigurationProperties.DEFAULT_KEY_SIZE).immutable().build();
    static final AttributeDefinition<Integer> VALUE_SIZE_ESTIMATE = AttributeDefinition.builder("valueSizeEstimate", ConfigurationProperties.DEFAULT_VALUE_SIZE).immutable().build();
    static final AttributeDefinition<String> MARSHALLER = AttributeDefinition.builder("marshaller", null, String.class).immutable().build();
-   static final AttributeDefinition<Boolean> PING_ON_STARTUP = AttributeDefinition.builder("pingOnStartup", true).immutable().build();
    static final AttributeDefinition<String> PROTOCOL_VERSION = AttributeDefinition.builder("protocolVersion", null, String.class).immutable().build();
    static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder("remoteCacheName", BasicCacheContainer.DEFAULT_CACHE_NAME).immutable().build();
    static final AttributeDefinition<List<RemoteServerConfiguration>> SERVERS = AttributeDefinition.builder("servers", null, (Class<List<RemoteServerConfiguration>>)(Class<?>)List.class).initializer(new AttributeInitializer<List<RemoteServerConfiguration>>() {
@@ -43,7 +42,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
-            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PING_ON_STARTUP, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SERVERS, SOCKET_TIMEOUT, TCP_NO_DELAY, TRANSPORT_FACTORY, VALUE_SIZE_ESTIMATE);
+            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SERVERS, SOCKET_TIMEOUT, TCP_NO_DELAY, TRANSPORT_FACTORY, VALUE_SIZE_ESTIMATE);
    }
 
    private final Attribute<String> balancingStrategy;
@@ -54,7 +53,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    private final Attribute<Integer> keySizeEstimate;
    private final Attribute<Integer> valueSizeEstimate;
    private final Attribute<String> marshaller;
-   private final Attribute<Boolean> pingOnStartup;
    private final Attribute<String> protocolVersion;
    private final Attribute<String> remoteCacheName;
    private final Attribute<List<RemoteServerConfiguration>> servers;
@@ -75,7 +73,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       keySizeEstimate = attributes.attribute(KEY_SIZE_ESTIMATE);
       valueSizeEstimate = attributes.attribute(VALUE_SIZE_ESTIMATE);
       marshaller = attributes.attribute(MARSHALLER);
-      pingOnStartup = attributes.attribute(PING_ON_STARTUP);
       protocolVersion = attributes.attribute(PROTOCOL_VERSION);
       remoteCacheName = attributes.attribute(REMOTE_CACHE_NAME);
       servers = attributes.attribute(SERVERS);
@@ -116,10 +113,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
 
    public String marshaller() {
       return marshaller.get();
-   }
-
-   public boolean pingOnStartup() {
-      return pingOnStartup.get();
    }
 
    public String protocolVersion() {

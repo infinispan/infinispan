@@ -57,7 +57,6 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
                .timeBetweenEvictionRuns(500)
                .minEvictableIdleTime(100)
                .numTestsPerEvictionRun(10)
-            .pingOnStartup(true)
             .addServer().host("localhost").port(hotRodServer.getPort());
 
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
