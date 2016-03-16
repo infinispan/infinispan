@@ -47,9 +47,9 @@ public class DefaultCacheManagerOverrideTest extends Arquillian {
    @Produces
    @ApplicationScoped
    public RemoteCacheManager defaultRemoteCacheManager() {
-      final Properties properties = new Properties();
-      properties.put(SERVER_LIST_KEY, SERVER_LIST_VALUE);
-
-      return new RemoteCacheManager(properties);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServers(SERVER_LIST_VALUE);
+      return new RemoteCacheManager(clientBuilder.build());
    }
 }

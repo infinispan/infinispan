@@ -69,7 +69,10 @@ public class LockingTest extends SingleCacheManagerTest {
    protected void setup() throws Exception {
       super.setup();
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
-      remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }
 
    private void doLockTest(CacheName cacheName) throws Exception {

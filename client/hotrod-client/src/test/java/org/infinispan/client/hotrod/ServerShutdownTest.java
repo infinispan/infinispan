@@ -28,8 +28,11 @@ public class ServerShutdownTest {
          public void call() {
             HotRodServer hotrodServer = HotRodClientTestingUtil.startHotRodServer(cm);
             try {
+               org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+                     new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+               clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
                withRemoteCacheManager(new RemoteCacheManagerCallable(
-                     new RemoteCacheManager("localhost", hotrodServer.getPort())) {
+                     new RemoteCacheManager(clientBuilder.build())) {
                   @Override
                   public void call() {
                      RemoteCache remoteCache = rcm.getCache();
@@ -52,8 +55,11 @@ public class ServerShutdownTest {
          public void call() {
             HotRodServer hotrodServer = HotRodClientTestingUtil.startHotRodServer(cm);
             try {
+               org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+                     new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+               clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
                withRemoteCacheManager(new RemoteCacheManagerCallable(
-                     new RemoteCacheManager("localhost", hotrodServer.getPort())) {
+                     new RemoteCacheManager(clientBuilder.build())) {
                   @Override
                   public void call() {
                      RemoteCache remoteCache = rcm.getCache();

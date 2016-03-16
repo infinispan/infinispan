@@ -47,8 +47,10 @@ public class DefaultExpirationTest extends SingleCacheManagerTest {
 
    protected RemoteCacheManager getRemoteCacheManager() {
       Properties config = new Properties();
-      config.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
-      return new RemoteCacheManager(config);
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer().host("localhost").port(hotrodServer.getPort());
+      return new RemoteCacheManager(clientBuilder.build());
    }
 
 
