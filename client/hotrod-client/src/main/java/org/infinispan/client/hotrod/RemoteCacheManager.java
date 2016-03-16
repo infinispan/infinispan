@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.EagerNearRemoteCache;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
@@ -344,11 +343,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    private <K, V> RemoteCacheImpl<K, V> createRemoteCache(String cacheName) {
       switch (configuration.nearCache().mode()) {
          case INVALIDATED:
-         case LAZY:
             return new InvalidatedNearRemoteCache<>(this, cacheName,
-               createNearCacheService(configuration.nearCache()));
-         case EAGER:
-            return new EagerNearRemoteCache<>(this, cacheName,
                createNearCacheService(configuration.nearCache()));
          case DISABLED:
          default:

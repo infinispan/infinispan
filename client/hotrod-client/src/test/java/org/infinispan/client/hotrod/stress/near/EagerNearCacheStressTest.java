@@ -66,7 +66,7 @@ public class EagerNearCacheStressTest {
    }
 
    public void testLocalPreloadAndGetPut10to1() {
-      runPreloadAndOps(NearCacheMode.EAGER, -1, 0.90);
+      runPreloadAndOps(NearCacheMode.INVALIDATED, -1, 0.90);
    }
 
    void runPreloadAndOps(NearCacheMode nearCacheMode, int maxEntries, double getRatio) {

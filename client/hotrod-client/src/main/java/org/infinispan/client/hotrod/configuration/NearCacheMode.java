@@ -19,32 +19,14 @@ public enum NearCacheMode {
     * server-side, invalidation messages will be sent to clients to remove
     * them from the near cache.
     */
-   INVALIDATED,
-
-   /**
-    * @deprecated Replaced by INVALIDATED
-    */
-   @Deprecated LAZY,
-
-   /**
-    * @deprecated To be removed without replacement
-    */
-   @Deprecated EAGER;
+   INVALIDATED;
 
    public boolean enabled() {
       return this != DISABLED;
    }
 
    public boolean invalidated() {
-      return this == INVALIDATED || this == LAZY;
-   }
-
-   /**
-    * @deprecated To be removed without replacement
-    */
-   @Deprecated
-   public boolean eager() {
-      return this == EAGER;
+      return this == INVALIDATED;
    }
 
 }
