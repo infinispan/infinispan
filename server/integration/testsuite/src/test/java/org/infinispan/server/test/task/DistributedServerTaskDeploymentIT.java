@@ -40,6 +40,7 @@ import static org.junit.Assert.*;
 @RunWith(Arquillian.class)
 @Category({Task.class})
 @WithRunningServer({@RunningServer(name="clusteredcache-1"), @RunningServer(name = "clusteredcache-2")})
+@Ignore("Will be fixed by ISPN-6302")
 public class DistributedServerTaskDeploymentIT {
 
     @InfinispanResource("clusteredcache-1")
