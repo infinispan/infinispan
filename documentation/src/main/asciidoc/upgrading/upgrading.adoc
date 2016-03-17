@@ -13,6 +13,9 @@ The entry retriever feature has been removed.  Please update to use the new Stre
 The `org.infinispan.filter.CacheFilters` class can be used to convert `KeyValueFilter` and `Converter` instances
 into proper Stream operations that are able to be marshalled.
 
+=== Spring 3 support is now removed
+Spring 3 is no longer supported.
+
 === Function classes have moved packages
 The class `SerializableSupplier` has moved from the `org.infinispan.stream`
 package to the `org.infinispan.util.function` package.

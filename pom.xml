@@ -55,7 +55,6 @@
       <module>all/cli</module>
       <module>rhq-plugin</module>
       <module>osgi</module>
-      <module>spring/spring</module>
       <module>spring/spring4</module>
       <module>spring/spring4/spring4-common</module>
       <module>spring/spring4/spring4-embedded</module>
