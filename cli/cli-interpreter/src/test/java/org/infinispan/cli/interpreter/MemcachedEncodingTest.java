@@ -12,8 +12,6 @@ import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.CacheValue;
-import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.test.MemcachedTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -28,7 +26,7 @@ import org.testng.annotations.Test;
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Test(testName = "cli.interpreter.MemcachedEncodingTest", groups = "unstable", description = "original group: functional")
+@Test(testName = "cli.interpreter.MemcachedEncodingTest", groups = "functional")
 @CleanupAfterMethod
 public class MemcachedEncodingTest extends SingleCacheManagerTest {
 
@@ -57,9 +55,9 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
       TestingUtil.killCacheManagers(cacheManager);
       MemcachedTestingUtil.killMemcachedClient(memcachedClient);
    }
-   /* TODO: convert to new encoding
+
    public void testMemcachedCodec() throws Exception {
-      Cache<ByteArrayKey, CacheValue> cache = cacheManager.getCache(MEMCACHED_CACHE);
+      Cache<String, byte[]> cache = cacheManager.getCache(MEMCACHED_CACHE);
 
       memcachedClient.set("k1", 3600, "v1").get();
 
@@ -75,7 +73,7 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
    }
 
    public void testMemcachedEncoding() throws Exception {
-      Cache<ByteArrayKey, CacheValue> cache = cacheManager.getCache(MEMCACHED_CACHE);
+      Cache<String, byte[]> cache = cacheManager.getCache(MEMCACHED_CACHE);
 
       memcachedClient.set("k1", 3600, "v1").get();
 
@@ -90,5 +88,5 @@ public class MemcachedEncodingTest extends SingleCacheManagerTest {
       String v2 = (String) memcachedClient.get("k2");
       assertEquals("v2", v2);
    }
-   */
+
 }
