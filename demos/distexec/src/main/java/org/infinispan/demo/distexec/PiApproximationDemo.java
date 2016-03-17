@@ -14,6 +14,7 @@ import org.infinispan.commons.util.Util;
 import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.LockSupport;
 
@@ -46,7 +47,7 @@ public class PiApproximationDemo extends Demo {
             DistributedExecutorService des = new DefaultExecutorService(cache);
 
             long start = System.currentTimeMillis();
-            List<Future<Integer>> results = des.submitEverywhere(new CircleTest(numberPerWorker));
+            List<CompletableFuture<Integer>> results = des.submitEverywhere(new CircleTest(numberPerWorker));
 
             int insideCircleCount = 0;
 

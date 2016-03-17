@@ -15,7 +15,6 @@ import org.infinispan.commons.api.functional.Param.PersistenceMode;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -408,7 +407,7 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
+   public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       return null;  // TODO: Customise this generated block
    }
 
@@ -503,97 +502,97 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value) {
+   public CompletableFuture<V> putAsync(K key, V value) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<Void> clearAsync() {
+   public CompletableFuture<Void> clearAsync() {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> removeAsync(Object key) {
+   public CompletableFuture<V> removeAsync(Object key) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
+   public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value) {
+   public CompletableFuture<V> replaceAsync(K key, V value) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return null;  // TODO: Customise this generated block
    }
 
    @Override
-   public NotifyingFuture<V> getAsync(K key) {
+   public CompletableFuture<V> getAsync(K key) {
       return null;  // TODO: Customise this generated block
    }
 

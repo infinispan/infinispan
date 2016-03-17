@@ -1,12 +1,10 @@
 package org.infinispan.remoting.rpc;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.Collection;
 import java.util.List;
@@ -48,34 +46,6 @@ public interface RpcManager {
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options);
 
    Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options);
-
-   /**
-    * @deprecated Use {@link #invokeRemotelyAsync(Collection, ReplicableCommand, RpcOptions)} instead.
-    *
-    * The same as {@link #invokeRemotely(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions)}
-    * except that the task is passed to the transport executor and a Future is returned.  The transport always deals
-    * with this synchronously.
-    *
-    * @param recipients recipients to invoke remote call on. If this is {@code null}, the call is broadcast to the
-    *                   entire cluster.
-    * @param rpc        command to execute remotely.
-    * @param options    it configures the invocation. The same instance can be re-used since {@link org.infinispan.remoting.rpc.RpcManager} does
-    *                   not change it. Any change in {@link org.infinispan.remoting.rpc.RpcOptions} during a remote invocation can lead to
-    *                   unpredictable behavior.
-    * @param future     the future which will be passed back to the user.
-    */
-   void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options,
-                               NotifyingNotifiableFuture<Object> future);
-
-   /**
-    * @deprecated Use {@link #invokeRemotelyAsync(Collection, ReplicableCommand, RpcOptions)} instead.
-    *
-    * Same as {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand,
-    * RpcOptions, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)} but with a different
-    * NotifyingNotifiableFuture type.
-    */
-   void invokeRemotelyInFuture(NotifyingNotifiableFuture<Map<Address, Response>> future, Collection<Address> recipients,
-                               ReplicableCommand rpc, RpcOptions options);
 
    /**
     * @return a reference to the underlying transport.

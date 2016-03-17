@@ -3,7 +3,6 @@ package org.infinispan.xsite;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.concurrent.AbstractInProcessFuture;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.LocalInvocation;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -11,6 +10,7 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -204,19 +204,9 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
       public void executeLocal() {
          try {
             final Response response = LocalInvocation.newInstanceFromCache(cache, newStatePushCommand(cache, chunk)).call();
-            this.remoteFuture = new AbstractInProcessFuture<Map<Address, Response>>() {
-               @Override
-               public Map<Address, Response> get() throws InterruptedException, ExecutionException {
-                  return Collections.singletonMap(address, response);
-               }
-            };
+            this.remoteFuture = CompletableFuture.completedFuture(Collections.singletonMap(address, response));
          } catch (final Exception e) {
-            this.remoteFuture = new AbstractInProcessFuture<Map<Address, Response>>() {
-               @Override
-               public Map<Address, Response> get() throws InterruptedException, ExecutionException {
-                  throw new ExecutionException(e);
-               }
-            };
+            this.remoteFuture = CompletableFutures.completedExceptionFuture(new ExecutionException(e));
          }
       }
 

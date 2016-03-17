@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -59,22 +58,6 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
       // TODO: left blank until we need to implement
       Map<Address, Response> responses = realOne.invokeRemotely(rpcs, options);
       return responses;
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options, NotifyingNotifiableFuture<Object> future) {
-      log.trace("ControlledRpcManager.invokeRemotelyInFuture");
-      beforeInvokeRemotely(rpc);
-      realOne.invokeRemotelyInFuture(recipients, rpc, options, future);
-      afterInvokeRemotely(rpc, null);
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(NotifyingNotifiableFuture<Map<Address, Response>> future, Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-      log.trace("ControlledRpcManager.invokeRemotelyInFuture");
-      beforeInvokeRemotely(rpc);
-      realOne.invokeRemotelyInFuture(future, recipients, rpc, options);
-      afterInvokeRemotely(rpc, null);
    }
 
    @Override

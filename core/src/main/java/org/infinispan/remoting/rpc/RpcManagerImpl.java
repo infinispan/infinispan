@@ -16,7 +16,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
@@ -267,25 +266,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
             totalReplicationTime.getAndAdd(timeTaken);
          }
       }
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(final NotifyingNotifiableFuture<Map<Address, Response>> future,
-                                      final Collection<Address> recipients, final ReplicableCommand rpc,
-                                      final RpcOptions options) {
-      if (trace) log.tracef("%s invoking in future call %s to recipient list %s with options %s", t.getAddress(),
-                            rpc, recipients, options);
-      CompletableFuture<Map<Address, Response>> rpcFuture = invokeRemotelyAsync(recipients, rpc, options);
-      CompletableFutures.connect(future, rpcFuture);
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc,
-                                      final RpcOptions options, final NotifyingNotifiableFuture<Object> future) {
-      // The type of the future parameter is incorrect, so we're discarding the generic type information
-      @SuppressWarnings("unchecked")
-      NotifyingNotifiableFuture<Map<Address, Response>> f = (NotifyingNotifiableFuture)future;
-      invokeRemotelyInFuture(f, recipients, rpc, options);
    }
 
    @Override

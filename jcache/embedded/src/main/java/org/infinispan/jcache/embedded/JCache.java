@@ -33,7 +33,6 @@ import org.infinispan.commons.api.AsyncCache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.context.Flag;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheListenerAdapter;
@@ -623,9 +622,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
                setListenerCompletion(listener);
             }
          });
-         FutureListener<V> futureListener = new FutureListener<V>() {
-            @Override
-            public void futureDone(Future<V> future) {
+         AsyncCache<K, V> asyncCache = cache;
+         for (K k : keysToLoad)
+            asyncCache.getAsync(k).whenComplete((v, t) -> {
+               if (t != null) {
+                  setListenerException(listener, t);
+               }
                try {
                   if (trace)
                      log.tracef("Key loaded, wait for the rest of keys to load");
@@ -638,11 +640,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
                } catch (TimeoutException e) {
                   setListenerException(listener, e);
                }
-            }
-         };
-         AsyncCache<K, V> asyncCache = cache;
-         for (K k : keysToLoad)
-            asyncCache.getAsync(k).attachListener(futureListener);
+            });
 
       } catch (Throwable t) {
          log.errorLoadingAll(keysToLoad, t);

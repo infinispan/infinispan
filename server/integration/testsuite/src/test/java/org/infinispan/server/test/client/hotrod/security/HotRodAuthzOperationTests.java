@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.Flag;
@@ -23,7 +24,6 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  *
@@ -52,7 +52,7 @@ public class HotRodAuthzOperationTests {
    }
 
    public static void testClearAsync(RemoteCache<String, String> remoteCache) throws Exception {
-      NotifyingFuture<Void> f = remoteCache.clearAsync();
+      CompletableFuture<Void> f = remoteCache.clearAsync();
       f.get(ASYNC_TIMEOUT, TimeUnit.SECONDS);
       assertTrue(remoteCache.isEmpty());
    }
@@ -67,11 +67,11 @@ public class HotRodAuthzOperationTests {
    }
 
    public static void testPutClearAsync(RemoteCache<String, String> remoteCache) throws Exception {
-      NotifyingFuture<String> f1 = remoteCache.putAsync(KEY1, VALUE1);
-      NotifyingFuture<String> f2 = remoteCache.putAsync(KEY2, VALUE2);
+      CompletableFuture<String> f1 = remoteCache.putAsync(KEY1, VALUE1);
+      CompletableFuture<String> f2 = remoteCache.putAsync(KEY2, VALUE2);
       f1.get(ASYNC_TIMEOUT, TimeUnit.SECONDS);
       f2.get(ASYNC_TIMEOUT, TimeUnit.SECONDS);
-      NotifyingFuture<Void> c = remoteCache.clearAsync();
+      CompletableFuture<Void> c = remoteCache.clearAsync();
       c.get(ASYNC_TIMEOUT, TimeUnit.SECONDS);
       assertFalse(remoteCache.containsKey(KEY1));
       assertFalse(remoteCache.containsKey(KEY2));
@@ -94,7 +94,7 @@ public class HotRodAuthzOperationTests {
 
    public static void testGetAsync(RemoteCache<String, String> remoteCache) throws Exception {
       assertTrue(remoteCache.containsKey(KEY1));
-      NotifyingFuture<String> f = remoteCache.getAsync(KEY1);
+      CompletableFuture<String> f = remoteCache.getAsync(KEY1);
       assertEquals(VALUE1, f.get(ASYNC_TIMEOUT, TimeUnit.SECONDS));
    }
 
@@ -118,7 +118,7 @@ public class HotRodAuthzOperationTests {
    }
 
    public static void testPutAsync(RemoteCache<String, String> remoteCache) throws Exception {
-      NotifyingFuture<String> f = remoteCache.putAsync(KEY1, VALUE1);
+      CompletableFuture<String> f = remoteCache.putAsync(KEY1, VALUE1);
       assertNull(f.get(ASYNC_TIMEOUT, TimeUnit.SECONDS));
    }
 
@@ -146,7 +146,7 @@ public class HotRodAuthzOperationTests {
       Map<String, String> entries = new HashMap<String, String>(2);
       entries.put(KEY1, VALUE1);
       entries.put(KEY2, VALUE2);
-      NotifyingFuture<Void> f = remoteCache.putAllAsync(entries);
+      CompletableFuture<Void> f = remoteCache.putAllAsync(entries);
       f.get(ASYNC_TIMEOUT, TimeUnit.SECONDS);
       assertEquals(2, remoteCache.size());
    }
@@ -169,7 +169,7 @@ public class HotRodAuthzOperationTests {
    public static void testRemoveContainsAsync(RemoteCache<String, String> remoteCache) throws Exception {
       remoteCache.put(KEY1, VALUE1);
       assertTrue(remoteCache.containsKey(KEY1));
-      NotifyingFuture<String> f = remoteCache.removeAsync(KEY1);
+      CompletableFuture<String> f = remoteCache.removeAsync(KEY1);
       f.get(ASYNC_TIMEOUT, TimeUnit.SECONDS);
       assertFalse(remoteCache.containsKey(KEY1));
    }
@@ -251,7 +251,7 @@ public class HotRodAuthzOperationTests {
       VersionedValue<String> v = remoteCache.getVersioned(KEY1);
       assertEquals(VALUE1, v.getValue());
       long ver = v.getVersion();
-      NotifyingFuture<Boolean> f = remoteCache.replaceWithVersionAsync(KEY1, VALUE2, ver);
+      CompletableFuture<Boolean> f = remoteCache.replaceWithVersionAsync(KEY1, VALUE2, ver);
       f.get(ASYNC_TIMEOUT, TimeUnit.SECONDS);
       v = remoteCache.getVersioned(KEY1);
       assertEquals(VALUE2, v.getValue());
@@ -276,7 +276,7 @@ public class HotRodAuthzOperationTests {
       VersionedValue<String> v = remoteCache.getVersioned(KEY1);
       assertEquals(VALUE1, v.getValue());
       long ver = v.getVersion();
-      NotifyingFuture<Boolean> f = remoteCache.removeWithVersionAsync(KEY1, ver);
+      CompletableFuture<Boolean> f = remoteCache.removeWithVersionAsync(KEY1, ver);
       f.get(ASYNC_TIMEOUT, TimeUnit.SECONDS);
       v = remoteCache.getVersioned(KEY1);
       if (v != null)

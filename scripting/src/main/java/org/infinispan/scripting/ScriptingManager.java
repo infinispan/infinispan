@@ -2,9 +2,6 @@ package org.infinispan.scripting;
 
 import java.util.concurrent.CompletableFuture;
 
-import javax.script.ScriptEngine;
-
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.tasks.TaskContext;
 
 /**

@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -210,7 +211,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          Integer r = future.get();
          assert r == 1;
 
-         List<Future<Integer>> list = des.submitEverywhere(new SimpleCallable());
+         List<CompletableFuture<Integer>> list = des.submitEverywhere(new SimpleCallable());
          AssertJUnit.assertEquals(1, list.size());
          for (Future<Integer> f : list) {
             AssertJUnit.assertEquals(new Integer(1), f.get());

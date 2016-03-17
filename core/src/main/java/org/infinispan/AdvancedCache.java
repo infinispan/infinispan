@@ -3,7 +3,6 @@ package org.infinispan;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -29,6 +28,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * An advanced interface that exposes additional methods not available on {@link Cache}.
@@ -404,7 +404,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @since 5.3
     */
-   NotifyingFuture<V> putAsync(K key, V value, Metadata metadata);
+   CompletableFuture<V> putAsync(K key, V value, Metadata metadata);
 
    // TODO: Even better: add replace/remove calls that apply the changes if a given function is successful
    // That way, you could do comparison not only on the cache value, but also based on version...etc

@@ -1,7 +1,6 @@
 package org.infinispan.server.infinispan.task;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -23,12 +22,10 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
 
       DefaultExecutorService des = new DefaultExecutorService(masterCacheNode);
       try {
-         List<Future<T>> tasks = des.submitEverywhere(new DistributedServerTask<>(taskName, context.getParameters()));
-         List<CompletableFuture<T>> all = new ArrayList<>(tasks.size());
-         tasks.forEach(task -> all.add(CompletableFutures.toCompletableFuture((NotifyingFuture<T>) task)));
+         List<CompletableFuture<T>> tasks = des.submitEverywhere(new DistributedServerTask<>(taskName, context.getParameters()));
 
 //         noinspection unchecked
-         return (CompletableFuture<T>) CompletableFutures.sequence(all);
+         return (CompletableFuture<T>) CompletableFutures.sequence(tasks);
       } finally {
          des.shutdown();
       }

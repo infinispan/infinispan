@@ -1,6 +1,5 @@
 package org.infinispan.api;
 
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -8,6 +7,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Mircea Markus
@@ -24,13 +24,13 @@ public class TxCacheAndAsyncOpsTest extends SingleCacheManagerTest {
 
    public void testAsyncOps() throws Exception {
 
-      NotifyingFuture<Object> result = cache.putAsync("k", "v");
+      CompletableFuture<Object> result = cache.putAsync("k", "v");
       assert result.get() == null;
 
       result = cache.removeAsync("k");
       assert result.get().equals("v");
 
-      final NotifyingFuture<Void> voidNotifyingFuture = cache.putAllAsync(Collections.singletonMap("k", "v"));
+      final CompletableFuture<Void> voidNotifyingFuture = cache.putAllAsync(Collections.singletonMap("k", "v"));
       voidNotifyingFuture.get();
 
       assert cache.get("k").equals("v");

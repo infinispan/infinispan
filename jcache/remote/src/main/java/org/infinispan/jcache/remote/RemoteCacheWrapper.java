@@ -8,12 +8,12 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.query.dsl.Query;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,7 +42,7 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<Void> clearAsync() {
+   public CompletableFuture<Void> clearAsync() {
       return delegate.clearAsync();
    }
 
@@ -72,7 +72,7 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<V> getAsync(K key) {
+   public CompletableFuture<V> getAsync(K key) {
       return delegate.getAsync(key);
    }
 
@@ -163,33 +163,33 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       return delegate.putAllAsync(data);
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       return delegate.putAllAsync(data, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit,
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit,
          long maxIdle, TimeUnit maxIdleUnit) {
       return delegate.putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value) {
+   public CompletableFuture<V> putAsync(K key, V value) {
       return delegate.putAsync(key, value);
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       return delegate.putAsync(key, value, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
+   public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
          TimeUnit maxIdleUnit) {
       return delegate.putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
@@ -210,17 +210,17 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return delegate.putIfAbsentAsync(key, value);
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
       return delegate.putIfAbsentAsync(key, value, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
          TimeUnit maxIdleUnit) {
       return delegate.putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
@@ -236,12 +236,12 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<V> removeAsync(Object key) {
+   public CompletableFuture<V> removeAsync(Object key) {
       return delegate.removeAsync(key);
    }
 
    @Override
-   public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
+   public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
       return delegate.removeAsync(key, value);
    }
 
@@ -256,7 +256,7 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<Boolean> removeWithVersionAsync(K key, long version) {
+   public CompletableFuture<Boolean> removeWithVersionAsync(K key, long version) {
       return delegate.removeWithVersionAsync(key, version);
    }
 
@@ -292,33 +292,33 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value) {
+   public CompletableFuture<V> replaceAsync(K key, V value) {
       return delegate.replaceAsync(key, value);
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       return delegate.replaceAsync(key, value, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
          TimeUnit maxIdleUnit) {
       return delegate.replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
       return delegate.replaceAsync(key, oldValue, newValue);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
       return delegate.replaceAsync(key, oldValue, newValue, lifespan, unit);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit,
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit,
          long maxIdle, TimeUnit maxIdleUnit) {
       return delegate.replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
@@ -344,17 +344,17 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version) {
+   public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version) {
       return delegate.replaceWithVersionAsync(key, newValue, version);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds) {
+   public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds) {
       return delegate.replaceWithVersionAsync(key, newValue, version, lifespanSeconds);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds,
+   public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds,
          int maxIdleSeconds) {
       return delegate.replaceWithVersionAsync(key, newValue, version, lifespanSeconds, maxIdleSeconds);
    }

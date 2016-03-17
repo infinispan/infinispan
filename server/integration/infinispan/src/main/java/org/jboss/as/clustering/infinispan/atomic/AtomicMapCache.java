@@ -23,12 +23,12 @@
 package org.jboss.as.clustering.infinispan.atomic;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * A cache wrapper that simplifies atomic map semantics.
@@ -116,77 +116,77 @@ public class AtomicMapCache<K, MK, MV> extends AbstractDelegatingAdvancedCache<K
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> putAsync(K key, Map<MK, MV> value) {
+    public CompletableFuture<Map<MK, MV>> putAsync(K key, Map<MK, MV> value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> putAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit unit) {
+    public CompletableFuture<Map<MK, MV>> putAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit unit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> putAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+    public CompletableFuture<Map<MK, MV>> putAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends Map<MK, MV>> data) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends Map<MK, MV>> data) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends Map<MK, MV>> data, long lifespan, TimeUnit unit) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends Map<MK, MV>> data, long lifespan, TimeUnit unit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends Map<MK, MV>> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends Map<MK, MV>> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> putIfAbsentAsync(K key, Map<MK, MV> value) {
+    public CompletableFuture<Map<MK, MV>> putIfAbsentAsync(K key, Map<MK, MV> value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> putIfAbsentAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit unit) {
+    public CompletableFuture<Map<MK, MV>> putIfAbsentAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit unit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> putIfAbsentAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+    public CompletableFuture<Map<MK, MV>> putIfAbsentAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> replaceAsync(K key, Map<MK, MV> value) {
+    public CompletableFuture<Map<MK, MV>> replaceAsync(K key, Map<MK, MV> value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> replaceAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit unit) {
+    public CompletableFuture<Map<MK, MV>> replaceAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit unit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Map<MK, MV>> replaceAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+    public CompletableFuture<Map<MK, MV>> replaceAsync(K key, Map<MK, MV> value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Boolean> replaceAsync(K key, Map<MK, MV> oldValue, Map<MK, MV> newValue) {
+    public CompletableFuture<Boolean> replaceAsync(K key, Map<MK, MV> oldValue, Map<MK, MV> newValue) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Boolean> replaceAsync(K key, Map<MK, MV> oldValue, Map<MK, MV> newValue, long lifespan, TimeUnit unit) {
+    public CompletableFuture<Boolean> replaceAsync(K key, Map<MK, MV> oldValue, Map<MK, MV> newValue, long lifespan, TimeUnit unit) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public NotifyingFuture<Boolean> replaceAsync(K key, Map<MK, MV> oldValue, Map<MK, MV> newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+    public CompletableFuture<Boolean> replaceAsync(K key, Map<MK, MV> oldValue, Map<MK, MV> newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
         throw new UnsupportedOperationException();
     }
 

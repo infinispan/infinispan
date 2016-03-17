@@ -18,7 +18,6 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -552,7 +552,7 @@ public abstract class AbstractRemoteCacheIT {
         fill(remoteCache, ASYNC_OPS_ENTRY_LOAD);
         assertEquals(ASYNC_OPS_ENTRY_LOAD, numEntriesOnServer(0));
 
-        NotifyingFuture<Void> future = remoteCache.clearAsync();
+        CompletableFuture<Void> future = remoteCache.clearAsync();
         future.get();
 
         assertEquals(0, numEntriesOnServer(0));
@@ -633,7 +633,7 @@ public abstract class AbstractRemoteCacheIT {
 
         remoteCache.put("aKey", "aValue");
         VersionedValue valueBinary = remoteCache.getVersioned("aKey");
-        NotifyingFuture<Boolean> future = remoteCache.replaceWithVersionAsync("aKey", "aNewValue", valueBinary.getVersion(),
+        CompletableFuture<Boolean> future = remoteCache.replaceWithVersionAsync("aKey", "aNewValue", valueBinary.getVersion(),
                 lifespanInSecs);
         assertTrue(future.get());
 
@@ -665,7 +665,7 @@ public abstract class AbstractRemoteCacheIT {
         Map<String, String> mapIn = new HashMap<String, String>();
         Map<String, String> mapOut = new HashMap<String, String>();
         fill(mapOut, ASYNC_OPS_ENTRY_LOAD);
-        NotifyingFuture<Void> future = remoteCache.putAllAsync(mapOut);
+        CompletableFuture<Void> future = remoteCache.putAllAsync(mapOut);
         future.get();
 
         mapIn = remoteCache.getBulk();
@@ -678,7 +678,7 @@ public abstract class AbstractRemoteCacheIT {
         Map<String, String> mapIn = new HashMap<String, String>();
         Map<String, String> mapOut = new HashMap<String, String>();
         fill(mapOut, ASYNC_OPS_ENTRY_LOAD);
-        NotifyingFuture<Void> future = remoteCache.putAllAsync(mapOut, lifespanInSecs, TimeUnit.SECONDS);
+        CompletableFuture<Void> future = remoteCache.putAllAsync(mapOut, lifespanInSecs, TimeUnit.SECONDS);
         future.get();
 
         sleepForSecs(lifespanInSecs + 2);
@@ -693,7 +693,7 @@ public abstract class AbstractRemoteCacheIT {
         remoteCache.put("aKey", "aValue");
         VersionedValue valueBinary = remoteCache.getVersioned("aKey");
         // replacement should take place (and so return true)
-        NotifyingFuture<Boolean> future = remoteCache.replaceWithVersionAsync("aKey", "aNewValue", valueBinary.getVersion());
+        CompletableFuture<Boolean> future = remoteCache.replaceWithVersionAsync("aKey", "aNewValue", valueBinary.getVersion());
         assertTrue(future.get());
 
         // version should have changed; value should have changed
@@ -708,7 +708,7 @@ public abstract class AbstractRemoteCacheIT {
 
     @Test
     public void testRemoveWithVersionAsync() throws Exception {
-        NotifyingFuture<Boolean> future = null;
+        CompletableFuture<Boolean> future = null;
         future = remoteCache.removeWithVersionAsync("aKey", 12321212l);
         assertTrue(!future.get());
 

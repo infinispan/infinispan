@@ -4,7 +4,6 @@ import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BatchingCache;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;

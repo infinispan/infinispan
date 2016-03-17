@@ -1,7 +1,6 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -12,6 +11,7 @@ import javax.transaction.TransactionManager;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -48,7 +48,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
 
       TransactionManager tm = getTransactionManager(nonOwnerCache);
       tm.begin();
-      NotifyingFuture<String> f = nonOwnerCache.getAsync(k);
+      CompletableFuture<String> f = nonOwnerCache.getAsync(k);
       assert f != null;
       assert f.get().equals(v);
       nonOwnerCache.put(k, v(m, 2));
@@ -83,7 +83,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
             TransactionManager tm = getTransactionManager(localCache);
             tm.begin();
             // This brings k,v to L1 in non-owner cache
-            NotifyingFuture<String> f;
+            CompletableFuture<String> f;
             if (withFlag)
                localCache = cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
 

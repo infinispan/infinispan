@@ -6,8 +6,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.Futures;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.factories.ComponentRegistry;
@@ -27,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -117,25 +116,22 @@ public class HotRodTargetMigrator implements TargetMigrator {
                List<List<Integer>> partitions = split(range(numSegments), servers.size());
                DistributedExecutorService executor = new DefaultExecutorService(cache);
                Iterator<Address> iterator = servers.iterator();
-               ArrayList<NotifyingFuture<Integer>> futures = new ArrayList<>(servers.size());
+               List<CompletableFuture<Integer>> futures = new ArrayList<>(servers.size());
                for (List<Integer> partition : partitions) {
                   Set<Integer> segmentSet = new HashSet<>();
                   segmentSet.addAll(partition);
                   futures.add(executor.submit(iterator.next(), new MigrationTask(segmentSet, readBatch, threads)));
                }
-               NotifyingFuture<List<Integer>> result = Futures.combine(futures);
-               try {
-                  List<Integer> integers = result.get();
-                  int sum = 0;
-                  for (Integer i : integers) {
-                     sum += i;
+               return futures.stream().mapToInt(f -> {
+                  try {
+                     return f.get();
+                  } catch (InterruptedException e) {
+                     Thread.currentThread().interrupt();
+                     throw log.couldNotMigrateData(cache.getName());
+                  } catch (ExecutionException e) {
+                     throw new CacheException(e);
                   }
-                  return sum;
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-               } catch (ExecutionException e) {
-                  throw new CacheException(e);
-               }
+               }).sum();
             }
          }
       }

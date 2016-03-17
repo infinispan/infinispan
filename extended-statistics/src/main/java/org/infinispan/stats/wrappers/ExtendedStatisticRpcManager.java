@@ -16,7 +16,6 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -93,20 +92,6 @@ public class ExtendedStatisticRpcManager implements RpcManager {
                timeService.timeDuration(start, NANOSECONDS), Collections.singleton(entry.getKey()));
       }
       return responseMap;
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options, NotifyingNotifiableFuture<Object> future) {
-      long start = timeService.time();
-      actual.invokeRemotelyInFuture(recipients, rpc, options, future);
-      updateStats(rpc, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS), recipients);
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(NotifyingNotifiableFuture<Map<Address, Response>> future, Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-      long start = timeService.time();
-      actual.invokeRemotelyInFuture(future, recipients, rpc, options);
-      updateStats(rpc, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS), recipients);
    }
 
    @Override

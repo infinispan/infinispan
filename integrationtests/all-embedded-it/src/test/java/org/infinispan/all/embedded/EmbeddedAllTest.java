@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import javax.transaction.TransactionManager;
@@ -179,7 +180,7 @@ public class EmbeddedAllTest {
    @Test
    public void testEmbeddedDistExec() throws Exception {
       DefaultExecutorService defaultExecutorService = new DefaultExecutorService(manager.getCache());
-      List<Future<String>> results = defaultExecutorService.submitEverywhere(new TestCallable());
+      List<CompletableFuture<String>> results = defaultExecutorService.submitEverywhere(new TestCallable());
       for(Future<String> result : results) {
          assertEquals("OK", result.get());
       }

@@ -1,6 +1,5 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -20,6 +19,7 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -99,7 +99,7 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       checkPoint.awaitStrict("sending_join_response", 10, SECONDS);
 
       // This will invoke an invalidation on the joiner
-      NotifyingFuture<Object> putFuture = cache(0).putAsync("key2", "value2");
+      CompletableFuture<Object> putFuture = cache(0).putAsync("key2", "value2");
       try {
          putFuture.get(1, SECONDS);
          fail("Put operation should have been blocked, but it finished successfully");
