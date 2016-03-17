@@ -2,8 +2,6 @@ package org.infinispan.query.distributed;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -17,6 +15,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -197,7 +196,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    class EventLoop implements Runnable {
 
       private MassIndexer massIndexer;
-      private NotifyingFuture<Void> future;
+      private CompletableFuture<Void> future;
       private AtomicInteger nexIndex = new AtomicInteger(OBJECT_COUNT);
 
       public EventLoop(MassIndexer massIndexer) {
@@ -208,21 +207,16 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
          System.out.println("Running MassIndexer");
          final StopTimer stopTimer = new StopTimer();
          future = massIndexer.startAsync();
-         future.attachListener(new FutureListener<Void>() {
-            @Override
-            public void futureDone(Future<Void> future) {
-               stopTimer.stop();
-               try {
-                  future.get();
-                  System.out.printf("\nMass indexer run in %d seconds", stopTimer.getElapsedIn(TimeUnit.SECONDS));
-                  System.out.println();
-                  waitForIndexSize(nexIndex.get());
-                  System.out.println("Mass Indexing complete.");
-               } catch (Exception e) {
-                  System.out.println("Error executing massindexer");
-                  e.printStackTrace();
-               }
+         future.whenComplete((v, t) -> {
+            stopTimer.stop();
+            if (t != null) {
+               System.out.println("Error executing massindexer");
+               t.printStackTrace();
             }
+            System.out.printf("\nMass indexer run in %d seconds", stopTimer.getElapsedIn(TimeUnit.SECONDS));
+            System.out.println();
+            waitForIndexSize(nexIndex.get());
+            System.out.println("Mass Indexing complete.");
          });
       }
 

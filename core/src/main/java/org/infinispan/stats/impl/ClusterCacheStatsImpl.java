@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -524,7 +525,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
 
    protected synchronized void fetchClusterWideStatsIfNeeded() {
       if (launchNewDistTask()) {
-         List<Future<Map<String, Number>>> responseList = Collections.emptyList();
+         List<CompletableFuture<Map<String, Number>>> responseList = Collections.emptyList();
          try {
             responseList = des.submitEverywhere(new DistributedCacheStatsCallable());
             updateFieldsFromResponseMap(responseList);
@@ -536,7 +537,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       }
    }
 
-   private void updateFieldsFromResponseMap(List<Future<Map<String, Number>>> responseList) throws Exception {
+   private void updateFieldsFromResponseMap(List<CompletableFuture<Map<String, Number>>> responseList) throws Exception {
 
       averageWriteTime = addLongAttributes(responseList, AVERAGE_WRITE_TIME) / responseList.size();
       averageReadTime = addLongAttributes(responseList, AVERAGE_READ_TIME) / responseList.size();
@@ -564,7 +565,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       cacheWriterStores = addLongAttributes(responseList, CACHE_WRITER_STORES);
    }
 
-   private long addLongAttributes(List<Future<Map<String, Number>>> responseList, String attribute) throws Exception {
+   private long addLongAttributes(List<CompletableFuture<Map<String, Number>>> responseList, String attribute) throws Exception {
       long total = 0;
       for (Future<Map<String, Number>> f : responseList) {
          Map<String, Number> m = f.get();
@@ -577,7 +578,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       return total;
    }
 
-   private int addIntAttributes(List<Future<Map<String, Number>>> responseList, String attribute) throws Exception {
+   private int addIntAttributes(List<CompletableFuture<Map<String, Number>>> responseList, String attribute) throws Exception {
       int total = 0;
       for (Future<Map<String, Number>> f : responseList) {
          Map<String, Number> m = f.get();
@@ -590,7 +591,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       return total;
    }
 
-   private long updateTimeSinceStart(List<Future<Map<String, Number>>> responseList) throws Exception {
+   private long updateTimeSinceStart(List<CompletableFuture<Map<String, Number>>> responseList) throws Exception {
       long timeSinceStartMax = 0;
       for (Future<Map<String, Number>> f : responseList) {
          Map<String, Number> m = f.get();
@@ -602,7 +603,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       return timeSinceStartMax;
    }
 
-   private double updateReadWriteRatio(List<Future<Map<String, Number>>> responseList) throws Exception {
+   private double updateReadWriteRatio(List<CompletableFuture<Map<String, Number>>> responseList) throws Exception {
       long sumOfAllReads = 0;
       long sumOfAllWrites = 0;
       double rwRatio = 0;
@@ -620,7 +621,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       return rwRatio;
    }
 
-   private double updateHitRatio(List<Future<Map<String, Number>>> responseList) throws Exception {
+   private double updateHitRatio(List<CompletableFuture<Map<String, Number>>> responseList) throws Exception {
       long totalHits = 0;
       long totalRetrievals = 0;
       double hitRatio = 0;

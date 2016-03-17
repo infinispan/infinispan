@@ -18,8 +18,6 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IteratorMapper;
-import org.infinispan.commons.util.concurrent.NoOpFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.container.DataContainer;
@@ -33,6 +31,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -80,12 +79,16 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 
 /**
  * Simple local cache without interceptor stack.
@@ -215,8 +218,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return new NoOpFuture<V>(getAndPutInternal(key, value, applyDefaultMetadata(metadata)));
+   public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
+      return CompletableFuture.completedFuture(getAndPutInternal(key, value, applyDefaultMetadata(metadata)));
    }
 
    @Override
@@ -715,102 +718,102 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value) {
-      return new NoOpFuture<>(put(key, value));
+   public CompletableFuture<V> putAsync(K key, V value) {
+      return CompletableFuture.completedFuture(put(key, value));
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return new NoOpFuture<>(put(key, value, lifespan, unit));
+   public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return CompletableFuture.completedFuture(put(key, value, lifespan, unit));
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new NoOpFuture<>(put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return CompletableFuture.completedFuture(put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       putAll(data);
-      return new NoOpFuture<Void>((Void) null);
+      return CompletableFuture.completedFuture((Void) null);
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       putAll(data, lifespan, unit);
-      return new NoOpFuture<>((Void) null);
+      return CompletableFuture.completedFuture((Void) null);
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-      return new NoOpFuture<>((Void) null);
+      return CompletableFuture.completedFuture((Void) null);
    }
 
    @Override
-   public NotifyingFuture<Void> clearAsync() {
+   public CompletableFuture<Void> clearAsync() {
       clear();
-      return new NoOpFuture<>((Void) null);
+      return CompletableFuture.completedFuture((Void) null);
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
-      return new NoOpFuture<>(putIfAbsent(key, value));
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
+      return CompletableFuture.completedFuture(putIfAbsent(key, value));
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return new NoOpFuture<>(putIfAbsent(key, value, lifespan, unit));
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return CompletableFuture.completedFuture(putIfAbsent(key, value, lifespan, unit));
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new NoOpFuture<>(putIfAbsent(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return CompletableFuture.completedFuture(putIfAbsent(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
    }
 
    @Override
-   public NotifyingFuture<V> removeAsync(Object key) {
-      return new NoOpFuture<>(remove(key));
+   public CompletableFuture<V> removeAsync(Object key) {
+      return CompletableFuture.completedFuture(remove(key));
    }
 
    @Override
-   public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
-      return new NoOpFuture<>(remove(key, value));
+   public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
+      return CompletableFuture.completedFuture(remove(key, value));
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value) {
-      return new NoOpFuture<>(replace(key, value));
+   public CompletableFuture<V> replaceAsync(K key, V value) {
+      return CompletableFuture.completedFuture(replace(key, value));
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return new NoOpFuture<>(replace(key, value, lifespan, unit));
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return CompletableFuture.completedFuture(replace(key, value, lifespan, unit));
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new NoOpFuture<>(replace(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return CompletableFuture.completedFuture(replace(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return new NoOpFuture<>(replace(key, oldValue, newValue));
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return CompletableFuture.completedFuture(replace(key, oldValue, newValue));
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      return new NoOpFuture<>(replace(key, oldValue, newValue, lifespan, unit));
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      return CompletableFuture.completedFuture(replace(key, oldValue, newValue, lifespan, unit));
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return new NoOpFuture<>(replace(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return CompletableFuture.completedFuture(replace(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
    }
 
    @Override
-   public NotifyingFuture<V> getAsync(K key) {
-      return new NoOpFuture<>(get(key));
+   public CompletableFuture<V> getAsync(K key) {
+      return CompletableFuture.completedFuture(get(key));
    }
 
    @Override

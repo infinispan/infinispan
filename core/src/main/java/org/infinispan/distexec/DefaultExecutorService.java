@@ -20,10 +20,6 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.commons.util.concurrent.NoOpFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
@@ -42,6 +38,7 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -203,13 +200,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
-   public <T> NotifyingFuture<T> submit(Runnable task, T result) {
-      return (NotifyingFuture<T>) super.submit(task, result);
+   public <T> CompletableFuture<T> submit(Runnable task, T result) {
+      return (CompletableFuture<T>) super.submit(task, result);
    }
 
    @Override
-   public <T> NotifyingFuture<T> submit(Callable<T> task) {
-      return (NotifyingFuture<T>) super.submit(task);
+   public <T> CompletableFuture<T> submit(Callable<T> task) {
+      return (CompletableFuture<T>) super.submit(task);
    }
 
    @Override
@@ -401,21 +398,21 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
-   public <T> NotifyingFuture<T> submit(Address target, Callable<T> task) {
+   public <T> CompletableFuture<T> submit(Address target, Callable<T> task) {
       DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
       DistributedTask<T> distributedTask = distributedTaskBuilder.build();
       return submit(target, distributedTask);
    }
 
    @Override
-   public <T> NotifyingFuture<T> submit(Address target, DistributedTask<T> task) {
+   public <T> CompletableFuture<T> submit(Address target, DistributedTask<T> task) {
       if (task == null)
          throw new NullPointerException();
       if (target == null)
          throw new NullPointerException();
       List<Address> members = getMembers();
       if (!members.contains(target)) {
-         return new NoOpFuture<>(new SuspectException("Target node " + target
+         return CompletableFutures.completedExceptionFuture(new SuspectException("Target node " + target
                   + " is not a cluster member, members are " + members));
       }
       Address me = getAddress();
@@ -431,14 +428,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
-   public <T, K> NotifyingFuture<T> submit(Callable<T> task, K... input) {
+   public <T, K> CompletableFuture<T> submit(Callable<T> task, K... input) {
       DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
       DistributedTask<T> distributedTask = distributedTaskBuilder.build();
       return submit(distributedTask, input);
    }
 
    @Override
-   public <T, K> NotifyingFuture<T> submit(DistributedTask<T> task, K... input) {
+   public <T, K> CompletableFuture<T> submit(DistributedTask<T> task, K... input) {
       if (task == null) throw new NullPointerException();
 
       if(inputKeysSpecified(input)){
@@ -456,18 +453,18 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
-   public <T> List<Future<T>> submitEverywhere(Callable<T> task) {
+   public <T> List<CompletableFuture<T>> submitEverywhere(Callable<T> task) {
       DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
       DistributedTask<T> distributedTask = distributedTaskBuilder.build();
       return submitEverywhere(distributedTask);
    }
 
    @Override
-   public <T> List<Future<T>> submitEverywhere(DistributedTask<T> task) {
+   public <T> List<CompletableFuture<T>> submitEverywhere(DistributedTask<T> task) {
       if (task == null) throw new NullPointerException();
 
       List<Address> members = executionCandidates(task);
-      List<Future<T>> futures = new ArrayList<Future<T>>(members.size());
+      List<CompletableFuture<T>> futures = new ArrayList<>(members.size());
       Address me = getAddress();
       for (Address target : members) {
          DistributedExecuteCommand<T> c = null;
@@ -484,17 +481,17 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    @Override
-   public <T, K> List<Future<T>> submitEverywhere(Callable<T> task, K... input) {
+   public <T, K> List<CompletableFuture<T>> submitEverywhere(Callable<T> task, K... input) {
       DistributedTaskBuilder<T> distributedTaskBuilder = createDistributedTaskBuilder(task);
       DistributedTask<T> distributedTask = distributedTaskBuilder.build();
       return submitEverywhere(distributedTask, input);
    }
 
    @Override
-   public <T, K> List<Future<T>> submitEverywhere(DistributedTask<T> task, K... input) {
+   public <T, K> List<CompletableFuture<T>> submitEverywhere(DistributedTask<T> task, K... input) {
       if (task == null) throw new NullPointerException();
       if(inputKeysSpecified(input)) {
-         List<Future<T>> futures = new ArrayList<Future<T>>(input.length * 2);
+         List<CompletableFuture<T>> futures = new ArrayList<>(input.length * 2);
          Address me = getAddress();
          Map<Address, List<K>> nodesKeysMap = keysToExecutionNodes(task.getTaskExecutionPolicy(), input);
          checkExecutionPolicy(task, nodesKeysMap, input);
@@ -797,7 +794,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
     * @author Mircea Markus
     * @author Vladimir Blagojevic
     */
-   private abstract class DistributedTaskPart<V> implements NotifyingFuture<V>, RunnableFuture<V> {
+   private abstract class DistributedTaskPart<V> extends CompletableFuture<V> implements RunnableFuture<V> {
 
       protected final DistributedExecuteCommand<V> distCommand;
       private final List<Object> inputKeys;
@@ -826,21 +823,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       public abstract Address getExecutionTarget();
 
-      private DefaultExecutorService getOuterType() {
-         return DefaultExecutorService.this;
-      }
-
       public abstract void execute();
-
-      @Override
-      public void run() {
-         //intentionally empty
-      }
-
-      @Override
-      public boolean isCancelled() {
-         return cancelled;
-      }
 
       @Override
       public V get() throws InterruptedException, ExecutionException {
@@ -863,7 +846,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             throw new CancellationException("Task already cancelled");
 
          long timeoutNanos = computeTimeoutNanos(timeout, unit);
-         long endNanos = timeService.expectedEndTime(timeoutNanos, TimeUnit.NANOSECONDS);
          try {
             return getResult(timeoutNanos);
          } catch (TimeoutException te) {
@@ -889,7 +871,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
 
-      protected abstract V getResult(long timeoutNanos) throws Exception;
+      protected V getResult(long timeoutNanos) throws Exception {
+         if (timeoutNanos > 0) {
+            return super.get(timeoutNanos, TimeUnit.NANOSECONDS);
+         } else {
+            return super.get();
+         }
+      }
 
       protected long computeTimeoutNanos(long timeout, TimeUnit unit) {
          long taskTimeout = TimeUnit.MILLISECONDS.toNanos(getOwningTask().timeout());
@@ -944,14 +932,14 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return part.get(timeout, unit);
       }
 
-      protected void setCancelled() {
-         cancelled = true;
+      @Override
+      public void run() {
+         execute();
       }
    }
 
    private class RemoteDistributedTaskPart<V> extends DistributedTaskPart<V> {
       private final Address executionTarget;
-      private CompletableFuture<Map<Address, Response>> future;
 
       public RemoteDistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command,
                                  List<Object> inputKeys, Address executionTarget, int failoverCount) {
@@ -971,11 +959,20 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void execute() {
          if (trace) log.tracef("Sending %s to remote execution at node %s", this, getExecutionTarget());
          try {
-            CompletableFuture<Map<Address, Response>> remoteFuture = rpc.invokeRemotelyAsync(
+            rpc.invokeRemotelyAsync(
                   Collections.singletonList(getExecutionTarget()), getCommand(), rpc.getRpcOptionsBuilder(
                         ResponseMode.SYNCHRONOUS).timeout(getOwningTask().timeout(), TimeUnit.MILLISECONDS)
-                        .build());
-            future = remoteFuture;
+                        .build()).whenComplete((Map<Address, Response> v, Throwable t) -> {
+               if (t != null) {
+                  completeExceptionally(t);
+               } else {
+                  try {
+                     complete(retrieveResult(v));
+                  } catch (Exception e) {
+                     completeExceptionally(e);
+                  }
+               }
+            });
          } catch (Throwable e) {
             log.remoteExecutionFailed(getExecutionTarget(), e);
          }
@@ -986,42 +983,21 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          if (!isCancelled()) {
             CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
             rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, rpc.getDefaultRpcOptions(true));
-            setCancelled();
-            return future.cancel(true);
+            return super.cancel(true);
          } else {
             //already cancelled
             return false;
          }
       }
 
-      @Override
-      public boolean isDone() {
-         return future.isDone();
-      }
-
-      @Override
-      protected V getResult(long timeoutNanos) throws Exception {
-         if (timeoutNanos > 0) {
-            return retrieveResult(future.get(timeoutNanos, TimeUnit.NANOSECONDS));
-         } else {
-            return retrieveResult(future.get());
-         }
-      }
-
-      private V retrieveResult(Object response) throws Exception {
+      private V retrieveResult(Map<Address, Response> response) throws Exception {
          V result = null;
-         //this is application level Exception that was raised in execution
-         //simply rethrow it (might be good candidate for failover)
-         if (response instanceof Exception) {
-            throw ((Exception) response);
-         }
-         //these two should never happen, mark them with IllegalStateException
-         if (response == null || !(response instanceof Map<?, ?>)) {
+         // this two should never happen, mark them with IllegalStateException
+         if (response == null) {
             throw new IllegalStateException("Invalid response received " + response);
          }
-         Map<Address, Response> mapResult = (Map<Address, Response>) response;
-         if (mapResult.size() == 1) {
-            for (Entry<Address, Response> e : mapResult.entrySet()) {
+         if (response.size() == 1) {
+            for (Entry<Address, Response> e : response.entrySet()) {
                Response value = e.getValue();
                if (value instanceof SuccessfulResponse) {
                   result = (V) ((SuccessfulResponse) value).getResponseValue();
@@ -1036,27 +1012,12 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
          return result;
       }
-
-      @Override
-      public NotifyingFuture<V> attachListener(final FutureListener<V> listener) {
-         future.whenComplete((value, throwable) -> {
-            listener.futureDone(this);
-         });
-         return this;
-      }
    }
 
    private class LocalDistributedTaskPart<V> extends DistributedTaskPart<V> {
-      private final NotifyingFutureImpl<V> future = new NotifyingFutureImpl<V>();
-
       public LocalDistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command,
                List<Object> inputKeys, int failoverCount) {
          super(inputKeys, command, task, failoverCount);
-      }
-
-      @Override
-      public boolean isDone() {
-         return future.isDone();
       }
 
       @Override
@@ -1069,20 +1030,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             } catch (Throwable e) {
                log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
             }
-            setCancelled();
-            return future.cancel(true);
+            return super.cancel(true);
          } else {
             //already cancelled
             return false;
-         }
-      }
-
-      @Override
-      protected V getResult(long timeoutNanos) throws Exception {
-         if (timeoutNanos > 0) {
-            return future.get(timeoutNanos, TimeUnit.NANOSECONDS);
-         } else {
-            return future.get();
          }
       }
 
@@ -1099,10 +1050,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
                @Override
                public V call() throws Exception {
-                  return doLocalInvoke();
-               }
-
-               private V doLocalInvoke() throws Exception {
                   getCommand().init(cache);
                   DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
                   try {
@@ -1110,10 +1057,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                      lifecycle.onPreExecute(getCommand().getCallable(), cache);
                      cancellationService.register(Thread.currentThread(), getCommand().getUUID());
                      V result = getCommand().perform(null);
-                     future.notifyDone(result);
+                     complete(result);
                      return result;
                   } catch (Exception e) {
-                     future.notifyException(e);
+                     completeExceptionally(e);
                      throw e;
                   } finally {
                      // hook into lifecycle
@@ -1122,16 +1069,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                   }
                }
             };
-            future.setFuture(localExecutorService.submit(call));
+            localExecutorService.submit(call);
          } catch (Throwable e1) {
             log.localExecutionFailed(e1);
          }
-      }
-
-      @Override
-      public NotifyingFuture<V> attachListener(final FutureListener<V> listener) {
-         future.attachListener(listener);
-         return this;
       }
    }
 

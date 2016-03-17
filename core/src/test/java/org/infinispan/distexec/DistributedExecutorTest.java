@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -307,7 +308,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
       DistributedExecutorService des = createDES(getCache());
 
-      List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(true),
+      List<CompletableFuture<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(true),
                                                         new String[] { "key1", "key2", "key5", "key6" });
       assertTrue(list != null && !list.isEmpty());
       for (Future<Boolean> f : list) {

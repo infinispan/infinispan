@@ -92,9 +92,8 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Flushing index '%s'", id = 14017)
    void flushingIndex(String entityType);
 
-   @LogMessage(level = ERROR)
    @Message(value = "Error executing MassIndexer", id = 14018)
-   void errorExecutingMassIndexer(@Cause Throwable cause);
+   CacheException errorExecutingMassIndexer(@Cause Throwable cause);
 
    @Message(value = "Cannot run Lucene queries on a cache that does not have indexing enabled", id = 14019)
    IllegalStateException cannotRunLuceneQueriesIfNotIndexed();

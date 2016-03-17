@@ -2,7 +2,6 @@ package org.infinispan.distexec;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.AssertJUnit;
@@ -13,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -40,7 +40,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       try {
          DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
          decs.submit(new SimpleCallable());
-         NotifyingFuture<Integer> future = decs.take();
+         CompletableFuture<Integer> future = decs.take();
          Integer r = future.get();
          AssertJUnit.assertEquals(1, r.intValue());
       } finally {
@@ -126,10 +126,10 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
    public void testBasicInvocationWithBlockingQueue() throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
       try {
-         BlockingQueue<NotifyingFuture<Integer>> queue = new ArrayBlockingQueue<NotifyingFuture<Integer>>(10);
+         BlockingQueue<CompletableFuture<Integer>> queue = new ArrayBlockingQueue<>(10);
          DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des, queue);
          decs.submit(new SimpleCallable());
-         NotifyingFuture<Integer> future = decs.take();
+         CompletableFuture<Integer> future = decs.take();
          Integer r = future.get();
          AssertJUnit.assertEquals((Integer) 1, r);
       } finally {
@@ -144,7 +144,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
          Integer result = 5;
          decs.submit(new SimpleRunnable(), result);
 
-         NotifyingFuture<Integer> future = decs.take();
+         CompletableFuture<Integer> future = decs.take();
          Integer r = future.get();
          AssertJUnit.assertEquals(result, r);
       } finally {
@@ -169,7 +169,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
       try {
          decs.submit(new SimpleCallable(true, 5000));
-         NotifyingFuture<Integer> callable = decs.poll();
+         CompletableFuture<Integer> callable = decs.poll();
          AssertJUnit.assertNull(callable);
       } finally {
          des.shutdownNow();
@@ -184,7 +184,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
          long start = System.currentTimeMillis();
          decs.submit(new SimpleCallable(true, sleepTime));
 
-         NotifyingFuture<Integer> future = decs.take();
+         CompletableFuture<Integer> future = decs.take();
          long end = System.currentTimeMillis();
 
          AssertJUnit.assertTrue("take() returned too soon", (end - start) >= sleepTime);
@@ -201,7 +201,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       try {
          decs.submit(new SimpleCallable());
 
-         NotifyingFuture<Integer> callable = decs.poll(1000, TimeUnit.MILLISECONDS);
+         CompletableFuture<Integer> callable = decs.poll(1000, TimeUnit.MILLISECONDS);
 
          AssertJUnit.assertEquals((Integer) 1, callable.get());
       } finally {
@@ -214,7 +214,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
       try {
          decs.submit(new SimpleCallable(true,5000));
-         NotifyingFuture<Integer> callable = decs.poll(10, TimeUnit.MILLISECONDS);
+         CompletableFuture<Integer> callable = decs.poll(10, TimeUnit.MILLISECONDS);
 
          AssertJUnit.assertNull(callable);
       } finally {

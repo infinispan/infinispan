@@ -2,11 +2,11 @@ package org.infinispan.distribution;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.context.Flag;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.CompletableFuture;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
@@ -34,7 +34,7 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
    public void testAsyncPut(Method m) throws Exception {
       Cache<Object, String> ownerCache = getOwner(k(m));
       ownerCache.put(k(m), v(m));
-      NotifyingFuture<String> f = ownerCache.putAsync(k(m), v(m, 1));
+      CompletableFuture<String> f = ownerCache.putAsync(k(m), v(m, 1));
       assert f != null;
       assertEquals(v(m), f.get());
    }
@@ -47,7 +47,7 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
       AdvancedCache<Object, String> nonOwnerCache = getNonOwner(key).getAdvancedCache();
 
       // Make the cache getAsync call go remote to verify it gets it correctly
-      NotifyingFuture<String> f = nonOwnerCache.getAsync(key);
+      CompletableFuture<String> f = nonOwnerCache.getAsync(key);
       assert f != null;
       assert f.get().equals(value);
 
@@ -72,7 +72,7 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
       // Calling replaceAsync() on a cache that does not own the key will force
       // a remote get call to find out whether the key is associated with any
       // value.
-      NotifyingFuture<String> f = getOwner(k(m)).replaceAsync(k(m), v(m));
+      CompletableFuture<String> f = getOwner(k(m)).replaceAsync(k(m), v(m));
       assert f != null;
       // In this case k1 is not present in cache(1), so should return null
       assert f.get() == null;
@@ -89,7 +89,7 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
       Cache<Object, String> nonOwnerCache = getNonOwner(k(m));
       ownerCache.put(k(m), v(m));
       // Make the cache getAsync call go remote to verify it gets it correctly
-      NotifyingFuture<String> f = nonOwnerCache.getAsync(k(m));
+      CompletableFuture<String> f = nonOwnerCache.getAsync(k(m));
       assert f != null;
       assert f.get().equals(v(m));
       nonOwnerCache.put(k(m, 1), v(m, 1));
@@ -100,9 +100,9 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
       getOwner(k(m, 2)).put(k(m, 2), v(m, 2));
       getOwner(k(m, 3)).put(k(m, 3), v(m, 3));
 
-      NotifyingFuture<String> f1 = getNonOwner(k(m, 1)).getAsync(k(m, 1));
-      NotifyingFuture<String> f2 = getNonOwner(k(m, 2)).getAsync(k(m, 2));
-      NotifyingFuture<String> f3 = getNonOwner(k(m, 3)).getAsync(k(m, 3));
+      CompletableFuture<String> f1 = getNonOwner(k(m, 1)).getAsync(k(m, 1));
+      CompletableFuture<String> f2 = getNonOwner(k(m, 2)).getAsync(k(m, 2));
+      CompletableFuture<String> f3 = getNonOwner(k(m, 3)).getAsync(k(m, 3));
 
       assert f1 != null;
       assert f1.get().equals(v(m, 1));
@@ -130,7 +130,7 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
    public void testLocalAsyncGet(Method m) throws Exception {
       Cache<Object, String> ownerCache = getOwner(k(m));
       ownerCache.put(k(m), v(m));
-      NotifyingFuture<String> f = getNonOwner(k(m)).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).getAsync(k(m));
+      CompletableFuture<String> f = getNonOwner(k(m)).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).getAsync(k(m));
       assert f != null;
       assert f.get() == null;
    }

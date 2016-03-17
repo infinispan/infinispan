@@ -3,10 +3,10 @@ package org.infinispan.cache.impl;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -46,7 +46,7 @@ public abstract class CacheSupport<K, V> implements BasicCache<K, V> {
    }
 
    @Override
-   public final NotifyingFuture<V> putAsync(K key, V value) {
+   public final CompletableFuture<V> putAsync(K key, V value) {
       return putAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
@@ -56,47 +56,47 @@ public abstract class CacheSupport<K, V> implements BasicCache<K, V> {
    }
 
    @Override
-   public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       return putAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+   public final CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       return putAllAsync(data, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       return putAllAsync(data, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+   public final CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return putIfAbsentAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
       return putIfAbsentAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       return replaceAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+   public final CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
       return replaceAsync(key, oldValue, newValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<V> replaceAsync(K key, V value) {
+   public final CompletableFuture<V> replaceAsync(K key, V value) {
       return replaceAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
       return replaceAsync(key, oldValue, newValue, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 

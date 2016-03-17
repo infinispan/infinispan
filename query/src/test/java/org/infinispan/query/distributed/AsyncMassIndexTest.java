@@ -3,8 +3,6 @@ package org.infinispan.query.distributed;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -16,6 +14,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
@@ -71,14 +70,11 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
 
       SearchManager searchManager = Search.getSearchManager(cache);
 
-      NotifyingFuture<Void> future = searchManager.getMassIndexer().startAsync();
+      CompletableFuture<Void> future = searchManager.getMassIndexer().startAsync();
 
       final CountDownLatch endLatch = new CountDownLatch(1);
-      future.attachListener(new FutureListener<Void>() {
-         @Override
-         public void futureDone(Future<Void> future) {
-            endLatch.countDown();
-         }
+      future.whenComplete((v, t) -> {
+         endLatch.countDown();
       });
       endLatch.await();
 

@@ -9,14 +9,16 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.AbstractInProcessFuture;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 /**
  * Tests concurrent startup of replicated and distributed caches
@@ -144,27 +146,16 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
    }
 
    private Future<Cache<String, String>> startCache(final CacheContainer cm, final String cacheName, boolean nonBlockingStartup) {
-      final Callable<Cache<String, String>> cacheCreator = new Callable<Cache<String, String>>() {
-
-         @Override
-         public Cache<String, String> call() throws Exception {
-            Cache<String, String> c = cm.getCache(cacheName);
-            return c;
-         }
-      };
+      final Callable<Cache<String, String>> cacheCreator = () -> cm.getCache(cacheName);
       if (nonBlockingStartup) {
          return fork(cacheCreator);
       } else {
-         return new AbstractInProcessFuture<Cache<String, String>>() {
-            @Override
-            public Cache<String, String> get() throws InterruptedException, ExecutionException {
-               try {
-                  return cacheCreator.call();
-               } catch (Exception e) {
-                  throw new ExecutionException(e);
-               }
-            }
-         };
+         try {
+            Cache<String, String> cache = cacheCreator.call();
+            return CompletableFuture.completedFuture(cache);
+         } catch (Exception e) {
+            return CompletableFutures.completedExceptionFuture(e);
+         }
       }
    }
 

@@ -4,15 +4,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
-import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -30,18 +30,7 @@ import org.infinispan.remoting.transport.Address;
  */
 public class DistributedExecutionCompletionService<V> implements CompletionService<V> {
     protected final DistributedExecutorService executor;
-    protected final BlockingQueue<NotifyingFuture<V>> completionQueue;
-    protected final QueueingListener listener;
-
-    protected class QueueingListener implements FutureListener<V> {
-        @Override
-        public void futureDone(Future<V> future) {
-            // This is a safe cast since this listener should only used
-            // in this class
-            completionQueue.add((NotifyingFuture<V>)future);
-        }
-
-    }
+    protected final BlockingQueue<CompletableFuture<V>> completionQueue;
 
    /**
     * Creates an ExecutorCompletionService using the supplied executor for base task execution and a
@@ -74,18 +63,17 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
     *            if executor is <tt>null</tt>
     */
     public DistributedExecutionCompletionService(DistributedExecutorService executor,
-                                     BlockingQueue<NotifyingFuture<V>> completionQueue) {
+                                     BlockingQueue<CompletableFuture<V>> completionQueue) {
         if (executor == null)
             throw new NullPointerException();
         this.executor = executor;
 
         if (completionQueue == null) {
-            this.completionQueue = new LinkedBlockingQueue<NotifyingFuture<V>>();
+            this.completionQueue = new LinkedBlockingQueue<CompletableFuture<V>>();
         }
         else {
             this.completionQueue = completionQueue;
         }
-        this.listener = new QueueingListener();
     }
 
     /**
@@ -95,11 +83,10 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      * internally this class sets the listener to provide ability to add to the queue.
      */
     @Override
-    public Future<V> submit(Callable<V> task) {
-        if (task == null) throw new NullPointerException();
-        NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task);
-        f.attachListener(listener);
-        return f;
+    public CompletableFuture<V> submit(Callable<V> task) {
+       if (task == null) throw new NullPointerException();
+       CompletableFuture<V> f = (CompletableFuture<V>) executor.submit(task);
+       return f.whenComplete((v, t) -> completionQueue.add(f));
     }
 
     /**
@@ -109,11 +96,10 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      * internally this class sets the listener to provide ability to add to the queue.
      */
     @Override
-    public Future<V> submit(Runnable task, V result) {
-        if (task == null) throw new NullPointerException();
-        NotifyingFuture<V> f = (NotifyingFuture<V>) executor.submit(task, result);
-        f.attachListener(listener);
-        return f;
+    public CompletableFuture<V> submit(Runnable task, V result) {
+       if (task == null) throw new NullPointerException();
+       CompletableFuture<V> f = (CompletableFuture<V>) executor.submit(task, result);
+       return f.whenComplete((v, t) -> completionQueue.add(f));
     }
 
     /**
@@ -124,7 +110,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      * since the task has already been completed.
      */
     @Override
-    public NotifyingFuture<V> take() throws InterruptedException {
+    public CompletableFuture<V> take() throws InterruptedException {
         return completionQueue.take();
     }
 
@@ -136,7 +122,7 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
     * since the task has already been completed.
     */
     @Override
-    public NotifyingFuture<V> poll() {
+    public CompletableFuture<V> poll() {
         return completionQueue.poll();
     }
 
@@ -148,35 +134,33 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
      * since the task has already been completed.
      */
     @Override
-    public NotifyingFuture<V> poll(long timeout, TimeUnit unit) throws InterruptedException {
+    public CompletableFuture<V> poll(long timeout, TimeUnit unit) throws InterruptedException {
         return completionQueue.poll(timeout, unit);
     }
 
     public <K> Future<V> submit(Callable<V> task, K... input) {
-       NotifyingFuture<V> f = executor.submit(task, input);
-       f.attachListener(listener);
-       return f;
+       CompletableFuture<V> f = executor.submit(task, input);
+       return f.whenComplete((v, t) -> completionQueue.add(f));
     }
 
-    public List<Future<V>> submitEverywhere(Callable<V> task) {
-       List<Future<V>> fl = executor.submitEverywhere(task);
+    public List<CompletableFuture<V>> submitEverywhere(Callable<V> task) {
+       List<CompletableFuture<V>> fl = executor.submitEverywhere(task);
        for (Future<V> f : fl) {
-          ((NotifyingFuture<V>) f).attachListener(listener);
+          ((CompletableFuture<V>) f).whenComplete((v, t) -> completionQueue.add((CompletableFuture<V>) f));
        }
        return fl;
     }
 
-    public <K> List<Future<V>> submitEverywhere(Callable<V> task, K... input) {
-       List<Future<V>> fl = executor.submitEverywhere(task, input);
-       for (Future<V> f : fl) {
-          ((NotifyingFuture<V>) f).attachListener(listener);
+    public <K> List<CompletableFuture<V>> submitEverywhere(Callable<V> task, K... input) {
+       List<CompletableFuture<V>> fl = executor.submitEverywhere(task, input);
+       for (CompletableFuture<V> f : fl) {
+          f.whenComplete((v, t) -> completionQueue.add(f));
        }
        return fl;
     }
 
-   public <K> Future<V> submit(Address target, Callable<V> task) {
-      NotifyingFuture<V> f = executor.submit(target, task);
-      f.attachListener(listener);
-      return f;
+   public <K> CompletableFuture<V> submit(Address target, Callable<V> task) {
+      CompletableFuture<V> f = executor.submit(target, task);
+      return f.whenComplete((v, t) -> completionQueue.add(f));
    }
 }
