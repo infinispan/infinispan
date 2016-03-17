@@ -4,9 +4,11 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
@@ -178,6 +180,14 @@ public class ConfigurationProperties {
 
    public int getMaxRetries() {
       return props.getIntProperty(MAX_RETRIES, DEFAULT_MAX_RETRIES);
+   }
+
+   /**
+    * Is version previous to, and not including, 1.2?
+    */
+   public static boolean isVersionPre12(Configuration cfg) {
+      String version = cfg.protocolVersion();
+      return Objects.equals(version, "1.0") || Objects.equals(version, "1.1");
    }
 
 }

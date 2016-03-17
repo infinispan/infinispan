@@ -195,7 +195,10 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
 
    /**
     * Returns the {@link VersionedValue} associated to the supplied key param, or null if it doesn't exist.
+    *
+    * @deprecated Use {@link #getWithMetadata(Object)} instead
     */
+   @Deprecated
    VersionedValue<V> getVersioned(K key);
 
    /**
