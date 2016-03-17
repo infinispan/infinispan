@@ -38,6 +38,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
       super();
    }
 
+   @Test(enabled = false, description = "Will be fixed by ISPN-6228")
    public void testJoinDuringXSiteST() throws InterruptedException, ExecutionException, TimeoutException {
       doTopologyChangeDuringXSiteST(TopologyEvent.JOIN);
    }
