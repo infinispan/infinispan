@@ -32,8 +32,4 @@ public class StickyServerLoadBalancingStrategy implements FailoverRequestBalanci
       }
    }
 
-   @Override
-   public SocketAddress nextServer() {
-      return nextServer(null);
-   }
 }

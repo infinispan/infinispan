@@ -157,11 +157,7 @@ public class TcpTransportFactory implements TransportFactory {
       if (cfgBalancerInstance != null) {
          balancer = cfgBalancerInstance;
       } else {
-         RequestBalancingStrategy cfgBalancer = Util.getInstance(configuration.balancingStrategyClass());
-         balancer =
-                 (cfgBalancer instanceof FailoverRequestBalancingStrategy)
-                         ? (FailoverRequestBalancingStrategy) cfgBalancer
-                         : new FailoverToRequestBalancingStrategyDelegate(cfgBalancer);
+         balancer = Util.getInstance(configuration.balancingStrategyClass());
       }
       balancers.put(cacheName, balancer);
       balancer.setServers(topologyInfo.getServers());
@@ -605,7 +601,7 @@ public class TcpTransportFactory implements TransportFactory {
    /**
     * Note that the returned <code>RequestBalancingStrategy</code> may not be thread-safe.
     */
-   public RequestBalancingStrategy getBalancer(byte[] cacheName) {
+   public FailoverRequestBalancingStrategy getBalancer(byte[] cacheName) {
       synchronized (lock) {
          return balancers.get(cacheName);
       }
@@ -614,29 +610,6 @@ public class TcpTransportFactory implements TransportFactory {
    public GenericKeyedObjectPool<SocketAddress, TcpTransport> getConnectionPool() {
       synchronized (lock) {
          return connectionPool;
-      }
-   }
-
-   private static class FailoverToRequestBalancingStrategyDelegate implements FailoverRequestBalancingStrategy {
-      final RequestBalancingStrategy delegate;
-
-      private FailoverToRequestBalancingStrategyDelegate(RequestBalancingStrategy delegate) {
-         this.delegate = delegate;
-      }
-
-      @Override
-      public void setServers(Collection<SocketAddress> servers) {
-         delegate.setServers(servers);
-      }
-
-      @Override
-      public SocketAddress nextServer() {
-         return delegate.nextServer();
-      }
-
-      @Override
-      public SocketAddress nextServer(Set<SocketAddress> failedServers) {
-         return delegate.nextServer();
       }
    }
 

@@ -68,9 +68,4 @@ public class Node1OnlyBalancingStrategy implements FailoverRequestBalancingStrat
         }
     }
 
-   @Override
-   public SocketAddress nextServer() {
-      return nextServer(null);
-   }
-
 }
