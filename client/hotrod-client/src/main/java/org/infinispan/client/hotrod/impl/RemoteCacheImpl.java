@@ -190,9 +190,16 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public VersionedValue<V> getVersioned(K key) {
       assertRemoteCacheManagerIsStarted();
-      GetWithVersionOperation<V> op = operationsFactory.newGetWithVersionOperation(
-         compatKeyIfNeeded(key), obj2bytes(key, true));
-      return op.execute();
+      if (ConfigurationProperties.isVersionPre12(remoteCacheManager.getConfiguration())) {
+         GetWithVersionOperation<V> op = operationsFactory.newGetWithVersionOperation(
+               compatKeyIfNeeded(key), obj2bytes(key, true));
+         return op.execute();
+      } else {
+         MetadataValue<V> result = getWithMetadata(key);
+         return result != null
+               ? new VersionedValueImpl<>(result.getVersion(), result.getValue())
+               : null;
+      }
    }
 
    @Override
