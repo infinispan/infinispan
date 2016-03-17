@@ -5,12 +5,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.commons.logging.BasicLogFactory;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.jboss.logging.BasicLogger;
 
 /**
@@ -23,7 +22,7 @@ import org.jboss.logging.BasicLogger;
 @Immutable
 public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
 
-   private static final BasicLogger log = BasicLogFactory.getLog(PutIfAbsentOperation.class);
+   private static final BasicLogger log = LogFactory.getLog(PutIfAbsentOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
    public PutIfAbsentOperation(Codec codec, TransportFactory transportFactory,
