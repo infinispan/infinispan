@@ -535,11 +535,11 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       builder.storeAsBinary.enable
       val cm = TestCacheManagerFactory.createCacheManager(builder)
       val cfg = builder.build
-      cm.defineConfiguration(new MemcachedServerConfigurationBuilder().build.cache, cfg)
+      cm.defineConfiguration(new MemcachedServerConfigurationBuilder().build.defaultCacheName(), cfg)
       assertTrue(cfg.storeAsBinary.enabled)
       val testServer = startMemcachedTextServer(cm, server.getPort + 33)
       try {
-         val memcachedCache = cm.getCache(testServer.getConfiguration.cache)
+         val memcachedCache = cm.getCache(testServer.getConfiguration.defaultCacheName())
          assertFalse(memcachedCache.getCacheConfiguration.storeAsBinary.enabled)
       } finally {
          cm.stop
