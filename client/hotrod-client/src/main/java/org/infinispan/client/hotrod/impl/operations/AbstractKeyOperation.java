@@ -11,8 +11,7 @@ import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.commons.logging.BasicLogFactory;
-import org.infinispan.commons.util.Util;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.jboss.logging.BasicLogger;
 
 /**
@@ -24,7 +23,7 @@ import org.jboss.logging.BasicLogger;
 @Immutable
 public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T> {
 
-   private static final BasicLogger log = BasicLogFactory.getLog(AbstractKeyOperation.class);
+   private static final BasicLogger log = LogFactory.getLog(AbstractKeyOperation.class);
 
    protected final Object key;
    protected final byte[] keyBytes;

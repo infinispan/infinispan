@@ -2,9 +2,9 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash2;
-import org.infinispan.commons.logging.BasicLogFactory;
 import org.infinispan.commons.util.Util;
 import org.jboss.logging.BasicLogger;
 import org.testng.annotations.BeforeTest;
@@ -111,7 +111,7 @@ public class ConsistentHashComparisonTest {
     */
    static class ConsistentHashV1Old implements ConsistentHash {
 
-      private static final BasicLogger log = BasicLogFactory.getLog(ConsistentHashV1Old.class);
+      private static final BasicLogger log = LogFactory.getLog(ConsistentHashV1Old.class);
 
       private final SortedMap<Integer, SocketAddress> positions = new TreeMap<Integer, SocketAddress>();
 

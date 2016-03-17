@@ -9,9 +9,9 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash2;
-import org.infinispan.commons.logging.BasicLogFactory;
 import org.infinispan.commons.util.Util;
 import org.jboss.logging.BasicLogger;
 
@@ -23,7 +23,7 @@ import org.jboss.logging.BasicLogger;
  */
 public class ConsistentHashV1 implements ConsistentHash {
 
-   private static final BasicLogger log = BasicLogFactory.getLog(ConsistentHashV1.class);
+   private static final BasicLogger log = LogFactory.getLog(ConsistentHashV1.class);
 
    private final SortedMap<Integer, SocketAddress> positions = new TreeMap<Integer, SocketAddress>();
 
