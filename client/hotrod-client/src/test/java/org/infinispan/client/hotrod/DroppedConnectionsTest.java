@@ -71,7 +71,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       TcpTransport tcpConnection = (TcpTransport) keyedObjectPool.borrowObject(address);
       keyedObjectPool.returnObject(address, tcpConnection);//now we have a reference to the single connection in pool
 
-      tcpConnection.destroy();
+      tcpConnection.release();
 
       assertEquals("v", rc.get("k"));
       assertEquals(0, keyedObjectPool.getNumActive(address));

@@ -68,7 +68,7 @@ public class TransportObjectFactory
    @Override
    public void destroyObject(SocketAddress address, TcpTransport transport) throws Exception {
       if (trace) log.tracef("About to destroy tcp transport: %s", transport);
-      transport.destroy();
+      transport.release();
    }
 
    @Override

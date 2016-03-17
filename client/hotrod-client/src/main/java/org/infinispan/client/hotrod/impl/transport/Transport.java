@@ -32,7 +32,6 @@ public interface Transport {
 
    short readByte();
 
-   @Deprecated
    void release();
 
    /**
