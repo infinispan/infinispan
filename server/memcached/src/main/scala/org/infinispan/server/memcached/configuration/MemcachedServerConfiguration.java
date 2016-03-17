@@ -19,14 +19,6 @@ public class MemcachedServerConfiguration extends ProtocolServerConfiguration {
       super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads, ignoredCaches);
    }
 
-   /**
-    * Use {@link #defaultCacheName()} instead
-    */
-   @Deprecated
-   public String cache() {
-      return defaultCacheName();
-   }
-
    @Override
    public String toString() {
       return "MemcachedServerConfiguration [" + super.toString() + "]";
