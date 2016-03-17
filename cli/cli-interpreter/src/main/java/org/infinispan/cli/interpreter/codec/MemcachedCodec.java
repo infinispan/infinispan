@@ -4,7 +4,6 @@ import java.nio.charset.Charset;
 
 import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.logging.Log;
-import org.infinispan.server.memcached.MemcachedValue;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -33,12 +32,10 @@ public class MemcachedCodec extends AbstractCodec {
    @Override
    public Object encodeValue(Object value) throws CodecException {
       if (value != null) {
-         if (value instanceof MemcachedValue) {
-            return value;
+         if (value instanceof String) {
+            return ((String)value).getBytes(UTF8);
          } else if (value instanceof byte[]) {
-            return new MemcachedValue((byte[])value, 1, 0);
-         } else if (value instanceof String) {
-            return new MemcachedValue(((String)value).getBytes(UTF8), 1, 0);
+            return value;
          } else {
             throw log.valueEncodingFailed(value.getClass().getName(), this.getName());
          }
@@ -55,8 +52,7 @@ public class MemcachedCodec extends AbstractCodec {
    @Override
    public Object decodeValue(Object value) {
       if (value != null) {
-         MemcachedValue mv = (MemcachedValue)value;
-         return new String(mv.data(), UTF8);
+         return new String((byte[]) value, UTF8);
       } else {
          return null;
       }
