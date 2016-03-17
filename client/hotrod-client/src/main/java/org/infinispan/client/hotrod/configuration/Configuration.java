@@ -8,7 +8,6 @@ import java.util.List;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.marshall.Marshaller;
 
@@ -22,7 +21,7 @@ import org.infinispan.commons.marshall.Marshaller;
 public class Configuration {
 
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
-   private final Class<? extends RequestBalancingStrategy> balancingStrategyClass;
+   private final Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass;
    private final FailoverRequestBalancingStrategy balancingStrategy;
    private final WeakReference<ClassLoader> classLoader;
    private final ConnectionPoolConfiguration connectionPool;
@@ -44,7 +43,7 @@ public class Configuration {
    private final NearCacheConfiguration nearCache;
    private final List<ClusterConfiguration> clusters;
 
-   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
+   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
          String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
@@ -73,7 +72,7 @@ public class Configuration {
       this.clusters = clusters;
    }
 
-   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
+   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
          String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
@@ -106,7 +105,7 @@ public class Configuration {
       return asyncExecutorFactory;
    }
 
-   public Class<? extends RequestBalancingStrategy> balancingStrategyClass() {
+   public Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass() {
       return balancingStrategyClass;
    }
 

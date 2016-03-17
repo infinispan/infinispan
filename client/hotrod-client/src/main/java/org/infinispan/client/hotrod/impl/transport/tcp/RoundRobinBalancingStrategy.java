@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * Round-robin implementation for {@link org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy}.
+ * Round-robin implementation for {@link org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy}.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -58,11 +58,6 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
             return server;
          }
       }
-   }
-
-   @Override
-   public SocketAddress nextServer() {
-      return nextServer(null);
    }
 
    /**

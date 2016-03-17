@@ -11,7 +11,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.http.annotation.ThreadSafe;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -68,10 +67,5 @@ public class Node0OnlyBalancingStrategy implements FailoverRequestBalancingStrat
             readLock.unlock();
         }
     }
-
-   @Override
-   public SocketAddress nextServer() {
-      return nextServer(null);
-   }
 
 }

@@ -23,11 +23,6 @@ public class PreferredServerBalancingStrategy implements FailoverRequestBalancin
    }
 
    @Override
-   public SocketAddress nextServer() {
-      return roundRobinBalancingStrategy.nextServer();
-   }
-
-   @Override
    public SocketAddress nextServer(Set<SocketAddress> failedServers) {
       if (failedServers != null && !failedServers.isEmpty() && failedServers.contains(preferredServer)) {
          return roundRobinBalancingStrategy.nextServer(failedServers);
