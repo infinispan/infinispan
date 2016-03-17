@@ -202,12 +202,7 @@ public class TcpTransport extends AbstractTransport {
 
    @Override
    public void release() {
-      try {
-         socket.close();
-      } catch (IOException e) {
-         invalid = true;
-         log.errorClosingSocket(this, e);
-      }
+      destroy();
    }
 
    @Override
