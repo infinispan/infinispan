@@ -19,6 +19,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -94,6 +95,7 @@ public class InfinispanQueryIT {
    }
 
    @Test @InSequence(value=4) @OperateOnDeployment("dep.active-1")
+   @Ignore(value = "Will be fixed by ISPN-5929")
    public void testQueryOnFirstNode() {
       List matches = service.findFullText("action");
       Assert.assertEquals(3, matches.size());
@@ -102,6 +104,7 @@ public class InfinispanQueryIT {
    }
 
    @Test @InSequence(value=5) @OperateOnDeployment("dep.active-2")
+   @Ignore(value = "Will be fixed by ISPN-5929")
    public void testQueryOnSecondNode() {
       List matches = service.findFullText("action");
       Assert.assertEquals(3, matches.size());
