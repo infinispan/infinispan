@@ -10,7 +10,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.commons.logging.BasicLogFactory;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.jboss.logging.BasicLogger;
 
 /**
@@ -22,7 +22,7 @@ import org.jboss.logging.BasicLogger;
 @Immutable
 public class PingOperation extends HotRodOperation {
 
-   private static final BasicLogger log = BasicLogFactory.getLog(PingOperation.class);
+   private static final BasicLogger log = LogFactory.getLog(PingOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private final Transport transport;
