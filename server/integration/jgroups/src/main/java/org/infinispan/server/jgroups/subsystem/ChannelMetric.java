@@ -43,7 +43,8 @@ public enum ChannelMetric implements Metric<JChannel> {
     ADDRESS_AS_UUID(MetricKeys.ADDRESS_AS_UUID, ModelType.STRING) {
         @Override
         public ModelNode execute(JChannel channel) {
-            return new ModelNode(channel.getAddressAsUUID());
+            String addressAsUUID = channel.getAddressAsUUID();
+            return new ModelNode(addressAsUUID == null ? "n/a" : addressAsUUID);
         }
     },
     DISCARD_OWN_MESSAGES(MetricKeys.DISCARD_OWN_MESSAGES, ModelType.BOOLEAN) {
