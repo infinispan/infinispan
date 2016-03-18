@@ -86,11 +86,6 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-spring</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-spring4-embedded</artifactId>
       </dependency>
 
