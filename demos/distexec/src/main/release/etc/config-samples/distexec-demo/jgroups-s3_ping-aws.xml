@@ -11,7 +11,7 @@
                   discard_delivered_msgs="true"/>
    <UNICAST3 conn_expiry_timeout="0"/>
    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000" max_bytes="400000"/>
-   <pbcast.GMS print_local_addr="true" join_timeout="60000" view_bundling="true"/>
+   <pbcast.GMS print_local_addr="true" join_timeout="${jgroups.join_timeout:5000}" view_bundling="true"/>
    <FC max_credits="2m" min_threshold="0.40"/>
    <FRAG2 frag_size="60000"/>
    <pbcast.STREAMING_STATE_TRANSFER/>

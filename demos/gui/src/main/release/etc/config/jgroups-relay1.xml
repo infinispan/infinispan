@@ -62,7 +62,7 @@
     <UNICAST3 conn_expiry_timeout="0"/>
     <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
                    max_bytes="1000000"/>
-    <pbcast.GMS print_local_addr="true" join_timeout="5000"
+    <pbcast.GMS print_local_addr="true" join_timeout="${jgroups.join_timeout:5000}"
                 max_bundling_time="200"
                 view_bundling="true"/>
     <FC max_credits="2M"
