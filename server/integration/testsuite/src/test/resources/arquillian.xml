@@ -11,7 +11,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/standalone-hotrod-rolling-upgrade.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -24,8 +26,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">standalone.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -38,7 +41,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/standalone-rest-rolling-upgrade.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -64,7 +70,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/clustered-jdbc.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -74,7 +83,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">clustered.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -86,7 +98,8 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">examples/clustered-storage-only.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
                 </property>
                 <property name="managementPort">10090</property>
@@ -101,7 +114,10 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="managementPort">9990</property>
                 <property name="serverConfig">examples/clustered-topology.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
@@ -120,6 +136,7 @@
                     -Djboss.jgroups.topology.rack=r1
                     -Djboss.jgroups.topology.machine=m2
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11311 11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -139,6 +156,7 @@
                     -Djboss.jgroups.topology.rack=r2
                     -Djboss.jgroups.topology.machine=m2
                     -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11411 11422 8280</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -150,7 +168,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-1.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -162,8 +183,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-2.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -176,7 +198,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/clustered-xsite.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -188,8 +213,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">examples/clustered-xsite2.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -202,8 +228,9 @@
                 <property name="jbossHome">${server3.dist}</property>
                 <property name="managementAddress">${node2.ip}</property>
                 <property name="serverConfig">examples/clustered-xsite3.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2 -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
-                    -Djboss.socket.binding.port-offset=200
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2
+                    -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
+                    -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
                 <property name="waitForPorts">11411 11422 8280</property>
@@ -216,7 +243,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/standalone-fcs-local.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args}
+                    -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip}
+                    -Djboss.bind.address=${node0.ip} -Djgroups.join_timeout=2000
+                </property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
@@ -227,7 +257,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/standalone-hotrod-multiple.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="waitForPorts">11222 11223 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
@@ -239,7 +272,10 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="managementPort">9990</property>
                 <property name="serverConfig">examples/standalone-rcs-local.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
@@ -251,8 +287,9 @@
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="managementPort">10090</property>
                 <property name="serverConfig">standalone.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11311 11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -264,7 +301,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/standalone-hotrod-ssl.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
@@ -275,7 +315,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/standalone-leveldb-cs-local.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
@@ -286,7 +329,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">examples/standalone-compatibility-mode.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="waitForPorts">11222 8080 11211</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
@@ -297,7 +343,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-jmx.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -309,8 +358,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-jmx.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -323,8 +373,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/standalone-leveldb-local.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -337,7 +388,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-asymmetric-1.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -349,8 +403,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-asymmetric-2.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -363,8 +418,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/rest-sec-basic-wr.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -376,8 +432,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/rest-sec-cert-wr.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -390,8 +447,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/rest-sec-digest-wr.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -404,8 +462,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/standalone-rcs-local.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -418,9 +477,10 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/standalone-rcs-remote.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -434,7 +494,9 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="managementPort">9990</property>
                 <property name="serverConfig">testsuite/clustered-with-encrypt.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -447,8 +509,9 @@
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="managementPort">10090</property>
                 <property name="serverConfig">testsuite/clustered-with-encrypt.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11311 11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -460,7 +523,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-suppress-state-transfer.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -472,8 +538,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-suppress-state-transfer.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -486,8 +553,9 @@
                 <property name="jbossHome">${server3.dist}</property>
                 <property name="managementAddress">${node2.ip}</property>
                 <property name="serverConfig">testsuite/clustered-suppress-state-transfer.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2 -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
-                    -Djboss.socket.binding.port-offset=200
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2
+                    -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
+                    -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
                 <property name="waitForPorts">11411 11422 8280</property>
@@ -500,8 +568,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-transport-stack.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Djboss.default.jgroups.stack=tcp</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djboss.default.jgroups.stack=tcp -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -513,8 +583,10 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-transport-stack.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100 -Djboss.default.jgroups.stack=udp
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -527,7 +599,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/standalone-filecs.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
@@ -538,7 +613,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/standalone-eviction.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -550,7 +628,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/standalone-customtask.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -563,7 +644,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/standalone-customcs.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -575,7 +659,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-expiration.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -587,8 +674,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-expiration.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -602,7 +690,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/jdbc.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -615,7 +706,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/jdbc-string-invalidation.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -627,8 +721,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/jdbc-string-invalidation.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -641,7 +736,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-with-l1.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -653,8 +751,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-with-l1.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -667,7 +766,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/standalone-cachecontainer.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 11223 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -679,7 +781,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-clusteredcache.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -691,8 +796,10 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-clusteredcache.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -704,8 +811,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/hotrod-auth-clustered.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -717,8 +825,10 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/hotrod-auth-clustered.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -731,8 +841,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/hotrod-auth-krb.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -745,8 +856,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/hotrod-auth-qop.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -759,8 +871,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/hotrod-auth-ldap.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -773,8 +886,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/hotrod-auth-ldap-ssl.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -787,8 +901,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/hotrod-authz-ldap.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -815,8 +930,10 @@
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="managementPort">10090</property>
                 <property name="serverConfig">testsuite/clustered-with-sasl-md5-1.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip} -Dsasl.username=test -Dsasl.password=heslo -Dsasl.realm=testRealm
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Dsasl.username=test -Dsasl.password=heslo -Dsasl.realm=testRealm
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11311 11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -829,7 +946,9 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="managementPort">9990</property>
                 <property name="serverConfig">testsuite/clustered-with-sasl-krb-0.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000 -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11211 11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -842,8 +961,9 @@
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="managementPort">10090</property>
                 <property name="serverConfig">testsuite/clustered-with-sasl-krb-1.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="waitForPorts">11311 11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -868,8 +988,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/hotrod-auth.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -885,7 +1006,10 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">testsuite/clustered-indexing.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -897,8 +1021,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">testsuite/clustered-indexing.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -911,7 +1036,11 @@
                 <property name="jbossHome">${server3.dist}</property>
                 <property name="managementAddress">${node2.ip}</property>
                 <property name="serverConfig">testsuite/clustered-indexing-secured.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2 -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip} -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djboss.socket.binding.port-offset=200</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2
+                    -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                    -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
+                </property>
                 <property name="managementPort">10190</property>
                 <property name="waitForPorts">11422 8280</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
@@ -926,8 +1055,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">${suite.client.local.config}</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -940,8 +1070,9 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">${suite.client.local.config}</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -956,8 +1087,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">${suite.client.dist.config}</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -970,9 +1102,10 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">${suite.client.dist.config}</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -987,8 +1120,9 @@
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="serverConfig">${suite.client.repl.config}</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -1001,9 +1135,10 @@
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="serverConfig">${suite.client.repl.config}</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -1020,7 +1155,9 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="allowConnectingToRunningServer">true</property>
                 <property name="serverConfig">examples/standalone-hotrod-rolling-upgrade.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -1033,8 +1170,9 @@
                 <property name="jbossHome">${server.old.dist}</property>
                 <property name="allowConnectingToRunningServer">true</property>
                 <property name="serverConfig">standalone.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
-                    -Djboss.socket.binding.port-offset=100
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -1049,7 +1187,7 @@
                 <property name="allowConnectingToRunningServer">true</property>
                 <property name="serverConfig">examples/standalone-rest-rolling-upgrade.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -1061,7 +1199,7 @@
                 <property name="jbossHome">${server.old.dist}</property>
                 <property name="serverConfig">standalone.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
-                -Djboss.socket.binding.port-offset=100
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -1093,8 +1231,10 @@
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="allowConnectingToRunningServer">true</property>
                 <property name="serverConfig">examples/clustered-hotrod-rolling-upgrade.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100 -Dremote.destination.port=11522
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -1106,8 +1246,9 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server2.old.dist}</property>
                 <property name="serverConfig">clustered.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2 -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
-                    -Djboss.socket.binding.port-offset=200
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2
+                    -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
+                    -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
                 <property name="waitForPorts">11411 11422 8280</property>
@@ -1119,8 +1260,9 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server3.old.dist}</property>
                 <property name="serverConfig">clustered.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node3 -Djboss.bind.address.management=${node3.ip} -Djboss.bind.address=${node3.ip}
-                    -Djboss.socket.binding.port-offset=300
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node3
+                    -Djboss.bind.address.management=${node3.ip} -Djboss.bind.address=${node3.ip}
+                    -Djboss.socket.binding.port-offset=300 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10290</property>
                 <property name="waitForPorts">11511 11522 8380</property>
@@ -1136,8 +1278,9 @@
                 <property name="managementAddress">${node0.ip}</property>
                 <property name="allowConnectingToRunningServer">true</property>
                 <property name="serverConfig">examples/clustered-rest-rolling-upgrade.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dremote.destination.port=8280
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dremote.destination.port=8280 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
@@ -1151,8 +1294,10 @@
                 <property name="managementAddress">${node1.ip}</property>
                 <property name="allowConnectingToRunningServer">true</property>
                 <property name="serverConfig">examples/clustered-rest-rolling-upgrade.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100 -Dremote.destination.port=8380
+                    -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="waitForPorts">11311 11322 8180</property>
@@ -1164,8 +1309,9 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server2.old.dist}</property>
                 <property name="serverConfig">clustered.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2 -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
-                    -Djboss.socket.binding.port-offset=200
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2
+                    -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
+                    -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
                 <property name="waitForPorts">11411 11422 8280</property>
@@ -1177,8 +1323,9 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server3.old.dist}</property>
                 <property name="serverConfig">clustered.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node3 -Djboss.bind.address.management=${node3.ip} -Djboss.bind.address=${node3.ip}
-                    -Djboss.socket.binding.port-offset=300
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node3
+                    -Djboss.bind.address.management=${node3.ip} -Djboss.bind.address=${node3.ip}
+                    -Djboss.socket.binding.port-offset=300 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10290</property>
                 <property name="waitForPorts">11511 11522 8380</property>
