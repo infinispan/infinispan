@@ -4,6 +4,7 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -56,18 +57,20 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
 
       assertEquals(1, listener.getInvocationCount());
 
-      CacheEntryExpiredEvent event = listener.events.iterator().next();
+      CacheEntryExpiredEvent event = listener.getEvents().iterator().next();
       assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
       assertEquals(cache, event.getCache());
       assertFalse(event.isPre());
       assertNotNull(event.getKey());
       // The dummy store produces value and metadata so lets make sure
-      assertEquals("v", event.getValue());
-      assertNotNull(event.getMetadata());
+      if (TestingUtil.getCacheLoader(cache) instanceof AdvancedCacheExpirationWriter) {
+         assertEquals("v", event.getValue());
+         assertNotNull(event.getMetadata());
+      }
    }
 
    private void assertExpiredEvents(int count) {
-      assertEquals(count, listener.getInvocationCount());
+      eventuallyEquals(count, () -> listener.getInvocationCount());
       listener.getEvents().forEach(event -> {
          assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
          assertEquals(cache, event.getCache());
