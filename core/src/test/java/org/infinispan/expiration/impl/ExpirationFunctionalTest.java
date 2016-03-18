@@ -22,15 +22,19 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       configure(builder);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager cm = createCacheManager(builder);
       TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
       cache = cm.getCache();
       afterCacheCreated(cm);
       return cm;
    }
 
-   protected void configure(ConfigurationBuilder config) {
+   protected EmbeddedCacheManager createCacheManager(ConfigurationBuilder builder) {
+      return TestCacheManagerFactory.createCacheManager(builder);
+   }
 
+   protected void configure(ConfigurationBuilder config) {
+      config.expiration().disableReaper();
    }
 
    protected void afterCacheCreated(EmbeddedCacheManager cm) {

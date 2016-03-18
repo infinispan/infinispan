@@ -659,48 +659,42 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    
    @Override
    public void purge(Executor threadPool, final PurgeListener task) {
-
-      threadPool.execute(new Runnable() {
-         @Override
-         public void run() {
-            long now = timeService.wallClockTime();
-            List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<KeyValuePair<Object, FileEntry>>();
-            synchronized (entries) {
-               for (Iterator<Map.Entry<K, FileEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
-                  Map.Entry<K, FileEntry> next = it.next();
-                  FileEntry fe = next.getValue();
-                  if (fe.isExpired(now)) {
-                     it.remove();
-                     entriesToPurge.add(new KeyValuePair<Object, FileEntry>(next.getKey(), fe));
-                  }
-               }
-            }
-
-            resizeLock.readLock().lock();
-            try {
-               for (Iterator<KeyValuePair<Object, FileEntry>> it = entriesToPurge.iterator(); it.hasNext(); ) {
-                  KeyValuePair<Object, FileEntry> next = it.next();
-                  FileEntry fe = next.getValue();
-                  if (fe.isExpired(now)) {
-                     it.remove();
-                     try {
-                        free(fe);
-                     } catch (Exception e) {
-                        throw new PersistenceException(e);
-                     }
-                     if (task != null) task.entryPurged(next.getKey());
-                  }
-               }
-               
-               // Disk space optimizations
-               synchronized (freeList) {
-                 processFreeEntries();
-               }
-            } finally {
-               resizeLock.readLock().unlock();
+      long now = timeService.wallClockTime();
+      List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<KeyValuePair<Object, FileEntry>>();
+      synchronized (entries) {
+         for (Iterator<Map.Entry<K, FileEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<K, FileEntry> next = it.next();
+            FileEntry fe = next.getValue();
+            if (fe.isExpired(now)) {
+               it.remove();
+               entriesToPurge.add(new KeyValuePair<Object, FileEntry>(next.getKey(), fe));
             }
          }
-      });
+      }
+
+      resizeLock.readLock().lock();
+      try {
+         for (Iterator<KeyValuePair<Object, FileEntry>> it = entriesToPurge.iterator(); it.hasNext(); ) {
+            KeyValuePair<Object, FileEntry> next = it.next();
+            FileEntry fe = next.getValue();
+            if (fe.isExpired(now)) {
+               it.remove();
+               try {
+                  free(fe);
+               } catch (Exception e) {
+                  throw new PersistenceException(e);
+               }
+               if (task != null) task.entryPurged(next.getKey());
+            }
+         }
+
+         // Disk space optimizations
+         synchronized (freeList) {
+           processFreeEntries();
+         }
+      } finally {
+         resizeLock.readLock().unlock();
+      }
    }
 
    @Override
