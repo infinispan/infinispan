@@ -69,7 +69,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.canExpire()) {
                   if (ExpiryHelper.isExpiredMortal(e.getLifespan(), e.getCreated(), currentTimeMillis)) {
-                     handleLifespanExpireEntry(e);
+                     handleLifespanExpireEntry(e, true);
                   } else if (ExpiryHelper.isExpiredTransient(e.getMaxIdle(), e.getLastUsed(), currentTimeMillis)) {
                      super.handleInMemoryExpiration(e, currentTimeMillis);
                   }
@@ -89,7 +89,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
    }
 
-   void handleLifespanExpireEntry(InternalCacheEntry<K, V> entry) {
+   void handleLifespanExpireEntry(InternalCacheEntry<K, V> entry, boolean sync) {
       K key = entry.getKey();
       // The most used case will be a miss so no extra read before
       if (expiring.putIfAbsent(key, key) == null) {
@@ -97,13 +97,18 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
          if (trace) {
             log.tracef("Submitting expiration removal for key %s which had lifespan of %s", key, lifespan);
          }
-         asyncExecutor.submit(() -> {
+         Runnable runnable = () -> {
             try {
                removeExpired(key, entry.getValue(), lifespan);
             } finally {
                expiring.remove(key);
             }
-         });
+         };
+         if (sync) {
+            runnable.run();
+         } else {
+            asyncExecutor.submit(runnable);
+         }
       }
    }
 
@@ -117,7 +122,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       // so we can see both the new value and the metadata
       synchronized (entry) {
          if (ExpiryHelper.isExpiredMortal(entry.getLifespan(), entry.getCreated(), currentTime)) {
-            handleLifespanExpireEntry(entry);
+            handleLifespanExpireEntry(entry, false);
          } else {
             super.handleInMemoryExpiration(entry, currentTime);
          }
@@ -126,25 +131,27 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
    @Override
    public void handleInStoreExpiration(K key) {
-      expiring.put(key, key);
-      // Unfortunately stores don't pull the entry so we can't tell exactly why it expired and thus we have to remove
-      // the entire value.  Unfortunately this could cause a concurrent write to be undone
-      try {
-         removeExpired(key, null, null);
-      } finally {
-         expiring.remove(key);
+      if (expiring.putIfAbsent(key, key) == null) {
+         // Unfortunately stores don't pull the entry so we can't tell exactly why it expired and thus we have to remove
+         // the entire value.  Unfortunately this could cause a concurrent write to be undone
+         try {
+            removeExpired(key, null, null);
+         } finally {
+            expiring.remove(key);
+         }
       }
    }
 
    @Override
    public void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry) {
       K key = marshalledEntry.getKey();
-      expiring.put(key, key);
-      try {
-         InternalMetadata metadata = marshalledEntry.getMetadata();
-         removeExpired(key, marshalledEntry.getValue(), metadata.lifespan() == -1 ? null : metadata.lifespan());
-      } finally {
-         expiring.remove(key);
+      if (expiring.putIfAbsent(key, key) == null) {
+         try {
+            InternalMetadata metadata = marshalledEntry.getMetadata();
+            removeExpired(key, marshalledEntry.getValue(), metadata.lifespan() == -1 ? null : metadata.lifespan());
+         } finally {
+            expiring.remove(key);
+         }
       }
    }
 }
