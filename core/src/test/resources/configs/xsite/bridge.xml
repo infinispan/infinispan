@@ -62,7 +62,7 @@
     <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
                    max_bytes="8m"/>
     <pbcast.GMS print_local_addr="false" join_timeout="3000"
-                view_bundling="true"/>
+                view_bundling="false"/>
 
     <MFC max_credits="2M"
          min_threshold="0.40"/>
