@@ -366,6 +366,12 @@
          </dependency>
 
          <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-tasks</artifactId>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
             <groupId>org.sonatype.oss</groupId>
             <artifactId>oss-parent</artifactId>
             <version>${version.org.sonatype.oss.parent}</version>

@@ -134,11 +134,6 @@
             <artifactId>metainf-services</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-tasks</artifactId>
-            <version>${version.org.infinispan}</version>
-        </dependency>
     </dependencies>
 
     <build>
