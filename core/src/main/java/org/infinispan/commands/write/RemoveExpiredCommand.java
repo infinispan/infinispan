@@ -125,8 +125,8 @@ public class RemoveExpiredCommand extends RemoveCommand {
    public String toString() {
       return "RemoveExpiredCommand{" +
               "key=" + key +
-              "value=" + value +
-              "lifespan=" + lifespan +
+              ", value=" + value +
+              ", lifespan=" + lifespan +
               '}';
    }
 

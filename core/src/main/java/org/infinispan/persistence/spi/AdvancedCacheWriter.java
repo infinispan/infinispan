@@ -23,7 +23,10 @@ public interface AdvancedCacheWriter<K, V> extends CacheWriter<K, V> {
    /**
     * Using the thread in the pool, removed all the expired data from the persistence storage. For each removed entry,
     * the supplied listener is invoked.
-    *
+    * <p>
+    * When this method returns all entries will be purged and no tasks will be running due to this loader in the
+    * provided executor.  If however an exception is thrown there could be tasks still pending or running in the
+    * executor.
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    void purge(Executor threadPool, PurgeListener<? super K> listener);
