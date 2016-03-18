@@ -212,6 +212,7 @@
                   <org.jsr107.tck.management.agentId>${tck.mbean.server}</org.jsr107.tck.management.agentId>
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                  <jgroups.join_timeout>2000</jgroups.join_timeout>
                </systemPropertyVariables>
                <properties>
                   <property>
@@ -237,6 +238,7 @@
                         <ExcludeList>ExcludeList_embedded</ExcludeList>
                         <javax.cache.Cache>${embedded.CacheImpl}</javax.cache.Cache>
                         <javax.cache.Cache.Entry>${embedded.CacheEntryImpl}</javax.cache.Cache.Entry>
+                        <jgroups.join_timeout>2000</jgroups.join_timeout>
                      </systemPropertyVariables>
                   </configuration>
                </execution>
@@ -267,6 +269,7 @@
                         <ExcludeList>ExcludeList_remote</ExcludeList>
                         <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
                         <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
+                        <jgroups.join_timeout>2000</jgroups.join_timeout>
                      </systemPropertyVariables>
                   </configuration>
                </execution>
@@ -322,6 +325,7 @@
                      </excludes>
                      <systemPropertyVariables>
                         <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
+                        <jgroups.join_timeout>2000</jgroups.join_timeout>
                      </systemPropertyVariables>
                   </configuration>
                </plugin>

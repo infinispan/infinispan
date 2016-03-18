@@ -61,7 +61,7 @@
                   max_bytes="1M"
    />
    <pbcast.GMS print_local_addr="false"
-               join_timeout="15000"
+               join_timeout="${jgroups.join_timeout:5000}"
    />
    <MFC max_credits="2m" 
         min_threshold="0.40"
