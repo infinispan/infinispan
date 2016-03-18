@@ -10,15 +10,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 import static org.infinispan.server.endpoint.subsystem.ModelKeys.CACHE_NAMES;
-import static org.infinispan.server.endpoint.subsystem.ModelKeys.IGNORED_CACHES;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author gustavonalle
@@ -42,7 +38,7 @@ public class EndpointSubsystemOperationsTestCase extends AbstractSubsystemTest {
               .setSubsystemXml(getSubsystemXml()).build();
    }
 
-   private void executeOp(String operationName, String... parameters) {
+   private ModelNode executeOp(String operationName, String... parameters) {
       ModelNode op = new ModelNode();
       op.get(OP).set(operationName);
       op.get(ADDRESS).set(PathAddress.pathAddress(Constants.SUBSYSTEM_PATH).toModelNode());
@@ -50,48 +46,40 @@ public class EndpointSubsystemOperationsTestCase extends AbstractSubsystemTest {
       stream(parameters).forEach(cacheNames::add);
       ModelNode result = services.executeOperation(op);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
+      return result.get(RESULT);
    }
 
    @Test
    public void testIgnoreCaches() throws Exception {
+      assertCachesNotIgnored("cache1", "cache2", "cache3");
+      assertCachesNotIgnored("whatever");
+
       executeOp("ignore-cache-all-endpoints", "cacheA", "cacheB", "cacheC");
       assertCachesIgnored("cacheA", "cacheB", "cacheC");
 
       executeOp("unignore-cache-all-endpoints", "cacheA");
+      assertCachesNotIgnored("cacheA");
       assertCachesIgnored("cacheB", "cacheC");
 
-      executeOp("unignore-cache-all-endpoints", "cacheB", "cacheC");
+      executeOp("unignore-cache-all-endpoints", "cacheB");
+      assertCachesNotIgnored("cacheA", "cacheB");
+      assertCachesNotIgnored("cacheC");
+
+      executeOp("unignore-cache-all-endpoints", "cacheA", "cacheB", "cacheC");
       assertCachesNotIgnored("cacheA", "cacheB", "cacheC");
    }
 
    private void assertCachesIgnored(String... caches) {
-      assertCachesOnEndpoints(services.readWholeModel(), true, caches);
+      assertCacheStatus(true, caches);
    }
 
    private void assertCachesNotIgnored(String... caches) {
-      assertCachesOnEndpoints(services.readWholeModel(), false, caches);
+      assertCacheStatus(false, caches);
    }
 
-   private void assertCachesOnEndpoints(ModelNode allModel, boolean assertDisabled, String... caches) {
-      ModelNode endPointRoot = allModel.get(SUBSYSTEM, Constants.SUBSYSTEM_NAME);
-
-      Set<ModelNode> allConnectors = endPointRoot.asList().stream()
-              .flatMap(mn -> mn.get(0).asList().stream())
-              .collect(Collectors.toSet());
-
-      allConnectors.forEach(connector -> {
-         ModelNode ignoredCaches = connector.get(0).get(IGNORED_CACHES);
-         if (!ignoredCaches.isDefined()) {
-            assertTrue(!assertDisabled);
-         } else {
-            Set<String> ignoredCacheNames = ignoredCaches.asList().stream().map(ModelNode::asString).collect(Collectors.toSet());
-            if (assertDisabled) {
-               assertTrue(stream(caches).allMatch(ignoredCacheNames::contains));
-            } else {
-               assertTrue(stream(caches).noneMatch(ignoredCacheNames::contains));
-            }
-         }
-      });
+   private void assertCacheStatus(boolean ignored, String... caches) {
+      ModelNode summary = executeOp("is-ignored-all-endpoints", caches);
+      stream(caches).allMatch(cache -> summary.get(cache).asBoolean() == ignored);
    }
 
 }

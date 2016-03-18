@@ -29,6 +29,10 @@ public class ModelNodeUtils {
       return result;
    }
 
+   static boolean contains(ModelNode list, String value) {
+      return list.isDefined() && list.asList().stream().anyMatch(modelNode -> modelNode.asString().contains(value));
+   }
+
    static ModelNode removeFromList(ModelNode original, ModelNode elements) {
       if (elements == null || !elements.isDefined() || !original.isDefined())
          return original;

@@ -79,8 +79,15 @@ public class EndpointSubsystemRootResource extends SimpleResourceDefinition {
               .setRuntimeOnly()
               .build();
 
+      OperationDefinition ignoreStatus = new SimpleOperationDefinitionBuilder("is-ignored-all-endpoints",
+              getResourceDescriptionResolver())
+              .setParameters(CACHE_NAMES)
+              .setRuntimeOnly()
+              .build();
+
       resourceRegistration.registerOperationHandler(ignoreCaches, new CacheDisablingCascadeHandler(ModelNodeUtils::addToList));
       resourceRegistration.registerOperationHandler(unignoreCaches, new CacheDisablingCascadeHandler(ModelNodeUtils::removeFromList));
+      resourceRegistration.registerOperationHandler(ignoreStatus, CacheIgnoreStatusHandler.INSTANCE);
    }
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
