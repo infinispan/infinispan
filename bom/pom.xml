@@ -233,11 +233,6 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-spring</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-spring4-remote</artifactId>
             <version>${project.version}</version>
          </dependency>

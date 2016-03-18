@@ -1166,8 +1166,8 @@ $$3.$$ Configure persistence.xml to use Infinispan instead of JBoss Cache:
 
 ===  Using Infinispan as a Spring Cache provider
 Starting with version 3.1, the link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction], enabling users to declaratively add caching support to applications via two simple annotations, `@Cacheable` and `@CacheEvict`.
-While out of the box Spring 3.1's caching support is backed by link:http://ehcache.org[EHCache] it has been designed to easily support different cache providers.
-To that end Spring 3.1 defines a simple and straightforward SPI other caching solutions may implement.
+While out of the box Spring's caching support is backed by link:http://ehcache.org[EHCache] it has been designed to easily support different cache providers.
+To that end Spring defines a simple and straightforward SPI other caching solutions may implement.
 Infinispan's very own spring modules do - amongst other things - exactly this and therefore users invested in Spring's programming model may easily have all their caching needs fulfilled through Infinispan.
 
 Here's how.
@@ -1216,23 +1216,6 @@ For Maven users this translates into
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-spring4</artifactId>
-         <version>${infinispan.version}</version>
-      </dependency>
- 
-----
-
-.pom.xml for Spring 3
-[source,xml]
-----
-
-     <dependency>
-         <groupId>org.springframework</groupId>
-         <artifactId>spring-context</artifactId>
-         <version>3.2.9.RELEASE</version>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-spring</artifactId>
          <version>${infinispan.version}</version>
       </dependency>
  
