@@ -2,10 +2,12 @@ package org.infinispan.registry.impl;
 
 import java.security.AccessController;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.DefineConfigurationAction;
+import org.infinispan.security.actions.GetCacheAction;
 
 /**
  * SecurityActions for the org.infinispan.registry.impl package.
