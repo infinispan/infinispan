@@ -2,6 +2,7 @@ package org.infinispan.lucenedemo;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -24,7 +25,6 @@ import org.apache.lucene.util.Version;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.InfinispanCollections;
 
 /**
  * DemoActions does some basic operations on the Lucene index,
@@ -76,7 +76,7 @@ public class DemoActions {
       } catch (IOException ioe) {
          // not recommended: in the simple demo this likely means that the index was not yet
          // initialized, so returning empty list.
-         return InfinispanCollections.emptyList();
+         return Collections.emptyList();
       }
    }
 
