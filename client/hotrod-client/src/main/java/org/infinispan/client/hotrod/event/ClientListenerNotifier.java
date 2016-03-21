@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -67,7 +68,19 @@ public class ClientListenerNotifier {
    }
 
    public static ClientListenerNotifier create(Codec codec, Marshaller marshaller) {
-      return new ClientListenerNotifier(Executors.newCachedThreadPool(), codec, marshaller);
+      ExecutorService executor = Executors.newCachedThreadPool(getRestoreThreadNameThreadFactory());
+      return new ClientListenerNotifier(executor, codec, marshaller);
+   }
+
+   private static ThreadFactory getRestoreThreadNameThreadFactory() {
+      return r -> new Thread(() -> {
+         final String originalName = Thread.currentThread().getName();
+         try {
+            r.run();
+         } finally {
+            Thread.currentThread().setName(originalName);
+         }
+      });
    }
 
    public Marshaller getMarshaller() {
