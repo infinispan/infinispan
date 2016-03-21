@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -126,36 +125,6 @@ public final class InfinispanCollections {
       Set<E> copy1 = new HashSet<>(s1);
       copy1.removeAll(new HashSet<>(s2));
       return copy1;
-   }
-
-   /**
-    * Returns the empty set (immutable). Delegates to {@link Collections#emptySet()}.
-    *
-    * @deprecated use {@link Collections#emptySet()} instead; to be removed in 9.0
-    */
-   @Deprecated
-   public static <T> Set<T> emptySet() {
-      return Collections.emptySet();
-   }
-
-   /**
-    * Returns the empty map (immutable). Delegates to {@link Collections#emptyMap()}.
-    *
-    * @deprecated use {@link Collections#emptyMap()} instead; to be removed in 9.0
-    */
-   @Deprecated
-   public static <K,V> Map<K,V> emptyMap() {
-      return Collections.emptyMap();
-   }
-
-   /**
-    * Returns the empty list (immutable). Delegates to {@link Collections#emptyList()}.
-    *
-    * @deprecated use {@link Collections#emptyList()} instead; to be removed in 9.0
-    */
-   @Deprecated
-   public static <T> List<T> emptyList() {
-      return Collections.emptyList();
    }
 
    public static <T> boolean containsAny(Collection<T> haystack, Collection<T> needles) {
