@@ -37,9 +37,9 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
 
    @Test
    @BMRule(name = "Delay the purge of the index",
-         targetClass= "org.hibernate.search.backend.impl.lucene.works.PurgeAllWorkDelegate",
-         targetMethod = "performWork",
-         action = "delay(500)"
+           targetClass = "org.hibernate.search.backend.impl.lucene.works.PurgeAllWorkExecutor",
+           targetMethod = "performWork",
+           action = "delay(500)"
    )
    public void testMassIndexOnAsync() throws Exception {
       final Cache<Object, Object> cache = caches().get(0);
@@ -56,12 +56,9 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
    }
 
    private void assertAllIndexed(final Cache cache) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int size = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), Transaction.class).list().size();
-            return size == NUM_ENTRIES;
-         }
+      eventually(() -> {
+         int size = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), Transaction.class).list().size();
+         return size == NUM_ENTRIES;
       });
    }
 
