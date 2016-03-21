@@ -8,6 +8,8 @@
    >
 
   <cache-container default-cache="default">
+    <jmx duplicate-domains="true" />
+
     <local-cache name="default">
       <locking isolation="REPEATABLE_READ"
                acquire-timeout="20000" write-skew="false"
