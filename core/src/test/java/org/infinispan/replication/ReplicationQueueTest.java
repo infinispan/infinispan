@@ -166,6 +166,8 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * Test that replication queue works fine when multiple threads are putting into the queue.
     */
    public void testReplicationQueueMultipleThreads() throws Exception {
+      ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
+
       // put 12 elements in the queue from 4 different threads
       final int numThreads = 4;
       final int numLoopsPerThread = 3;
@@ -183,13 +185,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       }, numThreads);
 
       // Now wait until values are replicated properly
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache2.size() == numThreads * numLoopsPerThread;
-         }
-      });
-      ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
+      eventually(() -> cache2.size() == numThreads * numLoopsPerThread && replicationQueue.getElementsCount() == 0);
       assertEquals(0, replicationQueue.getElementsCount());
    }
 
