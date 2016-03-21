@@ -1,6 +1,5 @@
 package org.infinispan.security;
 
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -18,6 +17,7 @@ import java.security.Policy;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -104,7 +104,7 @@ public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
 
    private void distExecTest() throws Exception {
       DefaultExecutorService des = new DefaultExecutorService(cache(0, EXECUTION_CACHE));
-      NotifyingFuture<Integer> future = des.submit(new SimpleCallable());
+      CompletableFuture<Integer> future = des.submit(new SimpleCallable());
       assertEquals(Integer.valueOf(1), future.get());
    }
 

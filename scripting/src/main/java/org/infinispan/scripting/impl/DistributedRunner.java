@@ -7,7 +7,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.scripting.logging.Log;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -34,11 +33,9 @@ public class DistributedRunner implements ScriptRunner {
       }
       DefaultExecutorService des = new DefaultExecutorService(masterCacheNode);
       try {
-         List<Future<T>> tasks = des.submitEverywhere(new DistributedScript<T>(metadata));
-         List<CompletableFuture<T>> all = new ArrayList<>(tasks.size());
-         tasks.forEach(task -> all.add(CompletableFutures.toCompletableFuture((NotifyingFuture<T>) task)));
+         List<CompletableFuture<T>> tasks = des.submitEverywhere(new DistributedScript<T>(metadata));
 
-         return (CompletableFuture<T>) CompletableFutures.sequence(all);
+         return (CompletableFuture<T>) CompletableFutures.sequence(tasks);
       } finally {
          des.shutdown();
       }

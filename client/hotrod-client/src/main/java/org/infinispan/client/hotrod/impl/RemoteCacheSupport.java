@@ -5,10 +5,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * Purpose: keep all delegating and unsupported methods in one place -> readability.
@@ -35,12 +35,12 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       return putAllAsync(data, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+   public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       return putAllAsync(data, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
@@ -90,22 +90,22 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    protected abstract void set(K key, V value);
 
    @Override
-   public final NotifyingFuture<V> putAsync(K key, V value) {
+   public final CompletableFuture<V> putAsync(K key, V value) {
       return putAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       return putAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version) {
+   public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version) {
       return replaceWithVersionAsync(key, newValue, version, 0);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds) {
+   public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds) {
       return replaceWithVersionAsync(key, newValue, version, lifespanSeconds, 0);
    }
 
@@ -120,7 +120,7 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value) {
+   public CompletableFuture<V> replaceAsync(K key, V value) {
       return replaceAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
@@ -131,12 +131,12 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
 
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return putIfAbsentAsync(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit) {
+   public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit) {
       return putIfAbsentAsync(key, value, lifespan, lifespanUnit, defaultMaxIdleTime, MILLISECONDS);
    }
 
@@ -161,27 +161,27 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    }
 
    @Override
-   public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
+   public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       return replaceAsync(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       throw new UnsupportedOperationException();
    }
 

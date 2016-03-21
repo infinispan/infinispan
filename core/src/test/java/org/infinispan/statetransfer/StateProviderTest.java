@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -255,20 +254,20 @@ public class StateProviderTest {
       when(rpcManager.getAddress()).thenReturn(A);
 
       //rpcManager.invokeRemotelyInFuture(Collections.singleton(destination), cmd, false, sendFuture, timeout);
-      doAnswer(new Answer<Map<Address, Response>>() {
-         @Override
-         public Map<Address, Response> answer(InvocationOnMock invocation) {
-            Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
-            ReplicableCommand rpcCommand = (ReplicableCommand) invocation.getArguments()[1];
-            if (rpcCommand instanceof StateResponseCommand) {
-               Map<Address, Response> results = new HashMap<Address, Response>();
-               TestingUtil.sleepThread(10000, "RpcManager mock interrupted during invokeRemotelyInFuture(..)");
-               return results;
-            }
-            return Collections.emptyMap();
-         }
-      }).when(rpcManager).invokeRemotelyInFuture(any(Collection.class), any(ReplicableCommand.class), any(RpcOptions.class),
-                                                 any(NotifyingNotifiableFuture.class));
+//      doAnswer(new Answer<Map<Address, Response>>() {
+//         @Override
+//         public Map<Address, Response> answer(InvocationOnMock invocation) {
+//            Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
+//            ReplicableCommand rpcCommand = (ReplicableCommand) invocation.getArguments()[1];
+//            if (rpcCommand instanceof StateResponseCommand) {
+//               Map<Address, Response> results = new HashMap<Address, Response>();
+//               TestingUtil.sleepThread(10000, "RpcManager mock interrupted during invokeRemotelyInFuture(..)");
+//               return results;
+//            }
+//            return Collections.emptyMap();
+//         }
+//      }).when(rpcManager).invokeRemotelyInFuture(any(Collection.class), any(ReplicableCommand.class), any(RpcOptions.class),
+//                                                 any(NotifyingNotifiableFuture.class));
 
       when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(new Answer<RpcOptionsBuilder>() {
          @Override

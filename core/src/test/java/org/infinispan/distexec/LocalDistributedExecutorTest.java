@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -110,7 +111,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       }
       assert exceptionCount == 1;
 
-      List<Future<Integer>> list = des.submitEverywhere(new ExceptionThrowingCallable());
+      List<CompletableFuture<Integer>> list = des.submitEverywhere(new ExceptionThrowingCallable());
       exceptionCount = 0;
       for (Future<Integer> f : list) {
          try {
@@ -294,7 +295,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    public void testCallableIsolation() throws Exception {
       DistributedExecutorService des = createDES(getCache());
 
-      List<Future<Integer>> list = des.submitEverywhere(new SimpleCallableWithField());
+      List<CompletableFuture<Integer>> list = des.submitEverywhere(new SimpleCallableWithField());
       assert list != null && !list.isEmpty();
       for (Future<Integer> f : list) {
          assert f.get() == 0;
@@ -464,7 +465,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       DistributedExecutorService des = createDES(getCache());
 
-      List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(true),
+      List<CompletableFuture<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(true),
                new String[] { "key1", "key2" });
       assert list != null && !list.isEmpty();
       for (Future<Boolean> f : list) {
@@ -491,7 +492,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       DistributedExecutorService des = createDES(getCache());
 
-      List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(false),
+      List<CompletableFuture<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(false),
                                                         new String[]{});
       assert list != null && !list.isEmpty();
       for (Future<Boolean> f : list) {
@@ -526,7 +527,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       DistributedExecutorService des = createDES(getCache());
 
-      List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(false));
+      List<CompletableFuture<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(false));
       assert list != null && !list.isEmpty();
       for (Future<Boolean> f : list) {
          assert f.get();

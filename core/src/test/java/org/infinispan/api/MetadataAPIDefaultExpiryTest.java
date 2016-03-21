@@ -1,6 +1,5 @@
 package org.infinispan.api;
 
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -11,9 +10,9 @@ import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -73,7 +72,7 @@ public class MetadataAPIDefaultExpiryTest extends SingleCacheManagerTest {
    }
 
    public void testDefaultLifespanPutAsync() throws Exception {
-      NotifyingFuture<Object> f = cache().putAsync(1, "v1");
+      CompletableFuture<Object> f = cache().putAsync(1, "v1");
       f.get(10, TimeUnit.SECONDS);
       expectCachedThenExpired(1, "v1");
       f = cache().getAdvancedCache().putAsync(2, "v2", new EmbeddedMetadata.Builder().build());

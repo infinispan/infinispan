@@ -3,7 +3,6 @@ package org.infinispan.it.compatibility;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
@@ -14,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -223,7 +223,7 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
       TestCacheListener l = new TestCacheListener();
       embedded.addListener(l);
 
-      NotifyingFuture future = remote.putAsync("k", "v");
+      CompletableFuture future = remote.putAsync("k", "v");
       future.get(60, TimeUnit.SECONDS);
       assertEquals(1, l.createdCounter);
       assertEquals("v", l.created.get("k"));
@@ -231,14 +231,14 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
       assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
-      NotifyingFuture future2 = remote.putAsync("key", "value");
+      CompletableFuture future2 = remote.putAsync("key", "value");
       future2.get(60, TimeUnit.SECONDS);
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
       assertTrue(l.modified.isEmpty());
       assertTrue(l.visited.isEmpty());
 
-      NotifyingFuture future3 = remote.putAsync("key", "modifiedValue");
+      CompletableFuture future3 = remote.putAsync("key", "modifiedValue");
       future3.get(60, TimeUnit.SECONDS);
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
@@ -246,7 +246,7 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
       assertEquals("modifiedValue", l.modified.get("key"));
       assertTrue(l.visited.isEmpty());
 
-      NotifyingFuture future4 = remote.replaceAsync("k", "replacedValue");
+      CompletableFuture future4 = remote.replaceAsync("k", "replacedValue");
       future4.get(60, TimeUnit.SECONDS);
       assertEquals(2, l.createdCounter);
       assertTrue(l.removed.isEmpty());
@@ -257,7 +257,7 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
       //resetting so don't have to type "== 2" etc. all over again
       l.reset();
 
-      NotifyingFuture future5 = remote.removeAsync("key");
+      CompletableFuture future5 = remote.removeAsync("key");
       future5.get(60, TimeUnit.SECONDS);
       assertTrue(l.created.isEmpty());
       assertEquals(1, l.removedCounter);
@@ -266,7 +266,7 @@ public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
 
       l.reset();
 
-      NotifyingFuture future6 = remote.getAsync("k");
+      CompletableFuture future6 = remote.getAsync("k");
       future6.get(60, TimeUnit.SECONDS);
       assertTrue(l.created.isEmpty());
       assertTrue(l.removed.isEmpty());

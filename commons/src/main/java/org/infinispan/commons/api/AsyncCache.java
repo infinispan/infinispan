@@ -1,9 +1,8 @@
 package org.infinispan.commons.api;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
  * AsyncCache. This interface is implemented by caches which support asynchronous variants of the various
@@ -12,7 +11,7 @@ import org.infinispan.commons.util.concurrent.NotifyingFuture;
  * Note that these methods only really make sense if you are using a clustered cache.  I.e., when used in LOCAL mode,
  * these "async" operations offer no benefit whatsoever.  These methods, such as {@link #putAsync(Object, Object)}
  * offer the best of both worlds between a fully synchronous and a fully asynchronous cache in that a
- * {@link NotifyingFuture} is returned.  The <tt>NotifyingFuture</tt> can then be ignored or thrown away for typical
+ * {@link CompletableFuture} is returned.  The <tt>NotifyingFuture</tt> can then be ignored or thrown away for typical
  * asynchronous behaviour, or queried for synchronous behaviour, which would block until any remote calls complete.
  * Note that all remote calls are, as far as the transport is concerned, synchronous.  This allows you the guarantees
  * that remote calls succeed, while not blocking your application thread unnecessarily.  For example, usage such as
@@ -50,7 +49,7 @@ public interface AsyncCache<K, V> {
     * @param value value to store
     * @return a future containing the old value replaced.
     */
-   NotifyingFuture<V> putAsync(K key, V value);
+   CompletableFuture<V> putAsync(K key, V value);
 
    /**
     * Asynchronous version of {@link #put(Object, Object, long, TimeUnit)} .  This method does not block on remote
@@ -63,7 +62,7 @@ public interface AsyncCache<K, V> {
     * @param unit     time unit for lifespan
     * @return a future containing the old value replaced
     */
-   NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit);
+   CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #put(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does not block
@@ -79,7 +78,7 @@ public interface AsyncCache<K, V> {
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the old value replaced
     */
-   NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #putAll(Map)}.  This method does not block on remote calls, even if your cache mode
@@ -88,7 +87,7 @@ public interface AsyncCache<K, V> {
     * @param data to store
     * @return a future containing a void return type
     */
-   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data);
+   CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data);
 
    /**
     * Asynchronous version of {@link #putAll(Map, long, TimeUnit)}.  This method does not block on remote calls, even if
@@ -99,7 +98,7 @@ public interface AsyncCache<K, V> {
     * @param unit     time unit for lifespan
     * @return a future containing a void return type
     */
-   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit);
+   CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #putAll(Map, long, TimeUnit, long, TimeUnit)}.  This method does not block on
@@ -114,7 +113,7 @@ public interface AsyncCache<K, V> {
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing a void return type
     */
-   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #clear()}.  This method does not block on remote calls, even if your cache mode is
@@ -122,7 +121,7 @@ public interface AsyncCache<K, V> {
     *
     * @return a future containing a void return type
     */
-   NotifyingFuture<Void> clearAsync();
+   CompletableFuture<Void> clearAsync();
 
    /**
     * Asynchronous version of {@link #putIfAbsent(Object, Object)}.  This method does not block on remote calls, even if
@@ -133,7 +132,7 @@ public interface AsyncCache<K, V> {
     * @param value value to store
     * @return a future containing the old value replaced.
     */
-   NotifyingFuture<V> putIfAbsentAsync(K key, V value);
+   CompletableFuture<V> putIfAbsentAsync(K key, V value);
 
    /**
     * Asynchronous version of {@link #putIfAbsent(Object, Object, long, TimeUnit)} .  This method does not block on
@@ -146,7 +145,7 @@ public interface AsyncCache<K, V> {
     * @param unit     time unit for lifespan
     * @return a future containing the old value replaced
     */
-   NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit);
+   CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #putIfAbsent(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does
@@ -162,7 +161,7 @@ public interface AsyncCache<K, V> {
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the old value replaced
     */
-   NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #remove(Object)}.  This method does not block on remote calls, even if your cache
@@ -171,7 +170,7 @@ public interface AsyncCache<K, V> {
     * @param key key to remove
     * @return a future containing the value removed
     */
-   NotifyingFuture<V> removeAsync(Object key);
+   CompletableFuture<V> removeAsync(Object key);
 
    /**
     * Asynchronous version of {@link #remove(Object, Object)}.  This method does not block on remote calls, even if your
@@ -181,7 +180,7 @@ public interface AsyncCache<K, V> {
     * @param value value to match on
     * @return a future containing a boolean, indicating whether the entry was removed or not
     */
-   NotifyingFuture<Boolean> removeAsync(Object key, Object value);
+   CompletableFuture<Boolean> removeAsync(Object key, Object value);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object)}.  This method does not block on remote calls, even if
@@ -191,7 +190,7 @@ public interface AsyncCache<K, V> {
     * @param value value to store
     * @return a future containing the previous value overwritten
     */
-   NotifyingFuture<V> replaceAsync(K key, V value);
+   CompletableFuture<V> replaceAsync(K key, V value);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, long, TimeUnit)}.  This method does not block on remote
@@ -204,7 +203,7 @@ public interface AsyncCache<K, V> {
     * @param unit     time unit for lifespan
     * @return a future containing the previous value overwritten
     */
-   NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit);
+   CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does not
@@ -220,7 +219,7 @@ public interface AsyncCache<K, V> {
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the previous value overwritten
     */
-   NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, Object)}.  This method does not block on remote calls,
@@ -232,7 +231,7 @@ public interface AsyncCache<K, V> {
     * @param newValue value to store
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue);
+   CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, Object, long, TimeUnit)}.  This method does not block on
@@ -246,7 +245,7 @@ public interface AsyncCache<K, V> {
     * @param unit     time unit for lifespan
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit);
+   CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, Object, long, TimeUnit, long, TimeUnit)}.  This method
@@ -263,7 +262,7 @@ public interface AsyncCache<K, V> {
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #get(Object)} that allows user code to
@@ -281,5 +280,5 @@ public interface AsyncCache<K, V> {
     * key when this is available. The actual value returned by the future
     * follows the same rules as {@link #get(Object)}
     */
-   NotifyingFuture<V> getAsync(K key);
+   CompletableFuture<V> getAsync(K key);
 }

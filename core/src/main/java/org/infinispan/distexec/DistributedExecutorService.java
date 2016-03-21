@@ -5,11 +5,10 @@ import java.io.NotSerializableException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -52,7 +51,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param task a task to execute on selected Infinispan node
     * @return a Future representing pending completion of the task
     */
-   <T> NotifyingFuture<T> submit(Address target, Callable<T> task);
+   <T> CompletableFuture<T> submit(Address target, Callable<T> task);
 
    /**
     *  Submits the given DistributedTask for execution on the specified target Infinispan node.
@@ -63,7 +62,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param task a task to execute on selected Infinispan node
     * @return a Future representing pending completion of the task
     */
-   <T> NotifyingFuture<T> submit(Address target, DistributedTask<T> task);
+   <T> CompletableFuture<T> submit(Address target, DistributedTask<T> task);
 
    /**
     * Submits the given Callable task for execution on a single Infinispan node.
@@ -77,7 +76,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable}
     * @return a Future representing pending completion of the task
     */
-   <T, K> NotifyingFuture<T> submit(Callable<T> task, K... input);
+   <T, K> CompletableFuture<T> submit(Callable<T> task, K... input);
 
    /**
     * Submits the given DistributedTask for execution on a single Infinispan node.
@@ -94,7 +93,7 @@ public interface DistributedExecutorService extends ExecutorService {
     *           {@link DistributedCallable}
     * @return a Future representing pending completion of the task
     */
-   <T, K> NotifyingFuture<T> submit(DistributedTask<T> task, K... input);
+   <T, K> CompletableFuture<T> submit(DistributedTask<T> task, K... input);
 
    /**
     * Submits the given Callable task for execution on all available Infinispan nodes.
@@ -102,7 +101,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param task a task to execute across Infinispan cluster
     * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
-   <T> List<Future<T>> submitEverywhere(Callable<T> task);
+   <T> List<CompletableFuture<T>> submitEverywhere(Callable<T> task);
 
    /**
     * Submits the given DistributedTask for execution on all available Infinispan nodes.
@@ -110,7 +109,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param task a task to execute across Infinispan cluster
     * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
-   <T> List<Future<T>> submitEverywhere(DistributedTask<T> task);
+   <T> List<CompletableFuture<T>> submitEverywhere(DistributedTask<T> task);
 
    /**
     * Submits the given Callable task for execution on all available Infinispan nodes using input
@@ -125,7 +124,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable}
     * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
-   <T, K > List<Future<T>> submitEverywhere(Callable<T> task, K... input);
+   <T, K > List<CompletableFuture<T>> submitEverywhere(Callable<T> task, K... input);
 
    /**
     * Submits the given DistributedTask for execution on all available Infinispan nodes using input
@@ -140,7 +139,7 @@ public interface DistributedExecutorService extends ExecutorService {
     * @param input input keys for this task, effective if and only if task is instance of {@link DistributedCallable}
     * @return a list of Futures, one future per Infinispan cluster node where task was executed
     */
-   <T, K > List<Future<T>> submitEverywhere(DistributedTask<T> task, K... input);
+   <T, K > List<CompletableFuture<T>> submitEverywhere(DistributedTask<T> task, K... input);
 
    /**
     * Returns DistributedTaskBuilder for this DistributedExecutorService and a given Callable. As it

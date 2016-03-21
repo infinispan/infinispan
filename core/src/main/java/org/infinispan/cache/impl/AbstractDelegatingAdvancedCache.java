@@ -4,7 +4,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.CacheSet;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -28,6 +27,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link AdvancedCache}.
@@ -245,7 +245,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
+   public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       return cache.putAsync(key, value, metadata);
    }
 

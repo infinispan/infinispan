@@ -3,11 +3,10 @@ package org.infinispan.client.hotrod;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -51,7 +50,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
    }
 
    public void testPutAsyncWithListener() throws Exception {
-      NotifyingFuture<String> f = remote().putAsync("k", "v");
+      CompletableFuture<String> f = remote().putAsync("k", "v");
       testFutureWithListener(f, null);
       testK("v");
 
@@ -67,7 +66,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
    }
 
    public void testPutAllAsyncWithListener() throws Exception {
-      NotifyingFuture<Void> f = remote().putAllAsync(Collections.singletonMap("k", "v3"));
+      CompletableFuture<Void> f = remote().putAllAsync(Collections.singletonMap("k", "v3"));
       testFutureWithListener(f, null);
       testK("v3");
    }
@@ -89,7 +88,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
       remote().put("k", "v3");
       testK("v3");
 
-      NotifyingFuture<String> f = remote().putIfAbsentAsync("k", "v4");
+      CompletableFuture<String> f = remote().putIfAbsentAsync("k", "v4");
       testFutureWithListener(f, "v3");
       assertEquals("v3", remote().remove("k"));
 
@@ -111,7 +110,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
       remote().put("k", "v3");
       testK("v3");
 
-      NotifyingFuture<String> f = remote().removeAsync("k");
+      CompletableFuture<String> f = remote().removeAsync("k");
       testFutureWithListener(f, "v3");
       testK(null);
    }
@@ -129,7 +128,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
       remote().put("k", "v");
       testK("v");
 
-      NotifyingFuture<String> f = remote().getAsync("k");
+      CompletableFuture<String> f = remote().getAsync("k");
       testFutureWithListener(f, "v");
    }
 
@@ -150,7 +149,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
       remote().put("k", "v4");
       VersionedValue value = remote().getVersioned("k");
 
-      NotifyingFuture<Boolean> f = remote().removeWithVersionAsync("k", value.getVersion() + 1);
+      CompletableFuture<Boolean> f = remote().removeWithVersionAsync("k", value.getVersion() + 1);
       testFutureWithListener(f, false);
       testK("v4");
 
@@ -174,7 +173,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
 
    public void testReplaceAsyncWithListener() throws Exception {
       testK(null);
-      NotifyingFuture<String> f = remote().replaceAsync("k", "v5");
+      CompletableFuture<String> f = remote().replaceAsync("k", "v5");
       testFutureWithListener(f, null);
       testK(null);
 
@@ -205,7 +204,7 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
       remote().put("k", "v");
       VersionedValue versioned1 = remote().getVersioned("k");
 
-      NotifyingFuture<Boolean> f = remote().replaceWithVersionAsync("k", "v2", versioned1.getVersion());
+      CompletableFuture<Boolean> f = remote().replaceWithVersionAsync("k", "v2", versioned1.getVersion());
       testFutureWithListener(f, true);
 
       VersionedValue versioned2 = remote().getVersioned("k");
@@ -229,43 +228,22 @@ public class RemoteAsyncAPITest extends SingleHotRodServerTest {
       assertTrue(f.isDone());
    }
 
-   private <T> void testFutureWithListener(NotifyingFuture<T> f, T expected) throws InterruptedException {
+   private <T> void testFutureWithListener(CompletableFuture<T> f, T expected) throws InterruptedException {
       assertNotNull(f);
       AtomicReference<Throwable> ex = new AtomicReference<Throwable>();
       CountDownLatch latch = new CountDownLatch(1);
-      f.attachListener(new TestingListener<T>(expected, ex, latch));
+      f.whenComplete((v, t) -> {
+         if (t != null) {
+            ex.set(t);
+         }
+         assertEquals("Obtained " + v, expected, v);
+         latch.countDown();
+      });
       if (!latch.await(5, TimeUnit.SECONDS)) {
          fail("Not finished within 5 seconds");
       }
       if (ex.get() != null) {
          throw new AssertionError(ex.get());
-      }
-   }
-
-   private static class TestingListener<T> implements FutureListener<T> {
-      private final T expected;
-      private final AtomicReference<Throwable> exception;
-      private final CountDownLatch latch;
-
-      private TestingListener(T expected, AtomicReference<Throwable> exception, CountDownLatch latch) {
-         this.expected = expected;
-         this.exception = exception;
-         this.latch = latch;
-      }
-
-      @Override
-      public void futureDone(Future<T> future) {
-         try {
-            assertNotNull(future);
-            assertFalse(future.isCancelled());
-            assertTrue(future.isDone());
-            T value = future.get();
-            assertEquals("Obtained " + value, expected, value);
-         } catch (Throwable t) {
-            exception.set(t);
-         } finally {
-            latch.countDown();
-         }
       }
    }
 }

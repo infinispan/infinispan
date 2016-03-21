@@ -30,9 +30,6 @@ import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.AbstractInProcessNotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -97,6 +94,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -285,52 +284,52 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public final NotifyingFuture<V> putAsync(K key, V value) {
+   public final CompletableFuture<V> putAsync(K key, V value) {
       return putAsync(key, value, defaultMetadata);
    }
 
    @Override
-   public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       return putAsync(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+   public final CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       return putAllAsync(data, defaultMetadata, null, null);
    }
 
    @Override
-   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       return putAllAsync(data, lifespan, MILLISECONDS, defaultMetadata.maxIdle(), MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+   public final CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return putIfAbsentAsync(key, value, defaultMetadata, null, null);
    }
 
    @Override
-   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
       return putIfAbsentAsync(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<V> replaceAsync(K key, V value) {
+   public final CompletableFuture<V> replaceAsync(K key, V value) {
       return replaceAsync(key, value, defaultMetadata, null, null);
    }
 
    @Override
-   public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       return replaceAsync(key, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
    }
 
    @Override
-   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+   public final CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
       return replaceAsync(key, oldValue, newValue, defaultMetadata, null, null);
    }
 
    @Override
-   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+   public final CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
       return replaceAsync(key, oldValue, newValue, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
    }
 
@@ -1232,324 +1231,178 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
     * @return a future
     */
    @SuppressWarnings("unchecked")
-   private <X> NotifyingFuture<X> wrapInFuture(final Object retval) {
-      if (retval instanceof NotifyingFuture) {
-         return (NotifyingFuture<X>) retval;
+   private <X> CompletableFuture<X> wrapInFuture(final Object retval) {
+      if (retval instanceof CompletableFuture) {
+         return (CompletableFuture<X>) retval;
       } else {
-         return new AbstractInProcessNotifyingFuture<X>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public X get() throws InterruptedException, ExecutionException {
-               return (X) retval;
-            }
-         };
+         return CompletableFuture.completedFuture((X) retval);
       }
    }
 
    @Override
-   public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
       return putAsync(key, value, metadata, null, null);
    }
 
-   final NotifyingFuture<V> putAsync(final K key, final V value, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+   final CompletableFuture<V> putAsync(final K key, final V value, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
-      Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               associateImplicitTransactionWithCurrentThread(ctx);
-               V retval = putInternal(key, value, metadata, explicitFlags, ctx);
-               try {
-                  result.notifyDone(retval);
-                  log.trace("Finished notifying");
-               } catch (Throwable e) {
-                  log.trace("Exception while notifying the future", e);
-               }
-               return retval;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-                  log.trace("Finished notifying");
-               } catch (Throwable e2) {
-                  log.trace("Exception while notifying the future", e2);
-               }
-               throw e;
-            }
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            associateImplicitTransactionWithCurrentThread(ctx);
+         } catch (InvalidTransactionException | SystemException e) {
+            throw new CompletionException(e);
          }
-      });
-      result.setFuture(returnValue);
-      return result;
+         return putInternal(key, value, metadata, explicitFlags, ctx);
+      }, asyncExecutor);
    }
 
    @Override
-   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
       return putAllAsync(data, metadata, null, null);
    }
 
-   final NotifyingFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<Void>();
+   final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, data.size());
-      Future<Void> returnValue = asyncExecutor.submit(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            try {
-               associateImplicitTransactionWithCurrentThread(ctx);
-               putAllInternal(data, metadata, explicitFlags, ctx);
-               try {
-                  result.notifyDone(null);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return null;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            associateImplicitTransactionWithCurrentThread(ctx);
+         } catch (InvalidTransactionException | SystemException e) {
+            throw new CompletionException(e);
          }
-      });
-      result.setFuture(returnValue);
-      return result;
+         putAllInternal(data, metadata, explicitFlags, ctx);
+         return null;
+      }, asyncExecutor);
    }
 
    @Override
-   public final NotifyingFuture<Void> clearAsync() {
+   public final CompletableFuture<Void> clearAsync() {
       return clearAsync(null, null);
    }
 
-   final NotifyingFuture<Void> clearAsync(final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<>();
-      Future<Void> returnValue = asyncExecutor.submit(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            try {
-               clear(explicitFlags, explicitClassLoader);
-               try {
-                  result.notifyDone(null);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return null;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
-         }
-      });
-      result.setFuture(returnValue);
-      return result;
+   final CompletableFuture<Void> clearAsync(final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      return CompletableFuture.supplyAsync(() -> {
+         clear(explicitFlags, explicitClassLoader);
+         return null;
+      }, asyncExecutor);
    }
 
    @Override
-   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
       return putIfAbsentAsync(key, value, metadata, null, null);
    }
 
-   final NotifyingFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
+   final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
          final EnumSet<Flag> explicitFlags,final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
-      Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               associateImplicitTransactionWithCurrentThread(ctx);
-               V retval = putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
-               try {
-                  result.notifyDone(retval);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return retval;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            associateImplicitTransactionWithCurrentThread(ctx);
+         } catch (InvalidTransactionException | SystemException e) {
+            throw new CompletionException(e);
          }
-      });
-      result.setFuture(returnValue);
-      return result;
+         return putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
+      }, asyncExecutor);
    }
 
    @Override
-   public final NotifyingFuture<V> removeAsync(Object key) {
+   public final CompletableFuture<V> removeAsync(Object key) {
       return removeAsync(key, null, null);
    }
 
-   final NotifyingFuture<V> removeAsync(final Object key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+   final CompletableFuture<V> removeAsync(final Object key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
-      Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               associateImplicitTransactionWithCurrentThread(ctx);
-               V retval = removeInternal(key, explicitFlags, ctx);
-               try {
-                  result.notifyDone(retval);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return retval;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            associateImplicitTransactionWithCurrentThread(ctx);
+         } catch (InvalidTransactionException | SystemException e) {
+            throw new CompletionException(e);
          }
-      });
-      result.setFuture(returnValue);
-      return result;
+         return removeInternal(key, explicitFlags, ctx);
+      }, asyncExecutor);
    }
 
    @Override
-   public final NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
+   public final CompletableFuture<Boolean> removeAsync(Object key, Object value) {
       return removeAsync(key, value, null, null);
    }
 
-   final NotifyingFuture<Boolean> removeAsync(final Object key, final Object value, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+   final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
-      final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
-      Future<Boolean> returnValue = asyncExecutor.submit(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            try {
-               associateImplicitTransactionWithCurrentThread(ctx);
-               Boolean retval = removeInternal(key, value, explicitFlags, ctx);
-               try {
-                  result.notifyDone(retval);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return retval;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            associateImplicitTransactionWithCurrentThread(ctx);
+         } catch (InvalidTransactionException | SystemException e) {
+            throw new CompletionException(e);
          }
-      });
-      result.setFuture(returnValue);
-      return result;
+         return removeInternal(key, value, explicitFlags, ctx);
+      }, asyncExecutor);
    }
 
    @Override
-   public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
       return replaceAsync(key, value, metadata, null, null);
    }
 
-   final NotifyingFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
+   final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
          final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, value);
-      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
-      Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
-         @Override
-         public V call() throws Exception {
-            try {
-               associateImplicitTransactionWithCurrentThread(ctx);
-               V retval = replaceInternal(key, value, metadata, explicitFlags, ctx);
-               try {
-                  result.notifyDone(retval);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return retval;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            associateImplicitTransactionWithCurrentThread(ctx);
+         } catch (InvalidTransactionException | SystemException e) {
+            throw new CompletionException(e);
          }
-      });
-      result.setFuture(returnValue);
-      return result;
+         return replaceInternal(key, value, metadata, explicitFlags, ctx);
+      }, asyncExecutor);
    }
 
    @Override
-   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
       return replaceAsync(key, oldValue, newValue, metadata, null, null);
    }
 
-   final NotifyingFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
+   final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
          final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       assertKeyValueNotNull(key, newValue);
       assertValueNotNull(oldValue);
-      final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
-      Future<Boolean> returnValue = asyncExecutor.submit(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            try {
-               associateImplicitTransactionWithCurrentThread(ctx);
-               Boolean retval = replaceInternal(key, oldValue, newValue, metadata, explicitFlags, ctx);
-               try {
-                  result.notifyDone(retval);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               return retval;
-            } catch (Exception e) {
-               try {
-                  result.notifyException(e);
-               } catch (Throwable t) {
-                  log.trace("Error when notifying", t);
-               }
-               throw e;
-            }
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            associateImplicitTransactionWithCurrentThread(ctx);
+         } catch (InvalidTransactionException | SystemException e) {
+            throw new CompletionException(e);
          }
-      });
-      result.setFuture(returnValue);
-      return result;
+         return replaceInternal(key, oldValue, newValue, metadata, explicitFlags, ctx);
+      }, asyncExecutor);
    }
 
    @Override
-   public NotifyingFuture<V> getAsync(K key) {
+   public CompletableFuture<V> getAsync(K key) {
       return getAsync(key, null, null);
    }
 
    @SuppressWarnings("unchecked")
-   NotifyingFuture<V> getAsync(final K key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+   CompletableFuture<V> getAsync(final K key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
       // Optimization to not start a new thread only when the operation is cheap:
       if (asyncSkipsThread(explicitFlags, key)) {
          return wrapInFuture(get(key, explicitFlags, explicitClassLoader));
@@ -1562,31 +1415,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             appliedFlags = explicitFlags.clone();
             explicitFlags.clear();
          }
-         final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-
-         Callable<V> c = new Callable<V>() {
-            @Override
-            public V call() throws Exception {
-               try {
-                  V retval = get(key, appliedFlags, explicitClassLoader);
-                  try {
-                     result.notifyDone(retval);
-                  } catch (Throwable t) {
-                     log.trace("Error when notifying", t);
-                  }
-                  return retval;
-               } catch (Exception e) {
-                  try {
-                     result.notifyException(e);
-                  } catch (Throwable t) {
-                     log.trace("Error when notifying", t);
-                  }
-                  throw e;
-               }
-            }
-         };
-         result.setFuture(asyncExecutor.submit(c));
-         return result;
+         return CompletableFuture.supplyAsync(() -> get(key, appliedFlags, explicitClassLoader), asyncExecutor);
       }
    }
 
@@ -1757,7 +1586,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
+   public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
       return putAsync(key, value, metadata, null, null);
    }
 

@@ -1,13 +1,14 @@
 package org.infinispan.query.distributed;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.context.Flag;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.api.NotIndexedType;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Running mass indexer on big bunch of data.
@@ -46,7 +47,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
    protected void rebuildIndexes() throws Exception {
       Cache cache = caches.get(0);
       SearchManager searchManager = Search.getSearchManager(cache);
-      NotifyingFuture<Void> future = searchManager.getMassIndexer().startAsync();
+      CompletableFuture<Void> future = searchManager.getMassIndexer().startAsync();
       future.get();
    }
 }

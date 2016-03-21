@@ -1,6 +1,5 @@
 package org.infinispan.util.concurrent;
 
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Collections;
@@ -11,11 +10,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import java.util.Map;
 
 /**
- * Utility methods connecting {@link CompletableFuture} futures and our {@link NotifyingNotifiableFuture} futures.
+ * Utility methods connecting {@link CompletableFuture} futures.
  *
  * @author Dan Berindei
  * @since 8.0
@@ -27,29 +25,6 @@ public class CompletableFutures {
 
    public static <K,V> CompletableFuture<Map<K, V>> returnEmptyMap() {
       return completedEmptyMapFuture;
-   }
-
-   public static <T> void connect(NotifyingNotifiableFuture<T> sink, CompletableFuture<T> source) {
-      CompletableFuture<T> compoundSource = source.whenComplete((value, throwable) -> {
-         if (throwable == null) {
-            sink.notifyDone(value);
-         } else {
-            sink.notifyException(throwable);
-         }
-      });
-      sink.setFuture(compoundSource);
-   }
-
-   public static <T> CompletableFuture<T> toCompletableFuture(NotifyingFuture<T> source) {
-      final CompletableFuture<T> result = new CompletableFuture<>();
-      source.attachListener(f -> {
-         try {
-            result.complete(f.get());
-         } catch (Exception e) {
-            result.cancel(false);
-         }
-      });
-      return result;
    }
 
    public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {

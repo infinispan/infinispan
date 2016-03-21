@@ -1,8 +1,9 @@
 package org.infinispan.query;
 
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Component to rebuild the indexes from the existing data.
@@ -23,8 +24,8 @@ public interface MassIndexer {
    void start();
 
    /**
-    * @return {@link org.infinispan.commons.util.concurrent.NotifyingFuture}
+    * @return {@link CompletableFuture}
     */
-   NotifyingFuture<Void> startAsync();
+   CompletableFuture<Void> startAsync();
 
 }

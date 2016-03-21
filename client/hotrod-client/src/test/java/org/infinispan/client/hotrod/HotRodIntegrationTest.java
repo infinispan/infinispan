@@ -6,7 +6,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
@@ -18,6 +17,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.k;
@@ -218,7 +218,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       VersionedValue valueBinary = remoteCache.getVersioned(k);
       long lifespan = TimeUnit.SECONDS.toMillis(lifespanInSecs);
       long startTime = System.currentTimeMillis();
-      NotifyingFuture<Boolean> future = remoteCache.replaceWithVersionAsync(
+      CompletableFuture<Boolean> future = remoteCache.replaceWithVersionAsync(
          k, newV, valueBinary.getVersion(), lifespanInSecs);
       assert future.get();
 
