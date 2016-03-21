@@ -1,6 +1,5 @@
 package org.infinispan.hibernate.search;
 
-import junit.framework.AssertionFailedError;
 import org.hibernate.cfg.Environment;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
@@ -13,6 +12,7 @@ import org.infinispan.remoting.transport.Address;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helpers to setup several instances of Hibernate Search using clustering to connect the index, and sharing the same H2
@@ -80,22 +80,31 @@ public final class ClusterTestHelper {
    }
 
    /**
-    * Wait some time for the cluster to form
+    * delegates {@link #waitMembersCount(FullTextSessionBuilder, Class, int, long, TimeUnit)} with 10s.
     */
    public static void waitMembersCount(FullTextSessionBuilder node, Class<?> entityType, int expectedSize) {
+      waitMembersCount(node, entityType, expectedSize, 10, TimeUnit.SECONDS);
+   }
+
+   /**
+    * Wait some time for the cluster to form
+    *
+    * @param node Node to be checked
+    * @param entityType An entity for check
+    * @param expectedSize Expected size of the cluster
+    * @param timeout Desired timeout
+    * @param timeoutUnit Timeout units
+     */
+   public static void waitMembersCount(FullTextSessionBuilder node, Class<?> entityType, int expectedSize, long timeout, TimeUnit timeoutUnit) {
+      long endTime = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(timeout, timeoutUnit);
       int currentSize = 0;
-      int loopCounter = 0;
-      while (currentSize < expectedSize) {
-         try {
-            Thread.sleep(10);
-         } catch (InterruptedException e) {
-            throw new AssertionFailedError(e.getMessage());
+      do {
+         if (System.currentTimeMillis() > endTime) {
+            throw new AssertionError("Timeout when waiting for desired number of nodes. Expected: " + expectedSize + ", got: " + currentSize);
          }
+         Thread.yield();
          currentSize = clusterSize(node, entityType);
-         if (loopCounter > 200) {
-            throw new AssertionFailedError("timeout while waiting for all nodes to join in cluster");
-         }
-      }
+      } while(currentSize != expectedSize);
    }
 
    /**
