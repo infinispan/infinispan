@@ -60,6 +60,7 @@ public class TwoNodesTest {
       } finally {
          nodeC.close();
       }
+      waitMembersCount(nodea, SimpleEmail.class, 2);
       assertEquals(2, clusterSize(nodea, SimpleEmail.class));
       verifyNodeSeesUpdatedIndex(nodea);
       verifyNodeSeesUpdatedIndex(nodeb);
