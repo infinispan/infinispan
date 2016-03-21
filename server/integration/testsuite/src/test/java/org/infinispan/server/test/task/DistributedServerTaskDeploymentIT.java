@@ -9,7 +9,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.Task;
-import org.infinispan.server.test.task.servertask.DistributedTestServerTask;
+import org.infinispan.server.test.task.servertask.DistributedDeploymentTestServerTask;
 import org.infinispan.tasks.ServerTask;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -21,7 +21,6 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -61,8 +60,8 @@ public class DistributedServerTaskDeploymentIT {
     @OverProtocol("jmx-as7")
     public static JavaArchive create1() {
         JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "custom-task-deployment.jar");
-        jar.addClass(DistributedTestServerTask.class);
-        jar.addAsServiceProvider(ServerTask.class, DistributedTestServerTask.class);
+        jar.addClass(DistributedDeploymentTestServerTask.class);
+        jar.addAsServiceProvider(ServerTask.class, DistributedDeploymentTestServerTask.class);
 
         return jar;
     }
@@ -72,8 +71,8 @@ public class DistributedServerTaskDeploymentIT {
     @OverProtocol("jmx-as7")
     public static JavaArchive create2() {
         JavaArchive jar = ShrinkWrap.create(JavaArchive.class, "custom-task-deployment.jar");
-        jar.addClass(DistributedTestServerTask.class);
-        jar.addAsServiceProvider(ServerTask.class, DistributedTestServerTask.class);
+        jar.addClass(DistributedDeploymentTestServerTask.class);
+        jar.addAsServiceProvider(ServerTask.class, DistributedDeploymentTestServerTask.class);
 
         return jar;
     }
@@ -98,7 +97,7 @@ public class DistributedServerTaskDeploymentIT {
     @InSequence(2)
     @SuppressWarnings("unchecked")
     public void shouldGatherNodeNamesInRemoteTasks() throws Exception {
-        Object resultObject = rcm1.getCache().execute(DistributedTestServerTask.NAME, Collections.emptyMap());
+        Object resultObject = rcm1.getCache().execute(DistributedDeploymentTestServerTask.NAME, Collections.emptyMap());
         assertNotNull(resultObject);
         List<String> result = (List<String>) resultObject;
         assertEquals(2, result.size());
@@ -114,6 +113,6 @@ public class DistributedServerTaskDeploymentIT {
 
         exceptionRule.expect(HotRodClientException.class);
         exceptionRule.expectMessage("ISPN027002");
-        rcm1.getCache().execute(DistributedTestServerTask.NAME, Collections.emptyMap());
+        rcm1.getCache().execute(DistributedDeploymentTestServerTask.NAME, Collections.emptyMap());
     }
 }
