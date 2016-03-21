@@ -2,6 +2,8 @@ package org.infinispan.query.dsl;
 
 /**
  * A builder for {@link Query} objects. An instance of this class can be obtained from {@link QueryFactory}.
+ * <p>
+ * Type parameter Q will be removed in Infinispan 9.0
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -19,13 +21,6 @@ public interface QueryBuilder<Q extends Query> extends FilterConditionBeginConte
    QueryBuilder select(Expression... projection);
 
    QueryBuilder select(String... attributePath);
-
-   /**
-    * @see #select(String... attributePath)
-    * @deprecated to be removed in 9.0
-    */
-   @Deprecated
-   QueryBuilder setProjection(String... attributePath);
 
    QueryBuilder groupBy(String... attributePath);
 
