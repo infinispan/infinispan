@@ -2,16 +2,13 @@ package org.infinispan.server.eventlogger;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionContext;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -20,22 +17,18 @@ import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.infinispan.util.logging.events.EventLogger;
 
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.jgroups.util.Util.assertNotNull;
 
 /**
- * ServerEventLogger. This event lgoger takes care of maintaining the server event log cache and
+ * ServerEventLogger. This event logger takes care of maintaining the server event log cache and
  * provides methods for querying its contents across all nodes. For resilience, the event log is
  * stored in a local, bounded, persistent cache and distributed executors are used to gather logs
  * from all the nodes in the cluster.
@@ -107,7 +100,7 @@ public class ServerEventLogger implements EventLogger {
       try {
          cacheManager.executor().submitConsumer(m -> {
             Cache<Object, Object> cache = m.getCache(EVENT_LOG_CACHE);
-            QueryFactory<Query> queryFactory = Search.getQueryFactory(cache);
+            QueryFactory queryFactory = Search.getQueryFactory(cache);
             QueryBuilder query = queryFactory.from(ServerEventImpl.class).orderBy("when", SortOrder.DESC).maxResults(count);
             FilterConditionContext filter = query.having("when").lte(start);
             category.map(c -> filter.and(queryFactory.having("category").eq(c)));
@@ -121,8 +114,9 @@ public class ServerEventLogger implements EventLogger {
                throwable.set(t);
             }
          }).get(1, TimeUnit.MINUTES);
-         if (throwable.get() != null) {
-            throw new CacheException(throwable.get());
+         Throwable th = throwable.get();
+         if (th != null) {
+            throw new CacheException(th);
          }
       } catch (Exception e) {
          log.debug("Could not retrieve events", e);

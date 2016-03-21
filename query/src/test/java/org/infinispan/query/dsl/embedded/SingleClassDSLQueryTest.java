@@ -43,7 +43,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    public void testQuery() throws Exception {
       Cache<String, Person> cache = cacheManager.getCache();
       cache.put("person1", new Person("William", "Shakespeare"));
-      QueryFactory<?> queryFactory = Search.getQueryFactory(cache);
+      QueryFactory queryFactory = Search.getQueryFactory(cache);
       Query query = queryFactory.from(Person.class).having("name").eq("William").toBuilder().build();
       List<Person> matches = query.list();
       assertEquals(1, matches.size());

@@ -131,7 +131,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
 
    public void testRemoteQueryDslExecution() throws Exception {
       QueryFactory qf = org.infinispan.client.hotrod.Search.getQueryFactory(remoteCache);
-      QueryBuilder<Query> qb = qf.from("sample_bank_account.User")
+      QueryBuilder qb = qf.from("sample_bank_account.User")
             .having("name").eq("John1")
             .toBuilder();
 
@@ -151,7 +151,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
 
    public void testEmbeddedQueryDslExecution() throws Exception {
       QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-      QueryBuilder<Query> qb = qf.from(UserHS.class)
+      QueryBuilder qb = qf.from(UserHS.class)
             .having("name").eq("John1")
             .toBuilder();
 
