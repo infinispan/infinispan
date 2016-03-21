@@ -3,7 +3,6 @@ package org.infinispan.server.eventlogger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
