@@ -20,13 +20,6 @@ public interface QueryBuilder<Q extends Query> extends FilterConditionBeginConte
 
    QueryBuilder select(String... attributePath);
 
-   /**
-    * @see #select(String... attributePath)
-    * @deprecated to be removed in 9.0
-    */
-   @Deprecated
-   QueryBuilder setProjection(String... attributePath);
-
    QueryBuilder groupBy(String... attributePath);
 
    QueryBuilder startOffset(long startOffset);
