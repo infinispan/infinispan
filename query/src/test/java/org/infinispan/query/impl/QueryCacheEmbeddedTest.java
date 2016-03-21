@@ -73,7 +73,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
 
       // obtain the query factory and create a query builder
       QueryFactory qf = Search.getQueryFactory(cache);
-      QueryBuilder<Query> queryQueryBuilder = qf.from(UserHS.class)
+      QueryBuilder queryQueryBuilder = qf.from(UserHS.class)
             .having("name").eq("John")
             .toBuilder();
 

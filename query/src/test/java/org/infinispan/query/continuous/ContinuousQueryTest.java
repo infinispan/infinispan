@@ -61,7 +61,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
          cache().put(i, value);
       }
 
-      QueryFactory<?> qf = Search.getQueryFactory(cache());
+      QueryFactory qf = Search.getQueryFactory(cache());
 
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
 
@@ -156,7 +156,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
          cache().put(i, value);
       }
 
-      QueryFactory<?> qf = Search.getQueryFactory(cache());
+      QueryFactory qf = Search.getQueryFactory(cache());
 
       ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
 
@@ -192,7 +192,7 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
    }
 
    public void testTwoSimilarCQ() {
-      QueryFactory<?> qf = Search.getQueryFactory(cache());
+      QueryFactory qf = Search.getQueryFactory(cache());
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
 
       Query query1 = qf.from(Person.class)
