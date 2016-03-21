@@ -51,7 +51,7 @@ public class RemoteContinuousQueryIT extends RemoteQueryBaseIT {
       remoteCache.put(3, createUser(3, 20));
       assertEquals(3, remoteCache.size());
 
-      QueryFactory<Query> qf = Search.getQueryFactory(remoteCache);
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(User.class).having("name").eq("user1").and().having("age").gt(20).toBuilder().build();
 
       final BlockingQueue<Integer> joined = new LinkedBlockingQueue<Integer>();
