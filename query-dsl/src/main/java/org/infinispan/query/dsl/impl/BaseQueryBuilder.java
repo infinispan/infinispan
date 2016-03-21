@@ -113,16 +113,6 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
       return this;
    }
 
-   /**
-    * @see #select(String... attributePath)
-    * @deprecated to be removed in 9.0
-    */
-   @Override
-   @Deprecated
-   public QueryBuilder<T> setProjection(String... projection) {
-      return select(projection);
-   }
-
    protected Expression[] getProjection() {
       return projection;
    }
