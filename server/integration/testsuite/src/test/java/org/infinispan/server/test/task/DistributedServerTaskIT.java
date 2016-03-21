@@ -120,7 +120,7 @@ public class DistributedServerTaskIT {
       params.put("throwException", true);
 
       exceptionRule.expect(HotRodClientException.class);
-      exceptionRule.expectMessage("CancellationException");
+      exceptionRule.expectMessage("Intentionally Thrown Exception");
 
       rcm1.getCache().execute(DistributedTestServerTask.NAME, params);
    }
