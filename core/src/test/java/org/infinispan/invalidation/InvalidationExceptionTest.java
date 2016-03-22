@@ -24,19 +24,10 @@ public class InvalidationExceptionTest extends MultipleCacheManagersTest {
       ConfigurationBuilder invalidAsync = getDefaultClusteredCacheConfig(
             CacheMode.INVALIDATION_ASYNC, false);
       createClusteredCaches(2, "invalidAsync", invalidAsync);
-
-      ConfigurationBuilder replQueue = getDefaultClusteredCacheConfig(
-            CacheMode.INVALIDATION_ASYNC, false);
-      replQueue.clustering().async().useReplQueue(true);
-      defineConfigurationOnAllManagers("invalidReplQueueCache", replQueue);
    }
 
    public void testNonSerializableAsyncInvalid() throws Exception {
       doNonSerializableInvalidTest("invalidAsync");
-   }
-
-   public void testNonSerializableReplQueue() throws Exception {
-      doNonSerializableInvalidTest("invalidReplQueueCache");
    }
 
    private void doNonSerializableInvalidTest(String cacheName) {

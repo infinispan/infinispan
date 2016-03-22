@@ -38,7 +38,6 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -670,7 +669,6 @@ public class TestingUtil {
          if (!cacheContainer.getStatus().allowInvocations()) return;
 
          for (Cache cache : runningCaches) {
-            clearReplicationQueues(cache);
             clearCacheLoader(cache);
             removeInMemoryData(cache);
          }
@@ -715,11 +713,6 @@ public class TestingUtil {
             // don't care
          }
       }
-   }
-
-   private static void clearReplicationQueues(Cache cache) {
-      ReplicationQueue queue = TestingUtil.extractComponent(cache, ReplicationQueue.class);
-      if (queue != null) queue.reset();
    }
 
    public static void clearCacheLoader(Cache cache) {

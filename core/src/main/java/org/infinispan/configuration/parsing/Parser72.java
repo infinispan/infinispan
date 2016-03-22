@@ -10,7 +10,24 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
+import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
@@ -46,7 +63,6 @@ import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +70,7 @@ import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.configuration.parsing.Attribute.MODE;
 import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
@@ -487,6 +504,8 @@ public class Parser72 implements ConfigurationParser {
                break;
             }
             case REPLICATION_QUEUE_EXECUTOR: {
+               log.ignoredReplicationQueueAttribute(attribute.getLocalName(),
+                     reader.getLocation().getLineNumber());
                builder.replicationQueueThreadPool().read(
                      createThreadPoolConfiguration(value, ASYNC_REPLICATION_QUEUE_EXECUTOR));
                break;
@@ -1434,9 +1453,11 @@ public class Parser72 implements ConfigurationParser {
          throws XMLStreamException {
       switch (attribute) {
          case ASYNC_MARSHALLING: {
-            ClusteringConfigurationBuilder clustering = builder.clustering();
-            if (!clustering.cacheMode().isSynchronous())
-               clustering.async().asyncMarshalling(Boolean.parseBoolean(value));
+            if (reader.getSchema().since(9, 0)) {
+               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+            } else {
+               log.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
+            }
             break;
          }
          case MODE: {
@@ -1445,13 +1466,19 @@ public class Parser72 implements ConfigurationParser {
             break;
          }
          case QUEUE_SIZE: {
-            int queueSize = Integer.parseInt(value);
-            builder.clustering().async().useReplQueue(queueSize > 0);
-            builder.clustering().async().replQueueMaxElements(queueSize);
+            if (reader.getSchema().since(9, 0)) {
+               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+            } else {
+               log.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
+            }
             break;
          }
          case QUEUE_FLUSH_INTERVAL: {
-            builder.clustering().async().replQueueInterval(Long.parseLong(value));
+            if (reader.getSchema().since(9, 0)) {
+               throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+            } else {
+               log.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
+            }
             break;
          }
          case REMOTE_TIMEOUT: {

@@ -121,6 +121,7 @@ public enum Attribute {
     PRELOAD(ModelKeys.PRELOAD),
     PROTOCOL_VERSION(ModelKeys.PROTOCOL_VERSION),
     PURGE(ModelKeys.PURGE),
+    @Deprecated
     QUEUE_FLUSH_INTERVAL(ModelKeys.QUEUE_FLUSH_INTERVAL),
     QUEUE_LENGTH(ModelKeys.QUEUE_LENGTH),
     QUEUE_SIZE(ModelKeys.QUEUE_SIZE),

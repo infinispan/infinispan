@@ -10,11 +10,6 @@ abstract class AbstractClusteringConfigurationChildBuilder extends AbstractConfi
    }
 
    @Override
-   public AsyncConfigurationBuilder async() {
-      return clusteringBuilder.async();
-   }
-
-   @Override
    public HashConfigurationBuilder hash() {
       return clusteringBuilder.hash();
    }

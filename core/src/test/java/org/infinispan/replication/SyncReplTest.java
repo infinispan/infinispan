@@ -143,7 +143,6 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       RpcManagerImpl asyncRpcManager = null;
       try {
          ConfigurationBuilder asyncCache = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
-         asyncCache.clustering().async().asyncMarshalling(true);
          asyncCache.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
          defineConfigurationOnAllManagers("asyncCache", asyncCache);
          Cache<String, String> asyncCache1 = manager(0).getCache("asyncCache");

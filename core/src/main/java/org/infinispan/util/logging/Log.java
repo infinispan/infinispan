@@ -308,10 +308,6 @@ public interface Log extends BasicLogger {
    void exceptionHandlingCommand(ReplicableCommand cmd, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Failed replicating %d elements in replication queue", id = 72)
-   void failedReplicatingQueue(int size, @Cause Throwable t);
-
-   @LogMessage(level = ERROR)
    @Message(value = "Unexpected error while replicating", id = 73)
    void unexpectedErrorReplicating(@Cause Throwable t);
 
@@ -1227,12 +1223,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Using a L1 lifespan of 0 or a negative value is meaningless", id = 351)
    CacheConfigurationException l1InvalidLifespan();
 
-   @Message(value = "Use of the replication queue is invalid when using DISTRIBUTED mode.", id = 352)
-   CacheConfigurationException noReplicationQueueDistributedCache();
-
-   @Message(value = "Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.", id = 353)
-   CacheConfigurationException replicationQueueOnlyForAsyncCaches();
-
    @Message(value = "Cannot define both interceptor class (%s) and interceptor instance (%s)", id = 354)
    CacheConfigurationException interceptorClassAndInstanceDefined(String customInterceptorClassName, String customInterceptor);
 
@@ -1401,4 +1391,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Caught exception while invoking a cache manager listener!", id = 405)
    void failedInvokingCacheManagerListener(@Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The replication queue is no longer supported since version 9.0. Attribute %s on line %d will be ignored.", id = 406)
+   void ignoredReplicationQueueAttribute(String attributeName, int line);
 }

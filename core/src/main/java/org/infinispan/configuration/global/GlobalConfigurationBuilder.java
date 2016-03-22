@@ -122,6 +122,10 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return listenerThreadPool;
    }
 
+   /**
+    * @deprecated Since 9.0, no longer used.
+    */
+   @Deprecated
    @Override
    public ThreadPoolConfigurationBuilder replicationQueueThreadPool() {
       return replicationQueueThreadPool;

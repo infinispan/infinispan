@@ -19,6 +19,7 @@ public enum Attribute {
     ALIASES("aliases"),
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
     ASYNC_EXECUTOR("async-executor"),
+    @Deprecated
     ASYNC_MARSHALLING("async-marshalling"),
     AUDIT_LOGGER("audit-logger"),
     AUTO_COMMIT("auto-commit"),
@@ -90,8 +91,10 @@ public enum Attribute {
     PRELOAD("preload"),
     PRIORITY("priority"),
     PURGE("purge"),
+    @Deprecated
     QUEUE_FLUSH_INTERVAL("queue-flush-interval"),
     QUEUE_LENGTH("queue-length"),
+    @Deprecated
     QUEUE_SIZE("queue-size"),
     RACK_ID("rack"),
     READ_ONLY("read-only"),
@@ -102,6 +105,7 @@ public enum Attribute {
     REMOTE_COMMAND_EXECUTOR("remote-command-executor"),
     REMOTE_SITE("remote-site"),
     REMOTE_TIMEOUT("remote-timeout"),
+    @Deprecated
     REPLICATION_QUEUE_EXECUTOR("replication-queue-executor"),
     ROLES("roles"),
     SEGMENTS("segments"),

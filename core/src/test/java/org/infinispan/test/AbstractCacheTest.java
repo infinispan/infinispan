@@ -57,11 +57,6 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
          .transaction().syncCommitPhase(true).syncRollbackPhase(true)
          .cacheStopTimeout(0L);
 
-      if (mode.isSynchronous())
-         builder.clustering().sync();
-      else
-         builder.clustering().async();
-
       return builder;
    }
 

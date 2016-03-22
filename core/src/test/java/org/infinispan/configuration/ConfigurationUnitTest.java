@@ -118,16 +118,6 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       });
    }
 
-   @Test
-   public void testReplAsyncWithQueue() {
-      Configuration configuration = new ConfigurationBuilder()
-         .clustering().cacheMode(CacheMode.REPL_ASYNC)
-         .async().useReplQueue(true).replQueueInterval(1222)
-         .build();
-      Assert.assertTrue(configuration.clustering().async().useReplQueue());
-      Assert.assertEquals(configuration.clustering().async().replQueueInterval(), 1222);
-   }
-
    @Test(expectedExceptions = CacheConfigurationException.class,
          expectedExceptionsMessageRegExp = "ISPN(\\d)*: Cannot enable Invocation Batching when the Transaction Mode is NON_TRANSACTIONAL, set the transaction mode to TRANSACTIONAL")
    public void testInvocationBatchingAndNonTransactional() throws Exception {
@@ -295,19 +285,6 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       config = new ConfigurationBuilder();
       cm.defineConfiguration("local", config.build());
       return cm;
-   }
-
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testDistAndReplQueue() {
-      EmbeddedCacheManager ecm = null;
-      try {
-         ConfigurationBuilder c = new ConfigurationBuilder();
-         c.clustering().cacheMode(CacheMode.DIST_ASYNC).async().useReplQueue(true);
-         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
-         ecm.getCache();
-      } finally {
-         TestingUtil.killCacheManagers(ecm);
-      }
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

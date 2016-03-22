@@ -3,13 +3,6 @@ package org.infinispan.configuration.cache;
 public interface ClusteringConfigurationChildBuilder extends ConfigurationChildBuilder {
 
    /**
-    * If configured all communications are asynchronous, in that whenever a thread sends a message
-    * sent over the wire, it does not wait for an acknowledgment before returning. Asynchronous
-    * configuration is mutually exclusive with synchronous configuration.
-    */
-   AsyncConfigurationBuilder async();
-
-   /**
     * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
     */
    HashConfigurationBuilder hash();

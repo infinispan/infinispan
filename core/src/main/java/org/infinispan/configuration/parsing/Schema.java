@@ -28,13 +28,19 @@ public class Schema {
    }
 
    public static Schema fromNamespaceURI(String namespaceURI) {
-      if (namespaceURI.startsWith("uri:")) {
+      int major = 999;
+      int minor = 999;
+      if (namespaceURI.startsWith("uri:") || namespaceURI.startsWith("urn:")) {
          String version = namespaceURI.substring(namespaceURI.lastIndexOf(':') + 1);
          String[] split = version.split("\\.");
-         return new Schema(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
-      } else {
-         return new Schema(999, 999);
+         try {
+            major = Integer.parseInt(split[0]);
+            minor = Integer.parseInt(split[1]);
+         } catch (NumberFormatException e) {
+            // Ignore
+         }
       }
+      return new Schema(major, minor);
    }
 
 }

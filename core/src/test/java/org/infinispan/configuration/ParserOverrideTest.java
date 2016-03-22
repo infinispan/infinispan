@@ -133,7 +133,7 @@ public class ParserOverrideTest extends AbstractInfinispanTest {
             "      <store-as-binary/>\n" +
             "      <expiration interval=\"23\" lifespan=\"50012\" max-idle=\"1341\"/>\n" +
             "   </replicated-cache>\n" +
-            "   <replicated-cache name=\"" + cacheName + "\" mode=\"ASYNC\" queue-flush-interval=\"105\" queue-size=\"341\" statistics=\"true\" deadlock-detection-spin=\"1223\" />\n" +
+            "   <replicated-cache name=\"" + cacheName + "\" mode=\"ASYNC\" statistics=\"true\" deadlock-detection-spin=\"1223\" />\n" +
             "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
       String xml2 = InfinispanStartTag.LATEST + JGROUPS_CONFIG +
@@ -143,7 +143,7 @@ public class ParserOverrideTest extends AbstractInfinispanTest {
             "      <locking isolation=\"READ_COMMITTED\" concurrency-level=\"30\" acquire-timeout=\"25000\"/>\n" +
             "      <store-as-binary keys=\"false\" values=\"false\"/>\n" +
             "   </replicated-cache>\n" +
-            "   <distributed-cache name=\"" + cacheName + "\" mode=\"ASYNC\" owners=\"3\" segments=\"51\" l1-lifespan=\"12345\" queue-size=\"-1\" statistics=\"true\" deadlock-detection-spin=\"1224\" >\n" +
+            "   <distributed-cache name=\"" + cacheName + "\" mode=\"ASYNC\" owners=\"3\" segments=\"51\" l1-lifespan=\"12345\" statistics=\"true\" deadlock-detection-spin=\"1224\" >\n" +
             "   </distributed-cache>" +
             "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
@@ -162,7 +162,6 @@ public class ParserOverrideTest extends AbstractInfinispanTest {
             Assert.assertEquals(c.clustering().l1().enabled(), true);
             Assert.assertEquals(c.clustering().l1().lifespan(), 12345);
             Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
-            Assert.assertEquals(c.clustering().async().useReplQueue(), false);
             // Interval and max elements irrelevant since replication queue is disabled
             Assert.assertEquals(c.jmxStatistics().enabled(), true);
             Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);

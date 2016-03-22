@@ -1,27 +1,5 @@
 package org.infinispan.configuration.parsing;
 
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.TOTAL_ORDER_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.shortened;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -32,7 +10,25 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
+import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
@@ -66,6 +62,19 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.configuration.parsing.Attribute.MODULE;
+import static org.infinispan.factories.KnownComponentNames.*;
+
 /**
  * This class implements the parser for Infinispan/AS7/EAP/JDG schema files
  *
@@ -78,6 +87,7 @@ import org.kohsuke.MetaInfServices;
       @Namespace(uri = "urn:infinispan:config:8.0", root = "infinispan"),
       @Namespace(uri = "urn:infinispan:config:8.1", root = "infinispan"),
       @Namespace(uri = "urn:infinispan:config:8.2", root = "infinispan"),
+      @Namespace(uri = "urn:infinispan:config:9.0", root = "infinispan"),
       @Namespace(root = "infinispan")
 })
 public class Parser80 implements ConfigurationParser {
@@ -504,8 +514,14 @@ public class Parser80 implements ConfigurationParser {
                break;
             }
             case REPLICATION_QUEUE_EXECUTOR: {
-               builder.replicationQueueThreadPool().read(
-                     createThreadPoolConfiguration(value, ASYNC_REPLICATION_QUEUE_EXECUTOR));
+               if (reader.getSchema().since(9, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  log.ignoredReplicationQueueAttribute(attribute.getLocalName(),
+                     reader.getLocation().getLineNumber());
+                  builder.replicationQueueThreadPool()
+                        .read(createThreadPoolConfiguration(value, ASYNC_REPLICATION_QUEUE_EXECUTOR));
+               }
                break;
             }
             case PERSISTENCE_EXECUTOR: {
@@ -1805,13 +1821,11 @@ public class Parser80 implements ConfigurationParser {
             break;
          }
          case QUEUE_SIZE: {
-            int queueSize = Integer.parseInt(value);
-            builder.clustering().async().useReplQueue(queueSize > 0);
-            builder.clustering().async().replQueueMaxElements(queueSize);
+            log.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
             break;
          }
          case QUEUE_FLUSH_INTERVAL: {
-            builder.clustering().async().replQueueInterval(Long.parseLong(value));
+            log.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
             break;
          }
          case REMOTE_TIMEOUT: {

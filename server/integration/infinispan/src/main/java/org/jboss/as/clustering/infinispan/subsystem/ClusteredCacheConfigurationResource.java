@@ -52,23 +52,6 @@ public class ClusteredCacheConfigurationResource extends CacheConfigurationResou
                     .setAlternatives(ModelKeys.CONFIGURATION)
                     .build();
 
-    static final SimpleAttributeDefinition QUEUE_FLUSH_INTERVAL =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.QUEUE_FLUSH_INTERVAL, ModelType.LONG, true)
-                    .setXmlName(Attribute.QUEUE_FLUSH_INTERVAL.getLocalName())
-                    .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(10))
-                    .build();
-
-    static final SimpleAttributeDefinition QUEUE_SIZE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.QUEUE_SIZE, ModelType.INT, true)
-                    .setXmlName(Attribute.QUEUE_SIZE.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(0))
-                    .build();
-
     static final SimpleAttributeDefinition REMOTE_TIMEOUT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_TIMEOUT, ModelType.LONG, true)
                     .setXmlName(Attribute.REMOTE_TIMEOUT.getLocalName())
@@ -78,7 +61,7 @@ public class ClusteredCacheConfigurationResource extends CacheConfigurationResou
                     .setDefaultValue(new ModelNode().set(15000))
                     .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = { MODE, QUEUE_SIZE, QUEUE_FLUSH_INTERVAL, REMOTE_TIMEOUT };
+    static final AttributeDefinition[] ATTRIBUTES = { MODE, REMOTE_TIMEOUT };
 
     public ClusteredCacheConfigurationResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheConfigurationAdd addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, addHandler, removeHandler, resolvePathHandler, runtimeRegistration);

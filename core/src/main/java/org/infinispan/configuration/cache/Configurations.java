@@ -18,7 +18,6 @@ public class Configurations {
    public static boolean isSecondPhaseAsync(Configuration cfg) {
       ClusteringConfiguration clusteringCfg = cfg.clustering();
       return !cfg.transaction().syncCommitPhase()
-            || clusteringCfg.async().useReplQueue()
             || !clusteringCfg.cacheMode().isSynchronous();
    }
 
