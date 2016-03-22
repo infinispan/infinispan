@@ -195,7 +195,6 @@
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
-      <checkstyle.config.location>${session.executionRootDirectory}/checkstyle/src/main/resources/checkstyle.xml</checkstyle.config.location>
 
       <bnd.consumer.policy>$&lt;range;[==,+)&gt;</bnd.consumer.policy>
       <bnd.provider.policy>$&lt;range;[==,=+)&gt;</bnd.provider.policy>
@@ -1375,7 +1374,7 @@
                    </dependency>
                 </dependencies>
                <configuration>
-                  <configLocation>${checkstyle.config.location}</configLocation>
+                  <configLocation>checkstyle.xml</configLocation>
                   <consoleOutput>true</consoleOutput>
                   <failsOnError>true</failsOnError>
                   <violationSeverity>error</violationSeverity>
