@@ -25,12 +25,19 @@ import org.infinispan.remoting.transport.Address;
  * return a result to task invoker.
  * <p>
  *
- *
  * Note that due to potential task migration to other nodes every {@link Callable},
  * {@link Runnable} and/or {@link DistributedCallable} submitted must be either {@link Serializable}
  * or {@link Externalizable}. Also the value returned from a callable must be {@link Serializable}
  * or {@link Externalizable}. Unfortunately if the value returned is not serializable then a
  * {@link NotSerializableException} will be thrown.
+ * <p>
+ *
+ * All {@link CompletableFuture} returned to the caller may be cancelled, however if interruption is desired,
+ * (ie. <b>mayInterruptIfRunning == true</b>), it will only be performed if done on the original
+ * <b>CompletableFuture</b> returned via one of the various submit methods.  Any chained
+ * futures from the original will only attempt to cancel the task result.  If interruption is needed and this task
+ * was found to be operating on a remote node it will send a cancellation command to the remote node in an attempt to
+ * stop it early using standard java {@link Thread#interrupt()} on the thread processing that task.
  *
  * @see DefaultExecutorService
  * @see DistributedCallable

@@ -981,10 +981,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-         if (!isCancelled()) {
+         if (!isCancelled() && super.cancel(true)) {
             CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
             rpc.invokeRemotely(Collections.singletonList(getExecutionTarget()), ccc, rpc.getDefaultRpcOptions(true));
-            return super.cancel(true);
+            return true;
          } else {
             //already cancelled
             return false;
@@ -1023,7 +1023,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       @Override
       public synchronized boolean cancel(boolean mayInterruptIfRunning) {
-         if (!isCancelled()) {
+         if (!isCancelled() && super.cancel(true)) {
             CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
             ccc.init(cancellationService);
             try {
@@ -1031,7 +1031,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             } catch (Throwable e) {
                log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
             }
-            return super.cancel(true);
+            return true;
          } else {
             //already cancelled
             return false;
