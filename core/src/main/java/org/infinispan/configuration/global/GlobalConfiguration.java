@@ -132,15 +132,6 @@ public class GlobalConfiguration {
       return null;
    }
 
-   /**
-    * @deprecated This method always returns null now.
-    * Look for a thread pool named as {@link #replicationQueueThreadPool()} instead.
-    */
-   @Deprecated
-   public ScheduledExecutorFactoryConfiguration replicationQueueScheduledExecutor() {
-      return null;
-   }
-
    public ThreadPoolConfiguration evictionThreadPool() {
       return evictionThreadPool;
    }
@@ -149,6 +140,10 @@ public class GlobalConfiguration {
       return listenerThreadPool;
    }
 
+   /**
+    * @deprecated Since 9.0, no longer used.
+    */
+   @Deprecated
    public ThreadPoolConfiguration replicationQueueThreadPool() {
       return replicationQueueThreadPool;
    }

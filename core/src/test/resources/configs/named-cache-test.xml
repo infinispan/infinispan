@@ -61,9 +61,6 @@
       <replicated-cache name="asyncRepl" mode="ASYNC" >
          <state-transfer enabled="false"/>
       </replicated-cache>
-      <replicated-cache name="asyncReplQueue" mode="ASYNC" queue-flush-interval="1234" queue-size="100">
-         <state-transfer enabled="false"/>
-      </replicated-cache>
       <replicated-cache name="txSyncRepl" mode="SYNC" remote-timeout="15000">
          <transaction mode="NON_XA" transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
          <state-transfer enabled="false"/>
@@ -110,7 +107,7 @@
          <eviction max-entries="5000"  thread-policy="PIGGYBACK" strategy="LRU"/>
          <expiration interval="500" lifespan="60000" max-idle="1000"/>
       </local-cache>
-      <replicated-cache name="withouthJmxEnabled" mode="ASYNC" queue-flush-interval="100" queue-size="200" statistics="false"/>
+      <replicated-cache name="withouthJmxEnabled" mode="ASYNC" statistics="false"/>
       <distributed-cache name="withDeadlockDetection" mode="SYNC" remote-timeout="20000" statistics="false" deadlock-detection-spin="1221" />
       <local-cache name="cacheWithCustomInterceptors">
          <custom-interceptors>

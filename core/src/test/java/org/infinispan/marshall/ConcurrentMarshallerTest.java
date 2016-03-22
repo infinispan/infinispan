@@ -29,7 +29,6 @@ public class ConcurrentMarshallerTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(
             CacheMode.REPL_ASYNC, false);
-      builder.clustering().async().useReplQueue(true);
       createClusteredCaches(2, "concurrentMarshaller", builder);
    }
 

@@ -72,8 +72,6 @@ public abstract class ClusteredCacheConfigurationAdd extends CacheConfigurationA
         final Mode mode = Mode.valueOf(ClusteredCacheConfigurationResource.MODE.resolveModelAttribute(context, cache).asString()) ;
 
         final long remoteTimeout = ClusteredCacheConfigurationResource.REMOTE_TIMEOUT.resolveModelAttribute(context, cache).asLong();
-        final int queueSize = ClusteredCacheConfigurationResource.QUEUE_SIZE.resolveModelAttribute(context, cache).asInt();
-        final long queueFlushInterval = ClusteredCacheConfigurationResource.QUEUE_FLUSH_INTERVAL.resolveModelAttribute(context, cache).asLong();
 
         // adjust the cache mode used based on the value of clustered attribute MODE
         CacheMode cacheMode = mode.apply(this.mode);
@@ -82,10 +80,6 @@ public abstract class ClusteredCacheConfigurationAdd extends CacheConfigurationA
         // process clustered cache attributes and elements
         if (cacheMode.isSynchronous()) {
             builder.clustering().sync().replTimeout(remoteTimeout);
-        } else {
-            builder.clustering().async().useReplQueue(queueSize > 0);
-            builder.clustering().async().replQueueMaxElements(queueSize);
-            builder.clustering().async().replQueueInterval(queueFlushInterval);
         }
     }
 }

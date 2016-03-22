@@ -177,6 +177,7 @@ public class ModelKeys {
     static final String PROPERTIES = "properties";
     static final String PROTOCOL_VERSION = "protocol-version";
     static final String PURGE = "purge";
+    @Deprecated
     static final String QUEUE_FLUSH_INTERVAL = "queue-flush-interval";
     static final String QUEUE_LENGTH = "queue-length";
     static final String QUEUE_SIZE = "queue-size";

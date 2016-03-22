@@ -1,15 +1,14 @@
 package org.infinispan.configuration.parsing;
 
-import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
-
 import javax.xml.XMLConstants;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
+
+import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -279,5 +278,4 @@ public final class ParseUtils {
    public static String[] getListAttributeValue(String value) {
       return value.split("\\s+");
    }
-
 }

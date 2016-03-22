@@ -1,14 +1,14 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
-
-import java.util.Arrays;
-
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Arrays;
+
+import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
 /**
  * Defines clustered characteristics of the cache.
  *
@@ -19,7 +19,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       ClusteringConfigurationChildBuilder, Builder<ClusteringConfiguration> {
    private static final Log log = LogFactory.getLog(ClusteringConfigurationBuilder.class, Log.class);
 
-   private final AsyncConfigurationBuilder asyncConfigurationBuilder;
    private final HashConfigurationBuilder hashConfigurationBuilder;
    private final L1ConfigurationBuilder l1ConfigurationBuilder;
    private final StateTransferConfigurationBuilder stateTransferConfigurationBuilder;
@@ -30,7 +29,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    ClusteringConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       this.attributes = ClusteringConfiguration.attributeDefinitionSet();
-      this.asyncConfigurationBuilder = new AsyncConfigurationBuilder(this);
       this.hashConfigurationBuilder = new HashConfigurationBuilder(this);
       this.l1ConfigurationBuilder = new L1ConfigurationBuilder(this);
       this.stateTransferConfigurationBuilder = new StateTransferConfigurationBuilder(this);
@@ -48,17 +46,6 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    public CacheMode cacheMode() {
       return attributes.attribute(CACHE_MODE).get();
-   }
-
-   /**
-    * Configure async sub element. Once this method is invoked users cannot subsequently invoke
-    * <code>configureSync()</code> as two are mutually exclusive
-    */
-   @Override
-   public AsyncConfigurationBuilder async() {
-      if (cacheMode().isSynchronous())
-         throw log.asyncPropertiesConfigOnSyncCache();
-      return asyncConfigurationBuilder;
    }
 
    /**
@@ -102,8 +89,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    @Override
    public
    void validate() {
-      for (Builder<?> validatable:
-            Arrays.asList(asyncConfigurationBuilder, hashConfigurationBuilder, l1ConfigurationBuilder,
+      for (Builder<?> validatable : Arrays.asList(hashConfigurationBuilder, l1ConfigurationBuilder,
                           syncConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
          validatable.validate();
       }
@@ -115,8 +101,8 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
          throw log.missingTransportConfiguration();
       }
 
-      for (ConfigurationChildBuilder validatable:
-         Arrays.asList(asyncConfigurationBuilder, hashConfigurationBuilder, l1ConfigurationBuilder,
+      for (ConfigurationChildBuilder validatable : Arrays
+            .asList(hashConfigurationBuilder, l1ConfigurationBuilder,
                        syncConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
          validatable.validate(globalConfig);
       }
@@ -125,14 +111,13 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    @Override
    public
    ClusteringConfiguration create() {
-      return new ClusteringConfiguration(attributes.protect(), asyncConfigurationBuilder.create(), hashConfigurationBuilder.create(),
+      return new ClusteringConfiguration(attributes.protect(), hashConfigurationBuilder.create(),
             l1ConfigurationBuilder.create(), stateTransferConfigurationBuilder.create(), syncConfigurationBuilder.create(), partitionHandlingConfigurationBuilder.create());
    }
 
    @Override
    public ClusteringConfigurationBuilder read(ClusteringConfiguration template) {
       attributes.read(template.attributes());
-      asyncConfigurationBuilder.read(template.async());
       hashConfigurationBuilder.read(template.hash());
       l1ConfigurationBuilder.read(template.l1());
       stateTransferConfigurationBuilder.read(template.stateTransfer());
@@ -144,11 +129,12 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public String toString() {
-      return "ClusteringConfigurationBuilder [asyncConfigurationBuilder=" + asyncConfigurationBuilder
-            + ", hashConfigurationBuilder=" + hashConfigurationBuilder + ", l1ConfigurationBuilder="
-            + l1ConfigurationBuilder + ", stateTransferConfigurationBuilder=" + stateTransferConfigurationBuilder
-            + ", syncConfigurationBuilder=" + syncConfigurationBuilder + ", partitionHandlingConfigurationBuilder="
-            + partitionHandlingConfigurationBuilder + ", attributes=" + attributes + "]";
+      return "ClusteringConfigurationBuilder [hashConfigurationBuilder=" + hashConfigurationBuilder +
+            ", l1ConfigurationBuilder=" + l1ConfigurationBuilder +
+            ", stateTransferConfigurationBuilder=" + stateTransferConfigurationBuilder +
+            ", syncConfigurationBuilder=" + syncConfigurationBuilder +
+            ", partitionHandlingConfigurationBuilder=" + partitionHandlingConfigurationBuilder +
+            ", attributes=" + attributes + "]";
    }
 
 }

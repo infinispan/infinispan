@@ -29,7 +29,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.jmx.annotations.Units;
-import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -65,18 +64,15 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
    private Configuration configuration;
-   private ReplicationQueue replicationQueue;
    private CommandsFactory cf;
    private StateTransferManager stateTransferManager;
    private TimeService timeService;
 
    @Inject
-   public void injectDependencies(Transport t, Configuration cfg,
-                                  ReplicationQueue replicationQueue, CommandsFactory cf,
+   public void injectDependencies(Transport t, Configuration cfg, CommandsFactory cf,
                                   StateTransferManager stateTransferManager, TimeService timeService) {
       this.t = t;
       this.configuration = cfg;
-      this.replicationQueue = replicationQueue;
       this.cf = cf;
       this.stateTransferManager = stateTransferManager;
       this.timeService = timeService;
@@ -109,25 +105,12 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       return pendingCH != null ? pendingCH.getMembers().toString() : "null";
    }
 
-   private boolean useReplicationQueue(boolean sync) {
-      return !sync && replicationQueue != null && replicationQueue.isEnabled();
-   }
-
    @Override
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpc,
                                                                         RpcOptions options) {
       if (trace) log.tracef("%s invoking %s to recipient list %s with options %s", t.getAddress(), rpc, recipients, options);
 
-      //skip replication queue option was added because when the ReplicationQueue invokes remotely, the command was
-      //added to the queue again. this way, we break the cycle
-      if (!options.skipReplicationQueue() && useReplicationQueue(options.responseMode().isSynchronous())) {
-         if (trace) {
-            log.tracef("Using replication queue for command [%s]", rpc);
-         }
-         replicationQueue.add(rpc);
-         return CompletableFutures.returnEmptyMap();
-      }
       if (!configuration.clustering().cacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
 

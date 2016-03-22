@@ -1,12 +1,5 @@
 package org.infinispan.server.test.cache.container;
 
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Scanner;
-
-import javax.management.ObjectName;
-
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -22,6 +15,12 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import javax.management.ObjectName;
+import java.util.Scanner;
+
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.junit.Assert.assertTrue;
 
 /**
  * - test start, default-cache, eviction-executor, listener-executor and replication-queue-executor attributes of cache-container element
@@ -100,9 +99,8 @@ public class CacheContainerIT {
                 String line = s.nextLine();
                 if (line.contains("Service \"jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ".default.config\"") && line.contains("dependencies:")) {
                     String dependencies = line.substring(line.indexOf("dependencies:"));
-                    if (dependencies.contains(executorPrefix + "test-infinispan-repl-queue")
-                            && dependencies.contains(executorPrefix + "test-infinispan-listener")
-                            && dependencies.contains(executorPrefix + "test-infinispan-eviction")) {
+                    if (dependencies.contains(executorPrefix + "test-infinispan-listener") &&
+                          dependencies.contains(executorPrefix + "test-infinispan-eviction")) {
                         b1 = true;
                     }
                 }

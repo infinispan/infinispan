@@ -22,22 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
-
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
-
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -54,6 +38,21 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
+
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * Infinispan subsystem parsing code.
@@ -654,26 +653,34 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
 
     private void parseClusteredCacheAttribute(XMLExtendedStreamReader reader, int index, Attribute attribute, String value, ModelNode cache) throws XMLStreamException {
         switch (attribute) {
-            case ASYNC_MARSHALLING: {
-                if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
-                    throw ParseUtils.unexpectedAttribute(reader, index);
-                } else {
-                    log.warn("The async-marshalling attribute has been deprecated and has no effect, please update your configuration file.");
-                    break;
-                }
-            }
+             case ASYNC_MARSHALLING: {
+                 if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
+                     throw ParseUtils.unexpectedAttribute(reader, index);
+                 } else {
+                     log.warn("The async-marshalling attribute has been deprecated and has no effect, please update your configuration file.");
+                     break;
+                 }
+             }
             case MODE: {
                 // note the use of ClusteredCacheAdd.MODE
                 ClusteredCacheConfigurationResource.MODE.parseAndSetParameter(value, cache, reader);
                 break;
             }
             case QUEUE_SIZE: {
-                ClusteredCacheConfigurationResource.QUEUE_SIZE.parseAndSetParameter(value, cache, reader);
-                break;
+                if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                    throw ParseUtils.unexpectedAttribute(reader, index);
+                } else {
+                    log.warn("The queue-size attribute has been deprecated and has no effect, please update your configuration file.");
+                    break;
+                }
             }
             case QUEUE_FLUSH_INTERVAL: {
-                ClusteredCacheConfigurationResource.QUEUE_FLUSH_INTERVAL.parseAndSetParameter(value, cache, reader);
-                break;
+                if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                    throw ParseUtils.unexpectedAttribute(reader, index);
+                } else {
+                    log.warn("The queue-flush-interval attribute has been deprecated and has no effect, please update your configuration file.");
+                    break;
+                }
             }
             case REMOTE_TIMEOUT: {
                 ClusteredCacheConfigurationResource.REMOTE_TIMEOUT.parseAndSetParameter(value, cache, reader);

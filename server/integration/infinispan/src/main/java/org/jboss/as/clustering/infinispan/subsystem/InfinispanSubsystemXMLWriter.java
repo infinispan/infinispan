@@ -262,8 +262,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
     private void processCommonClusteredCacheAttributes(XMLExtendedStreamWriter writer, ModelNode cache)
             throws XMLStreamException {
         this.writeOptional(writer, Attribute.MODE, cache, ModelKeys.MODE);
-        this.writeOptional(writer, Attribute.QUEUE_SIZE, cache, ModelKeys.QUEUE_SIZE);
-        this.writeOptional(writer, Attribute.QUEUE_FLUSH_INTERVAL, cache, ModelKeys.QUEUE_FLUSH_INTERVAL);
         this.writeOptional(writer, Attribute.REMOTE_TIMEOUT, cache, ModelKeys.REMOTE_TIMEOUT);
     }
 
