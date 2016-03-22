@@ -1482,7 +1482,7 @@ public class Parser72 implements ConfigurationParser {
             break;
          }
          case REMOTE_TIMEOUT: {
-            builder.clustering().sync().replTimeout(Long.parseLong(value));
+            builder.clustering().remoteTimeout(Long.parseLong(value));
             break;
          }
          default: {

@@ -79,7 +79,7 @@ public abstract class ClusteredCacheConfigurationAdd extends CacheConfigurationA
 
         // process clustered cache attributes and elements
         if (cacheMode.isSynchronous()) {
-            builder.clustering().sync().replTimeout(remoteTimeout);
+            builder.clustering().remoteTimeout(remoteTimeout);
         }
     }
 }

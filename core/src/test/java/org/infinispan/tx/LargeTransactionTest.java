@@ -27,7 +27,7 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.REPL_SYNC)
-            .sync().replTimeout(30000)
+            .remoteTimeout(30000)
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
             .syncCommitPhase(true).syncRollbackPhase(true)
             .invocationBatching().enable()

@@ -7,8 +7,11 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
+import static org.infinispan.configuration.cache.ClusteringConfiguration.REMOTE_TIMEOUT;
+
 /**
  * Defines clustered characteristics of the cache.
  *
@@ -47,6 +50,24 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    public CacheMode cacheMode() {
       return attributes.attribute(CACHE_MODE).get();
    }
+
+   /**
+    * This is the timeout used to wait for an acknowledgment when making a remote call, after which
+    * the call is aborted and an exception is thrown.
+    */
+   public ClusteringConfigurationBuilder remoteTimeout(long l) {
+      syncConfigurationBuilder.replTimeout(l);
+      return this;
+   }
+
+   /**
+    * This is the timeout used to wait for an acknowledgment when making a remote call, after which
+    * the call is aborted and an exception is thrown.
+    */
+   public ClusteringConfigurationBuilder remoteTimeout(long l, TimeUnit unit) {
+      return remoteTimeout(unit.toMillis(l));
+   }
+
 
    /**
     * Configure hash sub element

@@ -45,7 +45,7 @@ public class CommitTimeoutTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      builder.clustering().sync().replTimeout(2000);
+      builder.clustering().remoteTimeout(2000);
       builder.clustering().hash().numSegments(1).consistentHashFactory(consistentHashFactory);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
 

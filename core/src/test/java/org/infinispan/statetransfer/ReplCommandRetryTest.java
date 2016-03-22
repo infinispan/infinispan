@@ -58,7 +58,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       // The coordinator will always be the primary owner
       configurationBuilder.clustering().hash().numSegments(1)
             .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
-      configurationBuilder.clustering().sync().replTimeout(15000);
+      configurationBuilder.clustering().remoteTimeout(15000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       if (commandToBlock == LockControlCommand.class && !isOriginator) {
          configurationBuilder.customInterceptors().addInterceptor()

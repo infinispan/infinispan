@@ -30,7 +30,7 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering()
             .cacheMode(CacheMode.DIST_SYNC)
-            .sync().replTimeout(60000)
+            .remoteTimeout(60000)
             .stateTransfer().timeout(180000).fetchInMemoryState(true)
             .hash().numOwners(1);
 

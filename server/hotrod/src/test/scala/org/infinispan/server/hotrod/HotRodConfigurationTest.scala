@@ -28,7 +28,7 @@ class HotRodConfigurationTest {
       builder.topologyLockTimeout(26000).topologyReplTimeout(31000)
       withClusteredServer(builder) { (cfg, distSyncTimeout) =>
          assertEquals(cfg.locking().lockAcquisitionTimeout(), 26000)
-         assertEquals(cfg.clustering().sync().replTimeout(), 31000)
+         assertEquals(cfg.clustering().remoteTimeout(), 31000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
          assertEquals(cfg.clustering().stateTransfer().timeout(), 31000 + distSyncTimeout)
          assertTrue(cfg.persistence().stores().isEmpty)
@@ -39,7 +39,7 @@ class HotRodConfigurationTest {
       val builder = new HotRodServerConfigurationBuilder
       builder.topologyStateTransfer(false).topologyReplTimeout(43000)
       withClusteredServer(builder) { (cfg, distSyncTimeout) =>
-         assertEquals(cfg.clustering().sync().replTimeout(), 43000)
+         assertEquals(cfg.clustering().remoteTimeout(), 43000)
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState())
          val clcfg = cfg.persistence().stores().get(0).asInstanceOf[ClusterLoaderConfiguration]
          assertNotNull(clcfg)

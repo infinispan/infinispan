@@ -34,7 +34,7 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
       numOwners = 3;
       config
             .locking().lockAcquisitionTimeout(LOCK_TIMEOUT)
-            .clustering().sync().replTimeout(REPL_TIMEOUT)
+            .clustering().remoteTimeout(REPL_TIMEOUT)
             .clustering().hash().numOwners(numOwners)
             .transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
             .transaction().completedTxTimeout(3600000);

@@ -51,7 +51,7 @@ public class PutMapCommandStressTest extends MultipleCacheManagersTest {
       builderUsed.clustering().hash().numOwners(NUM_OWNERS);
       builderUsed.clustering().stateTransfer().chunkSize(25000);
       // This is increased just for the put all command when doing full tracing
-      builderUsed.clustering().sync().replTimeout(12000);
+      builderUsed.clustering().remoteTimeout(12000);
       configure(builderUsed);
       createClusteredCaches(CACHE_COUNT, CACHE_NAME, builderUsed);
    }

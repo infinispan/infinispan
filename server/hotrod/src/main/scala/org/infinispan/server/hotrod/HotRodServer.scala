@@ -177,7 +177,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
       val builder = new ConfigurationBuilder
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC).sync().replTimeout(configuration.topologyReplTimeout)
+      builder.clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(configuration.topologyReplTimeout)
              .locking().lockAcquisitionTimeout(configuration.topologyLockTimeout)
              .eviction().strategy(EvictionStrategy.NONE)
              .expiration().lifespan(-1).maxIdle(-1)

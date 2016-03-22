@@ -36,12 +36,11 @@ public class IndexStoredIndexedCacheTest extends MultipleCacheManagersTest {
       configurationBuilder
          .clustering()
          .cacheMode(CacheMode.DIST_SYNC)
+         .remoteTimeout(10000)
          .stateTransfer()
             .fetchInMemoryState(true)
          .l1()
             .enable()
-         .sync()
-            .replTimeout(10000)
       .transaction()
          .transactionMode(TransactionMode.TRANSACTIONAL)
       .locking()

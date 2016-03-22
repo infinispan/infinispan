@@ -50,7 +50,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
             .concurrencyLevel(5000) // lowering this to 50 makes the test pass also on 5.2 but it's just a temporary workaround
             .useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED)
             .dataContainer().storeAsBinary()
-            .clustering().sync().replTimeout(20000)
+            .clustering().remoteTimeout(20000)
             .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(10000)
             .persistence().passivation(false).addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath()).shared(false).preload(false)
             .fetchPersistentState(true)

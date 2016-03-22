@@ -38,7 +38,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
          // tests repeatedly queries changes
          configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       }
-      configuration.clustering().sync().replTimeout(3, TimeUnit.SECONDS);
+      configuration.clustering().remoteTimeout(3, TimeUnit.SECONDS);
       configuration.clustering().hash().numOwners(1);
       configuration.locking().lockAcquisitionTimeout(45, TimeUnit.SECONDS);
       caches = createClusteredCaches(2, cacheName, configuration);

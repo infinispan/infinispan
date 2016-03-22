@@ -89,7 +89,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
             configuration.transaction().use1PcForAutoCommitTransactions(true);
          }
       }
-      if (sync) configuration.clustering().sync().replTimeout(60, TimeUnit.SECONDS);
+      if (sync) configuration.clustering().remoteTimeout(60, TimeUnit.SECONDS);
       configuration.locking().lockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
       configuration.clustering().l1().enabled(l1CacheEnabled);
       if (groupsEnabled) {

@@ -114,7 +114,7 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
       dcc.clustering().hash()
             .numOwners(1)
             .numSegments(60);
-      dcc.clustering().sync().replTimeout(1, TimeUnit.SECONDS);
+      dcc.clustering().remoteTimeout(1, TimeUnit.SECONDS);
       dcc.versioning()
             .enable()
             .scheme(VersioningScheme.SIMPLE);

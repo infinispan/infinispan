@@ -62,7 +62,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true, true);
       configurationBuilder.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      configurationBuilder.clustering().sync().replTimeout(30000, TimeUnit.MILLISECONDS);
+      configurationBuilder.clustering().remoteTimeout(30000, TimeUnit.MILLISECONDS);
       configurationBuilder.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(1000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       ControlledConsistentHashFactory consistentHashFactory =
