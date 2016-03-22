@@ -94,12 +94,10 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
    }
 
    private boolean getWriteFileListAsync(Properties properties) {
-      boolean backendConfiguredAsync = !BackendFactory.isConfiguredAsSync(properties);
-
       return ConfigurationParseHelper.getBooleanValue(
             properties,
             InfinispanIntegration.WRITE_METADATA_ASYNC,
-            backendConfiguredAsync
+            false
       );
    }
 
