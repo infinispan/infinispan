@@ -525,15 +525,15 @@ public class QueryEngine {
       BooleShannonExpansion.IndexedFieldProvider indexedFieldProvider = getIndexedFieldProvider(parsingResult);
 
       boolean allProjectionsAreStored = true;
-      LinkedHashMap<String, List<Integer>> projectionsMap = null;
+      LinkedHashMap<PropertyPath, List<Integer>> projectionsMap = null;
       if (parsingResult.getProjectedPaths() != null) {
-         projectionsMap = new LinkedHashMap<String, List<Integer>>();
+         projectionsMap = new LinkedHashMap<PropertyPath, List<Integer>>();
          for (int i = 0; i < parsingResult.getProjectedPaths().length; i++) {
             PropertyPath p = parsingResult.getProjectedPaths()[i];
-            List<Integer> idx = projectionsMap.get(p.asStringPath());
+            List<Integer> idx = projectionsMap.get(p);
             if (idx == null) {
                idx = new ArrayList<Integer>();
-               projectionsMap.put(p.asStringPath(), idx);
+               projectionsMap.put(p, idx);
                if (!indexedFieldProvider.isStored(p.getPath())) {
                   allProjectionsAreStored = false;
                }
@@ -584,22 +584,20 @@ public class QueryEngine {
                         j++;
                      }
 
-                     rowProcessor = new RowProcessor() {
-
-                        final RowProcessor delegate = makeProjectionProcessor(projectedTypes);
-
-                        @Override
-                        public Object[] process(Object[] inRow) {
-                           if (delegate != null) {
-                              inRow = delegate.process(inRow);
-                           }
-                           Object[] outRow = new Object[map.length];
-                           for (int i = 0; i < map.length; i++) {
-                              outRow[i] = inRow[map[i]];
-                           }
-                           return outRow;
+                     RowProcessor projectionProcessor = makeProjectionProcessor(projectedTypes);
+                     rowProcessor = inRow -> {
+                        if (projectionProcessor != null) {
+                           inRow = projectionProcessor.process(inRow);
                         }
+                        Object[] outRow = new Object[map.length];
+                        for (int i = 0; i < map.length; i++) {
+                           outRow[i] = inRow[map[i]];
+                        }
+                        return outRow;
                      };
+                     PropertyPath[] deduplicated = projectionsMap.keySet().toArray(new PropertyPath[projectionsMap.size()]);
+                     jpqlString = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), deduplicated, normalizedWhereClause, sortFields);
+                     return new EmbeddedLuceneQuery(this, queryFactory, jpqlString, namedParameters, parsingResult.getProjections(), makeResultProcessor(rowProcessor), startOffset, maxResults);
                   } else {
                      rowProcessor = makeProjectionProcessor(parsingResult.getProjectedTypes());
                   }
