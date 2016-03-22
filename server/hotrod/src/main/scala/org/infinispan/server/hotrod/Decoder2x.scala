@@ -41,7 +41,6 @@ import java.util.{BitSet => JavaBitSet}
 import java.util.HashSet
 import java.util.HashMap
 import org.infinispan.tasks.TaskManager
-import java.util.Optional
 import org.infinispan.tasks.TaskContext
 
 /**
