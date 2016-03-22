@@ -56,16 +56,6 @@ public class AsyncMetadataConfigurationTest {
    @BMRule(targetClass = "org.infinispan.lucene.impl.DirectoryBuilderImpl",
          targetMethod = "create",
          helper = "org.hibernate.search.testsupport.BytemanHelper",
-         action = "assertBooleanValue($0.writeFileListAsync, true); countInvocation();",
-         name = "verifyAsyncMetadataEnabledByDefaultForAsyncBackend")
-   public void verifyAsyncMetadataOptionEnabledByDefaultForAsyncBackend() throws Exception {
-      buildSearchFactoryWithAsyncOption(true, null);
-   }
-
-   @Test
-   @BMRule(targetClass = "org.infinispan.lucene.impl.DirectoryBuilderImpl",
-         targetMethod = "create",
-         helper = "org.hibernate.search.testsupport.BytemanHelper",
          action = "assertBooleanValue($0.writeFileListAsync, false); countInvocation();",
          name = "verifyAsyncMetadataOptionExplicitlyDisabledForAsyncBackend")
    public void verifyAsyncMetadataOptionExplicitlyDisabledForAsyncBackend() throws Exception {
