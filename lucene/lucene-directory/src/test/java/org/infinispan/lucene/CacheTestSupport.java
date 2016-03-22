@@ -53,12 +53,11 @@ public abstract class CacheTestSupport {
       builder
             .clustering()
                .cacheMode(CacheMode.DIST_SYNC)
+               .remoteTimeout(10000)
                .stateTransfer()
                   .fetchInMemoryState(true)
                .l1()
                   .enable()
-               .sync()
-                  .replTimeout(10000)
             .transaction()
                .transactionMode(transactionMode)
             .locking()

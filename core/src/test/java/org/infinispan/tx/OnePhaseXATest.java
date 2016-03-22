@@ -60,7 +60,7 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
 
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.REPL_SYNC)
-            .sync().replTimeout(30000)
+            .remoteTimeout(30000)
             .transaction().invocationBatching().enable()
             .transaction().syncCommitPhase(true)
             .locking().lockAcquisitionTimeout(60000).useLockStriping(false);

@@ -366,7 +366,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder) {
-      return new RpcOptionsBuilder(configuration.clustering().sync().replTimeout(), TimeUnit.MILLISECONDS, responseMode, deliverOrder);
+      return new RpcOptionsBuilder(configuration.clustering().remoteTimeout(), TimeUnit.MILLISECONDS, responseMode, deliverOrder);
    }
 
    @Override

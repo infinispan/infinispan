@@ -42,7 +42,7 @@ public abstract class BaseStateTransferInterceptor extends CommandInterceptor {
       this.stateTransferLock = stateTransferLock;
       this.stateTransferManager = stateTransferManager;
       this.groupManager = groupManager;
-      transactionDataTimeout = configuration.clustering().sync().replTimeout();
+      transactionDataTimeout = configuration.clustering().remoteTimeout();
    }
 
    @Override

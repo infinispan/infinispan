@@ -105,7 +105,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Start
    public void start() {
       l1Lifespan = config.clustering().l1().lifespan();
-      replicationTimeout = config.clustering().sync().replTimeout();
+      replicationTimeout = config.clustering().remoteTimeout();
    }
 
    @Override

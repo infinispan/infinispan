@@ -53,7 +53,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
    private ConfigurationBuilder buildConfig(boolean transactional, boolean onePhase, Class<?> commandToBlock) {
       CacheMode mode = (transactional && !onePhase) ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC;
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(mode, transactional);
-      if (mode.isSynchronous()) configurationBuilder.clustering().sync().replTimeout(15000);
+      if (mode.isSynchronous()) configurationBuilder.clustering().remoteTimeout(15000);
       // The coordinator will always be the primary owner
       configurationBuilder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);

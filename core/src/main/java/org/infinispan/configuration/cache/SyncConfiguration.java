@@ -10,37 +10,50 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * If configured all communications are synchronous, in that whenever a thread sends a message sent
  * over the wire, it blocks until it receives an acknowledgment from the recipient. SyncConfig is
  * mutually exclusive with the AsyncConfig.
+ *
+ * @deprecated Since 9.0, the {@code replTimeout} attribute is now {@code ClusteringConfiguration.remoteTimeout}.
  */
+@Deprecated
 public class SyncConfiguration {
 
+   /**
+    * @deprecated Since 9.0, replaced with {@link ClusteringConfiguration#REMOTE_TIMEOUT}
+    */
+   @Deprecated
    public static final AttributeDefinition<Long> REPL_TIMEOUT = AttributeDefinition.builder("replTimeout", TimeUnit.SECONDS.toMillis(15)).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SyncConfiguration.class.getSimpleName(), REPL_TIMEOUT);
+      return new AttributeSet(SyncConfiguration.class.getSimpleName(), ClusteringConfiguration.REMOTE_TIMEOUT);
    }
 
-   private final Attribute<Long> replTimeout;
+   private final Attribute<Long> remoteTimeout;
    private final AttributeSet attributes;
 
    SyncConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-      replTimeout = attributes.attribute(REPL_TIMEOUT);
+      remoteTimeout = attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
    }
 
    /**
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
+    *
+    * @deprecated Since 9.0, please use {@link ClusteringConfiguration#replTimeout()} instead.
     */
+   @Deprecated
    public long replTimeout() {
-      return replTimeout.get();
+      return remoteTimeout.get();
    }
 
    /**
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
+    *
+    * @deprecated Since 9.0, please use {@link ClusteringConfiguration#replTimeout(long)} instead.
     */
+   @Deprecated
    public SyncConfiguration replTimeout(long l) {
-      replTimeout.set(l);
+      remoteTimeout.set(l);
       return this;
    }
 

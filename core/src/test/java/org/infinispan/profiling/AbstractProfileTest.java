@@ -45,7 +45,7 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getBaseCfg();
       cfg
          .locking().lockAcquisitionTimeout(60000)
-         .clustering().cacheMode(mode).sync().replTimeout(60000).stateTransfer().fetchInMemoryState(false);
+         .clustering().cacheMode(mode).remoteTimeout(60000).stateTransfer().fetchInMemoryState(false);
       if (mode.isDistributed()) {
          cfg.clustering().l1().enabled(l1).lifespan(120000);
       }

@@ -455,7 +455,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
    public void testBasicTargetLocalDistributedCallableWithoutAnyTimeout() throws Exception {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      config.clustering().cacheMode(CacheMode.REPL_SYNC).sync().replTimeout(0L);
+      config.clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(0L);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(config);
 
@@ -481,7 +481,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
    public void testBasicTargetRemoteDistributedCallableWithoutAnyTimeout() throws Exception {
       ConfigurationBuilder confBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      confBuilder.clustering().sync().replTimeout(0L);
+      confBuilder.clustering().remoteTimeout(0L);
 
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(confBuilder);
       EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(confBuilder);

@@ -68,7 +68,7 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
       builderUsed.clustering().hash().numOwners(3);
       builderUsed.clustering().stateTransfer().chunkSize(25000);
       // This is increased just for the put all command when doing full tracing
-      builderUsed.clustering().sync().replTimeout(12000000);
+      builderUsed.clustering().remoteTimeout(12000000);
       // This way if an iterator gets stuck we know earlier
       builderUsed.clustering().stateTransfer().timeout(240, TimeUnit.SECONDS);
       createClusteredCaches(CACHE_COUNT, CACHE_NAME, builderUsed);

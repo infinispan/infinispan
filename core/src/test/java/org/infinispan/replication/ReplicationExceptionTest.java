@@ -119,8 +119,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
          }
       }, 0);
 
-      cache1.getCacheConfiguration().clustering().sync().replTimeout(10);
-      cache2.getCacheConfiguration().clustering().sync().replTimeout(10);
+      cache1.getCacheConfiguration().clustering().remoteTimeout(10);
+      cache2.getCacheConfiguration().clustering().remoteTimeout(10);
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 
       cache1.put("k", "v");

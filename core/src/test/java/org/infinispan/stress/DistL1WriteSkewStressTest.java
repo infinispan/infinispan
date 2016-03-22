@@ -16,6 +16,6 @@ public class DistL1WriteSkewStressTest extends DistWriteSkewStressTest {
    protected void decorate(ConfigurationBuilder builder) {
       // Enable L1
       builder.clustering().l1().enable();
-      builder.clustering().sync().replTimeout(100, TimeUnit.MINUTES);
+      builder.clustering().remoteTimeout(100, TimeUnit.MINUTES);
    }
 }

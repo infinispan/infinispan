@@ -55,7 +55,7 @@ public class GetAllCommandStressTest extends MultipleCacheManagersTest {
       // Uncomment this line to make it transactional
 //      builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       // This is increased just for the put all command when doing full tracing
-      builderUsed.clustering().sync().replTimeout(12000);
+      builderUsed.clustering().remoteTimeout(12000);
       createClusteredCaches(CACHE_COUNT, CACHE_NAME, builderUsed);
    }
 

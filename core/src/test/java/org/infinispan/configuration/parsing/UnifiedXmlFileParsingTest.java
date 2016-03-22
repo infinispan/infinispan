@@ -325,7 +325,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(c.invocationBatching().enabled());
       assertEquals(1200000, c.clustering().l1().lifespan());
       assertEquals(4, c.clustering().hash().numOwners());
-      assertEquals(35000, c.clustering().sync().replTimeout());
+      assertEquals(35000, c.clustering().remoteTimeout());
       assertEquals(2, c.clustering().hash().numSegments());
       assertTrue(c.clustering().hash().consistentHashFactory() instanceof SyncConsistentHashFactory);
       assertTrue(c.clustering().partitionHandling().enabled());

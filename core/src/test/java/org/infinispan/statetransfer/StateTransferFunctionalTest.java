@@ -64,7 +64,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
             .lockingMode(LockingMode.PESSIMISTIC)
             .useSynchronization(false)
             .recovery().disable();
-      configurationBuilder.clustering().sync().replTimeout(30000);
+      configurationBuilder.clustering().remoteTimeout(30000);
       configurationBuilder.clustering().stateTransfer().chunkSize(20);
       configurationBuilder.locking().useLockStriping(false); // reduces the odd chance of a key collision and deadlock
    }

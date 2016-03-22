@@ -73,7 +73,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
       // This impl only really sets up a configuration for use later.
       configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      configurationBuilder.clustering().sync().replTimeout(30000);
+      configurationBuilder.clustering().remoteTimeout(30000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       configurationBuilder.locking().useLockStriping(false); // reduces the odd chance of a key collision and deadlock
    }

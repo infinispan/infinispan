@@ -56,7 +56,7 @@ public class ParserOverrideTest extends AbstractInfinispanTest {
             // These are all overridden values
             Assert.assertEquals(c.clustering().cacheMode(), CacheMode.REPL_SYNC);
             Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
-            Assert.assertEquals(c.clustering().sync().replTimeout(), 30000);
+            Assert.assertEquals(c.clustering().remoteTimeout(), 30000);
             Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
             Assert.assertEquals(c.locking().concurrencyLevel(), 30);
             Assert.assertEquals(c.locking().lockAcquisitionTimeout(), 25000);
@@ -104,7 +104,7 @@ public class ParserOverrideTest extends AbstractInfinispanTest {
             // These are all overridden values
             Assert.assertEquals(c.clustering().cacheMode(), CacheMode.REPL_SYNC);
             Assert.assertEquals(c.clustering().stateTransfer().fetchInMemoryState(), true);
-            Assert.assertEquals(c.clustering().sync().replTimeout(), 30000);
+            Assert.assertEquals(c.clustering().remoteTimeout(), 30000);
             Assert.assertEquals(c.locking().isolationLevel(), IsolationLevel.READ_COMMITTED);
             Assert.assertEquals(c.locking().concurrencyLevel(), 30);
             Assert.assertEquals(c.locking().lockAcquisitionTimeout(), 25000);

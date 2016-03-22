@@ -33,7 +33,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC)
-            .sync().replTimeout(5000)
+            .remoteTimeout(5000)
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL).cacheStopTimeout(100);
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cb);
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cb);

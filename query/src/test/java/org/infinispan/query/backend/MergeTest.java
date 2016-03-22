@@ -53,7 +53,7 @@ public class MergeTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, TX_ENABLED);
-      cacheCfg.clustering().sync().replTimeout(120000)
+      cacheCfg.clustering().remoteTimeout(120000)
             .indexing().index(Index.LOCAL)
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")

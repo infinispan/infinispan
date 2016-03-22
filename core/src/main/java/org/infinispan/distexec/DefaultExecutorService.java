@@ -193,7 +193,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    @Override
    public <T> DistributedTaskBuilder<T> createDistributedTaskBuilder(Callable<T> callable) {
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
-      long to = cacheConfiguration.clustering().sync().replTimeout();
+      long to = cacheConfiguration.clustering().remoteTimeout();
       DistributedTaskBuilder<T> dtb = new DefaultDistributedTaskBuilder<T>(to);
       dtb.callable(callable);
       return dtb;

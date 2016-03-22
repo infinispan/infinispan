@@ -63,7 +63,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CACHE_MODE, TX_ENABLED);
-      cacheCfg.clustering().sync().replTimeout(120000)
+      cacheCfg.clustering().remoteTimeout(120000)
             .indexing().index(Index.LOCAL)
             .addIndexedEntity(Transaction.class)
             .addProperty("default.directory_provider", DIRECTORY_PROVIDER.toString())

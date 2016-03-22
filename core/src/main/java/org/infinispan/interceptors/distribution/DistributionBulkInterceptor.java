@@ -193,7 +193,7 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
    }
 
    private static <C> CacheStream<C> applyTimeOut(CacheStream<C> stream, Cache<?, ?> cache) {
-      return stream.timeout(cache.getCacheConfiguration().clustering().sync().replTimeout(),
+      return stream.timeout(cache.getCacheConfiguration().clustering().remoteTimeout(),
               TimeUnit.MILLISECONDS);
    }
 
