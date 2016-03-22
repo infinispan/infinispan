@@ -307,10 +307,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    override def stop: Unit = {
       if (viewChangeListener != null) {
-         cacheManager.removeListener(viewChangeListener)
+         SecurityActions.removeListener(cacheManager, viewChangeListener)
       }
       if (topologyChangeListener != null) {
-         addressCache.removeListener(topologyChangeListener)
+         SecurityActions.removeListener(addressCache, topologyChangeListener)
       }
       if (distributedExecutorService != null) {
          distributedExecutorService.shutdownNow()

@@ -9,6 +9,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAction;
@@ -17,6 +18,7 @@ import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheRpcManagerAction;
+import org.infinispan.security.actions.RemoveListenerAction;
 
 /**
  * SecurityActions for the org.infinispan.server.hotrod package.
@@ -64,6 +66,11 @@ final class SecurityActions {
 
    static GlobalComponentRegistry getCacheGlobalComponentRegistry(final AdvancedCache<?, ?> cache) {
       GetCacheGlobalComponentRegistryAction action = new GetCacheGlobalComponentRegistryAction(cache);
+      return doPrivileged(action);
+   }
+
+   static Void removeListener(Listenable listenable, Object listener) {
+      RemoveListenerAction action = new RemoveListenerAction(listenable, listener);
       return doPrivileged(action);
    }
 }
