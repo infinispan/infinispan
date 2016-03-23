@@ -430,37 +430,39 @@ class Server(configuration: RestServerConfiguration, manager: RestCacheManager) 
    @Path("/{cacheName}/{cacheKey}")
    def removeEntry[V](@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean,
          @PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
-      manager.getInternalEntry(cacheName, key) match {
-         case ice: InternalCacheEntry[String, V] => {
-            val lastMod = lastModified(ice)
-            ice.getMetadata match {
-               case meta: MimeMetadata =>
-                  // The item exists in the cache, evaluate preconditions based on its attributes and the headers
-                  val etag = calcETAG(ice, meta)
-                  request.evaluatePreconditions(lastMod, etag) match {
-                     // One of the preconditions failed, build a response
-                     case bldr: ResponseBuilder => bldr.build
-                     // Preconditions passed
-                     case _ => {
-                        if (useAsync) {
-                           manager.getCache(cacheName).removeAsync(key)
-                        } else {
-                           manager.getCache(cacheName).remove(key)
+      protectCacheNotFound(request, useAsync) { (request, useAsync) =>
+         manager.getInternalEntry(cacheName, key) match {
+            case ice: InternalCacheEntry[String, V] => {
+               val lastMod = lastModified(ice)
+               ice.getMetadata match {
+                  case meta: MimeMetadata =>
+                     // The item exists in the cache, evaluate preconditions based on its attributes and the headers
+                     val etag = calcETAG(ice, meta)
+                     request.evaluatePreconditions(lastMod, etag) match {
+                        // One of the preconditions failed, build a response
+                        case bldr: ResponseBuilder => bldr.build
+                        // Preconditions passed
+                        case _ => {
+                           if (useAsync) {
+                              manager.getCache(cacheName).removeAsync(key)
+                           } else {
+                              manager.getCache(cacheName).remove(key)
+                           }
+                           Response.ok.build
                         }
-                        Response.ok.build
                      }
-                  }
-               case _ =>
-                  if (useAsync) {
-                     manager.getCache(cacheName).removeAsync(key)
-                  } else {
-                     manager.getCache(cacheName).remove(key)
-                  }
-                  Response.ok.build
+                  case _ =>
+                     if (useAsync) {
+                        manager.getCache(cacheName).removeAsync(key)
+                     } else {
+                        manager.getCache(cacheName).remove(key)
+                     }
+                     Response.ok.build
 
+               }
             }
+            case null => Response.status(Status.NOT_FOUND).build
          }
-         case null => Response.status(Status.NOT_FOUND).build
       }
    }
 
