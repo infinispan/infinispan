@@ -71,10 +71,7 @@ final class EmbeddedLuceneQuery extends BaseQuery {
       List<Object> list = createCacheQuery().list();
       if (resultProcessor != null) {
          results = new ArrayList<>(list.size());
-         for (Object r : list) {
-            Object o = resultProcessor.process(r);
-            results.add(o);
-         }
+         list.forEach(r -> results.add(resultProcessor.process(r)));
       } else {
          results = list;
       }

@@ -47,26 +47,31 @@ public final class RemoteQuery extends BaseQuery {
    @Override
    @SuppressWarnings("unchecked")
    public <T> List<T> list() {
-      if (results == null) {
-         results = executeQuery();
-      }
-
+      executeQuery();
       return (List<T>) results;
    }
 
-   private List<Object> executeQuery() {
-      checkParameters();
+   @Override
+   public int getResultSize() {
+      executeQuery();
+      return totalResults;
+   }
 
-      QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
-      QueryResponse response = op.execute();
-      totalResults = (int) response.getTotalResults();
-      return unwrapResults(response.getProjectionSize(), response.getResults());
+   private void executeQuery() {
+      if (results == null) {
+         checkParameters();
+
+         QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
+         QueryResponse response = op.execute();
+         totalResults = (int) response.getTotalResults();
+         results = unwrapResults(response.getProjectionSize(), response.getResults());
+      }
    }
 
    private List<Object> unwrapResults(int projectionSize, List<WrappedMessage> results) {
       List<Object> unwrappedResults;
       if (projectionSize > 0) {
-         unwrappedResults = new ArrayList<Object>(results.size() / projectionSize);
+         unwrappedResults = new ArrayList<>(results.size() / projectionSize);
          Iterator<WrappedMessage> it = results.iterator();
          while (it.hasNext()) {
             Object[] row = new Object[projectionSize];
@@ -76,13 +81,12 @@ public final class RemoteQuery extends BaseQuery {
             unwrappedResults.add(row);
          }
       } else {
-         unwrappedResults = new ArrayList<Object>(results.size());
+         unwrappedResults = new ArrayList<>(results.size());
          for (WrappedMessage r : results) {
             Object o = r.getValue();
             if (o instanceof byte[]) {
                try {
-                  byte[] bytes = (byte[]) r.getValue();
-                  o = ProtobufUtil.fromWrappedByteArray(serializationContext, bytes);
+                  o = ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) o);
                } catch (IOException e) {
                   throw new HotRodClientException(e);
                }
@@ -101,12 +105,6 @@ public final class RemoteQuery extends BaseQuery {
             }
          }
       }
-   }
-
-   @Override
-   public int getResultSize() {
-      list();
-      return totalResults;
    }
 
    public SerializationContext getSerializationContext() {
