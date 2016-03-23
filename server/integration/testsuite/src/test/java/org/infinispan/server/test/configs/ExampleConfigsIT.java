@@ -577,12 +577,10 @@ public class ExampleConfigsIT {
         delete(fullPathKey(KEY_A));
         delete(fullPathKey(KEY_B));
         delete(fullPathKey(KEY_C));
-        delete(fullPathKey(NAMED_CACHE_NAME, KEY_A));
 
         head(fullPathKey(KEY_A), HttpServletResponse.SC_NOT_FOUND);
         head(fullPathKey(KEY_B), HttpServletResponse.SC_NOT_FOUND);
         head(fullPathKey(KEY_C), HttpServletResponse.SC_NOT_FOUND);
-        head(fullPathKey(NAMED_CACHE_NAME, KEY_A), HttpServletResponse.SC_NOT_FOUND);
     }
 
     private void addServer(RemoteInfinispanServer server) {
