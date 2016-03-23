@@ -75,7 +75,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false, description = "To be fixed by ISPN-5530")
     public void distributedCacheTest() throws Exception {
 
         List<HashSet<Integer>> sets = new ArrayList<>();
