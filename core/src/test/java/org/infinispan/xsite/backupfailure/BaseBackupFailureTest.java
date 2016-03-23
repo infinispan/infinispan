@@ -59,7 +59,7 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
          prepareFailed = false;
          putFailed = false;
          removeFailed = false;
-         removeFailed = false;
+         replaceFailed = false;
          clearFailed = false;
          putMapFailed = false;
          dontFailPrepare = false;
