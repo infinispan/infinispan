@@ -158,10 +158,6 @@
         <module-def name="org.hibernate.hql.parser" slot="${infinispan.slot}">
             <maven-resource group="org.hibernate.hql" artifact="hibernate-hql-parser" />
         </module-def>
-
-        <module-def name="org.hibernate.hql.lucene" slot="${infinispan.slot}">
-            <maven-resource group="org.hibernate.hql" artifact="hibernate-hql-lucene" />
-        </module-def>
     </target>
 
     <target name="all" depends="clean, copy-files, modules"/>

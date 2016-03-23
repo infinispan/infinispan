@@ -602,11 +602,6 @@
             <version>${version.hibernate.hql.parser}</version>
          </dependency>
          <dependency>
-            <groupId>org.hibernate.hql</groupId>
-            <artifactId>hibernate-hql-lucene</artifactId>
-            <version>${version.hibernate.hql.parser}</version>
-         </dependency>
-         <dependency>
             <groupId>org.jboss.arquillian</groupId>
             <artifactId>arquillian-bom</artifactId>
             <version>${version.arquillian}</version>
