@@ -52,7 +52,7 @@ import static org.junit.Assert.assertNotNull;
 @Category(HotRodSingleNode.class)
 public class HotRodCustomMarshallerEventIT {
 
-    private final String TEST_CACHE_NAME = "testcache";
+    private final String TEST_CACHE_NAME = "testCache";
 
     static RemoteCacheManager remoteCacheManager;
     RemoteCache<Id, Id> remoteCache;
@@ -62,7 +62,6 @@ public class HotRodCustomMarshallerEventIT {
 
     @Deployment(testable = false, name = "marshaller")
     @TargetsContainer("container1")
-    @OverProtocol("jmx-as7")
     public static Archive<?> deploy1() {
         return createArchive();
     }

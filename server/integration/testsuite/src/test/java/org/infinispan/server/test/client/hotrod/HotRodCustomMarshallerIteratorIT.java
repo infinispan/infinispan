@@ -59,7 +59,7 @@ public class HotRodCustomMarshallerIteratorIT {
 
    private static final String TO_STRING_FILTER_CONVERTER_FACTORY_NAME = "to-string-filter-converter";
    private static final String PARAM_FILTER_CONVERTER_FACTORY_NAME = "param-filter-converter";
-   private static final String CACHE_NAME = "testcache";
+   private static final String CACHE_NAME = "testCache";
    private static RemoteCacheManager remoteCacheManager;
 
    private RemoteCache<Integer, User> remoteCache;
@@ -69,7 +69,6 @@ public class HotRodCustomMarshallerIteratorIT {
 
    @Deployment(testable = false, name = "marshallerFilter")
    @TargetsContainer("container1")
-   @OverProtocol("jmx-as7")
    public static Archive<?> deploy() throws IOException {
       return createFilterMarshallerArchive();
    }
