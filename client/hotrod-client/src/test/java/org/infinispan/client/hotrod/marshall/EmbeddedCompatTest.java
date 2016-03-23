@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
@@ -26,8 +27,10 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
+import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
@@ -47,7 +50,10 @@ import java.util.stream.IntStream;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests compatibility between remote query and embedded mode.
@@ -103,6 +109,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       protobufMetadataManager.registerMarshaller(new EmbeddedAccountMarshaller());
       protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
+      protobufMetadataManager.registerMarshaller(new EmbeddedTransactionMarshaller());
       protobufMetadataManager.registerMarshaller(new NotIndexedMarshaller());
 
       return cacheManager;
@@ -476,6 +483,58 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       List<Account> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).getId());
+   }
+
+   public void testDuplicateBooleanProjectionEmbedded() {
+      Transaction transaction = new TransactionHS();
+      transaction.setId(3);
+      transaction.setDescription("Hotel");
+      transaction.setAccountId(2);
+      transaction.setAmount(45);
+      transaction.setDate(new Date(42));
+      transaction.setDebit(true);
+      transaction.setValid(true);
+      cache.put(transaction.getId(), transaction);
+
+      QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
+
+      Query q = qf.from(TransactionHS.class)
+            .select("id", "isDebit", "isDebit")
+            .having("description").eq("Hotel")
+            .toBuilder().build();
+      List<Object[]> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(3, list.get(0).length);
+      assertEquals(3, list.get(0)[0]);
+      assertEquals(true, list.get(0)[1]);
+      assertEquals(true, list.get(0)[2]);
+   }
+
+   public void testDuplicateBooleanProjectionRemote() {
+      Transaction transaction = new TransactionHS();
+      transaction.setId(3);
+      transaction.setDescription("Hotel");
+      transaction.setAccountId(2);
+      transaction.setAmount(45);
+      transaction.setDate(new Date(42));
+      transaction.setDebit(true);
+      transaction.setValid(true);
+      cache.put(transaction.getId(), transaction);
+
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(TransactionPB.class)
+            .select("id", "isDebit", "isDebit")
+            .having("description").eq("Hotel")
+            .toBuilder().build();
+      List<Object[]> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals(3, list.get(0).length);
+      assertEquals(3, list.get(0)[0]);
+      assertEquals(true, list.get(0)[1]);
+      assertEquals(true, list.get(0)[2]);
    }
 
    private AccountPB createAccountPB(int id) {

@@ -16,6 +16,9 @@ final class DelegatingQuery extends BaseQuery {
 
    private final QueryEngine queryEngine;
 
+   /**
+    * The actual query object to which execution will be delegated.
+    */
    private BaseQuery query;
 
    DelegatingQuery(QueryEngine queryEngine, QueryFactory queryFactory,
@@ -28,12 +31,13 @@ final class DelegatingQuery extends BaseQuery {
    @Override
    public void resetQuery() {
       if (query != null) {
+         // reset the delegate but do not discard it!
          query.resetQuery();
       }
    }
 
    private Query createQuery() {
-      // query is created first time only
+      // the query is created first time only
       if (query == null) {
          query = queryEngine.buildQuery(queryFactory, jpaQuery, namedParameters, startOffset, maxResults);
       }

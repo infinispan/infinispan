@@ -70,20 +70,20 @@ final class RemoteQueryEngine extends QueryEngine {
 
    @Override
    protected ResultProcessor makeResultProcessor(ResultProcessor in) {
-      return new ResultProcessor<Object, Object>() {
-         @Override
-         public Object process(Object result) {
-            result = result instanceof ProtobufValueWrapper ? ((ProtobufValueWrapper) result).getBinary() : result;
-            if (in != null) {
-               result = in.process(result);
-            }
-            return result;
+      return result -> {
+         if (result instanceof ProtobufValueWrapper) {
+            result = ((ProtobufValueWrapper) result).getBinary();
          }
+         return in != null ? in.process(result) : result;
       };
    }
 
    @Override
    protected RowProcessor makeProjectionProcessor(Class<?>[] projectedTypes) {
+      if (isCompatMode) {
+         return null;
+      }
+
       // Protobuf's booleans are indexed as Strings, so we need to convert them.
       // Collect here the positions of all Boolean projections.
       int[] pos = new int[projectedTypes.length];
@@ -97,17 +97,14 @@ final class RemoteQueryEngine extends QueryEngine {
          return null;
       }
       final int[] cols = len < pos.length ? Arrays.copyOf(pos, len) : pos;
-      return new RowProcessor() {
-         @Override
-         public Object[] process(Object[] row) {
-            for (int i : cols) {
-               if (row[i] != null) {
-                  // the Boolean column is actually encoded as an String, so we convert it
-                  row[i] = "true".equals(row[i]);
-               }
+      return row -> {
+         for (int i : cols) {
+            if (row[i] != null) {
+               // the Boolean column is actually encoded as a String, so we convert it
+               row[i] = "true".equals(row[i]);
             }
-            return row;
          }
+         return row;
       };
    }
 
