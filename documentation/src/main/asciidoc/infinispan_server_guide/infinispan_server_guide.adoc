@@ -190,7 +190,7 @@ The subsystem declaration is enclosed in the following XML element:
 [source,xml]
 ----
 
-<subsystem xmlns="urn:infinispan:server:jgroups:8.0">
+<subsystem xmlns="urn:infinispan:server:jgroups:9.0">
     <channels default="cluster">
         <channel name="cluster"/>
     </channels>
@@ -380,7 +380,7 @@ The subsystem declaration is enclosed in the following XML element:
 [source,xml]
 ----
 
-<subsystem xmlns="urn:infinispan:server:core:8.0" default-cache-container="clustered">
+<subsystem xmlns="urn:infinispan:server:core:9.0" default-cache-container="clustered">
   ...
 </subsystem>
 
@@ -538,7 +538,7 @@ The subsystem declaration is enclosed in the following XML element:
 [source,xml]
 ----
 
- <subsystem xmlns="urn:infinispan:server:endpoint:5.3">
+ <subsystem xmlns="urn:infinispan:server:endpoint:9.0">
   ...
  </subsystem>
 

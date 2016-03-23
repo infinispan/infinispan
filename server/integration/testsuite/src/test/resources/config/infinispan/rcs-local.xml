@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:8.0" >
+        <subsystem xmlns="urn:infinispan:server:core:9.0" >
             <cache-container 
                 name="local"
                 default-cache="memcachedCache">
@@ -14,7 +14,7 @@
                     <transaction mode="NONE" />
                     <eviction 
                         strategy="LRU" 
-                        max-entries="2"/>
+                        size="2"/>
                     <remote-store 
                         cache="default"
                         socket-timeout="60000" 
@@ -39,7 +39,7 @@
                     <transaction mode="NONE" />
                     <eviction
                             strategy="LRU"
-                            max-entries="2"/>
+                            size="2"/>
                     <remote-store
                             cache="default"
                             read-only="true"
