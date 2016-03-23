@@ -14,7 +14,7 @@ import java.util.Optional;
 public class DistributedAuthServerTask implements ServerTask {
     public static final String NAME = "serverTask_distributed_authentication";
     public static final String CACHE_NAME = "customTaskCache";
-    public static final String ALLOWED_ROLE = "supervisor";
+    public static final String ALLOWED_ROLE = "executor";
 
     private TaskContext taskContext;
 

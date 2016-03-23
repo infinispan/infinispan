@@ -15,7 +15,7 @@ public class LocalAuthTestServerTask implements ServerTask {
     public static final String NAME = "localAuthTest";
     public static final String CACHE_NAME = "customTaskCache";
     public static final String KEY = "actionPerformed";
-    public static final String ALLOWED_ROLE = "supervisor";
+    public static final String ALLOWED_ROLE = "executor";
     public static final String EXECUTED_VALUE = "executed";
 
     private TaskContext taskContext;

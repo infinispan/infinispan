@@ -6,7 +6,8 @@
                         <role name="admin" permissions="ALL" />
                         <role name="reader" permissions="READ" />
                         <role name="writer" permissions="WRITE" />
-                        <role name="supervisor" permissions="READ WRITE EXEC BULK_READ ADMIN"/>
+                        <role name="supervisor" permissions="READ WRITE EXEC BULK_READ"/>
+                        <role name="executor" permissions="READ WRITE EXEC ADMIN"/>
                     </authorization>
                 </security>
                 <local-cache name="testcache" start="EAGER" batching="false">
@@ -19,7 +20,7 @@
                     <transaction mode="NONE" />
                     <compatibility enabled="true" />
                     <security>
-                        <authorization roles="admin reader writer supervisor" enabled="true" />
+                        <authorization roles="admin reader writer supervisor executor" enabled="true" />
                     </security>
                 </local-cache>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->

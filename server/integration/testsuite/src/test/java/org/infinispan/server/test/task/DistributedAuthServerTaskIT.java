@@ -56,6 +56,8 @@ public class DistributedAuthServerTaskIT {
 
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
+    public static final String EXECUTOR_LOGIN = "executor";
+    public static final String EXECUTOR_PASSWORD = "executorPassword";
 
     @BeforeClass
     public static void before() throws Exception {
@@ -88,7 +90,7 @@ public class DistributedAuthServerTaskIT {
     public void shouldRunLocalAuthTest() throws Exception {
         SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
         config.forIspnServer(server1).withServerName("node0");
-        config.forCredentials(HotRodSaslAuthTestBase.SUPERVISOR_LOGIN, HotRodSaslAuthTestBase.SUPERVISOR_PASSWD);
+        config.forCredentials(EXECUTOR_LOGIN, EXECUTOR_PASSWORD);
         RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
         RemoteCache remoteCache = rcm.getCache(LocalAuthTestServerTask.CACHE_NAME);
 
@@ -104,7 +106,7 @@ public class DistributedAuthServerTaskIT {
     public void shouldRunDistAuthTest() throws Exception {
         SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
         config.forIspnServer(server1).withServerName("node0");
-        config.forCredentials(HotRodSaslAuthTestBase.SUPERVISOR_LOGIN, HotRodSaslAuthTestBase.SUPERVISOR_PASSWD);
+        config.forCredentials(EXECUTOR_LOGIN, EXECUTOR_PASSWORD);
         RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
         RemoteCache remoteCache = rcm.getCache(DistributedAuthServerTask.CACHE_NAME);
 
