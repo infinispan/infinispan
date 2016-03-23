@@ -1,17 +1,12 @@
 package org.infinispan.util;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash2;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 @Test(testName = "util.HashFunctionTest", groups = "unit")
 public class HashFunctionTest extends AbstractInfinispanTest {
-
-   public void testMurmurHash2Consistency() {
-      testHashConsistency(new MurmurHash2());
-   }
 
    public void testMurmurHash3Consistency() {
       testHashConsistency(MurmurHash3.getInstance());

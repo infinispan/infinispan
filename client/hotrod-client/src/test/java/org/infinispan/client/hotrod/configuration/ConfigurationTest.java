@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import javax.security.auth.Subject;
 
 import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
-import org.infinispan.client.hotrod.SomeCustomConsistentHashV1;
+import org.infinispan.client.hotrod.SomeCustomConsistentHashV2;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.client.hotrod.SomeTransportfactory;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -44,7 +44,7 @@ public class ConfigurationTest {
             .minEvictableIdleTime(12000)
             .timeBetweenEvictionRuns(15000)
          .connectionTimeout(100)
-         .consistentHashImpl(1, SomeCustomConsistentHashV1.class)
+         .consistentHashImpl(2, SomeCustomConsistentHashV2.class)
          .socketTimeout(100)
          .tcpNoDelay(false)
          .keySizeEstimate(128)
@@ -158,7 +158,8 @@ public class ConfigurationTest {
       assertEquals(SomeAsyncExecutorFactory.class, configuration.asyncExecutorFactory().factoryClass());
       assertEquals(SomeRequestBalancingStrategy.class, configuration.balancingStrategyClass());
       assertEquals(SomeTransportfactory.class, configuration.transportFactory());
-      assertEquals(SomeCustomConsistentHashV1.class, configuration.consistentHashImpl(1));
+      assertEquals(null, configuration.consistentHashImpl(1));
+      assertEquals(SomeCustomConsistentHashV2.class, configuration.consistentHashImpl(2));
       assertEquals(100, configuration.connectionPool().maxActive());
       assertEquals(150, configuration.connectionPool().maxTotal());
       assertEquals(1000, configuration.connectionPool().maxWait());

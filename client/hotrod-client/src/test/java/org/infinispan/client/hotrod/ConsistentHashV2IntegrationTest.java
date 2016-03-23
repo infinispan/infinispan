@@ -31,8 +31,8 @@ import static org.testng.AssertJUnit.assertTrue;
 /**
  * @author Mircea Markus
  */
-@Test (groups = "functional", testName = "client.hotrod.ConsistentHashV1IntegrationTest")
-public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
+@Test (groups = "functional", testName = "client.hotrod.ConsistentHashV2IntegrationTest")
+public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
    public static final int NUM_KEYS = 200;
 
    private HotRodServer hotRodServer1;

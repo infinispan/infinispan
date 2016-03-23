@@ -104,13 +104,6 @@ public abstract class AbstractRemoteCacheIT {
                         //hashing
                 .keySizeEstimate(64)
                 .valueSizeEstimate(512);
-
-        if (isDistributedMode()) {
-            config.consistentHashImpl(1, "org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1");
-        } else {
-            config.consistentHashImpl(2, "org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2");
-        }
-
         return config.build();
     }
 

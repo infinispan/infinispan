@@ -1,16 +1,16 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-
-import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
  * A Hot Rod encoder/decoder for version 1.1 of the protocol.
@@ -45,11 +45,14 @@ public class Codec11 extends Codec10 {
             new LinkedHashMap<SocketAddress, Set<Integer>>();
 
       ConsistentHash ch = null;
-      if (hashFunctionVersion != 0)
+      if (hashFunctionVersion == 0) {
+         localLog.trace("Not using a consistent hash function (version 0)");
+      } else if (hashFunctionVersion == 1) {
+         localLog.trace("Ignoring obsolete consistent hash function (version 1)");
+      } else {
          ch = transport.getTransportFactory().getConsistentHashFactory()
                .newConsistentHash(hashFunctionVersion);
-      else
-         localLog.trace("Not using a consistent hash function (hash function version == 0)");
+      }
 
       for (int i = 0; i < clusterSize; i++) {
          String host = transport.readString();
