@@ -358,10 +358,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             cm.getCacheManagerConfiguration().evictionThreadPool().threadFactory();
       assertEquals("ExpirationThread", evictionThreadFactory.threadNamePattern());
 
-      DefaultThreadFactory replicationQueueThreadFactory =
-            cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadFactory();
-      assertEquals("ReplicationQueueThread", replicationQueueThreadFactory.threadNamePattern());
-
       assertTrue(gc.transport().transport() instanceof JGroupsTransport);
       assertEquals("infinispan-cluster", gc.transport().clusterName());
       // Should be "Jalapeno" but it's overriden by the test cache manager factory

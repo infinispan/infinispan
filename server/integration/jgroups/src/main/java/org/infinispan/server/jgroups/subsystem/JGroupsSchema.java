@@ -34,8 +34,9 @@ public enum JGroupsSchema {
 
     INFINISPAN_SERVER_JGROUPS_7_0("infinispan:server:jgroups", 7, 0),
     INFINISPAN_SERVER_JGROUPS_8_0("infinispan:server:jgroups", 8, 0),
+    INFINISPAN_SERVER_JGROUPS_9_0("infinispan:server:jgroups", 9, 0),
     ;
-    public static final JGroupsSchema CURRENT = INFINISPAN_SERVER_JGROUPS_8_0;
+    public static final JGroupsSchema CURRENT = INFINISPAN_SERVER_JGROUPS_9_0;
 
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 

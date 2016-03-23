@@ -1,23 +1,25 @@
 package org.infinispan.configuration.parsing;
 
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.*;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.QueryableDataContainer;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
@@ -41,12 +43,20 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.*;
+
 @Test(groups = "unit", testName = "configuration.parsing.UnifiedXmlFileParsingTest")
 public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
-      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml"}, {"8.2.xml"} };
+      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml"}, {"8.2.xml"}, {"9.0.xml"} };
    }
 
    @Test(dataProvider="configurationFiles")
@@ -60,6 +70,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             switch (version) {
+               case 90:
+                  configurationCheck90(cm);
+                  break;
                case 82:
                   configurationCheck82(cm);
                   break;
@@ -79,6 +92,13 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             }
          }
       });
+   }
+
+   private static void configurationCheck90(EmbeddedCacheManager cm) {
+      configurationCheck82(cm);
+      GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
+      assertEquals(4, globalConfiguration.transport().initialClusterSize());
+      assertEquals(30000, globalConfiguration.transport().initialClusterTimeout());
    }
 
    private static void configurationCheck82(EmbeddedCacheManager cm) {
@@ -195,17 +215,14 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("%G %i", threadFactory.threadNamePattern());
       assertEquals(5, threadFactory.initialPriority());
 
-      assertTrue(cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadPoolFactory() instanceof ScheduledThreadPoolExecutorFactory);
-      threadFactory = cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadFactory();
-      assertEquals("infinispan", threadFactory.threadGroup().getName());
-      assertEquals("%G %i", threadFactory.threadNamePattern());
-      assertEquals(5, threadFactory.initialPriority());
-
-      assertTrue(cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadPoolFactory() instanceof ScheduledThreadPoolExecutorFactory);
-      threadFactory = cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadFactory();
-      assertEquals("infinispan", threadFactory.threadGroup().getName());
-      assertEquals("%G %i", threadFactory.threadNamePattern());
-      assertEquals(5, threadFactory.initialPriority());
+      ThreadPoolExecutorFactory threadPoolExecutorFactory = cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadPoolFactory();
+      if (threadPoolExecutorFactory != null) { // Removed on 9.0
+         assertTrue(threadPoolExecutorFactory instanceof ScheduledThreadPoolExecutorFactory);
+         threadFactory = cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadFactory();
+         assertEquals("infinispan", threadFactory.threadGroup().getName());
+         assertEquals("%G %i", threadFactory.threadNamePattern());
+         assertEquals(5, threadFactory.initialPriority());
+      }
 
       threadFactory = cm.getCacheManagerConfiguration().transport().remoteCommandThreadPool().threadFactory();
       assertEquals("infinispan", threadFactory.threadGroup().getName());
