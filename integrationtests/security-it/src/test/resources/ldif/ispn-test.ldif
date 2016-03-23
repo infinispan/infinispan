@@ -47,3 +47,12 @@ uid: unprivileged
 cn: ISPN Unprivileged
 sn: unprivileged
 userPassword: weakPassword
+
+dn: uid=executor,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectclass: uidObject
+objectClass: person
+uid: executor
+cn: ISPN Executor
+sn: executor
+userPassword: executorPassword

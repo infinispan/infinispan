@@ -81,6 +81,19 @@ userPassword: password
 krb5PrincipalName: reader@INFINISPAN.ORG
 krb5KeyVersionNumber: 0
 
+dn: uid=executor,ou=People,dc=infinispan,dc=org
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+objectClass: krb5principal
+objectClass: krb5kdcentry
+cn: ISPN Executor
+sn: executor
+uid: executor
+userPassword: executorPassword
+krb5PrincipalName: executor@INFINISPAN.ORG
+krb5KeyVersionNumber: 0
+
 dn: uid=unprivileged,ou=People,dc=infinispan,dc=org
 objectClass: top
 objectClass: person
@@ -164,6 +177,13 @@ objectClass: groupOfNames
 cn: SupervisorIspnRole
 description: the Infinispan supervisor group
 member: uid=supervisor,ou=People,dc=infinispan,dc=org
+
+dn: cn=ExecutorIspnRole,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: ExecutorIspnRole
+description: the Infinispan executor group
+member: uid=executor,ou=People,dc=infinispan,dc=org
 
 dn: cn=WriterIspnRole,ou=Roles,dc=infinispan,dc=org
 objectClass: top
