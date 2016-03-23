@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.commons.hash.Hash;
 import org.testng.annotations.Test;
 
@@ -18,15 +18,15 @@ import static org.testng.Assert.assertEquals;
  * @author Mircea Markus
  * @since 5.0
  */
-@Test(groups = "unit", testName = "client.hotrod.ConsistentHashV1Test")
-public class ConsistentHashV1Test {
+@Test(groups = "unit", testName = "client.hotrod.ConsistentHashV2Test")
+public class ConsistentHashV2Test {
 
    private InetSocketAddress a1;
    private InetSocketAddress a2;
    private InetSocketAddress a3;
    private InetSocketAddress a4;
    private DummyHash hash;
-   private ConsistentHashV1 v1;
+   private ConsistentHashV2 v1;
 
 
    private void setUp(int numOwners) {
@@ -40,7 +40,7 @@ public class ConsistentHashV1Test {
       map.put(a3, Collections.singleton(2000));
       map.put(a4, Collections.singleton(3000));
 
-      this.v1 = new ConsistentHashV1();
+      this.v1 = new ConsistentHashV2();
       this.v1.init(map, numOwners, 10000);
       hash = new DummyHash();
       this.v1.setHash(hash);

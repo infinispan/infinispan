@@ -75,11 +75,6 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .addExecutorProperty("infinispan.client.hotrod.default_executor_factory.queue_size", "200000")
                 .keySizeEstimate(128)
                 .valueSizeEstimate(1024);
-
-        if (isDistributedMode()) {
-            config.consistentHashImpl(1, "org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1");
-        }
-
         return config;
     }
 
@@ -132,11 +127,6 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .addExecutorProperty("infinispan.client.hotrod.default_executor_factory.queue_size", "100000")
                 .keySizeEstimate(64)
                 .valueSizeEstimate(512);
-
-        if (isDistributedMode()) {
-            builder.consistentHashImpl(1, "org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1");
-        }
-
         Configuration defaultConf = builder.build();
         assertEqualConfiguration(defaultConf, rc);
         assertTrue(putGetFromDefaultCache(rcm));

@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.testng.annotations.Test;
 
@@ -57,12 +58,12 @@ public class ConsistentHashPerformanceTest {
    }
 
    public void testVariousVersion1() {
-      ConsistentHashComparisonTest.ConsistentHashV1Old dch2 = new ConsistentHashComparisonTest.ConsistentHashV1Old();
+      ConsistentHashV2 dch2 = new ConsistentHashV2();
       initConsistentHash(dch2);
       testConsistentHashSpeed(dch2);
    }
 
-   private void initConsistentHash(ConsistentHashComparisonTest.ConsistentHashV1Old dch) {
+   private void initConsistentHash(ConsistentHashV2 dch) {
       int numAddresses = 1500;
       LinkedHashMap<SocketAddress, Set<Integer>> map = new LinkedHashMap<SocketAddress, Set<Integer>>();
       for (int i = 0; i < numAddresses; i++) {

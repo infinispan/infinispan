@@ -7,7 +7,7 @@ package org.infinispan.commons.marshall;
  * @since 6.0
  */
 public interface Ids {
-   int MURMURHASH_2 = 71;
+   // 71 used to be MURMURHASH_2
    // 72 used to be MURMURHASH_2_COMPAT
    int MURMURHASH_3 = 73;
 

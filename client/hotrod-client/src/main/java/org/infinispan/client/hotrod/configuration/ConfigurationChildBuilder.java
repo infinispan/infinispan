@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.configuration;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
@@ -75,13 +74,13 @@ public interface ConfigurationChildBuilder {
 
    /**
     * Defines the {@link ConsistentHash} implementation to use for the specified version. By default,
-    * {@link ConsistentHashV1} is used for version 1 and {@link ConsistentHashV2} is used for version 2.
+    * {@link ConsistentHashV2} is used for version 1 and {@link ConsistentHashV2} is used for version 2.
     */
    ConfigurationBuilder consistentHashImpl(int version, Class<? extends ConsistentHash> consistentHashClass);
 
    /**
     * Defines the {@link ConsistentHash} implementation to use for the specified version. By default,
-    * {@link ConsistentHashV1} is used for version 1 and {@link ConsistentHashV2} is used for version 2.
+    * {@link ConsistentHashV2} is used for version 1 and {@link ConsistentHashV2} is used for version 2.
     */
    ConfigurationBuilder consistentHashImpl(int version, String consistentHashClass);
 

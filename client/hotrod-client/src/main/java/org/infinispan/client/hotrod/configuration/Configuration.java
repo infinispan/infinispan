@@ -126,7 +126,7 @@ public class Configuration {
    }
 
    public Class<? extends ConsistentHash>[] consistentHashImpl() {
-      return consistentHashImpl;
+      return Arrays.copyOf(consistentHashImpl, consistentHashImpl.length);
    }
 
    public Class<? extends ConsistentHash> consistentHashImpl(int version) {

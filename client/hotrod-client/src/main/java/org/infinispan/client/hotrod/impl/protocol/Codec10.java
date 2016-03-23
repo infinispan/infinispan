@@ -242,7 +242,9 @@ public class Codec10 implements Codec {
       }
       transport.getTransportFactory().updateServers(socketAddresses, cacheName, false);
       if (hashFunctionVersion == 0) {
-         localLog.trace("Not using a consistent hash function (hash function version == 0).");
+         localLog.trace("Not using a consistent hash function (version 0).");
+      } else if (hashFunctionVersion == 1) {
+         localLog.trace("Ignoring obsoleted consistent hash function (version 1)");
       } else {
          transport.getTransportFactory().updateHashFunction(
                servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);

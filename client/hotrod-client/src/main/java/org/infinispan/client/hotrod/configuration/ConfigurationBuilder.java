@@ -1,20 +1,9 @@
 package org.infinispan.client.hotrod.configuration;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TypedProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -27,6 +16,16 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * ConfigurationBuilder used to generate immutable {@link Configuration} objects to pass to the
@@ -51,7 +50,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int connectionTimeout = ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
    @SuppressWarnings("unchecked")
    private final Class<? extends ConsistentHash> consistentHashImpl[] = new Class[] {
-         ConsistentHashV1.class, ConsistentHashV2.class, SegmentConsistentHash.class
+         null, ConsistentHashV2.class, SegmentConsistentHash.class
    };
    private boolean forceReturnValues;
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
@@ -159,13 +158,21 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder consistentHashImpl(int version, Class<? extends ConsistentHash> consistentHashClass) {
-      this.consistentHashImpl[version - 1] = consistentHashClass;
+      if (version == 1) {
+         log.warn("Hash function version 1 is no longer supported.");
+      } else {
+         this.consistentHashImpl[version - 1] = consistentHashClass;
+      }
       return this;
    }
 
    @Override
    public ConfigurationBuilder consistentHashImpl(int version, String consistentHashClass) {
-      this.consistentHashImpl[version - 1] = Util.loadClass(consistentHashClass, classLoader());
+      if (version == 1) {
+         log.warn("Hash function version 1 is no longer supported.");
+      } else {
+         this.consistentHashImpl[version - 1] = Util.loadClass(consistentHashClass, classLoader());
+      }
       return this;
    }
 
@@ -267,8 +274,16 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.balancingStrategy(typed.getProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyClass.getName()));
       this.connectionPool.withPoolProperties(typed);
       this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout));
-      for (int i = 1; i <= consistentHashImpl.length; i++) {
-         this.consistentHashImpl(i, typed.getProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + i, consistentHashImpl[i - 1].getName()));
+      if (typed.containsKey(ConfigurationProperties.HASH_FUNCTION_PREFIX + ".1")) {
+         log.warn("Hash function version 1 is no longer supported");
+      }
+      for (int i = 0; i < consistentHashImpl.length; i++) {
+         if (consistentHashImpl[i] != null) {
+            int version = i + 1;
+            this.consistentHashImpl(version,
+                  typed.getProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + version,
+                        consistentHashImpl[i].getName()));
+         }
       }
       this.forceReturnValues(typed.getBooleanProperty(ConfigurationProperties.FORCE_RETURN_VALUES, forceReturnValues));
       this.keySizeEstimate(typed.getIntProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, keySizeEstimate));
@@ -352,7 +367,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.connectionPool.read(template.connectionPool());
       this.connectionTimeout = template.connectionTimeout();
       for (int i = 0; i < consistentHashImpl.length; i++) {
-         this.consistentHashImpl[i] = template.consistentHashImpl()[i];
+         this.consistentHashImpl[i] = template.consistentHashImpl(i + 1);
       }
       this.forceReturnValues = template.forceReturnValues();
       this.keySizeEstimate = template.keySizeEstimate();

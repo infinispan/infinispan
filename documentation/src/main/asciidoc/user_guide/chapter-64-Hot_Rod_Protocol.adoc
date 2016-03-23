@@ -1868,10 +1868,24 @@ The version of the hash function in use is provided in the Hot Rod protocol,
 as the hash function version parameter.
 
 .  Version 1 (single byte, 0x01) The initial version of the hash function in
-use is link:$$https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash2.java$$[Austin Appleby's MurmurHash 2.0 algorithm] , a fast, non-cryptographic hash that exhibits excellent distribution, collision resistance and avalanche behavior.  The specific version of the algorithm used is the slightly slower, endian-neutral version that allows consistent behavior across both big- and little-endian CPU architectures.  Infinispan's version also hard-codes the hash seed as -1. For details of the algorithm, please visit link:$$http://sites.google.com/site/murmurhash/$$[Austin Appleby's MurmurHash 2.0 page] .  Other implementations are detailed on link:$$http://en.wikipedia.org/wiki/MurmurHash$$[Wikipedia] .
+use is based on
+link:$$https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash2.java$$[Austin Appleby's MurmurHash 2.0 algorithm] , a fast, non-cryptographic hash that exhibits excellent distribution, collision resistance and avalanche behavior.  The specific version of the algorithm used is the slightly slower, endian-neutral version that allows consistent behavior across both big- and little-endian CPU architectures.  Infinispan's version also hard-codes the hash seed as -1. For details of the algorithm, please visit link:$$http://sites.google.com/site/murmurhash/$$[Austin Appleby's MurmurHash 2.0 page].
+Other implementations are detailed on
+link:$$http://en.wikipedia.org/wiki/MurmurHash$$[Wikipedia] .
 This hash function was the default one used by the Hot Rod server until Infinispan 4.2.1.
+Since Infinispan 5.0, the server never uses hash version 1.
+Since Infinispan 9.0, the client ignores hash version 1.
 
 .  Version 2 (single byte, 0x02) Since Infinispan 5.0, a new hash function is
-used by default which is
-link:$$https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash3.java$$[Austin Appleby's MurmurHash 3.0 algorithm] . Detailed information about the hash function can be found in this link:$$http://code.google.com/p/smhasher/wiki/MurmurHash3$$[wiki] .
+used by default which is based on
+link:$$https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/hash/MurmurHash3.java$$[Austin Appleby's MurmurHash 3.0 algorithm].
+Detailed information about the hash function can be found in this
+link:$$http://code.google.com/p/smhasher/wiki/MurmurHash3$$[wiki].
 Compared to 2.0, it provides better performance and spread.
+Since Infinispan 7.0, the server only uses version 2 for HotRod 1.x clients.
+
+. Version 3 (single byte, 0x03) Since Infinispan 7.0, a new hash function is used by default.
+The function is still based on
+link:$$http://code.google.com/p/smhasher/wiki/MurmurHash3$$[wiki],
+but is also aware of the hash segments used in the server's
+link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/distribution/ch/ConsistentHash.java[ConsistentHash].

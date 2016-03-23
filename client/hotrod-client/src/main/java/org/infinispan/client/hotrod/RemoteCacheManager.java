@@ -1,15 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
@@ -29,12 +19,20 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
-import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
@@ -125,8 +123,12 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       }
       properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, configuration.balancingStrategyClass().getName());
       properties.setProperty(ConfigurationProperties.CONNECT_TIMEOUT, Integer.toString(configuration.connectionTimeout()));
-      for (int i = 1; i <= configuration.consistentHashImpl().length; i++) {
-         properties.setProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + i, configuration.consistentHashImpl()[i-1].getName());
+      for (int i = 0; i < configuration.consistentHashImpl().length; i++) {
+         int version = i + 1;
+         if (configuration.consistentHashImpl(version) != null) {
+            properties.setProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + version,
+                  configuration.consistentHashImpl(version).getName());
+         }
       }
       properties.setProperty(ConfigurationProperties.FORCE_RETURN_VALUES, Boolean.toString(configuration.forceReturnValues()));
       properties.setProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, Integer.toString(configuration.keySizeEstimate()));

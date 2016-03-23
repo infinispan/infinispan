@@ -1,6 +1,8 @@
 package org.infinispan.distribution;
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
@@ -23,7 +25,7 @@ import static org.infinispan.profiling.testinternals.Generator.*;
 /**
  * This test benchmarks different hash functions.
  */
-@Test (groups = "manual", testName = "distribution.HashFunctionComparisonTest")
+@Test (groups = "manual", testName = "distribution.HashComparisonTest")
 public class HashFunctionComparisonTest {
 
    private static final int MAX_STRING_SIZE = 16;
@@ -32,10 +34,9 @@ public class HashFunctionComparisonTest {
    private static final int MODULUS_BASE = 1024;
    private static final NumberFormat nf = NumberFormat.getInstance();
 
-   private static List<HashFunction> getHashFunctions() {
-      List<HashFunction> functions = new LinkedList<HashFunction>();
-      functions.add(new MurmurHash2());
-      functions.add(new MurmurHash3());
+   private static List<Hash> getHashFunctions() {
+      List<Hash> functions = new LinkedList<Hash>();
+      functions.add(MurmurHash3.getInstance());
       functions.add(new SuperFastHash());
       return functions;
    }
@@ -54,11 +55,11 @@ public class HashFunctionComparisonTest {
    private void addressDistribution(int numAddresses) {
       int hashSpace = 10240;
 
-      Collection<HashFunction> functions = getHashFunctions();
+      Collection<Hash> functions = getHashFunctions();
 
       System.out.printf("%s %s %s %s %s %n%n", padString("Function", 25), padString("Greatest dist", 15), padString("Smallest dist", 15), padString("Mean dist", 15), padString("Positions", 15));
 
-      for (HashFunction f : functions) {
+      for (Hash f : functions) {
 
          List<Address> addresses = new LinkedList<Address>();
          for (int i=0; i<numAddresses; i++) addresses.add(generateAddress());
@@ -67,7 +68,7 @@ public class HashFunctionComparisonTest {
          for (Address a : addresses) positions.put(f.hash(a.hashCode()) % hashSpace, a);
 
          System.out.printf("%s %s %s %s %s %n%n",
-                 padString(f.functionName(), 25),
+                 padString(f.getClass().getSimpleName(), 25),
                  padString(greatestDist(positions, hashSpace), 15),
                  padString(smallestDist(positions, hashSpace), 15),
                  padString(meanDist(positions, hashSpace), 15),
@@ -132,8 +133,8 @@ public class HashFunctionComparisonTest {
    }
 
 
-   public void testHashFunctions() {
-      Collection<HashFunction> functions = getHashFunctions();
+   public void testHashs() {
+      Collection<Hash> functions = getHashFunctions();
 
       Set<Object> objectKeys = new HashSet<Object>(NUM_KEYS_PER_TYPE);
       Set<String> stringKeys = new HashSet<String>(NUM_KEYS_PER_TYPE);
@@ -156,12 +157,12 @@ public class HashFunctionComparisonTest {
       stats.addValue(hash % MODULUS_BASE);
    }
 
-   private void perform(Collection<HashFunction> functions, Set<Object> objectKeys, Set<String> stringKeys, Set<byte[]> byteArrayKeys, boolean warmup) {
+   private void perform(Collection<Hash> functions, Set<Object> objectKeys, Set<String> stringKeys, Set<byte[]> byteArrayKeys, boolean warmup) {
 
       if (!warmup)
          System.out.printf("%s %s %s %s%n", padString("Function Impl", 25), padString("String keys", 18), padString("Byte array keys", 18), padString("Object keys", 18));
 
-      for (HashFunction f : functions) {
+      for (Hash f : functions) {
          long oRes = 0, sRes = 0, bRes = 0;
          DescriptiveStatistics oStats = new DescriptiveStatistics();
          DescriptiveStatistics sStats = new DescriptiveStatistics();
@@ -181,7 +182,7 @@ public class HashFunctionComparisonTest {
 
          if (!warmup) {
             System.out.printf("%s %s %s %s%n",
-                    padString(f.functionName(), 25),
+                    padString(f.getClass().getSimpleName(), 25),
                     padString(prettyPrintTime(sRes), 18),
                     padString(prettyPrintTime(bRes), 18),
                     padString(prettyPrintTime(oRes), 18)
@@ -220,13 +221,11 @@ public class HashFunctionComparisonTest {
    }
 }
 
-abstract class HashFunction {
-   abstract int hash(byte[] payload);
+class SuperFastHash implements Hash {
 
-   public int hash(String payload) {
-      return hash(payload.getBytes(Charset.forName("UTF-8")));
-   }
+   public static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
+   @Override
    public int hash(int hashcode) {
       byte[] b = new byte[4];
       b[0] = (byte) hashcode;
@@ -236,10 +235,15 @@ abstract class HashFunction {
       return hash(b);
    }
 
-   abstract String functionName();
-}
-
-class SuperFastHash extends HashFunction {
+   @Override
+   public int hash(Object o) {
+      if (o instanceof byte[])
+         return hash((byte[]) o);
+      else if (o instanceof String)
+         return hash(((String) o).getBytes(CHARSET_UTF8));
+      else
+         return hash(o.hashCode());
+   }
 
    @Override
    public int hash(byte[] data) {
@@ -293,34 +297,5 @@ class SuperFastHash extends HashFunction {
       short s = bytes[offset];
       s &= bytes[offset + 1] << 8;
       return s;
-   }
-
-   @Override
-   public String functionName() {
-      return "SuperFastHash";
-   }
-}
-
-class MurmurHash2 extends HashFunction {
-   org.infinispan.commons.hash.MurmurHash2 h = new org.infinispan.commons.hash.MurmurHash2();
-   public String functionName() {
-      return "MurmurHash2 (neutral)";
-   }
-
-   @Override
-   public int hash(byte[] payload) {
-      return h.hash(payload);
-   }
-}
-
-class MurmurHash3 extends HashFunction {
-   org.infinispan.commons.hash.MurmurHash3 h = org.infinispan.commons.hash.MurmurHash3.getInstance();
-   public String functionName() {
-      return "MurmurHash3";
-   }
-
-   @Override
-   public int hash(byte[] payload) {
-      return h.hash(payload);
    }
 }

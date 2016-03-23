@@ -9,26 +9,30 @@ import org.infinispan.commons.util.Util;
  * into the configuration for consistent hash definitions as follows:
  * consistent-hash.[version]=[fully qualified class implementing ConsistentHash]
  * e.g.
- * <code>infinispan.client.hotrod.hash_function_impl.1=org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1</code>
+ * <code>infinispan.client.hotrod.hash_function_impl.3=org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash</code>
  * or if using the {@link Configuration} API,
- * <code>configuration.consistentHashImpl(1, org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1.class);</code>
+ * <code>configuration.consistentHashImpl(3, org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash.class);</code>
  * <p/>
- * If no CH function is defined for a certain version, then it will be defaulted to "org.infinispan.client.hotrod.impl.ConsistentHashV[version]".
- * E.g. if the server indicates that in use CH is version 1, and it is not defined within the configuration, it will be defaulted to
- * org.infinispan.client.hotrod.impl.ConsistentHashV1.
+ *
+ * <p>The defaults are:</p>
+ * <ol>
+ *    <li>N/A (No longer used.)</li>
+ *    <li>org.infinispan.client.hotrod.impl.ConsistentHashV2</li>
+ *    <li>org.infinispan.client.hotrod.impl.SegmentConsistentHash</li>
+ * </ol>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public class ConsistentHashFactory {
-   private Class<? extends ConsistentHash>[] version2ConsistentHash;
+   private Configuration configuration;
 
    public void init(Configuration configuration) {
-      this.version2ConsistentHash = configuration.consistentHashImpl();
+      this.configuration = configuration;
    }
 
    public <T extends ConsistentHash> T newConsistentHash(int version) {
-      Class<? extends ConsistentHash> hashFunctionClass = version2ConsistentHash[version-1];
+      Class<? extends ConsistentHash> hashFunctionClass = configuration.consistentHashImpl(version);
       // TODO: Why create a brand new instance via reflection everytime a new hash topology is received? Caching???
       return (T) Util.getInstance(hashFunctionClass);
    }
