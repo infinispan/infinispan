@@ -42,11 +42,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate.hql</groupId>
-         <artifactId>hibernate-hql-lucene</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-engine</artifactId>
       </dependency>
