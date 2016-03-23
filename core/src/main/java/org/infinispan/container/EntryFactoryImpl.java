@@ -79,33 +79,6 @@ public class EntryFactoryImpl implements EntryFactory {
       return cacheEntry;
    }
 
-   @Deprecated
-   @Override
-   public final  MVCCEntry wrapEntryForClear(InvocationContext ctx, Object key) throws InterruptedException {
-      return null;
-   }
-
-   @Override
-   public final  MVCCEntry wrapEntryForReplace(InvocationContext ctx, ReplaceCommand cmd) throws InterruptedException {
-      return wrapEntryForWriting(ctx, cmd.getKey(), Wrap.WRAP_NON_NULL, false, false);
-   }
-
-   @Override
-   public final  MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead,
-                                              boolean forInvalidation, boolean forceWrap) throws InterruptedException {
-      Wrap wrap = forceWrap ? Wrap.WRAP_ALL : Wrap.WRAP_NON_NULL;
-      return wrapEntryForWriting(ctx, key, wrap, skipRead, forInvalidation);
-   }
-
-   @Override
-   public MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry icEntry,
-                                    boolean undeleteIfNeeded, FlagAffectedCommand cmd, boolean skipRead) {
-      if (icEntry != null) {
-         throw new IllegalArgumentException("Only addMissingValue can handle external entries");
-      }
-      return wrapEntryForWriting(ctx, key, Wrap.WRAP_ALL, skipRead, false);
-   }
-
    @Override
    public MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, Wrap wrap, boolean skipRead,
                                         boolean ignoreOwnership) {
