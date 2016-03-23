@@ -217,8 +217,8 @@ In the simplest possible form, users just need to provide an link:http://docs.jb
 
 [source,java]
 ----
-import org.infinispan.marshall.Externalizer;
-import org.infinispan.marshall.SerializeWith;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeWith;
 
 @SerializeWith(Person.PersonExternalizer.class)
 public class Person {
@@ -249,15 +249,15 @@ public class Person {
 
 ----
 
-At runtime JBoss Marshalling will inspect the object and discover that's marshallable thanks to the annotation and so marshall it using the externalizer class passed. To make externalizer implementations easier to code and more typesafe, make sure you define type `<T>` as the type of object that's being marshalled/unmarshalled.
+At runtime JBoss Marshalling will inspect the object and discover that it's marshallable (thanks to the annotation) and so marshall it using the externalizer class passed. To make externalizer implementations easier to code and more typesafe, make sure you define type `<T>` as the type of object that's being marshalled/unmarshalled.
 
 Even though this way of defining externalizers is very user friendly, it has some disadvantages:
 
 
-* Due to several constraints of the model, such as support different versions of the same class or the need to marshall the Externalizer class, the payload sizes generated via this method are not the most efficient.
+* Due to several constraints of the model, such as support for different versions of the same class or the need to marshall the Externalizer class, the payload sizes generated via this method are not the most efficient.
 
 
-* This model requires for the marshalled class to be annotated with {@link SerializeWith} but a user might need to provide an Externalizer for a class for which source code is not available, or for any other constraints, it cannot be modified.
+* This model requires that the marshalled class be annotated with {@link SerializeWith} but a user might need to provide an Externalizer for a class for which source code is not available, or for any other constraints, it cannot be modified.
 
 
 * The use of annotations by this model might be limiting for framework developers or service providers that try to abstract lower level details, such as the marshalling layer, away from the user.
