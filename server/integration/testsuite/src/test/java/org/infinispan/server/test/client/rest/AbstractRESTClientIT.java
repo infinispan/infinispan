@@ -389,6 +389,8 @@ public abstract class AbstractRESTClientIT {
     public void testNonExistentCache() throws Exception {
         head(fullPathKey("nonexistentcache", "nodata"), HttpServletResponse.SC_NOT_FOUND);
         get(fullPathKey("nonexistentcache", "nodata"), HttpServletResponse.SC_NOT_FOUND);
+        put(fullPathKey("nonexistentcache", "nodata"), "data", "application/text", HttpServletResponse.SC_NOT_FOUND);
+        delete(fullPathKey("nonexistentcache", "nodata"), HttpServletResponse.SC_NOT_FOUND);
     }
 
     @Test
