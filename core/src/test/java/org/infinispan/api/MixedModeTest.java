@@ -2,9 +2,12 @@ package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -46,34 +49,36 @@ public class MixedModeTest extends MultipleCacheManagersTest {
       localCache1 = cache(0, "local").getAdvancedCache();
       localCache2 = cache(1, "local").getAdvancedCache();
 
-      invalSyncCache2.withFlags(CACHE_MODE_LOCAL).put("k", "v");
-      assert invalSyncCache2.get("k").equals("v");
-      assert invalSyncCache1.get("k") == null;
-      invalAsyncCache2.withFlags(CACHE_MODE_LOCAL).put("k", "v");
-      assert invalAsyncCache2.get("k").equals("v");
-      assert invalAsyncCache1.get("k") == null;
+      // With the default SyncConsistentHashFactory, the same key will work for all caches
+      MagicKey key = new MagicKey("k", replAsyncCache1);
+      invalSyncCache2.withFlags(CACHE_MODE_LOCAL).put(key, "v");
+      assertEquals("v", invalSyncCache2.get(key));
+      assertNull(invalSyncCache1.get(key));
+      invalAsyncCache2.withFlags(CACHE_MODE_LOCAL).put(key, "v");
+      assertEquals("v", invalAsyncCache2.get(key));
+      assertNull(invalAsyncCache1.get(key));
 
       replListener(replAsyncCache2).expectAny();
       replListener(invalAsyncCache2).expectAny();
 
-      replSyncCache1.put("k", "replSync");
-      replAsyncCache1.put("k", "replAsync");
-      invalSyncCache1.put("k", "invalSync");
-      invalAsyncCache1.put("k", "invalAsync");
-      localCache1.put("k", "local");
+      replSyncCache1.put(key, "replSync");
+      replAsyncCache1.put(key, "replAsync");
+      invalSyncCache1.put(key, "invalSync");
+      invalAsyncCache1.put(key, "invalAsync");
+      localCache1.put(key, "local");
 
       replListener(replAsyncCache2).waitForRpc();
       replListener(invalAsyncCache2).waitForRpc();
 
-      assert replSyncCache1.get("k").equals("replSync");
-      assert replSyncCache2.get("k").equals("replSync");
-      assert replAsyncCache1.get("k").equals("replAsync");
-      assert replAsyncCache2.get("k").equals("replAsync");
-      assert invalSyncCache1.get("k").equals("invalSync");
-      assert invalSyncCache2.get("k") == null;
-      assert invalAsyncCache1.get("k").equals("invalAsync");
-      assert invalAsyncCache2.get("k") == null;
-      assert localCache1.get("k").equals("local");
-      assert localCache2.get("k") == null;
+      assertEquals("replSync", replSyncCache1.get(key));
+      assertEquals("replSync", replSyncCache2.get(key));
+      assertEquals("replAsync", replAsyncCache1.get(key));
+      assertEquals("replAsync", replAsyncCache2.get(key));
+      assertEquals("invalSync", invalSyncCache1.get(key));
+      assertNull(invalSyncCache2.get(key));
+      assertEquals("invalAsync", invalAsyncCache1.get(key));
+      assertNull(invalAsyncCache2.get(key));
+      assertEquals("local", localCache1.get(key));
+      assertNull(localCache2.get(key));
    }
 }
