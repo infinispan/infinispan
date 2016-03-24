@@ -9,7 +9,6 @@
       <module name="org.infinispan.query.dsl"/>
       <module name="org.antlr.antlr-runtime"/>
       <module name="org.hibernate.hql.parser"/>
-      <module name="org.antlr.antlr-runtime"/>
       <module name="org.infinispan.protostream"/>
       <module name="org.jboss.logging" />
    </dependencies>
