@@ -18,7 +18,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRendererDelegate<BooleanExpr, FilterParsingResult> {
+final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRendererDelegate<BooleanExpr, FilterParsingResult> {
 
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
@@ -34,7 +34,7 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    private List<Class<?>> projectedTypes;
 
-   public FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
+   FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
                                  SingleEntityQueryBuilder<BooleanExpr> builder, SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder, Map<String, Object> namedParameters) {
       super(propertyHelper, entityNamesResolver, builder, namedParameters);
       this.propertyHelper = propertyHelper;
