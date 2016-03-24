@@ -21,7 +21,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterQueryResolverDelegate implements QueryResolverDelegate {
+final class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    private static final Log log = Logger.getMessageLogger(Log.class, FilterQueryResolverDelegate.class.getName());
 

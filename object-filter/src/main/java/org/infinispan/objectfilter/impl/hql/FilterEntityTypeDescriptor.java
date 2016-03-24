@@ -6,12 +6,12 @@ import org.infinispan.objectfilter.impl.util.StringHelper;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterEntityTypeDescriptor implements FilterTypeDescriptor {
+final class FilterEntityTypeDescriptor implements FilterTypeDescriptor {
 
    private final String entityType;
    private final ObjectPropertyHelper propertyHelper;
 
-   public FilterEntityTypeDescriptor(String entityType, ObjectPropertyHelper propertyHelper) {
+   FilterEntityTypeDescriptor(String entityType, ObjectPropertyHelper propertyHelper) {
       this.entityType = entityType;
       this.propertyHelper = propertyHelper;
    }

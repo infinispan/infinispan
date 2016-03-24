@@ -6,7 +6,7 @@ import org.hibernate.hql.ast.TypeDescriptor;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public interface FilterTypeDescriptor extends TypeDescriptor {
+interface FilterTypeDescriptor extends TypeDescriptor {
 
    /**
     * Returns the Java type of the represented entity.
