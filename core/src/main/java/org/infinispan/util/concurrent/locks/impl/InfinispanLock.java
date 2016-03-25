@@ -312,11 +312,12 @@ public class InfinispanLock {
 
       @Override
       public void lock() throws InterruptedException, TimeoutException {
-         while (true) {
-            switch (lockState) {
+         do {
+            LockState currentState = lockState;
+            switch (currentState) {
                case WAITING:
                   checkTimeout();
-                  await(notifier, timeService.remainingTime(timeout, TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+                  await(notifier, timeService.remainingTime(timeout, TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
                   break;
                case ACQUIRED:
                   return; //acquired!
@@ -329,9 +330,9 @@ public class InfinispanLock {
                   cleanup();
                   throw new DeadlockDetectedException("DeadLock detected");
                default:
-                  throw new IllegalStateException("Unknown lock state: " + lockState);
+                  throw new IllegalStateException("Unknown lock state: " + currentState);
             }
-         }
+         } while (true);
       }
 
       @Override
@@ -342,14 +343,14 @@ public class InfinispanLock {
       @Override
       public void cancel(LockState state) {
          checkValidCancelState(state);
-         out:
          do {
             LockState currentState = lockState;
             switch (currentState) {
                case WAITING:
                   if (casState(LockState.WAITING, state)) {
+                     onCanceled(this);
                      notifyListeners();
-                     break out;
+                     return;
                   }
                   break;
                case ACQUIRED: //no-op, a thread is inside the critical section.
@@ -358,13 +359,10 @@ public class InfinispanLock {
                case RELEASED:
                   return; //no-op, the lock is in final state.
                default:
-                  if (casState(currentState, state)) {
-                     break out;
-                  }
+                  throw new IllegalStateException("Unknown lock state " + currentState);
 
             }
          } while (true);
-         onCanceled(this);
       }
 
       @Override
@@ -395,18 +393,18 @@ public class InfinispanLock {
             case RELEASED:
                invoker.onEvent(LockState.ACQUIRED);
                break;
-            default:
+            case TIMED_OUT:
+            case DEADLOCKED:
                invoker.onEvent(state);
                break;
+            default:
+               throw new IllegalStateException("Unknown lock state " + state);
          }
       }
 
       private void checkValidCancelState(LockState state) {
-         switch (state) {
-            case WAITING:
-            case ACQUIRED:
-            case RELEASED:
-               throw new IllegalArgumentException("LockState " + state + " is not valid to cancel.");
+         if (state != LockState.TIMED_OUT && state != LockState.DEADLOCKED) {
+            throw new IllegalArgumentException("LockState " + state + " is not valid to cancel.");
          }
       }
 
@@ -433,13 +431,13 @@ public class InfinispanLock {
             LockState state = lockState;
             switch (state) {
                case WAITING:
-               case ACQUIRED:
                   if (casState(state, LockState.RELEASED)) {
                      cleanup();
                      notifyListeners();
                      return true;
                   }
                   break;
+               case ACQUIRED:
                case TIMED_OUT:
                case DEADLOCKED:
                   if (casState(state, LockState.RELEASED)) {
@@ -447,8 +445,10 @@ public class InfinispanLock {
                      return true;
                   }
                   break;
-               default:
+               case RELEASED:
                   return false;
+               default:
+                  throw new IllegalStateException("Unknown lock state " + state);
             }
          } while (true);
       }
