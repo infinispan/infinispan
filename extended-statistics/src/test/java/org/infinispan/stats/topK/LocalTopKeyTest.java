@@ -10,125 +10,135 @@ import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
+import java.lang.reflect.Method;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.infinispan.test.TestingUtil.k;
 
 /**
  * @author Pedro Ruivo
  * @since 6.0
  */
 @Test(groups = "functional", testName = "stats.topK.LocalTopKeyTest")
+@CleanupAfterTest
 public class LocalTopKeyTest extends SingleCacheManagerTest {
 
-   protected final CacheMode cacheMode;
-   private final AtomicInteger threadCounter = new AtomicInteger(0);
+   @BeforeMethod(alwaysRun = true)
+   public void resetBeforeTest() {
+      getTopKey().resetStatistics();
+   }
+   
+   public void testPut(Method method) {
+      final String key1 = k(method, 1);
+      final String key2 = k(method, 2);
+      
+      cache.put(key1, "value1");
+      cache.put(key2, "value2");
 
-   protected LocalTopKeyTest() {
-      this.cacheMode = CacheMode.LOCAL;
-      this.cleanup = CleanupPhase.AFTER_METHOD;
+      assertTopKeyAccesses(key1, 1, false);
+      assertTopKeyAccesses(key2, 1, false);
+      assertTopKeyAccesses(key1, 0, true);
+      assertTopKeyAccesses(key2, 0, true);
+
+      assertLockInformation(key1, 1, 0, 0);
+      assertLockInformation(key2, 1, 0, 0);
+
+      assertWriteSkew(key1, 0);
+      assertWriteSkew(key2, 0);
    }
 
-   public void testPut() {
-      resetStreamSummary(cache());
+   public void testGet(Method method) {
+      final String key1 = k(method, 1);
+      final String key2 = k(method, 2);
 
-      cache().put("key1", "value1");
-      cache().put("key2", "value2");
+      cache.get(key1);
+      cache.get(key2);
 
-      assertTopKeyAccesses(cache(), "key1", 1, false);
-      assertTopKeyAccesses(cache(), "key2", 1, false);
-      assertTopKeyAccesses(cache(), "key1", 0, true);
-      assertTopKeyAccesses(cache(), "key2", 0, true);
+      assertTopKeyAccesses(key1, 0, false);
+      assertTopKeyAccesses(key2, 0, false);
+      assertTopKeyAccesses(key1, 1, true);
+      assertTopKeyAccesses(key2, 1, true);
 
-      assertLockInformation(cache(), "key1", 1, 0, 0);
-      assertLockInformation(cache(), "key2", 1, 0, 0);
+      assertLockInformation(key1, 0, 0, 0);
+      assertLockInformation(key2, 0, 0, 0);
 
-      assertWriteSkew(cache(), "key1", 0);
-      assertWriteSkew(cache(), "key2", 0);
+      assertWriteSkew(key1, 0);
+      assertWriteSkew(key2, 0);
    }
 
-   public void testGet() {
-      resetStreamSummary(cache());
+   public void testLockFailed(Method method) throws InterruptedException, TimeoutException, ExecutionException {
+      final String key = k(method, 0);
 
-      cache().get("key1");
-      cache().get("key2");
-
-      assertTopKeyAccesses(cache(), "key1", 0, false);
-      assertTopKeyAccesses(cache(), "key2", 0, false);
-      assertTopKeyAccesses(cache(), "key1", 1, true);
-      assertTopKeyAccesses(cache(), "key2", 1, true);
-
-      assertLockInformation(cache(), "key1", 0, 0, 0);
-      assertLockInformation(cache(), "key2", 0, 0, 0);
-
-      assertWriteSkew(cache(), "key1", 0);
-      assertWriteSkew(cache(), "key2", 0);
-   }
-
-   public void testLockFailed() throws InterruptedException {
-      resetStreamSummary(cache());
-
-      PrepareCommandBlocker blocker = addPrepareBlockerIfAbsent(cache());
+      PrepareCommandBlocker blocker = addPrepareBlockerIfAbsent(cache);
       blocker.reset();
-      ThrowableAwareThread thread = putInOtherThread(cache(), "key", "value");
+      Future<Void> f = fork(() -> {
+         cache.put(key, "value");
+         return null;
+      });
       blocker.awaitUntilPrepareBlocked();
       //at this point, the key is locked...
       try {
-         cache().put("key", "value");
+         cache.put(key, "value");
          Assert.fail("The key should be locked!");
       } catch (Throwable t) {
          //expected
       }
       blocker.unblock();
-      thread.join();
-      Assert.assertNull(thread.throwable);
+      f.get(30, TimeUnit.SECONDS);
 
-      assertTopKeyAccesses(cache(), "key", 2, false);
-      assertTopKeyAccesses(cache(), "key", 0, true);
+      assertTopKeyAccesses(key, 2, false);
+      assertTopKeyAccesses(key, 0, true);
 
-      assertLockInformation(cache(), "key", 2, 1, 1);
+      assertLockInformation(key, 2, 1, 1);
 
-      assertWriteSkew(cache(), "key", 0);
+      assertWriteSkew(key, 0);
    }
 
-   public void testWriteSkew() throws Exception {
-      resetStreamSummary(cache());
+   public void testWriteSkew(Method method) throws Exception {
+      final String key = k(method, 0);
 
-      cache().put("key", "init");
+      cache.put(key, "init");
 
       tm().begin();
-      cache().get("key");
+      cache.get(key);
       Transaction transaction = tm().suspend();
 
-      cache().put("key", "value");
+      cache.put(key, "value");
 
       try {
          tm().resume(transaction);
-         cache().put("key", "value1");
+         cache.put(key, "value1");
          tm().commit();
          Assert.fail("The write skew should be detected");
       } catch (RollbackException t) {
          //expected
       }
 
-      assertTopKeyAccesses(cache(), "key", 3, false);
-      assertTopKeyAccesses(cache(), "key", 1, true);
+      assertTopKeyAccesses(key, 3, false);
+      assertTopKeyAccesses(key, 1, true);
 
       //the last put will originate an write skew
-      assertLockInformation(cache(), "key", 3, 0, 0);
+      assertLockInformation(key, 3, 0, 0);
 
-      assertWriteSkew(cache(), "key", 1);
+      assertWriteSkew(key, 1);
    }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
       builder.customInterceptors().addInterceptor()
             .before(TxInterceptor.class)
             .interceptor(new CacheUsageInterceptor());
@@ -138,71 +148,49 @@ public class LocalTopKeyTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
-   private ThrowableAwareThread putInOtherThread(final Cache<Object, Object> cache, final Object key, final Object value) {
-      ThrowableAwareThread thread = new ThrowableAwareThread() {
-         @Override
-         protected final void innerRun() throws Throwable {
-            cache.put(key, value);
-         }
-      };
-      thread.start();
-      return thread;
-   }
-
-   private CacheUsageInterceptor getTopKey(Cache<?, ?> cache) {
+   private CacheUsageInterceptor getTopKey() {
       for (CommandInterceptor interceptor : cache.getAdvancedCache().getInterceptorChain()) {
          if (interceptor instanceof CacheUsageInterceptor) {
             return (CacheUsageInterceptor) interceptor;
          }
       }
-      return null;
+      throw new IllegalStateException("CacheUsageInterceptor should be in the interceptor chain");
    }
 
-   private void resetStreamSummary(Cache<?, ?> cache) {
-      CacheUsageInterceptor summaryInterceptor = getTopKey(cache);
-      Assert.assertNotNull(summaryInterceptor);
-      summaryInterceptor.resetStatistics();
-   }
-
-   private void assertTopKeyAccesses(Cache<?, ?> cache, Object key, long expected, boolean readAccesses) {
-      CacheUsageInterceptor summaryInterceptor = getTopKey(cache);
+   private void assertTopKeyAccesses(String key, long expected, boolean readAccesses) {
       Long actual;
       if (readAccesses) {
-         actual = summaryInterceptor.getLocalTopGets().get(String.valueOf(key));
+         actual = getTopKey().getLocalTopGets().get(key);
       } else {
-         actual = summaryInterceptor.getLocalTopPuts().get(String.valueOf(key));
+         actual = getTopKey().getLocalTopPuts().get(key);
       }
       Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of accesses");
    }
 
-   private void assertWriteSkew(Cache<?, ?> cache, Object key, long expected) {
-      CacheUsageInterceptor summaryInterceptor = getTopKey(cache);
-      Long actual = summaryInterceptor.getTopWriteSkewFailedKeys().get(String.valueOf(key));
+   private void assertWriteSkew(String key, long expected) {
+      Long actual = getTopKey().getTopWriteSkewFailedKeys().get(key);
       Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of write skew");
    }
 
-   private void assertTopKeyLocked(Cache<?, ?> cache, Object key, long expected) {
-      CacheUsageInterceptor summaryInterceptor = getTopKey(cache);
-      Long actual = summaryInterceptor.getTopLockedKeys().get(String.valueOf(key));
+   private void assertTopKeyLocked(String key, long expected) {
+      Long actual = getTopKey().getTopLockedKeys().get(key);
       Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of locked keys");
    }
 
-   private void assertTopKeyLockContented(Cache<?, ?> cache, Object key, long expected) {
-      CacheUsageInterceptor summaryInterceptor = getTopKey(cache);
-      Long actual = summaryInterceptor.getTopContendedKeys().get(String.valueOf(key));
+   private void assertTopKeyLockContented(String key, long expected) {
+      Long actual = getTopKey().getTopContendedKeys().get(key);
       Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of contented keys");
    }
 
-   private void assertTopKeyLockFailed(Cache<?, ?> cache, Object key, long expected) {
-      CacheUsageInterceptor summaryInterceptor = getTopKey(cache);
-      Long actual = summaryInterceptor.getTopLockFailedKeys().get(String.valueOf(key));
+   private void assertTopKeyLockFailed(String key, long expected) {
+      Long actual = getTopKey().getTopLockFailedKeys().get(key);
       Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of lock failed keys");
    }
 
-   private void assertLockInformation(Cache<?, ?> cache, Object key, long locked, long contented, long failed) {
-      assertTopKeyLocked(cache, key, locked);
-      assertTopKeyLockContented(cache, key, contented);
-      assertTopKeyLockFailed(cache, key, failed);
+   private void assertLockInformation(String key, long locked, long contented, long failed) {
+      assertTopKeyLocked(key, locked);
+      assertTopKeyLockContented(key, contented);
+      assertTopKeyLockFailed(key, failed);
    }
 
    private PrepareCommandBlocker addPrepareBlockerIfAbsent(Cache<?, ?> cache) {
@@ -236,40 +224,20 @@ public class LocalTopKeyTest extends SingleCacheManagerTest {
          return retVal;
       }
 
-      public final synchronized void reset() {
+      private synchronized void reset() {
          unblock = false;
          prepareBlocked = false;
       }
 
-      public final synchronized void unblock() {
+      private synchronized void unblock() {
          unblock = true;
          notifyAll();
       }
 
-      public final synchronized void awaitUntilPrepareBlocked() throws InterruptedException {
+      private synchronized void awaitUntilPrepareBlocked() throws InterruptedException {
          while (!prepareBlocked) {
             wait();
          }
       }
-   }
-
-   private abstract class ThrowableAwareThread extends Thread {
-
-      private Throwable throwable;
-
-      protected ThrowableAwareThread() {
-         super("thread-" + threadCounter.getAndIncrement() + "-" + cacheMode);
-      }
-
-      @Override
-      public final void run() {
-         try {
-            innerRun();
-         } catch (Throwable throwable) {
-            this.throwable = throwable;
-         }
-      }
-
-      protected abstract void innerRun() throws Throwable;
    }
 }
