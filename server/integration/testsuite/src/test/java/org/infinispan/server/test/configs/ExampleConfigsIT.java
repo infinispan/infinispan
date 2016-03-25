@@ -1,15 +1,5 @@
 package org.infinispan.server.test.configs;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.ObjectInputStream;
-import java.net.Inet6Address;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.management.ObjectName;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
@@ -35,9 +25,9 @@ import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
-import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
@@ -48,14 +38,39 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.infinispan.server.test.client.rest.RESTHelper.*;
+import javax.management.ObjectName;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.ObjectInputStream;
+import java.net.Inet6Address;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
+import static org.infinispan.server.test.client.rest.RESTHelper.delete;
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.head;
+import static org.infinispan.server.test.client.rest.RESTHelper.post;
+import static org.infinispan.server.test.client.rest.RESTHelper.put;
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.eventually;
 import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 import static org.infinispan.server.test.util.ITestUtils.stopContainers;
-import static org.junit.Assert.*;
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for example configurations.
@@ -653,13 +668,17 @@ public class ExampleConfigsIT {
 
     private void doPutGet(RemoteInfinispanMBeans s, RemoteCache<Object, Object> c) {
         assertEquals(0, s.cache.getNumberOfEntries());
-        for (int i = 0; i < 10; i++) {
-            c.put("k" + i, "v" + i);
-        }
-        for (int i = 0; i < 10; i++) {
-            assertEquals("v" + i, c.get("k" + i));
-        }
-        assertEquals(10, s.cache.getNumberOfEntries());
+
+        final int maxRange = 10;
+        Map<String, String> testMap = new HashMap<>();
+        IntStream.range(0, maxRange)
+                .forEach(number -> testMap.put("k" + number, "v" + number));
+
+        c.putAll(testMap);
+
+        assertEquals(maxRange, s.cache.getNumberOfEntries());
+        c.retrieveEntries(null, maxRange)
+                .forEachRemaining((e) -> assertTrue(testMap.containsValue(e.getValue())));
     }
 
     private void doPutGetCheckPath(RemoteInfinispanMBeans s, String filePath, double sleepTime) throws Exception {
