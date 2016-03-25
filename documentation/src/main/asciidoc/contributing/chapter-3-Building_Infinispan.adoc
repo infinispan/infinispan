@@ -214,6 +214,12 @@ If you have written a functional, unit or stress test for Infinispan and want to
 The test you would have prototyped and tested in an isolated project created using this archetype can be simply dropped in to Infinispan's test suite.
 Make your changes, add your test, prove that it fails even on Infinispan's upstream source tree and issue a link:$$http://help.github.com/pull-requests/$$[pull request] . 
 
+===== Checking coding style
+If you have written any new code, it is highly recommended to validate formatting before submitting a Pull Request.
+This might be done by invoking:
+
+ $ mvn checktyle:check
+
 ===== Versions
 The archetypes generate poms with dependencies to specific versions of Infinispan.
 You should edit these generated poms by hand to point to other versions of Infinispan that you are interested in.
