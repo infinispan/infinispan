@@ -57,6 +57,10 @@ public abstract class BaseClusterTopKeyTest extends MultipleCacheManagersTest {
 
       cache(0).put(key1, "value1");
       cache(0).put(key2, "value2");
+
+      assertNoLocks(key1);
+      assertNoLocks(key2);
+
       cache(1).put(key1, "value3");
       cache(1).put(key2, "value4");
 
@@ -281,6 +285,12 @@ public abstract class BaseClusterTopKeyTest extends MultipleCacheManagersTest {
       assertTopKeyLocked(cache, key, locked);
       assertTopKeyLockContented(cache, key, contented);
       assertTopKeyLockFailed(cache, key, failed);
+   }
+
+   private void assertNoLocks(String key) {
+      for (Cache<?, ?> cache : caches()) {
+         assertEventuallyNotLocked(cache, key);
+      }
    }
 
    private PrepareCommandBlocker addPrepareBlockerIfAbsent(Cache<?, ?> cache) {
