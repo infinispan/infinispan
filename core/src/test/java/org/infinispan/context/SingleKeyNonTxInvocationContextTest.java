@@ -6,9 +6,11 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * SingleKeyNonTxInvocationContextTest
@@ -29,9 +31,9 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
       createCluster(c, 2);
       waitForClusterToForm();
       ci0 = new CheckInterceptor();
-      advancedCache(0).addInterceptor(ci0, 1);
+      advancedCache(0).getSequentialInterceptorChain().addInterceptor(ci0, 1);
       ci1 = new CheckInterceptor();
-      advancedCache(1).addInterceptor(ci1, 1);
+      advancedCache(1).getSequentialInterceptorChain().addInterceptor(ci1, 1);
    }
 
 
@@ -76,7 +78,7 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
    }
 
 
-   static class CheckInterceptor extends CommandInterceptor {
+   static class CheckInterceptor extends BaseCustomSequentialInterceptor {
 
       private boolean putOkay;
       private boolean removeOkay;
@@ -85,25 +87,25 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
 
 
       @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
          return super.visitPutKeyValueCommand(ctx, command);
       }
 
       @Override
-      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (isRightType(ctx)) removeOkay = true;
          return super.visitRemoveCommand(ctx, command);
       }
 
       @Override
-      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) getOkay = true;
          return super.visitGetKeyValueCommand(ctx, command);
       }
 
       @Override
-      public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (isRightType(ctx)) replaceOkay = true;
          return super.visitReplaceCommand(ctx, command);
       }

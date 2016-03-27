@@ -3,6 +3,8 @@ package org.infinispan.configuration.override;
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.BaseSequentialInterceptor;
 import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -13,7 +15,6 @@ import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -27,6 +28,7 @@ import javax.transaction.TransactionManager;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.infinispan.test.TestingUtil.withCacheManager;
@@ -491,13 +493,13 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       }
    }
 
-   class SimpleInterceptor extends CommandInterceptor {
+   private static class SimpleInterceptor extends DDSequentialInterceptor {
       private boolean putOkay;
 
       @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) putOkay = true;
-         return super.visitPutKeyValueCommand(ctx, command);
+         return ctx.continueInvocation();
       }
 
       private boolean isRightType(InvocationContext ctx) {

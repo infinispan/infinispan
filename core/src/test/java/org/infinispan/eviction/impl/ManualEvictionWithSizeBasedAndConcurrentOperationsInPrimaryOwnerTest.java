@@ -13,8 +13,8 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -32,7 +32,6 @@ import org.testng.annotations.Test;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -40,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
+import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -533,15 +533,15 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       volatile Runnable afterEvict;
 
       public AfterPassivationOrCacheWriter injectThis(Cache<Object, Object> injectInCache) {
-         InterceptorChain chain = TestingUtil.extractComponent(injectInCache, InterceptorChain.class);
-         List<CommandInterceptor> list = chain.getInterceptorsWhichExtend(CacheWriterInterceptor.class);
-         if (list.isEmpty()) {
-            list = chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class);
+         SequentialInterceptorChain chain = extractComponent(injectInCache, SequentialInterceptorChain.class);
+         SequentialInterceptor interceptor = chain.findInterceptorExtending(CacheWriterInterceptor.class);
+         if (interceptor == null) {
+            interceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
          }
-         if (list.isEmpty()) {
+         if (interceptor == null) {
             throw new IllegalStateException("Should not happen!");
          }
-         injectInCache.getAdvancedCache().addInterceptorAfter(this, list.get(0).getClass());
+         chain.addInterceptorAfter(this, interceptor.getClass());
          return this;
       }
 

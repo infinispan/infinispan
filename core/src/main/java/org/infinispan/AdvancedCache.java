@@ -3,6 +3,7 @@ package org.infinispan;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -12,6 +13,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -72,6 +74,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @param i        the interceptor to add
     * @param position the position to add the interceptor
+    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
     */
    void addInterceptor(CommandInterceptor i, int position);
 
@@ -82,6 +85,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param i                interceptor to add
     * @param afterInterceptor interceptor type after which to place custom interceptor
     * @return true if successful, false otherwise.
+    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
     */
    boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor);
 
@@ -92,6 +96,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param i                 interceptor to add
     * @param beforeInterceptor interceptor type before which to place custom interceptor
     * @return true if successful, false otherwise.
+    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
     */
    boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor);
 
@@ -100,6 +105,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * last one at getInterceptorChain().size() - 1.
     *
     * @param position the position at which to remove an interceptor
+    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
     */
    void removeInterceptor(int position);
 
@@ -107,16 +113,24 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * Removes the interceptor of specified type.
     *
     * @param interceptorType type of interceptor to remove
+    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
     */
    void removeInterceptor(Class<? extends CommandInterceptor> interceptorType);
 
    /**
-    * Retrieves the current Interceptor chain.
-    *
-    * @return an immutable {@link java.util.List} of {@link org.infinispan.interceptors.base.CommandInterceptor}s
-    *         configured for this cache
+    * @deprecated Since 9.0, use {@link #getSequentialInterceptorChain()} instead.
     */
    List<CommandInterceptor> getInterceptorChain();
+
+   /**
+    * Allows the modification of the interceptor chain.
+    *
+    * Experimental: The ability to modify the interceptors at runtime may be removed in future versions.
+    *
+    * @since 9.0
+    */
+   @Experimental
+   SequentialInterceptorChain getSequentialInterceptorChain();
 
    /**
     * @return the eviction manager - if one is configured - for this cache instance

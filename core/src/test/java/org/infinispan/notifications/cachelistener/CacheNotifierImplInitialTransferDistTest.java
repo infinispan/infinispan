@@ -9,7 +9,7 @@ import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -56,7 +56,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       createClusteredCaches(3, CACHE_NAME, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
    }
 
-   private static enum Operation {
+   private enum Operation {
       PUT(Event.Type.CACHE_ENTRY_MODIFIED), CREATE(Event.Type.CACHE_ENTRY_CREATED), REMOVE(Event.Type.CACHE_ENTRY_REMOVED) {
          @Override
          public <K, V> Object perform(Cache<K, V> cache, K key, V value) {
@@ -66,7 +66,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       private final Event.Type type;
 
-      private Operation(Event.Type type) {
+      Operation(Event.Type type) {
          this.type = type;
       }
 
@@ -210,7 +210,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       final CheckPoint checkPoint = new CheckPoint();
 
-      InterceptorChain chain = mockStream(cache, (mock, real, additional) ->
+      SequentialInterceptorChain chain = mockStream(cache, (mock, real, additional) ->
               doAnswer(i -> {
                  // Wait for main thread to sync up
                  checkPoint.trigger("pre_retrieve_entry_invoked");
@@ -243,7 +243,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
          verifyEvents(isClustered(listener), listener, expectedValues);
       } finally {
-         TestingUtil.replaceComponent(cache, InterceptorChain.class, chain, true);
+         TestingUtil.replaceComponent(cache, SequentialInterceptorChain.class, chain, true);
          cache.removeListener(listener);
       }
    }
@@ -281,7 +281,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       CheckPoint checkPoint = new CheckPoint();
 
-      InterceptorChain chain = mockStream(cache, (mock, real, additional) -> {
+      SequentialInterceptorChain chain = mockStream(cache, (mock, real, additional) -> {
          doAnswer(i -> {
             // Wait for main thread to sync up
             checkPoint.trigger("pre_close_iter_invoked");
@@ -367,7 +367,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             assertEquals(event.getValue(), value);
          }
       } finally {
-         TestingUtil.replaceComponent(cache, InterceptorChain.class, chain, true);
+         TestingUtil.replaceComponent(cache, SequentialInterceptorChain.class, chain, true);
          cache.removeListener(listener);
       }
    }
@@ -547,7 +547,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
                isPost = !isPost;
             }
 
-            CacheEntryEvent event = listener.events.get(position);
+            CacheEntryEvent<String, String> event = listener.events.get(position);
 
             assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
             assertTrue(expectedValues.containsKey(event.getKey()));
@@ -662,12 +662,12 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       }
    }
    @Listener(includeCurrentState = true, clustered = false)
-   private static class StateListenerNotClustered extends StateListener {
+   private static class StateListenerNotClustered extends StateListener<String, String> {
 
    }
 
    @Listener(includeCurrentState = true, clustered = true)
-   private static class StateListenerClustered extends StateListener {
+   private static class StateListenerClustered extends StateListener<String, String> {
 
    }
 
@@ -730,9 +730,9 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       void additionalInformation(Stream mockStream, Stream realStream, StreamMocking ourselves);
    }
 
-   protected InterceptorChain mockStream(final Cache<?, ?> cache, StreamMocking mocking) {
-      InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
-      InterceptorChain mockChain = spy(chain);
+   protected SequentialInterceptorChain mockStream(final Cache<?, ?> cache, StreamMocking mocking) {
+      SequentialInterceptorChain chain = TestingUtil.extractComponent(cache, SequentialInterceptorChain.class);
+      SequentialInterceptorChain mockChain = spy(chain);
       doAnswer(i -> {
          CacheSet cacheSet = (CacheSet) i.callRealMethod();
 
@@ -747,7 +747,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          return mockSet;
       }).when(mockChain).invoke(Mockito.any(InvocationContext.class),
               (VisitableCommand) argThat(new IsInstanceOf(EntrySetCommand.class)));
-      TestingUtil.replaceComponent(cache, InterceptorChain.class, mockChain, true);
+      TestingUtil.replaceComponent(cache, SequentialInterceptorChain.class, mockChain, true);
       return chain;
    }
 }

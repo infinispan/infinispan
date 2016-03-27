@@ -27,7 +27,8 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             final Cache<Object,Object> cache = cm.getCache();
-            CommandInterceptor i = cache.getAdvancedCache().getInterceptorChain().get(0);
+            SequentialInterceptor i =
+                  cache.getAdvancedCache().getSequentialInterceptorChain().getInterceptors().get(0);
             assertTrue("Expecting FooInterceptor in the interceptor chain", i instanceof FooInterceptor);
             assertEquals("bar", ((FooInterceptor)i).getFoo());
          }
@@ -49,8 +50,10 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override
          public void call() {
-            List<CommandInterceptor> interceptorChain = cacheManager.getCache("interceptors").getAdvancedCache().getInterceptorChain();
-            assertEquals(interceptorChain.get(interceptorChain.size() - 2).getClass(), FooInterceptor.class);
+            List<SequentialInterceptor> interceptors =
+                  cacheManager.getCache("interceptors").getAdvancedCache().getSequentialInterceptorChain()
+                              .getInterceptors();
+            assertEquals(FooInterceptor.class, interceptors.get(interceptors.size() - 2).getClass());
          }
       });
    }
@@ -63,8 +66,9 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override
          public void call() {
-            List<CommandInterceptor> interceptorChain = cacheManager.getCache("interceptors").getAdvancedCache().getInterceptorChain();
-            assertEquals(interceptorChain.get(1).getClass(), FooInterceptor.class);
+            SequentialInterceptorChain
+                  interceptorChain = cacheManager.getCache("interceptors").getAdvancedCache().getSequentialInterceptorChain();
+            assertEquals(interceptorChain.getInterceptors().get(1).getClass(), FooInterceptor.class);
          }
       });
    }
@@ -77,8 +81,11 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override
          public void call() {
-            List<CommandInterceptor> interceptorChain = cacheManager.getCache().getAdvancedCache().getInterceptorChain();
-            assertEquals(interceptorChain.get(interceptorChain.size() - 2).getClass(), FooInterceptor.class);
+            List<SequentialInterceptor> interceptors =
+                  cacheManager.getCache().getAdvancedCache().getSequentialInterceptorChain()
+                              .getInterceptors();
+            Object o = interceptors.get(interceptors.size() - 2);
+            assertEquals(FooInterceptor.class, o.getClass());
             assertFalse(interceptor.putInvoked);
             cacheManager.getCache().put("k", "v");
             assertEquals("v", cacheManager.getCache().get("k"));

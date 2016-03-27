@@ -6,7 +6,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -546,14 +546,15 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
       }
 
       protected long loads(Ownership ownership) {
-         InterceptorChain chain = extractComponent(cache(ownership), InterceptorChain.class);
-         CacheLoaderInterceptor interceptor = (CacheLoaderInterceptor) chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class).get(0);
+         SequentialInterceptorChain chain = extractComponent(cache(ownership), SequentialInterceptorChain.class);
+         CacheLoaderInterceptor interceptor = (CacheLoaderInterceptor) chain.findInterceptorExtending(CacheLoaderInterceptor.class);
          return interceptor.getCacheLoaderLoads();
       }
 
       private void resetStats(Ownership ownership) {
-         InterceptorChain chain = extractComponent(cache(ownership), InterceptorChain.class);
-         CacheLoaderInterceptor interceptor = (CacheLoaderInterceptor) chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class).get(0);
+         SequentialInterceptorChain chain = extractComponent(cache(ownership), SequentialInterceptorChain.class);
+         CacheLoaderInterceptor interceptor = (CacheLoaderInterceptor) chain.findInterceptorExtending(
+               CacheLoaderInterceptor.class);
          interceptor.resetStatistics();
       }
    }

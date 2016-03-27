@@ -1,5 +1,9 @@
 package org.infinispan.commons.util;
 
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.MarshallUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -7,12 +11,18 @@ import java.io.ObjectOutput;
 import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.InvalidPropertiesFormatException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.MarshallUtil;
+import java.util.Objects;
+import java.util.Set;
 
 
 /**
@@ -89,6 +99,41 @@ public class Immutables {
     */
    public static <T> List<T> immutableListMerge(List<? extends T> list1, List<? extends T> list2) {
       return new ImmutableListCopy<T>(list1, list2);
+   }
+
+   public static <T> ImmutableListCopy<T> immutableListAdd(List<T> list, int position, T element) {
+      T[] copy = (T[]) new Object[list.size() + 1];
+      for (int i = 0; i < position; i++) {
+         copy[i] = list.get(i);
+      }
+      copy[position] = element;
+      for (int i = position; i < list.size(); i++) {
+         copy[i + 1] = list.get(i);
+      }
+      return new ImmutableListCopy<>((T[]) copy);
+   }
+
+   public static <T> ImmutableListCopy<T> immutableListReplace(List<T> list, int position, T element) {
+      T[] copy = (T[]) new Object[list.size()];
+      for (int i = 0; i < position; i++) {
+         copy[i] = list.get(i);
+      }
+      copy[position] = element;
+      for (int i = position + 1; i < list.size(); i++) {
+         copy[i] = list.get(i);
+      }
+      return new ImmutableListCopy<>(copy);
+   }
+
+   public static <T> List<T> immutableListRemove(List<T> list, int position) {
+      T[] copy = (T[]) new Object[list.size() - 1];
+      for (int i = 0; i < position; i++) {
+         copy[i] = list.get(i);
+      }
+      for (int i = position + 1; i < list.size(); i++) {
+         copy[i - 1] = list.get(i);
+      }
+      return new ImmutableListCopy<>(copy);
    }
 
    /**

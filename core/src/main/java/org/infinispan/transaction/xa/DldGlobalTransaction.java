@@ -74,12 +74,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    @Override
    public String toString() {
-      return "DldGlobalTransaction{" +
-            "coinToss=" + coinToss +
-            ", lockIntention=" + lockIntention +
-            ", affectedKeys=" + remoteLockIntention +
-            ", locksAtOrigin=" + locksAtOrigin +
-            "} " + super.toString();
+      return super.toString() + ":dld:" + coinToss;
    }
 
    /**

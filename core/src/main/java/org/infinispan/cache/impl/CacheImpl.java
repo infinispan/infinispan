@@ -49,7 +49,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -85,6 +86,8 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -125,7 +128,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    protected InvocationContextContainer icc;
    protected InvocationContextFactory invocationContextFactory;
    protected CommandsFactory commandsFactory;
-   protected InterceptorChain invoker;
+   protected SequentialInterceptorChain invoker;
    protected Configuration config;
    protected CacheNotifier notifier;
    protected BatchContainer batchContainer;
@@ -163,7 +166,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   InvocationContextFactory invocationContextFactory,
                                   InvocationContextContainer icc,
                                   CommandsFactory commandsFactory,
-                                  InterceptorChain interceptorChain,
+                                  SequentialInterceptorChain interceptorChain,
                                   Configuration configuration,
                                   CacheNotifier notifier,
                                   ComponentRegistry componentRegistry,
@@ -907,12 +910,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public List<CommandInterceptor> getInterceptorChain() {
-      return invoker.asList();
+      List<SequentialInterceptor> interceptors = invoker.getInterceptors();
+      ArrayList<CommandInterceptor> list = new ArrayList<>(interceptors.size());
+      interceptors.forEach(interceptor -> {
+         if (interceptor instanceof CommandInterceptor) {
+            list.add((CommandInterceptor) interceptor);
+         }
+      });
+      return list;
    }
 
    @Override
    public void addInterceptor(CommandInterceptor i, int position) {
       invoker.addInterceptor(i, position);
+   }
+
+   @Override
+   public SequentialInterceptorChain getSequentialInterceptorChain() {
+      return invoker;
    }
 
    @Override

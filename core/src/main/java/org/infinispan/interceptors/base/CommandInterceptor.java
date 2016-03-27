@@ -13,11 +13,16 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.BaseSequentialInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This is the base class for all interceptors to extend, and implements the {@link Visitor} interface allowing it to
@@ -41,12 +46,13 @@ import java.util.Set;
  * @see VisitableCommand
  * @see Visitor
  * @see InterceptorChain
- * @since 4.0
+ * @deprecated Since 9.0, please extend {@link BaseSequentialInterceptor} instead.
  */
+@Deprecated
 @Scope(Scopes.NAMED_CACHE)
-public abstract class CommandInterceptor extends AbstractVisitor {
+public abstract class CommandInterceptor extends AbstractVisitor implements SequentialInterceptor {
 
-   private CommandInterceptor next;
+   private SequentialInterceptorChain interceptorChain;
 
    protected Configuration cacheConfiguration;
 
@@ -57,33 +63,44 @@ public abstract class CommandInterceptor extends AbstractVisitor {
    }
 
    @Inject
-   public void injectConfiguration(Configuration configuration) {
+   public void injectConfiguration(Configuration configuration, SequentialInterceptorChain interceptorChain) {
       this.cacheConfiguration = configuration;
+      this.interceptorChain = interceptorChain;
    }
 
    /**
     * Retrieves the next interceptor in the chain.
+    * Since 9.0, it returns {@code null} if the next interceptor does not extend {@code CommandInterceptor}.
     *
     * @return the next interceptor in the chain.
     */
    public final CommandInterceptor getNext() {
-      return next;
+      List<SequentialInterceptor> interceptors = interceptorChain.getInterceptors();
+      int myIndex = interceptors.indexOf(this);
+      if (myIndex < interceptors.size() - 1) {
+         SequentialInterceptor sequentialInterceptor = interceptors.get(myIndex + 1);
+         if (sequentialInterceptor instanceof CommandInterceptor)
+            return (CommandInterceptor) sequentialInterceptor;
+      }
+      return null;
    }
 
    /**
+    * Note: Unlike {@link #getNext()}, this method does not ignore interceptors that do not extend
+    * {@code CommandInterceptor}
+    *
     * @return true if there is another interceptor in the chain after this; false otherwise.
     */
    public final boolean hasNext() {
-      return getNext() != null;
+      List<SequentialInterceptor> interceptors = interceptorChain.getInterceptors();
+      int myIndex = interceptors.indexOf(this);
+      return myIndex < interceptors.size();
    }
 
    /**
-    * Sets the next interceptor in the chain to the interceptor passed in.
-    *
-    * @param next next interceptor in the chain.
+    * Does nothing since 9.0.
     */
-   public final void setNext(CommandInterceptor next) {
-      this.next = next;
+   public final void setNext(CommandInterceptor ignored) {
    }
 
    /**
@@ -96,7 +113,7 @@ public abstract class CommandInterceptor extends AbstractVisitor {
     * @throws Throwable in the event of problems
     */
    public final Object invokeNextInterceptor(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return command.acceptVisitor(ctx, next);
+      return ctx.forkInvocationSync(command);
    }
 
    /**
@@ -132,5 +149,13 @@ public abstract class CommandInterceptor extends AbstractVisitor {
       } else {
          return cache;
       }
+   }
+
+   @Override
+   public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+         throws Throwable {
+      // Any exceptions will be propagated to the caller
+      Object returnValue = command.acceptVisitor(ctx, this);
+      return ctx.shortCircuit(returnValue);
    }
 }

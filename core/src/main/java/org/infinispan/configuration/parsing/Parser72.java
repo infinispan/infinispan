@@ -41,7 +41,7 @@ import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
@@ -70,7 +70,6 @@ import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-import static org.infinispan.configuration.parsing.Attribute.MODE;
 import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
@@ -1266,13 +1265,13 @@ public class Parser72 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case AFTER:
-               interceptorBuilder.after(Util.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
+               interceptorBuilder.after(Util.<SequentialInterceptor>loadClass(value, holder.getClassLoader()));
                break;
             case BEFORE:
-               interceptorBuilder.before(Util.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
+               interceptorBuilder.before(Util.<SequentialInterceptor>loadClass(value, holder.getClassLoader()));
                break;
             case CLASS:
-               interceptorBuilder.interceptorClass(Util.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
+               interceptorBuilder.interceptorClass(Util.<SequentialInterceptor>loadClass(value, holder.getClassLoader()));
                break;
             case INDEX:
                interceptorBuilder.index(Integer.parseInt(value));

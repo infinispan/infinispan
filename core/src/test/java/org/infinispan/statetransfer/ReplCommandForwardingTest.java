@@ -145,7 +145,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
          }
       });
 
-      // The prepare command is replicated to cache c2, and it blocks in the DelayInterceptor on c1 and c2
+      // The prepare/commit command is replicated to cache c2, and it blocks in the DelayInterceptor on c1 and c2
       di1.waitUntilBlocked(1);
       di2.waitUntilBlocked(1);
 
@@ -158,7 +158,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       // Unblock the replicated command on c2.
       // The StateTransferInterceptor on c2 will forward the command to c3.
       // The DelayInterceptor on c3 will then block, waiting for an unblock() call.
-      log.tracef("Forwarding the prepare command from %s", c2);
+      log.tracef("Forwarding the %s from %s", commandToBlock.getSimpleName(), c2);
       di2.unblock(1);
       di3.waitUntilBlocked(1);
 

@@ -15,6 +15,7 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -189,6 +190,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public void addInterceptor(CommandInterceptor i, int position) {
       authzManager.checkPermission(AuthorizationPermission.ADMIN);
       delegate.addInterceptor(i, position);
+   }
+
+   @Override
+   public SequentialInterceptorChain getSequentialInterceptorChain() {
+      authzManager.checkPermission(AuthorizationPermission.ADMIN);
+      return delegate.getSequentialInterceptorChain();
    }
 
    @Override

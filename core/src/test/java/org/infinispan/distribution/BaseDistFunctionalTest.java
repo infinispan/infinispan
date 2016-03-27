@@ -280,6 +280,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected static void removeAllBlockingInterceptorsFromCache(Cache<?, ?> cache) {
       InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
       for (CommandInterceptor interceptor : chain.getInterceptorsWhichExtend(BlockingInterceptor.class)) {
+         ((BlockingInterceptor) interceptor).suspend(true);
          chain.removeInterceptor(interceptor.getClass());
       }
    }

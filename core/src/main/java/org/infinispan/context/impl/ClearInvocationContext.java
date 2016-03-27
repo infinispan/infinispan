@@ -2,6 +2,7 @@ package org.infinispan.context.impl;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -19,7 +20,7 @@ public class ClearInvocationContext extends AbstractInvocationContext implements
 
    private static final Map<Object, CacheEntry> LOOKUP_ENTRIES = Collections.singletonMap((Object) "_clear_", (CacheEntry) ClearCacheEntry.getInstance());
 
-   public ClearInvocationContext(Address origin) {
+   public ClearInvocationContext(Address origin, SequentialInterceptorChain interceptorChain) {
       super(origin);
    }
 

@@ -1,14 +1,13 @@
 package org.infinispan.context;
 
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -32,9 +31,9 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
    private boolean batchingEnabled;
 
    @Inject
-   public void init(TransactionManager tm,
-         TransactionTable transactionTable, Configuration config, BatchContainer batchContainer) {
-      super.init(config);
+   public void init(TransactionManager tm, TransactionTable transactionTable, Configuration config,
+                    BatchContainer batchContainer, SequentialInterceptorChain interceptorChain) {
+      super.init(config, interceptorChain);
       this.tm = tm;
       this.transactionTable = transactionTable;
       this.batchContainer = batchContainer;
@@ -69,18 +68,18 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
          throw new IllegalArgumentException("Cannot create a transactional context without a valid Transaction instance.");
       }
       LocalTransaction localTransaction = transactionTable.getOrCreateLocalTransaction(tx, implicitTransaction);
-      return new LocalTxInvocationContext(localTransaction);
+      return new LocalTxInvocationContext(localTransaction, interceptorChain);
    }
 
    @Override
    public LocalTxInvocationContext createTxInvocationContext(LocalTransaction localTransaction) {
-      return new LocalTxInvocationContext(localTransaction);
+      return new LocalTxInvocationContext(localTransaction, interceptorChain);
    }
 
    @Override
    public RemoteTxInvocationContext createRemoteTxInvocationContext(
          RemoteTransaction tx, Address origin) {
-      RemoteTxInvocationContext ctx = new RemoteTxInvocationContext(tx);
+      RemoteTxInvocationContext ctx = new RemoteTxInvocationContext(tx, interceptorChain);
       return ctx;
    }
 
@@ -105,7 +104,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
    }
 
    protected final NonTxInvocationContext newNonTxInvocationContext(Address origin) {
-      NonTxInvocationContext ctx = new NonTxInvocationContext(origin, keyEq);
+      NonTxInvocationContext ctx = new NonTxInvocationContext(origin, keyEq, interceptorChain);
       return ctx;
    }
 }

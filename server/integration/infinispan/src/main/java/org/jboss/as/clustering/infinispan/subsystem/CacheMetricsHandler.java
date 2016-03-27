@@ -31,6 +31,7 @@ import org.infinispan.interceptors.ActivationInterceptor;
 import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
 import org.infinispan.interceptors.InvalidationInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -192,7 +193,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             AdvancedCache<?, ?> aCache = cache.getAdvancedCache();
             DefaultLockManager lockManager = (DefaultLockManager) SecurityActions.getLockManager(aCache);
             RpcManagerImpl rpcManager = (RpcManagerImpl) SecurityActions.getRpcManager(aCache);
-            List<CommandInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
+            List<SequentialInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
             ComponentRegistry registry = SecurityActions.getComponentRegistry(aCache);
             ComponentStatus status = SecurityActions.getCacheStatus(aCache);
             switch (metric) {
@@ -381,9 +382,9 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         }
     }
 
-    public static <T extends CommandInterceptor> T getFirstInterceptorWhichExtends(List<CommandInterceptor> interceptors,
+    public static <T extends SequentialInterceptor> T getFirstInterceptorWhichExtends(List<SequentialInterceptor> interceptors,
                                                                                     Class<T> interceptorClass) {
-        for (CommandInterceptor interceptor : interceptors) {
+        for (SequentialInterceptor interceptor : interceptors) {
             boolean isSubclass = interceptorClass.isAssignableFrom(interceptor.getClass());
             if (isSubclass) {
                 return (T) interceptor;

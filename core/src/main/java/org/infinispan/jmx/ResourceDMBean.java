@@ -300,7 +300,7 @@ public class ResourceDMBean implements DynamicMBean {
                   log.tracef("Attribute %s has r=%b,w=%b,is=%b and value %s",
                              name, i.getMBeanAttributeInfo().isReadable(), i.getMBeanAttributeInfo().isWritable(), i.getMBeanAttributeInfo().isIs(), result.getValue());
             } catch (Exception e) {
-               log.debugf("Exception while reading value of attribute %s: %s", name, e);
+               log.debugf(e, "Exception while reading value of attribute %s", name);
             }
          } else {
             log.queriedAttributeNotFound(name);

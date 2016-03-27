@@ -121,6 +121,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
    }
    
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx) throws Exception {
+      log.debugf("sameNode=%s, useTx=%s", sameNode, useTx);
       final Cache cache1 = cache(0, "testcache");
       final Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
@@ -192,6 +193,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 
    private void locksReleasedWithoutExplicitUnlockHelper(boolean lockPriorToPut, boolean useCommit)
          throws Exception {
+      log.debugf("lockPriorToPut=%s, useCommit=%s", lockPriorToPut, useCommit);
       
       Cache cache1 = cache(0, "testcache");
       Cache cache2 = cache(1, "testcache");

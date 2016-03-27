@@ -3,17 +3,14 @@ package org.infinispan.api.mvcc;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
@@ -22,21 +19,16 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.interceptors.BaseSequentialInterceptor;
 import org.infinispan.interceptors.CallInterceptor;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcManagerImpl;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
+import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
@@ -65,17 +57,19 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       final Cache<MagicKey, String> cache2 = cache(1, CACHE_NAME);
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
-      cache1.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+      cache1.getAdvancedCache().getSequentialInterceptorChain().addInterceptor(new BaseSequentialInterceptor() {
          @Override
-         public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-            if (!ctx.isOriginLocal()) {
-               // wait first before the check
-               barrier.await(10, TimeUnit.SECONDS);
-               // and once more after the check
-               barrier.await(10, TimeUnit.SECONDS);
+         public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+               throws Throwable {
+            if (command instanceof PutKeyValueCommand) {
+               if (!ctx.isOriginLocal()) {
+                  // wait first before the check
+                  barrier.await(10, TimeUnit.SECONDS);
+                  // and once more after the check
+                  barrier.await(10, TimeUnit.SECONDS);
+               }
             }
-
-            return invokeNextInterceptor(ctx, command);
+            return ctx.continueInvocation();
          }
       }, 0);
 
@@ -175,17 +169,16 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       Cache<String, String> cache1 = cache(0, CACHE_NAME);
       Cache<String, String> cache2 = cache(1, CACHE_NAME);
 
-      cache1.getAdvancedCache().addInterceptorBefore(new CommandInterceptor() {
+      assertTrue(cache1.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(new BaseSequentialInterceptor() {
          @Override
-         public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-            throw new RuntimeException("Barf!");
+         public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+               throws Throwable {
+            if (command instanceof PutKeyValueCommand || command instanceof RemoveCommand) {
+               throw new RuntimeException("Barf!");
+            }
+            return ctx.continueInvocation();
          }
-
-         @Override
-         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-            throw new RuntimeException("Barf!");
-         }
-      }, CallInterceptor.class);
+      }, CallInterceptor.class));
 
       try {
          cache1.put(key, value);

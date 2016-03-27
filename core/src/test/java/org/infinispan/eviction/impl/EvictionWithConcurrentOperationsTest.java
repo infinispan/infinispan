@@ -12,12 +12,9 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.PassivationManager;
-import org.infinispan.interceptors.ActivationInterceptor;
-import org.infinispan.interceptors.CacheLoaderInterceptor;
-import org.infinispan.interceptors.ClusteredActivationInterceptor;
-import org.infinispan.interceptors.ClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -612,18 +609,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    private class AfterActivationOrCacheLoader extends ControlledCommandInterceptor {
 
       public AfterActivationOrCacheLoader injectThis(Cache<Object, Object> injectInCache) {
-         InterceptorChain chain = TestingUtil.extractComponent(injectInCache, InterceptorChain.class);
-         if (chain.containsInterceptorType(CacheLoaderInterceptor.class)) {
-            injectInCache.getAdvancedCache().addInterceptorAfter(this, CacheLoaderInterceptor.class);
-         } else if (chain.containsInterceptorType(ClusteredCacheLoaderInterceptor.class)) {
-            injectInCache.getAdvancedCache().addInterceptorAfter(this, ClusteredCacheLoaderInterceptor.class);
-         } else if (chain.containsInterceptorType(ActivationInterceptor.class)) {
-            injectInCache.getAdvancedCache().addInterceptorAfter(this, ActivationInterceptor.class);
-         } else if (chain.containsInterceptorType(ClusteredActivationInterceptor.class)) {
-            injectInCache.getAdvancedCache().addInterceptorAfter(this, ClusteredActivationInterceptor.class);
-         } else {
-            throw new IllegalStateException("Should not happen!");
-         }
+         SequentialInterceptorChain chain =
+               TestingUtil.extractComponent(injectInCache, SequentialInterceptorChain.class);
+         SequentialInterceptor loaderInterceptor =
+               chain.findInterceptorExtending(org.infinispan.interceptors.CacheLoaderInterceptor.class);
+         injectInCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(this, loaderInterceptor.getClass());
          return this;
       }
 

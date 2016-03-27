@@ -9,8 +9,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.EvictionConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.EvictionType;
@@ -22,13 +20,13 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
@@ -272,26 +270,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
 
          if (loaders.isEmpty() && writers.isEmpty()) {
-            InterceptorChain chain = cache.getComponentRegistry().getComponent(InterceptorChain.class);
-            List<CommandInterceptor> loaderInterceptors = chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class);
-            if (loaderInterceptors.isEmpty()) {
+            SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+            SequentialInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
+            if (loaderInterceptor == null) {
                log.persistenceWithoutCacheLoaderInterceptor();
             } else {
-               for (CommandInterceptor interceptor : loaderInterceptors) {
-                  ((CacheLoaderInterceptor) interceptor).disableInterceptor();
-               }
+               ((CacheLoaderInterceptor) loaderInterceptor).disableInterceptor();
+               chain.removeInterceptor(loaderInterceptor.getClass());
             }
-            List<CommandInterceptor> writerInterceptors = chain.getInterceptorsWhichExtend(CacheWriterInterceptor.class);
-            if (writerInterceptors.isEmpty()) {
+            SequentialInterceptor writerInterceptor = chain.findInterceptorExtending(CacheWriterInterceptor.class);
+            if (writerInterceptor == null) {
                log.persistenceWithoutCacheWriteInterceptor();
             } else {
-               for (CommandInterceptor interceptor : writerInterceptors) {
-                  ((CacheWriterInterceptor) interceptor).disableInterceptor();
-               }
+               ((CacheWriterInterceptor) writerInterceptor).disableInterceptor();
+               chain.removeInterceptor(writerInterceptor.getClass());
             }
-
-            removeInterceptors(loaderInterceptors);
-            removeInterceptors(writerInterceptors);
             enabled = false;
          }
       }
@@ -748,14 +741,5 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    public StreamingMarshaller getMarshaller() {
       return m;
-   }
-
-   private void removeInterceptors(Collection<CommandInterceptor> interceptors) {
-      if (interceptors.isEmpty()) {
-         return;
-      }
-      for (CommandInterceptor interceptor : interceptors) {
-         cache.removeInterceptor(interceptor.getClass());
-      }
    }
 }

@@ -19,7 +19,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -185,11 +186,10 @@ public class TestingUtil {
       }
    }
 
-   public static <T extends CommandInterceptor> T findInterceptor(Cache<?, ?> cache, Class<T> interceptorToFind) {
-      for (CommandInterceptor i : cache.getAdvancedCache().getInterceptorChain()) {
-         if (interceptorToFind.isInstance(i)) return interceptorToFind.cast(i);
-      }
-      return null;
+   public static <T extends SequentialInterceptor> T findInterceptor(Cache<?, ?> cache,
+         Class<T> interceptorToFind) {
+      return interceptorToFind.cast(cache.getAdvancedCache().getSequentialInterceptorChain()
+            .findInterceptorExtending(interceptorToFind));
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
@@ -848,17 +848,6 @@ public class TestingUtil {
       return extractComponentRegistry(cache).getComponent(LockManager.class);
    }
 
-   /**
-    * For testing only - introspects a cache and extracts the ComponentRegistry
-    *
-    * @param ci interceptor chain to introspect
-    *
-    * @return component registry
-    */
-   public static ComponentRegistry extractComponentRegistry(InterceptorChain ci) {
-      return (ComponentRegistry) extractField(ci, "componentRegistry");
-   }
-
    public static AbstractDelegatingMarshaller extractCacheMarshaller(Cache cache) {
       ComponentRegistry cr = (ComponentRegistry) extractField(cache, "componentRegistry");
       StreamingMarshaller marshaller = cr.getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
@@ -874,26 +863,6 @@ public class TestingUtil {
    public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
       GlobalComponentRegistry gcr = (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
       return gcr.getComponent(ExternalizerTable.class);
-   }
-
-   /**
-    * Replaces the existing interceptor chain in the cache wih one represented by the interceptor passed in.  This
-    * utility updates dependencies on all components that rely on the interceptor chain as well.
-    *
-    * @param cache       cache that needs to be altered
-    * @param interceptor the first interceptor in the new chain.
-    */
-   public static void replaceInterceptorChain(Cache cache, CommandInterceptor interceptor) {
-      ComponentRegistry cr = extractComponentRegistry(cache);
-      // make sure all interceptors here are wired.
-      CommandInterceptor i = interceptor;
-      do {
-         cr.wireDependencies(i);
-      }
-      while ((i = i.getNext()) != null);
-
-      InterceptorChain inch = cr.getComponent(InterceptorChain.class);
-      inch.setFirstInChain(interceptor);
    }
 
    /**
@@ -913,7 +882,7 @@ public class TestingUtil {
          cr.wireDependencies(i);
       }
       while ((i = i.getNext()) != null);
-      InterceptorChain inch = cr.getComponent(InterceptorChain.class);
+      SequentialInterceptorChain inch = cr.getComponent(SequentialInterceptorChain.class);
       return inch.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
    }
 
@@ -948,7 +917,7 @@ public class TestingUtil {
 
    public static void replicateCommand(Cache cache, VisitableCommand command) throws Throwable {
       ComponentRegistry cr = extractComponentRegistry(cache);
-      InterceptorChain ic = cr.getComponent(InterceptorChain.class);
+      SequentialInterceptorChain ic = cr.getComponent(SequentialInterceptorChain.class);
       InvocationContextFactory icf = cr.getComponent(InvocationContextFactory.class);
       InvocationContext ctxt = icf.createInvocationContext(true, -1);
       ic.invoke(ctxt, command);

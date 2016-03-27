@@ -8,6 +8,7 @@ import org.infinispan.remoting.transport.Address;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -83,9 +84,7 @@ public class GlobalTransaction implements Cloneable {
 
    @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("GlobalTransaction:<").append(addr).append(">:").append(id).append(isRemote() ? ":remote" : ":local");
-      return sb.toString();
+      return "GlobalTx:" + Objects.toString(addr, "local") + ":" + id;
    }
 
    /**

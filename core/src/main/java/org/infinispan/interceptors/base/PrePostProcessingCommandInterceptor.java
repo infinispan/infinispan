@@ -29,8 +29,9 @@ import org.infinispan.context.impl.TxInvocationContext;
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 9.0, please extend {@link org.infinispan.interceptors.DDSequentialInterceptor} instead.
  */
+@Deprecated
 public abstract class PrePostProcessingCommandInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {

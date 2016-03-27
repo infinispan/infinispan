@@ -8,7 +8,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
@@ -62,7 +62,7 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
-   static List<CommandInterceptor> getInterceptorChain(final AdvancedCache<?, ?> cache) {
+   static List<SequentialInterceptor> getInterceptorChain(final AdvancedCache<?, ?> cache) {
       GetCacheInterceptorChainAction action = new GetCacheInterceptorChainAction(cache);
       return doPrivileged(action);
    }

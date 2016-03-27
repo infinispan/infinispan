@@ -81,14 +81,14 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
          // handle first error per file, ignore the rest if any
          if (errorFiles.add(fileName)) {
             VisitableCommand cmd = commandsFactory.buildPutKeyValueCommand(fileName + ERRORS_KEY_SUFFIX, exception.getMessage(), null, EnumUtil.EMPTY_BIT_SET);
-            invoker.invoke(ctx, cmd);
+            invoker.invoke(ctx.clone(), cmd);
          }
       }
 
       @Override
       public void handleSuccess(String fileName) {
          VisitableCommand cmd = commandsFactory.buildRemoveCommand(fileName + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
-         invoker.invoke(ctx, cmd);
+         invoker.invoke(ctx.clone(), cmd);
       }
    }
 
@@ -210,7 +210,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
 
                // lock .errors key
                VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
-               invoker.invoke(ctx, cmd);
+               invoker.invoke(ctx.clone(), cmd);
             }
          } else {
             return invokeNextInterceptor(ctx, command);
@@ -270,7 +270,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
 
       // lock .errors key
       VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
-      invoker.invoke(ctx, cmd);
+      invoker.invoke(ctx.clone(), cmd);
 
       final Object result = invokeNextInterceptor(ctx, command);
 
@@ -307,10 +307,10 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
          if (shouldIntercept(key)) {
             // lock .errors key
             VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
-            invoker.invoke(ctx, cmd);
+            invoker.invoke(ctx.clone(), cmd);
 
             cmd = commandsFactory.buildRemoveCommand(key + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
-            invoker.invoke(ctx, cmd);
+            invoker.invoke(ctx.clone(), cmd);
 
             serializationContext.unregisterProtoFile(key);
             Map<String, FileDescriptor> fileDescriptors = serializationContext.getFileDescriptors();
@@ -320,7 +320,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
             for (FileDescriptor fd : fileDescriptors.values()) {
                if (fd.isResolved()) {
                   cmd = commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
-                  invoker.invoke(ctx, cmd);
+                  invoker.invoke(ctx.clone(), cmd);
                } else {
                   if (sb.length() > 0) {
                      sb.append('\n');
@@ -328,7 +328,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
                   sb.append(fd.getName());
                   PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX, "One of the imported files is missing or has errors", null, EnumUtil.EMPTY_BIT_SET);
                   put.setPutIfAbsent(true);
-                  invoker.invoke(ctx, put);
+                  invoker.invoke(ctx.clone(), put);
                }
             }
 
@@ -337,7 +337,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
             } else {
                cmd = commandsFactory.buildRemoveCommand(ERRORS_KEY_SUFFIX, null, EnumUtil.EMPTY_BIT_SET);
             }
-            invoker.invoke(ctx, cmd);
+            invoker.invoke(ctx.clone(), cmd);
          }
       }
 
@@ -365,7 +365,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
 
          // lock .errors key
          VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, EnumUtil.EMPTY_BIT_SET, null);
-         invoker.invoke(ctx, cmd);
+         invoker.invoke(ctx.clone(), cmd);
 
          final Object result = invokeNextInterceptor(ctx, command);
 
@@ -428,6 +428,6 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
          }
          cmd = commandsFactory.buildPutKeyValueCommand(ERRORS_KEY_SUFFIX, sb.toString(), null, EnumUtil.EMPTY_BIT_SET);
       }
-      invoker.invoke(ctx, cmd);
+      invoker.invoke(ctx.clone(), cmd);
    }
 }

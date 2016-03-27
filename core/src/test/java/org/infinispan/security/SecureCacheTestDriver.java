@@ -592,6 +592,11 @@ public class SecureCacheTestDriver {
       cache.getInterceptorChain();
    }
 
+   @TestCachePermission(AuthorizationPermission.ADMIN)
+   public void testGetSequentialInterceptorChain(SecureCache<String, String> cache) {
+      cache.getSequentialInterceptorChain();
+   }
+
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testRemoveAsync_Object_Object(SecureCache<String, String> cache) {
       cache.removeAsync("a", "a");

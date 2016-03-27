@@ -1,19 +1,22 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.components.ModuleMetadataFileFinder;
+import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.SequentialInterceptorChainImpl;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
-
-import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.factories.components.ModuleMetadataFileFinder;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
 
 /**
  * Tests {@link InterceptorChain} logic
@@ -30,28 +33,31 @@ public class InterceptorChainTest extends AbstractInfinispanTest {
    public void testConcurrentAddRemove() throws Exception {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
       componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(), InterceptorChainTest.class.getClassLoader());
-      InterceptorChain ic = new InterceptorChain(componentMetadataRepo);
-      ic.setFirstInChain(new CallInterceptor());
-      ic.addInterceptor(new ActivationInterceptor(), 1);
+      SequentialInterceptorChainImpl sequentialInterceptorChain =
+            new SequentialInterceptorChainImpl(componentMetadataRepo);
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
+      InterceptorChain ic = new InterceptorChain(sequentialInterceptorChain);
+      ic.setFirstInChain(new DummyCallInterceptor());
+      ic.addInterceptor(new DummyActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
       List<Future<Void>> futures = new ArrayList<Future<Void>>(2);
       // We do test concurrent add/remove of different types per thread,
       // so that the final result is predictable (testable) and that we
       // can not possibly fail because of the InterceptorChain checking
       // that no interceptor is ever added twice.
-      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new CacheMgmtInterceptor())));
-      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new DistCacheWriterInterceptor())));
-      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new InvalidationInterceptor())));
+      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new DummyCacheMgmtInterceptor())));
+      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new DummyDistCacheWriterInterceptor())));
+      futures.add(fork(new InterceptorChainUpdater(ic, barrier, new DummyInvalidationInterceptor())));
       barrier.await(); // wait for all threads to be ready
       barrier.await(); // wait for all threads to finish
       log.debug("All threads finished, let's shutdown the executor and check whether any exceptions were reported");
       for (Future<Void> future : futures) future.get();
 
-      assert ic.containsInterceptorType(CallInterceptor.class);
-      assert ic.containsInterceptorType(ActivationInterceptor.class);
-      assert ic.containsInterceptorType(CacheMgmtInterceptor.class);
-      assert ic.containsInterceptorType(DistCacheWriterInterceptor.class);
-      assert ic.containsInterceptorType(InvalidationInterceptor.class);
+      assert ic.containsInterceptorType(DummyCallInterceptor.class);
+      assert ic.containsInterceptorType(DummyActivationInterceptor.class);
+      assert ic.containsInterceptorType(DummyCacheMgmtInterceptor.class);
+      assert ic.containsInterceptorType(DummyDistCacheWriterInterceptor.class);
+      assert ic.containsInterceptorType(DummyInvalidationInterceptor.class);
       assert ic.asList().size() == 5 : "Resulting interceptor chain was actually " + ic.asList();
    }
 
@@ -87,4 +93,18 @@ public class InterceptorChainTest extends AbstractInfinispanTest {
       }
    }
 
+   private static class DummyCallInterceptor extends CommandInterceptor {
+   }
+
+   private static class DummyActivationInterceptor extends CommandInterceptor {
+   }
+
+   private static class DummyCacheMgmtInterceptor extends CommandInterceptor {
+   }
+
+   private static class DummyDistCacheWriterInterceptor extends CommandInterceptor {
+   }
+
+   private static class DummyInvalidationInterceptor extends CommandInterceptor {
+   }
 }

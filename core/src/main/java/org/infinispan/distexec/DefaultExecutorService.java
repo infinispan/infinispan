@@ -25,7 +25,7 @@ import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.responses.Response;
@@ -172,12 +172,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          }
       }
 
-      ensureAccessPermissions(masterCacheNode.getAdvancedCache());
-      ensureProperCacheState(masterCacheNode.getAdvancedCache());
-      ensureFullCache(masterCacheNode.getAdvancedCache());
-
       this.cache = masterCacheNode.getAdvancedCache();
       ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(cache);
+
+      ensureAccessPermissions(cache);
+      ensureProperCacheState(cache);
+      ensureFullCache(cache);
+
 
       this.rpc = SecurityActions.getCacheRpcManager(cache);
       this.invoker = registry.getComponent(InterceptorChain.class);
@@ -655,9 +656,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new IllegalStateException("Invalid cache state " + cache.getStatus());
    }
 
-   private void ensureFullCache(AdvancedCache<?, ?> advancedCache) {
-      List<CommandInterceptor> interceptorChain = SecurityActions.getInterceptorChain(advancedCache);
-      if (interceptorChain == null || interceptorChain.isEmpty()) {
+   private void ensureFullCache(AdvancedCache<?, ?> cache) {
+      List<SequentialInterceptor> interceptors = SecurityActions.getInterceptorChain(cache);
+      if (interceptors == null || interceptors.isEmpty()) {
          throw log.distributedExecutorsNotSupported();
       }
    }

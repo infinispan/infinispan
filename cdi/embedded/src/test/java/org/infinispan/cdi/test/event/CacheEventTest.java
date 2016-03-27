@@ -38,7 +38,8 @@ import static org.mockito.Mockito.mock;
 @Test(groups = "functional", testName = "cdi.test.event.CacheEventTest")
 public class CacheEventTest extends Arquillian {
 
-   private final NonTxInvocationContext invocationContext = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
+   private final NonTxInvocationContext invocationContext = new NonTxInvocationContext(null, AnyEquivalence.getInstance(),
+                                                                                       null);
 
    @Inject
    @Cache1

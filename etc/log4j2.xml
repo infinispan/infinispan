@@ -13,7 +13,7 @@
     </Console>
     <File name="File" fileName="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log"
           append="false">
-      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%n"/>
+      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
     </File>
     <Async name="AsyncFile">
       <AppenderRef ref="File"/>

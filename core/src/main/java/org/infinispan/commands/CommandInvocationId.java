@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -60,10 +61,7 @@ public class CommandInvocationId {
 
    @Override
    public String toString() {
-      return "CommandUUID{" +
-            "address=" + address +
-            ", id=" + id +
-            '}';
+      return "CommandInvocation:" + Objects.toString(address, "local") + ":" + id;
    }
 
    public static class Externalizer extends AbstractExternalizer<CommandInvocationId> {

@@ -13,7 +13,7 @@
     </Console>
     <CompressedFile name="CompressedFile"
           filename="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log.gz" append="false">
-      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%n"/>
+      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
     </CompressedFile>
     <Async name="AsyncCompressedFile">
       <AppenderRef ref="CompressedFile"/>
