@@ -158,33 +158,30 @@ public class LocalTopKeyTest extends SingleCacheManagerTest {
    }
 
    private void assertTopKeyAccesses(String key, long expected, boolean readAccesses) {
-      Long actual;
-      if (readAccesses) {
-         actual = getTopKey().getLocalTopGets().get(key);
-      } else {
-         actual = getTopKey().getLocalTopPuts().get(key);
-      }
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of accesses");
+      final CacheUsageInterceptor topK = getTopKey();
+      eventuallyEquals("Wrong number of accesses.", expected, () -> readAccesses ?
+            topK.getLocalTopGets().getOrDefault(key, 0L) :
+            topK.getLocalTopPuts().getOrDefault(key, 0L));
    }
 
    private void assertWriteSkew(String key, long expected) {
-      Long actual = getTopKey().getTopWriteSkewFailedKeys().get(key);
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of write skew");
+      final CacheUsageInterceptor topK = getTopKey();
+      eventuallyEquals("Wrong number of write skew.", expected, () -> topK.getTopWriteSkewFailedKeys().getOrDefault(key, 0L));
    }
 
    private void assertTopKeyLocked(String key, long expected) {
-      Long actual = getTopKey().getTopLockedKeys().get(key);
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of locked keys");
+      final CacheUsageInterceptor topK = getTopKey();
+      eventuallyEquals("Wrong number of locked keys.", expected, () -> topK.getTopLockedKeys().getOrDefault(key, 0L));
    }
 
    private void assertTopKeyLockContented(String key, long expected) {
-      Long actual = getTopKey().getTopContendedKeys().get(key);
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of contented keys");
+      final CacheUsageInterceptor topK = getTopKey();
+      eventuallyEquals("Wrong number of contented keys.", expected, () -> topK.getTopContendedKeys().getOrDefault(key, 0L));
    }
 
    private void assertTopKeyLockFailed(String key, long expected) {
-      Long actual = getTopKey().getTopLockFailedKeys().get(key);
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of lock failed keys");
+      final CacheUsageInterceptor topK = getTopKey();
+      eventuallyEquals("Wrong number of lock failed keys.", expected, () -> topK.getTopLockFailedKeys().getOrDefault(key, 0L));
    }
 
    private void assertLockInformation(String key, long locked, long contented, long failed) {
@@ -240,4 +237,5 @@ public class LocalTopKeyTest extends SingleCacheManagerTest {
          }
       }
    }
+
 }
