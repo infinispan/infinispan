@@ -1294,6 +1294,9 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-failsafe-plugin</artifactId>
                <version>${version.maven.surefire}</version>
+               <configuration>
+                  <runOrder>alphabetical</runOrder>
+               </configuration>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1578,6 +1581,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <runOrder>alphabetical</runOrder>
                <parallel>tests</parallel>
                <threadCount>${infinispan.test.parallel.threads}</threadCount>
                <forkCount>1</forkCount>
