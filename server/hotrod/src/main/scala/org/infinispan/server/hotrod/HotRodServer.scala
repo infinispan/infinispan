@@ -80,16 +80,29 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       new HotRodDecoder(getCacheManager, transport, this, isCacheIgnored)
 
    override def startInternal(configuration: HotRodServerConfiguration, cacheManager: EmbeddedCacheManager) {
+      // These are also initialized by super.startInternal, but we need them before
       this.configuration = configuration
+      this.cacheManager = cacheManager
 
       // populate the sasl factories based on the required mechs
       setupSasl
 
-      // 1. Start default cache and the endpoint before adding self to
+      // Initialize query-specific stuff
+      queryFacades = loadQueryFacades()
+      clientListenerRegistry = new ClientListenerRegistry(configuration)
+
+      addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory)
+      loadFilterConverterFactories(classOf[ParamKeyValueFilterConverterFactory[Any, Any, Any]])((name, f) => addKeyValueFilterConverterFactory(name, f.asInstanceOf[KeyValueFilterConverterFactory[_, _, _]]))
+      loadFilterConverterFactories(classOf[CacheEventFilterConverterFactory])(addCacheEventFilterConverterFactory)
+      loadFilterConverterFactories(classOf[CacheEventConverterFactory])(addCacheEventConverterFactory)
+      loadFilterConverterFactories(classOf[KeyValueFilterConverterFactory[Any, Any, Any]])(addKeyValueFilterConverterFactory)
+
+      // Start default cache and the endpoint before adding self to
       // topology in order to avoid topology updates being used before
       // endpoint is available.
       super.startInternal(configuration, cacheManager)
 
+      // Add self to topology cache last, after everything is initialized
       isClustered = cacheManager.getCacheManagerConfiguration.transport().transport() != null
       if (isClustered) {
          defineTopologyCacheConfig(cacheManager)
@@ -98,16 +111,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
          addSelfToTopologyView(cacheManager)
       }
-
-      queryFacades = loadQueryFacades()
-      clientListenerRegistry = new ClientListenerRegistry(configuration)
-
-      addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory)
-
-      loadFilterConverterFactories(classOf[ParamKeyValueFilterConverterFactory[Any,Any,Any]])((name, f) => addKeyValueFilterConverterFactory(name, f.asInstanceOf[KeyValueFilterConverterFactory[_,_,_]]))
-      loadFilterConverterFactories(classOf[CacheEventFilterConverterFactory])(addCacheEventFilterConverterFactory)
-      loadFilterConverterFactories(classOf[CacheEventConverterFactory])(addCacheEventConverterFactory)
-      loadFilterConverterFactories(classOf[KeyValueFilterConverterFactory[Any,Any,Any]])(addKeyValueFilterConverterFactory)
    }
 
    private def loadFilterConverterFactories[T](c: Class[T])(action: (String, T) => Any) = ServiceFinder.load(c).foreach { factory =>
