@@ -531,6 +531,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          eacs.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
+               if (taskContext.isStopped())
+                  return null;
+
                try {
                   final MarshalledEntry marshalledEntry = _load(key, fetchValue, fetchMetadata);
                   if (marshalledEntry != null) {
