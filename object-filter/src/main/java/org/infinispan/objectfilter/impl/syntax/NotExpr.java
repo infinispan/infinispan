@@ -18,8 +18,8 @@ public final class NotExpr implements BooleanExpr {
    }
 
    @Override
-   public BooleanExpr acceptVisitor(Visitor visitor) {
-      return visitor.visit(this);
+   public <T> T acceptVisitor(Visitor<?, ?> visitor) {
+      return (T) visitor.visit(this);
    }
 
    @Override

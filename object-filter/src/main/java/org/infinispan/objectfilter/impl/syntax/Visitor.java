@@ -4,25 +4,25 @@ package org.infinispan.objectfilter.impl.syntax;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public interface Visitor {
+public interface Visitor<BE, VE> {
 
-   BooleanExpr visit(NotExpr notExpr);
+   BE visit(NotExpr notExpr);
 
-   BooleanExpr visit(OrExpr orExpr);
+   BE visit(OrExpr orExpr);
 
-   BooleanExpr visit(AndExpr andExpr);
+   BE visit(AndExpr andExpr);
 
-   BooleanExpr visit(ConstantBooleanExpr constantBooleanExpr);
+   BE visit(ConstantBooleanExpr constantBooleanExpr);
 
-   BooleanExpr visit(IsNullExpr isNullExpr);
+   BE visit(IsNullExpr isNullExpr);
 
-   BooleanExpr visit(ComparisonExpr comparisonExpr);
+   BE visit(ComparisonExpr comparisonExpr);
 
-   BooleanExpr visit(LikeExpr likeExpr);
+   BE visit(LikeExpr likeExpr);
 
-   ValueExpr visit(ConstantValueExpr constantValueExpr);
+   VE visit(ConstantValueExpr constantValueExpr);
 
-   ValueExpr visit(PropertyValueExpr propertyValueExpr);
+   VE visit(PropertyValueExpr propertyValueExpr);
 
-   ValueExpr visit(AggregationExpr aggregationExpr);
+   VE visit(AggregationExpr aggregationExpr);
 }

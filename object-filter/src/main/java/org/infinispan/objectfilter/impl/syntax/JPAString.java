@@ -2,7 +2,9 @@ package org.infinispan.objectfilter.impl.syntax;
 
 /**
  * @author anistor@redhat.com
- * @since 7.0
+ * @since 9.0
  */
-public interface ValueExpr extends Visitable, JPAString {
+interface JPAString {
+
+   String toJpaString();
 }

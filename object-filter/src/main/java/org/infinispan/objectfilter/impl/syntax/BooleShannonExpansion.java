@@ -35,7 +35,7 @@ public final class BooleShannonExpansion {
       this.indexedFieldProvider = indexedFieldProvider;
    }
 
-   private static class Collector implements Visitor {
+   private static class Collector extends ExprVisitor {
 
       private final IndexedFieldProvider indexedFieldProvider;
 
@@ -123,7 +123,7 @@ public final class BooleShannonExpansion {
       }
    }
 
-   private static class Replacer implements Visitor {
+   private static class Replacer extends ExprVisitor {
 
       private final PrimaryPredicateExpr toReplace;
       private final ConstantBooleanExpr with;

@@ -7,7 +7,7 @@ package org.infinispan.objectfilter.impl.syntax;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class NoOpVisitor implements Visitor {
+public class ExprVisitor implements Visitor<BooleanExpr, ValueExpr> {
 
    @Override
    public BooleanExpr visit(NotExpr notExpr) {
