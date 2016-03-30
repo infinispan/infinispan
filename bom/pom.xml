@@ -79,7 +79,7 @@
       <version.scala.major>2.11</version.scala.major>
       <version.scala>${version.scala.major}.7</version.scala>
       <version.scala.xml>1.0.2</version.scala.xml>
-      <version.xstream>1.4.8</version.xstream>
+      <version.xstream>1.4.9</version.xstream>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
