@@ -245,7 +245,7 @@ The last thing to figure out is which id to give to the message. Each module tha
 |query|14001 - 14800
 |query-dsl|14801 - 15000
 |lucene directory|15001 - 16000
-|rhq plugin|16001 - 17000
+|<no longer used>|16001 - 17000
 |cdi integration|17001 - 18000
 |hbase cache store | 18001 - 19000 
 |cli interpreter | 19001 - 20000 

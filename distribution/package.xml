@@ -40,9 +40,6 @@
       <module dir="${output.dir}" target="modules/tools" module="tools" artifact="infinispan-tools" />
       <module dir="${output.dir}" target="modules/tree" module="tree" artifact="infinispan-tree" />
 
-      <!-- RHQ plugin -->
-      <module dir="${output.dir}" target="rhq-plugin" module="rhq-plugin" artifact="infinispan-rhq-plugin" dependencies="false" />
-
       <!-- Demos -->
       <mkdir dir="${output.dir}/demos" />
       <demo target="${output.dir}" demo="gui" />

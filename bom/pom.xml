@@ -76,7 +76,6 @@
       <version.jta>1.0.1.Final</version.jta>
       <version.netty>4.0.25.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
-      <version.rhq>4.4.0</version.rhq>
       <version.scala.major>2.11</version.scala.major>
       <version.scala>${version.scala.major}.7</version.scala>
       <version.scala.xml>1.0.2</version.scala.xml>
@@ -348,38 +347,6 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${version.hibernate.core}</version>
-         </dependency>
-         
-         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${version.rhq}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-plugin-api</artifactId>
-            <version>${version.rhq}</version>
-            <exclusions>
-               <exclusion>
-                  <groupId>com.sun.xml.bind</groupId>
-                  <artifactId>jaxb-impl</artifactId>
-               </exclusion>
-            </exclusions>
-         </dependency>
-         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-jmx-plugin</artifactId>
-            <version>${version.rhq}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-jboss-as-7-plugin</artifactId>
-            <version>${version.rhq}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-native-system</artifactId>
-            <version>${version.rhq}</version>
          </dependency>
          
          <dependency>

@@ -23,8 +23,6 @@ import java.util.regex.Pattern;
 public class TestNameVerifier {
     
    String dir = "src" + File.separator + "test" + File.separator + "java" + File.separator + "org" + File.separator + "infinispan";
-   public List<String> modules = new ArrayList<String>();
-
 
    Pattern packageLinePattern = Pattern.compile("package org.infinispan[^;]*");
    Pattern classLinePattern = Pattern.compile("(abstract\\s*)??(public\\s*)(abstract\\s*)??class [^\\s]*");
@@ -41,7 +39,7 @@ public class TestNameVerifier {
 
    FileFilter onlyDirs = new FileFilter() {
       public boolean accept(File pathname) {
-         return pathname.isDirectory();
+         return pathname.isDirectory() && !pathname.getName().equals("target");
       }
    };
 
@@ -135,13 +133,7 @@ public class TestNameVerifier {
 
    // Loop through the list of module names and pass it to the getFilesFromModule()
    private File[] getAllJavaFiles() {
-      populateModuleList();
-      List<File> listOfFiles = new ArrayList<File>();
-      for (String module : modules) {
-         // Take in the list from the getFilesFromModule() and add it to the collection here to be converted into an
-         // array and then returned.
-         listOfFiles.addAll(getFilesFromModule(module));
-      }
+      List<File> listOfFiles = getFiles();
       return listOfFiles.toArray(new File[listOfFiles.size()]);
    }
 
@@ -198,18 +190,8 @@ public class TestNameVerifier {
       return name.substring(firstIndexOfQuote + 1, name.length() - 1);
    }
 
-   // method that populates the list of module names
-   private void populateModuleList() {
-      modules.add("core");
-      modules.add("cachestore" + File.separator + "jdbc");
-      modules.add("cachestore" + File.separator + "remote");
-      modules.add("rhq-plugin");
-      modules.add("tree");
-   }
-
-   // Old method that Mircea wrote that originally returned an array. Now returns a list and will be added to the list in getAllJavaFiles()
-   private List<File> getFilesFromModule(String moduleName) {
-      File file = new File(new File(dir).getAbsolutePath());
+   private List<File> getFiles() {
+      File file = new File(".");
       assert file.isDirectory();
       ArrayList<File> result = new ArrayList<File>();
       addJavaFiles(file, result);

@@ -24,13 +24,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 /**
- * Tests for remote queries over HotRod but registering the proto file via JON/RHQ plugin.
+ * Tests for remote queries over HotRod but registering the proto file via DMR plugin.
  *
  * @author William Burns
  */
 @Category({ Queries.class })
 @RunWith(Arquillian.class)
-public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
+public class RemoteQueryDMRRegisterIT extends RemoteQueryIT {
 
    @Before
    @Override
@@ -44,7 +44,7 @@ public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
       remoteCacheManager = rcmFactory.createManager(clientBuilder);
       remoteCache = remoteCacheManager.getCache(cacheName);
 
-      //initialize server-side serialization context via JON/RHQ
+      //initialize server-side serialization context via DMR
       ModelNode nameList = new ModelNode()
               .add("/sample_bank_account/bank.proto");
       ModelNode urlList = new ModelNode()

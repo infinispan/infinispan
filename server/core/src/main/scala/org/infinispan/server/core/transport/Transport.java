@@ -14,7 +14,7 @@ import org.infinispan.jmx.annotations.MeasurementType;
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Scope(Scopes.GLOBAL) // So that RHQ plugin generation detects this as a cache manager level component
+@Scope(Scopes.GLOBAL) // So that annotation parser detects this as a cache manager level component
 @MBean(objectName = "Transport",
        description = "Transport component manages read and write operations to/from server.")
 public interface Transport {

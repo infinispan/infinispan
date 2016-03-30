@@ -74,7 +74,6 @@
                               <exclude>org.ops4j.base</exclude>
                               <exclude>org.ops4j.pax.swissbox</exclude>
                               <exclude>org.ops4j.pax.web</exclude>
-                              <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
                               <exclude>org.slf4j:slf4j-nop</exclude>
                               <exclude>org.slf4j:slf4j-jdk14</exclude>
                               <exclude>org.slf4j:slf4j-log4j12</exclude>
