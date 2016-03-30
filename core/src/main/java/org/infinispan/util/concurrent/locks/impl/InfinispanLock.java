@@ -232,7 +232,7 @@ public class InfinispanLock {
    }
 
    private boolean casRelease(LockPlaceHolder lockPlaceHolder) {
-      return OWNER_UPDATER.compareAndSet(this, lockPlaceHolder, null);
+      return cas(lockPlaceHolder, null);
    }
 
    private boolean remove(Object lockOwner) {
@@ -246,7 +246,11 @@ public class InfinispanLock {
    }
 
    private boolean cas(LockPlaceHolder release, LockPlaceHolder acquire) {
-      return OWNER_UPDATER.compareAndSet(this, release, acquire);
+      boolean cas = OWNER_UPDATER.compareAndSet(this, release, acquire);
+      if (trace) {
+         log.tracef("Lock Owner CAS(%s, %s) => %s", release, acquire, cas);
+      }
+      return cas;
    }
 
    private void tryAcquire(LockPlaceHolder release) {
@@ -259,7 +263,11 @@ public class InfinispanLock {
          if (toAcquire == null && toRelease == null) {
             return;
          } else if (toAcquire == null) {
-            casRelease(toRelease);
+            //nothing to acquire, but we have to release the current.
+            if (casRelease(toRelease)) {
+               toRelease = null;
+               continue; //in the meanwhile, we could have a new request. recheck!
+            }
             return;
          }
          if (cas(toRelease, toAcquire)) {
