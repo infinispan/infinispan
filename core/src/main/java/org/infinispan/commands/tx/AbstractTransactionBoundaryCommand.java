@@ -159,12 +159,12 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    
    @Override
    public Address getOrigin() {
-	   return origin;
+      return origin;
    }
    
    @Override
    public void setOrigin(Address origin) {
-	   this.origin = origin;
+      this.origin = origin;
    }
 
    @Override

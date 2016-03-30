@@ -129,7 +129,7 @@ public abstract class AbstractVisitor implements Visitor {
    
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
-	   return visitInvalidateCommand(ctx, invalidateL1Command);
+      return visitInvalidateCommand(ctx, invalidateL1Command);
    }
 
    /**

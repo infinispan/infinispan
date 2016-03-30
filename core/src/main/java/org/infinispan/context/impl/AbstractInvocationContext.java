@@ -23,7 +23,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    @Override
    public final Address getOrigin() {
-	   return origin;
+      return origin;
    }
 
    @Override

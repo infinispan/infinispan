@@ -16,13 +16,13 @@ public class JpaStoreUserEntityTest extends BaseJpaStoreTest {
    }
 
    @Override
-	protected TestObject createTestObject(String suffix) {
-		User user = new User();
-		user.setUsername("u_" + suffix);
-		user.setFirstName("fn_" + suffix);
-		user.setLastName("ln_" + suffix);
-		user.setNote("Some notes " + suffix);
+   protected TestObject createTestObject(String suffix) {
+      User user = new User();
+      user.setUsername("u_" + suffix);
+      user.setFirstName("fn_" + suffix);
+      user.setLastName("ln_" + suffix);
+      user.setNote("Some notes " + suffix);
 
-		return new TestObject(user.getUsername(), user);
-	}
+      return new TestObject(user.getUsername(), user);
+   }
 }

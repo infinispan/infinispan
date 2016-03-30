@@ -1464,15 +1464,15 @@ public class TestingUtil {
       return new Subject(true, set, Collections.emptySet(), Collections.emptySet());
    }
 
-	public static String loadFileAsString(InputStream is) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		BufferedReader r = new BufferedReader(new InputStreamReader(is));
-		for (String line = r.readLine(); line != null; line = r.readLine()) {
-			sb.append(line);
-			sb.append("\n");
-		}
-		return sb.toString();
-	}
+   public static String loadFileAsString(InputStream is) throws IOException {
+      StringBuilder sb = new StringBuilder();
+      BufferedReader r = new BufferedReader(new InputStreamReader(is));
+      for (String line = r.readLine(); line != null; line = r.readLine()) {
+         sb.append(line);
+         sb.append("\n");
+      }
+      return sb.toString();
+   }
 
    static public void assertAnyEquals(Object expected, Object actual) {
       if (expected instanceof byte[] && actual instanceof byte[])

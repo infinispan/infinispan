@@ -49,7 +49,7 @@ public class DataContainerTest extends AbstractInfinispanTest {
       }
       finally
       {
-      	TestingUtil.killCacheManagers(cm);
+         TestingUtil.killCacheManagers(cm);
       }
    }
 
@@ -91,7 +91,7 @@ public class DataContainerTest extends AbstractInfinispanTest {
 
          Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(), "put(name, Pete", "compute(name,"));
       } finally {
-      	TestingUtil.killCacheManagers(cm);
+         TestingUtil.killCacheManagers(cm);
       }
 
    }
@@ -99,8 +99,8 @@ public class DataContainerTest extends AbstractInfinispanTest {
    @Test
    public void testCustomDataContainer() {
 
-   	ConfigurationBuilder configuration = new ConfigurationBuilder();
-   	configuration.dataContainer().dataContainer(new QueryableDataContainer());
+      ConfigurationBuilder configuration = new ConfigurationBuilder();
+      configuration.dataContainer().dataContainer(new QueryableDataContainer());
 
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(configuration);
 
@@ -125,7 +125,7 @@ public class DataContainerTest extends AbstractInfinispanTest {
 
          Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(), "put(name, Pete", "compute(name,"));
       } finally {
-      	TestingUtil.killCacheManagers(cm);
+         TestingUtil.killCacheManagers(cm);
       }
    }
 

@@ -28,22 +28,22 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
 
    @Test(expectedExceptions = PersistenceException.class)
    public void testStoreNoJpa() {
-	   assertFalse(cs.contains("k"));
-	   cs.write(createEntry("k", "v"));
+      assertFalse(cs.contains("k"));
+      cs.write(createEntry("k", "v"));
    }
 
    @Test(expectedExceptions = PersistenceException.class)
    public void testStoreWithJpaBadKey() {
-	   assertFalse(cs.contains("k"));
-	   TestObject obj = createTestObject("1");
-	   cs.write(createEntry("k", obj.getValue()));
+      assertFalse(cs.contains("k"));
+      TestObject obj = createTestObject("1");
+      cs.write(createEntry("k", obj.getValue()));
    }
 
    public void testStoreWithJpaGoodKey() {
-	   TestObject obj = createTestObject("testStoreWithJpaGoodKey");
-	   assertFalse(cs.contains(obj.getKey()));
-	   MarshalledEntryImpl me = createEntry(obj);
-	   cs.write(me);
+      TestObject obj = createTestObject("testStoreWithJpaGoodKey");
+      assertFalse(cs.contains(obj.getKey()));
+      MarshalledEntryImpl me = createEntry(obj);
+      cs.write(me);
    }
 
    public void testLoadAndStoreImmortal() {
@@ -63,13 +63,13 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
    }
 
    public void testPreload() throws Exception {
-		TestObject obj1 = createTestObject("testPreload1");
-		TestObject obj2 = createTestObject("testPreload2");
-		TestObject obj3 = createTestObject("testPreload3");
+      TestObject obj1 = createTestObject("testPreload1");
+      TestObject obj2 = createTestObject("testPreload2");
+      TestObject obj3 = createTestObject("testPreload3");
 
-		cs.write(createEntry(obj1));
-		cs.write(createEntry(obj2));
-		cs.write(createEntry(obj3));
+      cs.write(createEntry(obj1));
+      cs.write(createEntry(obj2));
+      cs.write(createEntry(obj3));
       assertEquals(cs.load(obj1.getKey()).getValue(), obj1.getValue());
       assertEquals(cs.load(obj2.getKey()).getValue(), obj2.getValue());
       assertEquals(cs.load(obj3.getKey()).getValue(), obj3.getValue());
@@ -83,13 +83,13 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
             }
          }
       };
-		cs.process(null, taskWithValues, new ThreadPoolExecutor(1, 2, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(10)), true, false);
+      cs.process(null, taskWithValues, new ThreadPoolExecutor(1, 2, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(10)), true, false);
 
-		assertEquals(map.size(), 3);
+      assertEquals(map.size(), 3);
       assertEquals(map.remove(obj1.getKey()), obj1.getValue());
       assertEquals(map.remove(obj2.getKey()), obj2.getValue());
       assertEquals(map.remove(obj3.getKey()), obj3.getValue());
-		assertTrue(map.isEmpty());
+      assertTrue(map.isEmpty());
 
       final ConcurrentHashSet set = new ConcurrentHashSet();
       AdvancedCacheLoader.CacheLoaderTask taskWithoutValues = new AdvancedCacheLoader.CacheLoaderTask() {
@@ -106,28 +106,28 @@ public abstract class BaseJpaStoreTest extends AbstractJpaStoreTest {
       assertTrue(set.remove(obj2.getKey()));
       assertTrue(set.remove(obj3.getKey()));
       assertTrue(map.isEmpty());
-	}
+   }
 
    public void testStoreAndRemoveAll() {
-		TestObject obj1 = createTestObject("testStoreAndRemoveAll1");
-		TestObject obj2 = createTestObject("testStoreAndRemoveAll2");
-		TestObject obj3 = createTestObject("testStoreAndRemoveAll3");
-		TestObject obj4 = createTestObject("testStoreAndRemoveAll4");
+      TestObject obj1 = createTestObject("testStoreAndRemoveAll1");
+      TestObject obj2 = createTestObject("testStoreAndRemoveAll2");
+      TestObject obj3 = createTestObject("testStoreAndRemoveAll3");
+      TestObject obj4 = createTestObject("testStoreAndRemoveAll4");
 
-		cs.write(createEntry(obj1));
+      cs.write(createEntry(obj1));
       cs.write(createEntry(obj2));
       cs.write(createEntry(obj3));
       cs.write(createEntry(obj4));
 
-		assertEquals(cs.size(), 4);
+      assertEquals(cs.size(), 4);
 
-		cs.clear();
+      cs.clear();
       assertEquals(cs.size(), 0);
       assertFalse(cs.contains(obj1.getKey()));
       assertFalse(cs.contains(obj2.getKey()));
       assertFalse(cs.contains(obj3.getKey()));
       assertFalse(cs.contains(obj4.getKey()));
-	}
+   }
 
    public void testStoreValuesViaNonJpaCacheStore() {
       TestObject obj1 = createTestObject("testStoreViaNonJpaCacheStore1");

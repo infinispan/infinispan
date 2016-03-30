@@ -50,7 +50,7 @@ public abstract class HotRodOperation implements HotRodConstants {
    }
 
    /**
-    * Magic	| Message Id | Op code | Status | Topology Change Marker
+    * Magic | Message Id | Op code | Status | Topology Change Marker
     */
    protected short readHeaderAndValidate(Transport transport, HeaderParams params) {
       return codec.readHeader(transport, params);

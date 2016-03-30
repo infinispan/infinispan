@@ -8,15 +8,15 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
  */
 @SurvivesRestarts
 public class ActivationManagerStub implements ActivationManager {
-	@Override
+   @Override
    public void onUpdate(Object key, boolean newEntry) {
    }
 
-	@Override
+   @Override
    public void onRemove(Object key, boolean newEntry) {
    }
 
-	@Override
+   @Override
    public long getActivationCount() {
       return 0;
    }

@@ -21,12 +21,12 @@ import java.net.SocketAddress;
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
 public class MockChannelHandlerContext implements ChannelHandlerContext {
-	
-	private final Channel channel;
+   
+   private final Channel channel;
 
-	public MockChannelHandlerContext(MockChannel channel) {
-		this.channel = channel;
-	}
+   public MockChannelHandlerContext(MockChannel channel) {
+      this.channel = channel;
+   }
 
     @Override
     public Channel channel() {

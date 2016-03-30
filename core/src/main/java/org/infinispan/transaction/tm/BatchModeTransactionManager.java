@@ -8,7 +8,7 @@ package org.infinispan.transaction.tm;
  * @since 4.0
  */
 public class BatchModeTransactionManager extends DummyBaseTransactionManager {
-	
+   
    private static final long serialVersionUID = 5656602677430350961L;
 
    static BatchModeTransactionManager instance = null;

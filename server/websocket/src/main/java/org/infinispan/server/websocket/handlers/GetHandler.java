@@ -13,9 +13,9 @@ import org.infinispan.server.websocket.json.JsonObject;
  */
 public class GetHandler implements OpHandler {
 
-	@Override
+   @Override
    public void handleOp(JsonObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) {
-		String key = (String) opPayload.get(OpHandler.KEY);
-		ChannelUtils.pushCacheValue(key, cache, ctx);
-	}
+      String key = (String) opPayload.get(OpHandler.KEY);
+      ChannelUtils.pushCacheValue(key, cache, ctx);
+   }
 }

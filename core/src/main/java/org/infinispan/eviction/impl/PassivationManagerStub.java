@@ -10,16 +10,16 @@ import org.infinispan.persistence.spi.PersistenceException;
  */
 @SurvivesRestarts
 public class PassivationManagerStub implements PassivationManager {
-	@Override
+   @Override
    public boolean isEnabled() {
       return false;
    }
 
-	@Override
+   @Override
    public void passivate(InternalCacheEntry entry) {
    }
 
-	@Override
+   @Override
    public void passivateAll() throws PersistenceException {
    }
 
@@ -33,16 +33,16 @@ public class PassivationManagerStub implements PassivationManager {
       return 0;
    }
 
-	@Override
+   @Override
    public void resetStatistics() {
    }
 
-	@Override
+   @Override
    public boolean getStatisticsEnabled() {
       return false;
    }
 
-	@Override
+   @Override
    public void setStatisticsEnabled(boolean enabled) {
       throw new UnsupportedOperationException();
    }

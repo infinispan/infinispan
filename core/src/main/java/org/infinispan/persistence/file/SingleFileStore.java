@@ -128,7 +128,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          else
             clear(); // otherwise (unknown file format or no preload) just reset the file
-			
+         
          // Initialize the fragmentation factor
          fragmentationFactor = configuration.fragmentationFactor();
       } catch (Exception e) {
@@ -694,7 +694,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                
                // Disk space optimizations
                synchronized (freeList) {
-            	  processFreeEntries();
+                 processFreeEntries();
                }
             } finally {
                resizeLock.readLock().unlock();
