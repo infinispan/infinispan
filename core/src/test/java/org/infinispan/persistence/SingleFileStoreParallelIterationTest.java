@@ -2,7 +2,6 @@ package org.infinispan.persistence;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -25,11 +24,6 @@ public class SingleFileStoreParallelIterationTest extends ParallelIterationTest 
    protected void teardown() {
       super.teardown();
       TestingUtil.recursiveFileRemove(location);
-   }
-
-   @Override
-   protected int numThreads() {
-      return KnownComponentNames.getDefaultThreads(KnownComponentNames.PERSISTENCE_EXECUTOR) + 1 /** caller's thread */;
    }
 
 }

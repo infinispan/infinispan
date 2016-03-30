@@ -1,7 +1,6 @@
 package org.infinispan.persistence.jpa;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.persistence.ParallelIterationTest;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.persistence.jpa.entity.KeyValueEntity;
@@ -15,11 +14,6 @@ public class JpaStoreParallelIterationTest extends ParallelIterationTest {
          .persistenceUnitName(getPersistenceUnitName())
          .entityClass(KeyValueEntity.class)
          .storeMetadata(storeMetadata());
-   }
-
-   @Override
-   protected int numThreads() {
-      return KnownComponentNames.getDefaultThreads(KnownComponentNames.PERSISTENCE_EXECUTOR) + 1;
    }
 
    @Override
