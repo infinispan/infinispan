@@ -28,11 +28,11 @@ import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,26 +45,24 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.replaceField;
-import static org.testng.Assert.assertNull;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "stats.BaseClusteredExtendedStatisticTest")
+@Test(groups = "functional")
 public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheManagersTest {
 
-   protected static final int NUM_NODES = 2;
-   private static final String KEY_1 = "key_1";
-   private static final String KEY_2 = "key_2";
-   private static final String KEY_3 = "key_3";
+   private static final int NUM_NODES = 2;
    private static final String VALUE_1 = "value_1";
    private static final String VALUE_2 = "value_2";
    private static final String VALUE_3 = "value_3";
    private static final String VALUE_4 = "value_4";
-   protected final List<ControlledPerCacheInboundInvocationHandler> inboundHandlerList = new ArrayList<>(NUM_NODES);
+   private final List<ControlledPerCacheInboundInvocationHandler> inboundHandlerList = new ArrayList<>(NUM_NODES);
    private final CacheMode mode;
    private final boolean sync2ndPhase;
    private final boolean writeSkew;
@@ -86,177 +84,194 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
       return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().locateAll(keys));
    }
 
-   public void testPut() throws InterruptedException {
-      assertEmpty(KEY_1, KEY_2, KEY_3);
+   public void testPut(Method method) throws InterruptedException {
+      final String key1 = k(method, 1);
+      final String key2 = k(method, 2);
+      final String key3 = k(method, 3);
+      assertEmpty(key1, key2, key3);
 
-      put(0, KEY_1, VALUE_1);
+      put(0, key1, VALUE_1);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      assertCacheValue(key1, VALUE_1);
 
       Map<Object, Object> map = new HashMap<>();
-      map.put(KEY_2, VALUE_2);
-      map.put(KEY_3, VALUE_3);
+      map.put(key2, VALUE_2);
+      map.put(key3, VALUE_3);
 
       cache(0).putAll(map);
       awaitPutMap(0, map.keySet());
 
-      assertCacheValue(KEY_1, VALUE_1);
-      assertCacheValue(KEY_2, VALUE_2);
-      assertCacheValue(KEY_3, VALUE_3);
+      assertCacheValue(key1, VALUE_1);
+      assertCacheValue(key2, VALUE_2);
+      assertCacheValue(key3, VALUE_3);
 
       assertNoTransactions();
       assertNoTxStats();
    }
 
-   public void testRemove() throws InterruptedException {
-      assertEmpty(KEY_1);
+   public void testRemove(Method method) throws InterruptedException {
+      final String key1 = k(method, 1);
+      assertEmpty(key1);
 
-      put(1, KEY_1, VALUE_1);
+      put(1, key1, VALUE_1);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      assertCacheValue(key1, VALUE_1);
 
-      remove(0, KEY_1);
+      remove(0, key1);
 
-      assertCacheValue(KEY_1, null);
+      assertCacheValue(key1, null);
 
-      put(0, KEY_1, VALUE_1);
+      put(0, key1, VALUE_1);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      assertCacheValue(key1, VALUE_1);
 
-      remove(0, KEY_1);
+      remove(0, key1);
 
-      assertCacheValue(KEY_1, null);
+      assertCacheValue(key1, null);
 
       assertNoTransactions();
       assertNoTxStats();
    }
 
-   public void testPutIfAbsent() throws InterruptedException {
-      assertEmpty(KEY_1, KEY_2);
+   public void testPutIfAbsent(Method method) throws InterruptedException {
+      final String key1 = k(method, 1);
+      final String key2 = k(method, 2);
 
-      put(1, KEY_1, VALUE_1);
+      assertEmpty(key1, key2);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      put(1, key1, VALUE_1);
+
+      assertCacheValue(key1, VALUE_1);
 
       //read-only tx
-      cache(0).putIfAbsent(KEY_1, VALUE_2);
+      cache(0).putIfAbsent(key1, VALUE_2);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      assertCacheValue(key1, VALUE_1);
 
-      put(1, KEY_1, VALUE_3);
+      put(1, key1, VALUE_3);
 
-      assertCacheValue(KEY_1, VALUE_3);
+      assertCacheValue(key1, VALUE_3);
 
       //read-only tx
-      cache(0).putIfAbsent(KEY_1, VALUE_4);
+      cache(0).putIfAbsent(key1, VALUE_4);
 
-      assertCacheValue(KEY_1, VALUE_3);
+      assertCacheValue(key1, VALUE_3);
 
-      putIfAbsent(0, KEY_2, VALUE_1);
+      putIfAbsent(0, key2, VALUE_1);
 
-      assertCacheValue(KEY_2, VALUE_1);
+      assertCacheValue(key2, VALUE_1);
 
       assertNoTransactions();
       assertNoTxStats();
    }
 
-   public void testRemoveIfPresent() throws InterruptedException {
-      assertEmpty(KEY_1);
+   public void testRemoveIfPresent(Method method) throws InterruptedException {
+      final String key1 = k(method, 1);
 
-      put(0, KEY_1, VALUE_1);
+      assertEmpty(key1);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      put(0, key1, VALUE_1);
 
-      put(1, KEY_1, VALUE_2);
+      assertCacheValue(key1, VALUE_1);
 
-      assertCacheValue(KEY_1, VALUE_2);
+      put(1, key1, VALUE_2);
+
+      assertCacheValue(key1, VALUE_2);
 
       //read-only tx
-      cache(0).remove(KEY_1, VALUE_1);
+      cache(0).remove(key1, VALUE_1);
 
-      assertCacheValue(KEY_1, VALUE_2);
+      assertCacheValue(key1, VALUE_2);
 
-      remove(0, KEY_1, VALUE_2);
+      remove(0, key1, VALUE_2);
 
-      assertCacheValue(KEY_1, null);
+      assertCacheValue(key1, null);
 
       assertNoTransactions();
       assertNoTxStats();
    }
 
-   public void testClear() throws InterruptedException {
-      assertEmpty(KEY_1);
+   public void testClear(Method method) throws InterruptedException {
+      final String key1 = k(method, 1);
 
-      put(0, KEY_1, VALUE_1);
+      assertEmpty(key1);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      put(0, key1, VALUE_1);
+
+      assertCacheValue(key1, VALUE_1);
 
       cache(0).clear();
       awaitClear(0);
 
-      assertCacheValue(KEY_1, null);
+      assertCacheValue(key1, null);
 
       assertNoTransactions();
       assertNoTxStats();
    }
 
-   public void testReplace() throws InterruptedException {
-      assertEmpty(KEY_1);
+   public void testReplace(Method method) throws InterruptedException {
+      final String key1 = k(method, 1);
 
-      put(1, KEY_1, VALUE_1);
+      assertEmpty(key1);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      put(1, key1, VALUE_1);
 
-      Assert.assertEquals(replace(0, KEY_1, VALUE_2), VALUE_1);
+      assertCacheValue(key1, VALUE_1);
 
-      assertCacheValue(KEY_1, VALUE_2);
+      AssertJUnit.assertEquals(replace(0, key1, VALUE_2), VALUE_1);
 
-      put(0, KEY_1, VALUE_3);
+      assertCacheValue(key1, VALUE_2);
 
-      assertCacheValue(KEY_1, VALUE_3);
+      put(0, key1, VALUE_3);
 
-      replace(0, KEY_1, VALUE_3);
+      assertCacheValue(key1, VALUE_3);
 
-      assertCacheValue(KEY_1, VALUE_3);
+      replace(0, key1, VALUE_3);
 
-      put(0, KEY_1, VALUE_4);
+      assertCacheValue(key1, VALUE_3);
 
-      assertCacheValue(KEY_1, VALUE_4);
+      put(0, key1, VALUE_4);
+
+      assertCacheValue(key1, VALUE_4);
 
       assertNoTransactions();
       assertNoTxStats();
    }
 
-   public void testReplaceWithOldVal() throws InterruptedException {
-      assertEmpty(KEY_1);
+   public void testReplaceWithOldVal(Method method) throws InterruptedException {
+      final String key1 = k(method, 1);
 
-      put(1, KEY_1, VALUE_1);
+      assertEmpty(key1);
 
-      assertCacheValue(KEY_1, VALUE_1);
+      put(1, key1, VALUE_1);
 
-      put(0, KEY_1, VALUE_2);
+      assertCacheValue(key1, VALUE_1);
 
-      assertCacheValue(KEY_1, VALUE_2);
+      put(0, key1, VALUE_2);
+
+      assertCacheValue(key1, VALUE_2);
 
       //read-only tx
-      cache(0).replace(KEY_1, VALUE_3, VALUE_4);
+      cache(0).replace(key1, VALUE_3, VALUE_4);
 
-      assertCacheValue(KEY_1, VALUE_2);
+      assertCacheValue(key1, VALUE_2);
 
-      replace(0, KEY_1, VALUE_2, VALUE_4);
+      replace(0, key1, VALUE_2, VALUE_4);
 
-      assertCacheValue(KEY_1, VALUE_4);
+      assertCacheValue(key1, VALUE_4);
 
       assertNoTransactions();
       assertNoTxStats();
    }
 
-   public void testRemoveUnexistingEntry() throws InterruptedException {
-      assertEmpty(KEY_1);
+   public void testRemoveUnexistingEntry(Method method) throws InterruptedException {
+      final String key1 = k(method, 1);
 
-      remove(0, KEY_1);
+      assertEmpty(key1);
 
-      assertCacheValue(KEY_1, null);
+      remove(0, key1);
+
+      assertCacheValue(key1, null);
 
       assertNoTransactions();
       assertNoTxStats();
@@ -264,9 +279,7 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
 
    @BeforeMethod(alwaysRun = true)
    public void resetInboundHandler() {
-      for (ControlledPerCacheInboundInvocationHandler handler : inboundHandlerList) {
-         handler.reset();
-      }
+      inboundHandlerList.forEach(ControlledPerCacheInboundInvocationHandler::reset);
    }
 
    @Override
@@ -369,21 +382,18 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
       for (int i = 0; i < caches().size(); ++i) {
          statisticInterceptors[i] = getExtendedStatistic(cache(i));
       }
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (ExtendedStatisticInterceptor interceptor : statisticInterceptors) {
-               if (interceptor.getCacheStatisticManager().hasPendingTransactions()) {
-                  return false;
-               }
+      eventually(() -> {
+         for (ExtendedStatisticInterceptor interceptor : statisticInterceptors) {
+            if (interceptor.getCacheStatisticManager().hasPendingTransactions()) {
+               return false;
             }
-            return true;
          }
+         return true;
       });
    }
 
    private void assertEquals(int index, Object key, Object value) {
-      Assert.assertEquals(cache(index).get(key), value);
+      AssertJUnit.assertEquals(cache(index).get(key), value);
    }
 
    private ExtendedStatisticInterceptor getExtendedStatistic(Cache<?, ?> cache) {
@@ -414,12 +424,12 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
       PUT, REMOVE, REPLACE, CLEAR, PUT_MAP
    }
 
-   protected static class ControlledPerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
+   private static class ControlledPerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
 
       private final PerCacheInboundInvocationHandler delegate;
       private final Queue<Operation> operationQueue = new LinkedList<>();
 
-      public ControlledPerCacheInboundInvocationHandler(PerCacheInboundInvocationHandler delegate) {
+      private ControlledPerCacheInboundInvocationHandler(PerCacheInboundInvocationHandler delegate) {
          this.delegate = delegate;
       }
 
@@ -429,13 +439,13 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
          delegate.handle(command, reply, order);
       }
 
-      public void reset() {
+      private void reset() {
          synchronized (operationQueue) {
             operationQueue.clear();
          }
       }
 
-      public void await(Operation operation, long timeout, TimeUnit timeUnit) throws InterruptedException {
+      private void await(Operation operation, long timeout, TimeUnit timeUnit) throws InterruptedException {
          final long timeoutNanos = System.nanoTime() + timeUnit.toNanos(timeout);
          synchronized (operationQueue) {
             while (operationQueue.peek() != operation && System.nanoTime() - timeoutNanos < 0) {
