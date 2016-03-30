@@ -1,7 +1,6 @@
 package org.infinispan.persistence.leveldb;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.persistence.ParallelIterationTest;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -35,8 +34,4 @@ public class LevelDBParallelIterationTest extends ParallelIterationTest {
       super.teardown();
    }
 
-   @Override
-   protected int numThreads() {
-      return KnownComponentNames.getDefaultThreads(KnownComponentNames.PERSISTENCE_EXECUTOR) + 1; /** + the callers thread */
-   }
 }

@@ -5,7 +5,6 @@ import static org.testng.Assert.assertTrue;
 
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.ParallelIterationTest;
@@ -41,11 +40,6 @@ public class RestStoreParallelIterationTest  extends ParallelIterationTest {
       super.teardown();
       RestTestingUtil.killServers(restServer);
       TestingUtil.killCacheManagers(localCacheManager);
-   }
-
-   @Override
-   protected int numThreads() {
-      return KnownComponentNames.getDefaultThreads(KnownComponentNames.PERSISTENCE_EXECUTOR) + 1 /** caller's thread */;
    }
 
    @Override
