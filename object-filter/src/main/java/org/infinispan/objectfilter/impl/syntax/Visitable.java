@@ -4,7 +4,7 @@ package org.infinispan.objectfilter.impl.syntax;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public interface Visitable<T> {
+public interface Visitable {
 
-   T acceptVisitor(Visitor visitor);
+   <T> T acceptVisitor(Visitor<?, ?> visitor);
 }

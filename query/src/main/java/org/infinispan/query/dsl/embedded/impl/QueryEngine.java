@@ -28,6 +28,7 @@ import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
+import org.infinispan.objectfilter.impl.syntax.ExprVisitor;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
 import org.infinispan.objectfilter.impl.syntax.JPATreePrinter;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
@@ -35,7 +36,6 @@ import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.ValueExpr;
-import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -315,7 +315,7 @@ public class QueryEngine {
    private BooleanExpr swapVariables(final BooleanExpr expr, final String targetEntityName,
                                      final LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns) {
       final ObjectPropertyHelper<?> propertyHelper = getMatcher().getPropertyHelper();
-      class PropertyReplacer implements Visitor {
+      class PropertyReplacer extends ExprVisitor {
 
          @Override
          public BooleanExpr visit(NotExpr notExpr) {

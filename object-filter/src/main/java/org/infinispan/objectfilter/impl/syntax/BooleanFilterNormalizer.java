@@ -22,7 +22,7 @@ public final class BooleanFilterNormalizer {
     * A visitor that removes constant boolean expressions, absorbs sub-expressions (removes needless parentheses) and
     * swaps comparison operand sides to ensure the constant is always on the right side.
     */
-   private final Visitor simplifierVisitor = new NoOpVisitor() {
+   private final ExprVisitor simplifierVisitor = new ExprVisitor() {
 
       @Override
       public BooleanExpr visit(NotExpr notExpr) {
@@ -143,7 +143,7 @@ public final class BooleanFilterNormalizer {
    /**
     * Handles negation by applying De Morgan laws.
     */
-   private final Visitor deMorganVisitor = new NoOpVisitor() {
+   private final ExprVisitor deMorganVisitor = new ExprVisitor() {
 
       @Override
       public BooleanExpr visit(ConstantBooleanExpr constantBooleanExpr) {

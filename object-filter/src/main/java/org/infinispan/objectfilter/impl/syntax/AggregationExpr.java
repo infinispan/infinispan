@@ -52,7 +52,7 @@ public final class AggregationExpr extends PropertyValueExpr {
    }
 
    @Override
-   public ValueExpr acceptVisitor(Visitor visitor) {
-      return visitor.visit(this);
+   public <T> T acceptVisitor(Visitor<?, ?> visitor) {
+      return (T) visitor.visit(this);
    }
 }
