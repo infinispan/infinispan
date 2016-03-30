@@ -1,7 +1,6 @@
 package org.infinispan.persistence.jdbc.mixed;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.persistence.ParallelIterationTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfigurationBuilder;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
@@ -14,11 +13,6 @@ import org.testng.annotations.Test;
  */
 @Test (groups = "functional", testName = "persistence.jdbc.JdbcMixedStoreParallelIterationTest")
 public class JdbcMixedStoreParallelIterationTest extends ParallelIterationTest {
-
-   @Override
-   protected int numThreads() {
-      return 1;
-   }
 
    @Override
    protected void configurePersistence(ConfigurationBuilder cb) {

@@ -16,8 +16,4 @@ public class DummyStoreParallelIterationTest extends ParallelIterationTest {
       cb.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
    }
 
-   @Override
-   protected int numThreads() {
-      return 1;
-   }
 }

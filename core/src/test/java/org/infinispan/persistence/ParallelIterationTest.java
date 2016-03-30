@@ -10,7 +10,7 @@ import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -19,8 +19,8 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,10 +38,13 @@ import static org.testng.Assert.assertTrue;
 @Test (groups = "functional", testName = "persistence.ParallelIterationTest")
 public abstract class ParallelIterationTest extends SingleCacheManagerTest {
 
-   protected AdvancedLoadWriteStore store;
-   protected Executor persistenceExecutor;
+   private static final int NUM_THREADS = 10;
+   public static final int NUM_ENTRIES = 200;
+
+   protected AdvancedCacheLoader loader;
+   protected AdvancedCacheWriter writer;
+   protected Executor executor;
    protected StreamingMarshaller sm;
-   protected boolean multipleThreads = true;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -50,46 +53,45 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(cb);
       ComponentRegistry componentRegistry = manager.getCache().getAdvancedCache().getComponentRegistry();
       PersistenceManagerImpl pm = (PersistenceManagerImpl) componentRegistry.getComponent(PersistenceManager.class);
-      persistenceExecutor = pm.getPersistenceExecutor();
       sm = pm.getMarshaller();
-      store = TestingUtil.getFirstWriter(manager.getCache());
+      loader = TestingUtil.getFirstLoader(manager.getCache());
+      writer = TestingUtil.getFirstWriter(manager.getCache());
+      executor = Executors.newFixedThreadPool(NUM_THREADS, getTestThreadFactory("iteration"));
       return manager;
    }
 
    protected abstract void configurePersistence(ConfigurationBuilder cb);
 
-   protected abstract int numThreads();
-
    public void testParallelIterationWithValueAndMetadata() {
-      runIterationTest(numThreads(), persistenceExecutor, true, true);
+      runIterationTest(executor, true, true);
    }
 
    public void testParallelIterationWithValueWithoutMetadata() {
-      runIterationTest(numThreads(), persistenceExecutor, true, false);
+      runIterationTest(executor, true, false);
    }
 
    public void testSequentialIterationWithValueAndMetadata() {
-      runIterationTest(1, new WithinThreadExecutor(), true, true);
+      runIterationTest(new WithinThreadExecutor(), true, true);
    }
 
    public void testSequentialIterationWithValueWithoutMetadata() {
-      runIterationTest(1, new WithinThreadExecutor(), true, false);
+      runIterationTest(new WithinThreadExecutor(), true, false);
    }
 
    public void testParallelIterationWithoutValueWithMetadata() {
-      runIterationTest(numThreads(), persistenceExecutor, false, true);
+      runIterationTest(executor, false, true);
    }
 
    public void testParallelIterationWithoutValueOrMetadata() {
-      runIterationTest(numThreads(), persistenceExecutor, false, false);
+      runIterationTest(executor, false, false);
    }
 
    public void testSequentialIterationWithoutValueWithMetadata() {
-      runIterationTest(1, new WithinThreadExecutor(), false, true);
+      runIterationTest(new WithinThreadExecutor(), false, true);
    }
 
    public void testSequentialIterationWithoutValueOrMetadata() {
-      runIterationTest(1, new WithinThreadExecutor(), false, false);
+      runIterationTest(new WithinThreadExecutor(), false, false);
    }
 
    public void testCancelingTaskMultipleProcessors() {
@@ -97,12 +99,12 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       final ConcurrentMap<Object, Object> entries = new ConcurrentHashMap<>();
       final AtomicBoolean stopped = new AtomicBoolean(false);
 
-      store.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
+      loader.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             synchronized (entries) {
                boolean shouldStop = entries.size() == 100 && !stopped.get();
-               log.info("shouldStop = " + shouldStop + ",entries size = " + entries.size());
+               log.trace("shouldStop = " + shouldStop + ",entries size = " + entries.size());
                if (shouldStop) {
                   stopped.set(true);
                   taskContext.stop();
@@ -111,26 +113,27 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
                entries.put(unwrapKey(marshalledEntry.getKey()), unwrapValue(marshalledEntry.getValue()));
             }
          }
-      }, persistenceExecutor, true, true);
+      }, executor, true, true);
 
       assertTrue(stopped.get());
 
-      assertTrue(entries.size() <= 100 + numThreads(), "got " + entries.size() + " elements, expected less than " +
-            (100 + numThreads()));
+      assertTrue(entries.size() <= 100 + NUM_THREADS,
+            "got " + entries.size() + " elements, expected less than " + (100 + NUM_THREADS));
       assertTrue(entries.size() >= 100);
    }
 
-   private void runIterationTest(int numThreads, Executor persistenceExecutor1, final boolean fetchValues, boolean fetchMetadata) {
-      assertEquals(store.size(), 0);
-      int numEntries = insertData();
+   private void runIterationTest(Executor persistenceExecutor1, final boolean fetchValues,
+         boolean fetchMetadata) {
       final ConcurrentMap<Integer, Integer> entries = new ConcurrentHashMap<>();
       final ConcurrentMap<Integer, InternalMetadata> metadata = new ConcurrentHashMap<>();
       final AtomicBoolean sameKeyMultipleTimes = new AtomicBoolean();
       final AtomicInteger processed = new AtomicInteger();
-      final CyclicBarrier barrier = new CyclicBarrier(numThreads);
       final AtomicBoolean brokenBarrier = new AtomicBoolean(false);
 
-      store.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
+      assertEquals(loader.size(), 0);
+      insertData();
+
+      loader.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             int key = unwrapKey(marshalledEntry.getKey());
@@ -144,7 +147,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
                }
             }
             if (marshalledEntry.getMetadata() != null) {
-               log.tracef("For key %d found metdata %s", key, marshalledEntry.getMetadata());
+               log.tracef("For key %d found metadata %s", key, marshalledEntry.getMetadata());
                InternalMetadata prevMetadata = metadata.put(key, marshalledEntry.getMetadata());
                if (prevMetadata != null) {
                   log.warnf("Already a metadata present for key %s: %s", key, prevMetadata);
@@ -159,8 +162,8 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
 
       assertFalse(sameKeyMultipleTimes.get());
       assertFalse(brokenBarrier.get());
-      assertEquals(processed.get(), numEntries);
-      for (int i = 0; i < numEntries; i++) {
+      assertEquals(processed.get(), NUM_ENTRIES);
+      for (int i = 0; i < NUM_ENTRIES; i++) {
          if (fetchValues) {
             assertEquals(entries.get(i), (Integer) i, "For key " + i);
          } else {
@@ -176,14 +179,12 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       }
    }
 
-   private int insertData() {
-      int numEntries = 200;
-      for (int i = 0; i < numEntries; i++) {
+   private void insertData() {
+      for (int i = 0; i < NUM_ENTRIES; i++) {
          MarshalledEntryImpl me = new MarshalledEntryImpl(wrapKey(i), wrapValue(i, i),
                insertMetadata(i) ? TestingUtil.internalMetadata(lifespan(i), maxIdle(i)) : null, sm);
-         store.write(me);
+         writer.write(me);
       }
-      return numEntries;
    }
 
    protected void assertMetadataEmpty(InternalMetadata metadata) {

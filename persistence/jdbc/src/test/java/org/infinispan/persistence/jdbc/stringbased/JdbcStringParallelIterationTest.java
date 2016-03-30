@@ -14,11 +14,6 @@ import org.testng.annotations.Test;
 public class JdbcStringParallelIterationTest extends ParallelIterationTest {
 
    @Override
-   protected int numThreads() {
-      return 1;
-   }
-
-   @Override
    protected void configurePersistence(ConfigurationBuilder cb) {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder =
             cb.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class);
