@@ -38,7 +38,7 @@ public class Address implements Serializable {
    }
 
 //    public Object writeReplace() {
-//	return this;
+// return this;
 //    }
 
    public boolean equals(Object o) {

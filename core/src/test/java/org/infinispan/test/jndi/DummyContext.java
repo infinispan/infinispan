@@ -398,13 +398,13 @@ public class DummyContext implements Context {
     * <p/>
     * For example, if this context is named "wiz.com" relative to the initial context, then
     * <pre>
-    * 	composeName("east", "wiz.com")	</pre>
+    *    composeName("east", "wiz.com")   </pre>
     * might return <code>"east.wiz.com"</code>. If instead this context is named "org/research", then
     * <pre>
-    * 	composeName("user/jane", "org/research")	</pre>
+    *    composeName("user/jane", "org/research")  </pre>
     * might return <code>"org/research/user/jane"</code> while
     * <pre>
-    * 	composeName("user/jane", "research")	</pre>
+    *    composeName("user/jane", "research")   </pre>
     * returns <code>"research/user/jane"</code>.
     *
     * @param name   a name relative to this context

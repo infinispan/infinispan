@@ -19,10 +19,10 @@ import java.util.concurrent.Future;
 @Scope(Scopes.NAMED_CACHE)
 public interface L1Manager {
 
-	/**
-	 * Records a request that will be cached in another nodes L1
-	 */
-	void addRequestor(Object key, Address requestor);
+   /**
+    * Records a request that will be cached in another nodes L1
+    */
+   void addRequestor(Object key, Address requestor);
 
    Future<?> flushCache(Collection<Object> key, Address origin, boolean assumeOriginKeptEntryInL1);
 

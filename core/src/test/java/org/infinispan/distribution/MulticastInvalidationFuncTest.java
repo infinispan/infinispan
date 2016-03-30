@@ -13,8 +13,8 @@ import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "distribution.MulticastInvalidationFuncTest")
 public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest<Object, String> {
-	
-	public static final String KEY1 = "k1";
+   
+   public static final String KEY1 = "k1";
 
    public MulticastInvalidationFuncTest() {
       sync = true;
@@ -54,7 +54,7 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest<Object
       owner.put(KEY1, "bar");
       
       for (ReplListener rl : listeners) {
-      	rl.waitForRpc();
+         rl.waitForRpc();
       }
       
       Assert.assertNull(nonOwner.getAdvancedCache().getDataContainer().get(KEY1));

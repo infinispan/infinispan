@@ -14,8 +14,8 @@ import static org.junit.Assert.assertNull;
 
 @Test(groups = "functional", testName = "distribution.UnicastInvalidationFuncTest")
 public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest<Object, String> {
-	
-	public static final String KEY1 = "k1";
+   
+   public static final String KEY1 = "k1";
 
    public UnicastInvalidationFuncTest() {
       sync = true;
@@ -42,7 +42,7 @@ public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest<Object, 
       assertEquals(secondNonOwner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
       
       // Check that the non owners are notified
-		ReplListener rl = new ReplListener(nonOwner);
+      ReplListener rl = new ReplListener(nonOwner);
       rl.expect(InvalidateL1Command.class);
       listeners.add(rl);
       rl = new ReplListener(secondNonOwner);
@@ -53,7 +53,7 @@ public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest<Object, 
       owner.put(KEY1, "bar");
       
       for (ReplListener r : listeners) {
-      	r.waitForRpc();
+         r.waitForRpc();
       }
       
       Assert.assertNull(secondNonOwner.getAdvancedCache().getDataContainer().get(KEY1));

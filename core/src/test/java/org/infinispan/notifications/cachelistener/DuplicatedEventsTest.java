@@ -39,45 +39,45 @@ public class DuplicatedEventsTest extends MultipleCacheManagersTest {
 
       cacheA.put("a", "a");
 
-		/*
+      /*
        * We expect 2 events on both nodes: pre-create, post-create
-		 */
+       */
       assertEquals(2, listenerA.events.size());
       assertEquals(2, listenerB.events.size());
 
       checkEvents(listenerA, "a");
       checkEvents(listenerB, "a");
 
-		/*
+      /*
        * So far so good, let's try another key, say "b"
-		 */
+       */
 
       listenerA.events.clear();
       listenerB.events.clear();
 
       cacheA.put("b", "b");
 
-		/*
+      /*
        * We expect 2 events again
-		 */
+       */
       assertEquals(2, listenerA.events.size());
       assertEquals(2, listenerB.events.size());
 
       checkEvents(listenerA, "b");
       checkEvents(listenerB, "b");
 
-		/*
+      /*
        * Let's try another one, say "a0"
-		 */
+       */
 
       listenerA.events.clear();
       listenerB.events.clear();
 
       cacheA.put("a0", "a0");
 
-		/*
+      /*
        * We expect another 2 events
-		 */
+       */
       assertEquals(2, listenerA.events.size());
       assertEquals(2, listenerB.events.size());
 

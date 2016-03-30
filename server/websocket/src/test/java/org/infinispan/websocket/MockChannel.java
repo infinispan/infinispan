@@ -20,58 +20,58 @@ import java.net.SocketAddress;
  */
 public class MockChannel implements Channel {
 
-	private StringWriter writer = new StringWriter();
+   private StringWriter writer = new StringWriter();
 
-	@Override
-	public ChannelFuture write(Object message) {
-		if(message instanceof TextWebSocketFrame) {
-			writer.write(((TextWebSocketFrame)message).text());
-		} else {
-			throw new IllegalStateException("Expected a TextWebSocketFrame but got " + message);
-		}
-		return null;
-	}
+   @Override
+   public ChannelFuture write(Object message) {
+      if(message instanceof TextWebSocketFrame) {
+         writer.write(((TextWebSocketFrame)message).text());
+      } else {
+         throw new IllegalStateException("Expected a TextWebSocketFrame but got " + message);
+      }
+      return null;
+   }
 
-	public JsonObject getJSONPayload() {
-		if(writer.getBuffer().length() == 0) {
-			return null;
-		}
-		return getJSONPayload(0);
-	}
+   public JsonObject getJSONPayload() {
+      if(writer.getBuffer().length() == 0) {
+         return null;
+      }
+      return getJSONPayload(0);
+   }
 
-	public JsonObject getJSONPayload(long waitTimeout) {
-		long start = System.currentTimeMillis();
-		while(writer.getBuffer().length() == 0) {
-			if(System.currentTimeMillis() > start + waitTimeout) {
-				throw new RuntimeException("Timed out waiting for data to be pushed onto the channel.");
-			}
+   public JsonObject getJSONPayload(long waitTimeout) {
+      long start = System.currentTimeMillis();
+      while(writer.getBuffer().length() == 0) {
+         if(System.currentTimeMillis() > start + waitTimeout) {
+            throw new RuntimeException("Timed out waiting for data to be pushed onto the channel.");
+         }
          Thread.yield();
-		}
+      }
 
-		try {
+      try {
          return JsonObject.fromString(writer.toString());
-		} catch (Exception e) {
-			throw new RuntimeException("Invalid JSON payload [" + writer.toString() + "].", e);
+      } catch (Exception e) {
+         throw new RuntimeException("Invalid JSON payload [" + writer.toString() + "].", e);
       } finally {
-			clear();
-		}
-	}
+         clear();
+      }
+   }
 
-	public void clear() {
-		writer.getBuffer().setLength(0);
-	}
+   public void clear() {
+      writer.getBuffer().setLength(0);
+   }
 
-	@Override
-	public ChannelFuture closeFuture() {
-		return (ChannelFuture) Proxy.newProxyInstance(getClass().getClassLoader(),
+   @Override
+   public ChannelFuture closeFuture() {
+      return (ChannelFuture) Proxy.newProxyInstance(getClass().getClassLoader(),
                 new Class[] { ChannelFuture.class },
                 new InvocationHandler() {
-					@Override
+               @Override
                public Object invoke(Object proxy, Method method,Object[] args) throws Throwable {
-						return null;
-					}
-		});
-	}
+                  return null;
+               }
+      });
+   }
 
     @Override
     public EventLoop eventLoop() {

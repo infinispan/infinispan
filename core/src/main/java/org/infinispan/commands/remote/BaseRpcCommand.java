@@ -25,12 +25,12 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
    
    @Override
    public Address getOrigin() {
-	   return origin;
+      return origin;
    }
    
    @Override
    public void setOrigin(Address origin) {
-	   this.origin = origin;
+      this.origin = origin;
    }
 
    @Override

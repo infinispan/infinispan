@@ -9,7 +9,7 @@
 <module name="Checker">
 
     <!-- Source code is not formatted using tabs -->
-    <!--<module name="FileTabCharacter" />-->
+    <module name="FileTabCharacter" />
 
     <module name="TreeWalker">
         <property name="cacheFile" value="${checkstyle.cache.file}" />

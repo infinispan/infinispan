@@ -73,8 +73,8 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
    }
 
    public Collection<Address> getRemoteLocksAcquired(){
-	   if (remoteLockedNodes == null) return Collections.emptySet();
-	   return remoteLockedNodes;
+      if (remoteLockedNodes == null) return Collections.emptySet();
+      return remoteLockedNodes;
    }
 
    public void clearRemoteLocksAcquired() {

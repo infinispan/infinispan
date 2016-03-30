@@ -95,30 +95,30 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
      
-		TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
-		mgr.begin();
+      TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
+      mgr.begin();
 
-		cache1.getAdvancedCache().lock(k);
+      cache1.getAdvancedCache().lock(k);
 
-		// do a replace on empty key
-		// https://jira.jboss.org/browse/ISPN-514
-		Object old = cache1.replace(k, "blah");
-		assertNull("Should be null", cache1.get(k));
+      // do a replace on empty key
+      // https://jira.jboss.org/browse/ISPN-514
+      Object old = cache1.replace(k, "blah");
+      assertNull("Should be null", cache1.get(k));
 
-		boolean replaced = cache1.replace(k, "Vladimir", "Blagojevic");
-		assert !replaced;
+      boolean replaced = cache1.replace(k, "Vladimir", "Blagojevic");
+      assert !replaced;
 
-		assertNull("Should be null", cache1.get(k));
-		mgr.commit();
+      assertNull("Should be null", cache1.get(k));
+      mgr.commit();
 
-		assertEventuallyNotLocked(cache1, "testcache");
-		assertEventuallyNotLocked(cache2, "testcache");
+      assertEventuallyNotLocked(cache1, "testcache");
+      assertEventuallyNotLocked(cache2, "testcache");
 
-		assert cache1.isEmpty();
-		assert cache2.isEmpty();
-		cache1.clear();
-		cache2.clear();
-	}
+      assert cache1.isEmpty();
+      assert cache2.isEmpty();
+      cache1.clear();
+      cache2.clear();
+   }
    
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx) throws Exception {
       final Cache cache1 = cache(0, "testcache");

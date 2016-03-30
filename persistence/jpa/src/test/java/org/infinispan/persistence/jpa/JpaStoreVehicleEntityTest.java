@@ -17,12 +17,12 @@ public class JpaStoreVehicleEntityTest extends BaseJpaStoreTest {
    }
 
    @Override
-	protected TestObject createTestObject(String key) {
-		VehicleId id = new VehicleId("CA" + key, key);
-		Vehicle v = new Vehicle();
-		v.setId(id);
-		v.setColor("c_" + key);
-		
-		return new TestObject(v.getId(), v);
-	}
+   protected TestObject createTestObject(String key) {
+      VehicleId id = new VehicleId("CA" + key, key);
+      Vehicle v = new Vehicle();
+      v.setId(id);
+      v.setColor("c_" + key);
+      
+      return new TestObject(v.getId(), v);
+   }
 }

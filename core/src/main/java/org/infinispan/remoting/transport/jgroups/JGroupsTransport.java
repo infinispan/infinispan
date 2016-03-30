@@ -373,7 +373,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    // This is per CM, so the CL in use should be the CM CL
    private void buildChannel() {
-	  FileLookup fileLookup = FileLookupFactory.newInstance();
+     FileLookup fileLookup = FileLookupFactory.newInstance();
 
       // in order of preference - we first look for an external JGroups file, then a set of XML
       // properties, and

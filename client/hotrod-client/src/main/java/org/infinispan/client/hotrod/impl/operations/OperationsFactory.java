@@ -205,8 +205,8 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams) {
-		return new ExecuteOperation<T>(codec, transportFactory, cacheNameBytes, topologyId, flags(), taskName, marshalledParams);
-	}
+      return new ExecuteOperation<T>(codec, transportFactory, cacheNameBytes, topologyId, flags(), taskName, marshalledParams);
+   }
 
    private int flags(long lifespan, long maxIdle) {
       int intFlags = flags();

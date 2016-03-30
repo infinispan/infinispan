@@ -241,7 +241,7 @@ public class Reflections {
      * @throws ExceptionInInitializerError if the initialization provoked by this
      *                                     method fails.
      */
-	public static <T> T getFieldValue(Field field, Object instance, Class<T> expectedType) {
+   public static <T> T getFieldValue(Field field, Object instance, Class<T> expectedType) {
         try {
             return Reflections.cast(field.get(instance));
         } catch (IllegalAccessException e) {
