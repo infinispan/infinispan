@@ -39,8 +39,7 @@ import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
- * Handler to register the proto file(s) contents directly, targeted to
- * RHQ plugin clients
+ * Handler to register the proto file(s) contents via DMR/CLI
  *
  * @author gustavonalle
  * @since 7.0

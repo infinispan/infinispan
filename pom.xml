@@ -53,7 +53,6 @@
       <module>all/embedded</module>
       <module>all/embedded-query</module>
       <module>all/cli</module>
-      <module>rhq-plugin</module>
       <module>osgi</module>
       <module>spring/spring4</module>
       <module>spring/spring4/spring4-common</module>

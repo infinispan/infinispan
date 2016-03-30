@@ -2152,6 +2152,7 @@
                               <source>${dir.ispn}/cli/cli-interpreter/src/main/java</source>
                               <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
                               <source>${dir.ispn}/commons/src/main/java</source>
+                              <source>${dir.ispn}/commons-test/src/main/java</source>
                               <source>${dir.ispn}/core/src/main/java</source>
                               <source>${dir.ispn}/demos/distexec/src/main/java</source>
                               <source>${dir.ispn}/demos/gridfs-webdav//src/main/java</source>
@@ -2178,7 +2179,6 @@
                               <source>${dir.ispn}/query-dsl/src/main/java</source>
                               <source>${dir.ispn}/remote-query/remote-query-client/src/main/java</source>
                               <source>${dir.ispn}/remote-query/remote-query-server/src/main/java</source>
-                              <source>${dir.ispn}/rhq-plugin/src/main/java</source>
                               <source>${dir.ispn}/scripting/src/main/java</source>
                               <source>${dir.ispn}/server/websocket/src/main/java</source>
                               <source>${dir.ispn}/spring/spring/src/main/java</source>

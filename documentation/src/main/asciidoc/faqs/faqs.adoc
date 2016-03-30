@@ -60,8 +60,7 @@ Any major website or application that wants to take advantage of a fast data gri
 
 *  _Management_ - 
 When you start thinking about running a grid on several hundred servers, management is no longer an extra, it becomes a necessity.
-The preferred way to manage multiple Infinispan instances spread across different servers is to use link:$$http://rhq.org$$[RHQ] which is JBoss' enterprise management solution.
-Thanks to RHQ's agent and auto discovery capabilities, monitoring both Cache Manager and Cache instances is a very simple. 
+Since version 8.0, Infinispan bundles a management console.
 
 *  _Support for Compute Grids_ - 
 Infinispan 5 adds the ability to pass a Runnable around the grid.

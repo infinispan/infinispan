@@ -242,7 +242,7 @@ public class ResourceDMBean implements DynamicMBean {
 
       // Argument type transformation according to signatures
       for (int i = 0; i < sig.length; i++) {
-         // arguments are taken from RHQ like java.lang.String but we need some fields to be numbers
+         // Some clients (e.g. RHQ) will pass the arguments as java.lang.String but we need some fields to be numbers
          if (args[i] != null) {
             if (log.isDebugEnabled())
                log.debugf("Argument value before transformation: %s and its class: %s. " +
