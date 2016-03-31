@@ -49,6 +49,10 @@
         <module-def name="org.infinispan.commons" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-commons" />
         </module-def>
+
+        <module-def name="org.jboss.marshalling" slot="${infinispan.slot}">
+            <maven-resource group="org.jboss.marshalling" artifact="jboss-marshalling-osgi" />
+        </module-def>
     </target>
 
     <target name="all" depends="clean, copy-files, modules" />
