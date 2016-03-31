@@ -99,7 +99,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
          //await tx1 commit on cache1... the commit will be blocked!
          //tx1 has already committed in cache(0) but not in cache(1)
          //we block the remote get in order to force the tx2 to read the most recent value from cache(0)
-         controller.awaitCommit.await();
+         controller.awaitCommit.await(30, TimeUnit.SECONDS);
          controller.blockRemoteGet.close();
 
          final Future<Boolean> tx2 = fork(new Callable<Boolean>() {
@@ -172,7 +172,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
             getLog().debug("visit GetKeyValueCommand");
             if (!ctx.isOriginLocal() && blockRemoteGet != null) {
                getLog().debug("Remote Get Received... blocking...");
-               blockRemoteGet.await();
+               blockRemoteGet.await(30, TimeUnit.SECONDS);
             }
          }
       }
@@ -185,7 +185,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
             getLog().debug("visit GetCacheEntryCommand");
             if (!ctx.isOriginLocal() && blockRemoteGet != null) {
                getLog().debug("Remote Get Received... blocking...");
-               blockRemoteGet.await();
+               blockRemoteGet.await(30, TimeUnit.SECONDS);
             }
          }
       }
@@ -216,7 +216,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
                }
                if (blockCommit != null) {
                   getLog().debug("Commit Received... blocking...");
-                  blockCommit.await();
+                  blockCommit.await(30, TimeUnit.SECONDS);
                }
             }
          }

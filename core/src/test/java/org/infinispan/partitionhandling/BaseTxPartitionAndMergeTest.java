@@ -216,7 +216,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
          if (aClass.isAssignableFrom(command.getClass())) {
             notifier.open();
             try {
-               blocker.await();
+               blocker.await(30, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             }
