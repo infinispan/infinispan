@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod.test
 
 import java.lang.reflect.Method
+import java.net.NetworkInterface
 import java.util
 import java.util.Arrays
 import java.util.concurrent.CountDownLatch
@@ -27,7 +28,7 @@ import org.testng.Assert.{assertNull, assertTrue, _}
 import org.testng.AssertJUnit.assertEquals
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable.ListBuffer
+import scala.collection.JavaConverters._
 
 /**
  * Test utils for Hot Rod tests.
@@ -71,16 +72,19 @@ object HotRodTestingUtil extends Log {
                          proxyHost: String, proxyPort: Int, delay: Long, defaultCacheName: String = BasicCacheContainer.DEFAULT_CACHE_NAME): HotRodServer = {
       val builder = new HotRodServerConfigurationBuilder
       builder.proxyHost(proxyHost).proxyPort(proxyPort).idleTimeout(idleTimeout).defaultCacheName(defaultCacheName)
-      startHotRodServer(manager, port, delay, builder)
+      startHotRodServer(manager, host, port, delay, builder)
    }
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, builder: HotRodServerConfigurationBuilder): HotRodServer =
-      startHotRodServer(manager, port, 0, builder)
+      startHotRodServer(manager, host, port, 0, builder)
 
    def startHotRodServer(manager: EmbeddedCacheManager, builder: HotRodServerConfigurationBuilder): HotRodServer =
-      startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, builder)
+      startHotRodServer(manager, host, UniquePortThreadLocal.get.intValue, 0, builder)
 
-   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, builder: HotRodServerConfigurationBuilder): HotRodServer = {
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, builder: HotRodServerConfigurationBuilder): HotRodServer =
+      startHotRodServer(manager, host, port, delay, builder)
+
+   def startHotRodServer(manager: EmbeddedCacheManager, host: String, port: Int, delay: Long, builder: HotRodServerConfigurationBuilder): HotRodServer = {
       info("Start server in port %d", port)
       val server = new HotRodServer {
          override protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
@@ -103,6 +107,10 @@ object HotRodTestingUtil extends Log {
       val port = UniquePortThreadLocal.get.intValue
       builder.host(host).port(port).proxyHost(host).proxyPort(port)
       builder
+   }
+
+   def findNetworkInterfaces(loopback: Boolean): Iterator[NetworkInterface] = {
+      NetworkInterface.getNetworkInterfaces.asScala.filter(ni => ni.isUp && ni.isLoopback==loopback)
    }
 
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {

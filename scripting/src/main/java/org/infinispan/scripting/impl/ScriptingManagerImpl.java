@@ -26,6 +26,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.logging.Log;
 import org.infinispan.security.AuthorizationManager;
@@ -36,6 +37,7 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.tasks.impl.TaskManagerImpl;
 import org.infinispan.util.logging.LogFactory;
+
 
 /**
  * ScriptingManagerImpl.
@@ -62,7 +64,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       this.cacheManager = cacheManager;
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
-      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PERSISTENT));
+      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
       ((TaskManagerImpl)taskManager).registerTaskEngine(new ScriptingTaskEngine(this));
    }
 

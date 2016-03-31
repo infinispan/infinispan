@@ -2,9 +2,11 @@ package org.infinispan.server.hotrod
 
 import java.io.{IOException, StreamCorruptedException}
 import java.lang.StringBuilder
+import java.net.InetSocketAddress
 import java.security.PrivilegedExceptionAction
 import javax.security.auth.Subject
 import javax.security.sasl.SaslServer
+
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel._
 import io.netty.handler.codec.ReplayingDecoder
@@ -89,7 +91,8 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
          throw new CacheUnavailableException()
       }
       val ch = ctx.channel
-      decodeCtx.obtainCache(cacheManager)
+
+      decodeCtx.obtainCache(cacheManager, ch.remoteAddress.asInstanceOf[InetSocketAddress].getAddress.isLoopbackAddress)
       val cacheConfiguration = server.getCacheConfiguration(decodeCtx.header.cacheName)
       if (endOfOp.get) {
          val message = decodeCtx.header.op match {

@@ -74,6 +74,11 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    }
 
    @Override
+   public boolean isPrivateCache(String name) {
+      return privateCaches.contains(name);
+   }
+
+   @Override
    public Set<String> getInternalCacheNames() {
       return internalCaches.keySet();
    }
