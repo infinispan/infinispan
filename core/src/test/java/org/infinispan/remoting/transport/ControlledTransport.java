@@ -69,7 +69,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
 
    public void waitForCommandToBlock() throws InterruptedException {
       getLog().tracef("Waiting for at least one command to block");
-      blockingLatch.await();
+      blockingLatch.await(30, TimeUnit.SECONDS);
    }
 
    public boolean waitForCommandToBlock(long time, TimeUnit unit) throws InterruptedException {
@@ -103,7 +103,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
          }
 
          getLog().debugf("Replication trigger called, waiting for latch to open.");
-         replicationLatch.await();
+         replicationLatch.await(30, TimeUnit.SECONDS);
          getLog().trace("Replication latch opened, continuing.");
       } catch (Exception e) {
          throw new RuntimeException("Unexpected exception!", e);

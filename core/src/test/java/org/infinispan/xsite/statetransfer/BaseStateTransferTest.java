@@ -11,6 +11,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
@@ -25,7 +26,9 @@ import org.infinispan.xsite.BackupReceiverRepositoryDelegator;
 import org.infinispan.xsite.XSiteAdminOperations;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -68,13 +71,23 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       assertNoStateTransferInReceivingSite(NYC);
       assertNoStateTransferInSendingSite(LON);
 
-      //NYC is offline... lets put some initial data in
-      //we have 2 nodes in each site and the primary owner sends the state. Lets try to have more key than the chunk
-      //size in order to each site to send more than one chunk.
-      final int amountOfData = chunkSize(LON) * 4;
-      for (int i = 0; i < amountOfData; ++i) {
-         cache(LON, 0).put(key(i), value(0));
+      // NYC is offline... lets put some initial data in LON.
+      // The primary owner is the one sending the state to the backup.
+      // We add keys until we have more than one chunk on the LON coordinator.
+      DistributionManager dm0 = cache(LON, 0).getAdvancedCache().getDistributionManager();
+      Address coordLON = cache(LON, 0).getCacheManager().getAddress();
+      Set<Object> keysOnCoordinator = new HashSet<>();
+      int i = 0;
+      while (keysOnCoordinator.size() < chunkSize(LON)) {
+         Object key = key(i);
+         cache(LON, 0).put(key, value(0));
+         if (dm0.getPrimaryLocation(key).equals(coordLON)) {
+            keysOnCoordinator.add(key);
+         }
+         ++i;
       }
+      int numKeys = i;
+      log.debugf("Coordinator %s is primary owner for %d keys: %s", coordLON, keysOnCoordinator.size(), keysOnCoordinator);
 
       //check if NYC is empty
       assertInSite(NYC, new AssertCondition<Object, Object>() {
@@ -128,7 +141,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       assertInSite(NYC, new AssertCondition<Object, Object>() {
          @Override
          public void assertInCache(Cache<Object, Object> cache) {
-            for (int i = 0; i < amountOfData; ++i) {
+            for (int i = 0; i < numKeys; ++i) {
                assertEquals(value(0), cache.get(key(i)));
             }
          }

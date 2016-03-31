@@ -63,7 +63,7 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
 
    public void waitForCommandToBlock() throws InterruptedException {
       log.tracef("Waiting for at least one command to block");
-      blockingLatch.await();
+      blockingLatch.await(30, TimeUnit.SECONDS);
    }
 
    public boolean waitForCommandToBlock(long time, TimeUnit unit) throws InterruptedException {
@@ -97,7 +97,7 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
          }
 
          log.debugf("Replication trigger called, waiting for latch to open.");
-         replicationLatch.await();
+         replicationLatch.await(30, TimeUnit.SECONDS);
          log.trace("Replication latch opened, continuing.");
       } catch (Exception e) {
          throw new RuntimeException("Unexpected exception!", e);
