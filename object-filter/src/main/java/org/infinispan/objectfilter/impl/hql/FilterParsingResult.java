@@ -16,13 +16,13 @@ import java.util.List;
  */
 public final class FilterParsingResult<TypeMetadata> {
 
-   public static final class SortFieldImpl implements SortField {
+   static final class SortFieldImpl implements SortField {
 
       public final PropertyPath path;
 
       public final boolean isAscending;
 
-      public SortFieldImpl(PropertyPath path, boolean isAscending) {
+      SortFieldImpl(PropertyPath path, boolean isAscending) {
          this.path = path;
          this.isAscending = isAscending;
       }

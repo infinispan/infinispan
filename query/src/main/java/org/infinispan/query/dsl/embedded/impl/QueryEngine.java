@@ -77,7 +77,7 @@ public class QueryEngine {
    /**
     * Optional cache for query objects.
     */
-   protected final QueryCache queryCache;
+   private final QueryCache queryCache;
 
    /**
     * Optional, lazily acquired. This is {@code null} if the cache is not indexed.
