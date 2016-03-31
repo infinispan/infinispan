@@ -264,7 +264,10 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          assertEquals(op.getReturnValue(), future.get(10, SECONDS));
 
          // let state transfer go
-         checkPoint.trigger("pre_state_apply_release_for_" + nonOwnerCache);
+         // if backupOwnerCache is on coordinator there are 2 concurrent state transfer started
+         // therefore we need to release the latches for both of them
+         checkPoint.triggerForever("pre_state_apply_release_for_" + nonOwnerCache);
+
          TestingUtil.waitForRehashToComplete(primaryOwnerCache, nonOwnerCache);
 
          switch (op) {

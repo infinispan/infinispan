@@ -29,7 +29,8 @@ import java.util.Set;
 @Immutable
 public class MurmurHash3 implements Hash {
    private final static MurmurHash3 instance = new MurmurHash3();
-   
+   public final static int DEFAULT_SEED = 9001;
+
    public static MurmurHash3 getInstance() {
       return instance;
    }
@@ -333,7 +334,7 @@ public class MurmurHash3 implements Hash {
 
    @Override
    public int hash(byte[] payload) {
-      return MurmurHash3_x64_32(payload, 9001);
+      return MurmurHash3_x64_32(payload, DEFAULT_SEED);
    }
 
    /**
@@ -343,12 +344,17 @@ public class MurmurHash3 implements Hash {
     * @return a hash code for the byte array
     */
    public static int hash(long[] payload) {
-      return MurmurHash3_x64_32(payload, 9001);
+      return MurmurHash3_x64_32(payload, DEFAULT_SEED);
    }
 
    @Override
    public int hash(int hashcode) {
-      // Obtained by inlining MurmurHash3_x64_32(byte[], 9001) and removing all the unused code
+      return MurmurHash3_32_32(hashcode, DEFAULT_SEED);
+
+   }
+
+   public static int MurmurHash3_32_32(int hashcode, int seed) {
+      // Obtained by inlining MurmurHash3_x64_32(byte[], seed) and removing all the unused code
       // (since we know the input is always 4 bytes and we only need 4 bytes of output)
       byte b0 = (byte) hashcode;
       byte b1 = (byte) (hashcode >>> 8);
@@ -356,8 +362,8 @@ public class MurmurHash3 implements Hash {
       byte b3 = (byte) (hashcode >>> 24);
       State state = new State();
 
-      state.h1 = 0x9368e53c2f6af274L ^ 9001;
-      state.h2 = 0x586dcd208f7cd3fdL ^ 9001;
+      state.h1 = 0x9368e53c2f6af274L ^ seed;
+      state.h2 = 0x586dcd208f7cd3fdL ^ seed;
 
       state.c1 = 0x87c37b91114253d5L;
       state.c2 = 0x4cf5ad432745937fL;

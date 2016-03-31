@@ -7,6 +7,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -89,6 +90,11 @@ public interface ConfigurationChildBuilder {
     * Whether or not to implicitly FORCE_RETURN_VALUE for all calls.
     */
    ConfigurationBuilder forceReturnValues(boolean forceReturnValues);
+
+   /**
+    * Key equivalence class used on server. Applies only when running in compatibility mode.
+    */
+   ConfigurationBuilder keyEquivalence(Equivalence keyEquivalence);
 
    /**
     * This hint allows sizing of byte buffers when serializing and deserializing keys, to minimize array resizing. It defaults to 64.

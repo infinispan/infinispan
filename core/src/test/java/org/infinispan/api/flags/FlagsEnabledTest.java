@@ -17,6 +17,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -119,16 +120,16 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    }
 
    public void testReplicateSkipCacheLoad(Method m) {
-      final AdvancedCache<Object, String> cache1 = advancedCache(0, cacheName);
-      final AdvancedCache<Object, String> cache2 = advancedCache(1, cacheName);
+      final AdvancedCache<MagicKey, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<MagicKey, String> cache2 = advancedCache(1, cacheName);
       assertLoadsAndReset(cache1, 0, cache2, 0);
 
       final String v = v(m, 1);
-      final Object k = getKeyForCache(0, cacheName);
+      final MagicKey k = new MagicKey(k(m, 1), cache1);
       cache1.withFlags(Flag.SKIP_CACHE_LOAD).put(k, v);
+
       // The write-skew check tries to load it from persistence.
       assertLoadsAndReset(cache1, isTxCache() ? 1 : 0, cache2, 0);
-
       assertCacheValue(cache2, k, v);
       assertLoadsAndReset(cache1, 0, cache2, 0);
    }

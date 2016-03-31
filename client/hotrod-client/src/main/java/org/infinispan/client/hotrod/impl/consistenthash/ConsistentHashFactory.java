@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.consistenthash;
 
 
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -22,14 +23,18 @@ import org.infinispan.commons.util.Util;
  */
 public class ConsistentHashFactory {
    private Class<? extends ConsistentHash>[] version2ConsistentHash;
+   private Configuration configuration;
 
    public void init(Configuration configuration) {
       this.version2ConsistentHash = configuration.consistentHashImpl();
+      this.configuration = configuration;
    }
 
    public <T extends ConsistentHash> T newConsistentHash(int version) {
       Class<? extends ConsistentHash> hashFunctionClass = version2ConsistentHash[version-1];
       // TODO: Why create a brand new instance via reflection everytime a new hash topology is received? Caching???
-      return (T) Util.getInstance(hashFunctionClass);
+      T instance = (T) Util.getInstance(hashFunctionClass);
+      instance.init(configuration);
+      return instance;
    }
 }

@@ -24,6 +24,9 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.AnyServerEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
@@ -54,6 +57,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          ConsistentHashV1.class, ConsistentHashV2.class, SegmentConsistentHash.class
    };
    private boolean forceReturnValues;
+   private Equivalence keyEquivalence = AnyEquivalence.getInstance();
    private int keySizeEstimate = ConfigurationProperties.DEFAULT_KEY_SIZE;
    private Class<? extends Marshaller> marshallerClass = GenericJBossMarshaller.class;
    private Marshaller marshaller;
@@ -172,6 +176,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       this.forceReturnValues = forceReturnValues;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder keyEquivalence(Equivalence keyEquivalence) {
+      this.keyEquivalence = keyEquivalence;
       return this;
    }
 
@@ -322,11 +332,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
       if (marshaller == null) {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
+               consistentHashImpl, forceReturnValues, keyEquivalence, keySizeEstimate, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
                valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
       } else {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
-               consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
+               consistentHashImpl, forceReturnValues, keyEquivalence, keySizeEstimate, marshaller, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
                valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
       }
    }

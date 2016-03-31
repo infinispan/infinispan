@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
+
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +17,8 @@ public interface ConsistentHash {
    @Deprecated
    void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace);
 
+   default void init(Configuration configuration) {}
+
    SocketAddress getServer(Object key);
 
    /**
@@ -26,5 +30,4 @@ public interface ConsistentHash {
    int getNormalizedHash(Object object);
 
    Map<SocketAddress, Set<Integer>> getSegmentsByServer();
-
 }

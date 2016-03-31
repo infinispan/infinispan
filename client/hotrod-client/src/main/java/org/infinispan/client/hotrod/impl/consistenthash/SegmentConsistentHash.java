@@ -4,8 +4,11 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.hash.EquivalenceMurmurHash3;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Immutables;
@@ -25,7 +28,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
    private static final Log log = LogFactory.getLog(SegmentConsistentHash.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final Hash hash = MurmurHash3.getInstance();
+   private final EquivalenceMurmurHash3 hash = new EquivalenceMurmurHash3();
    private SocketAddress[][] segmentOwners;
    private int numSegments;
    private int segmentSize;
@@ -39,6 +42,11 @@ public final class SegmentConsistentHash implements ConsistentHash {
       this.segmentOwners = segmentOwners;
       this.numSegments = numSegments;
       this.segmentSize = Util.getSegmentSize(numSegments);
+   }
+
+   @Override
+   public void init(Configuration configuration) {
+      hash.setEquivalence(configuration.keyEquivalence());
    }
 
    @Override

@@ -163,6 +163,9 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int NUMERIC_ENTRY_VERSION = 156;
 
    int READ_WRITE_SNAPSHOT_VIEW = 157;
+   // 158-165 reserved for meta params
+
+   int INJECTABLE_EQUIVALENCE_MURMUR_HASH3 = 166;
 
    // 158 - 160 used by functions in commons
    int AVAILABILITY_MODE = 161;

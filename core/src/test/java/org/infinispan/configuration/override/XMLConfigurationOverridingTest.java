@@ -387,15 +387,18 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                Cache cache1 = cm.getCache(distCacheToChange);
                Cache cache2 = cm1.getCache(distCacheToChange);
 
+               ReplListener replList1 = new ReplListener(cache1, true, false);
                ReplListener replList2 = new ReplListener(cache2, true, true);
 
                MagicKey key = new MagicKey("key1", cache1);
                String value = "value1";
 
+               replList1.expect(PutKeyValueCommand.class);
                replList2.expect(PutKeyValueCommand.class);
                cache1.put(key, value);
 
-               // allow for replication
+               // We need to wait for replication to both primary and backup owner
+               replList1.waitForRpc();
                replList2.waitForRpc();
                assertEquals(value, cache1.get(key));
                assertEquals(value, cache2.get(key));

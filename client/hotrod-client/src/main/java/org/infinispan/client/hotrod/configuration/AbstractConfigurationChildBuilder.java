@@ -5,6 +5,7 @@ import java.util.Properties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -83,6 +84,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    @Override
    public ConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       return builder.forceReturnValues(forceReturnValues);
+   }
+
+   @Override
+   public ConfigurationBuilder keyEquivalence(Equivalence keyEquivalence) {
+      return builder.keyEquivalence(keyEquivalence);
    }
 
    @Override
