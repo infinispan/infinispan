@@ -5,7 +5,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.scripting.impl.ScriptingManagerImpl;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -36,7 +35,7 @@ import static org.junit.Assert.assertEquals;
 @Test(groups = "functional", testName = "scripting.ReplicatedSecuredScriptingTest")
 @CleanupAfterTest
 public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
-    static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManagerImpl.SCRIPT_MANAGER_ROLE);
+    static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
     static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
     static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
 

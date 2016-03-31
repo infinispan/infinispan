@@ -24,6 +24,8 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadataCreator;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -108,6 +110,10 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
             .compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller())
             .customInterceptors().addInterceptor()
             .interceptor(new ProtobufMetadataManagerInterceptor()).after(PessimisticLockingInterceptor.class);
+      if (globalConfiguration.security().authorization().enabled()) {
+         globalConfiguration.security().authorization().roles().put(SCHEMA_MANAGER_ROLE, new CacheRoleImpl(SCHEMA_MANAGER_ROLE, AuthorizationPermission.ALL));
+         cfg.security().authorization().enable().role(SCHEMA_MANAGER_ROLE);
+      }
       return cfg;
    }
 

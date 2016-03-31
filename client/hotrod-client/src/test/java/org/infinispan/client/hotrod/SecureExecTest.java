@@ -9,7 +9,6 @@ import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuild
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.scripting.impl.ScriptingManagerImpl;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -39,7 +38,7 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(testName = "client.hotrod.SecureExecTest", groups = "functional")
 @CleanupAfterMethod
 public class SecureExecTest extends AuthenticationTest {
-    static final Subject ADMIN = TestingUtil.makeSubject("user", ScriptingManagerImpl.SCRIPT_MANAGER_ROLE);
+    static final Subject ADMIN = TestingUtil.makeSubject("user", ScriptingManager.SCRIPT_MANAGER_ROLE);
 
     private RemoteCacheManager remoteCacheManager;
 

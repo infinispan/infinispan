@@ -17,6 +17,8 @@ import javax.management.ObjectName;
 @Scope(Scopes.GLOBAL)
 public interface ProtobufMetadataManager extends ProtobufMetadataManagerMBean {
 
+   String SCHEMA_MANAGER_ROLE = "___schema_manager";
+
    ObjectName getObjectName();
 
    void setObjectName(ObjectName objectName);

@@ -6,7 +6,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.scripting.impl.ScriptingManagerImpl;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -26,7 +25,7 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(groups = "functional", testName = "scripting.SecureScriptingTest")
 public class SecureScriptingTest extends AbstractScriptingTest {
 
-   static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManagerImpl.SCRIPT_MANAGER_ROLE);
+   static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
    static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
    static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
 

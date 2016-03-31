@@ -1,20 +1,26 @@
 === Scripting
 
 Scripting is a feature of Infinispan Server which allows invoking server-side scripts from remote clients.
-Scripting leverages the JDK's javax.script ScriptEngines, therefore allowing the use of any JVM languages which offer one. 
+Scripting leverages the JDK's javax.script ScriptEngines, therefore allowing the use of any JVM languages which offer one.
 By default, the JDK comes with Nashorn, a ScriptEngine capable of running JavaScript.
 
 ==== Installing scripts
-Scripts are stored in a special script cache, named '___script_cache'. 
-Adding a script is therefore as simple as +put+ting it into the cache itself. If the name of the script contains a filename extension, e.g. +myscript.js+, then that extension determines the engine that will be used to execute it. 
-Alternatively the script engine can be selected using script metadata (see below). 
+Scripts are stored in a special script cache, named '___script_cache'.
+Adding a script is therefore as simple as +put+ting it into the cache itself. 
+If the name of the script contains a filename extension, e.g. +myscript.js+, then that extension determines the engine that 
+will be used to execute it.
+Alternatively the script engine can be selected using script metadata (see below).
+Be aware that, when security is enabled, access to the script cache via the remote protocols requires
+that the user belongs to the _'___script_manager role'_.
 
 ==== Script metadata
-Script metadata is additional information about the script that the user can provide to the server to affect how a script is executed. 
-It is contained in a specially-formatted comment on the first lines of the script. 
+Script metadata is additional information about the script that the user can provide to the server to affect how a
+script is executed.
+It is contained in a specially-formatted comment on the first lines of the script.
 
 Properties are specified as +key=value+ pairs, separated by commas.
-You can use several different comment styles: The `//`, `;;`, `#` depending on the scripting language you use. You can split metadata over multiple lines if necessary, and you can use single (') or double (") quotes to delimit your values.
+You can use several different comment styles: The `//`, `;;`, `#` depending on the scripting language you use. 
+You can split metadata over multiple lines if necessary, and you can use single (') or double (") quotes to delimit your values.
 
 The following are examples of valid metadata comments:
 [source,javascript]
@@ -23,7 +29,7 @@ The following are examples of valid metadata comments:
 // mode=local, parameters=[a,b,c]
 ----
 
-===== Metadata properties 
+===== Metadata properties
 
 The following metadata property keys are available
 
@@ -45,7 +51,7 @@ retrieve, store and work with parameters.
 Since the execution mode is a characteristic of the script, nothing special needs to be done on the client to invoke scripts in different modes.
 
 ==== Script bindings
-The script engine within Infinispan exposes several internal objects as bindings in the scope of the script execution. 
+The script engine within Infinispan exposes several internal objects as bindings in the scope of the script execution.
 These are:
 
 * cache: the cache against which the script is being executed
@@ -57,7 +63,7 @@ These are:
 Aside from the standard bindings described above, when a script is executed it can be passed a set of named parameters which also appear as bindings.
 Parameters are passed as +name,value+ pairs where +name+ is a string and +value+ can be any value that is understood by the marshaller in use.
 
-The following is an example of a JavaScript script which takes two parameters, +multiplicand+ and +multiplier+ and multiplies them. 
+The following is an example of a JavaScript script which takes two parameters, +multiplicand+ and +multiplier+ and multiplies them.
 Because the last operation is an expression evaluation, its result is returned to the invoker.
 [source,javascript]
 ----
@@ -70,7 +76,7 @@ To store the script in the script cache, use the following Hot Rod code:
 [source,java]
 ----
 RemoteCache<String, String> scriptCache = cacheManager.getCache("___script_cache");
-scriptCache.put("multiplication.js", 
+scriptCache.put("multiplication.js",
   "// mode=local,language=javascript\n" +
   "multiplicand * multiplier\n");
 ----
@@ -90,7 +96,7 @@ Object result = cache.execute("multiplication.js", params);
 ----
 
 ==== Distributed execution
-The following is a script which runs within a Distributed Executor. 
+The following is a script which runs within a Distributed Executor.
 Each node will return its address, and the results from all nodes will be collected in a List and returned to the client.
 [source,javascript]
 ----

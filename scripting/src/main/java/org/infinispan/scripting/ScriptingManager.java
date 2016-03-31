@@ -12,7 +12,8 @@ import org.infinispan.tasks.TaskContext;
  * @since 7.2
  */
 public interface ScriptingManager {
-   public static final String SCRIPT_CACHE = "___script_cache";
+   String SCRIPT_CACHE = "___script_cache";
+   String SCRIPT_MANAGER_ROLE = "___script_manager";
 
    /**
     * Adds a new named script.
@@ -37,7 +38,7 @@ public interface ScriptingManager {
     * Runs a named script
     *
     * @param scriptName The name of the script to run. Use {@link #addScript(String, String)} to add a script
-    * @return a {@link NotifyingFuture} which will return the result of the script execution
+    * @return a {@link CompletableFuture} which will return the result of the script execution
     */
    <T> CompletableFuture<T> runScript(String scriptName);
 

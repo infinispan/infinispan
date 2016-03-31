@@ -4,7 +4,6 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -46,7 +45,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Scope(Scopes.GLOBAL)
 public class ScriptingManagerImpl implements ScriptingManager {
-   public static final String SCRIPT_MANAGER_ROLE = "___script_manager";
    private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
    EmbeddedCacheManager cacheManager;
    private ScriptEngineManager scriptEngineManager;

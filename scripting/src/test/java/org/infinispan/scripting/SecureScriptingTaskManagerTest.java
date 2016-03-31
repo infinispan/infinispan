@@ -7,7 +7,6 @@ import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuild
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.impl.ScriptTask;
-import org.infinispan.scripting.impl.ScriptingManagerImpl;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -42,7 +41,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
     protected static final String SCRIPT_NAME = "testRole.js";
     protected TaskManager taskManager;
 
-    static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManagerImpl.SCRIPT_MANAGER_ROLE);
+    static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
     static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
     static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
 
