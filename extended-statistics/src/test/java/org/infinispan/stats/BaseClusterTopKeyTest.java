@@ -1,16 +1,12 @@
 package org.infinispan.stats;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.TxInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
@@ -21,7 +17,6 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +31,7 @@ import static org.infinispan.test.TestingUtil.k;
  */
 @Test(groups = "functional")
 @CleanupAfterTest
-public abstract class BaseClusterTopKeyTest extends MultipleCacheManagersTest {
+public abstract class BaseClusterTopKeyTest extends AbstractTopKeyTest {
 
    private final CacheMode cacheMode;
    private final int clusterSize;
@@ -229,115 +224,14 @@ public abstract class BaseClusterTopKeyTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   protected boolean isOwner(Cache<?, ?> cache, Object key) {
-      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      return dm.locate(key).contains(addressOf(cache));
-   }
-
    protected boolean isPrimaryOwner(Cache<?, ?> cache, Object key) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       return dm.getPrimaryLocation(key).equals(addressOf(cache));
    }
 
-   private CacheUsageInterceptor getTopKey(Cache<?, ?> cache) {
-      for (CommandInterceptor interceptor : cache.getAdvancedCache().getInterceptorChain()) {
-         if (interceptor instanceof CacheUsageInterceptor) {
-            return (CacheUsageInterceptor) interceptor;
-         }
-      }
-      throw new IllegalStateException();
-   }
-
-   private void assertTopKeyAccesses(Cache<?, ?> cache, String key, long expected, boolean readAccesses) {
-      boolean isLocal = isOwner(cache, key);
-      Long actual;
-      if (readAccesses) {
-         actual = isLocal ? getTopKey(cache).getLocalTopGets().get(key) :
-               getTopKey(cache).getRemoteTopGets().get(key);
-      } else {
-         actual = isLocal ? getTopKey(cache).getLocalTopPuts().get(key) :
-               getTopKey(cache).getRemoteTopPuts().get(key);
-      }
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of accesses");
-   }
-
-   private void assertWriteSkew(Cache<?, ?> cache, String key, long expected) {
-      Long actual = getTopKey(cache).getTopWriteSkewFailedKeys().get(key);
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of write skew");
-   }
-
-   private void assertTopKeyLocked(Cache<?, ?> cache, String key, long expected) {
-      Long actual = getTopKey(cache).getTopLockedKeys().get(key);
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of locked keys");
-   }
-
-   private void assertTopKeyLockContented(Cache<?, ?> cache, String key, long expected) {
-      Long actual = getTopKey(cache).getTopContendedKeys().get(key);
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of contented keys");
-   }
-
-   private void assertTopKeyLockFailed(Cache<?, ?> cache, String key, long expected) {
-      Long actual = getTopKey(cache).getTopLockFailedKeys().get(key);
-      Assert.assertEquals(actual == null ? 0 : actual, expected, "Wrong number of lock failed keys");
-   }
-
-   private void assertLockInformation(Cache<?, ?> cache, String key, long locked, long contented, long failed) {
-      assertTopKeyLocked(cache, key, locked);
-      assertTopKeyLockContented(cache, key, contented);
-      assertTopKeyLockFailed(cache, key, failed);
-   }
-
    private void assertNoLocks(String key) {
       for (Cache<?, ?> cache : caches()) {
          assertEventuallyNotLocked(cache, key);
-      }
-   }
-
-   private PrepareCommandBlocker addPrepareBlockerIfAbsent(Cache<?, ?> cache) {
-      List<CommandInterceptor> chain = cache.getAdvancedCache().getInterceptorChain();
-
-      for (CommandInterceptor commandInterceptor : chain) {
-         if (commandInterceptor instanceof PrepareCommandBlocker) {
-            return (PrepareCommandBlocker) commandInterceptor;
-         }
-      }
-      PrepareCommandBlocker blocker = new PrepareCommandBlocker();
-      cache.getAdvancedCache().addInterceptorBefore(blocker, TxInterceptor.class);
-      return blocker;
-   }
-
-   private class PrepareCommandBlocker extends CommandInterceptor {
-
-      private boolean unblock = false;
-      private boolean prepareBlocked = false;
-
-      @Override
-      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         Object retVal = invokeNextInterceptor(ctx, command);
-         synchronized (this) {
-            prepareBlocked = true;
-            notifyAll();
-            while (!unblock) {
-               wait();
-            }
-         }
-         return retVal;
-      }
-
-      private synchronized void reset() {
-         unblock = false;
-         prepareBlocked = false;
-      }
-
-      private synchronized void unblock() {
-         unblock = true;
-         notifyAll();
-      }
-
-      private synchronized void awaitUntilPrepareBlocked() throws InterruptedException {
-         while (!prepareBlocked) {
-            wait();
-         }
       }
    }
 }
