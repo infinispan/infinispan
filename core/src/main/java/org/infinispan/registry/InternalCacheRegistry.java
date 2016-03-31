@@ -26,6 +26,10 @@ public interface InternalCacheRegistry {
        */
       USER,
       /**
+       * means that his cache requires security to be accessible remotely
+       */
+      PROTECTED,
+      /**
        * means the cache should be made persistent across restarts if global state persistence is enabled
        */
       PERSISTENT,
@@ -62,6 +66,13 @@ public interface InternalCacheRegistry {
     * {@link #registerInternalCache(String, Configuration)} method
     */
    boolean isInternalCache(String name);
+
+   /**
+    * Returns whether the cache is private, i.e. it has been registered using the
+    * {@link #registerInternalCache(String, Configuration, EnumSet<Flag>)} method without the
+    * {@link Flag#USER} flag
+    */
+   boolean isPrivateCache(String name);
 
    /**
     * Retrieves the names of all the internal caches

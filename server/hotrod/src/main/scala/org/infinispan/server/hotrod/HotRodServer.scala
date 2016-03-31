@@ -5,29 +5,32 @@ import org.infinispan
 import org.infinispan.AdvancedCache
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.distexec._
-import org.infinispan.filter.{ParamKeyValueFilterConverterFactory, KeyValueFilterConverterFactory}
+import org.infinispan.filter.{KeyValueFilterConverterFactory, ParamKeyValueFilterConverterFactory}
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent
-import org.infinispan.notifications.cachelistener.filter.{CacheEventFilterConverterFactory, CacheEventConverterFactory, CacheEventFilterFactory}
+import org.infinispan.notifications.cachelistener.filter.{CacheEventConverterFactory, CacheEventFilterConverterFactory, CacheEventFilterFactory}
 import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
+import org.infinispan.server.core.{AbstractProtocolServer, QueryFacade}
 import org.infinispan.eviction.EvictionStrategy
-import org.infinispan.commons.util.{ServiceFinder, CollectionFactory}
+import org.infinispan.commons.util.{CollectionFactory, ServiceFinder}
 import org.infinispan.commons.equivalence.AnyEquivalence
 import org.infinispan.remoting.transport.Address
-import org.infinispan.configuration.cache.{Configuration, CacheMode, ConfigurationBuilder}
+import org.infinispan.configuration.cache.{CacheMode, Configuration, ConfigurationBuilder}
 import org.infinispan.context.Flag
 import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import java.util.ServiceLoader
+
 import org.infinispan.util.concurrent.IsolationLevel
 import javax.security.sasl.SaslServerFactory
+
 import org.infinispan.server.core.security.SaslUtils
 import org.infinispan.factories.ComponentRegistry
 import org.infinispan.registry.InternalCacheRegistry
 import java.util.EnumSet
+
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory
 
 import scala.collection.JavaConversions._
@@ -103,7 +106,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       super.startInternal(configuration, cacheManager)
 
       // Add self to topology cache last, after everything is initialized
-      isClustered = cacheManager.getCacheManagerConfiguration.transport().transport() != null
+      val globalConfig = cacheManager.getCacheManagerConfiguration
+      isClustered = globalConfig.transport().transport() != null
       if (isClustered) {
          defineTopologyCacheConfig(cacheManager)
          if (isDebugEnabled)
@@ -136,13 +140,14 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def preStartCaches() {
-      // Start defined caches to avoid issues with lazily started caches
+      // Start defined caches to avoid issues with lazily started caches. Skip internal caches if authorization is not
+      // enabled
+      val icr = cacheManager.getGlobalComponentRegistry.getComponent(classOf[InternalCacheRegistry])
+      val authz = cacheManager.getCacheManagerConfiguration.security.authorization.enabled
       for (cacheName <- asScalaIterator(cacheManager.getCacheNames.iterator)) {
-         if (!cacheName.startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX)) {
-            val cache = getCacheInstance(cacheName, cacheManager, false)
-            val cacheCfg = SecurityActions.getCacheConfiguration(cache)
-            validateCacheConfiguration(cacheCfg)
-         }
+         val cache = getCacheInstance(cacheName, cacheManager, false, (!icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED) || authz))
+         val cacheCfg = SecurityActions.getCacheConfiguration(cache)
+         validateCacheConfiguration(cacheCfg)
       }
    }
 
@@ -207,7 +212,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       knownCaches.get(cacheName)
    }
 
-   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache = {
+   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean, addToKnownCaches: Boolean = true): Cache = {
       var cache: Cache = null
       if (!skipCacheCheck) cache = knownCaches.get(cacheName)
 
@@ -227,7 +232,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          // We don't need synchronization as long as we store the cache last
          knownCacheConfigurations.put(cacheName, cacheConfiguration)
          knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(tmpCache.getAdvancedCache))
-         knownCaches.put(cacheName, cache)
+         if (addToKnownCaches) {
+            knownCaches.put(cacheName, cache)
+         }
          // make sure we register a Migrator for this cache!
          tryRegisterMigrationManager(cacheName, cache)
       }

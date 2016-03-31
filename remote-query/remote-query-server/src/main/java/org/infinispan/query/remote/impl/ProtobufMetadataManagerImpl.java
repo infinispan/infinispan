@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -26,6 +27,7 @@ import org.infinispan.query.remote.impl.indexing.IndexingMetadataCreator;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
+import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -83,7 +85,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       this.cacheManager = cacheManager;
       internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
                                                   getProtobufMetadataCacheConfig().build(),
-                                                  EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PERSISTENT));
+                                                  EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
    }
 
    /**

@@ -2,17 +2,20 @@ package org.infinispan.rest
 
 import org.infinispan.server.hotrod.RestSourceMigrator
 import org.infinispan.upgrade.RollingUpgradeManager
-import org.infinispan.{Cache, AdvancedCache}
+import org.infinispan.{AdvancedCache, Cache}
 import org.infinispan.commons.api.BasicCacheContainer
 import org.infinispan.commons.util.CollectionFactory
-import org.infinispan.container.entries.{MVCCEntry, InternalCacheEntry, CacheEntry}
+import org.infinispan.container.entries.{CacheEntry, InternalCacheEntry, MVCCEntry}
 import org.infinispan.context.Flag
 import org.infinispan.distribution.DistributionManager
 import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.registry.InternalCacheRegistry
 import org.infinispan.remoting.transport.Address
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport
 
 class RestCacheManager(instance: EmbeddedCacheManager, isCacheIgnored: String => Boolean = Function.const(false)) {
+
+   private val allowInternalCacheAccess = instance.getCacheManagerConfiguration.security().authorization().enabled()
 
    private val knownCaches : java.util.Map[String, AdvancedCache[String, Array[Byte]]] =
       CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
@@ -28,6 +31,12 @@ class RestCacheManager(instance: EmbeddedCacheManager, isCacheIgnored: String =>
       if (isKnownCache) {
          knownCaches.get(name)
       } else {
+         val icr = instance.getGlobalComponentRegistry.getComponent(classOf[InternalCacheRegistry])
+         if (icr.isPrivateCache(name)) {
+            throw new CacheUnavailableException("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'".format(name))
+         } else if (!allowInternalCacheAccess && icr.isInternalCache(name)) {
+            throw new CacheUnavailableException("Remote requests are not allowed to internal caches when authorization is disabled. Do no send remote requests to cache '%s'".format(name))
+         }
          val cache =
             if (name == BasicCacheContainer.DEFAULT_CACHE_NAME)
                instance.getCache[String, Array[Byte]]()

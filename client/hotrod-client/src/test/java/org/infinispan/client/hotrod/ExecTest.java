@@ -104,7 +104,7 @@ public class ExecTest extends MultiHotRodServersTest {
       defineInAll(cacheName, builder);
       try (InputStream is = this.getClass().getResourceAsStream("/distExec.js")) {
          String script = TestingUtil.loadFileAsString(is);
-         clients.get(0).getCache(SCRIPT_CACHE).put("testScriptExecutionWithPassingParams.js", script);
+         manager(0).getCache(SCRIPT_CACHE).put("testScriptExecutionWithPassingParams.js", script);
       }
       populateCache(cacheName);
 
