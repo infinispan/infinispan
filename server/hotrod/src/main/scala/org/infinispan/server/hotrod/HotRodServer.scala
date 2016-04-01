@@ -1,37 +1,38 @@
 package org.infinispan.server.hotrod
 
-import logging.Log
+import java.util.{EnumSet, ServiceLoader}
+import java.util.function.Predicate
+import javax.security.sasl.SaslServerFactory
+
+import io.netty.channel.{Channel, ChannelInitializer}
 import org.infinispan
 import org.infinispan.AdvancedCache
+import org.infinispan.commons.equivalence.AnyEquivalence
 import org.infinispan.commons.marshall.Marshaller
+import org.infinispan.commons.util.{CollectionFactory, ServiceFinder}
+import org.infinispan.configuration.cache.{CacheMode, Configuration, ConfigurationBuilder}
+import org.infinispan.context.Flag
 import org.infinispan.distexec._
+import org.infinispan.eviction.EvictionStrategy
+import org.infinispan.factories.ComponentRegistry
 import org.infinispan.filter.{KeyValueFilterConverterFactory, ParamKeyValueFilterConverterFactory}
+import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent
 import org.infinispan.notifications.cachelistener.filter.{CacheEventConverterFactory, CacheEventFilterConverterFactory, CacheEventFilterFactory}
-import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
-import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.server.core.{AbstractProtocolServer, QueryFacade}
-import org.infinispan.eviction.EvictionStrategy
-import org.infinispan.commons.util.{CollectionFactory, ServiceFinder}
-import org.infinispan.commons.equivalence.AnyEquivalence
-import org.infinispan.remoting.transport.Address
-import org.infinispan.configuration.cache.{CacheMode, Configuration, ConfigurationBuilder}
-import org.infinispan.context.Flag
-import org.infinispan.upgrade.RollingUpgradeManager
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
-import java.util.ServiceLoader
-
-import org.infinispan.util.concurrent.IsolationLevel
-import javax.security.sasl.SaslServerFactory
-
-import org.infinispan.server.core.security.SaslUtils
-import org.infinispan.factories.ComponentRegistry
 import org.infinispan.registry.InternalCacheRegistry
-import java.util.EnumSet
-
+import org.infinispan.remoting.transport.Address
+import org.infinispan.server.core.security.SaslUtils
+import org.infinispan.server.core.transport.TimeoutEnabledChannelInitializer
+import org.infinispan.server.core.{AbstractProtocolServer, QueryFacade}
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory
+import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
+import org.infinispan.server.hotrod.logging.Log
+import org.infinispan.server.hotrod.transport.HotRodChannelInitializer
+import org.infinispan.upgrade.RollingUpgradeManager
+import org.infinispan.util.concurrent.IsolationLevel
 
 import scala.collection.JavaConversions._
 
@@ -80,7 +81,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    override def getEncoder = new HotRodEncoder(getCacheManager, this)
 
    override def getDecoder : HotRodDecoder =
-      new HotRodDecoder(getCacheManager, transport, this, isCacheIgnored)
+      new HotRodDecoder(cacheManager, transport, this, new Predicate[String] {
+               override def test(t: String): Boolean = isCacheIgnored(t)
+            })
 
    override def startInternal(configuration: HotRodServerConfiguration, cacheManager: EmbeddedCacheManager) {
       // These are also initialized by super.startInternal, but we need them before
@@ -115,6 +118,18 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
          addSelfToTopologyView(cacheManager)
       }
+   }
+
+   override def getInitializer: ChannelInitializer[Channel] = {
+      // Pass by name since we have circular dependency
+      def getTransport() = {
+         transport
+      }
+      if (configuration.idleTimeout > 0)
+         new HotRodChannelInitializer(this, getTransport(), getEncoder, getQualifiedName)
+           with TimeoutEnabledChannelInitializer
+      else // Idle timeout logic is disabled with -1 or 0 values
+         new HotRodChannelInitializer(this, getTransport(), getEncoder, getQualifiedName)
    }
 
    private def loadFilterConverterFactories[T](c: Class[T])(action: (String, T) => Any) = ServiceFinder.load(c).foreach { factory =>

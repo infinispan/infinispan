@@ -124,9 +124,8 @@ class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTim
                           dataVersion: Long): TestResponse =
       execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, dataVersion, 1 ,0)
 
-   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
-                          dataVersion: Long, flags: Int): TestResponse =
-      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, dataVersion, flags)
+   def removeIfUnmodified(k: Array[Byte], dataVersion: Long, flags: Int): TestResponse =
+      execute(0xA0, 0x0D, defaultCacheName, k, 0, 0, new Array[Byte](0), dataVersion, flags)
 
    def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
                v: Array[Byte], dataVersion: Long, clientIntelligence: Byte, topologyId: Int): TestResponse = {

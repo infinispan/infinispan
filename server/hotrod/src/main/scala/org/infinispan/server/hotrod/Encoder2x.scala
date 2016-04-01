@@ -9,7 +9,6 @@ import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.hotrod.Events._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.logging.Log
-import org.infinispan.server.hotrod.util.BulkUtil
 import org.infinispan.topology.CacheTopology
 
 import scala.collection.JavaConversions._
@@ -258,7 +257,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
    override def writeResponse(r: Response, buf: ByteBuf, cacheManager: EmbeddedCacheManager, server: HotRodServer): Unit = {
       r match {
          case r: ResponseWithPrevious =>
-            if (r.previous == None)
+            if (r.previous.isEmpty)
                writeUnsignedInt(0, buf)
             else
                writeRangedBytes(r.previous.get, buf)
@@ -281,8 +280,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          case g: BulkGetResponse =>
             if (isTrace) log.trace("About to respond to bulk get request")
             if (g.status == Success) {
-               val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
-               var iterator = asScalaIterator(cache.entrySet.iterator)
+               var iterator = asScalaIterator(g.entries.iterator)
                if (g.count != 0) {
                   if (isTrace) trace("About to write (max) %d messages to the client", g.count)
                   iterator = iterator.take(g.count)
@@ -297,8 +295,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          case g: BulkGetKeysResponse =>
             if (isTrace) log.trace("About to respond to bulk get keys request")
             if (g.status == Success) {
-               val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
-               val iterator = asScalaIterator(BulkUtil.getAllKeys(cache, g.scope))
+               val iterator = asScalaIterator(g.iterator)
                for (key <- iterator) {
                   buf.writeByte(1) // Not done
                   writeRangedBytes(key, buf)
@@ -320,13 +317,12 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             if (g.status == Success) writeRangedBytes(g.data.get, buf)
          case q: QueryResponse =>
             writeRangedBytes(q.result, buf)
-         case a: AuthMechListResponse => {
+         case a: AuthMechListResponse =>
             writeUnsignedInt(a.mechs.size, buf)
             for(mech <- a.mechs) {
                writeString(mech, buf)
             }
-         }
-         case a: AuthResponse => {
+         case a: AuthResponse =>
             if (a.challenge != null) {
                buf.writeBoolean(false)
                writeRangedBytes(a.challenge, buf)
@@ -334,7 +330,6 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                buf.writeBoolean(true)
                writeUnsignedInt(0, buf)
             }
-         }
          case s: SizeResponse => writeUnsignedLong(s.size, buf)
          case e: ExecResponse =>
             writeRangedBytes(e.result, buf)

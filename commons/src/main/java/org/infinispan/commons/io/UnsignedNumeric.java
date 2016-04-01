@@ -88,7 +88,7 @@ public class UnsignedNumeric {
 
 
    /**
-    * Reads an int stored in variable-length format.  Reads between one and nine bytes.  Smaller values take fewer
+    * Reads a long stored in variable-length format.  Reads between one and nine bytes.  Smaller values take fewer
     * bytes.  Negative numbers are not supported.
     */
    public static long readUnsignedLong(ObjectInput in) throws IOException {
@@ -121,7 +121,7 @@ public class UnsignedNumeric {
    }
 
    /**
-    * Writes an int in a variable-length format.  Writes between one and nine bytes.  Smaller values take fewer bytes.
+    * Writes a long in a variable-length format.  Writes between one and nine bytes.  Smaller values take fewer bytes.
     * Negative numbers are not supported.
     *
     * @param i int to write

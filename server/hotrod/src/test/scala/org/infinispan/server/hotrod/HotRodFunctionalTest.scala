@@ -312,14 +312,14 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testRemoveIfUmodifiedWithPreviousValue(m: Method) {
-      val resp = client.removeIfUnmodified(k(m) , 0, 0, v(m), 999, 0)
+      val resp = client.removeIfUnmodified(k(m) , 999, 0)
       assertStatus(resp, KeyDoesNotExist)
       client.assertPut(m)
       val getResp = client.getWithVersion(k(m), 0)
       assertSuccess(getResp, v(m), 0)
-      val resp2  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[TestResponseWithPrevious]
+      val resp2  = client.removeIfUnmodified(k(m), 888, 1).asInstanceOf[TestResponseWithPrevious]
       assertNotExecutedPrevious(resp2, v(m))
-      val resp3 = client.removeIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.dataVersion, 1).asInstanceOf[TestResponseWithPrevious]
+      val resp3 = client.removeIfUnmodified(k(m), getResp.dataVersion, 1).asInstanceOf[TestResponseWithPrevious]
       assertSuccessPrevious(resp3, v(m))
    }
 

@@ -93,8 +93,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          case g: BulkGetResponse => {
             log.trace("About to respond to bulk get request")
             if (g.status == Success) {
-               val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
-               var iterator = asScalaIterator(cache.entrySet.iterator)
+               var iterator = asScalaIterator(g.entries.iterator)
                if (g.count != 0) {
                   trace("About to write (max) %d messages to the client", g.count)
                   iterator = iterator.take(g.count)
@@ -110,8 +109,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          case g: BulkGetKeysResponse => {
             log.trace("About to respond to bulk get keys request")
             if (g.status == Success) {
-               val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
-               val iterator = asScalaIterator(BulkUtil.getAllKeys(cache, g.scope))
+               val iterator = asScalaIterator(g.iterator)
                for (key <- iterator) {
                   buf.writeByte(1) // Not done
                   writeRangedBytes(key, buf)

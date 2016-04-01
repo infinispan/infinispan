@@ -20,19 +20,16 @@ abstract class AbstractVersionedDecoder {
    val SecondsIn30days = 60 * 60 * 24 * 30
 
    /**
-    * Having read the message's Id, read the rest of Hot Rod header from the given buffer and return it.
+    * Having read the message's Id, read the rest of Hot Rod header from the given buffer and return it. Returns
+    * whether the entire header was read or not.
     */
-   def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader, requireAuth: Boolean): Boolean
-
-   /**
-    * Read the key to operate on from the message.
-    */
-   def readKey(header: HotRodHeader, buffer: ByteBuf): (Array[Byte], Boolean)
+   @throws(classOf[Exception])
+   def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader): Boolean
 
    /**
     * Read the parameters of the operation, if present.
     */
-   def readParameters(header: HotRodHeader, buffer: ByteBuf): (RequestParameters, Boolean)
+   def readParameters(header: HotRodHeader, buffer: ByteBuf): Option[RequestParameters]
 
    /**
     * Create a successful response.
@@ -54,21 +51,20 @@ abstract class AbstractVersionedDecoder {
     */
    def createGetResponse(header: HotRodHeader, entry: CacheEntry[Array[Byte], Array[Byte]]): Response
 
-   /**
-    * Handle a protocol specific header reading.
+  /**
+    * Read operation specific data for an operation that only requires a header
     */
-   def customReadHeader(header: HotRodHeader, buffer: ByteBuf,
-       cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef
+   def customReadHeader(header: HotRodHeader, buffer: ByteBuf, hrCtx: CacheDecodeContext, out: java.util.List[AnyRef]): Unit
 
    /**
     * Handle a protocol specific key reading.
     */
-   def customReadKey(decoder: HotRodDecoder, header: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ch: Channel): AnyRef
+   def customReadKey(header: HotRodHeader, buffer: ByteBuf, hrCtx: CacheDecodeContext, out: java.util.List[AnyRef]): Unit
 
    /**
     * Handle a protocol specific value reading.
     */
-   def customReadValue(decoder: HotRodDecoder, header: HotRodHeader, hrCtx: CacheDecodeContext, buffer: ByteBuf, cache: Cache): AnyRef
+   def customReadValue(header: HotRodHeader, buffer: ByteBuf, hrCtx: CacheDecodeContext, out: java.util.List[AnyRef]): Unit
 
    /**
     * Create a response for the stats command.

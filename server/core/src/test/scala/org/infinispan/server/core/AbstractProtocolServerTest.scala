@@ -1,5 +1,6 @@
 package org.infinispan.server.core
 
+import io.netty.channel.{ChannelInitializer, Channel}
 import org.testng.annotations.Test
 import org.infinispan.manager.EmbeddedCacheManager
 import org.testng.Assert._
@@ -66,6 +67,8 @@ class AbstractProtocolServerTest extends AbstractInfinispanTest {
       override def startInternal(configuration: MockServerConfiguration, cacheManager: EmbeddedCacheManager) {
          super.startInternal(configuration, cacheManager)
       }
+
+      override def getInitializer(): ChannelInitializer[Channel] = null
 
       override def getEncoder = null
 

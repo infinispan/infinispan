@@ -24,7 +24,7 @@ import org.infinispan.remoting.rpc.RpcManager
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.core._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
-import org.infinispan.server.core.transport.{NettyTransport, StatsChannelHandler}
+import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.server.memcached.MemcachedDecoderState._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.server.memcached.TextProtocolUtil._
@@ -41,7 +41,7 @@ import scala.collection.{immutable, mutable}
  */
 class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService,
                        val transport: NettyTransport, val cacheIgnoreAware: String => Boolean = Function.const(false))
-extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with StatsChannelHandler with ServerConstants {
+extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConstants {
 
    val SecondsInAMonth = 60 * 60 * 24 * 30
    val DefaultTimeUnit = TimeUnit.MILLISECONDS
@@ -405,17 +405,6 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with StatsChannel
    protected def readValue(b: ByteBuf) {
       b.readBytes(rawValue)
       skipLine(b) // read the rest of line to clear CRLF after value Byte[]
-   }
-
-   override def write(ctx: ChannelHandlerContext, msg: scala.Any, promise: ChannelPromise): Unit = {
-      val readable = msg.asInstanceOf[ByteBuf].readableBytes()
-      ctx.write(msg, promise.addListener(new ChannelFutureListener {
-         def operationComplete(future: ChannelFuture): Unit = {
-            if (future.isSuccess) {
-               transport.updateTotalBytesWritten(readable)
-            }
-         }
-      }))
    }
 
    def createValue(): Array[Byte] = rawValue
