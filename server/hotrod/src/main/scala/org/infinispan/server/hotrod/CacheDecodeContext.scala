@@ -1,11 +1,7 @@
 package org.infinispan.server.hotrod
 
-import java.io.IOException
-import java.nio.channels.ClosedChannelException
-import io.netty.buffer.{ByteBuf, Unpooled}
-import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.DecoderException
-import io.netty.util.CharsetUtil
+import java.util.{Map, Set}
+
 import org.infinispan.AdvancedCache
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.{EntryVersion, NumericVersion, NumericVersionGenerator, VersionGenerator}
@@ -15,12 +11,9 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.{EmbeddedMetadata, Metadata}
 import org.infinispan.remoting.rpc.RpcManager
 import org.infinispan.server.core.ServerConstants
-import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
-import java.util.Map
-import java.util.Set
 
 /**
  * Invokes operations against the cache based on the state kept during decoding process
@@ -32,8 +25,11 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
 
    val isTrace = isTraceEnabled
 
-   var isError = false
+   @scala.beans.BeanProperty
+   var error: Throwable = _
+   @scala.beans.BeanProperty
    var decoder: AbstractVersionedDecoder = _
+   @scala.beans.BeanProperty
    var header: HotRodHeader = _
    var cache: AdvancedCache[Bytes, Bytes] = _
    var key: Bytes = _
@@ -41,45 +37,30 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    var params: RequestParameters = _
    var putAllMap: Map[Bytes, Bytes] = _
    var getAllSet: Set[Bytes] = _
+   var operationDecodeContext: Any = _
 
    def resetParams(): Unit = {
+      decoder = null
+      header = null
       params = null
+      key = null
       rawValue = null
       putAllMap = null
       getAllSet = null
+      operationDecodeContext = null
    }
 
-   def createErrorResponse(t: Throwable): AnyRef = {
-      t match {
-         case d: DecoderException => d.getCause match {
-            case h: HotRodException => h.response
-            case _ => createErrorResponseBeforeReadingRequest(t)
-         }
-         case h: HotRodException => h.response
-         case c: ClosedChannelException => null
-         case _ => createErrorResponseBeforeReadingRequest(t)
-      }
-   }
-
-   private def createErrorResponseBeforeReadingRequest(t: Throwable): ErrorResponse = {
-      logErrorBeforeReadingRequest(t)
-      new ErrorResponse(0, 0, "", 1, ServerError, 0, t.toString)
-   }
-
-    def createServerException(e: Exception, b: ByteBuf): (HotRodException, Boolean) = {
+    def createExceptionResponse(e: Throwable): (ErrorResponse) = {
       e match {
          case i: InvalidMagicIdException =>
             logExceptionReported(i)
-            (new HotRodException(new ErrorResponse(
-               0, 0, "", 1, InvalidMagicOrMsgId, 0, i.toString), e), true)
+            new ErrorResponse(0, 0, "", 1, InvalidMagicOrMsgId, 0, i.toString)
          case e: HotRodUnknownOperationException =>
             logExceptionReported(e)
-            (new HotRodException(new ErrorResponse(
-               e.version, e.messageId, "", 1, UnknownOperation, 0, e.toString), e), true)
+            new ErrorResponse(e.version, e.messageId, "", 1, UnknownOperation, 0, e.toString)
          case u: UnknownVersionException =>
             logExceptionReported(u)
-            (new HotRodException(new ErrorResponse(
-               u.version, u.messageId, "", 1, UnknownVersion, 0, u.toString), e), true)
+            new ErrorResponse(u.version, u.messageId, "", 1, UnknownVersion, 0, u.toString)
          case r: RequestParsingException =>
             logExceptionReported(r)
             val msg =
@@ -87,33 +68,16 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
                   r.toString
                else
                   "%s: %s".format(r.getMessage, r.getCause.toString)
-            (new HotRodException(new ErrorResponse(
-               r.version, r.messageId, "", 1, ParseError, 0, msg), e), true)
+            new ErrorResponse(r.version, r.messageId, "", 1, ParseError, 0, msg)
          case i: IllegalStateException =>
             // Some internal server code could throw this, so make sure it's logged
             logExceptionReported(i)
-            (new HotRodException(decoder.createErrorResponse(header, i), e), false)
-         case t: Throwable => (new HotRodException(decoder.createErrorResponse(header, t), e), false)
+            decoder.createErrorResponse(header, i)
+         case t: Throwable if decoder != null => decoder.createErrorResponse(header, t)
+         case t: Throwable =>
+            logErrorBeforeReadingRequest(t)
+            new ErrorResponse(0, 0, "", 1, ServerError, 1, t.toString)
       }
-   }
-
-    def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable)(postCall: => Unit) {
-      val ch = ctx.channel
-      // Log it just in case the channel is closed or similar
-      debug(cause, "Exception caught")
-      if (!cause.isInstanceOf[IOException]) {
-         val errorResponse = createErrorResponse(cause)
-         if (errorResponse != null) {
-            errorResponse match {
-               case a: Bytes => ch.writeAndFlush(wrappedBuffer(a))
-               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8))
-               case null => // ignore
-               case _ => ch.writeAndFlush(errorResponse)
-            }
-         }
-      }
-      // After writing back an error, reset params and revert to initial state
-       postCall
    }
 
    def replace: Response = {
@@ -144,10 +108,11 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
          }
 
          if (!cacheName.isEmpty && !(cacheManager.getCacheNames contains cacheName)) {
-            isError = true // Mark it as error so that the rest of request is ignored
             throw new CacheNotFoundException(
                "Cache with name '%s' not found amongst the configured caches".format(cacheName),
                header.version, header.messageId)
+         } else {
+            cache = server.getCacheInstance(cacheName, cacheManager, skipCacheCheck = true)
          }
          cache = server.getCacheInstance(cacheName, cacheManager, skipCacheCheck = true)
       }
@@ -173,7 +138,32 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
       metadata.build()
    }
 
-   def get(keyBytes: Bytes): Response = createGetResponse(cache.getCacheEntry(keyBytes))
+   def get: Response = createGetResponse(cache.getCacheEntry(key))
+
+   def getKeyMetadata: GetWithMetadataResponse = {
+      val ce = cache.getCacheEntry(key)
+      if (ce != null) {
+         val ice = ce.asInstanceOf[InternalCacheEntry]
+         val entryVersion = ice.getMetadata.version().asInstanceOf[NumericVersion]
+         val v = ce.getValue
+         val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
+         val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
+         new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
+            header.clientIntel, OperationResponse.GetWithMetadataResponse, Success, header.topologyId,
+            Some(v), entryVersion.getVersion, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
+      } else {
+         new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
+            header.clientIntel, OperationResponse.GetWithMetadataResponse, KeyDoesNotExist, header.topologyId,
+            None, 0, -1, -1, -1, -1)
+      }
+   }
+
+   def containsKey: Response = {
+      if (cache.containsKey(key))
+         successResp(null)
+      else
+         notExistResp
+   }
 
    def replaceIfUnmodified: Response = {
       val entry = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key)
@@ -233,6 +223,31 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
          successResp(prev)
       else
          notExistResp
+   }
+
+   def removeIfUnmodified: Response = {
+      val entry = cache.getCacheEntry(key)
+      if (entry != null) {
+         // Hacky, but CacheEntry has not been generified
+         val prev = entry.getValue
+         val streamVersion = new NumericVersion(params.streamVersion)
+         if (entry.getMetadata.version() == streamVersion) {
+            val removed = cache.remove(key, prev)
+            if (removed)
+               successResp(prev)
+            else
+               notExecutedResp(prev)
+         } else {
+            notExecutedResp(prev)
+         }
+      } else {
+         notExistResp
+      }
+   }
+
+   def clear: Response = {
+      cache.clear()
+      successResp(null)
    }
 
    def successResp(prev: Bytes): Response = decoder.createSuccessResponse(header, prev)

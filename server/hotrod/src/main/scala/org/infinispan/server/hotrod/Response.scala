@@ -1,10 +1,13 @@
 package org.infinispan.server.hotrod
 
+import java.util.function.{BiConsumer, Consumer}
+
 import OperationStatus._
 import OperationResponse._
 import org.infinispan.commons.util.Util
 import org.infinispan.remoting.transport.Address
 import java.lang.StringBuilder
+import java.util.{Iterator => JavaIterator, Set => JavaSet, Map => JavaMap}
 
 import org.infinispan.server.hotrod.iteration.IterableIterationResult
 
@@ -41,7 +44,7 @@ class ResponseWithPrevious(override val version: Byte, override val messageId: L
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", previous=").append(Util.printArray(previous.getOrElse(null), true))
+         .append(", previous=").append(Util.printArray(previous.orNull, true))
          .append("}").toString
    }
 }
@@ -56,14 +59,13 @@ class GetResponse(override val version: Byte, override val messageId: Long, over
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(Util.printArray(data.getOrElse(null), true))
+         .append(", data=").append(Util.printArray(data.orNull, true))
          .append("}").toString
    }
 }
 class BulkGetResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
-                  override val operation: OperationResponse, override val status: OperationStatus,
-                  override val topologyId: Int, val count: Int)
-      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
+                  override val topologyId: Int, val count: Int, val entries: JavaSet[JavaMap.Entry[Bytes, Bytes]])
+      extends Response(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId) {
    override def toString = {
       new StringBuilder().append("BulkGetResponse").append("{")
          .append("version=").append(version)
@@ -76,9 +78,8 @@ class BulkGetResponse(override val version: Byte, override val messageId: Long, 
 }
 
 class BulkGetKeysResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
-                  override val operation: OperationResponse, override val status: OperationStatus,
-                  override val topologyId: Int, val scope: Int)
-      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
+                  override val topologyId: Int, scope: Int, val iterator: JavaIterator[Bytes])
+      extends Response(version, messageId, cacheName, clientIntel, BulkGetKeysResponse, Success, topologyId) {
    override def toString = {
       new StringBuilder().append("BulkGetKeysResponse").append("{")
          .append("version=").append(version)
@@ -91,18 +92,23 @@ class BulkGetKeysResponse(override val version: Byte, override val messageId: Lo
 }
 
 class GetAllResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
-                  override val operation: OperationResponse, override val status: OperationStatus,
-                  override val topologyId: Int, val entries: Map[Bytes, Bytes])
-      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
+                  override val topologyId: Int, val entries: JavaMap[Bytes, Bytes])
+      extends Response(version, messageId, cacheName, clientIntel, GetAllResponse, Success, topologyId) {
    override def toString = {
-      new StringBuilder().append("GetAllResponse").append("{")
+      val sb = new StringBuilder().append("GetAllResponse").append("{")
          .append("version=").append(version)
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", keys=")
-         .append(entries.map {case(k, v) => (Util.printArray(k, true), Util.printArray(v, true))}.mkString("[", ",", "]"))
-         .append("}").toString
+         .append(", entries=[")
+      entries.forEach(new BiConsumer[Array[Byte], Array[Byte]] {
+         override def accept(t: Array[Byte], u: Array[Byte]): Unit = {
+            sb.append(Util.printArray(t, true))
+            sb.append('=')
+            sb.append(Util.printArray(u, true))
+         }
+      })
+      sb.append("]}").toString
    }
 }
 
@@ -173,7 +179,7 @@ class GetWithVersionResponse(override val version: Byte, override val messageId:
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(Util.printArray(data.getOrElse(null), true))
+         .append(", data=").append(Util.printArray(data.orNull, true))
          .append(", dataVersion=").append(dataVersion)
          .append("}").toString
    }
@@ -191,7 +197,7 @@ class GetWithMetadataResponse(override val version: Byte, override val messageId
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(Util.printArray(data.getOrElse(null), true))
+         .append(", data=").append(Util.printArray(data.orNull, true))
          .append(", dataVersion=").append(dataVersion)
          .append(", created=").append(created)
          .append(", lifespan=").append(lifespan)
@@ -242,7 +248,7 @@ class QueryResponse(override val version: Byte, override val messageId: Long, ov
 }
 
 class AuthMechListResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
-                    override val clientIntel: Short, val mechs: Set[String],
+                    override val clientIntel: Short, val mechs: JavaSet[String],
                     override val topologyId: Int)
       extends Response(version, messageId, cacheName, clientIntel, AuthMechListResponse, Success, topologyId) {
    override def toString = {

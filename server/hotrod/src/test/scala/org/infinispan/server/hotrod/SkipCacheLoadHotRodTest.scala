@@ -120,11 +120,11 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       //RemoveIfUnmodifiedRequest
       val commandInterceptor = init()
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.removeIfUnmodified(k(m), 0, 0, v(m), 0, 0), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.removeIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.removeIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipCacheLoader.id,
+      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipCacheLoader.id,
                                                                        ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
    }
 

@@ -119,11 +119,11 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       //RemoveIfUnmodifiedRequest
       val commandInterceptor = init()
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.removeIfUnmodified(k(m), 0, 0, v(m), 0, 0), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.removeIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.removeIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipIndexing.id,
+      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipIndexing.id,
                                                                        ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
    }
 

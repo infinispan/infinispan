@@ -2,8 +2,6 @@ package org.infinispan.server.hotrod
 
 import logging.Log
 import org.infinispan.configuration.cache.Configuration
-import org.infinispan.server.core.Operation._
-import HotRodOperation._
 import OperationStatus._
 import org.infinispan.server.core._
 import collection.mutable
@@ -12,12 +10,12 @@ import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
 import org.infinispan.context.Flag._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
-import transport.NettyTransport
+import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
-import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.Channel
+
+import scala.annotation.switch
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -31,75 +29,85 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    type SuitableHeader = HotRodHeader
    private val isTrace = isTraceEnabled
 
-   override def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader, requireAuth: Boolean): Boolean = {
-      if (requireAuth)
-        throw new SecurityException("HotRod 1.x does not support authentication")
-      val streamOp = buffer.readUnsignedByte
-      val (op, endOfOp) = streamOp match {
-         case 0x01 => (PutRequest, false)
-         case 0x03 => (GetRequest, false)
-         case 0x05 => (PutIfAbsentRequest, false)
-         case 0x07 => (ReplaceRequest, false)
-         case 0x09 => (ReplaceIfUnmodifiedRequest, false)
-         case 0x0B => (RemoveRequest, false)
-         case 0x0D => (RemoveIfUnmodifiedRequest, false)
-         case 0x0F => (ContainsKeyRequest, false)
-         case 0x11 => (GetWithVersionRequest, false)
-         case 0x13 => (ClearRequest, true)
-         case 0x15 => (StatsRequest, true)
-         case 0x17 => (PingRequest, true)
-         case 0x19 => (BulkGetRequest, false)
-         case 0x1B => (GetWithMetadataRequest, false)
-         case 0x1D => (BulkGetKeysRequest, false)
-         case 0x1F => (QueryRequest, false)
-         case _ => throw new HotRodUnknownOperationException(
-               "Unknown operation: " + streamOp, version, messageId)
+   override def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader): Boolean = {
+      if (header.op == null) {
+         val part1 = for {
+            streamOp <- readMaybeByte(buffer)
+            cacheName <- readMaybeString(buffer)
+         } yield {
+            header.op = (streamOp: @switch) match {
+               case 0x01 => HotRodOperation.PutRequest
+               case 0x03 => HotRodOperation.GetRequest
+               case 0x05 => HotRodOperation.PutIfAbsentRequest
+               case 0x07 => HotRodOperation.ReplaceRequest
+               case 0x09 => HotRodOperation.ReplaceIfUnmodifiedRequest
+               case 0x0B => HotRodOperation.RemoveRequest
+               case 0x0D => HotRodOperation.RemoveIfUnmodifiedRequest
+               case 0x0F => HotRodOperation.ContainsKeyRequest
+               case 0x11 => HotRodOperation.GetWithVersionRequest
+               case 0x13 => HotRodOperation.ClearRequest
+               case 0x15 => HotRodOperation.StatsRequest
+               case 0x17 => HotRodOperation.PingRequest
+               case 0x19 => HotRodOperation.BulkGetRequest
+               case 0x1B => HotRodOperation.GetWithMetadataRequest
+               case 0x1D => HotRodOperation.BulkGetKeysRequest
+               case 0x1F => HotRodOperation.QueryRequest
+               case _ => throw new HotRodUnknownOperationException(
+                  "Unknown operation: " + streamOp, version, messageId)
+            }
+            if (isTrace) trace("Operation code: %d has been matched to %s", streamOp, header.op)
+            header.cacheName = cacheName
+
+            // Mark that we read up to here
+            buffer.markReaderIndex()
+         }
+         if (part1.isEmpty) {
+            return false
+         }
       }
-      if (isTrace) trace("Operation code: %d has been matched to %s", streamOp, op)
 
-      val cacheName = readString(buffer)
-      val flag = readUnsignedInt(buffer)
-      val clientIntelligence = buffer.readUnsignedByte
-      val topologyId = readUnsignedInt(buffer)
-      // TODO: Use these once transaction support is added
-      val txId = buffer.readByte
-      if (txId != 0) throw new UnsupportedOperationException("Transaction types other than 0 (NO_TX) is not supported at this stage.  Saw TX_ID of " + txId)
+      val part2 = for {
+         flag <- readMaybeVInt(buffer)
+         clientIntelligence <- readMaybeByte(buffer)
+         topologyId <- readMaybeVInt(buffer)
+         txId <- readMaybeByte(buffer)
+      } yield {
+         header.flag = flag
+         header.clientIntel = clientIntelligence
+         header.topologyId = topologyId
+         if (txId != 0) throw new UnsupportedOperationException("Transaction types other than 0 (NO_TX) is not supported at this stage.  Saw TX_ID of " + txId)
 
-      header.op = op
-      header.version = version
-      header.messageId = messageId
-      header.cacheName = cacheName
-      header.flag = flag
-      header.clientIntel = clientIntelligence
-      header.topologyId = topologyId
-      endOfOp
+         // Mark that we read up to here
+         buffer.markReaderIndex()
+      }
+
+      part2.isDefined
    }
 
-   override def readKey(h: HotRodHeader, buffer: ByteBuf): (Array[Byte], Boolean) = {
-      val k = readKey(buffer)
-      h.op match {
-         case RemoveRequest => (k, true)
-         case _ => (k, false)
-      }
-   }
-
-   private def readKey(buffer: ByteBuf): Array[Byte] = readRangedBytes(buffer)
-
-   override def readParameters(header: HotRodHeader, buffer: ByteBuf): (RequestParameters, Boolean) = {
+   override def readParameters(header: HotRodHeader, buffer: ByteBuf): Option[RequestParameters] = {
       header.op match {
-         case RemoveRequest => (null, true)
-         case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, new ExpirationParam(-1, TimeUnitValue.SECONDS), new ExpirationParam(-1, TimeUnitValue.SECONDS), buffer.readLong), true)
-         case ReplaceIfUnmodifiedRequest =>
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
-            val version = buffer.readLong
-            val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS), version), false)
+         case HotRodOperation.RemoveRequest => Some(null)
+         case HotRodOperation.RemoveIfUnmodifiedRequest =>
+            readMaybeLong(buffer).map(l => {
+               new RequestParameters(-1, new ExpirationParam(-1, TimeUnitValue.SECONDS), new ExpirationParam(-1, TimeUnitValue.SECONDS), l)
+            })
+         case HotRodOperation.ReplaceIfUnmodifiedRequest =>
+            for {
+               lifespan <- readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
+               maxIdle <- readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+               version <- readMaybeLong(buffer)
+               valueLength <- readMaybeVInt(buffer)
+            } yield {
+               new RequestParameters(valueLength, new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS), version)
+            }
          case _ =>
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
-            val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS), -1), false)
+            for {
+               lifespan <- readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
+               maxIdle <- readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+               valueLength <- readMaybeVInt(buffer)
+            } yield {
+               new RequestParameters(valueLength, new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS), -1)
+            }
       }
    }
 
@@ -107,14 +115,15 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       (h.flag & f.id) == f.id
    }
 
-   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Int = {
-      val stream = readUnsignedInt(buffer)
-      if (stream <= 0) {
-         if (useDefault)
-            EXPIRATION_DEFAULT
-         else
-            EXPIRATION_NONE
-      } else stream
+   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Option[Int] = {
+      readMaybeVInt(buffer).map(stream => {
+         if (stream <= 0) {
+            if (useDefault)
+               EXPIRATION_DEFAULT
+            else
+               EXPIRATION_NONE
+         } else stream
+      })
    }
 
    override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response =
@@ -129,23 +138,23 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: Array[Byte]): Response = {
       if (hasFlag(h, ForceReturnPreviousValue))
          new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
-               h.clientIntel, op, st, h.topologyId, if (prev == null) None else Some(prev))
+               h.clientIntel, op, st, h.topologyId, Option(prev))
       else
          new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId)
    }
 
    override def createGetResponse(h: HotRodHeader, entry: CacheEntry[Array[Byte], Array[Byte]]): Response = {
       val op = h.op
-      if (entry != null && op == GetRequest)
+      if (entry != null && op == HotRodOperation.GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                GetResponse, Success, h.topologyId,
                Some(entry.getValue))
-      else if (entry != null && op == GetWithVersionRequest) {
+      else if (entry != null && op == HotRodOperation.GetWithVersionRequest) {
          val version = entry.getMetadata.version().asInstanceOf[NumericVersion].getVersion
          new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
             Some(entry.getValue), version)
-      } else if (op == GetRequest)
+      } else if (op == HotRodOperation.GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                          GetResponse, KeyDoesNotExist, h.topologyId, None)
       else
@@ -154,67 +163,29 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server:
-       HotRodServer, ctx: ChannelHandlerContext): AnyRef = {
-      h.op match {
-         case ClearRequest =>
-            // Get an optimised cache in case we can make the operation more efficient
-            cache.clear()
-            new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
-                         ClearResponse, Success, h.topologyId)
-         case PingRequest => new Response(h.version, h.messageId, h.cacheName,
-                  h.clientIntel, PingResponse, Success, h.topologyId)
-      }
-   }
+   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, hrCtx: CacheDecodeContext,
+                                 out: java.util.List[AnyRef]): Unit = { }
 
-   override def customReadKey(decoder: HotRodDecoder, h: HotRodHeader, buffer: ByteBuf,
-       cache: Cache, server: HotRodServer, ch: Channel): AnyRef = {
+   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, hrCtx: CacheDecodeContext,
+                              out: java.util.List[AnyRef]): Unit = {
       h.op match {
-         case RemoveIfUnmodifiedRequest =>
-            val k = readKey(buffer)
-            val params = readParameters(h, buffer)._1
-            val entry = cache.getCacheEntry(k)
-            if (entry != null) {
-               val prev = entry.getValue
-               val streamVersion = new NumericVersion(params.streamVersion)
-               if (entry.getMetadata.version() == streamVersion) {
-                  val removed = cache.remove(k, prev)
-                  if (removed)
-                     createResponse(h, RemoveIfUnmodifiedResponse, Success, prev)
-                  else
-                     createResponse(h, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
-               } else {
-                  createResponse(h, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
-               }
-            } else {
-               createResponse(h, RemoveIfUnmodifiedResponse, KeyDoesNotExist, null)
+         case HotRodOperation.BulkGetRequest | HotRodOperation.BulkGetKeysRequest =>
+            for {
+               number <- readMaybeVInt(buffer)
+            } yield {
+               hrCtx.operationDecodeContext = number
+               buffer.markReaderIndex()
+               out.add(hrCtx)
             }
-         case ContainsKeyRequest =>
-            val k = readKey(buffer)
-            if (cache.containsKey(k))
-               new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
-                            ContainsKeyResponse, Success, h.topologyId)
-            else
-               new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
-                            ContainsKeyResponse, KeyDoesNotExist, h.topologyId)
-         case BulkGetRequest =>
-            val count = readUnsignedInt(buffer)
-            if (isTrace) trace("About to create bulk response, count = %d", count)
-            new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                                BulkGetResponse, Success, h.topologyId, count)
-         case BulkGetKeysRequest =>
-            val scope = readUnsignedInt(buffer)
-            if (isTrace) trace("About to create bulk get keys response, scope = %d", scope)
-            new BulkGetKeysResponse(h.version, h.messageId, h.cacheName,
-                  h.clientIntel, BulkGetKeysResponse, Success, h.topologyId, scope)
-         case GetWithMetadataRequest =>
-            val k = readKey(buffer)
-            getKeyMetadata(h, k, cache)
-         case QueryRequest =>
-            val query = readRangedBytes(buffer)
-            val result = server.query(cache, query)
-            new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               h.topologyId, result)
+         case HotRodOperation.QueryRequest =>
+            for {
+               query <- readMaybeRangedBytes(buffer)
+            } yield {
+               hrCtx.operationDecodeContext = query
+               buffer.markReaderIndex()
+               out.add(hrCtx)
+            }
+         case _ =>
       }
    }
 
@@ -236,8 +207,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadValue(decoder: HotRodDecoder, header: HotRodHeader,
-       hrCtx: CacheDecodeContext, buffer: ByteBuf, cache: Cache): AnyRef = null
+   override def customReadValue(header: HotRodHeader, buffer: ByteBuf, hrCtx: CacheDecodeContext,
+                                out: java.util.List[AnyRef]): Unit = { }
 
    override def createStatsResponse(hrCtx: CacheDecodeContext, t: NettyTransport): StatsResponse = {
       val h = hrCtx.header
@@ -276,8 +247,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       var optCache = c
       if (!hasFlag(h, ForceReturnPreviousValue)) {
          h.op match {
-            case PutRequest =>
-            case PutIfAbsentRequest =>
+            case HotRodOperation.PutRequest =>
+            case HotRodOperation.PutIfAbsentRequest =>
                optCache = optCache.withFlags(IGNORE_RETURN_VALUES)
             case _ =>
          }

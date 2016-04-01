@@ -110,7 +110,7 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
    private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
       if (frame instanceof PingWebSocketFrame) {
          // received a ping, so write back a pong
-         ctx.channel().writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
+         ctx.channel().writeAndFlush(new PongWebSocketFrame(frame.content().retain()), ctx.channel().voidPromise());
       } else if (frame instanceof CloseWebSocketFrame) {
          // request to close the connection
          handshaker.close(ctx.channel(), ((CloseWebSocketFrame) frame).retain());
