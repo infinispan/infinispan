@@ -99,6 +99,7 @@ import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ManagerStatusResponse;
+import org.infinispan.topology.PersistentUUID;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
@@ -382,6 +383,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MarshallableFunctionExternalizers.ConstantLambdaExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer());
+      addInternalExternalizer(new PersistentUUID.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

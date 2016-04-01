@@ -13,6 +13,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.globalstate.GlobalStateManager;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -45,6 +47,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentMap;
@@ -99,6 +103,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private ExecutorService asyncTransportExecutor;
    private SemaphoreCompletionService<Void> viewHandlingCompletionService;
    private EventLogManager eventLogManager;
+   private PersistentUUIDManager persistentUUIDManager;
 
    // These need to be volatile because they are sometimes read without holding the view handling lock.
    private volatile int viewId = -1;
@@ -118,7 +123,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
                       GlobalConfiguration globalConfiguration, GlobalComponentRegistry gcr,
                       CacheManagerNotifier cacheManagerNotifier, EmbeddedCacheManager cacheManager,
-                      EventLogManager eventLogManager) {
+                      EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.globalConfiguration = globalConfiguration;
@@ -126,6 +131,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       this.cacheManagerNotifier = cacheManagerNotifier;
       this.cacheManager = cacheManager;
       this.eventLogManager = eventLogManager;
+      this.persistentUUIDManager = persistentUUIDManager;
    }
 
    @Start(priority = 100)
@@ -235,7 +241,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          log.tracef("Ignoring leave request from %s for cache %s because it doesn't have a cache status entry", leaver, cacheName);
          return;
       }
-      cacheStatus.doLeave(leaver);
+      if (cacheStatus.doLeave(leaver)) {
+         cacheStatusMap.remove(cacheName);
+      }
    }
 
    @Override
@@ -404,11 +412,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          Configuration cacheConfiguration = cacheManager.getCacheConfiguration(cacheName);
          AvailabilityStrategy availabilityStrategy;
          if (cacheConfiguration != null && cacheConfiguration.clustering().partitionHandling().enabled()) {
-            availabilityStrategy = new PreferConsistencyStrategy(eventLogManager);
+            availabilityStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager);
          } else {
-            availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager);
+            availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager);
          }
-         return new ClusterCacheStatus(cacheName, availabilityStrategy, this, transport);
+         Optional<GlobalStateManager> globalStateManager = cacheManager.getGlobalComponentRegistry().getOptionalComponent(GlobalStateManager.class);
+         Optional<ScopedPersistentState> persistedState = globalStateManager.flatMap(gsm -> {
+            return gsm.readScopedState(cacheName);
+         });
+         return new ClusterCacheStatus(cacheName, availabilityStrategy, this, transport, persistedState, persistentUUIDManager);
       });
    }
 
@@ -611,10 +623,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public boolean isRebalancingEnabled(String cacheName) {
-      if (cacheName ==null) {
+      if (cacheName == null) {
          return isRebalancingEnabled();
       } else {
-         return cacheStatusMap.get(cacheName).isRebalanceEnabled();
+         ClusterCacheStatus s = cacheStatusMap.get(cacheName);
+         return s != null ? s.isRebalanceEnabled() : isRebalancingEnabled();
       }
    }
 
@@ -668,6 +681,19 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       } else {
          return RebalancingStatus.PENDING;
       }
+   }
+
+   @Override
+   public void broadcastShutdownCache(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) throws Exception {
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+            CacheTopologyControlCommand.Type.SHUTDOWN_PERFORM, transport.getAddress(), cacheTopology, null, viewId);
+      executeOnClusterSync(command, getGlobalTimeout(), totalOrder, distributed, null);
+   }
+
+   @Override
+   public void handleShutdownRequest(String cacheName) throws Exception {
+      ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+      cacheStatus.shutdownCache();
    }
 
    @Listener(sync = true)

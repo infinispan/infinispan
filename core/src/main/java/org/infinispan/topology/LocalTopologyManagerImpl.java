@@ -1,9 +1,13 @@
 package org.infinispan.topology;
 
+import org.infinispan.Cache;
+import org.infinispan.Version;
+import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.executors.SemaphoreCompletionService;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -12,6 +16,8 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.GlobalStateProvider;
 import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.globalstate.impl.GlobalStateManagerImpl;
+import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -24,7 +30,6 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -69,11 +74,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private volatile boolean running;
    private volatile int latestStatusResponseViewId;
    private PersistentUUID persistentUUID;
+   private PersistentUUIDManager persistentUUIDManager;
 
    @Inject
    public void inject(Transport transport,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                      GlobalComponentRegistry gcr, TimeService timeService, GlobalStateManager globalStateManager) {
+                      GlobalComponentRegistry gcr, TimeService timeService, GlobalStateManager globalStateManager, PersistentUUIDManager persistentUUIDManager) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.gcr = gcr;
@@ -82,6 +88,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          this.globalStateManager = globalStateManager;
          globalStateManager.registerStateProvider(this);
       }
+      this.persistentUUIDManager = persistentUUIDManager;
    }
 
    // Arbitrary value, only need to start after the (optional) GlobalStateManager and JGroupsTransport
@@ -92,10 +99,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
       if (persistentUUID == null) {
          persistentUUID = PersistentUUID.randomUUID();
+
          if (globalStateManager != null)
             globalStateManager.writeGlobalState();
       }
-      JGroupsAddressCache.putAddressPersistentUUID(transport.getAddress(), persistentUUID);
+      persistentUUIDManager.addPersistentAddressMapping(transport.getAddress(), persistentUUID);
       running = true;
       latestStatusResponseViewId = transport.getViewId();
    }
@@ -106,6 +114,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       if (trace) {
          log.tracef("Stopping LocalTopologyManager on %s", transport.getAddress());
       }
+      persistentUUIDManager.removePersistentAddressMapping(persistentUUID);
       running = false;
       withinThreadExecutor.shutdown();
    }
@@ -131,7 +140,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             int viewId = transport.getViewId();
             try {
                ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-                       CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
+                     CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
                CacheStatusResponse initialStatus = (CacheStatusResponse) executeOnCoordinator(command, timeout);
                // Ignore null responses, that's what the current coordinator returns if is shutting down
                if (initialStatus != null) {
@@ -143,6 +152,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                }
             } catch (Exception e) {
                log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
+               if (e.getCause() != null && e.getCause() instanceof CacheJoinException) {
+                  throw (CacheJoinException)e.getCause();
+               }
                if (timeService.isTimeExpired(endTime)) {
                   throw e;
                }
@@ -274,6 +286,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
 
       synchronized (cacheStatus) {
+         if (cacheTopology == null) {
+            // No topology yet: happens when a cache is being restarted from state
+            return;
+         }
+         // Register all persistent UUIDs locally
+         registerPersistentUUID(cacheTopology);
          CacheTopology existingTopology = cacheStatus.getCurrentTopology();
          if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
             log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s: %s",
@@ -294,7 +312,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          }
 
          CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers());
+               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers(),
+               persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers()));
          unionTopology.logRoutingTableInformation();
 
          boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
@@ -313,6 +332,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          if (!updateAvailabilityModeFirst) {
             cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
          }
+      }
+   }
+
+   private void registerPersistentUUID(CacheTopology cacheTopology) {
+      int count = cacheTopology.getActualMembers().size();
+      for(int i = 0; i < count; i++) {
+         persistentUUIDManager.addPersistentAddressMapping(
+               cacheTopology.getActualMembers().get(i),
+               cacheTopology.getMembersPersistentUUIDs().get(i)
+         );
       }
    }
 
@@ -364,8 +393,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          // and the rebalance after merge arrives before the merged topology update.
          if (newCacheTopology.getRebalanceId() != oldCacheTopology.getRebalanceId()) {
             // The currentCH changed, we need to install a "reset" topology with the new currentCH first
+            registerPersistentUUID(newCacheTopology);
             CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1,
-                  newCacheTopology.getRebalanceId() - 1, newCacheTopology.getCurrentCH(), null, newCacheTopology.getActualMembers());
+                  newCacheTopology.getRebalanceId() - 1, newCacheTopology.getCurrentCH(), null, newCacheTopology.getActualMembers(), persistentUUIDManager.mapAddresses(newCacheTopology.getActualMembers()));
             log.debugf("Installing fake cache topology %s for cache %s", resetTopology, cacheName);
             handler.updateConsistentHash(resetTopology);
          }
@@ -460,7 +490,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
          CacheTopology newTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology
                .getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers());
+               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers(), cacheTopology.getMembersPersistentUUIDs());
          handler.rebalance(newTopology);
       }
    }
@@ -574,6 +604,27 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName, type, transport.getAddress(),
             availabilityMode, transport.getViewId());
       executeOnCoordinator(command, getGlobalTimeout());
+   }
+
+   @Override
+   public void cacheShutdown(String name) throws Exception {
+      ReplicableCommand command = new CacheTopologyControlCommand(name, CacheTopologyControlCommand.Type.SHUTDOWN_REQUEST, transport.getAddress(), transport.getViewId());
+      executeOnCoordinator(command, getGlobalTimeout());
+   }
+
+   @Override
+   public void handleCacheShutdown(String cacheName) {
+      ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
+      CacheImpl<?, ?> cache = (CacheImpl<?, ?>) cr.getComponent(Cache.class);
+      cache.performGracefulShutdown();
+      // The cache has shutdown, write the CH state
+      ScopedPersistentState cacheState = new ScopedPersistentStateImpl(cacheName);
+      cacheState.setProperty(GlobalStateManagerImpl.VERSION, Version.getVersion());
+      cacheState.setProperty(GlobalStateManagerImpl.TIMESTAMP, timeService.instant().toString());
+      cacheState.setProperty(GlobalStateManagerImpl.VERSION_MAJOR, Version.getMajor());
+      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      cacheStatus.getCurrentTopology().getCurrentCH().remapAddresses(persistentUUIDManager.addressToPersistentUUID()).toScopedState(cacheState);
+      globalStateManager.writeScopedState(cacheState);
    }
 
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {

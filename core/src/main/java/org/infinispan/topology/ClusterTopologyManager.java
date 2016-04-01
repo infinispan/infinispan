@@ -69,4 +69,8 @@ public interface ClusterTopologyManager {
 
    void forceAvailabilityMode(String cacheName, AvailabilityMode availabilityMode);
 
+   void handleShutdownRequest(String cacheName) throws Exception;
+
+   void broadcastShutdownCache(String cacheName, CacheTopology currentTopology, boolean totalOrder, boolean distributed) throws Exception;
+
 }

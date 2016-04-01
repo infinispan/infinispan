@@ -7,7 +7,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.topology.PersistentUUID;
 
 import java.io.IOException;
@@ -21,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /**
  * Special implementation of {@link org.infinispan.distribution.ch.ConsistentHash} for replicated caches.
@@ -84,18 +84,14 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
       return new ReplicatedConsistentHash(this.getHashFunction(), unionMembers, primaryOwners);
    }
- 
+
    ReplicatedConsistentHash(ScopedPersistentState state) {
       this.hashFunction = Util.getInstance(state.getProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION), null);
       int numMembers = Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
       this.members = new ArrayList<>(numMembers);
       for(int i = 0; i < numMembers; i++) {
          PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
-         Address address = JGroupsAddressCache.fromPersistentUUID(uuid);
-         if (address == null) {
-            throw new IllegalStateException("Unknown address for "+uuid);
-         }
-         this.members.add(address);
+         this.members.add(uuid);
       }
       this.membersSet = Collections.unmodifiableSet(new HashSet<>(this.members));
       int numPrimaryOwners = state.getIntProperty(STATE_PRIMARY_OWNERS_COUNT);
@@ -219,12 +215,25 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, Integer.toString(members.size()));
       for (int i = 0; i < members.size(); i++) {
          state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
-               JGroupsAddressCache.getPersistentUUID(members.get(i)).toString());
+               members.get(i).toString());
       }
       state.setProperty(STATE_PRIMARY_OWNERS_COUNT, Integer.toString(primaryOwners.length));
       for (int i = 0; i < primaryOwners.length; i++) {
          state.setProperty(String.format(STATE_PRIMARY_OWNERS, i), Integer.toString(primaryOwners[i]));
       }
+   }
+
+   @Override
+   public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
+      List<Address> remappedMembers = new ArrayList<>(members.size());
+      for(Iterator<Address> i = members.iterator(); i.hasNext(); ) {
+         Address a = remapper.apply(i.next());
+         if (a == null) {
+            return null;
+         }
+         remappedMembers.add(a);
+      }
+      return new ReplicatedConsistentHash(hashFunction, remappedMembers, primaryOwners);
    }
 
    @Override

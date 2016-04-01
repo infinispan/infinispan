@@ -663,4 +663,9 @@ public class SecureCacheTestDriver {
    public void testRemoveExpired_Object_Object_Long(SecureCache<String, String> cache) {
       cache.getAdvancedCache().removeExpired("a", "a", null);
    }
+
+   @TestCachePermission(value = AuthorizationPermission.LIFECYCLE, needsSecurityManager = true)
+   public void testShutdown(SecureCache<String, String> cache) {
+      cache.shutdown();
+   }
 }

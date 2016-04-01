@@ -72,7 +72,9 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
    CH union(CH ch1, CH ch2);
 
    /**
-    * Recreates a ConsistentHash from a previously stored persistent state
+    * Recreates a ConsistentHash from a previously stored persistent state. The returned ConsistentHash will not have
+    * proper addresses, but {@link org.infinispan.topology.PersistentUUID}s instead so they will need to be replaced
+    * @param state the state to restore
     */
    default CH fromPersistentState(ScopedPersistentState state) {
       throw new UnsupportedOperationException();

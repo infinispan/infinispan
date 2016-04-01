@@ -7,6 +7,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -42,10 +43,13 @@ import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.PersistentUUID;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -203,19 +207,32 @@ public class TestingUtil {
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          while (true) {
             CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-            ConsistentHash currentCH = cacheTopology.getCurrentCH();
-            boolean rebalanceInProgress = cacheTopology.getPendingCH() != null;
-            boolean chContainsAllMembers = currentCH.getMembers().size() == caches.length;
-            boolean currentChIsBalanced = true;
-            int actualNumOwners = Math.min(currentCH.getNumOwners(), currentCH.getMembers().size());
-            for (int i = 0; i < currentCH.getNumSegments(); i++) {
-               if (currentCH.locateOwnersForSegment(i).size() < actualNumOwners) {
-                  currentChIsBalanced = false;
-                  break;
+            boolean rebalanceInProgress;
+            boolean chContainsAllMembers;
+            boolean currentChIsBalanced;
+            if (cacheTopology != null) {
+               rebalanceInProgress = cacheTopology.getPendingCH() != null;
+               ConsistentHash currentCH = cacheTopology.getCurrentCH();
+
+               chContainsAllMembers = currentCH.getMembers().size() == caches.length;
+               currentChIsBalanced = true;
+
+               int actualNumOwners = Math.min(currentCH.getNumOwners(), currentCH.getMembers().size());
+               for (int i = 0; i < currentCH.getNumSegments(); i++) {
+                  if (currentCH.locateOwnersForSegment(i).size() < actualNumOwners) {
+                     currentChIsBalanced = false;
+                     break;
+                  }
                }
+               if (chContainsAllMembers && !rebalanceInProgress && currentChIsBalanced)
+                  break;
+            } else {
+               rebalanceInProgress = false;
+               chContainsAllMembers = false;
+               currentChIsBalanced = true;
             }
-            if (chContainsAllMembers && !rebalanceInProgress && currentChIsBalanced)
-               break;
+
+            //System.out.printf("Cache %s Address %s cacheTopology %s rebalanceInProgress %s chContainsAllMembers %s, currentChIsBalanced %s\n", c.getName(), cacheAddress, cacheTopology, rebalanceInProgress, chContainsAllMembers, currentChIsBalanced);
 
             if (System.nanoTime() - giveup > 0) {
                String message;

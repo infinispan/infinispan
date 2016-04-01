@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /**
  * A consistent hash algorithm implementation. Implementations would typically be constructed via a
@@ -175,11 +176,23 @@ public interface ConsistentHash {
    String getRoutingTableAsString();
 
    /**
-     * Writes this ConsistentHash to the specified scoped state.
+     * Writes this ConsistentHash to the specified scoped state. Before invoking this method, the ConsistentHash
+     * addresses will have to be replaced with their corresponding {@link org.infinispan.topology.PersistentUUID}s
      *
      * @param state the state to which this ConsistentHash will be written
      */
    default void toScopedState(ScopedPersistentState state) {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
+    * Returns a new ConsistentHash with the addresses remapped according to the provided {@link UnaryOperator}.
+    * If an address cannot me remapped (i.e. the remapper returns null) this method should return null.
+    *
+    * @param remapper the remapper which given an address replaces it with another one
+    * @return the remapped ConsistentHash or null if one of the remapped addresses is null
+    */
+   default ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
       throw new UnsupportedOperationException();
    }
 }

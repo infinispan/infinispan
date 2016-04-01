@@ -6,6 +6,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -22,9 +23,11 @@ import java.util.Set;
 public class PreferConsistencyStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferConsistencyStrategy.class);
    private final EventLogManager eventLogManager;
+   private final PersistentUUIDManager persistentUUIDManager;
 
-   public PreferConsistencyStrategy(EventLogManager eventLogManager) {
+   public PreferConsistencyStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager) {
       this.eventLogManager = eventLogManager;
+      this.persistentUUIDManager = persistentUUIDManager;
    }
 
    @Override
@@ -190,7 +193,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // confirmation status (yet).
       if (mergedTopology != null) {
          mergedTopology = new CacheTopology(maxTopologyId + 1, mergedTopology.getRebalanceId(),
-               mergedTopology.getCurrentCH(), null, actualMembers);
+               mergedTopology.getCurrentCH(), null, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
       }
       context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode);
 

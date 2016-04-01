@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
@@ -30,8 +31,14 @@ public class CacheJoinInfo {
    // Per-node configuration
    private final float capacityFactor;
 
+   // Per-node state info
+   private final PersistentUUID persistentUUID;
+   private final Optional<Integer> persistentStateChecksum;
+
    public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, Hash hashFunction, int numSegments,
-                        int numOwners, long timeout, boolean totalOrder, boolean distributed, float capacityFactor) {
+                        int numOwners, long timeout, boolean totalOrder, boolean distributed, float capacityFactor,
+                        PersistentUUID persistentUUID,
+                        Optional<Integer> persistentStateChecksum) {
       this.consistentHashFactory = consistentHashFactory;
       this.hashFunction = hashFunction;
       this.numSegments = numSegments;
@@ -40,6 +47,8 @@ public class CacheJoinInfo {
       this.totalOrder = totalOrder;
       this.distributed = distributed;
       this.capacityFactor = capacityFactor;
+      this.persistentUUID = persistentUUID;
+      this.persistentStateChecksum = persistentStateChecksum;
    }
 
    public ConsistentHashFactory getConsistentHashFactory() {
@@ -74,6 +83,14 @@ public class CacheJoinInfo {
       return capacityFactor;
    }
 
+   public PersistentUUID getPersistentUUID() {
+      return persistentUUID;
+   }
+
+   public Optional<Integer> getPersistentStateChecksum() {
+      return persistentStateChecksum;
+   }
+
    @Override
    public int hashCode() {
       final int prime = 31;
@@ -86,6 +103,8 @@ public class CacheJoinInfo {
       result = prime * result + numSegments;
       result = prime * result + (int) (timeout ^ (timeout >>> 32));
       result = prime * result + (totalOrder ? 1231 : 1237);
+      result = prime * result + ((persistentUUID == null) ? 0 : persistentUUID.hashCode());
+      result = prime * result + ((persistentStateChecksum == null) ? 0 : persistentStateChecksum.hashCode());
       return result;
    }
 
@@ -120,6 +139,16 @@ public class CacheJoinInfo {
          return false;
       if (totalOrder != other.totalOrder)
          return false;
+      if (persistentUUID == null) {
+         if (other.persistentUUID != null)
+            return false;
+      } else if (!persistentUUID.equals(other.persistentUUID))
+         return false;
+      if (persistentStateChecksum == null) {
+         if (other.persistentStateChecksum != null)
+            return false;
+      } else if (!persistentStateChecksum.equals(other.persistentStateChecksum))
+         return false;
       return true;
    }
 
@@ -133,6 +162,8 @@ public class CacheJoinInfo {
             ", timeout=" + timeout +
             ", totalOrder=" + totalOrder +
             ", distributed=" + distributed +
+            ", persistentUUID=" + persistentUUID +
+            ", persistentStateChecksum=" + persistentStateChecksum +
             '}';
    }
 
@@ -147,6 +178,8 @@ public class CacheJoinInfo {
          output.writeBoolean(cacheJoinInfo.totalOrder);
          output.writeBoolean(cacheJoinInfo.distributed);
          output.writeFloat(cacheJoinInfo.capacityFactor);
+         output.writeObject(cacheJoinInfo.persistentUUID);
+         output.writeObject(cacheJoinInfo.persistentStateChecksum);
       }
 
       @Override
@@ -159,8 +192,10 @@ public class CacheJoinInfo {
          boolean totalOrder = unmarshaller.readBoolean();
          boolean distributed = unmarshaller.readBoolean();
          float capacityFactor = unmarshaller.readFloat();
+         PersistentUUID persistentUUID = (PersistentUUID) unmarshaller.readObject();
+         Optional<Integer> persistentStateChecksum = (Optional<Integer>) unmarshaller.readObject();
          return new CacheJoinInfo(consistentHashFactory, hashFunction, numSegments, numOwners, timeout,
-               totalOrder, distributed, capacityFactor);
+               totalOrder, distributed, capacityFactor, persistentUUID, persistentStateChecksum);
       }
 
       @Override

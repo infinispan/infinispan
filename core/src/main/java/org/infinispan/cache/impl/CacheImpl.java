@@ -43,6 +43,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -155,6 +156,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private GlobalConfiguration globalCfg;
    private boolean isClassLoaderInContext;
    private LocalTopologyManager localTopologyManager;
+   private volatile boolean stopping = false;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -900,12 +902,51 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          displayName = "Stops cache."
    )
    public void stop() {
-      stop(null);
+      performImmediateShutdown();
    }
 
-   void stop(ClassLoader explicitClassLoader) {
-      if (log.isDebugEnabled()) log.debugf("Stopping cache %s on %s", getName(), getCacheManager().getAddress());
+   @Override
+   @ManagedOperation(
+         description = "Shuts down the cache across the cluster",
+         displayName = "Clustered cache shutdown"
+   )
+   public void shutdown() {
+      if (log.isDebugEnabled())
+         log.debugf("Shutting down cache %s on %s", getName(), getCacheManager().getAddress());
+
+      synchronized (this) {
+         if (!stopping && componentRegistry.getStatus() == ComponentStatus.RUNNING) {
+            stopping = true;
+            requestClusterWideShutdown();
+         }
+      }
+
+   }
+
+   private void requestClusterWideShutdown() {
+      // If the cache is clustered, perform a cluster-wide shutdown, otherwise do it immediately
+      if (config.clustering().cacheMode().isClustered()) {
+         try {
+            localTopologyManager.cacheShutdown(name);
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      }
+      performImmediateShutdown();
+   }
+
+   private void performImmediateShutdown() {
+      if (log.isDebugEnabled())
+         log.debugf("Stopping cache %s on %s", getName(), getCacheManager().getAddress());
       componentRegistry.stop();
+   }
+
+   public void performGracefulShutdown() {
+      // Perform any orderly shutdown operations here
+      PassivationManager passivationManager = componentRegistry.getComponent(PassivationManager.class);
+      if (passivationManager != null) {
+         passivationManager.passivateAll();
+      }
    }
 
    @Override

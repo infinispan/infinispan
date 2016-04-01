@@ -11,19 +11,13 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.topology.PersistentUUID;
+import org.infinispan.topology.PersistentUUIDManager;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.UnaryOperator;
 
 /**
  * Default {@link ConsistentHash} implementation. This object is immutable.
@@ -113,11 +107,7 @@ public class DefaultConsistentHash implements ConsistentHash {
       this.members = new ArrayList<>(numMembers);
       for(int i = 0; i < numMembers; i++) {
          PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
-         Address address = JGroupsAddressCache.fromPersistentUUID(uuid);
-         if (address == null) {
-            throw new IllegalStateException("Unknown address for " + uuid);
-         }
-         this.members.add(address);
+         this.members.add(uuid);
       }
       int numSegments = state.getIntProperty(STATE_NUM_SEGMENTS);
       this.segmentSize = Util.getSegmentSize(numSegments);
@@ -127,7 +117,7 @@ public class DefaultConsistentHash implements ConsistentHash {
          segmentOwners[i] = new ArrayList<>();
          for (int j = 0; j < segmentOwnerCount; j++) {
             PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(STATE_SEGMENT_OWNER, i, j)));
-            segmentOwners[i].add(JGroupsAddressCache.fromPersistentUUID(uuid));
+            segmentOwners[i].add(uuid);
          }
       }
       int numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
@@ -420,7 +410,7 @@ public class DefaultConsistentHash implements ConsistentHash {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, members.size());
       for (int i = 0; i < members.size(); i++) {
          state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
-               JGroupsAddressCache.getPersistentUUID(members.get(i)).toString());
+               members.get(i).toString());
       }
       state.setProperty(STATE_CAPACITY_FACTORS, capacityFactors.length);
       for (int i = 0; i < capacityFactors.length; i++) {
@@ -432,10 +422,40 @@ public class DefaultConsistentHash implements ConsistentHash {
          state.setProperty(String.format(STATE_SEGMENT_OWNER_COUNT, i), segmentOwnerAddresses.size());
          for(int j = 0; j < segmentOwnerAddresses.size(); j++) {
             state.setProperty(String.format(STATE_SEGMENT_OWNER, i, j),
-                  JGroupsAddressCache.getPersistentUUID(segmentOwnerAddresses.get(j)).toString());
+                  segmentOwnerAddresses.get(j).toString());
          }
       }
       state.setProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION, hashFunction.getClass().getName());
+   }
+
+   @Override
+   public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
+      List<Address> remappedMembers = new ArrayList<>(members.size());
+      for(Iterator<Address> i = members.iterator(); i.hasNext(); ) {
+         Address a = remapper.apply(i.next());
+         if (a == null) {
+            return null;
+         }
+         remappedMembers.add(a);
+      }
+      Map<Address, Float> remappedCapacityFactors = null;
+      if (capacityFactors != null) {
+         remappedCapacityFactors = new HashMap<>(members.size());
+         for(int i=0; i < members.size(); i++) {
+            remappedCapacityFactors.put(remapper.apply(members.get(i)), capacityFactors[i]);
+         }
+      }
+      List<Address>[] remappedSegmentOwners = new List[segmentOwners.length];
+      for(int i=0; i < segmentOwners.length; i++) {
+         List<Address> remappedOwners = new ArrayList<>(segmentOwners[i].size());
+         for(Iterator<Address> j = segmentOwners[i].iterator(); j.hasNext(); ) {
+            remappedOwners.add(remapper.apply(j.next()));
+         }
+         remappedSegmentOwners[i] = remappedOwners;
+      }
+
+      return new DefaultConsistentHash(this.hashFunction, this.numOwners, this.segmentOwners.length, remappedMembers,
+            remappedCapacityFactors, remappedSegmentOwners);
    }
 
    public static class Externalizer extends InstanceReusingAdvancedExternalizer<DefaultConsistentHash> {

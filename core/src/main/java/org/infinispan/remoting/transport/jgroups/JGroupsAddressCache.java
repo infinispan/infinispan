@@ -18,8 +18,6 @@ import org.jgroups.util.UUID;
 public class JGroupsAddressCache {
    private static final EquivalentConcurrentHashMapV8<org.jgroups.Address, JGroupsAddress> addressCache =
          new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
-   private static final EquivalentConcurrentHashMapV8<JGroupsAddress, PersistentUUID> persistentUUIDCache =
-         new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
 
    // HACK: Avoid the org.jgroups.Address reference in the signature so that local caches can work without the jgroups jar.
    // Otherwise, instantiating the JGroupsAddress externalizer will try to load the org.jgroups.Address class.
@@ -39,34 +37,12 @@ public class JGroupsAddressCache {
       });
    }
 
-   public static void putAddressPersistentUUID(Object address, PersistentUUID uuid) {
-      persistentUUIDCache.put((JGroupsAddress) address, uuid);
-   }
-
-   public static PersistentUUID getPersistentUUID(Object address) {
-      return persistentUUIDCache.get(address);
-   }
-
-   public static org.infinispan.remoting.transport.Address fromPersistentUUID(PersistentUUID uuid) {
-      for(Entry<JGroupsAddress, PersistentUUID> entry : persistentUUIDCache.entrySet()) {
-         if(entry.getValue().equals(uuid))
-            return entry.getKey();
-      }
-      return null;
-   }
-
    static void pruneAddressCache() {
       // Prune the JGroups addresses & LocalUUIDs no longer in the UUID cache from the our address cache
       addressCache.forEachKey(Integer.MAX_VALUE, address -> {
          if (UUID.get(address) == null) {
             addressCache.remove(address);
-            persistentUUIDCache.remove(address);
          }
       });
-   }
-
-   public static void flushAddressCaches() {
-      addressCache.clear();
-      persistentUUIDCache.clear();
    }
 }

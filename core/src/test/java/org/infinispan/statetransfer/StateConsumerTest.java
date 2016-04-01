@@ -32,6 +32,9 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.PersistentUUID;
+import org.infinispan.topology.PersistentUUIDManager;
+import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -103,11 +106,13 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       GlobalConfiguration globalConfiguration = gcb.build();
       Configuration configuration = cb.build();
+      PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
 
       // create list of 6 members
       Address[] addresses = new Address[4];
       for (int i = 0; i < 4; i++) {
          addresses[i] = new TestAddress(i);
+         persistentUUIDManager.addPersistentAddressMapping(addresses[i], PersistentUUID.randomUUID());
       }
       List<Address> members1 = Arrays.asList(addresses[0], addresses[1], addresses[2], addresses[3]);
       List<Address> members2 = Arrays.asList(addresses[0], addresses[1], addresses[2]);
@@ -217,11 +222,11 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // node 4 leaves
-      stateConsumer.onTopologyUpdate(new CacheTopology(1, 1, ch2, null, ch2.getMembers()), false);
+      stateConsumer.onTopologyUpdate(new CacheTopology(1, 1, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // start a rebalance
-      stateConsumer.onTopologyUpdate(new CacheTopology(2, 2, ch2, ch3, ch23, ch23.getMembers()), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(2, 2, ch2, ch3, ch23, ch23.getMembers(), persistentUUIDManager.mapAddresses(ch23.getMembers())), true);
       assertTrue(stateConsumer.hasActiveTransfers());
 
       // check that all segments have been requested
@@ -235,18 +240,18 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers()), false);
+            stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
             return null;
          }
       });
-      stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers()), false);
+      stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
       future.get();
       assertFalse(stateConsumer.hasActiveTransfers());
 
 
       // restart the rebalance
       requestedSegments.clear();
-      stateConsumer.onTopologyUpdate(new CacheTopology(4, 4, ch2, ch3, ch23, ch23.getMembers()), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(4, 4, ch2, ch3, ch23, ch23.getMembers(), persistentUUIDManager.mapAddresses(ch23.getMembers())), true);
       assertTrue(stateConsumer.hasActiveTransfers());
       assertEquals(flatRequestedSegments, newSegments);
 
