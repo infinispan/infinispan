@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -41,9 +40,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * This is not caching the fact that some key is not defined: that would be tricky to
  * get right and is not needed for our use case.
  *
- * @deprecated To be removed in Infinispan 9.0
  * @author Sanne Grinovero (C) 2013 Red Hat Inc.
  * @author anistor@redhat.com
+ * @deprecated To be removed in Infinispan 9.0
  */
 @ThreadSafe
 @Deprecated
@@ -90,6 +89,7 @@ public final class QueryKnownClasses {
 
    /**
     * Constructor used only in autodetect mode.
+    *
     * @deprecated will be removed in Infinispan 9.0
     */
    @Deprecated
@@ -118,12 +118,7 @@ public final class QueryKnownClasses {
       }
       this.searchFactoryHandler = searchFactoryHandler;
       startInternalCache();
-      knownClassesCache.addListener(searchFactoryHandler.getCacheListener(), new KeyFilter<KeyValuePair<String, Class<?>>>() {
-         @Override
-         public boolean accept(KeyValuePair<String, Class<?>> key) {
-            return key.getKey().equals(cacheName);
-         }
-      });
+      knownClassesCache.addListener(searchFactoryHandler.getCacheListener(), key -> key.getKey().equals(cacheName));
    }
 
    void stop() {
@@ -181,13 +176,7 @@ public final class QueryKnownClasses {
       startInternalCache();
       Transaction tx = suspendTx();
       try {
-         runCommand(new Runnable() {
-
-            @Override
-            public void run() {
-               knownClassesCache.put(new KeyValuePair<>(cacheName, clazz), value);
-            }
-         });
+         runCommand(() -> knownClassesCache.put(new KeyValuePair<>(cacheName, clazz), value));
       } finally {
          resumeTx(tx);
       }

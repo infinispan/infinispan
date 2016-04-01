@@ -125,14 +125,14 @@ public class AttributeNode<AttributeMetadata, AttributeId extends Comparable<Att
    public AttributeNode<AttributeMetadata, AttributeId> addChild(AttributeId attribute) {
       AttributeNode<AttributeMetadata, AttributeId> child;
       if (children == null) {
-         children = new HashMap<AttributeId, AttributeNode<AttributeMetadata, AttributeId>>();
-         child = new AttributeNode<AttributeMetadata, AttributeId>(attribute, this);
+         children = new HashMap<>();
+         child = new AttributeNode<>(attribute, this);
          children.put(attribute, child);
          rebuildChildrenArray();
       } else {
          child = children.get(attribute);
          if (child == null) {
-            child = new AttributeNode<AttributeMetadata, AttributeId>(attribute, this);
+            child = new AttributeNode<>(attribute, this);
             children.put(attribute, child);
             rebuildChildrenArray();
          }

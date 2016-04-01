@@ -70,7 +70,7 @@ public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFil
 
       @Override
       public Set<Class<? extends JPAProtobufCacheEventFilterConverter>> getTypeClasses() {
-         return Collections.<Class<? extends JPAProtobufCacheEventFilterConverter>>singleton(JPAProtobufCacheEventFilterConverter.class);
+         return Collections.singleton(JPAProtobufCacheEventFilterConverter.class);
       }
    }
 }

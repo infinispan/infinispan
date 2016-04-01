@@ -13,7 +13,7 @@ class FilterLikePredicate extends LikePredicate<BooleanExpr> {
 
    private final ValueExpr valueExpr;
 
-   public FilterLikePredicate(ValueExpr valueExpr, String patternValue, Character escapeCharacter) {
+   FilterLikePredicate(ValueExpr valueExpr, String patternValue, Character escapeCharacter) {
       super(valueExpr.toJpaString(), patternValue, escapeCharacter);
       this.valueExpr = valueExpr;
    }

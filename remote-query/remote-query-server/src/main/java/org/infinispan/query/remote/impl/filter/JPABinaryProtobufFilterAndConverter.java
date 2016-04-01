@@ -87,7 +87,7 @@ public final class JPABinaryProtobufFilterAndConverter<K, V> extends AbstractKey
 
       @Override
       public Set<Class<? extends JPABinaryProtobufFilterAndConverter>> getTypeClasses() {
-         return Collections.<Class<? extends JPABinaryProtobufFilterAndConverter>>singleton(JPABinaryProtobufFilterAndConverter.class);
+         return Collections.singleton(JPABinaryProtobufFilterAndConverter.class);
       }
    }
 

@@ -105,7 +105,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
-            namedParameters = new HashMap<String, Object>(paramsSize);
+            namedParameters = new HashMap<>(paramsSize);
             for (int i = 0; i < paramsSize; i++) {
                String paramName = input.readUTF();
                Object paramValue = input.readObject();
@@ -123,7 +123,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
       @Override
       public Set<Class<? extends JPAContinuousQueryProtobufCacheEventFilterConverter>> getTypeClasses() {
-         return Collections.<Class<? extends JPAContinuousQueryProtobufCacheEventFilterConverter>>singleton(JPAContinuousQueryProtobufCacheEventFilterConverter.class);
+         return Collections.singleton(JPAContinuousQueryProtobufCacheEventFilterConverter.class);
       }
    }
 }

@@ -57,7 +57,7 @@ public class JPACacheEventFilterConverter<K, V, C> extends AbstractCacheEventFil
 
       @Override
       public Set<Class<? extends JPACacheEventFilterConverter>> getTypeClasses() {
-         return Collections.<Class<? extends JPACacheEventFilterConverter>>singleton(JPACacheEventFilterConverter.class);
+         return Collections.singleton(JPACacheEventFilterConverter.class);
       }
    }
 }

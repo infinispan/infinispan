@@ -18,11 +18,8 @@ import java.util.Map;
  */
 final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements ObjectFilter {
 
-   private static final FilterCallback emptyCallback = new FilterCallback() {
-      @Override
-      public void onFilterResult(boolean isDelta, Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
-         // do nothing
-      }
+   private static final FilterCallback emptyCallback = (isDelta, userContext, eventType, instance, projection, sortProjection) -> {
+      // do nothing
    };
 
    private final BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher;
@@ -50,7 +47,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
       this.acc = acc;
 
       //todo [anistor] we need an efficient single-filter registry
-      FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = new FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, false);
+      FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = new FilterRegistry<>(metadataAdapter, false);
       filterSubscription = filterRegistry.addFilter(queryString, namedParameters, query, projections, projectionTypes, sortFields, emptyCallback, null);
       root = filterRegistry.getPredicateIndex().getRoot();
    }

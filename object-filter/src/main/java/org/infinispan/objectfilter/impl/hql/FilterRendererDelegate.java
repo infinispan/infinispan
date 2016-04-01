@@ -18,7 +18,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRendererDelegate<BooleanExpr, FilterParsingResult> {
+final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRendererDelegate<BooleanExpr, FilterParsingResult> {
 
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
@@ -34,8 +34,8 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    private List<Class<?>> projectedTypes;
 
-   public FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
-                                 SingleEntityQueryBuilder<BooleanExpr> builder, SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder, Map<String, Object> namedParameters) {
+   FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
+                          SingleEntityQueryBuilder<BooleanExpr> builder, SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder, Map<String, Object> namedParameters) {
       super(propertyHelper, entityNamesResolver, builder, namedParameters);
       this.propertyHelper = propertyHelper;
       this.havingBuilder = havingBuilder;
@@ -50,7 +50,7 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
    protected void addSortField(org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath propertyPath, String collateName, boolean isAscending) {
       // collationName is ignored
       if (sortFields == null) {
-         sortFields = new ArrayList<SortField>(5);
+         sortFields = new ArrayList<>(5);
       }
       sortFields.add(new FilterParsingResult.SortFieldImpl(makePropertyPath(propertyPath), isAscending));
    }
@@ -64,7 +64,7 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
    protected void addGrouping(org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath propertyPath, String collateName) {
       // collationName is ignored
       if (groupBy == null) {
-         groupBy = new ArrayList<PropertyPath>(5);
+         groupBy = new ArrayList<>(5);
       }
       groupBy.add(makePropertyPath(propertyPath));
    }
@@ -73,8 +73,8 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
    public void setPropertyPath(org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath propertyPath) {
       if (status == Status.DEFINING_SELECT) {
          if (projections == null) {
-            projections = new ArrayList<PropertyPath>(5);
-            projectedTypes = new ArrayList<Class<?>>(5);
+            projections = new ArrayList<>(5);
+            projectedTypes = new ArrayList<>(5);
          }
          PropertyPath projection;
          if (propertyPath.getNodes().size() == 1 && propertyPath.getNodes().get(0).isAlias()) {
@@ -100,7 +100,7 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    @Override
    public FilterParsingResult<TypeMetadata> getResult() {
-      return new FilterParsingResult<TypeMetadata>(builder, havingBuilder,
+      return new FilterParsingResult<>(builder, havingBuilder,
             targetTypeName, targetEntityMetadata,
             projections, projectedTypes,
             groupBy,

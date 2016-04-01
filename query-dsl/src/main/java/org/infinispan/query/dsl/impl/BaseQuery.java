@@ -82,7 +82,7 @@ public abstract class BaseQuery implements Query {
          }
          if (!namedParameters.containsKey(paramName)) {
             if (unknownParams == null) {
-               unknownParams = new HashSet<String>();
+               unknownParams = new HashSet<>();
             }
             unknownParams.add(paramName);
          }

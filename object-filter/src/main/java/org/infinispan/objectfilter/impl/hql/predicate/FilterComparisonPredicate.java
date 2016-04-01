@@ -14,7 +14,7 @@ class FilterComparisonPredicate extends ComparisonPredicate<BooleanExpr> {
 
    private final ValueExpr valueExpr;
 
-   public FilterComparisonPredicate(ValueExpr valueExpr, Type comparisonType, Object comparisonValue) {
+   FilterComparisonPredicate(ValueExpr valueExpr, Type comparisonType, Object comparisonValue) {
       super(valueExpr.toJpaString(), comparisonType, comparisonValue);
       this.valueExpr = valueExpr;
    }

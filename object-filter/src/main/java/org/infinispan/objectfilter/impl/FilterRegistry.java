@@ -25,7 +25,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
 
    private final PredicateIndex<AttributeMetadata, AttributeId> predicateIndex;
 
-   private final List<FilterSubscriptionImpl> filterSubscriptions = new ArrayList<FilterSubscriptionImpl>();
+   private final List<FilterSubscriptionImpl> filterSubscriptions = new ArrayList<>();
 
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
@@ -38,8 +38,8 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
    public FilterRegistry(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, boolean useIntervals) {
       this.metadataAdapter = metadataAdapter;
       this.useIntervals = useIntervals;
-      treeMaker = new BETreeMaker<AttributeId>(metadataAdapter, useIntervals);
-      predicateIndex = new PredicateIndex<AttributeMetadata, AttributeId>(metadataAdapter);
+      treeMaker = new BETreeMaker<>(metadataAdapter, useIntervals);
+      predicateIndex = new PredicateIndex<>(metadataAdapter);
    }
 
    public MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> getMetadataAdapter() {
@@ -70,7 +70,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
 
       List<List<AttributeId>> translatedProjections = null;
       if (projection != null && projection.length != 0) {
-         translatedProjections = new ArrayList<List<AttributeId>>(projection.length);
+         translatedProjections = new ArrayList<>(projection.length);
          for (String projectionPath : projection) {
             translatedProjections.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(projectionPath)));
          }
@@ -79,7 +79,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       List<List<AttributeId>> translatedSortFields = null;
       if (sortFields != null) {
          // deduplicate sort fields
-         LinkedHashMap<String, SortField> sortFieldMap = new LinkedHashMap<String, SortField>();
+         LinkedHashMap<String, SortField> sortFieldMap = new LinkedHashMap<>();
          for (SortField sf : sortFields) {
             String path = sf.getPath().asStringPath();
             if (!sortFieldMap.containsKey(path)) {
@@ -88,7 +88,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
          }
          sortFields = sortFieldMap.values().toArray(new SortField[sortFieldMap.size()]);
          // translate sort field paths
-         translatedSortFields = new ArrayList<List<AttributeId>>(sortFields.length);
+         translatedSortFields = new ArrayList<>(sortFields.length);
          for (SortField sortField : sortFields) {
             translatedSortFields.add(metadataAdapter.translatePropertyPath(sortField.getPath().getPath()));
          }
@@ -97,7 +97,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       BooleanExpr normalizedQuery = booleanFilterNormalizer.normalize(query);
       BETree beTree = treeMaker.make(normalizedQuery);
 
-      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(queryString, namedParameters, useIntervals, metadataAdapter, beTree, callback, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, eventTypes);
+      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<>(queryString, namedParameters, useIntervals, metadataAdapter, beTree, callback, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, eventTypes);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);
       filterSubscription.index = filterSubscriptions.size();

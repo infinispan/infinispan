@@ -66,7 +66,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
 
       private final InvocationContext ctx;
 
-      private final Set<String> errorFiles = new TreeSet<String>();
+      private final Set<String> errorFiles = new TreeSet<>();
 
       private ProgressCallback(InvocationContext ctx) {
          this.ctx = ctx;
@@ -106,9 +106,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
                   .addProtoFile(key, (String) command.getValue());
             try {
                serializationContext.registerProtoFiles(source);
-            } catch (IOException e) {
-               throw new CacheException("Failed to parse proto file : " + key, e);
-            } catch (DescriptorParserException e) {
+            } catch (IOException | DescriptorParserException e) {
                throw new CacheException("Failed to parse proto file : " + key, e);
             }
          }
@@ -127,9 +125,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
          }
          try {
             serializationContext.registerProtoFiles(source);
-         } catch (IOException e) {
-            throw new CacheException(e);
-         } catch (DescriptorParserException e) {
+         } catch (IOException | DescriptorParserException e) {
             throw new CacheException(e);
          }
          return null;
@@ -144,9 +140,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
                   .addProtoFile(key, (String) command.getNewValue());
             try {
                serializationContext.registerProtoFiles(source);
-            } catch (IOException e) {
-               throw new CacheException("Failed to parse proto file : " + key, e);
-            } catch (DescriptorParserException e) {
+            } catch (IOException | DescriptorParserException e) {
                throw new CacheException("Failed to parse proto file : " + key, e);
             }
          }
@@ -233,9 +227,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
 
          try {
             serializationContext.registerProtoFiles(source);
-         } catch (IOException e) {
-            throw new CacheException("Failed to parse proto file : " + key, e);
-         } catch (DescriptorParserException e) {
+         } catch (IOException | DescriptorParserException e) {
             throw new CacheException("Failed to parse proto file : " + key, e);
          }
 
@@ -284,9 +276,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
 
       try {
          serializationContext.registerProtoFiles(source);
-      } catch (IOException e) {
-         throw new CacheException(e);
-      } catch (DescriptorParserException e) {
+      } catch (IOException | DescriptorParserException e) {
          throw new CacheException(e);
       }
 
@@ -383,9 +373,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor imp
 
             try {
                serializationContext.registerProtoFiles(source);
-            } catch (IOException e) {
-               throw new CacheException("Failed to parse proto file : " + key, e);
-            } catch (DescriptorParserException e) {
+            } catch (IOException | DescriptorParserException e) {
                throw new CacheException("Failed to parse proto file : " + key, e);
             }
 

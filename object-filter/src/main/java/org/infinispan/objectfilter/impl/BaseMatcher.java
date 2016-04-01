@@ -41,9 +41,9 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    private final QueryParser queryParser = new QueryParser();
 
-   protected final Map<String, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByTypeName = new HashMap<String, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>>();
+   protected final Map<String, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByTypeName = new HashMap<>();
 
-   protected final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByType = new HashMap<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>>();
+   protected final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByType = new HashMap<>();
 
    /**
     * Executes the registered filters and notifies each one of them whether it was satisfied or not by the given
@@ -224,7 +224,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       }
 
       FieldAccumulator[] accumulators = acc != null ? acc.toArray(new FieldAccumulator[acc.size()]) : null;
-      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, namedParameters,
+      return new ObjectFilterImpl<>(this, metadataAdapter, jpaQuery, namedParameters,
             parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), accumulators);
    }
 
@@ -254,7 +254,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       try {
          FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filtersByTypeName.get(parsingResult.getTargetEntityName());
          if (filterRegistry == null) {
-            filterRegistry = new FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>(createMetadataAdapter(parsingResult.getTargetEntityMetadata()), true);
+            filterRegistry = new FilterRegistry<>(createMetadataAdapter(parsingResult.getTargetEntityMetadata()), true);
             filtersByTypeName.put(parsingResult.getTargetEntityName(), filterRegistry);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }

@@ -51,11 +51,6 @@ class HybridQuery extends BaseEmbeddedQuery {
          private boolean isReady = false;
 
          @Override
-         public void remove() {
-            throw new UnsupportedOperationException("remove");
-         }
-
-         @Override
          public void close() {
          }
 

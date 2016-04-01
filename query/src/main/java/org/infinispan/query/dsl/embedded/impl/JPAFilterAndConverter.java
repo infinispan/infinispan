@@ -82,7 +82,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
       if (objectFilter == null) {
          // if parameters are present caching cannot be currently performed due to internal implementation limitations
          if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
-            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpaQuery, matcherImplClass);
+            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpaQuery, matcherImplClass);
             ObjectFilter objectFilter = queryCache.get(queryCacheKey);
             if (objectFilter == null) {
                objectFilter = matcher.getObjectFilter(jpaQuery, namedParameters);
@@ -145,7 +145,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
-            namedParameters = new HashMap<String, Object>(paramsSize);
+            namedParameters = new HashMap<>(paramsSize);
             for (int i = 0; i < paramsSize; i++) {
                String paramName = input.readUTF();
                Object paramValue = input.readObject();
@@ -163,7 +163,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
 
       @Override
       public Set<Class<? extends JPAFilterAndConverter>> getTypeClasses() {
-         return Collections.<Class<? extends JPAFilterAndConverter>>singleton(JPAFilterAndConverter.class);
+         return Collections.singleton(JPAFilterAndConverter.class);
       }
    }
 
@@ -196,7 +196,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
 
       @Override
       public Set<Class<? extends FilterResultImpl>> getTypeClasses() {
-         return Collections.<Class<? extends FilterResultImpl>>singleton(FilterResultImpl.class);
+         return Collections.singleton(FilterResultImpl.class);
       }
    }
 }

@@ -432,7 +432,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
       @Override
       public Set<Class<? extends ReplicatedConsistentHash>> getTypeClasses() {
-         return Collections.<Class<? extends ReplicatedConsistentHash>>singleton(ReplicatedConsistentHash.class);
+         return Collections.singleton(ReplicatedConsistentHash.class);
       }
    }
 }

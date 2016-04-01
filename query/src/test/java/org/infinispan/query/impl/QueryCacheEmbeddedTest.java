@@ -121,7 +121,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
    }
 
    private AtomicReference<Object> captureLastGetResult(QueryCache queryCacheSpy) {
-      final AtomicReference<Object> lastResult = new AtomicReference<Object>();
+      final AtomicReference<Object> lastResult = new AtomicReference<>();
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {

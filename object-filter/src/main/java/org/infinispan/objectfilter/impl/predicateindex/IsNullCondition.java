@@ -4,7 +4,7 @@ package org.infinispan.objectfilter.impl.predicateindex;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class IsNullCondition extends Condition<Object> {
+public final class IsNullCondition implements Condition<Object> {
 
    public static final IsNullCondition INSTANCE = new IsNullCondition();
 

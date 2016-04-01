@@ -77,7 +77,7 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
-            namedParameters = new HashMap<String, Object>(paramsSize);
+            namedParameters = new HashMap<>(paramsSize);
             for (int i = 0; i < paramsSize; i++) {
                String paramName = input.readUTF();
                Object paramValue = input.readObject();
@@ -94,7 +94,7 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
 
       @Override
       public Set<Class<? extends JPAProtobufFilterAndConverter>> getTypeClasses() {
-         return Collections.<Class<? extends JPAProtobufFilterAndConverter>>singleton(JPAProtobufFilterAndConverter.class);
+         return Collections.singleton(JPAProtobufFilterAndConverter.class);
       }
    }
 }

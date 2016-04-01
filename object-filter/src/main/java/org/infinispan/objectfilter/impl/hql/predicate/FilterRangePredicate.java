@@ -15,7 +15,7 @@ class FilterRangePredicate extends RangePredicate<BooleanExpr> {
 
    private final ValueExpr valueExpr;
 
-   public FilterRangePredicate(ValueExpr valueExpr, Object lower, Object upper) {
+   FilterRangePredicate(ValueExpr valueExpr, Object lower, Object upper) {
       super(valueExpr.toJpaString(), lower, upper);
       this.valueExpr = valueExpr;
    }
