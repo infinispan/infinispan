@@ -6,8 +6,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheStream;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.distexec.mapreduce.Collator;
@@ -29,18 +31,19 @@ public final class BulkUtil {
    public static final int GLOBAL_SCOPE = 1;
    public static final int LOCAL_SCOPE = 2;
 
-   public static Set<byte[]> getAllKeys(Cache<byte[], ?> cache, int scope) {
-      CacheMode cacheMode = cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode();
-      boolean keysAreLocal = !cacheMode.isClustered() || cacheMode.isReplicated();
-      if (keysAreLocal || scope == LOCAL_SCOPE) {
-         return cache.keySet();
-      } else {
-         MapReduceTask<byte[], Object, byte[], Object> task =
-               new MapReduceTask<byte[], Object, byte[], Object>((Cache<byte[], Object>) cache)
-                     .mappedWith(new KeyMapper<byte[]>())
-                     .reducedWith(new KeyReducer<byte[]>());
-         return task.execute(createCollator(cache));
+   public static Iterator<byte[]> getAllKeys(Cache<byte[], ?> cache, int scope) {
+      CompatibilityModeConfiguration compatibility = cache.getCacheConfiguration().compatibility();
+      CacheStream stream = cache.keySet().stream();
+      HotRodTypeConverter converter = new HotRodTypeConverter();
+      if (compatibility.enabled() && compatibility.marshaller() != null) {
+         converter.setMarshaller(compatibility.marshaller());
       }
+      return new IteratorMapper<Object, byte[]>(stream.iterator(), k -> {
+         if (k instanceof byte[]) {
+            return (byte[]) k;
+         }
+         return (byte[]) converter.unboxKey(k);
+      });
    }
 
    private static Collator<byte[], Object, Set<byte[]>> createCollator(Cache<byte[], ?> cache) {

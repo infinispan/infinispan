@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.server.core.Operation._
-import org.infinispan.server.hotrod.HotRodOperation._
 import scala.annotation.switch
 
 /**
@@ -52,32 +51,9 @@ object OperationResponse extends Enumeration {
    val IterationNextResponse = Value(0x34)
    val IterationEndResponse = Value(0x36)
 
-   def toResponse(request: Enumeration#Value): OperationResponse = {
-      request match {
-         case PutRequest => PutResponse
-         case GetRequest => GetResponse
-         case PutIfAbsentRequest => PutIfAbsentResponse
-         case ReplaceRequest => ReplaceResponse
-         case ReplaceIfUnmodifiedRequest => ReplaceIfUnmodifiedResponse
-         case RemoveRequest => RemoveResponse
-         case RemoveIfUnmodifiedRequest => RemoveIfUnmodifiedResponse
-         case ContainsKeyRequest => ContainsKeyResponse
-         case GetWithVersionRequest => GetWithVersionResponse
-         case ClearRequest => ClearResponse
-         case StatsRequest => StatsResponse
-         case PingRequest => PingResponse
-         case BulkGetRequest => BulkGetResponse
-         case GetWithMetadataRequest => GetWithMetadataResponse
-         case BulkGetKeysRequest => BulkGetKeysResponse
-         case QueryRequest => QueryResponse
-         case AuthMechListRequest => AuthMechListResponse
-         case AuthRequest => AuthResponse
-         case AddClientListenerRequest => AddClientListenerResponse
-         case RemoveClientListenerRequest => RemoveClientListenerResponse
-         case ExecRequest => ExecResponse
-         case PutAllRequest => PutAllResponse
-         case GetAllRequest => GetAllResponse
-      }
+   def toResponse(request: HotRodOperation): OperationResponse = {
+      // Go to java so switch case will be optimized properly
+      OperationResponseJava.operationToResponse(request).asInstanceOf[OperationResponse]
    }
 
 }

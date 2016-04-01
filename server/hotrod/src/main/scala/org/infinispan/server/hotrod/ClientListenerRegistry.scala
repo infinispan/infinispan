@@ -116,12 +116,12 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                case t: Throwable => decoder.createErrorResponse(h, t)
                case _ => decoder.createSuccessResponse(h, null)
             }
-            ch.writeAndFlush(resp)
+            ch.writeAndFlush(resp, ch.voidPromise)
             ()
          })
       } else {
          cache.addListener(clientEventSender, filter.orNull, converter.orNull)
-         ch.writeAndFlush(decoder.createSuccessResponse(h, null))
+         ch.writeAndFlush(decoder.createSuccessResponse(h, null), ch.voidPromise)
       }
    }
 
@@ -195,9 +195,12 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    def findAndWriteEvents(channel: Channel): Unit = {
-      eventSenders.values().collectFirst { case s: BaseClientEventSender =>
-         if(s.hasChannel(channel)) s.writeEventsIfPossible()
-      }
+      // Make sure we write any event in main event loop
+      channel.eventLoop().execute(new Runnable {
+         override def run(): Unit = eventSenders.values().collectFirst {
+            case s: BaseClientEventSender => if (s.hasChannel(channel)) s.writeEventsIfPossible()
+         }
+      })
    }
 
    // Do not make sync=false, instead move cache operation causing
@@ -217,10 +220,10 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
       def writeEventsIfPossible(): Unit = {
          var written = false
-         while(eventQueue.size() > 0 && ch.isWritable) {
+         while(!eventQueue.isEmpty && ch.isWritable) {
             val event = eventQueue.poll()
             if (isTrace) tracef("Write event: %s to channel %s", event, ch)
-            ch.write(event)
+            ch.write(event, ch.voidPromise)
             written = true
          }
          if (written) {
@@ -271,6 +274,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          eventQueue.put(remoteEvent)
 
          if (!waitingForFlush) {
+            // Make sure we write any event in main event loop
             ch.eventLoop().submit(() => writeEventsIfPossible())
          }
       }

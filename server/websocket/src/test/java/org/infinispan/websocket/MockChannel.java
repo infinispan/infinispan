@@ -20,7 +20,8 @@ import java.net.SocketAddress;
  */
 public class MockChannel implements Channel {
 
-	private StringWriter writer = new StringWriter();
+	private final StringWriter writer = new StringWriter();
+   private final ChannelPromise voidPromise = new DefaultChannelPromise(this);
 
 	@Override
 	public ChannelFuture write(Object message) {
@@ -160,7 +161,7 @@ public class MockChannel implements Channel {
 
     @Override
     public ChannelPromise voidPromise() {
-        return null;
+        return voidPromise;
     }
 
     @Override
@@ -231,7 +232,7 @@ public class MockChannel implements Channel {
     @Override
     public ChannelFuture write(Object msg, ChannelPromise promise) {
         write(msg);
-        return promise.setSuccess();
+        return promise;
     }
 
     @Override
@@ -242,7 +243,7 @@ public class MockChannel implements Channel {
     @Override
     public ChannelFuture writeAndFlush(Object msg, ChannelPromise promise) {
         write(msg);
-        return promise.setSuccess();
+        return promise;
     }
 
     @Override

@@ -30,14 +30,15 @@ import io.netty.buffer.PooledByteBufAllocator
  * @since 4.1
  */
 class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel],
-                     address: InetSocketAddress, configuration: ProtocolServerConfiguration, threadNamePrefix: String, cacheManager: EmbeddedCacheManager)
+                     address: InetSocketAddress, val configuration: ProtocolServerConfiguration,
+                     threadNamePrefix: String, cacheManager: EmbeddedCacheManager)
         extends Transport with Log {
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE)
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE)
 
    private val masterGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(threadNamePrefix + "ServerMaster"))
-   private val workerGroup = new NioEventLoopGroup(configuration.workerThreads, new DefaultThreadFactory(threadNamePrefix + "ServerWorker"))
+   private val workerGroup = new NioEventLoopGroup(0, new DefaultThreadFactory(threadNamePrefix + "ServerWorker"))
 
    private val totalBytesWritten, totalBytesRead = new AtomicLong
    private val isGlobalStatsEnabled =

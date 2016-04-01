@@ -51,7 +51,7 @@ class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       val a = client.authMechList
       assertEquals(a.mechs.size, 1)
       assertTrue(a.mechs.contains("CRAM-MD5"))
-      assertEquals(1, server.getDecoder.transport.acceptedChannels.size())
+      assertEquals(1, server.getDecoder.getTransport.acceptedChannels.size())
    }
 
    def testAuth(m: Method) {
@@ -59,17 +59,17 @@ class HotRodAuthenticationTest extends HotRodSingleNodeTest {
       val sc = Sasl.createSaslClient(Array("CRAM-MD5"), null, "hotrod", "localhost", props, new TestCallbackHandler("user", "realm", "password".toCharArray()))
       val res = client.auth(sc)
       assertTrue(res.complete)
-      assertEquals(1, server.getDecoder.transport.acceptedChannels.size())
+      assertEquals(1, server.getDecoder.getTransport.acceptedChannels.size())
    }
    
    def testUnauthorizedOpCloseConnection(m: Method) {
       // Ensure the transport is clean
-      server.getDecoder.transport.stop()
-      server.getDecoder.transport.start()
+      server.getDecoder.getTransport.stop()
+      server.getDecoder.getTransport.start()
       try {
         client.assertPutFail(m)
       } finally {
-        assertEquals(0, server.getDecoder.transport.acceptedChannels.size())
+        assertEquals(0, server.getDecoder.getTransport.acceptedChannels.size())
       }
    }
 
