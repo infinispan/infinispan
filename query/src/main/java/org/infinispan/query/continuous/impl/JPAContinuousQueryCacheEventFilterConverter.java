@@ -94,7 +94,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
       if (objectFilter == null) {
          // if parameters are present caching cannot be currently performed due to internal implementation limitations
          if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
-            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpaQuery, matcherImplClass);
+            KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpaQuery, matcherImplClass);
             ObjectFilter objectFilter = queryCache.get(queryCacheKey);
             if (objectFilter == null) {
                objectFilter = matcher.getObjectFilter(jpaQuery, namedParameters);
@@ -163,7 +163,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
          if (paramsSize != 0) {
-            namedParameters = new HashMap<String, Object>(paramsSize);
+            namedParameters = new HashMap<>(paramsSize);
             for (int i = 0; i < paramsSize; i++) {
                String paramName = input.readUTF();
                Object paramValue = input.readObject();
@@ -181,7 +181,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
 
       @Override
       public Set<Class<? extends JPAContinuousQueryCacheEventFilterConverter>> getTypeClasses() {
-         return Collections.<Class<? extends JPAContinuousQueryCacheEventFilterConverter>>singleton(JPAContinuousQueryCacheEventFilterConverter.class);
+         return Collections.singleton(JPAContinuousQueryCacheEventFilterConverter.class);
       }
    }
 }

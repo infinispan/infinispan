@@ -321,7 +321,7 @@ public class JPAQueryGenerator implements Visitor<String> {
          ParameterExpression param = (ParameterExpression) argument;
          sb.append(':').append(param.getParamName());
          if (namedParameters == null) {
-            namedParameters = new HashMap<String, Object>(5);
+            namedParameters = new HashMap<>(5);
          }
          namedParameters.put(param.getParamName(), null);
          return;

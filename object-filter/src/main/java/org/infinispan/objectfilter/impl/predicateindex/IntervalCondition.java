@@ -6,7 +6,7 @@ import org.infinispan.objectfilter.impl.util.Interval;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class IntervalCondition<AttributeDomain extends Comparable<AttributeDomain>> extends Condition<AttributeDomain> {
+public final class IntervalCondition<AttributeDomain extends Comparable<AttributeDomain>> implements Condition<AttributeDomain> {
 
    private final Interval<AttributeDomain> interval;
 

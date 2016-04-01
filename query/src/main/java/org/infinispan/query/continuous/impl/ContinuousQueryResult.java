@@ -22,7 +22,7 @@ public final class ContinuousQueryResult<V> {
 
    private final Object[] projection;
 
-   public ContinuousQueryResult(boolean isJoining, V value, Object[] projection) {
+   ContinuousQueryResult(boolean isJoining, V value, Object[] projection) {
       this.isJoining = isJoining;
       this.value = value;
       this.projection = projection;
@@ -86,7 +86,7 @@ public final class ContinuousQueryResult<V> {
 
       @Override
       public Set<Class<? extends ContinuousQueryResult>> getTypeClasses() {
-         return Collections.<Class<? extends ContinuousQueryResult>>singleton(ContinuousQueryResult.class);
+         return Collections.singleton(ContinuousQueryResult.class);
       }
    }
 }

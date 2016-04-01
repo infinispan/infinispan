@@ -630,7 +630,7 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
 
       @Override
       public Set<Class<? extends DefaultConsistentHashFactory>> getTypeClasses() {
-         return Collections.<Class<? extends DefaultConsistentHashFactory>>singleton(DefaultConsistentHashFactory.class);
+         return Collections.singleton(DefaultConsistentHashFactory.class);
       }
    }
 }

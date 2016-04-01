@@ -22,7 +22,7 @@ public final class PredicateIndex<AttributeMetadata, AttributeId extends Compara
    private final AttributeNode<AttributeMetadata, AttributeId> root;
 
    public PredicateIndex(MetadataAdapter<?, AttributeMetadata, AttributeId> metadataAdapter) {
-      root = new RootNode<AttributeMetadata, AttributeId>(metadataAdapter);
+      root = new RootNode<>(metadataAdapter);
    }
 
    public AttributeNode<AttributeMetadata, AttributeId> getRoot() {

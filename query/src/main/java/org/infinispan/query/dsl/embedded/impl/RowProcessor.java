@@ -4,6 +4,7 @@ package org.infinispan.query.dsl.embedded.impl;
  * @author anistor@redhat.com
  * @since 8.1
  */
+@FunctionalInterface
 public interface RowProcessor extends ResultProcessor<Object[], Object[]> {
 
    /**

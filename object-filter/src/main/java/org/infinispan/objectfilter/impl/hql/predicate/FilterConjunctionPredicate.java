@@ -10,7 +10,7 @@ import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
  */
 class FilterConjunctionPredicate extends ConjunctionPredicate<BooleanExpr> {
 
-   public FilterConjunctionPredicate() {
+   FilterConjunctionPredicate() {
    }
 
    @Override

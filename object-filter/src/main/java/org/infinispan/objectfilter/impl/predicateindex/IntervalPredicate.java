@@ -19,7 +19,7 @@ public final class IntervalPredicate<AttributeDomain extends Comparable<Attribut
    private final Interval<AttributeDomain> interval;
 
    public IntervalPredicate(boolean isRepeated, Interval<AttributeDomain> interval) {
-      super(isRepeated, new IntervalCondition<AttributeDomain>(interval));
+      super(isRepeated, new IntervalCondition<>(interval));
       this.interval = interval;
    }
 

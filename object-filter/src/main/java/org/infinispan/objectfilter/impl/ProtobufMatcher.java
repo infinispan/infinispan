@@ -94,7 +94,7 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
 
       @Override
       public List<Integer> translatePropertyPath(List<String> path) {
-         List<Integer> propPath = new ArrayList<Integer>(path.size());
+         List<Integer> propPath = new ArrayList<>(path.size());
          Descriptor md = messageDescriptor;
          for (String prop : path) {
             FieldDescriptor fd = md.findFieldByName(prop);

@@ -33,7 +33,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private final BETree beTree;
 
-   private final List<Predicates.Subscription<AttributeId>> predicateSubscriptions = new ArrayList<Predicates.Subscription<AttributeId>>();
+   private final List<Predicates.Subscription<AttributeId>> predicateSubscriptions = new ArrayList<>();
 
    private final FilterCallback callback;
 

@@ -7,7 +7,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterEmbeddedEntityTypeDescriptor implements FilterTypeDescriptor {
+final class FilterEmbeddedEntityTypeDescriptor implements FilterTypeDescriptor {
 
    private final String entityType;
    private final List<String> propertyPath;
@@ -20,7 +20,7 @@ public final class FilterEmbeddedEntityTypeDescriptor implements FilterTypeDescr
     * @param path           the property path from the embedding entity to this entity
     * @param propertyHelper a helper for dealing with properties
     */
-   public FilterEmbeddedEntityTypeDescriptor(String entityType, List<String> path, ObjectPropertyHelper propertyHelper) {
+   FilterEmbeddedEntityTypeDescriptor(String entityType, List<String> path, ObjectPropertyHelper propertyHelper) {
       this.entityType = entityType;
       this.propertyPath = path;
       this.propertyHelper = propertyHelper;
@@ -28,14 +28,14 @@ public final class FilterEmbeddedEntityTypeDescriptor implements FilterTypeDescr
 
    @Override
    public boolean hasProperty(String propertyName) {
-      List<String> newPath = new LinkedList<String>(propertyPath);
+      List<String> newPath = new LinkedList<>(propertyPath);
       newPath.add(propertyName);
       return propertyHelper.hasProperty(entityType, newPath);
    }
 
    @Override
    public boolean hasEmbeddedProperty(String propertyName) {
-      List<String> newPath = new LinkedList<String>(propertyPath);
+      List<String> newPath = new LinkedList<>(propertyPath);
       newPath.add(propertyName);
       return propertyHelper.hasEmbeddedProperty(entityType, newPath);
    }

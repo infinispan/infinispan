@@ -4,7 +4,7 @@ package org.infinispan.objectfilter.impl.predicateindex;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class EqualsCondition<AttributeDomain> extends Condition<AttributeDomain> {
+public final class EqualsCondition<AttributeDomain> implements Condition<AttributeDomain> {
 
    private final AttributeDomain value;
 

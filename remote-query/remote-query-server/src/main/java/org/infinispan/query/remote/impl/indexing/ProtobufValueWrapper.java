@@ -81,7 +81,7 @@ public final class ProtobufValueWrapper {
 
       @Override
       public Set<Class<? extends ProtobufValueWrapper>> getTypeClasses() {
-         return Collections.<Class<? extends ProtobufValueWrapper>>singleton(ProtobufValueWrapper.class);
+         return Collections.singleton(ProtobufValueWrapper.class);
       }
    }
 }
