@@ -115,7 +115,7 @@ public class DefaultConsistentHash implements ConsistentHash {
          PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
          Address address = JGroupsAddressCache.fromPersistentUUID(uuid);
          if (address == null) {
-            throw new IllegalStateException("Unknown address for "+uuid);
+            throw new IllegalStateException("Unknown address for " + uuid);
          }
          this.members.add(address);
       }
