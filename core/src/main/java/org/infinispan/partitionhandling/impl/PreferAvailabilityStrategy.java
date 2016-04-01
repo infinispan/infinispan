@@ -6,6 +6,8 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.PersistentUUID;
+import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -21,9 +23,11 @@ import java.util.Objects;
 public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferAvailabilityStrategy.class);
    private final EventLogManager eventLogManager;
+   private final PersistentUUIDManager persistentUUIDManager;
 
-   public PreferAvailabilityStrategy(EventLogManager eventLogManager) {
+   public PreferAvailabilityStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager) {
       this.eventLogManager = eventLogManager;
+      this.persistentUUIDManager = persistentUUIDManager;
    }
 
    @Override
@@ -137,7 +141,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       CacheTopology mergedTopology = null;
       if (maxTopology != null) {
          mergedTopology = new CacheTopology(maxTopologyId + 1, maxRebalanceId + 1,
-               maxTopology.getCurrentCH(), null, maxTopology.getActualMembers());
+               maxTopology.getCurrentCH(), null, maxTopology.getActualMembers(), persistentUUIDManager.mapAddresses(maxTopology.getActualMembers()));
       }
 
       context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, null);

@@ -111,7 +111,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @throws IllegalStateException if {@link #getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    void putForExternalRead(K key, V value);
-   
+
    /**
     * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in lifespan parameters.
     *
@@ -119,7 +119,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @param value    value to store
     * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param unit     unit of measurement for the lifespan
-    * 
+    *
     * @since 7.0
     */
    void putForExternalRead(K key, V value, long lifespan, TimeUnit unit);
@@ -334,4 +334,27 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     */
    @Override
    void clear();
+
+   /**
+    * Stops a cache. If the cache is clustered, this only stops the cache on the node where it is being invoked. If you
+    * need to stop the cache across a cluster, use the {@link #shutdown()} method.
+    */
+   @Override
+   void stop();
+
+   /**
+    * Performs a controlled, clustered shutdown of the cache. When invoked, the following operations are performed:
+    * <ul>
+    *    <li>rebalancing for the cache is disabled</li>
+    *    <li>in-memory data is flushed/passivated to any persistent stores</li>
+    *    <li>state is persisted to the location defined in {@link org.infinispan.configuration.global.GlobalStateConfigurationBuilder#persistentLocation(String)}</li>
+    * </ul>
+    *
+    * This method differs from {@link #stop()} only in clustered modes,
+    * and only when {@link org.infinispan.configuration.global.GlobalStateConfiguration#enabled()} is true, otherwise it
+    * just behaves like {@link #stop()}.
+    */
+   default void shutdown() {
+      stop();
+   }
 }

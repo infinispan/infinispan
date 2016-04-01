@@ -16,6 +16,7 @@ import org.infinispan.distribution.group.PartitionerConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -33,6 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +59,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private GlobalConfiguration globalConfiguration;
    private RpcManager rpcManager;
    private LocalTopologyManager localTopologyManager;
+   private Optional<Integer> persistentStateChecksum;
 
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
    // The first topology in which the local node was a member. Any command with a lower
@@ -77,7 +80,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     RpcManager rpcManager,
                     KeyPartitioner keyPartitioner,
                     LocalTopologyManager localTopologyManager,
-                    PartitionHandlingManager partitionHandlingManager) {
+                    PartitionHandlingManager partitionHandlingManager,
+                    GlobalStateManager globalStateManager) {
       this.stateConsumer = stateConsumer;
       this.stateProvider = stateProvider;
       this.cacheName = cache.getName();
@@ -88,6 +92,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.keyPartitioner = keyPartitioner;
       this.localTopologyManager = localTopologyManager;
       this.partitionHandlingManager = partitionHandlingManager;
+      if (globalStateManager != null) {
+         persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(state -> state.getChecksum());
+      } else {
+         persistentStateChecksum = Optional.empty();
+      }
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
@@ -105,7 +114,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
             configuration.clustering().stateTransfer().timeout(),
             configuration.transaction().transactionProtocol().isTotalOrder(),
             configuration.clustering().cacheMode().isDistributed(),
-            configuration.clustering().hash().capacityFactor());
+            configuration.clustering().hash().capacityFactor(),
+            localTopologyManager.getPersistentUUID(),
+            persistentStateChecksum);
 
       CacheTopology initialTopology = localTopologyManager.join(cacheName, joinInfo, new CacheTopologyHandler() {
          @Override
@@ -164,7 +175,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          unionCH = new PartitionerConsistentHash(unionCH, keyPartitioner);
       }
       return new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), currentCH, pendingCH,
-            unionCH, cacheTopology.getActualMembers());
+            unionCH, cacheTopology.getActualMembers(), cacheTopology.getMembersPersistentUUIDs());
    }
 
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
@@ -208,7 +219,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @SuppressWarnings("unused")
    public void waitForInitialStateTransferToComplete() throws Exception {
       if (configuration.clustering().stateTransfer().awaitInitialTransfer()) {
-         if (!localTopologyManager.isRebalancingEnabled()) {
+         if (!localTopologyManager.isCacheRebalancingEnabled(cacheName)) {
             initialStateTransferComplete.countDown();
          }
          if (trace) log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName, rpcManager.getAddress());

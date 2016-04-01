@@ -124,4 +124,16 @@ public interface LocalTopologyManager {
     * across restarts
     */
    PersistentUUID getPersistentUUID();
+
+   /**
+    * Initiates a cluster-wide cache shutdown for the specified cache
+    * @throws Exception
+    */
+   void cacheShutdown(String name) throws Exception;
+
+   /**
+    * Handles the local operations related to gracefully shutting down a cache
+    */
+   void handleCacheShutdown(String cacheName);
+
 }

@@ -38,14 +38,15 @@ public class CacheTopology {
    private final ConsistentHash pendingCH;
    private final transient ConsistentHash unionCH;
    private List<Address> actualMembers;
+   private List<PersistentUUID> persistentUUIDs;
 
    public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
-         List<Address> actualMembers) {
-      this(topologyId, rebalanceId, currentCH, pendingCH, null, actualMembers);
+         List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
+      this(topologyId, rebalanceId, currentCH, pendingCH, null, actualMembers, persistentUUIDs);
    }
 
    public CacheTopology(int topologyId, int rebalanceId, ConsistentHash currentCH, ConsistentHash pendingCH,
-         ConsistentHash unionCH, List<Address> actualMembers) {
+         ConsistentHash unionCH, List<Address> actualMembers, List<PersistentUUID> persistentUUIDs) {
       if (pendingCH != null && !pendingCH.getMembers().containsAll(currentCH.getMembers())) {
          throw new IllegalArgumentException("A cache topology's pending consistent hash must " +
                "contain all the current consistent hash's members");
@@ -56,6 +57,7 @@ public class CacheTopology {
       this.pendingCH = pendingCH;
       this.unionCH = unionCH;
       this.actualMembers = actualMembers;
+      this.persistentUUIDs = persistentUUIDs;
    }
 
    public int getTopologyId() {
@@ -111,6 +113,10 @@ public class CacheTopology {
     */
    public List<Address> getActualMembers() {
       return actualMembers;
+   }
+
+   public List<PersistentUUID> getMembersPersistentUUIDs() {
+      return persistentUUIDs;
    }
 
    /**
@@ -170,6 +176,7 @@ public class CacheTopology {
             ", pendingCH=" + pendingCH +
             ", unionCH=" + unionCH +
             ", actualMembers=" + actualMembers +
+            ", persistentUUIDs=" + persistentUUIDs +
             '}';
    }
 
@@ -191,6 +198,7 @@ public class CacheTopology {
          output.writeObject(cacheTopology.pendingCH);
          output.writeObject(cacheTopology.unionCH);
          output.writeObject(cacheTopology.actualMembers);
+         output.writeObject(cacheTopology.persistentUUIDs);
       }
 
       @Override
@@ -201,7 +209,8 @@ public class CacheTopology {
          ConsistentHash pendingCH = (ConsistentHash) unmarshaller.readObject();
          ConsistentHash unionCH = (ConsistentHash) unmarshaller.readObject();
          List<Address> actualMembers = (List<Address>) unmarshaller.readObject();
-         return new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH, unionCH, actualMembers);
+         List<PersistentUUID> persistentUUIDs = (List<PersistentUUID>) unmarshaller.readObject();
+         return new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH, unionCH, actualMembers, persistentUUIDs);
       }
 
       @Override

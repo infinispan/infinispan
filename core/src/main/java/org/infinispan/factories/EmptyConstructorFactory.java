@@ -10,6 +10,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
+import org.infinispan.topology.PersistentUUIDManager;
+import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.events.EventLogManager;
@@ -26,8 +28,8 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  */
 
 @DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
-                              ExternalizerTable.class, InboundInvocationHandler.class, RemoteCommandsFactory.class,
-                              TimeService.class})
+                              ExternalizerTable.class, InboundInvocationHandler.class, PersistentUUIDManager.class,
+                              RemoteCommandsFactory.class, TimeService.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -48,6 +50,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new DefaultTimeService();
       else if (componentType.equals(EventLogManager.class))
          return (T) new EventLogManagerImpl();
+      else if (componentType.equals(PersistentUUIDManager.class))
+         return (T) new PersistentUUIDManagerImpl();
 
       throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
    }

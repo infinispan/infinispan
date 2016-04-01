@@ -4,7 +4,7 @@ package org.infinispan.commons;
  * Thrown when operations on {@link Cache} fail unexpectedly.
  * <p/>
  * Specific subclasses such as {@link org.infinispan.util.concurrent.TimeoutException} and {@link
- * org.infinispan.config.ConfigurationException} have more specific uses.
+ * org.infinispan.commons.CacheConfigurationException} have more specific uses.
  * <p/>
  * Transactions: if a CacheException (including any subclasses) is thrown for an operation on a JTA transaction, then
  * the transaction is marked for rollback.

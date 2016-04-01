@@ -38,6 +38,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       LEAVE,
       // A member is confirming that it finished the rebalance operation.
       REBALANCE_CONFIRM,
+      // A member is requesting a cache shutdown
+      SHUTDOWN_REQUEST,
 
       // Coordinator to member:
       // The coordinator is updating the consistent hash.
@@ -49,6 +51,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       GET_STATUS,
       // Update the stable topology
       STABLE_TOPOLOGY_UPDATE,
+      // Tell members to shutdown cache
+      SHUTDOWN_PERFORM,
 
       // Member to coordinator:
       // Enable/disable rebalancing, check whether rebalancing is enabled
@@ -69,6 +73,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    private transient LocalTopologyManager localTopologyManager;
    private transient ClusterTopologyManager clusterTopologyManager;
+   private transient PersistentUUIDManager persistentUUIDManager;
 
    private String cacheName;
    private Type type;
@@ -81,6 +86,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    private ConsistentHash pendingCH;
    private AvailabilityMode availabilityMode;
    private List<Address> actualMembers;
+   private List<PersistentUUID> persistentUUIDs;
 
    private Throwable throwable;
    private int viewId;
@@ -136,13 +142,15 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.pendingCH = cacheTopology.getPendingCH();
       this.availabilityMode = availabilityMode;
       this.actualMembers = cacheTopology.getActualMembers();
+      this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
       this.viewId = viewId;
    }
 
    @Inject
-   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager) {
+   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager, PersistentUUIDManager persistentUUIDManager) {
       this.localTopologyManager = localTopologyManager;
       this.clusterTopologyManager = clusterTopologyManager;
+      this.persistentUUIDManager = persistentUUIDManager;
    }
 
    @Override
@@ -175,22 +183,28 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
          case REBALANCE_CONFIRM:
             clusterTopologyManager.handleRebalanceCompleted(cacheName, sender, topologyId, throwable, viewId);
             return null;
+         case SHUTDOWN_REQUEST:
+            clusterTopologyManager.handleShutdownRequest(cacheName);
+            return null;
 
          // coordinator to member
          case CH_UPDATE:
             localTopologyManager.handleTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
-                  pendingCH, actualMembers), availabilityMode, viewId, sender);
+                  pendingCH, actualMembers, persistentUUIDs), availabilityMode, viewId, sender);
             return null;
          case STABLE_TOPOLOGY_UPDATE:
             localTopologyManager.handleStableTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId,
-                  currentCH, pendingCH, actualMembers), sender, viewId);
+                  currentCH, pendingCH, actualMembers, persistentUUIDs), sender, viewId);
             return null;
          case REBALANCE_START:
             localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
-                  pendingCH, actualMembers), viewId, sender);
+                  pendingCH, actualMembers, persistentUUIDs), viewId, sender);
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest(viewId);
+         case SHUTDOWN_PERFORM:
+            localTopologyManager.handleCacheShutdown(cacheName);
+            return null;
 
          // rebalance policy control
          case POLICY_GET_STATUS:
@@ -277,6 +291,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             output.writeObject(currentCH);
             output.writeObject(pendingCH);
             MarshallUtil.marshallCollection(actualMembers, output);
+            MarshallUtil.marshallCollection(persistentUUIDs, output);
             MarshallUtil.marshallEnum(availabilityMode, output);
             output.writeInt(topologyId);
             output.writeInt(rebalanceId);
@@ -287,6 +302,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             output.writeObject(currentCH);
             output.writeObject(pendingCH);
             MarshallUtil.marshallCollection(actualMembers, output);
+            MarshallUtil.marshallCollection(persistentUUIDs, output);
             output.writeInt(topologyId);
             output.writeInt(rebalanceId);
             output.writeInt(viewId);
@@ -296,6 +312,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             output.writeObject(currentCH);
             output.writeObject(pendingCH);
             MarshallUtil.marshallCollection(actualMembers, output);
+            MarshallUtil.marshallCollection(persistentUUIDs, output);
             output.writeInt(topologyId);
             output.writeInt(rebalanceId);
             output.writeInt(viewId);
@@ -339,6 +356,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             currentCH = (ConsistentHash) input.readObject();
             pendingCH = (ConsistentHash) input.readObject();
             actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+            persistentUUIDs = MarshallUtil.unmarshallCollection(input, ArrayList::new);
             availabilityMode = MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
             topologyId = input.readInt();
             rebalanceId = input.readInt();
@@ -349,6 +367,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             currentCH = (ConsistentHash) input.readObject();
             pendingCH = (ConsistentHash) input.readObject();
             actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+            persistentUUIDs = MarshallUtil.unmarshallCollection(input, ArrayList::new);
             topologyId = input.readInt();
             rebalanceId = input.readInt();
             viewId = input.readInt();
@@ -358,6 +377,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             currentCH = (ConsistentHash) input.readObject();
             pendingCH = (ConsistentHash) input.readObject();
             actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+            persistentUUIDs = MarshallUtil.unmarshallCollection(input, ArrayList::new);
             topologyId = input.readInt();
             rebalanceId = input.readInt();
             viewId = input.readInt();

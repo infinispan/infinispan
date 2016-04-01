@@ -154,4 +154,14 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
       return delegate.getPersistentUUID();
    }
 
+   @Override
+   public void cacheShutdown(String name) throws Exception {
+      delegate.cacheShutdown(name);
+   }
+
+   @Override
+   public void handleCacheShutdown(String cacheName) {
+      delegate.handleCacheShutdown(cacheName);
+   }
+
 }

@@ -17,6 +17,7 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.topology.CacheJoinException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -1395,4 +1396,16 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The replication queue is no longer supported since version 9.0. Attribute %s on line %d will be ignored.", id = 406)
    void ignoredReplicationQueueAttribute(String attributeName, int line);
+
+   @Message(value = "Extraneous members %s are attempting to join cache %s, as they were not members of the persisted state", id = 407)
+   CacheJoinException extraneousMembersJoinRestoredCache(List<Address> extraneousMembers, String cacheName);
+
+   @Message(value = "Node %s with persistent state attempting to join cache %s on cluster without state", id = 408)
+   CacheJoinException nodeWithPersistentStateJoiningClusterWithoutState(Address joiner, String cacheName);
+
+   @Message(value = "Node %s without persistent state attempting to join cache %s on cluster with state", id = 409)
+   CacheJoinException nodeWithoutPersistentStateJoiningCacheWithState(Address joiner, String cacheName);
+
+   @Message(value = "Node %s attempting to join cache %s with incompatible state", id = 410)
+   CacheJoinException nodeWithIncompatibleStateJoiningCache(Address joiner, String cacheName);
 }

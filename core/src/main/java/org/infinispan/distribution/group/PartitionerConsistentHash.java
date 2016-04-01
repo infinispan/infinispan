@@ -6,10 +6,12 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.PersistentUUIDManager;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /**
  * {@link ConsistentHash} wrapper that uses a {@link KeyPartitioner} instead of a {@link Hash}.
@@ -100,6 +102,11 @@ public class PartitionerConsistentHash implements ConsistentHash {
    @Override
    public void toScopedState(ScopedPersistentState state) {
       ch.toScopedState(state);
+   }
+
+   @Override
+   public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
+      return ch.remapAddresses(remapper);
    }
 
    @Override

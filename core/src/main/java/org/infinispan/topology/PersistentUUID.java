@@ -1,8 +1,16 @@
 package org.infinispan.topology;
 
-import java.util.UUID;
-
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * PersistentUUID. A special {@link Address} UUID whose purpose is to remain unchanged across node
@@ -25,7 +33,7 @@ public class PersistentUUID implements Address {
    }
 
    public static PersistentUUID randomUUID() {
-      return new PersistentUUID(UUID.randomUUID());
+      return new PersistentUUID(Util.threadLocalRandomUUID());
    }
 
    public static PersistentUUID fromString(String name) {
@@ -72,5 +80,29 @@ public class PersistentUUID implements Address {
       } else if (!uuid.equals(other.uuid))
          return false;
       return true;
+   }
+
+   public static class Externalizer extends AbstractExternalizer<PersistentUUID> {
+
+      @Override
+      public Set<Class<? extends PersistentUUID>> getTypeClasses() {
+         return Collections.<Class<? extends PersistentUUID>>singleton(PersistentUUID.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, PersistentUUID uuid) throws IOException {
+         output.writeLong(uuid.getMostSignificantBits());
+         output.writeLong(uuid.getLeastSignificantBits());
+      }
+
+      @Override
+      public PersistentUUID readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new PersistentUUID(input.readLong(), input.readLong());
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.PERSISTENT_UUID;
+      }
    }
 }

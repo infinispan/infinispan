@@ -26,6 +26,9 @@ import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.PersistentUUID;
+import org.infinispan.topology.PersistentUUIDManager;
+import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -80,7 +83,11 @@ public class StateProviderTest {
    private static final TestAddress E = new TestAddress(4, "E");
    private static final TestAddress F = new TestAddress(5, "F");
    private static final TestAddress G = new TestAddress(6, "G");
+   private static final PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
 
+   static {
+      Arrays.asList(A, B, C, D, E, F, G).forEach(address -> persistentUUIDManager.addPersistentAddressMapping(address, PersistentUUID.randomUUID()));
+   }
 
    private Configuration configuration;
 
@@ -189,7 +196,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, ch1.getMembers());
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, ch1.getMembers(), persistentUUIDManager.mapAddresses(ch1.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);
@@ -211,7 +218,7 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, ch2.getMembers());
+      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, true);
 
       assertFalse(stateProvider.isStateTransferInProgress());
@@ -302,7 +309,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, ch2.getMembers());
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);
@@ -325,7 +332,7 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, ch2.getMembers());
+      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       assertFalse(stateProvider.isStateTransferInProgress());
