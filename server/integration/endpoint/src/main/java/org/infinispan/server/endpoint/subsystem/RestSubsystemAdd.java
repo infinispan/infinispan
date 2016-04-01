@@ -53,6 +53,7 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "rest"), service);
       EndpointUtils.addCacheContainerDependency(builder, service.getCacheContainerName(), service.getCacheManager());
+      EndpointUtils.addCacheDependency(builder, service.getCacheContainerName(), null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
       builder
          .addDependency(PathManagerService.SERVICE_NAME, PathManager.class, service.getPathManagerInjector());
