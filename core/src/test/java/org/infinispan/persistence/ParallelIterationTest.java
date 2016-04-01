@@ -20,7 +20,9 @@ import org.testng.annotations.Test;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -56,7 +58,9 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       sm = pm.getMarshaller();
       loader = TestingUtil.getFirstLoader(manager.getCache());
       writer = TestingUtil.getFirstWriter(manager.getCache());
-      executor = Executors.newFixedThreadPool(NUM_THREADS, getTestThreadFactory("iteration"));
+      executor = new ThreadPoolExecutor(NUM_THREADS, NUM_THREADS, 0L, TimeUnit.MILLISECONDS,
+            new SynchronousQueue<>(), getTestThreadFactory("iteration"),
+            new ThreadPoolExecutor.CallerRunsPolicy());
       return manager;
    }
 
@@ -122,7 +126,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       assertTrue(entries.size() >= 100);
    }
 
-   private void runIterationTest(Executor persistenceExecutor1, final boolean fetchValues,
+   private void runIterationTest(Executor executor, final boolean fetchValues,
          boolean fetchMetadata) {
       final ConcurrentMap<Integer, Integer> entries = new ConcurrentHashMap<>();
       final ConcurrentMap<Integer, InternalMetadata> metadata = new ConcurrentHashMap<>();
@@ -158,7 +162,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
             }
             processed.incrementAndGet();
          }
-      }, persistenceExecutor1, fetchValues, fetchMetadata);
+      }, executor, fetchValues, fetchMetadata);
 
       assertFalse(sameKeyMultipleTimes.get());
       assertFalse(brokenBarrier.get());
