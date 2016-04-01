@@ -134,4 +134,10 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = WARN)
    @Message(value = "Found undeclared indexable types in cache %s : %s. No indexes were created for these types because autodetection is not enabled for this cache.", id = 14029)
    void detectedUnknownIndexedEntities(String cacheName, String classNames);
+
+   @Message(value = "The type %s is not an indexed entity.", id = 14030)
+   IllegalArgumentException getNoIndexedEntityException(String typeName);
+
+   @Message(value = "No queries can be applied to property %2$s in type %1$s since the property is analyzed.", id = 14031)
+   ParsingException getQueryOnAnalyzedPropertyNotSupportedException(String typeName, String propertyName);
 }

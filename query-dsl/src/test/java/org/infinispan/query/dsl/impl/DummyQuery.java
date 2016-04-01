@@ -10,7 +10,12 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class DummyQuery implements Query {
+class DummyQuery implements Query {
+
+   @Override
+   public Map<String, Object> getParameters() {
+      return null;
+   }
 
    @Override
    public Query setParameter(String paramName, Object paramValue) {

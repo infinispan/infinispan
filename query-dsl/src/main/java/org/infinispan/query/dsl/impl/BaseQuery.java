@@ -5,6 +5,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +47,11 @@ public abstract class BaseQuery implements Query {
 
    public String getJPAQuery() {
       return jpaQuery;
+   }
+
+   @Override
+   public Map<String, Object> getParameters() {
+      return Collections.unmodifiableMap(namedParameters);
    }
 
    @Override

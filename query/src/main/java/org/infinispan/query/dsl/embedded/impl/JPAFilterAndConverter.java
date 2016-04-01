@@ -80,20 +80,19 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
 
    public ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
-         // if parameters are present caching cannot be currently performed due to internal implementation limitations
-         if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
+         if (queryCache != null) {
             KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpaQuery, matcherImplClass);
             ObjectFilter objectFilter = queryCache.get(queryCacheKey);
             if (objectFilter == null) {
-               objectFilter = matcher.getObjectFilter(jpaQuery, namedParameters);
+               objectFilter = matcher.getObjectFilter(jpaQuery);
                queryCache.put(queryCacheKey, objectFilter);
             }
             this.objectFilter = objectFilter;
          } else {
-            objectFilter = matcher.getObjectFilter(jpaQuery, namedParameters);
+            objectFilter = matcher.getObjectFilter(jpaQuery);
          }
       }
-      return objectFilter;
+      return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
    }
 
    public String getJPAQuery() {

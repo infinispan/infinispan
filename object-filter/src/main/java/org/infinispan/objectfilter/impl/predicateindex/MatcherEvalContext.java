@@ -45,6 +45,9 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    private Map<Predicate<?>, Counter> suspendedPredicateSubscriptionCounts;
 
    protected MatcherEvalContext(Object userContext, Object eventType, Object instance) {
+      if (instance == null) {
+         throw new IllegalArgumentException("instance cannot be null");
+      }
       this.userContext = userContext;
       this.eventType = eventType;
       this.instance = instance;

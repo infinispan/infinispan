@@ -33,7 +33,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    }
 
    @Override
-   public Class<?> getPrimitivePropertyType(String entityType, List<String> propertyPath) {
+   public Class<?> getPrimitivePropertyType(String entityType, String[] propertyPath) {
       FieldDescriptor field = getField(entityType, propertyPath);
       switch (field.getJavaType()) {
          case INT:
@@ -62,7 +62,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
     * @return the field descriptor or null if not found
     * @throws IllegalStateException if the entity type is unknown
     */
-   private FieldDescriptor getField(String entityType, List<String> propertyPath) {
+   private FieldDescriptor getField(String entityType, String[] propertyPath) {
       Descriptor messageDescriptor;
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
@@ -73,7 +73,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
       int i = 0;
       for (String p : propertyPath) {
          FieldDescriptor field = messageDescriptor.findFieldByName(p);
-         if (field == null || ++i == propertyPath.size()) {
+         if (field == null || ++i == propertyPath.length) {
             return field;
          }
          if (field.getJavaType() == JavaType.MESSAGE) {
@@ -86,7 +86,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    }
 
    @Override
-   public boolean hasProperty(String entityType, List<String> propertyPath) {
+   public boolean hasProperty(String entityType, String[] propertyPath) {
       Descriptor messageDescriptor;
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
@@ -107,11 +107,11 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
             break;
          }
       }
-      return i == propertyPath.size();
+      return i == propertyPath.length;
    }
 
    @Override
-   public boolean hasEmbeddedProperty(String entityType, List<String> propertyPath) {
+   public boolean hasEmbeddedProperty(String entityType, String[] propertyPath) {
       Descriptor messageDescriptor;
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
@@ -134,7 +134,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    }
 
    @Override
-   public boolean isRepeatedProperty(String entityType, List<String> propertyPath) {
+   public boolean isRepeatedProperty(String entityType, String[] propertyPath) {
       Descriptor messageDescriptor;
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
@@ -160,7 +160,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public Object convertToPropertyType(String entityType, List<String> propertyPath, String value) {
-      FieldDescriptor field = getField(entityType, propertyPath);
+      FieldDescriptor field = getField(entityType, propertyPath.toArray(new String[propertyPath.size()]));
 
       //todo [anistor] this is just for remote query because booleans and enums are handled as integers for historical reasons.
       if (field.getJavaType() == JavaType.BOOLEAN) {

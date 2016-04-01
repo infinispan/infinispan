@@ -1,14 +1,12 @@
 package org.infinispan.objectfilter.impl;
 
-import org.hibernate.hql.QueryParser;
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.JPQLParser;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
@@ -17,7 +15,6 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.jboss.logging.Logger;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +35,6 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    private final Lock read = readWriteLock.readLock();
 
    private final Lock write = readWriteLock.writeLock();
-
-   private final QueryParser queryParser = new QueryParser();
 
    protected final Map<String, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByTypeName = new HashMap<>();
 
@@ -117,8 +112,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(Query query) {
-      BaseQuery baseQuery = (BaseQuery) query;
-      return getObjectFilter(baseQuery.getJPAQuery(), baseQuery.getNamedParameters());
+      return getObjectFilter(((BaseQuery) query).getJPAQuery(), null);
    }
 
    @Override
@@ -127,52 +121,13 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters) {
-      return getObjectFilter(jpaQuery, namedParameters, null);
-   }
-
-   @Override
-   public ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters, List<FieldAccumulator> acc) {
-      final FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, namedParameters);
+   public ObjectFilter getObjectFilter(String jpaQuery, List<FieldAccumulator> acc) {
+      final FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery);
       disallowGroupingAndAggregations(parsingResult);
 
       // if the query is a contradiction just return an ObjectFilter that rejects everything
       if (parsingResult.getWhereClause() == ConstantBooleanExpr.FALSE) {
-         return new ObjectFilter() {
-
-            @Override
-            public String getEntityTypeName() {
-               return parsingResult.getTargetEntityName();
-            }
-
-            @Override
-            public String[] getProjection() {
-               return null;
-            }
-
-            @Override
-            public Class<?>[] getProjectionTypes() {
-               return null;
-            }
-
-            @Override
-            public SortField[] getSortFields() {
-               return null;
-            }
-
-            @Override
-            public Comparator<Comparable[]> getComparator() {
-               return null;
-            }
-
-            @Override
-            public FilterResult filter(Object instance) {
-               if (instance == null) {
-                  throw new IllegalArgumentException("instance cannot be null");
-               }
-               return null;
-            }
-         };
+         return new RejectObjectFilter<>(null, parsingResult);
       }
 
       final MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter = createMetadataAdapter(parsingResult.getTargetEntityMetadata());
@@ -181,57 +136,19 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       // in case we have sorting and projections we cannot take this shortcut because the computation of projections or sort projections is a bit more involved
       if ((parsingResult.getWhereClause() == null || parsingResult.getWhereClause() == ConstantBooleanExpr.TRUE)
             && parsingResult.getSortFields() == null && parsingResult.getProjectedPaths() == null) {
-         return new ObjectFilter() {
-
-            @Override
-            public String getEntityTypeName() {
-               return parsingResult.getTargetEntityName();
-            }
-
-            @Override
-            public String[] getProjection() {
-               return null;
-            }
-
-            @Override
-            public Class<?>[] getProjectionTypes() {
-               return null;
-            }
-
-            @Override
-            public SortField[] getSortFields() {
-               return null;
-            }
-
-            @Override
-            public Comparator<Comparable[]> getComparator() {
-               return null;
-            }
-
-            @Override
-            public FilterResult filter(Object instance) {
-               if (instance == null) {
-                  throw new IllegalArgumentException("instance cannot be null");
-               }
-               MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = startSingleTypeContext(null, null, instance, metadataAdapter);
-               if (matcherEvalContext != null) {
-                  // once we have a successfully created context we already have a match as there are no filter conditions except for entity type
-                  return new FilterResultImpl(convert(instance), null, null);
-               }
-               return null;
-            }
-         };
+         return new AcceptObjectFilter<>(null, this, metadataAdapter, parsingResult);
       }
 
       FieldAccumulator[] accumulators = acc != null ? acc.toArray(new FieldAccumulator[acc.size()]) : null;
-      return new ObjectFilterImpl<>(this, metadataAdapter, jpaQuery, namedParameters,
+      return new ObjectFilterImpl<>(this, metadataAdapter, jpaQuery, parsingResult.getParameterNames(),
             parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), accumulators);
    }
 
    @Override
    public ObjectFilter getObjectFilter(FilterSubscription filterSubscription) {
       FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>) filterSubscription;
-      return getObjectFilter(filterSubscriptionImpl.getQueryString(), filterSubscriptionImpl.getNamedParameters());
+      ObjectFilter objectFilter = getObjectFilter(filterSubscriptionImpl.getQueryString());
+      return filterSubscriptionImpl.getNamedParameters() != null ? objectFilter.withParameters(filterSubscriptionImpl.getNamedParameters()) : objectFilter;
    }
 
    @Override
@@ -246,8 +163,9 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public FilterSubscription registerFilter(String jpaQuery, Map<String, Object> namedParameters, FilterCallback callback, Object... eventType) {
-      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, namedParameters);
+   public FilterSubscription registerFilter(String jpaQuery, Map<String, Object> namedParameters, FilterCallback
+         callback, Object... eventType) {
+      FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery);
       disallowGroupingAndAggregations(parsingResult);
 
       write.lock();
@@ -262,10 +180,6 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       } finally {
          write.unlock();
       }
-   }
-
-   public FilterParsingResult<TypeMetadata> parse(String jpaQuery, Map<String, Object> namedParameters) {
-      return queryParser.parseQuery(jpaQuery, createFilterProcessingChain(namedParameters));
    }
 
    private void disallowGroupingAndAggregations(FilterParsingResult<TypeMetadata> parsingResult) {
@@ -322,7 +236,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
     */
    protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startSingleTypeContext(Object userContext, Object eventType, Object instance, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter);
 
-   protected abstract FilterProcessingChain<TypeMetadata> createFilterProcessingChain(Map<String, Object> namedParameters);
+   public abstract JPQLParser<TypeMetadata> getParser();
 
    public abstract ObjectPropertyHelper<TypeMetadata> getPropertyHelper();
 

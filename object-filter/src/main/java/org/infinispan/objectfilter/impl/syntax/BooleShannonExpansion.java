@@ -23,9 +23,9 @@ public final class BooleShannonExpansion {
    // todo [anistor] besides indexed vs non-indexed we need to detect occurrences of cross-relationship spurious matches and apply a second in-memory filtering phase
    public interface IndexedFieldProvider {
 
-      boolean isIndexed(List<String> propertyPath);
+      boolean isIndexed(String[] propertyPath);
 
-      boolean isStored(List<String> propertyPath);
+      boolean isStored(String[] propertyPath);
    }
 
    private final IndexedFieldProvider indexedFieldProvider;

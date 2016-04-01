@@ -1,13 +1,12 @@
 package org.infinispan.objectfilter.impl;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.JPQLParser;
 import org.infinispan.objectfilter.impl.hql.RowPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.RowMatcherEvalContext;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -19,17 +18,13 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
 
    private final RowPropertyHelper propertyHelper;
 
-   private final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
-
-      @Override
-      public Class<?> getClassFromName(String entityName) {
-         return Object[].class;
-      }
-   };
+   private final JPQLParser<RowPropertyHelper.RowMetadata> parser;
 
    public RowMatcher(RowPropertyHelper.ColumnMetadata[] columns) {
       rowMetadata = new RowPropertyHelper.RowMetadata(columns);
       propertyHelper = new RowPropertyHelper(rowMetadata);
+      EntityNamesResolver entityNamesResolver = entityName -> Object[].class;
+      parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
    }
 
    @Override
@@ -53,13 +48,13 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
    }
 
    @Override
-   protected FilterProcessingChain<RowPropertyHelper.RowMetadata> createFilterProcessingChain(Map<String, Object> namedParameters) {
-      return FilterProcessingChain.build(entityNamesResolver, propertyHelper, namedParameters);
+   protected FilterRegistry<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> getFilterRegistryForType(RowPropertyHelper.RowMetadata entityType) {
+      return filtersByType.get(entityType);
    }
 
    @Override
-   protected FilterRegistry<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> getFilterRegistryForType(RowPropertyHelper.RowMetadata entityType) {
-      return filtersByType.get(entityType);
+   public JPQLParser<RowPropertyHelper.RowMetadata> getParser() {
+      return parser;
    }
 
    @Override
@@ -91,12 +86,12 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
       }
 
       @Override
-      public List<Integer> translatePropertyPath(List<String> path) {
-         if (path.size() > 1) {
+      public List<Integer> translatePropertyPath(String[] path) {
+         if (path.length > 1) {
             throw new IllegalStateException("Nested attributes are not supported");
          }
 
-         String columnName = path.get(0);
+         String columnName = path[0];
          for (RowPropertyHelper.ColumnMetadata c : rowMetadata.getColumns()) {
             if (c.getColumnName().equals(columnName)) {
                return Collections.singletonList(c.getColumnIndex());

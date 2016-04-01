@@ -6,7 +6,7 @@ import org.hibernate.hql.ast.TypeDescriptor;
  * @author anistor@redhat.com
  * @since 7.0
  */
-interface FilterTypeDescriptor extends TypeDescriptor {
+public interface FilterTypeDescriptor extends TypeDescriptor {
 
    /**
     * Returns the Java type of the represented entity.
@@ -22,4 +22,8 @@ interface FilterTypeDescriptor extends TypeDescriptor {
     * @return {@code true} if the given property denotes an entity embedded into this one, {@code false} otherwise.
     */
    boolean hasEmbeddedProperty(String propertyName);
+
+   default String[] makeJoinedPath(String propName) {
+      return new String[]{propName};
+   }
 }

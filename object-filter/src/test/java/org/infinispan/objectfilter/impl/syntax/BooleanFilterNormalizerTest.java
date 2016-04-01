@@ -1,9 +1,8 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.JPQLParser;
 import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.junit.Test;
@@ -18,11 +17,11 @@ public class BooleanFilterNormalizerTest {
 
    private final EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
    private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
-   private final QueryParser queryParser = new QueryParser();
+   private final JPQLParser<Class<?>> parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    private void assertExpectedTree(String jpaQuery, String expectedExprStr) {
-      FilterParsingResult<Class<?>> parsingResult = queryParser.parseQuery(jpaQuery, FilterProcessingChain.build(entityNamesResolver, propertyHelper, null));
+      FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       assertEquals(expectedExprStr, expr.toString());
    }

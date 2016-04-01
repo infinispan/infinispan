@@ -168,8 +168,14 @@ final class PredicateOptimisations {
     * @return null or a replacement BooleanExpr
     */
    private static BooleanExpr optimizeOverlappingIntervalPredicates(ComparisonExpr first, ComparisonExpr second, boolean isConjunction) {
-      final Comparable firstValue = ((ConstantValueExpr) first.getRightChild()).getConstantValue();
-      final Comparable secondValue = ((ConstantValueExpr) second.getRightChild()).getConstantValue();
+      final ConstantValueExpr firstConstant = (ConstantValueExpr) first.getRightChild();
+      final ConstantValueExpr secondConstant = (ConstantValueExpr) second.getRightChild();
+      if (firstConstant.isParameter() || secondConstant.isParameter()) {
+         // if an interval end is a parameter then it is too early to do optimisations
+         return null;
+      }
+      final Comparable firstValue = firstConstant.getConstantValue();
+      final Comparable secondValue = secondConstant.getConstantValue();
       final int cmp = firstValue.compareTo(secondValue);
 
       if (first.getComparisonType() == ComparisonExpr.Type.EQUAL) {

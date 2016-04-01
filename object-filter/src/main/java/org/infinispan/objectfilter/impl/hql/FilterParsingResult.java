@@ -5,7 +5,7 @@ import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @param <TypeMetadata> is either {@link java.lang.Class} or {@link org.infinispan.protostream.descriptors.Descriptor}
@@ -39,6 +39,8 @@ public final class FilterParsingResult<TypeMetadata> {
       }
    }
 
+   private final String jpaQuery;
+   private final Set<String> parameterNames;
    private final BooleanExpr whereClause;
    private final BooleanExpr havingClause;
    private final String targetEntityName;
@@ -48,22 +50,36 @@ public final class FilterParsingResult<TypeMetadata> {
    private final PropertyPath[] groupBy;
    private final SortField[] sortFields;
 
-   FilterParsingResult(BooleanExpr whereClause, BooleanExpr havingClause,
-                       String targetEntityName, TypeMetadata targetEntityMetadata,
-                       List<PropertyPath> projectedPaths, List<Class<?>> projectedTypes,
-                       List<PropertyPath> groupBy,
-                       List<SortField> sortFields) {
+   //todo [anistor] make package local
+   public FilterParsingResult(String jpaQuery,
+                              Set<String> parameterNames,
+                              BooleanExpr whereClause,
+                              BooleanExpr havingClause,
+                              String targetEntityName, TypeMetadata targetEntityMetadata,
+                              PropertyPath[] projectedPaths, Class<?>[] projectedTypes,
+                              PropertyPath[] groupBy,
+                              SortField[] sortFields) {
+      this.jpaQuery = jpaQuery;
+      this.parameterNames = parameterNames;
       this.whereClause = whereClause;
       this.havingClause = havingClause;
       this.targetEntityName = targetEntityName;
       this.targetEntityMetadata = targetEntityMetadata;
-      if (projectedPaths != null && (projectedTypes == null || projectedTypes.size() != projectedPaths.size()) || projectedPaths == null && projectedTypes != null) {
+      if (projectedPaths != null && (projectedTypes == null || projectedTypes.length != projectedPaths.length) || projectedPaths == null && projectedTypes != null) {
          throw new IllegalArgumentException("projectedPaths and projectedTypes sizes must match");
       }
-      this.projectedPaths = projectedPaths == null ? null : projectedPaths.toArray(new PropertyPath[projectedPaths.size()]);
-      this.projectedTypes = projectedTypes == null ? null : projectedTypes.toArray(new Class<?>[projectedTypes.size()]);
-      this.groupBy = groupBy == null ? null : groupBy.toArray(new PropertyPath[groupBy.size()]);
-      this.sortFields = sortFields == null ? null : sortFields.toArray(new SortField[sortFields.size()]);
+      this.projectedPaths = projectedPaths;
+      this.projectedTypes = projectedTypes;
+      this.groupBy = groupBy;
+      this.sortFields = sortFields;
+   }
+
+   public String getJpaQuery() {
+      return jpaQuery;
+   }
+
+   public Set<String> getParameterNames() {
+      return parameterNames;
    }
 
    /**
@@ -155,7 +171,9 @@ public final class FilterParsingResult<TypeMetadata> {
    @Override
    public String toString() {
       return "FilterParsingResult [" +
-            "targetEntityName=" + targetEntityName
+            " jpaQuery=" + jpaQuery
+            + ", targetEntityName=" + targetEntityName
+            + ", parameterNames=" + parameterNames
             + ", whereClause=" + whereClause
             + ", havingClause=" + havingClause
             + ", projectedPaths=" + Arrays.toString(projectedPaths)

@@ -1,7 +1,6 @@
 package org.infinispan.objectfilter.impl.hql;
 
 import org.antlr.runtime.tree.Tree;
-import org.hibernate.hql.ast.TypeDescriptor;
 import org.hibernate.hql.ast.common.JoinType;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PathedPropertyReference;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PathedPropertyReferenceSource;
@@ -9,6 +8,7 @@ import org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.QueryResolverDelegate;
 import org.infinispan.objectfilter.impl.logging.Log;
+import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
 
 import java.util.Collections;
@@ -21,21 +21,31 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class FilterQueryResolverDelegate implements QueryResolverDelegate {
+public class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    private static final Log log = Logger.getMessageLogger(Log.class, FilterQueryResolverDelegate.class.getName());
 
-   private final Map<String, String> aliasToEntityType = new HashMap<>();
+   protected final Map<String, String> aliasToEntityType = new HashMap<>();
 
-   private final ObjectPropertyHelper propertyHelper;
+   protected final Map<String, PropertyPath> aliasToPropertyPath = new HashMap<>();
 
-   private final EntityNamesResolver entityNamesResolver;
+   protected final ObjectPropertyHelper propertyHelper;
 
-   private String targetType;
+   protected final EntityNamesResolver entityNamesResolver;
 
-   private boolean definingSelect = false;
+   protected String targetType;
 
-   FilterQueryResolverDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper propertyHelper) {
+   protected Class<?> targetClass;
+
+   protected String alias;
+
+   protected enum Status {
+      DEFINING_SELECT, DEFINING_FROM
+   }
+
+   protected Status status;
+
+   public FilterQueryResolverDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper propertyHelper) {
       this.entityNamesResolver = entityNamesResolver;
       this.propertyHelper = propertyHelper;
    }
@@ -46,20 +56,23 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
       String entityName = entityNameTree.getText();
       String prevAlias = aliasToEntityType.put(alias, entityName);
       if (prevAlias != null && !prevAlias.equalsIgnoreCase(entityName)) {
-         throw new UnsupportedOperationException("Alias reuse currently not supported: aliasTree " + alias + " already assigned to type " + prevAlias);
-      }
-      if (entityNamesResolver.getClassFromName(entityName) == null) {
-         throw new IllegalStateException("Unknown entity name " + entityName);
+         throw new UnsupportedOperationException("Alias reuse currently not supported: alias " + alias + " already assigned to type " + prevAlias);
       }
       if (targetType != null) {
          throw new IllegalStateException("Can't target multiple types: " + targetType + " already selected before " + entityName);
       }
       targetType = entityName;
+      targetClass = entityNamesResolver.getClassFromName(entityName);
+      if (targetClass == null) {
+         throw new IllegalStateException("Unknown entity name " + entityName);
+      }
    }
 
    @Override
    public void registerJoinAlias(Tree alias, PropertyPath path) {
-      throw new UnsupportedOperationException("Not implemented");
+      if (!path.getNodes().isEmpty() && !aliasToPropertyPath.containsKey(alias.getText())) {
+         aliasToPropertyPath.put(alias.getText(), path);
+      }
    }
 
    @Override
@@ -68,50 +81,91 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
    }
 
    @Override
-   public PathedPropertyReferenceSource normalizeUnqualifiedPropertyReference(Tree property) {
-      if (aliasToEntityType.containsKey(property.getText())) {
-         return normalizeQualifiedRoot(property);
+   public PathedPropertyReferenceSource normalizeUnqualifiedPropertyReference(Tree propertyTree) {
+      String property = propertyTree.getText();
+      if (aliasToEntityType.containsKey(property)) {
+         return normalizeQualifiedRoot(propertyTree);
       }
 
-      return normalizeProperty(new FilterEntityTypeDescriptor(targetType, propertyHelper), Collections.emptyList(), property.getText());
+      return normalizeProperty(new FilterEntityTypeDescriptor(targetType, propertyHelper), Collections.emptyList(), property);
    }
 
    @Override
    public boolean isPersisterReferenceAlias() {
-      return true;
+      return aliasToEntityType.containsKey(alias);
    }
 
    @Override
    public PathedPropertyReferenceSource normalizeUnqualifiedRoot(Tree identifier382) {
-      throw new UnsupportedOperationException("Not implemented");
+      String aliasText = identifier382.getText();
+      if (aliasToEntityType.containsKey(aliasText)) {
+         return normalizeQualifiedRoot(identifier382);
+      }
+      if (aliasToPropertyPath.containsKey(aliasText)) {
+         PropertyPath propertyPath = aliasToPropertyPath.get(aliasText);
+         if (propertyPath == null) {
+            throw log.getUnknownAliasException(aliasText);
+         }
+         FilterTypeDescriptor sourceType = (FilterTypeDescriptor) propertyPath.getNodes().get(0).getType();
+         List<String> resolveAlias = resolveAlias(propertyPath);
+
+         return new PathedPropertyReference(aliasText, new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(), resolveAlias, propertyHelper), true);
+      }
+      throw log.getUnknownAliasException(aliasText);
    }
 
    @Override
    public PathedPropertyReferenceSource normalizeQualifiedRoot(Tree root) {
-      String entityNameForAlias = aliasToEntityType.get(root.getText());
+      String alias = root.getText();
+      String entityNameForAlias = aliasToEntityType.get(alias);
 
       if (entityNameForAlias == null) {
-         throw log.getUnknownAliasException(root.getText());
+         PropertyPath propertyPath = aliasToPropertyPath.get(alias);
+         if (propertyPath == null) {
+            throw log.getUnknownAliasException(alias);
+         }
+         return new PathedPropertyReference(StringHelper.join(propertyPath.getNodeNamesWithoutAlias()), null, false);
       }
 
       if (entityNamesResolver.getClassFromName(entityNameForAlias) == null) {
          throw new IllegalStateException("Unknown entity name " + entityNameForAlias);
       }
 
-      return new PathedPropertyReference(root.getText(), new FilterEntityTypeDescriptor(entityNameForAlias, propertyHelper), true);
+      return new PathedPropertyReference(alias, new FilterEntityTypeDescriptor(entityNameForAlias, propertyHelper), true);
    }
 
    @Override
-   public PathedPropertyReferenceSource normalizePropertyPathIntermediary(PropertyPath path, Tree propertyName) {
+   public PathedPropertyReferenceSource normalizePropertyPathIntermediary(PropertyPath path, Tree propertyNameTree) {
       FilterTypeDescriptor sourceType = (FilterTypeDescriptor) path.getLastNode().getType();
-
-      if (!sourceType.hasProperty(propertyName.getText())) {
-         throw log.getNoSuchPropertyException(sourceType.toString(), propertyName.getText());
+      String propertyName = propertyNameTree.getText();
+      if (!sourceType.hasProperty(propertyName)) {
+         throw log.getNoSuchPropertyException(sourceType.toString(), propertyName);
       }
 
-      List<String> newPath = new LinkedList<>(path.getNodeNamesWithoutAlias());
-      newPath.add(propertyName.getText());
-      return new PathedPropertyReference(propertyName.getText(), new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(), newPath, propertyHelper), false);
+      List<String> newPath = resolveAlias(path);
+      newPath.add(propertyName);
+      return new PathedPropertyReference(propertyName, new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(), newPath, propertyHelper), false);
+   }
+
+   private List<String> resolveAlias(PropertyPath path) {
+      if (path.getFirstNode().isAlias()) {
+         String alias = path.getFirstNode().getName();
+         if (aliasToEntityType.containsKey(alias)) {
+            // Alias for entity
+            return path.getNodeNamesWithoutAlias();
+         } else if (aliasToPropertyPath.containsKey(alias)) {
+            // Alias for embedded
+            PropertyPath propertyPath = aliasToPropertyPath.get(alias);
+            List<String> resolvedAlias = resolveAlias(propertyPath);
+            resolvedAlias.addAll(path.getNodeNamesWithoutAlias());
+            return resolvedAlias;
+         } else {
+            // Alias not found
+            throw log.getUnknownAliasException(alias);
+         }
+      }
+      // It does not start with an alias
+      return path.getNodeNamesWithoutAlias();
    }
 
    @Override
@@ -135,16 +189,15 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
       return normalizeProperty((FilterTypeDescriptor) path.getLastNode().getType(), path.getNodeNamesWithoutAlias(), propertyNameNode.getText());
    }
 
-   private PathedPropertyReferenceSource normalizeProperty(FilterTypeDescriptor type, List<String> path, String propertyName) {
+   protected PathedPropertyReferenceSource normalizeProperty(FilterTypeDescriptor type, List<String> path, String propertyName) {
       if (!type.hasProperty(propertyName)) {
          throw log.getNoSuchPropertyException(type.toString(), propertyName);
       }
 
-      List<String> newPath = new LinkedList<>(path);
-      newPath.add(propertyName);
-
-      TypeDescriptor propType;
+      FilterTypeDescriptor propType;
       if (type.hasEmbeddedProperty(propertyName)) {
+         List<String> newPath = new LinkedList<>(path);
+         newPath.add(propertyName);
          propType = new FilterEmbeddedEntityTypeDescriptor(type.getEntityType(), newPath, propertyHelper);
       } else {
          propType = new FilterPropertyTypeDescriptor();
@@ -154,22 +207,24 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    @Override
    public void pushFromStrategy(JoinType joinType, Tree associationFetchTree, Tree propertyFetchTree, Tree alias) {
-      throw new UnsupportedOperationException("Not implemented");
+      status = Status.DEFINING_FROM;
+      this.alias = alias.getText();
    }
 
    @Override
    public void pushSelectStrategy() {
-      definingSelect = true;
+      status = Status.DEFINING_SELECT;
    }
 
    @Override
    public void popStrategy() {
-      definingSelect = false;
+      status = null;
+      alias = null;
    }
 
    @Override
    public void propertyPathCompleted(PropertyPath path) {
-      if (definingSelect && path.getLastNode().getType() instanceof FilterEmbeddedEntityTypeDescriptor) {
+      if (status == Status.DEFINING_SELECT && path.getLastNode().getType() instanceof FilterEmbeddedEntityTypeDescriptor) {
          FilterEmbeddedEntityTypeDescriptor type = (FilterEmbeddedEntityTypeDescriptor) path.getLastNode().getType();
          throw log.getProjectionOfCompleteEmbeddedEntitiesNotSupportedException(type.getEntityType(), path.asStringPathWithoutAlias());
       }

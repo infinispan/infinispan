@@ -1,8 +1,10 @@
 package org.infinispan.query.dsl.embedded.impl;
 
 import org.hibernate.hql.ParsingException;
+import org.hibernate.search.exception.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
@@ -78,7 +80,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
       user1.setAge(22);
-      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
       Address address1 = new AddressHS();
@@ -107,7 +109,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       user3.setName("Spider");
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
-      user3.setAccountIds(Collections.<Integer>emptySet());
+      user3.setAccountIds(Collections.emptySet());
 
       Account account1 = new AccountHS();
       account1.setId(1);
@@ -323,14 +325,16 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testBuildLuceneQuery() {
-      CacheQuery q = qe.buildLuceneQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
+      FilterParsingResult<?> parsingResult = qe.getMatcher().getParser().parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
+      CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
       List<Object> list = q.list();
       assertEquals(3, list.size());
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL100002: The type org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS has no indexed property named notes.")
+   @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = "Unable to find field notes in org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS")
    public void testBuildLuceneQueryOnNonIndexedField() {
-      CacheQuery q = qe.buildLuceneQuery("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
+      FilterParsingResult<?> parsingResult = qe.getMatcher().getParser().parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'");
+      CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
    }
 
    public void testGlobalCount() {

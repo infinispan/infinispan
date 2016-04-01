@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl.hql;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -28,16 +27,20 @@ final class FilterEmbeddedEntityTypeDescriptor implements FilterTypeDescriptor {
 
    @Override
    public boolean hasProperty(String propertyName) {
-      List<String> newPath = new LinkedList<>(propertyPath);
-      newPath.add(propertyName);
-      return propertyHelper.hasProperty(entityType, newPath);
+      return propertyHelper.hasProperty(entityType, makeJoinedPath(propertyName));
    }
 
    @Override
    public boolean hasEmbeddedProperty(String propertyName) {
-      List<String> newPath = new LinkedList<>(propertyPath);
-      newPath.add(propertyName);
-      return propertyHelper.hasEmbeddedProperty(entityType, newPath);
+      return propertyHelper.hasEmbeddedProperty(entityType, makeJoinedPath(propertyName));
+   }
+
+   @Override
+   public String[] makeJoinedPath(String propName) {
+      String[] newPath = new String[propertyPath.size() + 1];
+      newPath = propertyPath.toArray(newPath);
+      newPath[newPath.length - 1] = propName;
+      return newPath;
    }
 
    @Override

@@ -6,8 +6,6 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 
-import java.util.List;
-
 /**
  * Tests if a field is indexed by examining the Protobuf metadata.
  *
@@ -23,7 +21,7 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
    }
 
    @Override
-   public boolean isIndexed(List<String> propertyPath) {
+   public boolean isIndexed(String[] propertyPath) {
       Descriptor md = messageDescriptor;
       int i = 0;
       for (String p : propertyPath) {
@@ -35,7 +33,7 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
          if (field.getJavaType() == JavaType.MESSAGE) {
             md = field.getMessageType();
          } else {
-            if (i == propertyPath.size()) {
+            if (i == propertyPath.length) {
                IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
                return indexingMetadata == null || indexingMetadata.isFieldIndexed(field.getNumber());
             } else {
@@ -47,7 +45,7 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
    }
 
    @Override
-   public boolean isStored(List<String> propertyPath) {
+   public boolean isStored(String[] propertyPath) {
       Descriptor md = messageDescriptor;
       int i = 0;
       for (String p : propertyPath) {
@@ -59,7 +57,7 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
          if (field.getJavaType() == JavaType.MESSAGE) {
             md = field.getMessageType();
          } else {
-            if (i == propertyPath.size()) {
+            if (i == propertyPath.length) {
                IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
                return indexingMetadata == null || indexingMetadata.isFieldStored(field.getNumber());
             } else {

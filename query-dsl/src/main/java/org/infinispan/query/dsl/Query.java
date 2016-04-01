@@ -14,6 +14,8 @@ import java.util.Map;
  */
 public interface Query {
 
+   Map<String, Object> getParameters();
+
    Query setParameter(String paramName, Object paramValue);
 
    Query setParameters(Map<String, Object> paramValues);

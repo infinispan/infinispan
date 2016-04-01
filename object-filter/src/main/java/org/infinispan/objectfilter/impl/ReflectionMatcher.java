@@ -1,15 +1,15 @@
 package org.infinispan.objectfilter.impl;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.JPQLParser;
 import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 import java.beans.IntrospectionException;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -17,9 +17,9 @@ import java.util.Map;
  */
 public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.PropertyAccessor, String> {
 
-   private final EntityNamesResolver entityNamesResolver;
-
    private final ReflectionPropertyHelper propertyHelper;
+
+   private final JPQLParser<Class<?>> parser;
 
    public ReflectionMatcher(ClassLoader classLoader) {
       this(new ReflectionEntityNamesResolver(classLoader));
@@ -29,8 +29,8 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
       if (entityNamesResolver == null) {
          throw new IllegalArgumentException("The EntityNamesResolver argument cannot be null");
       }
-      this.entityNamesResolver = entityNamesResolver;
       propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
+      parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
    }
 
    @Override
@@ -54,13 +54,13 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    }
 
    @Override
-   protected FilterProcessingChain<Class<?>> createFilterProcessingChain(Map<String, Object> namedParameters) {
-      return FilterProcessingChain.build(entityNamesResolver, propertyHelper, namedParameters);
+   protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> getFilterRegistryForType(Class<?> entityType) {
+      return filtersByType.get(entityType);
    }
 
    @Override
-   protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> getFilterRegistryForType(Class<?> entityType) {
-      return filtersByType.get(entityType);
+   public JPQLParser<Class<?>> getParser() {
+      return parser;
    }
 
    @Override
@@ -92,8 +92,8 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
       }
 
       @Override
-      public List<String> translatePropertyPath(List<String> path) {
-         return path;
+      public List<String> translatePropertyPath(String[] path) {
+         return Arrays.asList(path);
       }
 
       @Override

@@ -1,6 +1,8 @@
 package org.infinispan.objectfilter;
 
 import java.util.Comparator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A filter that tests if an object matches a pre-defined condition and returns either the original instance or the
@@ -23,6 +25,15 @@ public interface ObjectFilter {
    String[] getProjection();
 
    Class<?>[] getProjectionTypes();
+
+   /**
+    * Returns the parameter names or an empty Set if there are no parameters.
+    */
+   Set<String> getParameterNames();
+
+   Map<String, Object> getParameters();
+
+   ObjectFilter withParameters(Map<String, Object> namedParameters);
 
    /**
     * The array of sort specifications if defined, or {@code null} otherwise.

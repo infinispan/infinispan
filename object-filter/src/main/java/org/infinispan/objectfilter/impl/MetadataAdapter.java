@@ -19,7 +19,7 @@ public interface MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId ex
     * Transforms a String property path into an internal representation of the path which might not be String based
     * (AttributeId is an Integer in the Protobuf case).
     */
-   List<AttributeId> translatePropertyPath(List<String> path);
+   List<AttributeId> translatePropertyPath(String[] path);
 
    AttributeMetadata makeChildAttributeMetadata(AttributeMetadata parentAttributeMetadata, AttributeId attribute);
 

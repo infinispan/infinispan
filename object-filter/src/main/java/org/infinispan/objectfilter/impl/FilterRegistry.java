@@ -72,7 +72,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       if (projection != null && projection.length != 0) {
          translatedProjections = new ArrayList<>(projection.length);
          for (String projectionPath : projection) {
-            translatedProjections.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(projectionPath)));
+            translatedProjections.add(metadataAdapter.translatePropertyPath(StringHelper.split(projectionPath)));
          }
       }
 
@@ -95,7 +95,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       }
 
       BooleanExpr normalizedQuery = booleanFilterNormalizer.normalize(query);
-      BETree beTree = treeMaker.make(normalizedQuery);
+      BETree beTree = treeMaker.make(normalizedQuery, namedParameters);
 
       FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<>(queryString, namedParameters, useIntervals, metadataAdapter, beTree, callback, projection, projectionTypes, translatedProjections, sortFields, translatedSortFields, eventTypes);
       filterSubscription.registerProjection(predicateIndex);
