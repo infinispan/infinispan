@@ -14,6 +14,7 @@ package org.infinispan.objectfilter;
  * @author anistor@redhat.com
  * @since 7.0
  */
+@FunctionalInterface
 public interface FilterCallback {
 
    /**

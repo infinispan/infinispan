@@ -17,7 +17,7 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
 
    private final QueryEngine queryEngine;
 
-   public EmbeddedQueryBuilder(EmbeddedQueryFactory queryFactory, QueryEngine queryEngine, String rootType) {
+   EmbeddedQueryBuilder(EmbeddedQueryFactory queryFactory, QueryEngine queryEngine, String rootType) {
       super(queryFactory, rootType);
       this.queryEngine = queryEngine;
    }

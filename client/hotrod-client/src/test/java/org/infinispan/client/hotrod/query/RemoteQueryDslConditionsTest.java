@@ -34,12 +34,17 @@ import java.util.List;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.query.dsl.Expression.*;
+import static org.infinispan.query.dsl.Expression.avg;
+import static org.infinispan.query.dsl.Expression.count;
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.min;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.infinispan.query.dsl.Expression.sum;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model.

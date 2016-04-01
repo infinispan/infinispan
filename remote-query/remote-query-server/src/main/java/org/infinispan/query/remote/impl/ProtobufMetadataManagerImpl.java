@@ -140,7 +140,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       if (fileNames.length != contents.length) {
          throw new MBeanException(new IllegalArgumentException("invalid parameter sizes"));
       }
-      Map<String, String> files = new HashMap<String, String>(fileNames.length);
+      Map<String, String> files = new HashMap<>(fileNames.length);
       for (int i = 0; i < fileNames.length; i++) {
          files.put(fileNames[i], contents[i]);
       }
@@ -164,7 +164,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    @ManagedAttribute(description = "The names of all Protobuf files", displayName = "Protofile Names")
    @Override
    public String[] getProtofileNames() {
-      Set<String> fileNames = new HashSet<String>();
+      Set<String> fileNames = new HashSet<>();
       for (String k : getCache().keySet()) {
          if (k.endsWith(PROTO_KEY_SUFFIX)) {
             fileNames.add(k);

@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class RegexCondition extends Condition<String> {
+public final class RegexCondition implements Condition<String> {
 
    private enum Type {
       Regexp, Contains, StartsWith, EndsWith, Equals

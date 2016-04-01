@@ -50,7 +50,6 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -89,9 +88,9 @@ public class QueryEngine {
     */
    private SearchIntegrator searchFactory;
 
-   protected final QueryParser queryParser = new QueryParser();
+   private final QueryParser queryParser = new QueryParser();
 
-   protected final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
+   private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    public QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
       this.cache = cache;
@@ -149,7 +148,7 @@ public class QueryEngine {
          throw log.groupingAndAggregationQueriesMustUseProjections();
       }
 
-      LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata>();
+      LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new LinkedHashMap<>();
 
       final ObjectPropertyHelper<?> propertyHelper = getMatcher().getPropertyHelper();
       if (parsingResult.getGroupBy() != null) {
@@ -224,8 +223,8 @@ public class QueryEngine {
          }
       }
 
-      LinkedHashMap<String, Integer> inColumns = new LinkedHashMap<String, Integer>();
-      List<FieldAccumulator> accumulators = new LinkedList<FieldAccumulator>();
+      LinkedHashMap<String, Integer> inColumns = new LinkedHashMap<>();
+      List<FieldAccumulator> accumulators = new LinkedList<>();
       RowPropertyHelper.ColumnMetadata[] _columns = new RowPropertyHelper.ColumnMetadata[columns.size()];
       for (PropertyPath p : columns.keySet()) {
          RowPropertyHelper.ColumnMetadata c = columns.get(p);
@@ -325,7 +324,7 @@ public class QueryEngine {
 
          @Override
          public BooleanExpr visit(OrExpr orExpr) {
-            List<BooleanExpr> visitedChildren = new ArrayList<BooleanExpr>();
+            List<BooleanExpr> visitedChildren = new ArrayList<>();
             for (BooleanExpr c : orExpr.getChildren()) {
                visitedChildren.add(c.acceptVisitor(this));
             }
@@ -334,7 +333,7 @@ public class QueryEngine {
 
          @Override
          public BooleanExpr visit(AndExpr andExpr) {
-            List<BooleanExpr> visitedChildren = new ArrayList<BooleanExpr>();
+            List<BooleanExpr> visitedChildren = new ArrayList<>();
             for (BooleanExpr c : andExpr.getChildren()) {
                visitedChildren.add(c.acceptVisitor(this));
             }
@@ -415,8 +414,8 @@ public class QueryEngine {
       String firstPhaseQueryStr = firstPhaseQuery.toString();
       BaseQuery baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr, namedParameters));
 
-      List<FieldAccumulator> secondPhaseAccumulators = new LinkedList<FieldAccumulator>();
-      List<FieldAccumulator> thirdPhaseAccumulators = new LinkedList<FieldAccumulator>();
+      List<FieldAccumulator> secondPhaseAccumulators = new LinkedList<>();
+      List<FieldAccumulator> thirdPhaseAccumulators = new LinkedList<>();
       RowPropertyHelper.ColumnMetadata[] _columns = new RowPropertyHelper.ColumnMetadata[columns.size()];
       StringBuilder secondPhaseQuery = new StringBuilder();
       secondPhaseQuery.append("SELECT ");
@@ -527,12 +526,12 @@ public class QueryEngine {
       boolean allProjectionsAreStored = true;
       LinkedHashMap<PropertyPath, List<Integer>> projectionsMap = null;
       if (parsingResult.getProjectedPaths() != null) {
-         projectionsMap = new LinkedHashMap<PropertyPath, List<Integer>>();
+         projectionsMap = new LinkedHashMap<>();
          for (int i = 0; i < parsingResult.getProjectedPaths().length; i++) {
             PropertyPath p = parsingResult.getProjectedPaths()[i];
             List<Integer> idx = projectionsMap.get(p);
             if (idx == null) {
-               idx = new ArrayList<Integer>();
+               idx = new ArrayList<>();
                projectionsMap.put(p, idx);
                if (!indexedFieldProvider.isStored(p.getPath())) {
                   allProjectionsAreStored = false;
@@ -546,7 +545,7 @@ public class QueryEngine {
       SortField[] sortFields = parsingResult.getSortFields();
       if (sortFields != null) {
          // deduplicate sort fields
-         LinkedHashMap<String, SortField> sortFieldMap = new LinkedHashMap<String, SortField>();
+         LinkedHashMap<String, SortField> sortFieldMap = new LinkedHashMap<>();
          for (SortField sf : sortFields) {
             PropertyPath p = sf.getPath();
             String asStringPath = p.asStringPath();
@@ -645,7 +644,7 @@ public class QueryEngine {
       FilterParsingResult<?> parsingResult;
       // if parameters are present caching cannot be currently performed due to internal implementation limitations
       if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
-         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, FilterParsingResult.class);
+         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpqlString, FilterParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
             parsingResult = getMatcher().parse(jpqlString, namedParameters);
@@ -661,7 +660,7 @@ public class QueryEngine {
       ObjectFilter objectFilter;
       // if parameters are present caching cannot be currently performed due to internal implementation limitations
       if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
-         KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>> queryCacheKey = new KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>>(jpqlString, new KeyValuePair<Class, List<FieldAccumulator>>(matcher.getClass(), acc));
+         KeyValuePair<String, KeyValuePair<Class, List<FieldAccumulator>>> queryCacheKey = new KeyValuePair<>(jpqlString, new KeyValuePair<>(matcher.getClass(), acc));
          objectFilter = queryCache.get(queryCacheKey);
          if (objectFilter == null) {
             objectFilter = matcher.getObjectFilter(jpqlString, namedParameters, acc);
@@ -680,12 +679,9 @@ public class QueryEngine {
    protected JPAFilterAndConverter makeFilter(String jpaQuery, Map<String, Object> namedParameters) {
       final JPAFilterAndConverter filter = createFilter(jpaQuery, namedParameters);
 
-      SecurityActions.doPrivileged(new PrivilegedAction<Object>() {
-         @Override
-         public Object run() {
-            cache.getComponentRegistry().wireDependencies(filter);
-            return null;
-         }
+      SecurityActions.doPrivileged(() -> {
+         cache.getComponentRegistry().wireDependencies(filter);
+         return null;
       });
 
       return filter;
@@ -734,7 +730,7 @@ public class QueryEngine {
       LuceneQueryParsingResult parsingResult;
       // if parameters are present caching cannot be currently performed due to internal implementation limitations
       if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
-         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, LuceneQueryParsingResult.class);
+         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpqlString, LuceneQueryParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
             parsingResult = queryParser.parseQuery(jpqlString, makeParsingProcessingChain(namedParameters));

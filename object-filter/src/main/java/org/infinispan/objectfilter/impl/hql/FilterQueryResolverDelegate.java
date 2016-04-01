@@ -25,7 +25,7 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    private static final Log log = Logger.getMessageLogger(Log.class, FilterQueryResolverDelegate.class.getName());
 
-   private final Map<String, String> aliasToEntityType = new HashMap<String, String>();
+   private final Map<String, String> aliasToEntityType = new HashMap<>();
 
    private final ObjectPropertyHelper propertyHelper;
 
@@ -35,7 +35,7 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    private boolean definingSelect = false;
 
-   public FilterQueryResolverDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper propertyHelper) {
+   FilterQueryResolverDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper propertyHelper) {
       this.entityNamesResolver = entityNamesResolver;
       this.propertyHelper = propertyHelper;
    }
@@ -73,7 +73,7 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
          return normalizeQualifiedRoot(property);
       }
 
-      return normalizeProperty(new FilterEntityTypeDescriptor(targetType, propertyHelper), Collections.<String>emptyList(), property.getText());
+      return normalizeProperty(new FilterEntityTypeDescriptor(targetType, propertyHelper), Collections.emptyList(), property.getText());
    }
 
    @Override
@@ -109,7 +109,7 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
          throw log.getNoSuchPropertyException(sourceType.toString(), propertyName.getText());
       }
 
-      List<String> newPath = new LinkedList<String>(path.getNodeNamesWithoutAlias());
+      List<String> newPath = new LinkedList<>(path.getNodeNamesWithoutAlias());
       newPath.add(propertyName.getText());
       return new PathedPropertyReference(propertyName.getText(), new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(), newPath, propertyHelper), false);
    }
@@ -140,7 +140,7 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
          throw log.getNoSuchPropertyException(type.toString(), propertyName);
       }
 
-      List<String> newPath = new LinkedList<String>(path);
+      List<String> newPath = new LinkedList<>(path);
       newPath.add(propertyName);
 
       TypeDescriptor propType;

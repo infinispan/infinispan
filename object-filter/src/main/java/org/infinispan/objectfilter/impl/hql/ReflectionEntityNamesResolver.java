@@ -23,9 +23,7 @@ public final class ReflectionEntityNamesResolver implements EntityNamesResolver 
             } else {
                return Class.forName(entityName);
             }
-         } catch (ClassNotFoundException ex) {
-            // ignore
-         } catch (NoClassDefFoundError er) {
+         } catch (ClassNotFoundException | NoClassDefFoundError ex) {
             // ignore
          }
       }

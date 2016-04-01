@@ -73,7 +73,7 @@ public final class QueryFacadeImpl implements QueryFacade {
       if (namedParameters == null || namedParameters.isEmpty()) {
          return null;
       }
-      Map<String, Object> params = new HashMap<String, Object>(namedParameters.size());
+      Map<String, Object> params = new HashMap<>(namedParameters.size());
       for (QueryRequest.NamedParameter p : namedParameters) {
          params.put(p.getName(), p.getValue());
       }
@@ -85,7 +85,7 @@ public final class QueryFacadeImpl implements QueryFacade {
       int numResults = list.size();
       String[] projection = q.getProjection();
       int projSize = projection != null ? projection.length : 0;
-      List<WrappedMessage> results = new ArrayList<WrappedMessage>(projSize == 0 ? numResults : numResults * projSize);
+      List<WrappedMessage> results = new ArrayList<>(projSize == 0 ? numResults : numResults * projSize);
 
       for (Object o : list) {
          if (projSize == 0) {

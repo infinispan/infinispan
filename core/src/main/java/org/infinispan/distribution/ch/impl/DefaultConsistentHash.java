@@ -497,7 +497,7 @@ public class DefaultConsistentHash implements ConsistentHash {
 
       @Override
       public Set<Class<? extends DefaultConsistentHash>> getTypeClasses() {
-         return Collections.<Class<? extends DefaultConsistentHash>>singleton(DefaultConsistentHash.class);
+         return Collections.singleton(DefaultConsistentHash.class);
       }
    }
 }

@@ -72,7 +72,7 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
          // collect unsorted results and get the requested page if any was specified
          try {
             if (iterator.hasNext()) {
-               results = new ArrayList<Object>(INITIAL_CAPACITY);
+               results = new ArrayList<>(INITIAL_CAPACITY);
                while (iterator.hasNext()) {
                   ObjectFilter.FilterResult entry = iterator.next();
                   resultSize++;
@@ -92,7 +92,7 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
          }
       } else {
          // collect and sort results, in reverse order for now
-         PriorityQueue<ObjectFilter.FilterResult> filterResults = new PriorityQueue<ObjectFilter.FilterResult>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
+         PriorityQueue<ObjectFilter.FilterResult> filterResults = new PriorityQueue<>(INITIAL_CAPACITY, new ReverseFilterResultComparator(comparator));
          try {
             while (iterator.hasNext()) {
                ObjectFilter.FilterResult entry = iterator.next();

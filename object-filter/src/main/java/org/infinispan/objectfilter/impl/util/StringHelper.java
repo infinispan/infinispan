@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.util;
 
 import org.hibernate.hql.internal.util.Strings;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,10 +24,8 @@ public final class StringHelper {
    }
 
    public static List<String> splitPropertyPath(String propertyPath) {
-      List<String> pathAsList = new LinkedList<String>();
-      for (String p : propertyPath.split("[.]")) {
-         pathAsList.add(p);
-      }
+      List<String> pathAsList = new LinkedList<>();
+      Collections.addAll(pathAsList, propertyPath.split("[.]"));
       return pathAsList;
    }
 }

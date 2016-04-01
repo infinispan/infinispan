@@ -152,11 +152,6 @@ public final class Grouper {
             private final Iterator<Object[]> iterator = groups.values().iterator();
 
             @Override
-            public void remove() {
-               throw new UnsupportedOperationException("remove");
-            }
-
-            @Override
             public boolean hasNext() {
                return iterator.hasNext();
             }

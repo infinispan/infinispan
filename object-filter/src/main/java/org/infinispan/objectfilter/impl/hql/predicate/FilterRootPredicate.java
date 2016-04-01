@@ -9,7 +9,7 @@ import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
  */
 class FilterRootPredicate extends RootPredicate<BooleanExpr> {
 
-   public FilterRootPredicate() {
+   FilterRootPredicate() {
    }
 
    @Override

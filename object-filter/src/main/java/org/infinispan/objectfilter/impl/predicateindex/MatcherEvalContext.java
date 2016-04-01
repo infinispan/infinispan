@@ -69,7 +69,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    public void initMultiFilterContext(FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry) {
       rootNode = filterRegistry.getPredicateIndex().getRoot();
-      suspendedPredicateSubscriptionCounts = new HashMap<Predicate<?>, Counter>();
+      suspendedPredicateSubscriptionCounts = new HashMap<>();
       filterSubscriptions = filterRegistry.getFilterSubscriptions();
       filterContexts = new FilterEvalContext[filterRegistry.getFilterSubscriptions().size()];
    }

@@ -13,7 +13,7 @@ class FilterIsNullPredicate extends IsNullPredicate<BooleanExpr> {
 
    private final ValueExpr valueExpr;
 
-   public FilterIsNullPredicate(ValueExpr valueExpr) {
+   FilterIsNullPredicate(ValueExpr valueExpr) {
       super(valueExpr.toJpaString());
       this.valueExpr = valueExpr;
    }

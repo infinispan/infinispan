@@ -71,7 +71,7 @@ public class StateChunk {
 
       @Override
       public Set<Class<? extends StateChunk>> getTypeClasses() {
-         return Collections.<Class<? extends StateChunk>>singleton(StateChunk.class);
+         return Collections.singleton(StateChunk.class);
       }
 
       @Override

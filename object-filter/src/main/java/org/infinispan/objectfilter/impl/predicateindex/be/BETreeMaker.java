@@ -41,8 +41,8 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
    }
 
    public BETree make(BooleanExpr booleanExpr) {
-      List<BENode> nodes = new ArrayList<BENode>();
-      List<Integer> treeCounters = new ArrayList<Integer>();
+      List<BENode> nodes = new ArrayList<>();
+      List<Integer> treeCounters = new ArrayList<>();
 
       if (booleanExpr == null) {
          treeCounters.add(BETree.EXPR_TRUE);
@@ -105,7 +105,7 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
                if (useIntervals) {
                   addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(right.getConstantValue(), true, right.getConstantValue(), true)));
                } else {
-                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<Object>(isRepeated, new EqualsCondition(right.getConstantValue())));
+                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, new EqualsCondition(right.getConstantValue())));
                }
                break;
             case LESS:
@@ -124,16 +124,16 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
                throw new IllegalStateException("Unexpected comparison type: " + expr.getComparisonType());
          }
       } else if (condition instanceof IsNullExpr) {
-         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<Object>(isRepeated, IsNullCondition.INSTANCE));
+         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, IsNullCondition.INSTANCE));
       } else if (condition instanceof LikeExpr) {
-         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<String>(isRepeated, new RegexCondition(((LikeExpr) condition).getPattern())));
+         addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, new RegexCondition(((LikeExpr) condition).getPattern())));
       } else {
          throw new IllegalStateException("Unexpected condition type: " + condition);
       }
    }
 
    private void addPredicateNode(BENode parent, List<BENode> nodes, List<Integer> treeCounters, boolean isNegated, List<AttributeId> path, Predicate predicate) {
-      PredicateNode predicateNode = new PredicateNode<AttributeId>(parent, predicate, isNegated, path);
+      PredicateNode predicateNode = new PredicateNode<>(parent, predicate, isNegated, path);
       int size = nodes.size();
       predicateNode.setLocation(size, size + 1);
       nodes.add(predicateNode);

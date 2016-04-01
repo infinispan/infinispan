@@ -27,7 +27,7 @@ public final class Predicates<AttributeDomain extends Comparable<AttributeDomain
       /**
        * The callbacks of the subscribed predicates.
        */
-      private final List<Subscription> subscriptions = new ArrayList<Subscription>();
+      private final List<Subscription> subscriptions = new ArrayList<>();
 
       private Subscriptions(Predicate predicate) {
          this.predicate = predicate;
@@ -143,7 +143,7 @@ public final class Predicates<AttributeDomain extends Comparable<AttributeDomain
       } else {
          subscriptions = null;
          if (unorderedPredicates == null) {
-            unorderedPredicates = new ArrayList<Subscriptions>();
+            unorderedPredicates = new ArrayList<>();
          } else {
             for (int i = 0; i < unorderedPredicates.size(); i++) {
                Subscriptions s = unorderedPredicates.get(i);

@@ -28,14 +28,14 @@ final class FilterEmbeddedEntityTypeDescriptor implements FilterTypeDescriptor {
 
    @Override
    public boolean hasProperty(String propertyName) {
-      List<String> newPath = new LinkedList<String>(propertyPath);
+      List<String> newPath = new LinkedList<>(propertyPath);
       newPath.add(propertyName);
       return propertyHelper.hasProperty(entityType, newPath);
    }
 
    @Override
    public boolean hasEmbeddedProperty(String propertyName) {
-      List<String> newPath = new LinkedList<String>(propertyPath);
+      List<String> newPath = new LinkedList<>(propertyPath);
       newPath.add(propertyName);
       return propertyHelper.hasEmbeddedProperty(entityType, newPath);
    }

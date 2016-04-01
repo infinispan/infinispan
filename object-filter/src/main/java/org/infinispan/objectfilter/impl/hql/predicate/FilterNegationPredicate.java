@@ -10,7 +10,7 @@ import org.infinispan.objectfilter.impl.syntax.NotExpr;
  */
 class FilterNegationPredicate extends NegationPredicate<BooleanExpr> {
 
-   public FilterNegationPredicate() {
+   FilterNegationPredicate() {
    }
 
    @Override

@@ -65,7 +65,7 @@ final class HibernateSearchIndexedFieldProvider implements BooleShannonExpansion
       if (propertyMetadata == null) {
          return false;
       }
-      for (DocumentFieldMetadata dfm : propertyMetadata.getFieldMetadata()) {
+      for (DocumentFieldMetadata dfm : propertyMetadata.getFieldMetadataSet()) {
          if (dfm.getStore() == Store.NO) {
             return false;
          }

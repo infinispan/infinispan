@@ -144,7 +144,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
             }
 
             payloadMessageDescriptor = serializationContext.getMessageDescriptor(entityTypeName);
-            messageContext = new MessageContext<MessageContext>(null, null, payloadMessageDescriptor);
+            messageContext = new MessageContext<>(null, null, payloadMessageDescriptor);
          }
       }
    }
@@ -159,7 +159,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
    }
 
    private void pushContext(String fieldName, Descriptor messageDescriptor) {
-      messageContext = new MessageContext<MessageContext>(messageContext, fieldName, messageDescriptor);
+      messageContext = new MessageContext<>(messageContext, fieldName, messageDescriptor);
    }
 
    private void popContext() {
