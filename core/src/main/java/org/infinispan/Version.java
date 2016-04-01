@@ -29,6 +29,7 @@ public class Version {
    private final short versionShort;
    private final short marshallVersion;
    private final String majorMinor;
+   private final String major;
 
    private Version() {
       String parts[] = getParts(Injected.getVersion());
@@ -37,6 +38,7 @@ public class Version {
       moduleSlot = String.format("%s-%s.%s", MODULE_PREFIX, parts[0], parts[1]);
       marshallVersion = Short.valueOf(parts[0] + parts[1]);
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
+      major = parts[0];
    }
 
    public static String getVersion() {
@@ -53,6 +55,10 @@ public class Version {
 
    public static String getMajorMinor() {
       return INSTANCE.majorMinor;
+   }
+
+   public static String getMajor() {
+      return INSTANCE.major;
    }
 
    public static boolean compareTo(byte[] v) {
@@ -150,7 +156,7 @@ public class Version {
       static String getVersion() {
          return "0.0.0-SNAPSHOT"; // Will be replaced by the Maven Injection plugin
       }
-      
+
       static String getCodename() {
          return ""; // Will be replaced by the Maven Injection plugin
       }

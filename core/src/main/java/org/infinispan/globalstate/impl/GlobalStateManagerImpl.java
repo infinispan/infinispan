@@ -39,6 +39,9 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.1
  */
 public class GlobalStateManagerImpl implements GlobalStateManager {
+   public static final String VERSION = "@version";
+   public static final String TIMESTAMP = "@timestamp";
+   public static final String VERSION_MAJOR = "version-major";
    private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private GlobalConfiguration globalConfiguration;
    private List<GlobalStateProvider> stateProviders = new ArrayList<>();
@@ -62,7 +65,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
             throw log.nonWritableStateFile(stateFile);
          }
          // Validate the state before proceeding
-         log.globalStateLoad(state.getProperty("version"), state.getProperty("timestamp"));
+         log.globalStateLoad(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
 
          stateProviders.forEach(provider -> provider.prepareForRestore(state));
       } else {
@@ -84,12 +87,13 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    @Override
    public void writeGlobalState() {
       ScopedPersistentState state = new ScopedPersistentStateImpl(GLOBAL_SCOPE);
-      state.setProperty("version", Version.getVersion());
-      state.setProperty("timestamp", timeService.instant().toString());
+      state.setProperty(VERSION, Version.getVersion());
+      state.setProperty(VERSION_MAJOR, Version.getMajor());
+      state.setProperty(TIMESTAMP, timeService.instant().toString());
       // ask any state providers to contribute to the global state
       stateProviders.forEach(provider -> provider.prepareForPersist(state));
       writeScopedState(state);
-      log.globalStateWrite(state.getProperty("version"), state.getProperty("timestamp"));
+      log.globalStateWrite(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
    }
 
    @Override

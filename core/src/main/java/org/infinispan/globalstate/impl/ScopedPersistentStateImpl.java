@@ -61,4 +61,29 @@ public class ScopedPersistentStateImpl implements ScopedPersistentState {
       state.forEach(action);
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ScopedPersistentStateImpl that = (ScopedPersistentStateImpl) o;
+
+      if (scope != null ? !scope.equals(that.scope) : that.scope != null) return false;
+      return state != null ? state.equals(that.state) : that.state == null;
+
+   }
+
+   @Override
+   public int hashCode() {
+      int result = scope != null ? scope.hashCode() : 0;
+      result = 31 * result + (state != null ? state.hashCode() : 0);
+      return result;
+   }
+
+   @Override
+   public int getChecksum() {
+      int result = scope != null ? scope.hashCode() : 0;
+      result += state.entrySet().stream().filter(e -> !e.getKey().startsWith("@")).mapToInt(Map.Entry::hashCode).sum();
+      return result;
+   }
 }
