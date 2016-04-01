@@ -3,7 +3,11 @@ package org.infinispan.globalstate;
 import java.util.function.BiConsumer;
 
 /**
- * ScopedPersistentState.
+ * ScopedPersistentState represents state which needs to be persisted, scoped by name (e.g. the cache name).
+ * The default implementation of persistent state uses the standard {@link java.util.Properties} format with the
+ * additional rule that order is preserved. In order to verify state consistency (e.g. across a cluster) a checksum
+ * of the state's data can be computed. State properties prefixed with the '@' character will not be included as part
+ * of the checksum computation (e.g. @timestamp)
  *
  * @author Tristan Tarrant
  * @since 8.1
@@ -50,4 +54,9 @@ public interface ScopedPersistentState {
     * Performs the specified action on every entry of the state
     */
    void forEach(BiConsumer<String, String> action);
+
+   /**
+    * Returns the checksum of the properties excluding those prefixed with @
+    */
+   int getChecksum();
 }
