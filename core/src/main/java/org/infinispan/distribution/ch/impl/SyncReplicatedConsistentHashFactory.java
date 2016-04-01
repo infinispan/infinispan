@@ -3,8 +3,11 @@ package org.infinispan.distribution.ch.impl;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -21,7 +24,7 @@ import java.util.Set;
  * @since 8.2
  */
 public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
-
+   private static final Log log = LogFactory.getLog(SyncReplicatedConsistentHashFactory.class);
    public static final float OWNED_SEGMENTS_ALLOWED_VARIATION = 1.10f;
    public static final float PRIMARY_SEGMENTS_ALLOWED_VARIATION = 1.20f;
 
@@ -32,6 +35,14 @@ public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactor
          List<Address> members, Map<Address, Float> capacityFactors) {
       DefaultConsistentHash dch = syncCHF.create(hashFunction, 1, numSegments, members, null);
       return replicatedFromDefault(dch);
+   }
+
+   @Override
+   public ReplicatedConsistentHash fromPersistentState(ScopedPersistentState state) {
+      String consistentHashClass = state.getProperty("consistentHash");
+      if (!ReplicatedConsistentHash.class.getName().equals(consistentHashClass))
+         throw log.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
+      return new ReplicatedConsistentHash(state);
    }
 
    private ReplicatedConsistentHash replicatedFromDefault(DefaultConsistentHash dch) {
