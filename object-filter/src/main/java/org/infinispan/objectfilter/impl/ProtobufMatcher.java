@@ -1,6 +1,6 @@
 package org.infinispan.objectfilter.impl;
 
-import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.JPQLParser;
 import org.infinispan.objectfilter.impl.hql.ProtobufEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ProtobufPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
@@ -12,7 +12,6 @@ import org.infinispan.protostream.descriptors.JavaType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -22,17 +21,18 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
 
    private final SerializationContext serializationContext;
 
-   private final ProtobufEntityNamesResolver entityNamesResolver;
-
    private final ProtobufPropertyHelper propertyHelper;
 
    private final Descriptor wrappedMessageDescriptor;
 
+   private final JPQLParser<Descriptor> parser;
+
    public ProtobufMatcher(SerializationContext serializationContext) {
       this.serializationContext = serializationContext;
       wrappedMessageDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
-      entityNamesResolver = new ProtobufEntityNamesResolver(serializationContext);
+      ProtobufEntityNamesResolver entityNamesResolver = new ProtobufEntityNamesResolver(serializationContext);
       propertyHelper = new ProtobufPropertyHelper(entityNamesResolver, serializationContext);
+      parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
    }
 
    @Override
@@ -55,13 +55,13 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    }
 
    @Override
-   protected FilterProcessingChain<Descriptor> createFilterProcessingChain(Map<String, Object> namedParameters) {
-      return FilterProcessingChain.build(entityNamesResolver, propertyHelper, namedParameters);
+   protected FilterRegistry<Descriptor, FieldDescriptor, Integer> getFilterRegistryForType(Descriptor entityType) {
+      return filtersByTypeName.get(entityType.getFullName());
    }
 
    @Override
-   protected FilterRegistry<Descriptor, FieldDescriptor, Integer> getFilterRegistryForType(Descriptor entityType) {
-      return filtersByTypeName.get(entityType.getFullName());
+   public JPQLParser<Descriptor> getParser() {
+      return parser;
    }
 
    @Override
@@ -93,8 +93,8 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
       }
 
       @Override
-      public List<Integer> translatePropertyPath(List<String> path) {
-         List<Integer> propPath = new ArrayList<>(path.size());
+      public List<Integer> translatePropertyPath(String[] path) {
+         List<Integer> propPath = new ArrayList<>(path.length);
          Descriptor md = messageDescriptor;
          for (String prop : path) {
             FieldDescriptor fd = md.findFieldByName(prop);

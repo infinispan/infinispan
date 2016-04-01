@@ -1,14 +1,15 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.hql.lucene.LuceneQueryParsingResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.dsl.embedded.impl.jpalucene.LuceneQueryParsingResult;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
@@ -83,10 +84,10 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
 
       AtomicReference<Object> lastGetResult = captureLastGetResult(queryCacheSpy);
 
-      KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpaQuery, LuceneQueryParsingResult.class);
+      KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpaQuery, FilterParsingResult.class);
 
       // ensure that the query cache does not have it already
-      LuceneQueryParsingResult cachedParsingResult = queryCache.get(queryCacheKey);
+      FilterParsingResult cachedParsingResult = queryCache.get(queryCacheKey);
       assertNull(cachedParsingResult);
 
       // first attempt to build and execute the query (query cache is empty)
@@ -99,7 +100,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       // check interaction with query cache - expect a cache miss
       InOrder inOrder = inOrder(queryCacheSpy);
       inOrder.verify(queryCacheSpy, calls(1)).get(queryCacheKey);
-      ArgumentCaptor<LuceneQueryParsingResult> captor = ArgumentCaptor.forClass(LuceneQueryParsingResult.class);
+      ArgumentCaptor<FilterParsingResult> captor = ArgumentCaptor.forClass(FilterParsingResult.class);
       inOrder.verify(queryCacheSpy, calls(1)).put(eq(queryCacheKey), captor.capture());
       inOrder.verifyNoMoreInteractions();
       assertNull(lastGetResult.get());

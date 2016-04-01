@@ -53,7 +53,5 @@ public interface Matcher {
 
    ObjectFilter getObjectFilter(String jpaQuery);
 
-   ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters);
-
-   ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters, List<FieldAccumulator> acc);
+   ObjectFilter getObjectFilter(String jpaQuery, List<FieldAccumulator> acc);
 }

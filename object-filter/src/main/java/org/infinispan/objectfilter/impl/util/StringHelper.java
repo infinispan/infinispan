@@ -1,10 +1,6 @@
 package org.infinispan.objectfilter.impl.util;
 
-import org.hibernate.hql.internal.util.Strings;
-
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author anistor@redhat.com
@@ -15,17 +11,15 @@ public final class StringHelper {
    private StringHelper() {
    }
 
-   public static String join(String[] array, String separator) {
-      return Strings.join(array, separator);
+   public static String join(String[] array) {
+      return join(Arrays.asList(array));
    }
 
-   public static String join(Iterable<String> iterable, String separator) {
-      return Strings.join(iterable, separator);
+   public static String join(Iterable<String> iterable) {
+      return String.join(".", iterable);
    }
 
-   public static List<String> splitPropertyPath(String propertyPath) {
-      List<String> pathAsList = new LinkedList<>();
-      Collections.addAll(pathAsList, propertyPath.split("[.]"));
-      return pathAsList;
+   public static String[] split(String propertyPath) {
+      return propertyPath.split("[.]");
    }
 }

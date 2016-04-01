@@ -133,10 +133,13 @@ public final class SingleEntityHavingQueryBuilderImpl implements SingleEntityHav
    }
 
    private PropertyValueExpr makePropertyValueExpr(String entityType, List<String> propertyPath, AggregationPropertyPath.Type aggregationType) {
+      String[] path = propertyPath.toArray(new String[propertyPath.size()]);
+      boolean isRepeated = propertyHelper.isRepeatedProperty(entityType, path);
+      Class<?> primitiveType = propertyHelper.getPrimitivePropertyType(entityType, path);
       if (aggregationType != null) {
-         return new AggregationExpr(PropertyPath.AggregationType.from(aggregationType), propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+         return new AggregationExpr(PropertyPath.AggregationType.from(aggregationType), path, isRepeated, primitiveType);
       } else {
-         return new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+         return new PropertyValueExpr(path, isRepeated, primitiveType);
       }
    }
 

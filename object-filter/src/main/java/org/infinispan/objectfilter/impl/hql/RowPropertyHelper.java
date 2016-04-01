@@ -1,9 +1,5 @@
 package org.infinispan.objectfilter.impl.hql;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * @author anistor@redhat.com
  * @since 8.0
@@ -63,22 +59,6 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
       }
    }
 
-   private static final Set<Class<?>> primitives = new HashSet<Class<?>>();
-
-   static {
-      primitives.add(java.util.Date.class);
-      primitives.add(java.time.Instant.class);
-      primitives.add(String.class);
-      primitives.add(Character.class);
-      primitives.add(Double.class);
-      primitives.add(Float.class);
-      primitives.add(Long.class);
-      primitives.add(Integer.class);
-      primitives.add(Short.class);
-      primitives.add(Byte.class);
-      primitives.add(Boolean.class);
-   }
-
    private final RowMetadata rowMetadata;
 
    public RowPropertyHelper(RowMetadata rowMetadata) {
@@ -92,22 +72,22 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
    }
 
    @Override
-   public Class<?> getPrimitivePropertyType(String entityType, List<String> propertyPath) {
+   public Class<?> getPrimitivePropertyType(String entityType, String[] propertyPath) {
       // entityType is ignored
 
       Class<?> propType = getColumnAccessor(propertyPath).getPropertyType();
-      if (propType.isEnum() || primitives.contains(propType)) {
+      if (propType.isEnum() || primitives.containsKey(propType)) {
          return propType;
       }
       return null;
    }
 
-   private ColumnMetadata getColumnAccessor(List<String> propertyPath) {
-      if (propertyPath.size() > 1) {
+   private ColumnMetadata getColumnAccessor(String[] propertyPath) {
+      if (propertyPath.length > 1) {
          throw new IllegalStateException("Nested attributes are not supported");
       }
 
-      String columnName = propertyPath.get(0);
+      String columnName = propertyPath[0];
       for (RowPropertyHelper.ColumnMetadata c : rowMetadata.getColumns()) {
          if (c.getColumnName().equals(columnName)) {
             return c;
@@ -118,12 +98,12 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
    }
 
    @Override
-   public boolean hasProperty(String entityType, List<String> propertyPath) {
-      if (propertyPath.size() > 1) {
+   public boolean hasProperty(String entityType, String[] propertyPath) {
+      if (propertyPath.length > 1) {
          throw new IllegalStateException("Nested attributes are not supported");
       }
 
-      String columnName = propertyPath.get(0);
+      String columnName = propertyPath[0];
       for (RowPropertyHelper.ColumnMetadata c : rowMetadata.getColumns()) {
          if (c.getColumnName().equals(columnName)) {
             return true;
@@ -133,12 +113,12 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
    }
 
    @Override
-   public boolean hasEmbeddedProperty(String entityType, List<String> propertyPath) {
+   public boolean hasEmbeddedProperty(String entityType, String[] propertyPath) {
       return false;
    }
 
    @Override
-   public boolean isRepeatedProperty(String entityType, List<String> propertyPath) {
+   public boolean isRepeatedProperty(String entityType, String[] propertyPath) {
       return false;
    }
 }

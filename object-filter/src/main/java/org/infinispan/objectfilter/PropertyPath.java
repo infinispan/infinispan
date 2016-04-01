@@ -3,7 +3,7 @@ package org.infinispan.objectfilter;
 import org.hibernate.hql.ast.origin.hql.resolve.path.AggregationPropertyPath;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,15 +23,15 @@ public final class PropertyPath {
          }
          switch (aggregationType) {
             case SUM:
-               return PropertyPath.AggregationType.SUM;
+               return AggregationType.SUM;
             case AVG:
-               return PropertyPath.AggregationType.AVG;
+               return AggregationType.AVG;
             case MIN:
-               return PropertyPath.AggregationType.MIN;
+               return AggregationType.MIN;
             case MAX:
-               return PropertyPath.AggregationType.MAX;
+               return AggregationType.MAX;
             case COUNT:
-               return PropertyPath.AggregationType.COUNT;
+               return AggregationType.COUNT;
             default:
                throw new IllegalStateException("Aggregation " + aggregationType.name() + " is not supported");
          }
@@ -43,30 +43,34 @@ public final class PropertyPath {
     */
    private final AggregationType aggregationType;
 
-   private final List<String> path;
+   private final String[] path;
 
    public PropertyPath(AggregationType aggregationType, List<String> path) {
+      this(aggregationType, path.toArray(new String[path.size()]));
+   }
+
+   public PropertyPath(AggregationType aggregationType, String[] path) {
       this.aggregationType = aggregationType;
       this.path = path;
    }
 
    public PropertyPath(AggregationType aggregationType, String propertyName) {
-      this(aggregationType, Collections.singletonList(propertyName));
+      this(aggregationType, new String[]{propertyName});
    }
 
    public AggregationType getAggregationType() {
       return aggregationType;
    }
 
-   public List<String> getPath() {
+   public String[] getPath() {
       return path;
    }
 
    public String asStringPath() {
-      if (path.isEmpty()) {    //todo [anistor] can it really be empty?
+      if (path.length == 0) {    //todo [anistor] can it really be empty?
          return null;
       }
-      return StringHelper.join(path, ".");
+      return StringHelper.join(path);
    }
 
    @Override
@@ -74,17 +78,17 @@ public final class PropertyPath {
       if (this == o) return true;
       if (o == null || o.getClass() != PropertyPath.class) return false;
       PropertyPath that = (PropertyPath) o;
-      return aggregationType == that.aggregationType && path.equals(that.path);
+      return aggregationType == that.aggregationType && Arrays.equals(path, that.path);
    }
 
    @Override
    public int hashCode() {
-      return 31 * (aggregationType != null ? aggregationType.hashCode() : 0) + path.hashCode();
+      return 31 * (aggregationType != null ? aggregationType.hashCode() : 0) + Arrays.hashCode(path);
    }
 
    @Override
    public String toString() {
       return aggregationType != null ?
-            aggregationType.name() + '(' + StringHelper.join(path, ".") + ')' : StringHelper.join(path, ".");
+            aggregationType.name() + '(' + StringHelper.join(path) + ')' : StringHelper.join(path);
    }
 }

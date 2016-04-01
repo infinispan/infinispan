@@ -45,20 +45,23 @@ public final class FilterPredicateFactory implements PredicateFactory<BooleanExp
    @Override
    public ComparisonPredicate<BooleanExpr> getComparisonPredicate(String entityType, Type comparisonType,
                                                                   List<String> propertyPath, Object comparisonValue) {
-      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      String[] path = propertyPath.toArray(new String[propertyPath.size()]);
+      ValueExpr valueExpr = new PropertyValueExpr(path, propertyHelper.isRepeatedProperty(entityType, path), propertyHelper.getPrimitivePropertyType(entityType, path));
       return new FilterComparisonPredicate(valueExpr, comparisonType, comparisonValue);
    }
 
    @Override
    public InPredicate<BooleanExpr> getInPredicate(String entityType, List<String> propertyPath, List<Object> values) {
-      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      String[] path = propertyPath.toArray(new String[propertyPath.size()]);
+      ValueExpr valueExpr = new PropertyValueExpr(path, propertyHelper.isRepeatedProperty(entityType, path), propertyHelper.getPrimitivePropertyType(entityType, path));
       return new FilterInPredicate(valueExpr, values);
    }
 
    @Override
    public RangePredicate<BooleanExpr> getRangePredicate(String entityType, List<String> propertyPath,
                                                         Object lowerValue, Object upperValue) {
-      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      String[] path = propertyPath.toArray(new String[propertyPath.size()]);
+      ValueExpr valueExpr = new PropertyValueExpr(path, propertyHelper.isRepeatedProperty(entityType, path), propertyHelper.getPrimitivePropertyType(entityType, path));
       return new FilterRangePredicate(valueExpr, lowerValue, upperValue);
    }
 
@@ -80,13 +83,16 @@ public final class FilterPredicateFactory implements PredicateFactory<BooleanExp
    @Override
    public LikePredicate<BooleanExpr> getLikePredicate(String entityType, List<String> propertyPath,
                                                       String patternValue, Character escapeCharacter) {
-      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      String[] path = propertyPath.toArray(new String[propertyPath.size()]);
+      ValueExpr valueExpr = new PropertyValueExpr(path, propertyHelper.isRepeatedProperty(entityType, path), propertyHelper.getPrimitivePropertyType(entityType, path));
       return new FilterLikePredicate(valueExpr, patternValue, escapeCharacter);
    }
 
    @Override
    public IsNullPredicate<BooleanExpr> getIsNullPredicate(String entityType, List<String> propertyPath) {
-      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      String[] path = propertyPath.toArray(new String[propertyPath.size()]);
+      //todo [anistor] 2 calls to propertyHelper .. very inefficient
+      ValueExpr valueExpr = new PropertyValueExpr(path, propertyHelper.isRepeatedProperty(entityType, path), propertyHelper.getPrimitivePropertyType(entityType, path));
       return new FilterIsNullPredicate(valueExpr);
    }
 }

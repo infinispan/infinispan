@@ -20,7 +20,7 @@ final class CompatibilityReflectionMatcher extends ReflectionMatcher {
 
    private final SerializationContext serializationContext;
 
-   public CompatibilityReflectionMatcher(final SerializationContext serializationContext) {
+   CompatibilityReflectionMatcher(final SerializationContext serializationContext) {
       super(new EntityNamesResolver() {
          @Override
          public Class<?> getClassFromName(String entityName) {

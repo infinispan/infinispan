@@ -11,19 +11,19 @@ import static org.junit.Assert.assertNull;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class ReflectionParsingTest extends AbstractParsingTest {
+public class ReflectionParsingTest extends AbstractParsingTest<Class<?>> {
 
    @Override
-   protected FilterProcessingChain<Class<?>> createFilterProcessingChain() throws Exception {
+   protected JPQLParser<Class<?>> createParser() {
       EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
-      ReflectionPropertyHelper reflectionPropertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
-      return FilterProcessingChain.build(entityNamesResolver, reflectionPropertyHelper, null);
+      ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
+      return new JPQLParser<>(entityNamesResolver, propertyHelper);
    }
 
    @Test
    public void testParsingResult() throws Exception {
       String jpaQuery = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
-      FilterParsingResult<Class<?>> result = queryParser.parseQuery(jpaQuery, createFilterProcessingChain());
+      FilterParsingResult<Class<?>> result = parser.parse(jpaQuery);
 
       assertNotNull(result.getWhereClause());
 

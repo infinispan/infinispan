@@ -2,7 +2,7 @@ package org.infinispan.objectfilter.impl.syntax;
 
 import org.infinispan.objectfilter.impl.util.StringHelper;
 
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author anistor@redhat.com
@@ -10,25 +10,32 @@ import java.util.List;
  */
 public class PropertyValueExpr implements ValueExpr {
 
-   protected final List<String> propertyPath;
+   protected final String[] propertyPath;
 
    protected final boolean isRepeated;
 
-   public PropertyValueExpr(List<String> propertyPath, boolean isRepeated) {
+   protected final Class<?> primitiveType;
+
+   public PropertyValueExpr(String[] propertyPath, boolean isRepeated, Class<?> primitiveType) {
       this.propertyPath = propertyPath;
       this.isRepeated = isRepeated;
+      this.primitiveType = primitiveType;
    }
 
-   public PropertyValueExpr(String propertyPath, boolean isRepeated) {
-      this(StringHelper.splitPropertyPath(propertyPath), isRepeated);
+   public PropertyValueExpr(String propertyPath, boolean isRepeated, Class<?> primitiveType) {
+      this(StringHelper.split(propertyPath), isRepeated, primitiveType);
    }
 
-   public List<String> getPropertyPath() {
+   public String[] getPropertyPath() {
       return propertyPath;
    }
 
    public boolean isRepeated() {
       return isRepeated;
+   }
+
+   public Class<?> getPrimitiveType() {
+      return primitiveType;
    }
 
    @Override
@@ -41,12 +48,12 @@ public class PropertyValueExpr implements ValueExpr {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       PropertyValueExpr other = (PropertyValueExpr) o;
-      return propertyPath.equals(other.propertyPath);
+      return Arrays.equals(propertyPath, other.propertyPath);
    }
 
    @Override
    public int hashCode() {
-      return propertyPath.hashCode();
+      return Arrays.hashCode(propertyPath);
    }
 
    @Override

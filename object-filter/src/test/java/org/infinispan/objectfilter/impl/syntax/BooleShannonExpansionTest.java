@@ -1,14 +1,11 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
-import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.JPQLParser;
 import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -20,7 +17,7 @@ public class BooleShannonExpansionTest {
 
    private final EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
    private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
-   private final QueryParser queryParser = new QueryParser();
+   private final JPQLParser<Class<?>> parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    /**
@@ -29,18 +26,18 @@ public class BooleShannonExpansionTest {
     * @param expectedJpa     the expected equivalent JPA of the AST
     */
    private void assertExpectedTree(String jpaQuery, String expectedExprStr, String expectedJpa) {
-      FilterParsingResult<Class<?>> parsingResult = queryParser.parseQuery(jpaQuery, FilterProcessingChain.build(entityNamesResolver, propertyHelper, null));
+      FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
 
       BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new BooleShannonExpansion.IndexedFieldProvider() {
          @Override
-         public boolean isIndexed(List<String> propertyPath) {
-            String last = propertyPath.get(propertyPath.size() - 1);
+         public boolean isIndexed(String[] propertyPath) {
+            String last = propertyPath[propertyPath.length - 1];
             return !"number".equals(last) && !"license".equals(last);
          }
 
          @Override
-         public boolean isStored(List<String> propertyPath) {
+         public boolean isStored(String[] propertyPath) {
             return isIndexed(propertyPath);
          }
       });

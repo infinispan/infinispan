@@ -10,7 +10,9 @@ import org.jboss.logging.Logger;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A specialised {@link PropertyHelper} able to handle non-Class metadata.
@@ -21,6 +23,30 @@ import java.util.List;
 public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelper {
 
    private static final Log log = Logger.getMessageLogger(Log.class, ObjectPropertyHelper.class.getName());
+
+   protected static final Map<Class<?>, Class<?>> primitives = new HashMap<>();
+
+   static {
+      primitives.put(java.util.Date.class, java.util.Date.class);
+      primitives.put(java.time.Instant.class, java.time.Instant.class);
+      primitives.put(String.class, String.class);
+      primitives.put(Character.class, Character.class);
+      primitives.put(char.class, Character.class);
+      primitives.put(Double.class, Double.class);
+      primitives.put(double.class, Double.class);
+      primitives.put(Float.class, Float.class);
+      primitives.put(float.class, Float.class);
+      primitives.put(Long.class, Long.class);
+      primitives.put(long.class, Long.class);
+      primitives.put(Integer.class, Integer.class);
+      primitives.put(int.class, Integer.class);
+      primitives.put(Short.class, Short.class);
+      primitives.put(short.class, Short.class);
+      primitives.put(Byte.class, Byte.class);
+      primitives.put(byte.class, Byte.class);
+      primitives.put(Boolean.class, Boolean.class);
+      primitives.put(boolean.class, Boolean.class);
+   }
 
    protected final EntityNamesResolver entityNamesResolver;
 
@@ -39,10 +65,11 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
     */
    @Override
    public Object convertToPropertyType(String entityType, List<String> propertyPath, String value) {
-      final Class<?> propertyType = getPrimitivePropertyType(entityType, propertyPath);
+      final String[] path = propertyPath.toArray(new String[propertyPath.size()]);
+      final Class<?> propertyType = getPrimitivePropertyType(entityType, path);
       if (propertyType == null) {
          // not a primitive, then it is an embedded entity, need to signal an invalid query
-         throw log.getPredicatesOnCompleteEmbeddedEntitiesNotAllowedException(StringHelper.join(propertyPath, "."));
+         throw log.getPredicatesOnCompleteEmbeddedEntitiesNotAllowedException(StringHelper.join(path));
       }
 
       if (Date.class.isAssignableFrom(propertyType)) {
@@ -116,16 +143,16 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
     * @param propertyPath the path of the property
     * @return the {@link Class} or {@code null} if not a primitive property
     */
-   public abstract Class<?> getPrimitivePropertyType(String entityType, List<String> propertyPath);
+   public abstract Class<?> getPrimitivePropertyType(String entityType, String[] propertyPath);
 
-   public abstract boolean hasProperty(String entityType, List<String> propertyPath);
+   public abstract boolean hasProperty(String entityType, String[] propertyPath);
 
-   public abstract boolean hasEmbeddedProperty(String entityType, List<String> propertyPath);
+   public abstract boolean hasEmbeddedProperty(String entityType, String[] propertyPath);
 
    /**
     * Tests if the attribute path contains repeated (collection/array) attributes.
     */
-   public abstract boolean isRepeatedProperty(String entityType, List<String> propertyPath);
+   public abstract boolean isRepeatedProperty(String entityType, String[] propertyPath);
 
    /**
     * This is an alternative to {@link EntityNamesResolver#getClassFromName}, because not everything is a {@link

@@ -11,14 +11,21 @@ import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
 final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRendererDelegate<BooleanExpr, FilterParsingResult> {
+
+   private final String jpaQuery;
+
+   private final Set<String> parameterNames;
 
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
@@ -34,11 +41,17 @@ final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRender
 
    private List<Class<?>> projectedTypes;
 
-   FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
-                          SingleEntityQueryBuilder<BooleanExpr> builder, SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder, Map<String, Object> namedParameters) {
+   FilterRendererDelegate(String jpaQuery,
+                          EntityNamesResolver entityNamesResolver,
+                          ObjectPropertyHelper<TypeMetadata> propertyHelper,
+                          SingleEntityQueryBuilder<BooleanExpr> builder,
+                          SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder,
+                          Map<String, Object> namedParameters) {
       super(propertyHelper, entityNamesResolver, builder, namedParameters);
+      this.jpaQuery = jpaQuery;
       this.propertyHelper = propertyHelper;
       this.havingBuilder = havingBuilder;
+      this.parameterNames = namedParameters.keySet();
    }
 
    @Override
@@ -100,10 +113,16 @@ final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRender
 
    @Override
    public FilterParsingResult<TypeMetadata> getResult() {
-      return new FilterParsingResult<>(builder.build(), havingBuilder != null ? havingBuilder.build() : null,
-            targetTypeName, targetEntityMetadata,
-            projections, projectedTypes,
-            groupBy,
-            sortFields);
+      return new FilterParsingResult<>(
+            jpaQuery,
+            Collections.unmodifiableSet(new HashSet<>(parameterNames)),
+            builder.build(),
+            havingBuilder != null ? havingBuilder.build() : null,
+            targetTypeName,
+            targetEntityMetadata,
+            projections == null ? null : projections.toArray(new PropertyPath[projections.size()]),
+            projectedTypes == null ? null : projectedTypes.toArray(new Class<?>[projectedTypes.size()]),
+            groupBy == null ? null : groupBy.toArray(new PropertyPath[groupBy.size()]),
+            sortFields == null ? null : sortFields.toArray(new SortField[sortFields.size()]));
    }
 }

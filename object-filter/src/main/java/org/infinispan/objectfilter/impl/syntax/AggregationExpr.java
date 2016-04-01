@@ -2,8 +2,6 @@ package org.infinispan.objectfilter.impl.syntax;
 
 import org.infinispan.objectfilter.PropertyPath;
 
-import java.util.List;
-
 /**
  * @author anistor@redhat.com
  * @since 8.0
@@ -12,8 +10,8 @@ public final class AggregationExpr extends PropertyValueExpr {
 
    private final PropertyPath propertyPath;
 
-   public AggregationExpr(PropertyPath.AggregationType aggregationType, List<String> propertyPath, boolean isRepeated) {
-      super(propertyPath, isRepeated);
+   public AggregationExpr(PropertyPath.AggregationType aggregationType, String[] propertyPath, boolean isRepeated, Class<?> primitiveType) {
+      super(propertyPath, isRepeated, primitiveType);
       if (aggregationType == null) {
          throw new IllegalArgumentException("aggregationType cannot be null");
       }

@@ -18,7 +18,7 @@ final class FilterEntityTypeDescriptor implements FilterTypeDescriptor {
 
    @Override
    public boolean hasProperty(String propertyName) {
-      return propertyHelper.hasProperty(entityType, StringHelper.splitPropertyPath(propertyName));
+      return propertyHelper.hasProperty(entityType, StringHelper.split(propertyName));
    }
 
    @Override
@@ -28,7 +28,7 @@ final class FilterEntityTypeDescriptor implements FilterTypeDescriptor {
 
    @Override
    public boolean hasEmbeddedProperty(String propertyName) {
-      return propertyHelper.hasEmbeddedProperty(entityType, StringHelper.splitPropertyPath(propertyName));
+      return propertyHelper.hasEmbeddedProperty(entityType, StringHelper.split(propertyName));
    }
 
    @Override
