@@ -100,7 +100,7 @@ final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRender
 
    @Override
    public FilterParsingResult<TypeMetadata> getResult() {
-      return new FilterParsingResult<>(builder, havingBuilder,
+      return new FilterParsingResult<>(builder.build(), havingBuilder != null ? havingBuilder.build() : null,
             targetTypeName, targetEntityMetadata,
             projections, projectedTypes,
             groupBy,
