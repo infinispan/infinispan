@@ -1,7 +1,5 @@
 package org.infinispan.objectfilter.impl.hql;
 
-import org.hibernate.hql.ast.spi.SingleEntityHavingQueryBuilder;
-import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
 import org.infinispan.objectfilter.PropertyPath;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
@@ -41,8 +39,8 @@ public final class FilterParsingResult<TypeMetadata> {
       }
    }
 
-   private final SingleEntityQueryBuilder<BooleanExpr> whereBuilder;
-   private final SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder;
+   private final BooleanExpr whereClause;
+   private final BooleanExpr havingClause;
    private final String targetEntityName;
    private final TypeMetadata targetEntityMetadata;
    private final PropertyPath[] projectedPaths;
@@ -50,15 +48,13 @@ public final class FilterParsingResult<TypeMetadata> {
    private final PropertyPath[] groupBy;
    private final SortField[] sortFields;
 
-   FilterParsingResult(SingleEntityQueryBuilder<BooleanExpr> whereBuilder,
-                       SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder,
+   FilterParsingResult(BooleanExpr whereClause, BooleanExpr havingClause,
                        String targetEntityName, TypeMetadata targetEntityMetadata,
-                       List<PropertyPath> projectedPaths,
-                       List<Class<?>> projectedTypes,
+                       List<PropertyPath> projectedPaths, List<Class<?>> projectedTypes,
                        List<PropertyPath> groupBy,
                        List<SortField> sortFields) {
-      this.whereBuilder = whereBuilder;
-      this.havingBuilder = havingBuilder;
+      this.whereClause = whereClause;
+      this.havingClause = havingClause;
       this.targetEntityName = targetEntityName;
       this.targetEntityMetadata = targetEntityMetadata;
       if (projectedPaths != null && (projectedTypes == null || projectedTypes.size() != projectedPaths.size()) || projectedPaths == null && projectedTypes != null) {
@@ -76,11 +72,11 @@ public final class FilterParsingResult<TypeMetadata> {
     * @return the filter created while walking the parse tree
     */
    public BooleanExpr getWhereClause() {
-      return whereBuilder.build();
+      return whereClause;
    }
 
    public BooleanExpr getHavingClause() {
-      return havingBuilder.build();
+      return havingClause;
    }
 
    /**
@@ -128,8 +124,7 @@ public final class FilterParsingResult<TypeMetadata> {
    }
 
    public boolean hasGroupingOrAggregations() {
-      //todo [anistor] havingBuilder.build() builds the query prematurely and is inefficient
-      if (groupBy != null || havingBuilder.build() != null) {
+      if (groupBy != null || havingClause != null) {
          return true;
       }
       if (projectedPaths != null) {
@@ -161,8 +156,8 @@ public final class FilterParsingResult<TypeMetadata> {
    public String toString() {
       return "FilterParsingResult [" +
             "targetEntityName=" + targetEntityName
-            + ", whereClause=" + getWhereClause()
-            + ", havingClause=" + getHavingClause()
+            + ", whereClause=" + whereClause
+            + ", havingClause=" + havingClause
             + ", projectedPaths=" + Arrays.toString(projectedPaths)
             + ", projectedTypes=" + Arrays.toString(projectedTypes)
             + ", groupBy=" + Arrays.toString(groupBy)
