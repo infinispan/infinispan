@@ -32,9 +32,12 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLogger;
+import org.infinispan.xsite.notification.SiteStatusListener;
 
 import javax.transaction.Transaction;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +47,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+
+import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 /**
  * @author Mircea Markus
@@ -60,9 +65,9 @@ public class BackupSenderImpl implements BackupSender {
    private TransactionTable txTable;
    private TimeService timeService;
    private CommandsFactory commandsFactory;
-   private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<String, CustomFailurePolicy>();
+   private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
    private final ConcurrentMap<String, OfflineStatus> offlineStatus = CollectionFactory.makeConcurrentMap();
-
+   private EventLogManager eventLogManager;
 
    private final String localSiteName;
    private String cacheName;
@@ -76,13 +81,14 @@ public class BackupSenderImpl implements BackupSender {
 
    @Inject
    public void init(Cache cache, Transport transport, TransactionTable txTable, GlobalConfiguration gc,
-                    TimeService timeService, CommandsFactory commandsFactory) {
+                    TimeService timeService, CommandsFactory commandsFactory, EventLogManager eventLogManager) {
       this.cache = cache;
       this.transport = transport;
       this.txTable = txTable;
       this.globalConfig = gc;
       this.timeService = timeService;
       this.commandsFactory = commandsFactory;
+      this.eventLogManager = eventLogManager;
    }
 
    @Start
@@ -90,6 +96,7 @@ public class BackupSenderImpl implements BackupSender {
       this.config = cache.getCacheConfiguration();
       this.cacheName = cache.getName();
       for (BackupConfiguration bc : config.sites().enabledBackups()) {
+         final String siteName = bc.site();
          if (bc.backupFailurePolicy() == BackupFailurePolicy.CUSTOM) {
             String backupPolicy = bc.failurePolicyClass();
             if (backupPolicy == null) {
@@ -99,8 +106,19 @@ public class BackupSenderImpl implements BackupSender {
             instance.init(cache);
             siteFailurePolicy.put(bc.site(), instance);
          }
-         OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService);
-         offlineStatus.put(bc.site(), offline);
+         OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService,
+                                                   new SiteStatusListener() {
+                                                      @Override
+                                                      public void siteOnline() {
+                                                         BackupSenderImpl.this.siteOnline(siteName);
+                                                      }
+
+                                                      @Override
+                                                      public void siteOffline() {
+                                                         BackupSenderImpl.this.siteOffline(siteName);
+                                                      }
+                                                   });
+         offlineStatus.put(siteName, offline);
       }
    }
 
@@ -232,7 +250,7 @@ public class BackupSenderImpl implements BackupSender {
    }
 
    private List<XSiteBackup> calculateBackupInfo(BackupFilter backupFilter) {
-      List<XSiteBackup> backupInfo = new ArrayList<XSiteBackup>(2);
+      List<XSiteBackup> backupInfo = new ArrayList<>(2);
       SitesConfiguration sites = config.sites();
       for (BackupConfiguration bc : sites.enabledBackups()) {
          if (bc.site().equals(localSiteName)) {
@@ -276,7 +294,7 @@ public class BackupSenderImpl implements BackupSender {
       if (modifications == null || modifications.isEmpty()) {
          return Collections.emptyList();
       }
-      List<WriteCommand> filtered = new ArrayList<WriteCommand>(modifications.size());
+      List<WriteCommand> filtered = new ArrayList<>(modifications.size());
       for (WriteCommand writeCommand : modifications) {
          if (!writeCommand.isSuccessful()) {
             continue;
@@ -299,6 +317,18 @@ public class BackupSenderImpl implements BackupSender {
          filtered.add(filteredCommand);
       }
       return filtered;
+   }
+
+   private void siteOnline(String siteName) {
+      getEventLogger().info(EventLogCategory.CLUSTER, MESSAGES.siteOnline(siteName));
+   }
+
+   private void siteOffline(String siteName) {
+      getEventLogger().info(EventLogCategory.CLUSTER, MESSAGES.siteOffline(siteName));
+   }
+
+   private EventLogger getEventLogger() {
+      return eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress());
    }
 
    public static final class CustomBackupPolicyInvoker extends AbstractVisitor {
@@ -374,7 +404,7 @@ public class BackupSenderImpl implements BackupSender {
 
    @Override
    public Map<String, Boolean> status() {
-      Map<String, Boolean> result = new HashMap<String, Boolean>(offlineStatus.size());
+      Map<String, Boolean> result = new HashMap<>(offlineStatus.size());
       for (Map.Entry<String, OfflineStatus> os : offlineStatus.entrySet()) {
          result.put(os.getKey(), !os.getValue().isOffline());
       }

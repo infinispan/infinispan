@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
@@ -7,6 +8,7 @@ import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.notification.SiteStatusListener;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -20,23 +22,27 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * shouldn't affect performance significantly as the number of site backups should be relatively small (1-3).
  *
  * @author Mircea Markus
+ * @author Pedro Ruivo
  * @since 5.2
  */
 @ThreadSafe
 public class OfflineStatus {
 
-   private static Log log = LogFactory.getLog(OfflineStatus.class);
+   private static final Log log = LogFactory.getLog(OfflineStatus.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final TimeService timeService;
+   private final SiteStatusListener listener;
    private volatile TakeOfflineConfiguration takeOffline;
    private boolean recordingOfflineStatus = false;
    private long firstFailureTime;
    private int failureCount;
-   private volatile boolean forceOffline = false;
+   private boolean isOffline = false;
 
-   public OfflineStatus(TakeOfflineConfiguration takeOfflineConfiguration, TimeService timeService) {
+   public OfflineStatus(TakeOfflineConfiguration takeOfflineConfiguration, TimeService timeService, SiteStatusListener listener) {
       this.takeOffline = takeOfflineConfiguration;
       this.timeService = timeService;
+      this.listener = listener;
    }
 
    public synchronized void updateOnCommunicationFailure(long sendTimeMillis) {
@@ -48,48 +54,51 @@ public class OfflineStatus {
    }
 
    public synchronized boolean isOffline() {
-      if (forceOffline)
+      if (isOffline)
          return true;
 
       if (!recordingOfflineStatus)
          return false;
 
       if (takeOffline.minTimeToWait() > 0) { //min time to wait is enabled
-         if (!minTimeHasElapsed()) return false;
+         if (!internalMinTimeHasElapsed()) return false;
       }
 
       if (takeOffline.afterFailures() > 0) {
          if (takeOffline.afterFailures() <= failureCount) {
+            if (trace) {
+               log.trace("Site is failed: min failures reached.");
+            }
+            listener.siteOffline();
+            isOffline = true;
             return true;
          } else {
             return false;
          }
       } else {
-         log.trace("Site is failed: minTimeToWait elapsed and we don't have a min failure number to wait for.");
-         return true;
+         if (takeOffline.minTimeToWait() > 0) { //min time to wait is enabled
+            if (trace) {
+               log.trace("Site is failed: minTimeToWait elapsed and we don't have a min failure number to wait for.");
+            }
+            listener.siteOffline();
+            isOffline = true;
+            return true;
+         } else {
+            return false;
+         }
       }
    }
 
    public synchronized boolean minTimeHasElapsed() {
-      if (takeOffline.minTimeToWait() <= 0)
-         throw new IllegalStateException("Cannot invoke this method if minTimeToWait is not enabled");
-      long millis = millisSinceFirstFailure();
-      if (millis >= takeOffline.minTimeToWait()) {
-         log.tracef("The minTimeToWait has passed: minTime=%s, timeSinceFirstFailure=%s",
-                    takeOffline.minTimeToWait(), millis);
-         return true;
-      }
-      return false;
+      return internalMinTimeHasElapsed();
    }
 
    public synchronized long millisSinceFirstFailure() {
-      return timeService.timeDuration(MILLISECONDS.toNanos(firstFailureTime), MILLISECONDS);
+      return internalMillisSinceFirstFailure();
    }
 
    public synchronized boolean bringOnline() {
-      if (!isOffline()) return false;
-      reset();
-      return true;
+      return isOffline && internalReset();
    }
 
    public synchronized int getFailureCount() {
@@ -109,19 +118,20 @@ public class OfflineStatus {
       reset();
    }
 
-   public void reset() {
-      recordingOfflineStatus = false;
-      failureCount = 0;
-      forceOffline = false;
+   public synchronized void reset() {
+      internalReset();
    }
 
    public TakeOfflineConfiguration getTakeOffline() {
       return takeOffline;
    }
 
-   public boolean forceOffline() {
-      if (isOffline()) return false;
-      forceOffline = true;
+   public synchronized boolean forceOffline() {
+      if (isOffline) {
+         return false;
+      }
+      isOffline = true;
+      listener.siteOffline();
       return true;
    }
 
@@ -131,7 +141,7 @@ public class OfflineStatus {
             "takeOffline=" + takeOffline +
             ", recordingOfflineStatus=" + recordingOfflineStatus +
             ", firstFailureTime=" + firstFailureTime +
-            ", forceOffline=" + forceOffline +
+            ", isOffline=" + isOffline +
             ", failureCount=" + failureCount +
             '}';
    }
@@ -146,5 +156,41 @@ public class OfflineStatus {
          builder.minTimeToWait(minTimeToWait);
       }
       amend(builder.create());
+   }
+
+   @GuardedBy("this")
+   private boolean internalMinTimeHasElapsed() {
+      long minTimeToWait = takeOffline.minTimeToWait();
+      if (minTimeToWait <= 0)
+         throw new IllegalStateException("Cannot invoke this method if minTimeToWait is not enabled");
+      long millis = internalMillisSinceFirstFailure();
+      if (millis >= minTimeToWait) {
+         if (trace) {
+            log.tracef("The minTimeToWait has passed: minTime=%s, timeSinceFirstFailure=%s",
+                       minTimeToWait, millis);
+         }
+         return true;
+      }
+      return false;
+   }
+
+   /**
+    * @return true if status changed
+    */
+   @GuardedBy("this")
+   private boolean internalReset() {
+      boolean wasOffline = isOffline;
+      recordingOfflineStatus = false;
+      failureCount = 0;
+      isOffline = false;
+      if (wasOffline) {
+         listener.siteOnline();
+      }
+      return wasOffline;
+   }
+
+   @GuardedBy("this")
+   private long internalMillisSinceFirstFailure() {
+      return timeService.timeDuration(MILLISECONDS.toNanos(firstFailureTime), MILLISECONDS);
    }
 }

@@ -1,13 +1,19 @@
 package org.infinispan.xsite.offline;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.concurrent.TimeUnit;
-
+import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.ControlledTimeService;
 import org.infinispan.xsite.OfflineStatus;
+import org.infinispan.xsite.notification.SiteStatusListener;
 import org.testng.annotations.Test;
+
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+
+import static java.lang.String.format;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea Markus
@@ -17,57 +23,220 @@ import org.testng.annotations.Test;
 public class OfflineStatusTest extends AbstractInfinispanTest {
 
    public void timeBasedTakeOffline() {
-      final OfflineStatus offlineStatus = new OfflineStatus(new TakeOfflineConfigurationBuilder(null, null).afterFailures(10).minTimeToWait(3000).create(), TIME_SERVICE);
+      //Tests if the offline status changes when the minimum time has elapsed and after failure counter.
+      final long minTimeWait = 3000;
+      final int minFailures = 10;
+      final TestContext context = createNew(minTimeWait, minFailures);
 
-      assert !offlineStatus.isOffline();
-      for (int i = 0; i < 9; i++) {
-         offlineStatus.updateOnCommunicationFailure(now());
+      //first part, we reached the min failures but not the min time.
+      for (int i = 0; i < minFailures + 1; i++) {
+         assertOffline(context, false);
+         addCommunicationFailure(context);
       }
 
-      assertEquals(9, offlineStatus.getFailureCount());
-      assert !offlineStatus.isOffline();
-      assert !offlineStatus.minTimeHasElapsed() : offlineStatus.millisSinceFirstFailure();
+      assertMinFailureCount(context, minFailures + 1);
+      assertMinTimeElapsed(context, false);
+      assertOffline(context, false);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            Thread.sleep(1000);
-            return offlineStatus.minTimeHasElapsed();
-         }
-      });
+      context.timeService.advance(minTimeWait + 1);
 
-      assertEquals(9, offlineStatus.getFailureCount());
-      assert !offlineStatus.isOffline();
-      assert offlineStatus.minTimeHasElapsed();
+      assertMinTimeElapsed(context, true);
+      assertMinFailureCount(context, minFailures + 1);
+      assertOffline(context, true);
 
+      context.offlineStatus.reset(); //reset everything
 
-      offlineStatus.updateOnCommunicationFailure(now());
-      assertEquals(10, offlineStatus.getFailureCount());
-      assert offlineStatus.isOffline();
-      assert offlineStatus.minTimeHasElapsed();
+      //second part, we reached the min time, but not the failures-
+      for (int i = 0; i < minFailures -1; i++) {
+         assertOffline(context, false);
+         addCommunicationFailure(context);
+      }
+
+      assertMinFailureCount(context, minFailures -1);
+      assertMinTimeElapsed(context, false);
+      assertOffline(context, false);
+
+      context.timeService.advance(minTimeWait + 1);
+
+      assertMinFailureCount(context, minFailures -1);
+      assertMinTimeElapsed(context, true);
+      assertOffline(context, false);
+
+      addCommunicationFailure(context);
+
+      assertMinTimeElapsed(context, true);
+      assertMinFailureCount(context, minFailures);
+      assertOffline(context, true);
+
+      context.listener.check(SiteStatus.OFFLINE, SiteStatus.ONLINE, SiteStatus.OFFLINE);
    }
 
    public void testFailureBasedOnly() throws Throwable {
-      final OfflineStatus offlineStatus = new OfflineStatus(new TakeOfflineConfigurationBuilder(null, null).afterFailures(10).minTimeToWait(0).create(), TIME_SERVICE);
-      test(offlineStatus);
-      offlineStatus.reset();
-      test(offlineStatus);
-   }
+      //note: can't check the min time since it throws an IllegalStateException when disabled
+      final int minFailures = 10;
+      final TestContext context = createNew(0, minFailures);
 
-   private void test(OfflineStatus offlineStatus) throws InterruptedException {
-      for (int i = 0; i < 9; i++) {
-         offlineStatus.updateOnCommunicationFailure(now());
+      for (int i = 0; i < minFailures - 1; i++) {
+         assertOffline(context, false);
+         addCommunicationFailure(context);
       }
-      assert !offlineStatus.isOffline();
-      Thread.sleep(2000);
-      assert !offlineStatus.isOffline();
 
-      offlineStatus.updateOnCommunicationFailure(now());
-      assertEquals(10, offlineStatus.getFailureCount());
-      assert offlineStatus.isOffline();
+      assertMinFailureCount(context, minFailures - 1);
+      assertOffline(context, false);
+
+      context.timeService.advance(1);
+
+      assertMinFailureCount(context, minFailures - 1);
+      assertOffline(context, false);
+
+      addCommunicationFailure(context);
+
+      assertMinFailureCount(context, minFailures);
+      assertOffline(context, true);
+
+      context.listener.check(SiteStatus.OFFLINE);
    }
 
-   private long now() {
-      return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+   public void testTimeBasedOnly() throws Throwable {
+      final long minWaitTime = 3000;
+      final int minFailures = 10;
+      final TestContext context = createNew(minWaitTime, -1);
+
+      for (int i = 0; i < minFailures; i++) {
+         assertOffline(context, false);
+         addCommunicationFailure(context);
+      }
+
+      assertMinFailureCount(context, minFailures);
+      assertMinTimeElapsed(context, false);
+      assertOffline(context, false);
+
+      context.timeService.advance(minWaitTime + 1);
+
+      assertMinFailureCount(context, minFailures);
+      assertMinTimeElapsed(context, true);
+      assertOffline(context, true);
+
+      context.listener.check(SiteStatus.OFFLINE);
+   }
+
+   public void testForceOffline() {
+      //note: can't check the min time since it throws an IllegalStateException when disabled
+      final TestContext context = createNew(-1, -1);
+
+      addCommunicationFailure(context);
+      context.timeService.advance(1);
+
+      assertMinFailureCount(context, 1);
+      assertOffline(context, false);
+
+      context.offlineStatus.forceOffline();
+
+      assertMinFailureCount(context, 1);
+      assertOffline(context, true);
+
+      //test bring online
+      context.offlineStatus.bringOnline();
+
+      assertMinFailureCount(context, 0);
+      assertOffline(context, false);
+
+      addCommunicationFailure(context);
+      context.timeService.advance(1);
+
+      assertMinFailureCount(context, 1);
+      assertOffline(context, false);
+
+      context.offlineStatus.forceOffline();
+
+      assertMinFailureCount(context, 1);
+      assertOffline(context, true);
+
+      //test reset
+      context.offlineStatus.reset();
+
+      assertMinFailureCount(context, 0);
+      assertOffline(context, false);
+
+      context.listener.check(SiteStatus.OFFLINE, SiteStatus.ONLINE, SiteStatus.OFFLINE, SiteStatus.ONLINE);
+   }
+
+   private static void assertOffline(TestContext context, boolean expected) {
+      assertEquals("Checking offline.", expected, context.offlineStatus.isOffline());
+   }
+
+   private static void assertMinFailureCount(TestContext context, int expected) {
+      assertEquals("Check failure count.", expected, context.offlineStatus.getFailureCount());
+   }
+
+   private static void assertMinTimeElapsed(TestContext context, boolean expected) {
+      assertEquals(format("Check min time has elapsed. Current time=%d. Time elapsed=%d", context.timeService.time(),
+                                      context.offlineStatus.millisSinceFirstFailure()),
+                               expected,
+                               context.offlineStatus.minTimeHasElapsed());
+
+   }
+
+   private static void addCommunicationFailure(TestContext context) {
+      context.offlineStatus.updateOnCommunicationFailure(context.timeService.wallClockTime());
+   }
+
+   private static TestContext createNew(long minWait, int afterFailures) {
+      ControlledTimeService t = new ControlledTimeService(0);
+      ListenerImpl l = new ListenerImpl();
+      TakeOfflineConfiguration c = new TakeOfflineConfigurationBuilder(null, null)
+            .afterFailures(afterFailures)
+            .minTimeToWait(minWait)
+            .create();
+      return new TestContext(new OfflineStatus(c, t, l), t, l);
+   }
+
+   private static class TestContext {
+      private final OfflineStatus offlineStatus;
+      private final ControlledTimeService timeService;
+      private final ListenerImpl listener;
+
+      private TestContext(OfflineStatus offlineStatus, ControlledTimeService timeService, ListenerImpl listener) {
+         this.offlineStatus = offlineStatus;
+         this.timeService = timeService;
+         this.listener = listener;
+      }
+   }
+
+   private static class ListenerImpl implements SiteStatusListener {
+      private final Queue<SiteStatus> notifications;
+
+      private ListenerImpl() {
+         notifications = new ConcurrentLinkedDeque<>();
+      }
+
+      @Override
+      public void siteOnline() {
+         notifications.add(SiteStatus.ONLINE);
+      }
+
+      @Override
+      public void siteOffline() {
+         notifications.add(SiteStatus.OFFLINE);
+      }
+
+      private void check(SiteStatus first) {
+         assertEquals("Check first site status.",  first, notifications.poll());
+         assertTrue("Check notifications is empty.", notifications.isEmpty());
+      }
+
+      private void check(SiteStatus first, SiteStatus... remaining) {
+         assertEquals("Check first site status.",  first, notifications.poll());
+         int i = 2;
+         for (SiteStatus status : remaining) {
+            assertEquals(format("Check %d(\"th\") site status", i), status, notifications.poll());
+            i++;
+         }
+         assertTrue("Check notifications is empty.", notifications.isEmpty());
+      }
+   }
+
+   private enum SiteStatus {
+      ONLINE, OFFLINE
    }
 }
