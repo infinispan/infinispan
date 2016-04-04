@@ -5,7 +5,7 @@
     <parent>
        <groupId>org.infinispan.server</groupId>
        <artifactId>infinispan-server-versions</artifactId>
-       <version>8.2.1-SNAPSHOT</version>
+       <version>8.2.2-SNAPSHOT</version>
        <relativePath>../versions/pom.xml</relativePath>
     </parent>
 
@@ -196,8 +196,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat"
-                                      todir="${project.build.outputDirectory}"/>
+                                <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}" />
                             </target>
                         </configuration>
                     </execution>
