@@ -71,4 +71,10 @@ public interface Messages {
 
    @Message(value = "After merge (or coordinator change), the coordinator failed to recover cluster. Cluster members are %s.", id = 100004)
    String clusterRecoveryFailed(Collection<Address> members);
+
+   @Message(value = "Site '%s' is online.", id = 100005)
+   String siteOnline(String siteName);
+
+   @Message(value = "Site '%s' is offline.", id = 100006)
+   String siteOffline(String siteName);
 }
