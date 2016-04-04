@@ -218,6 +218,33 @@ Configuration c = new ConfigurationBuilder()
    .build();
 ----
 
+==== Initial cluster size
+Infinispan's very dynamic nature in handling toplogy changes (i.e. nodes being added / removed
+at runtime) means that, normally, a node doesn't wait for the presence of other nodes before 
+starting. While this is very flexible, it might not be suitable for applications which require
+a specific number of nodes to join the cluster before caches are started. For this reason,
+you can specify how many nodes should have joined the cluster before proceeding with cache 
+initialization. To do this, use the _initialClusterSize_ and _initialClusterTimeout_ transport
+properties. The declarative XML configuration:
+
+[source,xml]
+----
+   <transport initial-cluster-size="4" initial-cluster-timeout="30000" />
+----
+
+The programmatic Java configuration:
+[source,java]
+----
+GlobalConfiguration global = new GlobalConfigurationBuilder()
+   .transport()
+       .initialClusterSize(4)
+       .initialClusterTimeout(30000)
+   .build();
+----
+
+The above configuration will wait for _4_ nodes to join the cluster before initialization. If
+the initial nodes do not appear within the specified timeout, the cache manager will fail to 
+start.
 
 ==== L1 Caching
 To prevent repeated remote calls when doing multiple GETs, L1 caching can be enabled.

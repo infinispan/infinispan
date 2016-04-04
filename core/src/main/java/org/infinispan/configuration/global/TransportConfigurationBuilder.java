@@ -98,7 +98,8 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    /**
-    * Sets the number of nodes that need to join before the cache container can start. The default is to
+    * Sets the number of nodes that need to join before the cache container can start. The default is to start
+    * immediately without waiting.
     */
    public TransportConfigurationBuilder initialClusterSize(int clusterSize) {
       attributes.attribute(INITIAL_CLUSTER_SIZE).set(clusterSize);
