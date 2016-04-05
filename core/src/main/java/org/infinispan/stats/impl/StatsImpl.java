@@ -2,8 +2,8 @@ package org.infinispan.stats.impl;
 
 import net.jcip.annotations.Immutable;
 
-import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.stats.Stats;
 
 /**

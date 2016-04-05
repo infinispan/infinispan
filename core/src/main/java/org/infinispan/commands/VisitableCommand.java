@@ -1,7 +1,6 @@
 package org.infinispan.commands;
 
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 

@@ -1,4 +1,4 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
@@ -15,10 +15,9 @@ import org.infinispan.util.logging.LogFactory;
  * cache loader if needed on a remote node, in certain conditions.
  *
  * @author Manik Surtani
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
-public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
+public class ClusteredActivationInterceptor extends ActivationInterceptor {
 
    private static final Log log = LogFactory.getLog(ClusteredActivationInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -33,9 +32,9 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
       this.cdl = cdl;
       this.stateTransferManager = stateTransferManager;
    }
-   
+
    @Start(priority = 15)
-   private void startClusteredCacheLoaderInterceptor() {
+   private void startClusteredActivationInterceptor() {
       transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
       distributed = cacheConfiguration.clustering().cacheMode().isDistributed();
    }
@@ -49,7 +48,6 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
                return true;
             }
          } else {
-            // TODO Do we replicate CACHE_MODE_LOCAL commands?
             if (!cdl.localNodeIsPrimaryOwner(key) && !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
                if (trace) {
                   log.tracef("Skip load for command %s. This node is not the primary owner of %s", cmd, key);

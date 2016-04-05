@@ -132,8 +132,8 @@
       </replicated-cache>
       <local-cache name="custom-interceptors" unreliable-return-values="true">
          <custom-interceptors>
-            <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor1" after="org.infinispan.interceptors.InvocationContextInterceptor"/>
-            <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor2" before="org.infinispan.interceptors.InvocationContextInterceptor"/>
+            <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor1" after="org.infinispan.interceptors.impl.InvocationContextInterceptor"/>
+            <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor2" before="org.infinispan.interceptors.impl.InvocationContextInterceptor"/>
             <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor3" index="1"/>
             <interceptor class="org.infinispan.configuration.parsing.UnifiedXmlFileParsingTest$CustomInterceptor4" position="LAST">
                <property name="foo">bar</property>

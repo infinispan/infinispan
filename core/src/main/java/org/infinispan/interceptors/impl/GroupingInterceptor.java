@@ -1,4 +1,4 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.Configuration;
@@ -9,29 +9,25 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * A {@link org.infinispan.interceptors.base.CommandInterceptor} implementation that keeps track of the keys
- * added/removed during the processing of a {@link org.infinispan.commands.remote.GetKeysInGroupCommand}
+ * An interceptor that keeps track of the keys
+ * added/removed during the processing of a {@link GetKeysInGroupCommand}
  *
  * @author Pedro Ruivo
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
-public class GroupingInterceptor extends CommandInterceptor {
+public class GroupingInterceptor extends DDSequentialInterceptor {
 
    private CacheNotifier<?, ?> cacheNotifier;
    private GroupManager groupManager;
@@ -48,22 +44,22 @@ public class GroupingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
       command.setGroupOwner(isGroupOwner(groupName));
       if (!command.isGroupOwner() || !isPassivationEnabled) {
-         Object result = invokeNextInterceptor(ctx, command);
+         Object result = ctx.forkInvocationSync(command);
          if (result instanceof List) {
             //noinspection unchecked
             filter((List<CacheEntry>) result);
          }
-         return result;
+         return ctx.shortCircuit(result);
       }
       KeyListener listener = new KeyListener(groupName, groupManager, factory);
       //this is just to try to make the snapshot the most recent possible by picking some modification on the fly.
       cacheNotifier.addListener(listener);
       try {
-         Object result = invokeNextInterceptor(ctx, command);
+         Object result = ctx.forkInvocationSync(command);
          if (result instanceof List) {
             //noinspection unchecked
             ((List) result).addAll(listener.activatedKeys);
@@ -75,7 +71,7 @@ public class GroupingInterceptor extends CommandInterceptor {
                ((Map) result).put(entry.getKey(), entry.getValue());
             }
          }
-         return result;
+         return ctx.shortCircuit(result);
       } finally {
          cacheNotifier.removeListener(listener);
       }

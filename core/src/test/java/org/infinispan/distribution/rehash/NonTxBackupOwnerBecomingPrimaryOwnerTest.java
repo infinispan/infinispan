@@ -145,13 +145,13 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       CyclicBarrier beforeCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCache1Barrier,
             op.getCommandClass(), false, false);
-      cache1.addInterceptorBefore(blockingInterceptor1, NonTxDistributionInterceptor.class);
+      cache1.getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor1, NonTxDistributionInterceptor.class);
 
       // Every operation command will be blocked after returning to the distribution interceptor on cache2
       CyclicBarrier afterCache2Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(afterCache2Barrier,
             op.getCommandClass(), true, false);
-      cache2.addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
+      cache2.getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
 
       // Put from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
       Future<Object> future = fork(new Callable<Object>() {

@@ -5,6 +5,8 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.BackupResponse;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Handles x-site data backups for pessimistic transactional caches.
  *
@@ -14,24 +16,24 @@ import org.infinispan.remoting.transport.BackupResponse;
 public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       //if this is an "empty" tx no point replicating it to other clusters
       if (!shouldInvokeRemoteTxCommand(ctx))
-         return super.visitPrepareCommand(ctx, command);
+         return ctx.continueInvocation();
 
       boolean isTxFromRemoteSite = isTxFromRemoteSite( command.getGlobalTransaction() );
       if (isTxFromRemoteSite) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
 
       BackupResponse backupResponse = backupSender.backupPrepare(command);
-      Object result = invokeNextInterceptor(ctx, command);
+      Object result = ctx.forkInvocationSync(command);
       backupSender.processResponses(backupResponse, command, ctx.getTransaction());
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       //for pessimistic transaction we don't do a 2PC (as we already own the remote lock) but just
       //a 1PC
       throw new IllegalStateException("This should never happen!");

@@ -20,15 +20,14 @@ import org.infinispan.util.logging.Log;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for transaction based locking interceptors.
  *
  * @author Mircea.Markus@jboss.com
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
    private boolean trace = getLog().isTraceEnabled();
 
@@ -46,16 +45,16 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          lockManager.unlockAll(ctx);
       }
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
          // Cache.putForExternalRead() is non-transactional
          return visitNonTxDataWriteCommand(ctx, command);
@@ -64,9 +63,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       try {
-         return super.visitGetAllCommand(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
          //locks need to be released in this situation as they might have been acquired from L1.
@@ -75,10 +74,10 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       boolean releaseLocks = releaseLockOnTxCompletion(ctx);
       try {
-         return super.visitCommitCommand(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (OutdatedTopologyException e) {
          releaseLocks = false;
          throw e;
@@ -88,7 +87,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    protected final Object invokeNextAndCommitIf1Pc(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object result = invokeNextInterceptor(ctx, command);
+      Object result = ctx.forkInvocationSync(command);
       if (command.isOnePhaseCommit() && releaseLockOnTxCompletion(ctx)) {
          lockManager.unlockAll(ctx);
       }

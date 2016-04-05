@@ -5,4 +5,4 @@
  *
  * @private
  */
-package org.infinispan.interceptors.compat.impl;
+package org.infinispan.interceptors.compat;

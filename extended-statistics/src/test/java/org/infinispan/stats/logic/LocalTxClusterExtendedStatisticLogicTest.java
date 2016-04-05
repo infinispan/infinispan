@@ -2,7 +2,7 @@ package org.infinispan.stats.logic;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.interceptors.TxInterceptor;
+import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.CacheStatisticCollector;
 import org.infinispan.stats.CacheStatisticManager;
@@ -116,9 +116,9 @@ public class LocalTxClusterExtendedStatisticLogicTest extends SingleCacheManager
    @Override
    protected void setup() throws Exception {
       super.setup();
-      CacheStatisticManager manager = (CacheStatisticManager) extractField(extendedStatisticInterceptor, "cacheStatisticManager");
-      CacheStatisticCollector collector = (CacheStatisticCollector) extractField(manager, "cacheStatisticCollector");
-      ConcurrentGlobalContainer globalContainer = (ConcurrentGlobalContainer) extractField(collector, "globalContainer");
+      CacheStatisticManager manager = extractField(extendedStatisticInterceptor, "cacheStatisticManager");
+      CacheStatisticCollector collector = extractField(manager, "cacheStatisticCollector");
+      ConcurrentGlobalContainer globalContainer = extractField(collector, "globalContainer");
       replaceField(TEST_TIME_SERVICE, "timeService", manager, CacheStatisticManager.class);
       replaceField(TEST_TIME_SERVICE, "timeService", collector, CacheStatisticCollector.class);
       replaceField(TEST_TIME_SERVICE, "timeService", globalContainer, ConcurrentGlobalContainer.class);

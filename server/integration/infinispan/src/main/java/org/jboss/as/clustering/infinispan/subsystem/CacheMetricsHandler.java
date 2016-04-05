@@ -27,13 +27,12 @@ import org.infinispan.Cache;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.ActivationInterceptor;
-import org.infinispan.interceptors.CacheMgmtInterceptor;
-import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.InvalidationInterceptor;
 import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.TxInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.ActivationInterceptor;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
+import org.infinispan.interceptors.impl.CacheWriterInterceptor;
+import org.infinispan.interceptors.impl.InvalidationInterceptor;
+import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.server.infinispan.SecurityActions;
@@ -323,7 +322,8 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 }
                 case CACHE_LOADER_LOADS: {
-                    ActivationInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, ActivationInterceptor.class);
+                    ActivationInterceptor
+                          interceptor = getFirstInterceptorWhichExtends(interceptors, ActivationInterceptor.class);
                     result.set(interceptor != null ? interceptor.getCacheLoaderLoads() : 0);
                     break;
                 }
@@ -333,7 +333,8 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 }
                 case CACHE_LOADER_STORES: {
-                    CacheWriterInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, CacheWriterInterceptor.class);
+                    CacheWriterInterceptor
+                          interceptor = getFirstInterceptorWhichExtends(interceptors, CacheWriterInterceptor.class);
                     result.set(interceptor != null ? interceptor.getWritesToTheStores() : 0);
                     break;
                 }

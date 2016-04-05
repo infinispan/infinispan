@@ -1,7 +1,8 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -33,7 +34,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -66,6 +67,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -75,11 +77,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.transaction.xa.TransactionXaAdapter
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
-public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatisticsExposer {
+public class TxInterceptor<K, V> extends DDSequentialInterceptor implements JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -100,11 +101,6 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
    private boolean useVersioning;
    private boolean statisticsEnabled;
 
-   @Override
-   protected Log getLog() {
-      return log;
-   }
-
    @Inject
    public void init(TransactionTable txTable, Configuration configuration, RpcManager rpcManager,
                     RecoveryManager recoveryManager, CommandsFactory commandsFactory, Cache<K, V> cache,
@@ -124,7 +120,12 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return ctx.shortCircuit(handlePrepareCommand(ctx, command));
+   }
+
+   protected Object handlePrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+         throws Throwable {
       // Debugging for ISPN-5379
       ctx.getCacheTransaction().freezeModifications();
 
@@ -150,7 +151,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
 
    private Object invokeNextInterceptorAndVerifyTransaction(TxInvocationContext ctx, AbstractTransactionBoundaryCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.forkInvocationSync(command);
       } finally {
          if (!ctx.isOriginLocal()) {
             verifyRemoteTransaction((RemoteTxInvocationContext) ctx, command);
@@ -159,13 +160,13 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       GlobalTransaction gtx = ctx.getGlobalTransaction();
       // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
       if (!ctx.isOriginLocal()) {
          if (txTable.isTransactionCompleted(gtx)) {
             if (trace) log.tracef("Transaction %s already completed, skipping commit", gtx);
-            return null;
+            return ctx.shortCircuit(null);
          }
 
          if (!isTotalOrder) {
@@ -174,22 +175,22 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
       }
 
       if (this.statisticsEnabled) commits.incrementAndGet();
-      Object result = invokeNextInterceptor(ctx, command);
+      Object result = ctx.forkInvocationSync(command);
       if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionCommitted(gtx, false);
       }
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
       // The transaction was marked as completed in RollbackCommand.prepare()
       if (!ctx.isOriginLocal() || isTotalOrder) {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
       }
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          //for tx that rollback we do not send a TxCompletionNotification, so we should cleanup
          // the recovery info here
@@ -201,56 +202,56 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       enlistIfNeeded(ctx);
 
       if (ctx.isOriginLocal()) {
          command.setGlobalTransaction(ctx.getGlobalTransaction());
       }
 
-      return invokeNextInterceptorAndVerifyTransaction(ctx, command);
+      return ctx.shortCircuit(invokeNextInterceptorAndVerifyTransaction(ctx, command));
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistWriteAndInvokeNext(ctx, command));
    }
 
    @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
+   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistWriteAndInvokeNext(ctx, command));
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistWriteAndInvokeNext(ctx, command));
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistWriteAndInvokeNext(ctx, command));
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistWriteAndInvokeNext(ctx, command));
    }
 
    @Override
-   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
+   public CompletableFuture<Void> visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistReadAndInvokeNext(ctx, command));
    }
 
    @Override
-   public CacheSet<K> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       CacheSet<K> set = (CacheSet<K>) enlistReadAndInvokeNext(ctx, command);
       if (ctx.isInTxScope()) {
-         return new AbstractDelegatingKeyCacheSet(getCacheWithFlags(cache, command), set) {
+         return ctx.shortCircuit(new AbstractDelegatingKeyCacheSet(Caches.getCacheWithFlags(cache, command), set) {
             @Override
             public CloseableIterator<K> iterator() {
                return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
@@ -276,16 +277,16 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
                }
                return (int) size;
             }
-         };
+         });
       }
-      return set;
+      return ctx.shortCircuit(set);
    }
 
    @Override
-   public CacheSet<CacheEntry<K, V>> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) enlistReadAndInvokeNext(ctx, command);
       if (ctx.isInTxScope()) {
-         return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
+         return ctx.shortCircuit(new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
             @Override
             public CloseableIterator<CacheEntry<K, V>> iterator() {
                return new TransactionAwareEntryCloseableIterator<>(super.iterator(),
@@ -311,34 +312,34 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
                }
                return (int) size;
             }
-         };
+         });
       }
-      return set;
+      return ctx.shortCircuit(set);
    }
 
    @Override
-   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, invalidateCommand);
+   public CompletableFuture<Void> visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
+      return ctx.shortCircuit(enlistWriteAndInvokeNext(ctx, invalidateCommand));
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistReadAndInvokeNext(ctx, command));
    }
 
    @Override
-   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
+   public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistReadAndInvokeNext(ctx, command));
    }
    
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      return ctx.shortCircuit(enlistReadAndInvokeNext(ctx, command));
    }
 
    private Object enlistReadAndInvokeNext(InvocationContext ctx, VisitableCommand command) throws Throwable {
       enlistIfNeeded(ctx);
-      return invokeNextInterceptor(ctx, command);
+      return ctx.forkInvocationSync(command);
    }
 
    private void enlistIfNeeded(InvocationContext ctx) throws SystemException {
@@ -359,7 +360,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
       }
       Object rv;
       try {
-         rv = invokeNextInterceptor(ctx, command);
+         rv = ctx.forkInvocationSync(command);
       } catch (OutdatedTopologyException e) {
          // The command will be retried, so we shouldn't mark the transaction for rollback
          throw e;
@@ -502,7 +503,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
          }
          RollbackCommand rollback = commandsFactory.buildRollbackCommand(command.getGlobalTransaction());
          try {
-            invokeNextInterceptor(ctx, rollback);
+            ctx.forkInvocationSync(rollback);
          } finally {
             RemoteTransaction remoteTx = ctx.getCacheTransaction();
             remoteTx.markForRollback(true);
@@ -536,7 +537,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
          if (trace) {
             log.tracef("Replaying the transactions received as a result of state transfer %s", prepareCommand);
          }
-         visitPrepareCommand(ctx, prepareCommand);
+         handlePrepareCommand(ctx, prepareCommand);
       }
    }
 

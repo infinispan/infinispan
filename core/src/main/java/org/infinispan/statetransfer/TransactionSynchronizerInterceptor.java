@@ -5,8 +5,10 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.transaction.xa.CacheTransaction;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * With the Non-Blocking State Transfer (NBST) in place it is possible for a transactional command to be forwarded
@@ -29,53 +31,53 @@ import org.infinispan.transaction.xa.CacheTransaction;
  * @author Mircea Markus
  * @since 5.2
  */
-public class TransactionSynchronizerInterceptor extends CommandInterceptor {
+public class TransactionSynchronizerInterceptor extends DDSequentialInterceptor {
 
    @Override
-   public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          CacheTransaction cacheTransaction = ctx.getCacheTransaction();
          synchronized (cacheTransaction) {
-            return super.visitPrepareCommand(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          }
       } else {
-         return super.visitPrepareCommand(ctx, command);
+         return ctx.continueInvocation();
       }
    }
 
    @Override
-   public final Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          CacheTransaction cacheTransaction = ctx.getCacheTransaction();
          synchronized (cacheTransaction) {
-            return super.visitCommitCommand(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          }
       } else {
-         return super.visitCommitCommand(ctx, command);
+         return ctx.continueInvocation();
       }
    }
 
    @Override
-   public final Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          CacheTransaction cacheTransaction = ctx.getCacheTransaction();
          synchronized (cacheTransaction) {
-            return super.visitRollbackCommand(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          }
       } else {
-         return super.visitRollbackCommand(ctx, command);
+         return ctx.continueInvocation();
       }
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          CacheTransaction cacheTransaction = ctx.getCacheTransaction();
          synchronized (cacheTransaction) {
-            return super.visitLockControlCommand(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          }
       } else {
-         return super.visitLockControlCommand(ctx, command);
+         return ctx.continueInvocation();
       }
    }
 }

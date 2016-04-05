@@ -19,7 +19,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -397,13 +397,13 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    }
 
    private ExtendedStatisticInterceptor getExtendedStatistic(Cache<?, ?> cache) {
-      for (CommandInterceptor commandInterceptor : cache.getAdvancedCache().getInterceptorChain()) {
-         if (commandInterceptor instanceof ExtendedStatisticInterceptor) {
-            ((ExtendedStatisticInterceptor) commandInterceptor).resetStatistics();
-            return (ExtendedStatisticInterceptor) commandInterceptor;
-         }
+      SequentialInterceptorChain interceptorChain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      ExtendedStatisticInterceptor extendedStatisticInterceptor =
+            interceptorChain.findInterceptorExtending(ExtendedStatisticInterceptor.class);
+      if (extendedStatisticInterceptor != null) {
+         extendedStatisticInterceptor.resetStatistics();
       }
-      return null;
+      return extendedStatisticInterceptor;
    }
 
    private void replaceAllPerCacheInboundInvocationHandler() {

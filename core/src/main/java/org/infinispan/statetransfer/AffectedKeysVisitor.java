@@ -18,7 +18,7 @@ import java.util.HashSet;
  * @author anistor@redhat.com
  * @since 5.2
  */
-class AffectedKeysVisitor extends AbstractVisitor {
+public class AffectedKeysVisitor extends AbstractVisitor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {

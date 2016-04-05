@@ -5,11 +5,10 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.testng.AssertJUnit;
@@ -94,9 +93,10 @@ public abstract class BaseStateTransferGetGroupKeysTest extends BaseUtilGroupTes
    @Override
    protected final void resetCaches(List<Cache<GroupKey, String>> cacheList) {
       for (Cache cache : cacheList) {
-         InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
-         if (chain.containsInterceptorType(BlockCommandInterceptor.class)) {
-            ((BlockCommandInterceptor) chain.getInterceptorsWithClass(BlockCommandInterceptor.class).get(0)).reset();
+         SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+         BlockCommandInterceptor interceptor = chain.findInterceptorWithClass(BlockCommandInterceptor.class);
+         if (interceptor != null) {
+            interceptor.reset();
          }
       }
    }
@@ -107,11 +107,9 @@ public abstract class BaseStateTransferGetGroupKeysTest extends BaseUtilGroupTes
    }
 
    private static BlockCommandInterceptor injectBlockCommandInterceptorIfAbsent(Cache<GroupKey, String> cache) {
-      InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
-      BlockCommandInterceptor interceptor;
-      if (chain.containsInterceptorType(BlockCommandInterceptor.class)) {
-         interceptor = (BlockCommandInterceptor) chain.getInterceptorsWithClass(BlockCommandInterceptor.class).get(0);
-      } else {
+      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      BlockCommandInterceptor interceptor = chain.findInterceptorWithClass(BlockCommandInterceptor.class);
+      if (interceptor == null) {
          interceptor = new BlockCommandInterceptor();
          chain.addInterceptorAfter(interceptor, EntryWrappingInterceptor.class);
       }

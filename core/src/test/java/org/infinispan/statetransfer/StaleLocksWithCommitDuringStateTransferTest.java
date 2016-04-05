@@ -10,7 +10,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -158,7 +158,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       txCoordinator.prepare(localTx);
 
       // Delay the commit on the remote node. Can't used blockNewTransactions because we don't want a StateTransferInProgressException
-      InterceptorChain c2ic = TestingUtil.extractComponent(c2, InterceptorChain.class);
+      SequentialInterceptorChain c2ic = c2.getAdvancedCache().getSequentialInterceptorChain();
       c2ic.addInterceptorBefore(new CommandInterceptor() {
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {

@@ -3,14 +3,12 @@ package org.infinispan.tx.recovery.admin;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
 import java.util.List;
 
@@ -42,8 +40,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
       failureInterceptor0 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
       failureInterceptor1 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
-      advancedCache(0).addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
-      advancedCache(1).addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
+      advancedCache(0).getSequentialInterceptorChain().addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
+      advancedCache(1).getSequentialInterceptorChain().addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
    }
 
    @BeforeMethod

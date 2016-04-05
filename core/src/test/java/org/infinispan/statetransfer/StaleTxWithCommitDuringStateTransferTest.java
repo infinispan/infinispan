@@ -1,15 +1,10 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -23,10 +18,8 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;

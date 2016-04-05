@@ -1,32 +1,16 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.tx.dld.ControlledRpcManager;
 import org.testng.annotations.Test;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
@@ -91,7 +75,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
 
          assertIsInL1(nonOwner, key);
       } finally {
-         nonOwner.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
+         nonOwner.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
       }
    }
 
@@ -153,7 +137,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
 
          assertIsNotInL1(nonOwner, key);
       } finally {
-         nonOwner.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
+         nonOwner.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
       }
    }
 }

@@ -10,9 +10,9 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.CallInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -127,9 +127,9 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       }
 
       public static TxCommandInterceptor inject(Cache cache) {
-         InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
+         SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
          if (chain.containsInterceptorType(TxCommandInterceptor.class)) {
-            return (TxCommandInterceptor) chain.getInterceptorsWithClass(TxCommandInterceptor.class).get(0);
+            return chain.findInterceptorWithClass(TxCommandInterceptor.class);
          }
          TxCommandInterceptor interceptor = new TxCommandInterceptor();
          chain.addInterceptorBefore(interceptor, CallInterceptor.class);

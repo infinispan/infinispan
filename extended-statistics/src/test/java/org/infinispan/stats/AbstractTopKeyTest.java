@@ -4,12 +4,13 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.interceptors.TxInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static java.lang.String.format;
 import static org.infinispan.distribution.DistributionTestHelper.addressOf;
@@ -26,12 +27,9 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
    }
 
    protected CacheUsageInterceptor getTopKey(Cache<?, ?> cache) {
-      for (CommandInterceptor interceptor : cache.getAdvancedCache().getInterceptorChain()) {
-         if (interceptor instanceof CacheUsageInterceptor) {
-            return (CacheUsageInterceptor) interceptor;
-         }
-      }
-      throw new IllegalStateException();
+      SequentialInterceptorChain interceptorChain =
+            cache.getAdvancedCache().getSequentialInterceptorChain();
+      return interceptorChain.findInterceptorExtending(CacheUsageInterceptor.class);
    }
 
    protected void assertTopKeyAccesses(Cache<?, ?> cache, String key, long expected, boolean readAccesses) {
@@ -83,26 +81,25 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
    }
 
    protected PrepareCommandBlocker addPrepareBlockerIfAbsent(Cache<?, ?> cache) {
-      List<CommandInterceptor> chain = cache.getAdvancedCache().getInterceptorChain();
+      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
 
-      for (CommandInterceptor commandInterceptor : chain) {
-         if (commandInterceptor instanceof PrepareCommandBlocker) {
-            return (PrepareCommandBlocker) commandInterceptor;
-         }
-      }
-      PrepareCommandBlocker blocker = new PrepareCommandBlocker();
-      cache.getAdvancedCache().addInterceptorBefore(blocker, TxInterceptor.class);
+      PrepareCommandBlocker blocker = chain.findInterceptorWithClass(PrepareCommandBlocker.class);
+      if (blocker != null)
+         return blocker;
+
+      blocker = new PrepareCommandBlocker();
+      chain.addInterceptorBefore(blocker, TxInterceptor.class);
       return blocker;
    }
 
-   protected class PrepareCommandBlocker extends CommandInterceptor {
+   protected class PrepareCommandBlocker extends DDSequentialInterceptor {
 
       private boolean unblock = false;
       private boolean prepareBlocked = false;
 
       @Override
-      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         Object retVal = invokeNextInterceptor(ctx, command);
+      public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         Object retVal = ctx.forkInvocationSync(command);
          synchronized (this) {
             prepareBlocked = true;
             notifyAll();
@@ -110,7 +107,7 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
                wait();
             }
          }
-         return retVal;
+         return ctx.shortCircuit(retVal);
       }
 
       public synchronized void reset() {

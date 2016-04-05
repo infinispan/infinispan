@@ -1,10 +1,9 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 
@@ -12,9 +11,8 @@ import org.infinispan.util.concurrent.locks.LockManager;
  * Base class for replication and distribution interceptors.
  *
  * @author anistor@redhat.com
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
 public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
    protected CommandsFactory cf;

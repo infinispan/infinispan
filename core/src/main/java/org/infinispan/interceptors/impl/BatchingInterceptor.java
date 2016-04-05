@@ -1,50 +1,47 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Interceptor that captures batched calls and attaches contexts.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
-public class BatchingInterceptor extends CommandInterceptor {
+public class BatchingInterceptor extends DDSequentialInterceptor {
    private BatchContainer batchContainer;
    private TransactionManager transactionManager;
    private InvocationContextFactory invocationContextFactory;
+   private SequentialInterceptorChain invoker;
 
    private static final Log log = LogFactory.getLog(BatchingInterceptor.class);
 
-   @Override
-   protected Log getLog() {
-      return log;
-   }
-
    @Inject
    private void inject(BatchContainer batchContainer, TransactionManager transactionManager,
-                       InvocationContextFactory invocationContextFactory) {
+                       InvocationContextFactory invocationContextFactory, SequentialInterceptorChain invoker) {
       this.batchContainer = batchContainer;
       this.transactionManager = transactionManager;
       this.invocationContextFactory = invocationContextFactory;
+      this.invoker = invoker;
    }
 
    @Override
-   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
+   public CompletableFuture<Void> visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       // eviction is non-tx, so this interceptor should be no-op for EvictCommands
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    /**
@@ -53,10 +50,10 @@ public class BatchingInterceptor extends CommandInterceptor {
     * suspend the batch's tx.</li> <li>If there is no batch in progress, just pass the call up the chain.</li> </ul>
     */
    @Override
-   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   public CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (!ctx.isOriginLocal()) {
          // Nothing to do for remote calls
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
 
       Transaction tx;
@@ -64,20 +61,25 @@ public class BatchingInterceptor extends CommandInterceptor {
          // The active transaction means we are in an auto-batch.
          // No batch means a read-only auto-batch.
          // Either way, we don't need to do anything
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
 
       try {
          transactionManager.resume(tx);
-         InvocationContext invocationContext = ctx;
+         InvocationContext txInvocationContext = ctx;
          if (!ctx.isInTxScope()) {
-            // If there's no ongoing tx then BatchingInterceptor creates one and then invokes next interceptor,
+            // If there's no ongoing tx then BatchingInterceptor creates one and then invokes the chain again,
             // so that all interceptors in the stack will be executed in a transactional context.
-            // This is where a new context (TxInvocationContext) is created, as the existing context is not transactional: NonTxInvocationContext.
             log.tracef("Called with a non-tx invocation context: %s", ctx);
-            invocationContext = invocationContextFactory.createInvocationContext(true, -1);
+            txInvocationContext = invocationContextFactory.createInvocationContext(true, -1);
          }
-         return invokeNextInterceptor(invocationContext, command);
+         // Before sequential interceptors, we could continue the invocation with the next interceptor,
+         // with invokeNextInterceptor(txInvocationContext, command).
+         // But now we keep track of the invocation state (e.g. the current interceptor) in the invocation
+         // context itself (BaseSequentialInvocationContext, to be precise), so we have to restart the
+         // invocation with the new context instance.
+         // TODO Move the creation of the proper invocation context out of the interceptor and into CacheImpl
+         return ctx.shortCircuit(invoker.invoke(txInvocationContext, command));
       } finally {
          if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
             transactionManager.suspend();

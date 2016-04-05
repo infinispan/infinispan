@@ -14,14 +14,11 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -41,13 +38,6 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    // Using the same list type everywhere may help with the optimization of the invocation context methods
    private static final ImmutableListCopy<SequentialInterceptor> EMPTY_INTERCEPTORS_LIST =
          new ImmutableListCopy<>(new SequentialInterceptor[0]);
-   private static final Map<Class<? extends CommandInterceptor>, Class<? extends SequentialInterceptor>>
-         replacementInterceptors = new IdentityHashMap<>();
-
-   static {
-      // Populate the replacementInterceptors map
-   }
-
    private static final Log log = LogFactory.getLog(SequentialInterceptorChainImpl.class);
 
    final ComponentMetadataRepo componentMetadataRepo;
@@ -85,9 +75,6 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
     * @param clazz type of interceptor to check for
     */
    private void checkInterceptor(Class<? extends SequentialInterceptor> clazz) {
-      if (replacementInterceptors.containsKey(clazz)) {
-         throw new IllegalArgumentException("Cannot add deprecated interceptor " + clazz);
-      }
       if (containsInterceptorType(clazz, false))
          throw new CacheConfigurationException("Detected interceptor of type [" + clazz.getName() +
                                                      "] being added to the interceptor chain " +
@@ -128,7 +115,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       lock.lock();
       try {
          for (int i = 0; i < interceptors.size(); i++) {
-            if (interceptorMatches(interceptors.get(i), getReplacementInterceptor(clazz))) {
+            if (interceptorMatches(interceptors.get(i), clazz)) {
                removeInterceptor(i);
                break;
             }
@@ -152,7 +139,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          checkInterceptor(interceptorClass);
          validateCustomInterceptor(interceptorClass);
          for (int i = 0; i < interceptors.size(); i++) {
-            if (interceptorMatches(interceptors.get(i), getReplacementInterceptor(afterInterceptor))) {
+            if (interceptorMatches(interceptors.get(i), afterInterceptor)) {
                interceptors = immutableListAdd(interceptors, i + 1, toAdd);
                rebuildInterceptors();
                return true;
@@ -181,7 +168,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          checkInterceptor(interceptorClass);
          validateCustomInterceptor(interceptorClass);
          for (int i = 0; i < interceptors.size(); i++) {
-            if (interceptorMatches(interceptors.get(i), getReplacementInterceptor(beforeInterceptor))) {
+            if (interceptorMatches(interceptors.get(i), beforeInterceptor)) {
                interceptors = immutableListAdd(interceptors, i, toAdd);
                rebuildInterceptors();
                return true;
@@ -203,7 +190,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          validateCustomInterceptor(interceptorClass);
 
          for (int i = 0; i < interceptors.size(); i++) {
-            if (interceptorMatches(interceptors.get(i), getReplacementInterceptor(existingInterceptorType))) {
+            if (interceptorMatches(interceptors.get(i), existingInterceptorType)) {
                interceptors = immutableListReplace(interceptors, i, replacingInterceptor);
                rebuildInterceptors();
                return true;
@@ -301,11 +288,11 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       for (SequentialInterceptor interceptor : localInterceptors) {
          Class<? extends SequentialInterceptor> currentInterceptorType = interceptor.getClass();
          if (alsoMatchSubClasses) {
-            if (getReplacementInterceptor(interceptorType).isAssignableFrom(currentInterceptorType)) {
+            if (interceptorType.isAssignableFrom(currentInterceptorType)) {
                return true;
             }
          } else {
-            if (getReplacementInterceptor(interceptorType) == currentInterceptorType) {
+            if (interceptorType == currentInterceptorType) {
                return true;
             }
          }
@@ -324,10 +311,5 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       while (it.hasPrevious()) {
          firstInterceptor = new InterceptorListNode(it.previous(), firstInterceptor);
       }
-   }
-
-
-   static Class<? extends SequentialInterceptor> getReplacementInterceptor(Class<? extends SequentialInterceptor> oldInterceptor) {
-      return replacementInterceptors.getOrDefault(oldInterceptor, oldInterceptor);
    }
 }

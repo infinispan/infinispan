@@ -11,7 +11,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
@@ -23,6 +23,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created to control the total order validation. It disable the possibility of acquiring locks during execution through
@@ -30,10 +31,8 @@ import java.util.Collection;
  *
  * @author Pedro Ruivo
  * @author Mircea.Markus@jboss.com
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
-public class TotalOrderInterceptor extends CommandInterceptor {
+public class TotalOrderInterceptor extends DDSequentialInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -54,7 +53,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (log.isDebugEnabled()) {
          log.debugf("Prepare received. Transaction=%s, Affected keys=%s, Local=%s",
                     command.getGlobalTransaction().globalId(),
@@ -68,7 +67,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
       try {
          simulateLocking(ctx, command, clusteringDependentLogic);
          if (ctx.isOriginLocal()) {
-            return invokeNextInterceptor(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          } else {
             TotalOrderRemoteTransactionState state = getTransactionState(ctx);
 
@@ -94,12 +93,12 @@ public class TotalOrderInterceptor extends CommandInterceptor {
                }
 
                //invoke next interceptor in the chain
-               Object result = invokeNextInterceptor(ctx, command);
+               Object result = ctx.forkInvocationSync(command);
 
                if (command.isOnePhaseCommit()) {
                   totalOrderManager.release(state);
                }
-               return result;
+               return ctx.shortCircuit(result);
             } finally {
                state.prepared();
             }
@@ -118,21 +117,21 @@ public class TotalOrderInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, false);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, true);
    }
 
    @Override
-   public final Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       throw new UnsupportedOperationException("Lock interface not supported with total order protocol");
    }
 
-   private Object visitSecondPhaseCommand(TxInvocationContext context, AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
+   private CompletableFuture<Void> visitSecondPhaseCommand(TxInvocationContext context, AbstractTransactionBoundaryCommand command, boolean commit) throws Throwable {
       GlobalTransaction gtx = command.getGlobalTransaction();
       if (trace) {
          log.tracef("Second phase command received. Commit?=%s Transaction=%s, Local=%s", commit, gtx.globalId(),
@@ -144,10 +143,10 @@ public class TotalOrderInterceptor extends CommandInterceptor {
       try {
          if (!processSecondCommand(state, commit) && !context.isOriginLocal()) {
             //we can return here, because we set onePhaseCommit to prepare and it will release all the resources
-            return null;
+            return context.shortCircuit(null);
          }
 
-         return invokeNextInterceptor(context, command);
+         return context.shortCircuit(context.forkInvocationSync(command));
       } catch (Throwable exception) {
          if (log.isDebugEnabled()) {
             log.debugf(exception, "Exception while rollback transaction %s", gtx.globalId());

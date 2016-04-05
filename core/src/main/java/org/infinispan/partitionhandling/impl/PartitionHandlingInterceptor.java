@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -27,12 +28,16 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
-public class PartitionHandlingInterceptor extends CommandInterceptor {
+public class PartitionHandlingInterceptor extends DDSequentialInterceptor {
+   private static final Log log = LogFactory.getLog(PartitionHandlingInterceptor.class);
+   
    PartitionHandlingManager partitionHandlingManager;
    private Transport transport;
    private DistributionManager distributionManager;
@@ -54,21 +59,21 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
-   protected Object handleSingleWrite(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected CompletableFuture<Void> handleSingleWrite(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkWrite(command.getKey());
       }
@@ -76,7 +81,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          for (Object k : command.getAffectedKeys())
             partitionHandlingManager.checkWrite(k);
@@ -85,7 +90,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkClear();
       }
@@ -93,12 +98,12 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       return handleSingleWrite(ctx, command);
    }
 
    @Override
-   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkBulkRead();
       }
@@ -106,7 +111,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkBulkRead();
       }
@@ -114,59 +119,59 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
       Object result;
       try {
-         result = super.visitGetKeyValueCommand(ctx, command);
+         result = ctx.forkInvocationSync(command);
       } catch (RpcException e) {
          if (performPartitionCheck(ctx, command)) {
             // We must have received an AvailabilityException from one of the owners.
             // There is no way to verify the cause here, but there isn't any other way to get an invalid get response.
-            throw getLog().degradedModeKeyUnavailable(key);
+            throw log.degradedModeKeyUnavailable(key);
          } else {
             throw e;
          }
       }
       postOperationPartitionCheck(ctx, command, key, result);
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    @Override
-   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       Object key = command.getKey();
       Object result;
       try {
-         result = super.visitGetCacheEntryCommand(ctx, command);
+         result = ctx.forkInvocationSync(command);
       } catch (RpcException e) {
          if (performPartitionCheck(ctx, command)) {
             // We must have received an AvailabilityException from one of the owners.
             // There is no way to verify the cause here, but there isn't any other way to get an invalid get response.
-            throw getLog().degradedModeKeyUnavailable(key);
+            throw log.degradedModeKeyUnavailable(key);
          } else {
             throw e;
          }
       }
       postOperationPartitionCheck(ctx, command, key, result);
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object result = super.visitPrepareCommand(ctx, command);
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      Object result = ctx.forkInvocationSync(command);
       if (ctx.isOriginLocal()) {
          postTxCommandCheck(ctx);
       }
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      Object result = super.visitCommitCommand(ctx, command);
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      Object result = ctx.forkInvocationSync(command);
       if (ctx.isOriginLocal()) {
          postTxCommandCheck(ctx);
       }
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    protected void postTxCommandCheck(TxInvocationContext ctx) {
@@ -190,7 +195,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
             // and we only fail the operation if _all_ owners have left the cluster.
             // TODO Move this to the availability strategy when implementing ISPN-4624
             if (!InfinispanCollections.containsAny(transport.getMembers(), distributionManager.locate(key))) {
-               throw getLog().degradedModeKeyUnavailable(key);
+               throw log.degradedModeKeyUnavailable(key);
             }
          }
       }
@@ -199,15 +204,15 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       Map<Object, Object> result;
       try {
-         result = (Map<Object, Object>) super.visitGetAllCommand(ctx, command);
+         result = (Map<Object, Object>) ctx.forkInvocationSync(command);
       } catch (RpcException e) {
          if (performPartitionCheck(ctx, command)) {
             // We must have received an AvailabilityException from one of the owners.
             // There is no way to verify the cause here, but there isn't any other way to get an invalid get response.
-            throw getLog().degradedModeKeysUnavailable(command.getKeys());
+            throw log.degradedModeKeysUnavailable(command.getKeys());
          } else {
             throw e;
          }
@@ -235,12 +240,12 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
                }
             }
             if (!missingKeys.isEmpty()) {
-               throw getLog().degradedModeKeysUnavailable(missingKeys);
+               throw log.degradedModeKeysUnavailable(missingKeys);
             }
          }
       }
 
       // TODO We can still return a stale value if the other partition stayed active without us and we haven't entered degraded mode yet.
-      return result;
+      return ctx.shortCircuit(result);
    }
 }

@@ -5,7 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -136,7 +136,7 @@ public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManager
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier,
             op.getCommandClass(), true, false);
-      cache1.addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
+      cache1.getSequentialInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
 
       // Wait for cache0 to collect the state to send to cache1 (including our previous value).
       blockingRpcManager0.waitForCommandToBlock();

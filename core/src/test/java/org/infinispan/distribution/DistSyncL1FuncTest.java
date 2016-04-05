@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -33,12 +33,12 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
    }
 
    @Override
-   protected Class<? extends CommandInterceptor> getDistributionInterceptorClass() {
+   protected Class<? extends SequentialInterceptor> getDistributionInterceptorClass() {
       return NonTxDistributionInterceptor.class;
    }
 
    @Override
-   protected Class<? extends CommandInterceptor> getL1InterceptorClass() {
+   protected Class<? extends SequentialInterceptor> getL1InterceptorClass() {
       return L1NonTxInterceptor.class;
    }
 

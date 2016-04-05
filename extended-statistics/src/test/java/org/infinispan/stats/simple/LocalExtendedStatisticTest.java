@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -254,12 +254,12 @@ public class LocalExtendedStatisticTest extends SingleCacheManagerTest {
    }
 
    private ExtendedStatisticInterceptor getExtendedStatistic(Cache<?, ?> cache) {
-      for (CommandInterceptor commandInterceptor : cache.getAdvancedCache().getInterceptorChain()) {
-         if (commandInterceptor instanceof ExtendedStatisticInterceptor) {
-            ((ExtendedStatisticInterceptor) commandInterceptor).resetStatistics();
-            return (ExtendedStatisticInterceptor) commandInterceptor;
-         }
+      SequentialInterceptorChain interceptorChain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      ExtendedStatisticInterceptor extendedStatisticInterceptor =
+            interceptorChain.findInterceptorExtending(ExtendedStatisticInterceptor.class);
+      if (extendedStatisticInterceptor != null) {
+         extendedStatisticInterceptor.resetStatistics();
       }
-      return null;
+      return extendedStatisticInterceptor;
    }
 }

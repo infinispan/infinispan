@@ -1,6 +1,7 @@
-package org.infinispan.interceptors.base;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -9,10 +10,9 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * Base class for all the interceptors exposing management statistics.
  *
  * @author Mircea.Markus@jboss.com
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
-public abstract class JmxStatsCommandInterceptor extends CommandInterceptor implements JmxStatisticsExposer {
+public abstract class JmxStatsCommandInterceptor extends DDSequentialInterceptor implements JmxStatisticsExposer {
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled = false;
 

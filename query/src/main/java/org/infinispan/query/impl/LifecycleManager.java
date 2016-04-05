@@ -20,7 +20,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
@@ -166,7 +166,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
          // Interceptor registration not needed, core configuration handling
          // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
-         InterceptorChain ic = cr.getComponent(InterceptorChain.class);
+         SequentialInterceptorChain ic = cr.getComponent(SequentialInterceptorChain.class);
 
          ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
          InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
@@ -286,7 +286,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
-      InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
+      SequentialInterceptorChain interceptorChain = cr.getComponent(SequentialInterceptorChain.class);
       return interceptorChain != null && interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 
@@ -375,7 +375,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
 
       for (InterceptorConfiguration interceptorConfig : cfg.customInterceptors().interceptors()) {
-         if (!(interceptorConfig.interceptor() instanceof QueryInterceptor)) {
+         if (!(interceptorConfig.sequentialInterceptor() instanceof QueryInterceptor)) {
             customInterceptorsBuilder.addInterceptor().read(interceptorConfig);
          }
       }

@@ -9,13 +9,13 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Locking interceptor to be used for non-transactional caches.
  *
  * @author Mircea Markus
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class NonTransactionalLockingInterceptor extends AbstractLockingInterceptor {
 
    private static final Log log = LogFactory.getLog(NonTransactionalLockingInterceptor.class);
@@ -26,38 +26,38 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
-   protected final Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+   protected final CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          lockManager.unlockAll(ctx);//possibly needed because of L1 locks being acquired
       }
    }
 
    @Override
-   protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       assertNonTransactional(ctx);
       return visitNonTxDataWriteCommand(ctx, command);
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          lockManager.unlockAll(ctx);//possibly needed because of L1 locks being acquired
       }
    }
 
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
          if (!command.isForwarded() && !hasSkipLocking(command)) {
             lockAllAndRecord(ctx, command.getMap().keySet().stream().filter(this::shouldLockKey), getLockTimeoutMillis(command));
          }
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          lockManager.unlockAll(ctx);
       }

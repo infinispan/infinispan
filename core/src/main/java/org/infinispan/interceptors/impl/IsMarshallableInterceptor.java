@@ -1,14 +1,10 @@
-package org.infinispan.interceptors;
-
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-
-import java.util.Map;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -22,9 +18,12 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.interceptors.DDSequentialInterceptor;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * Interceptor to verify whether parameters passed into cache are marshallables
@@ -38,22 +37,13 @@ import org.infinispan.util.logging.LogFactory;
  * with the original request thread.
  *
  * @author Galder Zamarreño
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
-public class IsMarshallableInterceptor extends CommandInterceptor {
+public class IsMarshallableInterceptor extends DDSequentialInterceptor {
 
    private StreamingMarshaller marshaller;
    private DistributionManager distManager;
    private boolean storeAsBinary;
-
-   private static final Log log = LogFactory.getLog(IsMarshallableInterceptor.class);
-   private static final boolean trace = log.isTraceEnabled();
-
-   @Override
-   protected Log getLog() {
-      return log;
-   }
 
    @Inject
    protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
@@ -70,70 +60,70 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
       if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
          checkMarshallable(key);
-      return super.visitGetKeyValueCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       Object key = command.getKey();
       if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
          checkMarshallable(key);
-      return super.visitGetCacheEntryCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       for (Object key : command.getKeys()) {
          if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
             checkMarshallable(key);
       }
-      return super.visitGetAllCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command)) {
          for (Object key : command.getKeys()) {
             checkMarshallable(key);
          }
       }
-      return super.visitLockControlCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
          checkMarshallable(command.getKey());
          checkMarshallable(command.getValue());
       }
-      return super.visitPutKeyValueCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
          checkMarshallable(command.getMap());
-      return super.visitPutMapCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
          checkMarshallable(command.getKey());
-      return super.visitRemoveCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
          checkMarshallable(command.getKey());
          checkMarshallable(command.getNewValue());
       }
-      return super.visitReplaceCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    private boolean isClusterInvocation(InvocationContext ctx, FlagAffectedCommand command) {

@@ -4,23 +4,20 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.interceptors.CacheLoaderInterceptor;
-import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.CacheWriterInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import java.util.List;
-
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * ClassLoaderManagerDisablingTest.
@@ -89,12 +86,12 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
       PersistenceManager clm = TestingUtil.extractComponent(cache, PersistenceManager.class);
       assertEquals(count, clm.getStores(DummyInMemoryStore.class).size());
       clm.disableStore(DummyInMemoryStore.class.getName());
-      List<CommandInterceptor> interceptors = TestingUtil.extractComponent(cache, InterceptorChain.class)
-            .getInterceptorsWhichExtend(CacheLoaderInterceptor.class);
-      assertTrue("Expected empty CacheLoaderInterceptor list: " + interceptors, interceptors.isEmpty());
-      interceptors = TestingUtil.extractComponent(cache, InterceptorChain.class)
-            .getInterceptorsWhichExtend(CacheWriterInterceptor.class);
-      assertTrue("Expected empty CacheWriterInterceptor list: " + interceptors, interceptors.isEmpty());
+      SequentialInterceptor interceptor = cache.getAdvancedCache().getSequentialInterceptorChain()
+            .findInterceptorExtending(CacheLoaderInterceptor.class);
+      assertNull(interceptor);
+      interceptor = cache.getAdvancedCache().getSequentialInterceptorChain()
+            .findInterceptorExtending(CacheWriterInterceptor.class);
+      assertNull(interceptor);
    }
 
    private ConfigurationBuilder createClusterConfiguration(CacheMode cacheMode) {

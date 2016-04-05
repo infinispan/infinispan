@@ -4,14 +4,12 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -20,7 +18,6 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.mockito.AdditionalAnswers;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -53,12 +50,12 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    }
 
    @Override
-   protected Class<? extends CommandInterceptor> getDistributionInterceptorClass() {
+   protected Class<? extends SequentialInterceptor> getDistributionInterceptorClass() {
       return TxDistributionInterceptor.class;
    }
 
    @Override
-   protected Class<? extends CommandInterceptor> getL1InterceptorClass() {
+   protected Class<? extends SequentialInterceptor> getL1InterceptorClass() {
       return L1TxInterceptor.class;
    }
 

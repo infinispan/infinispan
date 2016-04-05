@@ -1,16 +1,15 @@
 package org.infinispan.query.blackbox;
 
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
@@ -28,7 +27,6 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,9 +137,9 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    private void assertQueryInterceptorPresent(Cache<?, ?> c) {
-      CommandInterceptor i = TestingUtil.findInterceptor(c, QueryInterceptor.class);
-      assert i != null : "Expected to find a QueryInterceptor, only found "
-               + c.getAdvancedCache().getInterceptorChain();
+      QueryInterceptor i = TestingUtil.findInterceptor(c, QueryInterceptor.class);
+      assert i != null : "Expected to find a QueryInterceptor, only found " +
+            c.getAdvancedCache().getSequentialInterceptorChain().getInterceptors();
    }
 
    public void testModified() throws Exception {

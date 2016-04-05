@@ -22,15 +22,12 @@ import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.TestingUtil.findInterceptor;
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.testng.AssertJUnit.assertEquals;
 

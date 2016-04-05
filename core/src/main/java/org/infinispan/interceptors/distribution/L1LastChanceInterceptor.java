@@ -15,7 +15,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.TransactionMode;
@@ -25,6 +25,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -35,9 +36,7 @@ import java.util.concurrent.Future;
  * container
  *
  * @author wburns
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
    private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);
@@ -62,22 +61,22 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, true);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, true);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command, false);
    }
 
-   public Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) throws Throwable {
+      Object returnValue = ctx.forkInvocationSync(command);
       Object key;
       if (shouldUpdateOnWriteCommand(command) && command.isSuccessful() &&
             cdl.localNodeIsOwner((key = command.getKey()))) {
@@ -89,12 +88,12 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
          blockOnL1FutureIfNeeded(l1Manager.flushCache(Collections.singleton(key), ctx.getOrigin(),
                                                       assumeOriginKeptEntryInL1));
       }
-      return returnValue;
+      return ctx.shortCircuit(returnValue);
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      Object returnValue = ctx.forkInvocationSync(command);
       if (shouldUpdateOnWriteCommand(command)) {
          Set<Object> keys = command.getMap().keySet();
          Set<Object> toInvalidate = new HashSet<Object>(keys.size());
@@ -110,7 +109,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
             blockOnL1FutureIfNeeded(l1Manager.flushCache(toInvalidate, ctx.getOrigin(), true));
          }
       }
-      return returnValue;
+      return ctx.shortCircuit(returnValue);
    }
 
    private boolean shouldUpdateOnWriteCommand(WriteCommand command) {
@@ -118,19 +117,19 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retVal = invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      Object retVal = ctx.forkInvocationSync(command);
       if (command.isOnePhaseCommit()) {
          blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(ctx));
       }
-      return retVal;
+      return ctx.shortCircuit(retVal);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      Object retVal = invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      Object retVal = ctx.forkInvocationSync(command);
       blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(ctx));
-      return retVal;
+      return ctx.shortCircuit(retVal);
    }
 
    private Future<?> handleLastChanceL1InvalidationOnCommit(TxInvocationContext ctx) {
@@ -166,5 +165,10 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
             }
          }
       }
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 }

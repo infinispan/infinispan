@@ -1,10 +1,5 @@
 package org.infinispan.interceptors.compat;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.util.Collection;
-import java.util.Set;
-
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.ServiceFinder;
@@ -14,13 +9,16 @@ import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.util.Collection;
+import java.util.Set;
+
 /**
  * An interceptor that applies type conversion to the data stored in the cache.
  *
  * @author Galder Zamarreño
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class TypeConverterInterceptor<K, V> extends BaseTypeConverterInterceptor<K, V> {
 
    // No need for a REST type converter since the REST server itself does

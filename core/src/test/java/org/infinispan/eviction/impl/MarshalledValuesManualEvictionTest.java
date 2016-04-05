@@ -2,7 +2,7 @@ package org.infinispan.eviction.impl;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.impl.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
-import org.infinispan.interceptors.MarshalledValueInterceptor;
+import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.SingleCacheManagerTest;

@@ -61,7 +61,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public void addInterceptor(CommandInterceptor i, int position) {
-      cache.addInterceptor(i, position);
+      cache.getSequentialInterceptorChain().addInterceptor(i, position);
    }
 
    @Override
@@ -71,22 +71,22 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      return cache.addInterceptorAfter(i, afterInterceptor);
+      return cache.getSequentialInterceptorChain().addInterceptorAfter(i, afterInterceptor);
    }
 
    @Override
    public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      return cache.addInterceptorBefore(i, beforeInterceptor);
+      return cache.getSequentialInterceptorChain().addInterceptorBefore(i, beforeInterceptor);
    }
 
    @Override
    public void removeInterceptor(int position) {
-      cache.removeInterceptor(position);
+      cache.getSequentialInterceptorChain().removeInterceptor(position);
    }
 
    @Override
    public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      cache.removeInterceptor(interceptorType);
+      cache.getSequentialInterceptorChain().removeInterceptor(interceptorType);
    }
 
    @Override

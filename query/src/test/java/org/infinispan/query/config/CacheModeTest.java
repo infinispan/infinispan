@@ -2,13 +2,14 @@ package org.infinispan.query.config;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertNotNull;
 
 @Test(groups = "functional", testName = "query.config.CacheModeTest")
 public class CacheModeTest extends AbstractInfinispanTest {
@@ -35,11 +36,9 @@ public class CacheModeTest extends AbstractInfinispanTest {
       CacheContainer cc = null;
       try {
          cc = TestCacheManagerFactory.createCacheManager(m, true);
-         boolean found = false;
-         for (CommandInterceptor i : cc.getCache().getAdvancedCache().getInterceptorChain()) {
-            if (i instanceof QueryInterceptor) found = true;
-         }
-         assert found : "Didn't find a query interceptor in the chain!!";
+         QueryInterceptor queryInterceptor =
+               TestingUtil.findInterceptor(cc.getCache(), QueryInterceptor.class);
+         assertNotNull("Didn't find a query interceptor in the chain!!", queryInterceptor);
       } finally {
          TestingUtil.killCacheManagers(cc);
       }

@@ -7,7 +7,7 @@ import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.L1Manager;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -29,8 +29,13 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Test that ensure when L1 cache is enabled that if writes occurs during a state transfer and vice versa that the
@@ -134,8 +139,9 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       assertIsInL1(c3, key);
 
       CyclicBarrier barrier = new CyclicBarrier(2);
-      c3.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(barrier, InvalidateL1Command.class, true, false),
-                                                EntryWrappingInterceptor.class);
+      c3.getAdvancedCache().getSequentialInterceptorChain()
+            .addInterceptorAfter(new BlockingInterceptor(barrier, InvalidateL1Command.class, true, false),
+                  EntryWrappingInterceptor.class);
 
       Future<String> future = c1.putAsync(key, newValue);
 

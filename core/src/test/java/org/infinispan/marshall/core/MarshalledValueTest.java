@@ -11,8 +11,9 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.MarshalledValueInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -80,7 +81,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    private void assertMarshalledValueInterceptorPresent(Cache c) {
-      InterceptorChain ic1 = TestingUtil.extractComponent(c, InterceptorChain.class);
+      SequentialInterceptorChain ic1 = c.getAdvancedCache().getSequentialInterceptorChain();
       assertTrue(ic1.containsInterceptorType(MarshalledValueInterceptor.class));
    }
 
@@ -89,7 +90,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Cache cache1;
       cache1 = cache(0, "replSync");
       cache(1, "replSync");
-      InterceptorChain chain = TestingUtil.extractComponent(cache1, InterceptorChain.class);
+      SequentialInterceptorChain chain = cache1.getAdvancedCache().getSequentialInterceptorChain();
       chain.removeInterceptor(MarshalledValueListenerInterceptor.class);
       mvli = new MarshalledValueListenerInterceptor();
       chain.addInterceptorAfter(mvli, MarshalledValueInterceptor.class);

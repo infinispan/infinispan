@@ -4,8 +4,8 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SequentialInvocationContext;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -258,12 +258,14 @@ public abstract class BaseSequentialInvocationContext
       SequentialInterceptor interceptor = interceptorNode.interceptor;
       nextInterceptor = interceptorNode.nextNode;
 
-      // Simplify the execution for CommandInterceptors
-      if (interceptor instanceof CommandInterceptor) {
-         return command.acceptVisitor(this, (CommandInterceptor) interceptor);
+      CompletableFuture<Void> nextVisitFuture;
+      // Simplify the execution for double-dispatch interceptors
+      if (interceptor instanceof DDSequentialInterceptor) {
+         nextVisitFuture =
+               (CompletableFuture<Void>) command.acceptVisitor(this, (DDSequentialInterceptor) interceptor);
+      } else {
+         nextVisitFuture = interceptor.visitCommand(this, command);
       }
-
-      CompletableFuture<Void> nextVisitFuture = interceptor.visitCommand(this, command);
       if (!nextVisitFuture.isDone()) {
          CompletableFutures.await(nextVisitFuture);
       }
@@ -273,7 +275,8 @@ public abstract class BaseSequentialInvocationContext
    private Object handleActionSync(VisitableCommand command,
          InterceptorListNode interceptorNode) throws Throwable {
       if (EXTRA_LOGS && trace) {
-         log.tracef("Handling action %s/%s", actionName(action), className(actionValue));
+         log.tracef("Handling action %s/%s from %s", actionName(action), className(actionValue),
+               className(interceptorNode.interceptor));
       }
       if (action == SHORT_CIRCUIT) {
          // Normally this would skip the rest of the interceptors, but here it's just a normal return

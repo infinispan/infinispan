@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -38,7 +39,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.query.Transformer;
@@ -62,7 +63,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 4.0
  */
-public final class QueryInterceptor extends CommandInterceptor {
+public final class QueryInterceptor extends DDSequentialInterceptor {
 
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
@@ -89,11 +90,6 @@ public final class QueryInterceptor extends CommandInterceptor {
     * were declared and we are running in the (deprecated) autodetect mode. Autodetect mode will be removed in 9.0.
     */
    private Class<?>[] indexedEntities;
-
-   @Override
-   protected Log getLog() {
-      return log;
-   }
 
    public QueryInterceptor(SearchIntegrator searchFactory, IndexModificationStrategy indexingMode) {
       this.searchFactory = searchFactory;
@@ -156,40 +152,40 @@ public final class QueryInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object toReturn = invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      Object toReturn = ctx.forkInvocationSync(command);
       processPutKeyValueCommand(command, ctx, toReturn, null);
-      return toReturn;
+      return ctx.shortCircuit(toReturn);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       // remove the object out of the cache first.
-      Object valueRemoved = invokeNextInterceptor(ctx, command);
+      Object valueRemoved = ctx.forkInvocationSync(command);
       processRemoveCommand(command, ctx, valueRemoved, null);
-      return valueRemoved;
+      return ctx.shortCircuit(valueRemoved);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      Object valueReplaced = invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      Object valueReplaced = ctx.forkInvocationSync(command);
       processReplaceCommand(command, ctx, valueReplaced, null);
-      return valueReplaced;
+      return ctx.shortCircuit(valueReplaced);
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Map<Object, Object> previousValues = (Map<Object, Object>) invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      Map<Object, Object> previousValues = (Map<Object, Object>) ctx.forkInvocationSync(command);
       processPutMapCommand(command, ctx, previousValues, null);
-      return previousValues;
+      return ctx.shortCircuit(previousValues);
    }
 
    @Override
-   public Object visitClearCommand(final InvocationContext ctx, final ClearCommand command) throws Throwable {
+   public CompletableFuture<Void> visitClearCommand(final InvocationContext ctx, final ClearCommand command) throws Throwable {
       // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
-      Object returnValue = invokeNextInterceptor(ctx, command);
+      Object returnValue = ctx.forkInvocationSync(command);
       processClearCommand(command, ctx, null);
-      return returnValue;
+      return ctx.shortCircuit(returnValue);
    }
 
    /**
@@ -309,7 +305,7 @@ public final class QueryInterceptor extends CommandInterceptor {
     * as a transaction sync.
     */
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final WriteCommand[] writeCommands = command.getModifications();
       final Object[] stateBeforePrepare = new Object[writeCommands.length];
 
@@ -329,7 +325,7 @@ public final class QueryInterceptor extends CommandInterceptor {
          }
       }
 
-      final Object toReturn = super.visitPrepareCommand(ctx, command);
+      final Object toReturn = ctx.forkInvocationSync(command);
 
       if (ctx.isTransactionValid()) {
          final TransactionContext transactionContext = makeTransactionalEventContext();
@@ -348,7 +344,7 @@ public final class QueryInterceptor extends CommandInterceptor {
             }
          }
       }
-      return toReturn;
+      return ctx.shortCircuit(toReturn);
    }
 
    private Map<Object, Object> getPreviousValues(Set<Object> keySet) {

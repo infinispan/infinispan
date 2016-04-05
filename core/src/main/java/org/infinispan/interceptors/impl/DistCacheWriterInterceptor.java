@@ -1,4 +1,4 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -17,6 +17,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
@@ -35,9 +36,8 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
  *
  * @author Galder Zamarreño
  * @author Dan Berindei
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
 public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    private DistributionManager dm;
    private Transport transport;
@@ -69,21 +69,21 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    // ---- WRITE commands
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      Object returnValue = ctx.forkInvocationSync(command);
       Object key = command.getKey();
-      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
-      if (!isProperWriter(ctx, command, command.getKey())) return returnValue;
+      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return ctx.shortCircuit(returnValue);
+      if (!isProperWriter(ctx, command, command.getKey())) return ctx.shortCircuit(returnValue);
 
       storeEntry(ctx, key, command);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
-      return returnValue;
+      return ctx.shortCircuit(returnValue);
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
-      if (!isStoreEnabled(command) || ctx.isInTxScope()) return returnValue;
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      Object returnValue = ctx.forkInvocationSync(command);
+      if (!isStoreEnabled(command) || ctx.isInTxScope()) return ctx.shortCircuit(returnValue);
 
       Map<Object, Object> map = command.getMap();
       int count = 0;
@@ -99,33 +99,33 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
          }
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(count);
-      return returnValue;
+      return ctx.shortCircuit(returnValue);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      Object retval = invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      Object retval = ctx.forkInvocationSync(command);
       Object key = command.getKey();
-      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return retval;
-      if (!isProperWriter(ctx, command, key)) return retval;
+      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return ctx.shortCircuit(retval);
+      if (!isProperWriter(ctx, command, key)) return ctx.shortCircuit(retval);
 
       boolean resp = persistenceManager.deleteFromAllStores(key, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
       log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
-      return retval;
+      return ctx.shortCircuit(retval);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
          throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
+      Object returnValue = ctx.forkInvocationSync(command);
       Object key = command.getKey();
-      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
-      if (!isProperWriter(ctx, command, command.getKey())) return returnValue;
+      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return ctx.shortCircuit(returnValue);
+      if (!isProperWriter(ctx, command, command.getKey())) return ctx.shortCircuit(returnValue);
 
       storeEntry(ctx, key, command);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
-      return returnValue;
+      return ctx.shortCircuit(returnValue);
    }
 
    @Override
