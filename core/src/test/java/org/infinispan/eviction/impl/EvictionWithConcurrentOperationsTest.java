@@ -12,10 +12,10 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.PassivationManager;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.Listener;
@@ -600,7 +600,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected class AfterEntryWrappingInterceptor extends ControlledCommandInterceptor {
 
       public AfterEntryWrappingInterceptor injectThis(Cache<Object, Object> injectInCache) {
-         injectInCache.getAdvancedCache().addInterceptorAfter(this, EntryWrappingInterceptor.class);
+         injectInCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(this, EntryWrappingInterceptor.class);
          return this;
       }
 
@@ -612,7 +612,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
          SequentialInterceptorChain chain =
                TestingUtil.extractComponent(injectInCache, SequentialInterceptorChain.class);
          SequentialInterceptor loaderInterceptor =
-               chain.findInterceptorExtending(org.infinispan.interceptors.CacheLoaderInterceptor.class);
+               chain.findInterceptorExtending(org.infinispan.interceptors.impl.CacheLoaderInterceptor.class);
          injectInCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(this, loaderInterceptor.getClass());
          return this;
       }

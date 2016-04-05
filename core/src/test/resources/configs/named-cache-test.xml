@@ -111,11 +111,11 @@
       <distributed-cache name="withDeadlockDetection" mode="SYNC" remote-timeout="20000" statistics="false" deadlock-detection-spin="1221" />
       <local-cache name="cacheWithCustomInterceptors">
          <custom-interceptors>
-            <interceptor position="FIRST" class="org.infinispan.interceptors.CallInterceptor" />
-            <interceptor position="LAST" class="org.infinispan.interceptors.CallInterceptor"/>
-            <interceptor index="3" class="org.infinispan.interceptors.CallInterceptor"/>
-            <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
-            <interceptor after="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
+            <interceptor position="FIRST" class="org.infinispan.interceptors.impl.CallInterceptor" />
+            <interceptor position="LAST" class="org.infinispan.interceptors.impl.CallInterceptor"/>
+            <interceptor index="3" class="org.infinispan.interceptors.impl.CallInterceptor"/>
+            <interceptor before="org.infinispan.interceptors.impl.CallInterceptor" class="org.infinispan.interceptors.impl.CallInterceptor"/>
+            <interceptor after="org.infinispan.interceptors.impl.CallInterceptor" class="org.infinispan.interceptors.impl.CallInterceptor"/>
             <interceptor position="FIRST" class="org.infinispan.interceptors.FooInterceptor">
                <property name="foo">bar</property>
             </interceptor>

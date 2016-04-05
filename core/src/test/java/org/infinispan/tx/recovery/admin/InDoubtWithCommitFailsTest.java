@@ -6,8 +6,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -38,7 +38,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
             .clustering().l1().disable().stateTransfer().fetchInMemoryState(false);
       createCluster(configuration, 2);
       waitForClusterToForm();
-      advancedCache(1).addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
+      advancedCache(1).getSequentialInterceptorChain().addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
    }
 
    public void testRecoveryInfoListCommit() throws Exception {

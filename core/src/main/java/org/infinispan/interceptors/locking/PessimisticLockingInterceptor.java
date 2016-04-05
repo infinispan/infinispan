@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Locking interceptor to be used by pessimistic caches.
@@ -41,9 +42,7 @@ import java.util.Set;
  * in the case of keys being locked.
  *
  * @author Mircea Markus
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private CommandsFactory cf;
@@ -63,7 +62,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   protected final Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+   protected final CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       try {
          if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
             Object key = command.getKey();
@@ -71,7 +70,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             lockOrRegisterBackupLock((TxInvocationContext<?>) ctx, key, getLockTimeoutMillis(command));
             ((TxInvocationContext<?>) ctx).addAffectedKey(key);
          }
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (Throwable t) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw t;
@@ -81,14 +80,14 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       try {
          if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
             acquireAllRemoteIfNeeded(ctx, command.getKeys(), command);
             //noinspection unchecked
             lockAllOrRegisterBackupLock((TxInvocationContext<?>) ctx, (Collection<Object>) command.getKeys(), getLockTimeoutMillis(command));
          }
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (Throwable t) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw t;
@@ -96,20 +95,20 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNextAndCommitIf1Pc(ctx, command);
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      return ctx.shortCircuit(invokeNextAndCommitIf1Pc(ctx, command));
       // don't remove the locks here, the rollback command will clear them
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       try {
          if (!hasSkipLocking(command)) {
             final Collection<Object> affectedKeys = command.getMap().keySet();
             acquireAllRemoteIfNeeded(ctx, affectedKeys, command);
             lockAllOrRegisterBackupLock((TxInvocationContext<?>) ctx, affectedKeys, getLockTimeoutMillis(command));
          }
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
@@ -117,7 +116,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       try {
          Object key = command.getKey();
          if (!hasSkipLocking(command)) {
@@ -126,7 +125,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          }
          // Mark the key as affected even with SKIP_LOCKING
          ((TxInvocationContext<?>) ctx).addAffectedKey(key);
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (OutdatedTopologyException e) {
          // The command will be retried, no need to release this or other locks
          throw e;
@@ -137,7 +136,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       Object[] compositeKeys = command.getCompositeKeys();
       try {
          if (!hasSkipLocking(command)) {
@@ -147,21 +146,21 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                lockAllAndRecord(ctx, keysToLock, getLockTimeoutMillis(command));
             }
          }
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (!ctx.isInTxScope())
          throw new IllegalStateException("Locks should only be acquired within the scope of a transaction!");
 
       try {
          boolean skipLocking = hasSkipLocking(command);
          if (skipLocking) {
-            return invokeNextInterceptor(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          }
 
          // First go remotely - required by DLD.
@@ -172,7 +171,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
                LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
                if (!localTx.getAffectedKeys().containsAll(command.getKeys())) {
-                  invokeNextInterceptor(ctx, command);
+                  ctx.forkInvocationSync(command);
                } else {
                   log.tracef("Already own locks on keys: %s, skipping remote call", command.getKeys());
                }
@@ -184,11 +183,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             if (ctx.isOriginLocal())
                throw new AssertionError("There's no advancedCache.unlock so this must have originated remotely.");
             releaseLocksOnFailureBeforePrepare(ctx);
-            return Boolean.FALSE;
+            return ctx.shortCircuit(Boolean.FALSE);
          }
 
          lockAllOrRegisterBackupLock(ctx, command.getKeys(), getLockTimeoutMillis(command));
-         return Boolean.TRUE;
+         return ctx.shortCircuit(Boolean.TRUE);
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
@@ -204,8 +203,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             log.tracef("We already have lock for keys %s, skip remote lock acquisition", keys);
             return;
          } else {
-            LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(), txContext.getGlobalTransaction());
-            invokeNextInterceptor(ctx, lcc);
+            LockControlCommand lcc = cf.buildLockControlCommand(keys,
+                  command.getFlagsBitSet(), txContext.getGlobalTransaction());
+            ctx.forkInvocationSync(lcc);
          }
       }
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(keys);
@@ -221,7 +221,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             return;
          } else {
             LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(), txContext.getGlobalTransaction());
-            invokeNextInterceptor(ctx, lcc);
+            ctx.forkInvocationSync(lcc);
          }
       }
    }

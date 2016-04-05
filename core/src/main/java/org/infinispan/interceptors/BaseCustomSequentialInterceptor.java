@@ -4,13 +4,10 @@ import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.DDSequentialInterceptor;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
- * Anyone using the {@link org.infinispan.AdvancedCache#addInterceptor(CommandInterceptor, int)} method (or any of its
+ * Anyone using the {@link org.infinispan.interceptors.SequentialInterceptorChain#addInterceptor(SequentialInterceptor, int)} method (or any of its
  * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own 
  * custom interceptors.
  * <p />
@@ -21,7 +18,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * from which other components may be accessed.  Further, lifecycle should be implemented by overriding {@link #start()}
  * and {@link #stop()} as defined in this class.
  *
- * @see BaseCustomInterceptor
  * @author Dan Berindei
  * @since 9.0
  */

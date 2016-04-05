@@ -1,13 +1,11 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
-
-import java.util.Map;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -17,23 +15,27 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
  * call resulted in a modification, add the Modification to the end of the modification list keyed by the current
  * transaction.
  *
+ *
  * @author Bela Ban
  * @author Mircea.Markus@jboss.com
- * @deprecated Since 8.2, no longer public API.
+ * @author Dan Berindei
+ * @since 9.0
  */
-@Deprecated
-public class CallInterceptor extends CommandInterceptor {
-
+public class CallInterceptor extends DDSequentialInterceptor {
+   // TODO Invoke the command directly in BaseSequentialInvocationChain#invokeNext and remove this interceptor?
    private static final Log log = LogFactory.getLog(CallInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
    private CacheNotifier notifier;
@@ -44,56 +46,51 @@ public class CallInterceptor extends CommandInterceptor {
    }
 
    @Override
-   protected Log getLog() {
-      return log;
-   }
-
-   @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handlePrepareCommand.");
-      return null;
+      return ctx.shortCircuit(null);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handleCommitCommand.");
-      return null;
+      return ctx.shortCircuit(null);
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handleRollbackCommand.");
-      return null;
+      return ctx.shortCircuit(null);
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
+   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handleLockControlCommand.");
-      return null;
+      return ctx.shortCircuit(null);
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       if (trace) log.trace("Executing command: " + command + ".");
       Object ret = command.perform(ctx);
       if (ret != null) {
          notifyCacheEntryVisit(ctx, command, command.getKey(), ret);
       }
-      return ret;
+      return ctx.shortCircuit(ret);
    }
 
    @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       if (trace) log.trace("Executing command: " + command + ".");
       Object ret = command.perform(ctx);
       if (ret != null) {
          notifyCacheEntryVisit(ctx, command, command.getKey(), ((CacheEntry) ret).getValue());
       }
-      return ret;
+      return ctx.shortCircuit(ret);
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (trace) log.trace("Executing command: " + command + ".");
       Object ret = command.perform(ctx);
       if (ret != null) {
@@ -110,7 +107,7 @@ public class CallInterceptor extends CommandInterceptor {
             }
          }
       }
-      return ret;
+      return ctx.shortCircuit(ret);
    }
 
    private void notifyCacheEntryVisit(InvocationContext ctx, FlagAffectedCommand command,
@@ -120,8 +117,8 @@ public class CallInterceptor extends CommandInterceptor {
    }
 
    @Override
-   final public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   final public CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (trace) log.trace("Executing command: " + command + ".");
-      return command.perform(ctx);
+      return ctx.shortCircuit(command.perform(ctx));
    }
 }

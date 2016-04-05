@@ -14,6 +14,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This interceptor is used in total order in distributed mode when the write skew check is enabled. After sending the
@@ -21,28 +22,26 @@ import java.util.Collection;
  * (i.e., the write skew check passes in all keys owners)
  *
  * @author Pedro Ruivo
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class TotalOrderVersionedDistributionInterceptor extends VersionedDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration) || !ctx.hasModifications() ||
             !shouldTotalOrderRollbackBeInvokedRemotely(ctx)) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
       totalOrderTxRollback(ctx);
       return super.visitRollbackCommand(ctx, command);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration) || !ctx.hasModifications()) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
       totalOrderTxCommit(ctx);
       return super.visitCommitCommand(ctx, command);

@@ -1,17 +1,4 @@
-package org.infinispan.interceptors;
-
-import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
-import static org.infinispan.persistence.PersistenceUtil.convert;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
@@ -22,9 +9,9 @@ import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -53,7 +40,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -70,16 +56,30 @@ import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 import org.infinispan.util.CloseableSuppliedIterator;
-import org.infinispan.util.function.CloseableSupplier;
 import org.infinispan.util.DistinctKeyDoubleEntryCloseableIterator;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.function.CloseableSupplier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+
+import static org.infinispan.cache.impl.Caches.*;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.persistence.PersistenceUtil.convert;
+
 /**
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheLoads = new AtomicLong(0);
@@ -99,11 +99,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
-
-   @Override
-   protected Log getLog() {
-      return log;
-   }
 
    @Inject
    protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier,
@@ -127,38 +122,44 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
+         throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+         throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+         throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx,
+         GetCacheEntryCommand command) throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command)
+         throws Throwable {
       if (enabled) {
          for (Object key : command.getKeys()) {
             loadIfNeeded(ctx, key, command);
          }
       }
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+   public CompletableFuture<Void> visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
+         throws Throwable {
       if (enabled) {
          Object[] keys;
          if ((keys = command.getKeys()) != null && keys.length > 0) {
@@ -167,38 +168,42 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             }
          }
       }
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command)
+         throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
+         throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
-   private Object visitDataCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   private CompletableFuture<Void> visitDataCommand(InvocationContext ctx, AbstractDataCommand command)
+         throws Throwable {
       if (enabled) {
          Object key;
          if ((key = command.getKey()) != null) {
             loadIfNeeded(ctx, key, command);
          }
       }
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeysInGroupCommand(final InvocationContext ctx,
+         GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
       if (!command.isGroupOwner() || !enabled || hasSkipLoadFlag(command)) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
 
       final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
-                                                                   new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
+            new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
       persistenceManager.processOnAllStores(keyFilter, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
@@ -210,50 +215,52 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             }
          }
       }, true, true);
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public CacheSet<CacheEntry<K, V>> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command)
+         throws Throwable {
+      CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) ctx.forkInvocationSync(command);
       if (!enabled || hasSkipLoadFlag(command)) {
-         return entrySet;
+         return ctx.shortCircuit(entrySet);
       }
-      return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), entrySet) {
-
-         @Override
-         public CloseableIterator<CacheEntry<K, V>> iterator() {
-            CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
+      CacheSet<CacheEntry<K, V>> wrappedEntrySet =
+            new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), entrySet) {
+               @Override
+               public CloseableIterator<CacheEntry<K, V>> iterator() {
+                  CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
             Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
-                    keyEquivalence);
-            // TODO: how to handle concurrent activation....
+                              keyEquivalence);
+                  // TODO: how to handle concurrent activation....
             return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
-                    // TODO: how to pass in key filter...
+                              // TODO: how to pass in key filter...
                     new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
                             new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048)), e -> e.getKey(),
                     seenKeys);
-         }
+               }
 
-         @Override
-         public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-            return spliteratorFromIterator(iterator());
-         }
+               @Override
+               public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+                  return spliteratorFromIterator(iterator());
+               }
 
-         private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
+               private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
             return new IteratorAsSpliterator.Builder<>(iterator)
                     .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
                     .get();
-         }
+               }
 
-         @Override
-         public int size() {
-            long size = stream().count();
-            if (size > Integer.MAX_VALUE) {
-               return Integer.MAX_VALUE;
-            }
-            return (int) size;
-         }
-      };
+               @Override
+               public int size() {
+                  long size = stream().count();
+                  if (size > Integer.MAX_VALUE) {
+                     return Integer.MAX_VALUE;
+                  }
+                  return (int) size;
+               }
+            };
+      return ctx.shortCircuit(wrappedEntrySet);
    }
 
    class SupplierFunction<K, V> implements CloseableSupplier<K> {
@@ -279,60 +286,65 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public CacheSet<K> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      CacheSet<K> keySet = (CacheSet<K>) invokeNextInterceptor(ctx, command);
+   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
+         throws Throwable {
+      CacheSet<K> keySet = (CacheSet<K>) ctx.forkInvocationSync(command);
       if (!enabled || hasSkipLoadFlag(command)) {
-         return keySet;
+         return ctx.shortCircuit(keySet);
       }
-      return new AbstractDelegatingKeyCacheSet<K, V>(getCacheWithFlags(cache, command), keySet) {
+      CacheSet<K> wrappedKeySet =
+            new AbstractDelegatingKeyCacheSet<K, V>(getCacheWithFlags(cache, command), keySet) {
 
-         @Override
-         public CloseableIterator<K> iterator() {
-            CloseableIterator<K> iterator = Closeables.iterator(keySet.stream());
+               @Override
+               public CloseableIterator<K> iterator() {
+                  CloseableIterator<K> iterator = Closeables.iterator(keySet.stream());
             Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
-                    keyEquivalence);
-            // TODO: how to handle concurrent activation....
+                              keyEquivalence);
+                  // TODO: how to handle concurrent activation....
             return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                     new SupplierFunction<>(new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,
-                            // TODO: how to pass in key filter...
+                                    // TODO: how to pass in key filter...
                             iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048))),
                     Function.identity(), seenKeys);
-         }
+               }
 
-         @Override
-         public CloseableSpliterator<K> spliterator() {
-            return spliteratorFromIterator(iterator());
-         }
+               @Override
+               public CloseableSpliterator<K> spliterator() {
+                  return spliteratorFromIterator(iterator());
+               }
 
-         private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
+               private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
             return new IteratorAsSpliterator.Builder<>(iterator)
                     .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
                     .get();
-         }
+               }
 
-         @Override
-         public int size() {
-            long size = stream().count();
-            if (size > Integer.MAX_VALUE) {
-               return Integer.MAX_VALUE;
-            }
-            return (int) size;
-         }
-      };
+               @Override
+               public int size() {
+                  long size = stream().count();
+                  if (size > Integer.MAX_VALUE) {
+                     return Integer.MAX_VALUE;
+                  }
+                  return (int) size;
+               }
+            };
+      return ctx.shortCircuit(wrappedKeySet);
    }
 
    @Override
-   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
+         throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
    @Override
-   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
+         throws Throwable {
       return visitDataCommand(ctx, command);
    }
 
@@ -355,7 +367,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
     * @param key The key for the entry to look up
     * @param cmd The command that was called that now wants to query the cache loader
     * @return Whether or not the entry was found in the cache loader.  A value of null means the cache loader was never
-    *         queried for the value, so it was neither a hit or a miss.
+    * queried for the value, so it was neither a hit or a miss.
     * @throws Throwable
     */
    protected final Boolean loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) {

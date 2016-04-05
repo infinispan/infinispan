@@ -274,32 +274,32 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public void addInterceptor(CommandInterceptor i, int position) {
-      // TODO: Customise this generated block
+      cache.addInterceptor(i, position);
    }
 
    @Override
    public SequentialInterceptorChain getSequentialInterceptorChain() {
-      throw new UnsupportedOperationException();
+      return cache.getSequentialInterceptorChain();
    }
 
    @Override
    public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      return false;  // TODO: Customise this generated block
+      return cache.addInterceptorAfter(i, afterInterceptor);
    }
 
    @Override
    public void removeInterceptor(int position) {
-      // TODO: Customise this generated block
+      cache.removeInterceptor(position);
    }
 
    @Override
    public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      // TODO: Customise this generated block
+      cache.removeInterceptor(interceptorType);
    }
 
    @Override
    public List<CommandInterceptor> getInterceptorChain() {
-      return null;  // TODO: Customise this generated block
+      return cache.getInterceptorChain();
    }
 
    @Override

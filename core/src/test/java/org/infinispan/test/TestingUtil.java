@@ -84,7 +84,22 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -192,8 +207,8 @@ public class TestingUtil {
 
    public static <T extends SequentialInterceptor> T findInterceptor(Cache<?, ?> cache,
          Class<T> interceptorToFind) {
-      return interceptorToFind.cast(cache.getAdvancedCache().getSequentialInterceptorChain()
-            .findInterceptorExtending(interceptorToFind));
+      return cache.getAdvancedCache().getSequentialInterceptorChain()
+            .findInterceptorExtending(interceptorToFind);
    }
 
    public static void waitForRehashToComplete(Cache... caches) {
@@ -899,6 +914,23 @@ public class TestingUtil {
          cr.wireDependencies(i);
       }
       while ((i = i.getNext()) != null);
+      SequentialInterceptorChain inch = cache.getAdvancedCache().getSequentialInterceptorChain();
+      return inch.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
+   }
+
+   /**
+    * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor
+    * instance passed
+    * as parameter.
+    *
+    * @param replacingInterceptor        the interceptor to add to the interceptor chain
+    * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
+    * @return true if the interceptor was replaced
+    */
+   public static boolean replaceInterceptor(Cache cache, SequentialInterceptor replacingInterceptor, Class<? extends SequentialInterceptor> toBeReplacedInterceptorType) {
+      ComponentRegistry cr = extractComponentRegistry(cache);
+      // make sure all interceptors here are wired.
+      cr.wireDependencies(replacingInterceptor);
       SequentialInterceptorChain inch = cr.getComponent(SequentialInterceptorChain.class);
       return inch.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
    }

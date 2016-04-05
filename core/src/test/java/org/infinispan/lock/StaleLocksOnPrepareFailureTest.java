@@ -5,11 +5,10 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -42,7 +41,7 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
       // force the prepare command to fail on c2
       FailInterceptor interceptor = new FailInterceptor();
       interceptor.failFor(PrepareCommand.class);
-      InterceptorChain ic = TestingUtil.extractComponent(c2, InterceptorChain.class);
+      SequentialInterceptorChain ic = c2.getAdvancedCache().getSequentialInterceptorChain();
       ic.addInterceptorBefore(interceptor, TxDistributionInterceptor.class);
 
       MagicKey k1 = new MagicKey("k1", c1);

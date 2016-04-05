@@ -1,13 +1,13 @@
 package org.infinispan.tx;
 
-import org.infinispan.interceptors.TxInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import java.util.List;
+import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * @author Mircea Markus
@@ -22,10 +22,8 @@ public class NonTxCacheInterceptorTest extends SingleCacheManagerTest {
    }
 
    public void testNoTxInterceptor() {
-      final List<CommandInterceptor> interceptorChain = cache.getAdvancedCache().getInterceptorChain();
+      final SequentialInterceptorChain interceptorChain = cache.getAdvancedCache().getSequentialInterceptorChain();
       log.trace(interceptorChain);
-      for (CommandInterceptor ci : interceptorChain) {
-         assert !ci.getClass().equals(TxInterceptor.class);
-      }
+      assertFalse(interceptorChain.containsInterceptorType(TxInterceptor.class));
    }
 }

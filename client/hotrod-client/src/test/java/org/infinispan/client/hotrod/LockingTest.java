@@ -5,8 +5,8 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.CallInterceptor;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -114,7 +114,7 @@ public class LockingTest extends SingleCacheManagerTest {
    private CheckPoint injectBlockingCommandInterceptor(String cacheName) {
       AdvancedCache<?, ?> advancedCache = cache(cacheName).getAdvancedCache();
       final CheckPoint checkPoint = new CheckPoint();
-      advancedCache.addInterceptorBefore(new BaseCustomInterceptor() {
+      advancedCache.getSequentialInterceptorChain().addInterceptorBefore(new BaseCustomInterceptor() {
 
          private final AtomicBoolean first = new AtomicBoolean(false);
 

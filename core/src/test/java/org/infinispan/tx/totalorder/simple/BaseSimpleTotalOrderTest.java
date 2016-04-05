@@ -5,7 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
@@ -64,7 +64,7 @@ public abstract class BaseSimpleTotalOrderTest extends MultipleCacheManagersTest
    }
 
    public final void testInterceptorChain() {
-      InterceptorChain ic = advancedCache(0).getComponentRegistry().getComponent(InterceptorChain.class);
+      SequentialInterceptorChain ic = advancedCache(0).getSequentialInterceptorChain();
       assertTrue(ic.containsInterceptorType(TotalOrderInterceptor.class));
       if (writeSkew) {
          assertFalse(ic.containsInterceptorType(TotalOrderDistributionInterceptor.class));

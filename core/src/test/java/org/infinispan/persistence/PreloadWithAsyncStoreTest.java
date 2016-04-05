@@ -6,12 +6,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -21,7 +20,10 @@ import org.testng.annotations.Test;
 
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Pedro Ruivo
@@ -130,9 +132,8 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
    }
 
    private ExceptionTrackerInterceptor getInterceptor(Cache cache) {
-      return (ExceptionTrackerInterceptor) TestingUtil.extractComponent(cache, InterceptorChain.class)
-            .getInterceptorsWithClass(ExceptionTrackerInterceptor.class)
-            .get(0);
+      return cache.getAdvancedCache().getSequentialInterceptorChain()
+            .findInterceptorWithClass(ExceptionTrackerInterceptor.class);
    }
 
    private static enum CacheType {

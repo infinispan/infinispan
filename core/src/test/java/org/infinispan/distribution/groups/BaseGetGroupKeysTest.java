@@ -9,10 +9,10 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -206,9 +206,10 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    @Override
    protected final void resetCaches(List<Cache<BaseUtilGroupTest.GroupKey, String>> cacheList) {
       for (Cache cache : cacheList) {
-         InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
-         if (chain.containsInterceptorType(BlockCommandInterceptor.class)) {
-            ((BlockCommandInterceptor) chain.getInterceptorsWithClass(BlockCommandInterceptor.class).get(0)).reset();
+         SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+         BlockCommandInterceptor interceptor = chain.findInterceptorExtending(BlockCommandInterceptor.class);
+         if (interceptor != null) {
+            interceptor.reset();
          }
       }
    }
@@ -234,11 +235,9 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
 
    private BlockCommandInterceptor injectIfAbsent(Cache<?, ?> cache) {
       log.debugf("Injecting BlockCommandInterceptor in %s", cache);
-      InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
-      BlockCommandInterceptor interceptor;
-      if (chain.containsInterceptorType(BlockCommandInterceptor.class)) {
-         interceptor = (BlockCommandInterceptor) chain.getInterceptorsWithClass(BlockCommandInterceptor.class).get(0);
-      } else {
+      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      BlockCommandInterceptor interceptor = chain.findInterceptorExtending(BlockCommandInterceptor.class);
+      if (interceptor == null) {
          interceptor = new BlockCommandInterceptor(log);
          if (!chain.addInterceptorAfter(interceptor, EntryWrappingInterceptor.class)) {
             if (!chain.addInterceptorAfter(interceptor, VersionedEntryWrappingInterceptor.class)) {

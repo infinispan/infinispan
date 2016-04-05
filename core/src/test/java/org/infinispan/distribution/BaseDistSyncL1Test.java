@@ -7,7 +7,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.TestingUtil;
@@ -75,16 +75,16 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
    protected BlockingInterceptor addBlockingInterceptor(Cache<?, ?> cache, final CyclicBarrier barrier,
                                          Class<? extends VisitableCommand> commandClass,
-                                         Class<? extends CommandInterceptor> interceptorPosition,
+         Class<? extends SequentialInterceptor> interceptorPosition,
                                          boolean blockAfterCommand) {
       BlockingInterceptor bi = new BlockingInterceptor(barrier, commandClass, blockAfterCommand, false);
-      cache.getAdvancedCache().addInterceptorBefore(bi, interceptorPosition);
+      cache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(bi, interceptorPosition);
       return bi;
    }
 
-   protected abstract Class<? extends CommandInterceptor> getDistributionInterceptorClass();
+   protected abstract Class<? extends SequentialInterceptor> getDistributionInterceptorClass();
 
-   protected abstract Class<? extends CommandInterceptor> getL1InterceptorClass();
+   protected abstract Class<? extends SequentialInterceptor> getL1InterceptorClass();
 
    protected <K> void assertL1StateOnLocalWrite(Cache<? super K,?> cache, Cache<?, ?> updatingCache, K key, Object valueWrite) {
       // Default just assumes it invalidated the cache
@@ -183,7 +183,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       CyclicBarrier invalidationBarrier = new CyclicBarrier(2);
       // We want to block right before the invalidation would hit the L1 interceptor to prevent it from invaliding until we want
-      nonOwnerCache.getAdvancedCache().addInterceptorBefore(
+      nonOwnerCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(
             new BlockingInterceptor(invalidationBarrier, InvalidateL1Command.class, false, false), getL1InterceptorClass());
 
       try {
@@ -319,10 +319,12 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       // Add a barrier to block the owner/backupowner from going further after retrieving the value before coming back into the L1
       // interceptor
       CyclicBarrier getBarrier = new CyclicBarrier(3);
-      ownerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier, GetCacheEntryCommand.class, true, false),
-                                                        getL1InterceptorClass());
-      backupOwnerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier, GetCacheEntryCommand.class, true, false),
-                                                       getL1InterceptorClass());
+      ownerCache.getAdvancedCache().getSequentialInterceptorChain()
+            .addInterceptorAfter(new BlockingInterceptor(getBarrier, GetCacheEntryCommand.class, true, false),
+                  getL1InterceptorClass());
+      backupOwnerCache.getAdvancedCache().getSequentialInterceptorChain()
+            .addInterceptorAfter(new BlockingInterceptor(getBarrier, GetCacheEntryCommand.class, true, false),
+                  getL1InterceptorClass());
 
       try {
          Future<String> future = nonOwnerCache.getAsync(key);

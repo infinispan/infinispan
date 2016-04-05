@@ -11,34 +11,33 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This interceptor handles distribution of entries across a cluster, as well as transparent lookup, when the total
  * order based protocol is enabled
  *
  * @author Pedro Ruivo
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration) || !ctx.hasModifications() ||
             !shouldTotalOrderRollbackBeInvokedRemotely(ctx)) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
       totalOrderTxRollback(ctx);
       return super.visitRollbackCommand(ctx, command);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (Configurations.isOnePhaseTotalOrderCommit(cacheConfiguration) || !ctx.hasModifications()) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
       totalOrderTxCommit(ctx);
       return super.visitCommitCommand(ctx, command);

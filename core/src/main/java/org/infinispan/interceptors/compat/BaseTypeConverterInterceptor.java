@@ -3,11 +3,12 @@ package org.infinispan.interceptors.compat;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
+import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -24,7 +25,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
@@ -40,6 +41,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.StreamSupport;
 
 /**
@@ -47,10 +49,8 @@ import java.util.stream.StreamSupport;
  * to provide a suitable TypeConverter.
  *
  * @author Galder Zamarreño
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
-public abstract class BaseTypeConverterInterceptor<K, V> extends CommandInterceptor {
+public abstract class BaseTypeConverterInterceptor<K, V> extends DDSequentialInterceptor {
 
    private InternalEntryFactory entryFactory;
    private VersionGenerator versionGenerator;
@@ -73,7 +73,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
    protected abstract TypeConverter<Object, Object, Object, Object> determineTypeConverter(Set<Flag> flags);
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
@@ -81,12 +81,12 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
          command.setKey(converter.boxKey(key));
          command.setValue(converter.boxValue(command.getValue()));
       }
-      Object ret = invokeNextInterceptor(ctx, command);
-      return converter.unboxValue(ret);
+      Object ret = ctx.forkInvocationSync(command);
+      return ctx.shortCircuit(converter.unboxValue(ret));
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          Map<Object, Object> map = command.getMap();
          TypeConverter<Object, Object, Object, Object> converter =
@@ -99,36 +99,36 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
          command.setMap(convertedMap);
       }
       // There is no return value for putAll so nothing to convert
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
       if (ctx.isOriginLocal()) {
          command.setKey(converter.boxKey(key));
       }
-      Object ret = invokeNextInterceptor(ctx, command);
+      Object ret = ctx.forkInvocationSync(command);
       if (ret != null) {
          if (needsUnboxing(ctx)) {
-            return converter.unboxValue(ret);
+            return ctx.shortCircuit(converter.unboxValue(ret));
          }
-         return ret;
+         return ctx.shortCircuit(ret);
       }
-      return null;
+      return ctx.shortCircuit(null);
    }
 
    @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
       if (ctx.isOriginLocal()) {
          command.setKey(converter.boxKey(key));
       }
-      Object ret = invokeNextInterceptor(ctx, command);
+      Object ret = ctx.forkInvocationSync(command);
       if (ret != null) {
          CacheEntry entry = (CacheEntry) ret;
          Object returnValue = entry.getValue();
@@ -136,11 +136,11 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
             returnValue = converter.unboxValue(entry.getValue());
          }
          // Create a copy of the entry to avoid modifying the internal entry
-         return entryFactory.create(
+         return ctx.shortCircuit(entryFactory.create(
                entry.getKey(), returnValue, entry.getMetadata(),
-               entry.getLifespan(), entry.getMaxIdle());
+               entry.getLifespan(), entry.getMaxIdle()));
       }
-      return null;
+      return ctx.shortCircuit(null);
    }
 
    private boolean needsUnboxing(InvocationContext ctx) {
@@ -148,7 +148,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       Collection<?> keys = command.getKeys();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
@@ -159,16 +159,16 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
          }
          command.setKeys(boxedKeys);
       }
-      Object ret = invokeNextInterceptor(ctx, command);
+      Object ret = ctx.forkInvocationSync(command);
 
       if (ret != null && !needsUnboxing(ctx))
-         return ret;
+         return ctx.shortCircuit(ret);
 
       if (ret != null) {
          if (command.isReturnEntries()) {
             Map<Object, CacheEntry> map = (Map<Object, CacheEntry>) ret;
             Map<Object, Object> unboxed = command.createMap();
-            for (Map.Entry<Object, CacheEntry> entry : map.entrySet()) {
+            for (Entry<Object, CacheEntry> entry : map.entrySet()) {
                CacheEntry cacheEntry = entry.getValue();
                if (cacheEntry == null) {
                   unboxed.put(entry.getKey(), null);
@@ -182,23 +182,23 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
                   }
                }
             }
-            return unboxed;
+            return ctx.shortCircuit(unboxed);
          } else {
             Map<Object, Object> map = (Map<Object, Object>) ret;
             Map<Object, Object> unboxed = command.createMap();
-            for (Map.Entry<Object, Object> entry : map.entrySet()) {
+            for (Entry<Object, Object> entry : map.entrySet()) {
                Object value = entry == null ? null : entry.getValue();
                unboxed.put(converter.unboxKey(entry.getKey()), entry == null ? null : converter.unboxValue(value));
             }
-            return unboxed;
+            return ctx.shortCircuit(unboxed);
          }
       }
 
-      return null;
+      return ctx.shortCircuit(null);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
@@ -209,15 +209,15 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
          command.setNewValue(converter.boxValue(command.getNewValue()));
       }
       addVersionIfNeeded(command);
-      Object ret = invokeNextInterceptor(ctx, command);
+      Object ret = ctx.forkInvocationSync(command);
 
       // Return of conditional replace is not the value type, but boolean, so
       // apply an exception that applies to all servers, regardless of what's
       // stored in the value side
       if (oldValue != null && ret instanceof Boolean)
-         return ret;
+         return ctx.shortCircuit(ret);
 
-      return converter.unboxValue(ret);
+      return ctx.shortCircuit(converter.unboxValue(ret));
    }
 
    private void addVersionIfNeeded(MetadataAwareCommand cmd) {
@@ -231,7 +231,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object key = command.getKey();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
@@ -240,24 +240,24 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
          command.setKey(converter.boxKey(key));
          command.setValue(converter.boxValue(conditionalValue));
       }
-      Object ret = invokeNextInterceptor(ctx, command);
+      Object ret = ctx.forkInvocationSync(command);
 
       // Return of conditional remove is not the value type, but boolean, so
       // apply an exception that applies to all servers, regardless of what's
       // stored in the value side
       if (conditionalValue != null && ret instanceof Boolean)
-         return ret;
+         return ctx.shortCircuit(ret);
 
-      return ctx.isOriginLocal() ? converter.unboxValue(ret) : ret;
+      return ctx.shortCircuit(ctx.isOriginLocal() ? converter.unboxValue(ret) : ret);
    }
 
    @Override
-   public CacheSet<K> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
-         CacheSet<K> set = (CacheSet<K>) super.visitKeySetCommand(ctx, command);
+         CacheSet<K> set = (CacheSet<K>) ctx.forkInvocationSync(command);
 
-         return new AbstractDelegatingKeyCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
+         return ctx.shortCircuit(new AbstractDelegatingKeyCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
 
             @Override
             public CloseableIterator<K> iterator() {
@@ -285,18 +285,18 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
                stream.onClose(closeableSpliterator::close);
                return new TypeConverterStream(stream, converter, entryFactory);
             }
-         };
+         });
       }
-      return (CacheSet<K>) invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public CacheSet<CacheEntry<K, V>> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
-         CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) super.visitEntrySetCommand(ctx, command);
+         CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) ctx.forkInvocationSync(command);
 
-         return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
+         return ctx.shortCircuit(new AbstractDelegatingEntryCacheSet<K, V>(Caches.getCacheWithFlags(cache, command), set) {
             @Override
             public CloseableIterator<CacheEntry<K, V>> iterator() {
                return new TypeConverterIterator<>(super.iterator(), converter, entryFactory);
@@ -323,9 +323,9 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
                stream.onClose(closeableSpliterator::close);
                return new TypeConverterStream(stream, converter, entryFactory);
             }
-         };
+         });
       }
-      return (CacheSet<CacheEntry<K, V>>) invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    private static <K, V> CacheEntry<K, V> convert(CacheEntry<K, V> entry,

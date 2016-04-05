@@ -2,11 +2,12 @@ package org.infinispan.distribution;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author William Burns
  * @since 6.0
  */
-public class BlockingInterceptor extends CommandInterceptor {
+public class BlockingInterceptor extends DDSequentialInterceptor {
    private static final Log log = LogFactory.getLog(BlockingInterceptor.class);
 
    private final CyclicBarrier barrier;
@@ -57,12 +58,12 @@ public class BlockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   protected CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       try {
          if (!blockAfter) {
             blockIfNeeded(ctx, command);
          }
-         return super.handleDefault(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          if (blockAfter) {
             blockIfNeeded(ctx, command);

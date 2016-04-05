@@ -12,9 +12,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.CallInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
@@ -203,9 +203,9 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       }
 
       public static CountingInterceptor inject(Cache cache) {
-         InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
+         SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
          if (chain.containsInterceptorType(CountingInterceptor.class)) {
-            return (CountingInterceptor) chain.getInterceptorsWithClass(CountingInterceptor.class).get(0);
+            return chain.findInterceptorWithClass(CountingInterceptor.class);
          }
          CountingInterceptor interceptor = new CountingInterceptor();
          chain.addInterceptorBefore(interceptor, CallInterceptor.class);

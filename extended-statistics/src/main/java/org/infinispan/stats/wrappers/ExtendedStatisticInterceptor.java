@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -24,7 +25,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -55,7 +56,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "ExtendedStatistics", description = "Component that manages and exposes extended statistics " +
       "relevant to transactions.")
-public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
+public class ExtendedStatisticInterceptor extends BaseCustomSequentialInterceptor {
 
    private static final Log log = LogFactory.getLog(ExtendedStatisticInterceptor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -66,30 +67,29 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
    private TimeService timeService;
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return visitWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       if (trace) {
          log.tracef("Visit Get Key Value command %s. Is it in transaction scope? %s. Is it local? %s", command,
                     ctx.isInTxScope(), ctx.isOriginLocal());
       }
-      Object retVal;
       if (ctx.isInTxScope()) {
          long start = timeService.time();
-         retVal = invokeNextInterceptor(ctx, command);
+         Object retVal = ctx.forkInvocationSync(command);
          long end = timeService.time();
          initStatsIfNecessary(ctx);
          if (isRemote(command.getKey())) {
@@ -100,22 +100,21 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
          cacheStatisticManager.add(ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                                    getGlobalTransaction(ctx), ctx.isOriginLocal());
          cacheStatisticManager.increment(NUM_GET, getGlobalTransaction(ctx), ctx.isOriginLocal());
+         return ctx.shortCircuit(retVal);
       } else {
-         retVal = invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
-      return retVal;
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (trace) {
          log.tracef("Visit Get All Command %s. Is it in transaction scope? %s. Is it local? %s", command,
                ctx.isInTxScope(), ctx.isOriginLocal());
       }
-      Object retVal;
       if (ctx.isInTxScope()) {
          long start = timeService.time();
-         retVal = invokeNextInterceptor(ctx, command);
+         Object retVal = ctx.forkInvocationSync(command);
          long end = timeService.time();
          initStatsIfNecessary(ctx);
          int numRemote = 0;
@@ -133,14 +132,14 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
          cacheStatisticManager.add(ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                getGlobalTransaction(ctx), ctx.isOriginLocal());
          cacheStatisticManager.add(NUM_GET, command.getKeys().size(), getGlobalTransaction(ctx), ctx.isOriginLocal());
+         return ctx.shortCircuit(retVal);
       } else {
-         retVal = invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
-      return retVal;
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       GlobalTransaction globalTransaction = command.getGlobalTransaction();
       if (trace) {
          log.tracef("Visit Prepare command %s. Is it local?. Transaction is %s", command,
@@ -155,11 +154,11 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
       boolean success = false;
       try {
          long start = timeService.time();
-         Object ret = invokeNextInterceptor(ctx, command);
+         Object ret = ctx.forkInvocationSync(command);
          long end = timeService.time();
          updateTime(PREPARE_EXECUTION_TIME, NUM_PREPARE_COMMAND, start, end, globalTransaction, ctx.isOriginLocal());
          success = true;
-         return ret;
+         return ctx.shortCircuit(ret);
       } catch (TimeoutException e) {
          if (ctx.isOriginLocal() && isLockTimeout(e)) {
             cacheStatisticManager.increment(NUM_LOCK_FAILED_TIMEOUT, globalTransaction, ctx.isOriginLocal());
@@ -207,12 +206,12 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, true, COMMIT_EXECUTION_TIME, NUM_COMMIT_COMMAND);
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return visitSecondPhaseCommand(ctx, command, false, ROLLBACK_EXECUTION_TIME, NUM_ROLLBACK_COMMAND);
    }
 
@@ -708,7 +707,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
       replace();
    }
 
-   private Object visitSecondPhaseCommand(TxInvocationContext ctx, TransactionBoundaryCommand command, boolean commit,
+   private CompletableFuture<Void> visitSecondPhaseCommand(TxInvocationContext ctx, TransactionBoundaryCommand command, boolean commit,
                                           ExtendedStatistic duration, ExtendedStatistic counter) throws Throwable {
       GlobalTransaction globalTransaction = command.getGlobalTransaction();
       if (trace) {
@@ -716,15 +715,15 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
                     ctx.isOriginLocal(), globalTransaction.globalId());
       }
       long start = timeService.time();
-      Object ret = invokeNextInterceptor(ctx, command);
+      Object ret = ctx.forkInvocationSync(command);
       long end = timeService.time();
       updateTime(duration, counter, start, end, globalTransaction, ctx.isOriginLocal());
       cacheStatisticManager.setTransactionOutcome(commit, globalTransaction, ctx.isOriginLocal());
       cacheStatisticManager.terminateTransaction(globalTransaction, true, true);
-      return ret;
+      return ctx.shortCircuit(ret);
    }
 
-   private Object visitWriteCommand(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
+   private CompletableFuture<Void> visitWriteCommand(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
       if (trace) {
          log.tracef("Visit write command %s. Is it in transaction scope? %s. Is it local? %s", command,
                     ctx.isInTxScope(), ctx.isOriginLocal());
@@ -734,7 +733,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
          long start = timeService.time();
          long end;
          try {
-            ret = invokeNextInterceptor(ctx, command);
+            ret = ctx.forkInvocationSync(command);
          } catch (TimeoutException e) {
             if (ctx.isOriginLocal() && isLockTimeout(e)) {
                initStatsIfNecessary(ctx);
@@ -787,9 +786,9 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
                                       getGlobalTransaction(ctx), ctx.isOriginLocal());
             cacheStatisticManager.increment(NUM_REMOTE_PUT, getGlobalTransaction(ctx), ctx.isOriginLocal());
          }
-         return ret;
+         return ctx.shortCircuit(ret);
       } else
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
    }
 
    private GlobalTransaction getGlobalTransaction(InvocationContext context) {

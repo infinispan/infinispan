@@ -9,18 +9,15 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.L1InternalCacheEntry;
-import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
-import org.infinispan.distribution.group.Grouper;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.distribution.group.Grouper;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 import javax.transaction.TransactionManager;
@@ -278,10 +275,12 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected static void removeAllBlockingInterceptorsFromCache(Cache<?, ?> cache) {
-      InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
-      for (CommandInterceptor interceptor : chain.getInterceptorsWhichExtend(BlockingInterceptor.class)) {
-         ((BlockingInterceptor) interceptor).suspend(true);
-         chain.removeInterceptor(interceptor.getClass());
+      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      BlockingInterceptor blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
+      while (blockingInterceptor != null) {
+         blockingInterceptor.suspend(true);
+         chain.removeInterceptor(blockingInterceptor.getClass());
+         blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
       }
    }
 }

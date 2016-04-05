@@ -5,7 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.TxInterceptor;
+import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.stats.container.ConcurrentGlobalContainer;
 import org.infinispan.stats.container.ExtendedStatistic;

@@ -22,6 +22,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author Manik Surtani
  * @deprecated Since 9.0, use {@link BaseCustomSequentialInterceptor} instead.
  */
+@Deprecated
 public class BaseCustomInterceptor extends CommandInterceptor {
    protected Cache<?, ?> cache;
    protected EmbeddedCacheManager embeddedCacheManager;

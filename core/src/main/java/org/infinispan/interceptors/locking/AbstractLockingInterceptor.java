@@ -19,14 +19,16 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockUtil;
+import org.infinispan.util.logging.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,15 +37,15 @@ import java.util.stream.Stream;
  * Base class for various locking interceptors in this package.
  *
  * @author Mircea Markus
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
-public abstract class AbstractLockingInterceptor extends CommandInterceptor {
-   private boolean trace = getLog().isTraceEnabled();
+public abstract class AbstractLockingInterceptor extends DDSequentialInterceptor {
+   private final boolean trace = getLog().isTraceEnabled();
 
    protected LockManager lockManager;
    protected DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
+
+   protected abstract Log getLog();
 
    @Inject
    public void setDependencies(LockManager lockManager, DataContainer<Object, Object> dataContainer,
@@ -54,60 +56,60 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeNextInterceptor(ctx, command);
+   public final CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
    @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
 
-   protected abstract Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable;
+   protected abstract CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable;
 
-   protected abstract Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable;
+   protected abstract CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable;
 
    // We need this method in here because of putForExternalRead
-   protected final Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected final CompletableFuture<Void> visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       try {
          if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
-            return invokeNextInterceptor(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          }
          lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          lockManager.unlockAll(ctx);
       }
    }
 
    @Override
-   public final Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       try {
          if (hasSkipLocking(command)) {
-            return invokeNextInterceptor(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          }
          lockAllAndRecord(ctx, Arrays.asList(command.getKeys()), getLockTimeoutMillis(command));
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          if (!ctx.isInTxScope()) {
             lockManager.unlockAll(ctx);
@@ -116,14 +118,14 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public final Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
+   public final CompletableFuture<Void> visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command) throws Throwable {
       if (command.isCausedByALocalWrite(cdl.getAddress())) {
          if (trace) getLog().trace("Skipping invalidation as the write operation originated here.");
-         return null;
+         return ctx.shortCircuit(null);
       }
 
       if (hasSkipLocking(command)) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
 
       final Object[] keys = command.getKeys();
@@ -139,11 +141,11 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
                }
             }
             if (keysToInvalidate.isEmpty()) {
-               return null;
+               return ctx.shortCircuit(null);
             }
             command.setKeys(keysToInvalidate.toArray());
          }
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          command.setKeys(keys);
          if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
@@ -151,22 +153,22 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+   public CompletableFuture<Void> visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
    @Override
-   public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+   public CompletableFuture<Void> visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
       return visitDataWriteCommand(ctx, command);
    }
 
@@ -200,4 +202,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
       lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).lock();
    }
 
+   protected final boolean hasSkipLocking(LocalFlagAffectedCommand command) {
+      return command.hasFlag(Flag.SKIP_LOCKING);
+   }
 }

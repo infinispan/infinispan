@@ -7,6 +7,8 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.BackupResponse;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Handles x-site data backups for optimistic transactional caches.
  *
@@ -16,50 +18,50 @@ import org.infinispan.remoting.transport.BackupResponse;
 public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       //if this is an "empty" tx no point replicating it to other clusters
       if (!shouldInvokeRemoteTxCommand(ctx))
-         return super.visitPrepareCommand(ctx, command);
+         return ctx.continueInvocation();
 
       boolean isTxFromRemoteSite = isTxFromRemoteSite(command.getGlobalTransaction());
       if (isTxFromRemoteSite) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
 
       BackupResponse backupResponse = backupSender.backupPrepare(command);
-      Object result = invokeNextInterceptor(ctx, command);
+      Object result = ctx.forkInvocationSync(command);
       backupSender.processResponses(backupResponse, command, ctx.getTransaction());
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!shouldInvokeRemoteTxCommand(ctx))
-         return super.visitCommitCommand(ctx, command);
+         return ctx.continueInvocation();
 
       if (isTxFromRemoteSite(command.getGlobalTransaction())) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
 
       BackupResponse backupResponse = backupSender.backupCommit(command);
-      Object result = invokeNextInterceptor(ctx, command);
+      Object result = ctx.forkInvocationSync(command);
       backupSender.processResponses(backupResponse, command, ctx.getTransaction());
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (!shouldRollbackRemoteTxCommand(ctx))
-         return super.visitRollbackCommand(ctx, command);
+         return ctx.continueInvocation();
 
       if (isTxFromRemoteSite(command.getGlobalTransaction())) {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.continueInvocation();
       }
 
       BackupResponse backupResponse = backupSender.backupRollback(command);
-      Object result = invokeNextInterceptor(ctx, command);
+      Object result = ctx.forkInvocationSync(command);
       backupSender.processResponses(backupResponse, command, ctx.getTransaction());
-      return result;
+      return ctx.shortCircuit(result);
    }
 
    private boolean shouldRollbackRemoteTxCommand(TxInvocationContext ctx) {

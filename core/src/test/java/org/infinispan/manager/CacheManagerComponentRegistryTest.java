@@ -5,11 +5,10 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.interceptors.BatchingInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.impl.BatchingInterceptor;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -101,7 +100,9 @@ public class CacheManagerComponentRegistryTest extends AbstractCacheTest {
       Cache overridden = cm.getCache("overridden");
 
       // assert components.
-      assert !TestingUtil.extractComponent(c, InterceptorChain.class).containsInterceptorType(BatchingInterceptor.class);
-      assert TestingUtil.extractComponent(overridden, InterceptorChain.class).containsInterceptorType(BatchingInterceptor.class);
+      SequentialInterceptorChain initialChain = c.getAdvancedCache().getSequentialInterceptorChain();
+      assert !initialChain.containsInterceptorType(BatchingInterceptor.class);
+      SequentialInterceptorChain overriddenChain = overridden.getAdvancedCache().getSequentialInterceptorChain();
+      assert overriddenChain.containsInterceptorType(BatchingInterceptor.class);
    }
 }

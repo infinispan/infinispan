@@ -1,8 +1,5 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
-import org.infinispan.context.Flag;
-import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -12,19 +9,23 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.
  *
  * @author Mircea Markus
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
 
    protected VersionGenerator versionGenerator;
@@ -41,7 +42,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) command;
       if (ctx.isOriginLocal()) {
          versionedPrepareCommand.setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
@@ -53,7 +54,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
                cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, versionedPrepareCommand);
       }
 
-      Object retval = invokeNextInterceptor(ctx, command);
+      Object retval = ctx.forkInvocationSync(command);
 
       if (!ctx.isOriginLocal()) {
          newVersionData =
@@ -69,18 +70,18 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       if (command.isOnePhaseCommit()) {
          commitContextEntries(ctx, null, null);
       }
-      return retval;
+      return ctx.shortCircuit(retval);
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       VersionedCommitCommand versionedCommitCommand = (VersionedCommitCommand) command;
       try {
          if (ctx.isOriginLocal()) {
             versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
          }
 
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          if (!ctx.isOriginLocal()) {
             ctx.getCacheTransaction().setUpdatedEntryVersions(versionedCommitCommand.getUpdatedVersions());

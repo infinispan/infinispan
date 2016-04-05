@@ -2,38 +2,33 @@ package org.infinispan.interceptors.totalorder;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.BaseStateTransferInterceptor;
+import org.infinispan.interceptors.impl.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * Synchronizes the incoming totally ordered transactions with the state transfer.
  *
  * @author Pedro Ruivo
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderStateTransferInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          return localPrepare(ctx, command);
       }
       return remotePrepare(ctx, command);
    }
 
-   @Override
-   protected Log getLog() {
-      return log;
-   }
-
-   private Object remotePrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   private CompletableFuture<Void> remotePrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final int topologyId = currentTopologyId();
       ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
 
@@ -52,10 +47,10 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
          throw new IllegalStateException("This should never happen");
       }
 
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
-   private Object localPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   private CompletableFuture<Void> localPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       boolean needsToPrepare = true;
       Object retVal = null;
       while (needsToPrepare) {
@@ -67,7 +62,7 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
                           command.getGlobalTransaction().globalId(), command.getTopologyId());
             }
 
-            retVal = invokeNextInterceptor(ctx, command);
+            retVal = ctx.forkInvocationSync(command);
             needsToPrepare = false;
          } catch (Throwable throwable) {
             //if we receive a RetryPrepareException it was because the prepare was delivered during a state transfer.
@@ -86,10 +81,15 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
             }
          }
       }
-      return retVal;
+      return ctx.shortCircuit(retVal);
    }
 
    private boolean needsToRePrepare(Throwable throwable) {
       return throwable instanceof RemoteException && throwable.getCause() instanceof RetryPrepareException;
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 }

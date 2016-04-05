@@ -5,7 +5,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
@@ -93,10 +93,10 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       CyclicBarrier barrier = new CyclicBarrier(3);
       BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
             true, false);
-      cache0.getAdvancedCache().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
+      cache0.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
       BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
             true, false);
-      cache2.getAdvancedCache().addInterceptorBefore(blockingInterceptor2, EntryWrappingInterceptor.class);
+      cache2.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor2, EntryWrappingInterceptor.class);
 
       final MagicKey key = new MagicKey(cache1, cache2);
       Future<String> future = fork(new Callable<String>() {
@@ -110,8 +110,8 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       barrier.await(10, TimeUnit.SECONDS);
 
       // Remove the interceptor so the next command can proceed properly
-      cache0.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
-      cache2.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
+      cache0.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+      cache2.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
       blockingInterceptor0.suspend(true);
       blockingInterceptor2.suspend(true);
 

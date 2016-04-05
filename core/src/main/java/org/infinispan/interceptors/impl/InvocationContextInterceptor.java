@@ -1,4 +1,4 @@
-package org.infinispan.interceptors;
+package org.infinispan.interceptors.impl;
 
 
 import org.infinispan.InvalidCacheUsageException;
@@ -16,7 +16,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
@@ -33,14 +33,14 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
-public class InvocationContextInterceptor extends CommandInterceptor {
+public class InvocationContextInterceptor extends DDSequentialInterceptor {
 
    private TransactionManager tm;
    private ComponentRegistry componentRegistry;
@@ -50,11 +50,6 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
    private volatile boolean shuttingDown = false;
-
-   @Override
-   protected Log getLog() {
-      return log;
-   }
 
    @Start(priority = 1)
    private void setStartStatus() {
@@ -75,14 +70,14 @@ public class InvocationContextInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return handleAll(ctx, command);
+   public CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      return ctx.shortCircuit(handleAll(ctx, command));
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand lcc) throws Throwable {
+   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand lcc) throws Throwable {
       Object retval = handleAll(ctx, lcc);
-      return retval == null ? false : retval;
+      return ctx.shortCircuit(retval == null ? false : retval);
    }
 
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
@@ -107,7 +102,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
             if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
 
             try {
-               return invokeNextInterceptor(ctx, command);
+               return ctx.forkInvocationSync(command);
             } catch (InvalidCacheUsageException ex) {
                throw ex; // Propagate back client usage errors regardless of flag
             } catch (Throwable th) {

@@ -8,8 +8,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -20,13 +20,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author Pedro Ruivo
  * @since 5.3
  */
-public class TransactionTrackInterceptor extends BaseCustomInterceptor {
+public class TransactionTrackInterceptor extends BaseCustomSequentialInterceptor {
 
    private static final Log log = LogFactory.getLog(TransactionTrackInterceptor.class);
    private static final GlobalTransaction CLEAR_TRANSACTION = new ClearGlobalTransaction();
@@ -36,24 +37,19 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
    //ordered local transaction list constructed from the operations.
    private final ArrayList<GlobalTransaction> localTransactionsOperation;
 
-   public TransactionTrackInterceptor() {
+   private TransactionTrackInterceptor() {
       localTransactionsSeen = new HashSet<>();
       remoteTransactionsSeen = new HashSet<>();
       localTransactionsOperation = new ArrayList<>(8);
    }
 
    public static TransactionTrackInterceptor injectInCache(Cache<?, ?> cache) {
-      InterceptorChain chain = cache.getAdvancedCache().getComponentRegistry().getComponent(InterceptorChain.class);
+      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
       if (chain.containsInterceptorType(TransactionTrackInterceptor.class)) {
-         return (TransactionTrackInterceptor) chain.getInterceptorsWithClass(TransactionTrackInterceptor.class).get(0);
+         return chain.findInterceptorWithClass(TransactionTrackInterceptor.class);
       }
       TransactionTrackInterceptor interceptor = new TransactionTrackInterceptor();
-      //TODO: commented because of ISPN-3066
-      //cache.getAdvancedCache().getComponentRegistry().registerComponent(interceptor, TransactionTrackInterceptor.class);
-      //TODO: begin of workaround because of ISPN-3066
-      interceptor.cache = cache;
-      interceptor.embeddedCacheManager = cache.getCacheManager();
-      //TODO: end of workaround because of ISPN-3066
+      cache.getAdvancedCache().getComponentRegistry().wireDependencies(interceptor);
       chain.addInterceptor(interceptor, 0);
       return interceptor;
    }
@@ -71,9 +67,9 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public CompletableFuture<Void> visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          if (ctx.isOriginLocal()) {
             addLocalTransaction(CLEAR_TRANSACTION);
@@ -85,27 +81,27 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          seen(command.getGlobalTransaction(), ctx.isOriginLocal());
       }
    }
 
    @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+   public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          seen(command.getGlobalTransaction(), ctx.isOriginLocal());
       }
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          seen(command.getGlobalTransaction(), ctx.isOriginLocal());
       }
@@ -164,9 +160,9 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
    }
 
    @Override
-   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   protected CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       try {
-         return super.handleDefault(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          if (ctx.isOriginLocal() && ctx.isInTxScope()) {
             GlobalTransaction globalTransaction = ((TxInvocationContext) ctx).getGlobalTransaction();
@@ -231,7 +227,7 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
    }
 
    private static class ClearGlobalTransaction extends GlobalTransaction {
-      public ClearGlobalTransaction() {
+      ClearGlobalTransaction() {
          super(null, false);
       }
    }

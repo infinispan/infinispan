@@ -3,7 +3,7 @@ package org.infinispan.stats.topK;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.interceptors.TxInterceptor;
+import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.AbstractTopKeyTest;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.concurrent.IsolationLevel;

@@ -4,6 +4,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
+import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -20,7 +21,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.DistributedCacheStream;
@@ -32,6 +33,7 @@ import org.infinispan.stream.impl.tx.TxDistributedCacheStream;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -44,10 +46,8 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXEC
  * distributed processing through the cluster.
  * @param <K> The key type of entries
  * @param <V> The value type of entries
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
-public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
+public class DistributionBulkInterceptor<K, V> extends DDSequentialInterceptor {
    private Cache<K, V> cache;
 
    @Inject
@@ -56,17 +56,17 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
    }
 
    @Override
-   public CacheSet<CacheEntry<K, V>> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) super.visitEntrySetCommand(ctx, command);
+   public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) ctx.forkInvocationSync(command);
       if (!command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (ctx.isInTxScope()) {
-            return new TxBackingEntrySet<>(getCacheWithFlags(cache, command), entrySet, command,
+            entrySet = new TxBackingEntrySet<>(Caches.getCacheWithFlags(cache, command), entrySet, command,
                     (LocalTxInvocationContext) ctx);
          } else {
-            return new BackingEntrySet<>(getCacheWithFlags(cache, command), entrySet, command);
+            entrySet = new BackingEntrySet<>(Caches.getCacheWithFlags(cache, command), entrySet, command);
          }
       }
-      return entrySet;
+      return ctx.shortCircuit(entrySet);
    }
 
    protected static class BackingEntrySet<K, V> extends AbstractCloseableIteratorCollection<CacheEntry<K, V>, K, V>
@@ -224,17 +224,21 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
    }
 
    @Override
-   public CacheSet<K> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+   public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      CacheSet<K> keySet;
       if (!command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (ctx.isInTxScope()) {
-            return new TxBackingKeySet<>(getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
-                    Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command, (LocalTxInvocationContext) ctx);
+            keySet = new TxBackingKeySet<>(Caches.getCacheWithFlags(cache, command),
+                  cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command,
+                  (LocalTxInvocationContext) ctx);
          } else {
-            return new BackingKeySet<>(getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
+            keySet = new BackingKeySet<>(Caches.getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
                     Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command);
          }
+      } else {
+         keySet = (CacheSet<K>) ctx.forkInvocationSync(command);
       }
-      return (CacheSet<K>) super.visitKeySetCommand(ctx, command);
+      return ctx.shortCircuit(keySet);
    }
 
    protected static class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V>

@@ -9,7 +9,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -19,7 +19,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -190,7 +189,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
    }
 
    private HitsAwareCacheManagersTest.HitCountInterceptor hitCountInterceptor(int i) {
-      InterceptorChain ic = advancedCache(i).getComponentRegistry().getComponent(InterceptorChain.class);
-      return (HitsAwareCacheManagersTest.HitCountInterceptor) ic.getInterceptorsWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class).get(0);
+      SequentialInterceptorChain ic = advancedCache(i).getSequentialInterceptorChain();
+      return ic.findInterceptorWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class);
    }
 }

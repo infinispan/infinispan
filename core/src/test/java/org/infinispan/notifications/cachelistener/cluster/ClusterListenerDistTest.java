@@ -47,7 +47,7 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
 
       CyclicBarrier barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor = new BlockingInterceptor(barrier, PutKeyValueCommand.class, true, false);
-      cache1.getAdvancedCache().addInterceptorBefore(blockingInterceptor, NonTxDistributionInterceptor.class);
+      cache1.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor, NonTxDistributionInterceptor.class);
 
       final MagicKey key = new MagicKey(cache1, cache2);
       Future<String> future = fork(new Callable<String>() {

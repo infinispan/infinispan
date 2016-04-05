@@ -149,7 +149,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       }
 
       val ci = new FlagCheckCommandInterceptor
-      cacheManager.getCache(cacheName).getAdvancedCache.addInterceptor(ci, 1)
+      cacheManager.getCache(cacheName).getAdvancedCache.getSequentialInterceptorChain().addInterceptor(ci, 1)
       ci
    }
 

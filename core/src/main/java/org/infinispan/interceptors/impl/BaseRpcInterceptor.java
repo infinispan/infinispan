@@ -1,4 +1,4 @@
-package org.infinispan.interceptors.base;
+package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -7,6 +7,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SelfDeliverFilter;
@@ -17,6 +18,7 @@ import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.util.logging.Log;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,15 +30,16 @@ import java.util.Set;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
- * @deprecated Since 8.2, no longer public API.
+ * @since 9.0
  */
-@Deprecated
-public abstract class BaseRpcInterceptor extends CommandInterceptor {
+public abstract class BaseRpcInterceptor extends DDSequentialInterceptor {
    protected boolean trace = getLog().isTraceEnabled();
 
    protected RpcManager rpcManager;
 
    protected boolean defaultSynchronous;
+
+   protected abstract Log getLog();
 
    @Inject
    public void inject(RpcManager rpcManager, StateConsumer stateConsumer) {

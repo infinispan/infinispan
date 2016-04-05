@@ -4,8 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -42,7 +42,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    public void testContentsOfContext() throws Exception {
       Cache<Key, String> c = cacheManager.getCache();
       ContextExtractingInterceptor cex = new ContextExtractingInterceptor();
-      assertTrue(c.getAdvancedCache().addInterceptorAfter(cex, InvocationContextInterceptor.class));
+      assertTrue(c.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(cex, InvocationContextInterceptor.class));
 
       c.put(new Key("k"), "v");
 

@@ -23,7 +23,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.CacheMgmtInterceptor;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;

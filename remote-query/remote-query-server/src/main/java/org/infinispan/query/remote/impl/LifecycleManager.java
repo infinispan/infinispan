@@ -16,9 +16,9 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.interceptors.BatchingInterceptor;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.impl.BatchingInterceptor;
+import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
@@ -131,7 +131,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
 
          // Interceptor registration not needed, core configuration handling
          // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
-         InterceptorChain ic = cr.getComponent(InterceptorChain.class);
+         SequentialInterceptorChain ic = cr.getComponent(SequentialInterceptorChain.class);
 
          ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
          InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
@@ -188,7 +188,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private boolean verifyChainContainsRemoteValueWrapperInterceptor(ComponentRegistry cr) {
-      InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
+      SequentialInterceptorChain interceptorChain = cr.getComponent(SequentialInterceptorChain.class);
       return interceptorChain != null && interceptorChain.containsInterceptorType(RemoteValueWrapperInterceptor.class, true);
    }
 
@@ -203,7 +203,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
       CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
 
       for (InterceptorConfiguration interceptorConfig : cfg.customInterceptors().interceptors()) {
-         if (!(interceptorConfig.interceptor() instanceof RemoteValueWrapperInterceptor)) {
+         if (!(interceptorConfig.sequentialInterceptor() instanceof RemoteValueWrapperInterceptor)) {
             customInterceptorsBuilder.addInterceptor().read(interceptorConfig);
          }
       }

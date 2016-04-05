@@ -43,7 +43,6 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
-import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
@@ -1605,13 +1604,13 @@ public class Parser80 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case AFTER:
-               interceptorBuilder.after(Util.<SequentialInterceptor>loadClass(value, holder.getClassLoader()));
+               interceptorBuilder.after(Util.loadClass(value, holder.getClassLoader()));
                break;
             case BEFORE:
-               interceptorBuilder.before(Util.<SequentialInterceptor>loadClass(value, holder.getClassLoader()));
+               interceptorBuilder.before(Util.loadClass(value, holder.getClassLoader()));
                break;
             case CLASS:
-               interceptorBuilder.interceptorClass(Util.<SequentialInterceptor>loadClass(value, holder.getClassLoader()));
+               interceptorBuilder.interceptorClass(Util.loadClass(value, holder.getClassLoader()));
                break;
             case INDEX:
                interceptorBuilder.index(Integer.parseInt(value));

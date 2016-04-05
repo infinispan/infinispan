@@ -21,14 +21,13 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Locking interceptor to be used by optimistic transactional caches.
  *
  * @author Mircea Markus
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private boolean needToMarkReads;
@@ -58,7 +57,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       final Collection<Object> keysToLock = command.getKeysToLock();
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(command.getAffectedKeys());
       if (!keysToLock.isEmpty()) {
@@ -76,14 +75,14 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          }
       }
 
-      return invokeNextAndCommitIf1Pc(ctx, command);
+      return ctx.shortCircuit(invokeNextAndCommitIf1Pc(ctx, command));
    }
 
    @Override
-   protected Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+   protected CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
          //locks need to be released in this situation as they might have been acquired from L1.
@@ -92,54 +91,54 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
-      return super.visitGetKeyValueCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (needToMarkReads && ctx.isInTxScope()) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
          for (Object key : command.getKeys()) {
             tctx.getCacheTransaction().addReadKey(key);
          }
       }
-      return super.visitGetAllCommand(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+   public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
    @Override
-   protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   protected CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       try {
          // Regardless of whether is conditional so that
          // write skews can be detected in both cases.
          markKeyAsRead(ctx, command, command.isConditional());
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
       }
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       throw new InvalidCacheUsageException("Explicit locking is not allowed with optimistic caches!");
    }
 

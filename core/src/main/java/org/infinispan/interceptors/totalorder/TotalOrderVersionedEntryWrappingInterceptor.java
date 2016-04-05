@@ -1,8 +1,5 @@
 package org.infinispan.interceptors.totalorder;
 
-import org.infinispan.context.Flag;
-import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -12,23 +9,24 @@ import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Wrapping Interceptor for Total Order protocol when versions are needed
  *
  * @author Mircea.Markus@jboss.com
  * @author Pedro Ruivo
- * @deprecated Since 8.2, no longer public API.
  */
-@Deprecated
 public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryWrappingInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderVersionedEntryWrappingInterceptor.class);
@@ -36,24 +34,24 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    private static final EntryVersionsMap EMPTY_VERSION_MAP = new EntryVersionsMap();
 
    @Override
-   public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
 
       if (ctx.isOriginLocal()) {
          ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
          //for local mode keys
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
-         Object retVal = invokeNextInterceptor(ctx, command);
+         Object retVal = ctx.forkInvocationSync(command);
          if (shouldCommitDuringPrepare(command, ctx)) {
             commitContextEntries(ctx, null, null);
          }
-         return retVal;
+         return ctx.shortCircuit(retVal);
       }
 
       //Remote context, delivered in total order
 
       wrapEntriesForPrepare(ctx, command);
 
-      Object retVal = invokeNextInterceptor(ctx, command);
+      Object retVal = ctx.forkInvocationSync(command);
 
       EntryVersionsMap versionsMap = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx,
                                                                                 (VersionedPrepareCommand) command);
@@ -65,13 +63,13 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
             log.tracef("Transaction %s will be committed in the 2nd phase", ctx.getGlobalTransaction().globalId());
       }
 
-      return versionsMap == null ? retVal : new ArrayList<Object>(versionsMap.keySet());
+      return ctx.shortCircuit(versionsMap == null ? retVal : new ArrayList<Object>(versionsMap.keySet()));
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } finally {
          commitContextEntries(ctx, null, null);
       }

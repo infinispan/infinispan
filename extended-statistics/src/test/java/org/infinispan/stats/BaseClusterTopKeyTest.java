@@ -5,7 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.interceptors.TxInterceptor;
+import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.concurrent.IsolationLevel;

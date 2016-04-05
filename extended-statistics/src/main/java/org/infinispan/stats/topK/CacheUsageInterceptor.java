@@ -1,6 +1,7 @@
 package org.infinispan.stats.topK;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -10,7 +11,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -28,7 +29,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 6.0
  */
 @MBean(objectName = "CacheUsageStatistics", description = "Keeps tracks of the accessed keys")
-public class CacheUsageInterceptor extends BaseCustomInterceptor {
+public class CacheUsageInterceptor extends BaseCustomSequentialInterceptor {
 
    public static final int DEFAULT_TOP_KEY = 10;
    private static final Log log = LogFactory.getLog(CacheUsageInterceptor.class, Log.class);
@@ -36,33 +37,33 @@ public class CacheUsageInterceptor extends BaseCustomInterceptor {
    private DistributionManager distributionManager;
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
 
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          streamSummaryContainer.addGet(command.getKey(), command.getRemotelyFetchedValue() != null);
       }
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          for (Object key : command.getKeys()) {
             streamSummaryContainer.addGet(key, command.getRemotelyFetched().containsKey(key));
          }
       }
-      return invokeNextInterceptor(ctx, command);
+      return ctx.continueInvocation();
    }
 
    // TODO: implement visitPutMapCommand
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
          if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
             streamSummaryContainer.addPut(command.getKey(), isRemote(command.getKey()));
          }
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (WriteSkewException wse) {
          Object key = wse.getKey();
          if (streamSummaryContainer.isEnabled() && key != null && ctx.isOriginLocal()) {
@@ -73,9 +74,9 @@ public class CacheUsageInterceptor extends BaseCustomInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
-         return invokeNextInterceptor(ctx, command);
+         return ctx.shortCircuit(ctx.forkInvocationSync(command));
       } catch (WriteSkewException wse) {
          Object key = wse.getKey();
          if (streamSummaryContainer.isEnabled() && key != null && ctx.isOriginLocal()) {

@@ -3,9 +3,13 @@ package org.infinispan.test.concurrent;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Replaces a {@link CommandInterceptor} with a wrapper that can interact with a {@link StateSequencer} when a
@@ -17,11 +21,11 @@ import java.util.List;
 public class InterceptorSequencerAction {
    private final StateSequencer stateSequencer;
    private final Cache<?, ?> cache;
-   private final Class<? extends CommandInterceptor> interceptorClass;
+   private final Class<? extends SequentialInterceptor> interceptorClass;
    private CommandMatcher matcher;
    private SequencerInterceptor ourInterceptor;
 
-   public InterceptorSequencerAction(StateSequencer stateSequencer, Cache<?, ?> cache, Class<? extends CommandInterceptor> interceptorClass, CommandMatcher matcher) {
+   public InterceptorSequencerAction(StateSequencer stateSequencer, Cache<?, ?> cache, Class<? extends SequentialInterceptor> interceptorClass, CommandMatcher matcher) {
       this.stateSequencer = stateSequencer;
       this.cache = cache;
       this.interceptorClass = interceptorClass;
@@ -41,9 +45,9 @@ public class InterceptorSequencerAction {
 
    private void initOurInterceptor() {
       if (ourInterceptor == null) {
-         ourInterceptor = SequencerInterceptor.createUniqueInterceptor(cache.getAdvancedCache().getInterceptorChain());
+         ourInterceptor = SequencerInterceptor.createUniqueInterceptor(cache.getAdvancedCache().getSequentialInterceptorChain());
          ourInterceptor.init(stateSequencer, matcher);
-         cache.getAdvancedCache().addInterceptorBefore(ourInterceptor, interceptorClass);
+         cache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(ourInterceptor, interceptorClass);
       }
    }
 
@@ -58,7 +62,7 @@ public class InterceptorSequencerAction {
       return this;
    }
 
-   public static class SequencerInterceptor extends CommandInterceptor {
+   public static class SequencerInterceptor extends DDSequentialInterceptor {
       private static final Class[] uniqueInterceptorClasses = {
             U1.class, U2.class, U3.class, U4.class, U5.class, U6.class, U7.class, U8.class, U9.class
       };
@@ -68,7 +72,7 @@ public class InterceptorSequencerAction {
       private volatile List<String> statesBefore;
       private volatile List<String> statesAfter;
 
-      public static SequencerInterceptor createUniqueInterceptor(List<CommandInterceptor> chain) {
+      public static SequencerInterceptor createUniqueInterceptor(SequentialInterceptorChain chain) {
          Class uniqueClass = findUniqueClass(chain);
          try {
             return (SequencerInterceptor) uniqueClass.newInstance();
@@ -77,15 +81,9 @@ public class InterceptorSequencerAction {
          }
       }
 
-      public static Class<?> findUniqueClass(List<CommandInterceptor> chain) {
-         for (Class<?> clazz : uniqueInterceptorClasses) {
-            boolean alreadyExists = false;
-            for (CommandInterceptor interceptor : chain) {
-               if (interceptor.getClass().equals(clazz)) {
-                  alreadyExists = true;
-               }
-            }
-            if (!alreadyExists) {
+      public static Class<?> findUniqueClass(SequentialInterceptorChain chain) {
+         for (Class<? extends SequentialInterceptor> clazz : uniqueInterceptorClasses) {
+            if (!chain.containsInterceptorType(clazz)) {
                return clazz;
             }
          }
@@ -99,11 +97,11 @@ public class InterceptorSequencerAction {
       }
 
       @Override
-      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      protected CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          boolean commandAccepted = matcher.accept(command);
          StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesBefore);
          try {
-            return super.handleDefault(ctx, command);
+            return ctx.shortCircuit(ctx.forkInvocationSync(command));
          } finally {
             StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesAfter);
          }

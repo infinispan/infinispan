@@ -12,28 +12,9 @@ import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.interceptors.ActivationInterceptor;
-import org.infinispan.interceptors.BatchingInterceptor;
-import org.infinispan.interceptors.CacheLoaderInterceptor;
-import org.infinispan.interceptors.CacheMgmtInterceptor;
-import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.CallInterceptor;
-import org.infinispan.interceptors.ClusteredActivationInterceptor;
-import org.infinispan.interceptors.ClusteredCacheLoaderInterceptor;
-import org.infinispan.interceptors.DeadlockDetectingInterceptor;
-import org.infinispan.interceptors.DistCacheWriterInterceptor;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.interceptors.GroupingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.InvalidationInterceptor;
-import org.infinispan.interceptors.InvocationContextInterceptor;
-import org.infinispan.interceptors.IsMarshallableInterceptor;
-import org.infinispan.interceptors.MarshalledValueInterceptor;
-import org.infinispan.interceptors.NotificationInterceptor;
 import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.interceptors.TxInterceptor;
-import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.compat.TypeConverterInterceptor;
 import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
@@ -42,7 +23,26 @@ import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
+import org.infinispan.interceptors.impl.ActivationInterceptor;
+import org.infinispan.interceptors.impl.BatchingInterceptor;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
+import org.infinispan.interceptors.impl.CacheWriterInterceptor;
+import org.infinispan.interceptors.impl.CallInterceptor;
+import org.infinispan.interceptors.impl.ClusteredActivationInterceptor;
+import org.infinispan.interceptors.impl.ClusteredCacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.DeadlockDetectingInterceptor;
+import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.GroupingInterceptor;
+import org.infinispan.interceptors.impl.InvalidationInterceptor;
+import org.infinispan.interceptors.impl.InvocationContextInterceptor;
+import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
+import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
+import org.infinispan.interceptors.impl.NotificationInterceptor;
 import org.infinispan.interceptors.impl.SequentialInterceptorChainImpl;
+import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
@@ -66,6 +66,9 @@ import java.util.List;
 
 /**
  * Factory class that builds an interceptor chain based on cache configuration.
+ *
+ * For backwards compatibility, the factory will register both a {@link SequentialInterceptorChain} and
+ * a {@link InterceptorChain} before initializing the interceptors.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com

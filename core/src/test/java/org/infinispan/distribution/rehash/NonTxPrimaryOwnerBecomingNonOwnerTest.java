@@ -5,7 +5,7 @@ import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -141,7 +141,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       CyclicBarrier beforeCache0Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(beforeCache0Barrier,
             op.getCommandClass(), false, true);
-      cache0.addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
+      cache0.getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
 
       // Write from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
       Future<Object> future = fork(new Callable<Object>() {
