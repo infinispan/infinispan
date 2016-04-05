@@ -46,7 +46,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
    public void testExpirationOfStoreWhenDataNotInMemory() throws Exception {
       String key = "k";
       cache.put(key, "v", 10, TimeUnit.MILLISECONDS);
-      cache.getAdvancedCache().getDataContainer().remove(key);
+      removeFromContainer(key);
       // At this point data should only be in store - we assume size won't ressurect value into memory
       assertEquals(1, cache.size());
       assertEquals(0, listener.getInvocationCount());
@@ -67,6 +67,10 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
          assertEquals("v", event.getValue());
          assertNotNull(event.getMetadata());
       }
+   }
+
+   protected void removeFromContainer(String key) {
+      cache.getAdvancedCache().getDataContainer().remove(key);
    }
 
    private void assertExpiredEvents(int count) {
