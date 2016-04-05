@@ -135,7 +135,12 @@ public class RemoveExpiredCommand extends RemoveCommand {
       output.writeObject(commandInvocationId);
       output.writeObject(key);
       output.writeObject(value);
-      output.writeLong(lifespan);
+      if (lifespan != null) {
+         output.writeBoolean(true);
+         output.writeLong(lifespan);
+      } else {
+         output.writeBoolean(false);
+      }
    }
 
    @Override
@@ -143,7 +148,12 @@ public class RemoveExpiredCommand extends RemoveCommand {
       commandInvocationId = (CommandInvocationId) input.readObject();
       key = input.readObject();
       value = input.readObject();
-      lifespan = input.readLong();
+      boolean lifespanProvided = input.readBoolean();
+      if (lifespanProvided) {
+         lifespan = input.readLong();
+      } else {
+         lifespan = null;
+      }
    }
 
    @Override
