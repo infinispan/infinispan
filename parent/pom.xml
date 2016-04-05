@@ -154,6 +154,7 @@
       <version.mockito>1.9.5</version.mockito>
       <version.mockito_dep.objenesis>1.4</version.mockito_dep.objenesis>
       <version.mysql.driver>5.1.19</version.mysql.driver>
+      <version.netty>4.0.32.Final</version.netty>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.org.picketbox>4.0.20.Final</version.org.picketbox>
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
@@ -500,6 +501,11 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>${version.javax.servlet}</version>
+         </dependency>
+         <dependency>
+         	  <groupId>io.netty</groupId>
+         	  <artifactId>netty-all</artifactId>
+         	  <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>com.jgoodies</groupId>
