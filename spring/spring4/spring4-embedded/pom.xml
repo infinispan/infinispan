@@ -28,12 +28,9 @@
             <artifactId>infinispan-core</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- This dependency is needed only in Maven reactor -->
-        <!-- Users should not use it -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-spring4-common</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -97,25 +94,6 @@
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>${project.basedir}/src/main/resources</directory>
-                <filtering>false</filtering>
-                <includes>
-                    <include>**/infinispan-spring-${infinispan.core.schema.version}.xsd</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>${project.basedir}/src/main/resources</directory>
-                <filtering>false</filtering>
-                <includes>
-                    <include>**/*</include>
-                </includes>
-                <excludes>
-                    <exclude>**/infinispan-spring-*.xsd</exclude>
-                </excludes>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.felix</groupId>
