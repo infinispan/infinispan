@@ -94,6 +94,10 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
             new SimpleOperationDefinitionBuilder("stop-cache",
                     new InfinispanResourceDescriptionResolver("cache")
             ).setRuntimeOnly().build();
+    static final OperationDefinition SHUTDOWN_CACHE =
+         new SimpleOperationDefinitionBuilder("shutdown-cache",
+               new InfinispanResourceDescriptionResolver("cache")
+         ).setRuntimeOnly().build();
     static final OperationDefinition START_CACHE =
             new SimpleOperationDefinitionBuilder("start-cache",
                     new InfinispanResourceDescriptionResolver("cache")
@@ -189,6 +193,7 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
         resourceRegistration.registerOperationHandler(CacheResource.FLUSH_CACHE, CacheCommands.FlushCacheCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(CacheResource.START_CACHE, CacheCommands.StartCacheCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(CacheResource.STOP_CACHE, CacheCommands.StopCacheCommand.INSTANCE);
+        resourceRegistration.registerOperationHandler(CacheResource.SHUTDOWN_CACHE, CacheCommands.ShudownCacheCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(CacheResource.RESET_STATISTICS, CacheCommands.ResetCacheStatisticsCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(CacheResource.RESET_ACTIVATION_STATISTICS, CacheCommands.ResetActivationStatisticsCommand.INSTANCE);
         resourceRegistration.registerOperationHandler(CacheResource.RESET_INVALIDATION_STATISTICS, CacheCommands.ResetInvalidationStatisticsCommand.INSTANCE);

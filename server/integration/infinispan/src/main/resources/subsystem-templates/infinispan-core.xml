@@ -27,42 +27,43 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="clustered" default-cache="default" statistics="true">
             <transport lock-timeout="60000" />
-            
+            <global-state />
+
             <distributed-cache-configuration name="transactional" mode="SYNC" start="EAGER">
                <transaction mode="NON_XA" locking="PESSIMISTIC"/>
             </distributed-cache-configuration>
-            
+
             <replicated-cache-configuration name="replicated" mode="SYNC" start="EAGER" />
 
             <distributed-cache-configuration name="persistent-file-store" mode="SYNC" start="EAGER">
                <file-store shared="false" fetch-state="true" passivation="false"/>
             </distributed-cache-configuration>
-            
+
             <distributed-cache-configuration name="indexed" mode="SYNC" start="EAGER">
                <indexing index="LOCAL" auto-config="true"/>
             </distributed-cache-configuration>
-            
+
             <distributed-cache-configuration name="memory-bounded" mode="SYNC" start="EAGER">
                <eviction strategy="LRU" size="10000000" type="MEMORY"/>
             </distributed-cache-configuration>
-            
+
             <distributed-cache-configuration name="persistent-file-store-passivation" mode="SYNC" start="EAGER">
                <eviction strategy="LRU" size="10000" type="COUNT"/>
                <file-store shared="false" fetch-state="true" passivation="true">
                   <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
                </file-store>
             </distributed-cache-configuration>
-            
+
             <distributed-cache-configuration name="persistent-file-store-write-behind" mode="SYNC" start="EAGER">
                <file-store shared="false" fetch-state="true" passivation="false">
                   <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
                </file-store>
             </distributed-cache-configuration>
-            
+
             <distributed-cache-configuration name="persistent-leveldb-store" mode="SYNC" start="EAGER">
                <leveldb-store shared="false" fetch-state="true" passivation="false"/>
             </distributed-cache-configuration>
-            
+
             <distributed-cache-configuration name="persistent-jdbc-string-keyed" mode="SYNC" owners="2" start="EAGER">
                <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" fetch-state="true" preload="false" purge="false" shared="false" passivation="false">
                   <string-keyed-table prefix="ISPN">
@@ -83,7 +84,7 @@
                   </binary-keyed-table>
                </binary-keyed-jdbc-store>
             </distributed-cache-configuration>
-            
+
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <transaction mode="NONE" />
@@ -167,6 +168,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="clustered" default-cache="default" >
             <transport lock-timeout="60000" />
+            <global-state />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" size="1000" type="COUNT"/>
@@ -342,6 +344,7 @@
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="clustered" default-cache="default" statistics="true">
             <transport lock-timeout="60000"/>
+            <global-state />
             <distributed-cache name="default" mode="SYNC" start="EAGER"/>
             <!-- Indexes are local to each node, stored on the filesystem -->
             <replicated-cache name="OnDiskNonSharedIndex" mode="SYNC" start="EAGER">

@@ -165,6 +165,19 @@ public abstract class CacheCommands implements OperationStepHandler {
         }
     }
 
+    public static class ShudownCacheCommand extends CacheCommands {
+        public static final ShudownCacheCommand INSTANCE = new ShudownCacheCommand();
+
+        public ShudownCacheCommand() {
+        }
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation, OperationContext context) throws Exception {
+            SecurityActions.shutdownCache(cache.getAdvancedCache());
+            return null;
+        }
+    }
+
     public static class ResetTxStatisticsCommand extends CacheCommands {
         public static final ResetTxStatisticsCommand INSTANCE = new ResetTxStatisticsCommand();
 
