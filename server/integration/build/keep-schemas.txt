@@ -6,5 +6,14 @@ jboss-as-jmx_*.xsd
 jboss-as-logging_*.xsd
 jboss-as-txn_*.xsd
 jboss-as-xts_*.xsd
-jboss-infinispan-*.xsd
+jboss-as-jgroups_*.xsd
 module-*.xsd
+jboss-infinispan-endpoint_*.xsd
+jboss-infinispan-jgroups_*.xsd
+jboss-infinispan-core_*.xsd
+jboss-as-cli_*.xsd
+wildfly-cli_*.xsd
+wildfly-config_*.xsd
+wildfly-txn_*.xsd
+wildfly-datasources_*.xsd
+infinispan-*.xsd
