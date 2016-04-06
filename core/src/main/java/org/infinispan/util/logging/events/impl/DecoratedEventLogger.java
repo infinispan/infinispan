@@ -34,7 +34,7 @@ public class DecoratedEventLogger implements EventLogger {
    public void log(EventLogLevel level, EventLogCategory category, String message) {
       StringBuilder sb = new StringBuilder();
       context.ifPresent(c -> sb.append(MESSAGES.eventLogContext(c)));
-      scope.ifPresent(s -> sb.append(MESSAGES.eventLogContext(s)));
+      scope.ifPresent(s -> sb.append(MESSAGES.eventLogScope(s)));
       who.ifPresent(w -> sb.append(MESSAGES.eventLogWho(w)));
       // We don't include detail in this implementation
       sb.append(message);
