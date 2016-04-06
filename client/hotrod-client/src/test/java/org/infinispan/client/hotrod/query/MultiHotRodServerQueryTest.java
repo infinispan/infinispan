@@ -145,7 +145,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       assertUser1(list.get(0));
    }
 
-   @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQL100005:.*", description = "See https://issues.jboss.org/browse/ISPN-4423")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000405: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache1);
 
