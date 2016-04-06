@@ -69,6 +69,6 @@ public interface Messages {
    @Message(value = "[Scope=%s]")
    String eventLogScope(String scope);
 
-   @Message(value = "After merge (or coordinator change), the coordinator failed to recover cluster. Cluster members are %s.")
+   @Message(value = "After merge (or coordinator change), the coordinator failed to recover cluster. Cluster members are %s.", id = 100004)
    String clusterRecoveryFailed(Collection<Address> members);
 }
