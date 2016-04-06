@@ -74,7 +74,7 @@
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
       <version.jgroups>3.6.7.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
-      <version.netty>4.0.25.Final</version.netty>
+      <version.netty>4.0.36.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.scala.major>2.11</version.scala.major>
       <version.scala>${version.scala.major}.7</version.scala>
