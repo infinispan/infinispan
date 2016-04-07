@@ -9,6 +9,7 @@ import java.util.Collection;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.security.SubjectUserInfo;
 
 /**
@@ -21,6 +22,11 @@ import org.infinispan.server.core.security.SubjectUserInfo;
 public class SimpleSubjectUserInfo implements SubjectUserInfo {
     final String userName;
     final Subject subject;
+
+    public SimpleSubjectUserInfo(Subject subject) {
+       this.userName = Security.getSubjectUserPrincipal(subject).getName();
+       this.subject = subject;
+    }
 
     public SimpleSubjectUserInfo(String userName, Subject subject) {
        this.userName = userName;

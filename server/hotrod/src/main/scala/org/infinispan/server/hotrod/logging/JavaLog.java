@@ -84,4 +84,6 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Unauthorized operation", id = 6017)
    SecurityException unauthorizedOperation();
 
+   @Message(value = "EXTERNAL SASL mechanism not allowed without SSL client certificate", id = 6018)
+   SecurityException externalMechNotAllowedWithoutSSLClientCert();
 }

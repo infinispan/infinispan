@@ -21,7 +21,7 @@ public class CommonNameRoleMapper implements PrincipalRoleMapper {
    public Set<String> principalToRoles(Principal principal) {
       String name = principal.getName();
       if (name.startsWith("CN=")) {
-         return Collections.singleton(name.substring(3, name.indexOf(',')));
+         return Collections.singleton(name.split(",")[0].substring(3));
       } else {
          return null;
       }

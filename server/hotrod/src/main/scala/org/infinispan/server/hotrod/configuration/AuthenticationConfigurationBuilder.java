@@ -14,6 +14,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.security.SaslUtils;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
+import org.infinispan.server.core.security.external.ExternalSaslServerFactory;
 import org.infinispan.server.hotrod.logging.JavaLog;
 
 /**
@@ -87,6 +88,7 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
             throw log.serverAuthenticationProvider();
          }
          Set<String> allMechs = new LinkedHashSet<String>();
+         Collections.addAll(allMechs, ExternalSaslServerFactory.NAMES);
          for (Iterator<SaslServerFactory> factories = SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), true); factories.hasNext(); ) {
             SaslServerFactory factory = factories.next();
             for(String mech : factory.getMechanismNames(mechProperties)) {
