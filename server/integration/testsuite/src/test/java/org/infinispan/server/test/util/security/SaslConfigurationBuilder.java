@@ -1,14 +1,14 @@
 package org.infinispan.server.test.util.security;
 
-import java.io.File;
-
-import javax.security.auth.Subject;
-
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.SaslQop;
 import org.infinispan.client.hotrod.configuration.SaslStrength;
+import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.server.test.util.ITestUtils;
+
+import java.io.File;
+import javax.security.auth.Subject;
 
 /**
  * 
@@ -47,6 +47,11 @@ public class SaslConfigurationBuilder extends ConfigurationBuilder {
 
    public SaslConfigurationBuilder forSubject(Subject subj) {
       this.security().authentication().clientSubject(subj).callbackHandler(new SimpleLoginHandler("", "")); //callback handle is required by ISPN config validation
+      return this;
+   }
+
+   public SaslConfigurationBuilder forExternalAuth() {
+      this.security().authentication().callbackHandler(new VoidCallbackHandler());
       return this;
    }
 
