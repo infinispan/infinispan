@@ -1,15 +1,17 @@
 package org.infinispan.server.hotrod
 
 import javax.net.ssl.SSLPeerUnverifiedException
+
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import java.io.IOException
+
 import org.infinispan.IllegalLifecycleStateException
 import org.infinispan.commons.CacheException
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
-import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, SKIP_INDEXING, IGNORE_RETURN_VALUES}
+import org.infinispan.context.Flag.{IGNORE_RETURN_VALUES, SKIP_CACHE_LOAD, SKIP_INDEXING}
 import org.infinispan.remoting.transport.jgroups.SuspectException
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.core._
@@ -20,18 +22,24 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.stats.ClusterCacheStats
 import org.infinispan.util.concurrent.TimeoutException
+
 import scala.annotation.switch
 import scala.collection.JavaConverters._
 import javax.security.sasl.Sasl
+
 import io.netty.channel.ChannelHandlerContext
 import javax.security.auth.Subject
-import java.security.{PrivilegedActionException, PrivilegedAction, Principal}
+import java.security.{Principal, PrivilegedAction, PrivilegedActionException}
 import javax.security.sasl.SaslServer
+
 import io.netty.handler.ssl.SslHandler
 import java.util.ArrayList
+
 import org.infinispan.server.core.security.InetAddressPrincipal
 import java.net.InetSocketAddress
+
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal
+
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -40,6 +48,8 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import java.util.{BitSet => JavaBitSet}
 import java.util.HashSet
 import java.util.HashMap
+
+import org.infinispan.server.core.security.external.ExternalSaslServerFactory
 import org.infinispan.tasks.TaskManager
 import org.infinispan.tasks.TaskContext
 
@@ -257,7 +267,17 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                   val sap = authConf.serverAuthenticationProvider
                   val mechProperties = new HashMap[String, String](server.getConfiguration.authentication.mechProperties)
                   decoder.callbackHandler = sap.getCallbackHandler(mech, mechProperties)
-                  val ssf = server.getSaslServerFactory(mech)
+                  val ssf = if (mech == "EXTERNAL") {
+                     val sslHandler = ctx.pipeline.get("ssl").asInstanceOf[SslHandler]
+                     try {
+                        if (sslHandler != null)
+                           new ExternalSaslServerFactory(sslHandler.engine.getSession.getPeerPrincipal)
+                        else
+                           throw log.externalMechNotAllowedWithoutSSLClientCert
+                     } catch {
+                        case e: SSLPeerUnverifiedException => throw log.externalMechNotAllowedWithoutSSLClientCert
+                     }
+                  } else server.getSaslServerFactory(mech)
                   decoder.saslServer = if (authConf.serverSubject != null) {
                      Subject.doAs(authConf.serverSubject, new PrivilegedAction[SaslServer] {
                         def run : SaslServer = {
