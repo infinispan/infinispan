@@ -1,6 +1,7 @@
 package org.infinispan.server.core
 
 import java.net.InetSocketAddress
+import io.netty.util.concurrent.DefaultEventExecutorGroup
 import org.infinispan.manager.EmbeddedCacheManager
 import transport.NettyTransport
 import logging.Log
@@ -24,6 +25,7 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
    private var transportObjName: ObjectName = _
    private var mbeanServer: MBeanServer = _
    private var isGlobalStatsEnabled: Boolean = _
+   protected lazy val executor = new DefaultEventExecutorGroup(configuration.workerThreads())
 
    protected def startInternal(configuration: SuitableConfiguration, cacheManager: EmbeddedCacheManager) {
       this.configuration = configuration
@@ -64,9 +66,9 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
 
    override def getInitializer: ChannelInitializer[Channel] = {
       if (configuration.idleTimeout > 0)
-         new TimeoutEnabledChannelInitializer(this, getEncoder)
+         new TimeoutEnabledChannelInitializer(this, getEncoder, executor)
       else // Idle timeout logic is disabled with -1 or 0 values
-         new NettyChannelInitializer(this, getEncoder)
+         new NettyChannelInitializer(this, getEncoder, executor)
    }
 
    protected def registerTransportMBean() {
