@@ -835,6 +835,36 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
+        <container qualifier="hotrodAuthExternalClustered" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">testsuite/hotrod-auth-external-ssl.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">9990</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
+        <container qualifier="hotrodAuthExternalClustered-2" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server2.dist}</property>
+                <property name="managementAddress">${node1.ip}</property>
+                <property name="serverConfig">testsuite/hotrod-auth-external-ssl.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
+                    -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">10090</property>
+                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
         <container qualifier="hotrodAuthKrb" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
