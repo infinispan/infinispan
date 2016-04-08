@@ -15,9 +15,6 @@
           filename="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log.gz" append="false">
       <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
     </CompressedFile>
-    <Async name="AsyncCompressedFile">
-      <AppenderRef ref="CompressedFile"/>
-    </Async>
   </Appenders>
 
   <Loggers>
@@ -28,7 +25,7 @@
 
     <Root level="DEBUG">
       <AppenderRef ref="STDOUT" level="ERROR"/>
-      <AppenderRef ref="AsyncCompressedFile"/>
+      <AppenderRef ref="CompressedFile"/>
       <!--
    Uncomment the filter definition below to only allow TRACE and DEBUG messages from threads
    whose names include the log4j.thread.filter system property. Useful to get TRACE logs
