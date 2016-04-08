@@ -1144,7 +1144,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public String toString() {
-      return "Cache '" + name + "'@" + (config !=null && config.clustering().cacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(this));
+      return "Cache '" + name + "'@" + (config !=null && config.clustering().cacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(getCacheManager()));
    }
 
    @Override

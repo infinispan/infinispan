@@ -18,6 +18,7 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.container.DataContainer;
@@ -1622,5 +1623,10 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       CloseableSpliterator<CacheEntry<K, V>> spliterator = Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
             Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       return () -> StreamSupport.stream(spliterator, parallel);
+   }
+
+   @Override
+   public String toString() {
+      return "SimpleCache '" + getName() + "'@" + Util.hexIdHashCode(getCacheManager());
    }
 }
