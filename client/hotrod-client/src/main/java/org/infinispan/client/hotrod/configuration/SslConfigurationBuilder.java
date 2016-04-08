@@ -4,9 +4,13 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.TypedProperties;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.client.hotrod.logging.Log;
+
+import java.util.Properties;
 
 /**
  *
@@ -146,4 +150,25 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return this;
    }
 
+   @Override
+   public ConfigurationBuilder withProperties(Properties properties) {
+      TypedProperties typed = TypedProperties.toTypedProperties(properties);
+      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_SSL, enabled));
+      this.keyStoreFileName(typed.getProperty(ConfigurationProperties.KEY_STORE_FILE_NAME, keyStoreFileName));
+
+      if (typed.containsKey(ConfigurationProperties.KEY_STORE_PASSWORD))
+         this.keyStorePassword(typed.getProperty(ConfigurationProperties.KEY_STORE_PASSWORD).toCharArray());
+
+      if (typed.containsKey(ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD))
+         this.keyStoreCertificatePassword(typed.getProperty(ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD).toCharArray());
+
+      this.trustStoreFileName(typed.getProperty(ConfigurationProperties.TRUST_STORE_FILE_NAME, trustStoreFileName));
+
+      if (typed.containsKey(ConfigurationProperties.TRUST_STORE_PASSWORD))
+         this.trustStorePassword(typed.getProperty(ConfigurationProperties.TRUST_STORE_PASSWORD).toCharArray());
+
+      this.sslContext((SSLContext) typed.get(ConfigurationProperties.SSL_CONTEXT));
+
+      return builder.getBuilder();
+   }
 }

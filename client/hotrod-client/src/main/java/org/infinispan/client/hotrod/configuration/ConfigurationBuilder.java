@@ -301,6 +301,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       this.valueSizeEstimate(typed.getIntProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, valueSizeEstimate));
       this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries));
+      this.security.ssl().withProperties(properties);
+      this.security.authentication().withProperties(properties);
       return this;
    }
 

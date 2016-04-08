@@ -2,15 +2,21 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.TypedProperties;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.Util;
 
 /**
  * AuthenticationConfigurationBuilder.
@@ -152,6 +158,33 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
             throw log.invalidSaslMechanism(saslMechanism);
          }
       }
+   }
+
+   @Override
+   public ConfigurationBuilder withProperties(Properties properties) {
+      TypedProperties typed = TypedProperties.toTypedProperties(properties);
+      this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_AUTH, enabled));
+      this.saslMechanism(typed.getProperty(ConfigurationProperties.SASL_MECHANISM));
+      Object prop = typed.get(ConfigurationProperties.AUTH_CALLBACK_HANDLER);
+      if (prop instanceof String) {
+         CallbackHandler handler = Util.getInstance((String) prop, builder.getBuilder().classLoader());
+         this.callbackHandler(handler);
+      } else {
+         this.callbackHandler((CallbackHandler) prop);
+      }
+
+      this.serverName(typed.getProperty(ConfigurationProperties.AUTH_SERVER_NAME));
+      this.clientSubject((Subject) typed.get(ConfigurationProperties.AUTH_CLIENT_SUBJECT));
+
+      Map<String, String> saslProperties = typed.entrySet().stream()
+            .filter(e -> ((String) e.getKey()).startsWith(ConfigurationProperties.SASL_PROPERTIES_PREFIX))
+            .collect(Collectors.toMap(
+                  e -> ConfigurationProperties.SASL_PROPERTIES_PREFIX_REGEX
+                        .matcher((String) e.getKey()).replaceFirst(""),
+                  e -> (String) e.getValue()));
+      this.saslProperties(saslProperties);
+
+      return builder.getBuilder();
    }
 
 }
