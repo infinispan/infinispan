@@ -114,61 +114,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    @Override
    @Deprecated
    public Properties getProperties() {
-      Properties properties = new Properties();
-      if (configuration.asyncExecutorFactory().factoryClass() != null) {
-         properties.setProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, configuration.asyncExecutorFactory().factoryClass().getName());
-         TypedProperties aefProps = configuration.asyncExecutorFactory().properties();
-         for(String key : Arrays.asList(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE)) {
-            if (aefProps.containsKey(key)) {
-               properties.setProperty(key, aefProps.getProperty(key));
-            }
-         }
-      }
-      properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, configuration.balancingStrategyClass().getName());
-      properties.setProperty(ConfigurationProperties.CONNECT_TIMEOUT, Integer.toString(configuration.connectionTimeout()));
-      for (int i = 0; i < configuration.consistentHashImpl().length; i++) {
-         int version = i + 1;
-         if (configuration.consistentHashImpl(version) != null) {
-            properties.setProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + version,
-                  configuration.consistentHashImpl(version).getName());
-         }
-      }
-      properties.setProperty(ConfigurationProperties.FORCE_RETURN_VALUES, Boolean.toString(configuration.forceReturnValues()));
-      properties.setProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, Integer.toString(configuration.keySizeEstimate()));
-      properties.setProperty(ConfigurationProperties.MARSHALLER, configuration.marshallerClass().getName());
-      properties.setProperty(ConfigurationProperties.PROTOCOL_VERSION, configuration.protocolVersion());
-      properties.setProperty(ConfigurationProperties.SO_TIMEOUT, Integer.toString(configuration.socketTimeout()));
-      properties.setProperty(ConfigurationProperties.TCP_NO_DELAY, Boolean.toString(configuration.tcpNoDelay()));
-      properties.setProperty(ConfigurationProperties.TCP_KEEP_ALIVE, Boolean.toString(configuration.tcpKeepAlive()));
-      properties.setProperty(ConfigurationProperties.TRANSPORT_FACTORY, configuration.transportFactory().getName());
-      properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, Integer.toString(configuration.valueSizeEstimate()));
-      properties.setProperty(ConfigurationProperties.MAX_RETRIES, Integer.toString(configuration.maxRetries()));
-
-      properties.setProperty("exhaustedAction", Integer.toString(configuration.connectionPool().exhaustedAction().ordinal()));
-      properties.setProperty("maxActive", Integer.toString(configuration.connectionPool().maxActive()));
-      properties.setProperty("maxTotal", Integer.toString(configuration.connectionPool().maxTotal()));
-      properties.setProperty("maxWait", Long.toString(configuration.connectionPool().maxWait()));
-      properties.setProperty("maxIdle", Integer.toString(configuration.connectionPool().maxIdle()));
-      properties.setProperty("minIdle", Integer.toString(configuration.connectionPool().minIdle()));
-      properties.setProperty("numTestsPerEvictionRun", Integer.toString(configuration.connectionPool().numTestsPerEvictionRun()));
-      properties.setProperty("minEvictableIdleTimeMillis", Long.toString(configuration.connectionPool().minEvictableIdleTime()));
-      properties.setProperty("timeBetweenEvictionRunsMillis", Long.toString(configuration.connectionPool().timeBetweenEvictionRuns()));
-
-      properties.setProperty("lifo", Boolean.toString(configuration.connectionPool().lifo()));
-      properties.setProperty("testOnBorrow", Boolean.toString(configuration.connectionPool().testOnBorrow()));
-      properties.setProperty("testOnReturn", Boolean.toString(configuration.connectionPool().testOnReturn()));
-      properties.setProperty("testWhileIdle", Boolean.toString(configuration.connectionPool().testWhileIdle()));
-
-      StringBuilder servers = new StringBuilder();
-      for(ServerConfiguration server : configuration.servers()) {
-         if (servers.length() > 0) {
-            servers.append(";");
-         }
-         servers.append(server.host()).append(":").append(server.port());
-      }
-      properties.setProperty(ConfigurationProperties.SERVER_LIST, servers.toString());
-
-      return properties;
+      return configuration.properties();
    }
 
    /**

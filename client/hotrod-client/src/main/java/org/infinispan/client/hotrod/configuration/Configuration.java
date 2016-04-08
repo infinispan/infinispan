@@ -4,12 +4,16 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.TypedProperties;
 
 /**
  * Configuration.
@@ -202,4 +206,100 @@ public class Configuration {
             + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
             + "nearCache=" + nearCache + "]";
    }
+
+   public Properties properties() {
+      Properties properties = new Properties();
+      if (asyncExecutorFactory().factoryClass() != null) {
+         properties.setProperty(ConfigurationProperties.ASYNC_EXECUTOR_FACTORY, asyncExecutorFactory().factoryClass().getName());
+         TypedProperties aefProps = asyncExecutorFactory().properties();
+         for(String key : Arrays.asList(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE)) {
+            if (aefProps.containsKey(key)) {
+               properties.setProperty(key, aefProps.getProperty(key));
+            }
+         }
+      }
+      properties.setProperty(ConfigurationProperties.REQUEST_BALANCING_STRATEGY, balancingStrategyClass().getName());
+      properties.setProperty(ConfigurationProperties.CONNECT_TIMEOUT, Integer.toString(connectionTimeout()));
+      for (int i = 0; i < consistentHashImpl().length; i++) {
+         int version = i + 1;
+         if (consistentHashImpl(version) != null) {
+            properties.setProperty(ConfigurationProperties.HASH_FUNCTION_PREFIX + "." + version,
+                  consistentHashImpl(version).getName());
+         }
+      }
+      properties.setProperty(ConfigurationProperties.FORCE_RETURN_VALUES, Boolean.toString(forceReturnValues()));
+      properties.setProperty(ConfigurationProperties.KEY_SIZE_ESTIMATE, Integer.toString(keySizeEstimate()));
+      properties.setProperty(ConfigurationProperties.MARSHALLER, marshallerClass().getName());
+      properties.setProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion());
+      properties.setProperty(ConfigurationProperties.SO_TIMEOUT, Integer.toString(socketTimeout()));
+      properties.setProperty(ConfigurationProperties.TCP_NO_DELAY, Boolean.toString(tcpNoDelay()));
+      properties.setProperty(ConfigurationProperties.TCP_KEEP_ALIVE, Boolean.toString(tcpKeepAlive()));
+      properties.setProperty(ConfigurationProperties.TRANSPORT_FACTORY, transportFactory().getName());
+      properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, Integer.toString(valueSizeEstimate()));
+      properties.setProperty(ConfigurationProperties.MAX_RETRIES, Integer.toString(maxRetries()));
+
+      properties.setProperty("exhaustedAction", Integer.toString(connectionPool().exhaustedAction().ordinal()));
+      properties.setProperty("maxActive", Integer.toString(connectionPool().maxActive()));
+      properties.setProperty("maxTotal", Integer.toString(connectionPool().maxTotal()));
+      properties.setProperty("maxWait", Long.toString(connectionPool().maxWait()));
+      properties.setProperty("maxIdle", Integer.toString(connectionPool().maxIdle()));
+      properties.setProperty("minIdle", Integer.toString(connectionPool().minIdle()));
+      properties.setProperty("numTestsPerEvictionRun", Integer.toString(connectionPool().numTestsPerEvictionRun()));
+      properties.setProperty("minEvictableIdleTimeMillis", Long.toString(connectionPool().minEvictableIdleTime()));
+      properties.setProperty("timeBetweenEvictionRunsMillis", Long.toString(connectionPool().timeBetweenEvictionRuns()));
+
+      properties.setProperty("lifo", Boolean.toString(connectionPool().lifo()));
+      properties.setProperty("testOnBorrow", Boolean.toString(connectionPool().testOnBorrow()));
+      properties.setProperty("testOnReturn", Boolean.toString(connectionPool().testOnReturn()));
+      properties.setProperty("testWhileIdle", Boolean.toString(connectionPool().testWhileIdle()));
+
+      StringBuilder servers = new StringBuilder();
+      for(ServerConfiguration server : servers()) {
+         if (servers.length() > 0) {
+            servers.append(";");
+         }
+         servers.append(server.host()).append(":").append(server.port());
+      }
+      properties.setProperty(ConfigurationProperties.SERVER_LIST, servers.toString());
+
+      properties.setProperty(ConfigurationProperties.USE_SSL, Boolean.toString(security.ssl().enabled()));
+
+      if (security.ssl().keyStoreFileName() != null)
+         properties.setProperty(ConfigurationProperties.KEY_STORE_FILE_NAME, security.ssl().keyStoreFileName());
+
+      if (security.ssl().keyStorePassword() != null)
+         properties.setProperty(ConfigurationProperties.KEY_STORE_PASSWORD, new String(security.ssl().keyStorePassword()));
+
+      if (security.ssl().keyStoreCertificatePassword() != null)
+         properties.setProperty(ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD, new String(security.ssl().keyStoreCertificatePassword()));
+
+      if (security.ssl().trustStoreFileName() != null)
+         properties.setProperty(ConfigurationProperties.TRUST_STORE_FILE_NAME, security.ssl().trustStoreFileName());
+
+      if (security.ssl().trustStorePassword() != null)
+         properties.setProperty(ConfigurationProperties.TRUST_STORE_PASSWORD, new String(security.ssl().trustStorePassword()));
+
+      if (security.ssl().sslContext() != null)
+         properties.put(ConfigurationProperties.SSL_CONTEXT, security.ssl().sslContext());
+
+      properties.setProperty(ConfigurationProperties.USE_AUTH, Boolean.toString(security.authentication().enabled()));
+
+      if (security.authentication().saslMechanism() != null)
+         properties.setProperty(ConfigurationProperties.SASL_MECHANISM, security.authentication().saslMechanism());
+
+      if (security.authentication().callbackHandler() != null)
+         properties.put(ConfigurationProperties.AUTH_CALLBACK_HANDLER, security.authentication().callbackHandler());
+
+      if (security.authentication().serverName() != null)
+         properties.setProperty(ConfigurationProperties.AUTH_SERVER_NAME, security.authentication().serverName());
+
+      if (security.authentication().clientSubject() != null)
+         properties.put(ConfigurationProperties.AUTH_CLIENT_SUBJECT, security.authentication().clientSubject());
+
+      for (Map.Entry<String, String> entry : security.authentication().saslProperties().entrySet())
+         properties.setProperty(ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.' + entry.getKey(), entry.getValue());
+
+      return properties;
+   }
+
 }
