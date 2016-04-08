@@ -333,4 +333,9 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
       }
       return ret;
    }
+
+   @Override
+   public String toString() {
+      return "StatsCollectingCache '" + getName() + "'";
+   }
 }

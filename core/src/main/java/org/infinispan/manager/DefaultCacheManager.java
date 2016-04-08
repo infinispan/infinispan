@@ -62,8 +62,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -141,7 +141,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * and {@link org.infinispan.configuration.global.GlobalConfiguration GlobalConfiguration} for details of these defaults.
     */
    public DefaultCacheManager() {
-      this((GlobalConfiguration) null, null, true);
+      this(null, null, true);
    }
 
    /**
@@ -151,7 +151,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @param start if true, the cache manager is started
     */
    public DefaultCacheManager(boolean start) {
-      this((GlobalConfiguration) null, null, start);
+      this(null, null, start);
    }
 
    /**
@@ -593,7 +593,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    /**
-    * @param configurationName
     * @return a null return value means the cache was created by someone else before we got the lock
     */
    private <K, V> Cache<K, V> wireAndStartCache(String cacheName, String configurationName) {
@@ -666,8 +665,16 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    private void terminate(String cacheName) {
       CacheWrapper cacheWrapper = this.caches.get(cacheName);
-      if (cacheWrapper != null && cacheWrapper.cache != null) {
+      if (cacheWrapper != null) {
          Cache<?, ?> cache = cacheWrapper.cache;
+         if (cache == null) {
+            log.tracef("Ignoring cache %s, which hasn't properly started yet!", cacheName);
+            return;
+         }
+         if (cache.getStatus().isTerminated()) {
+            log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
+            return;
+         }
          unregisterCacheMBean(cache);
          cache.stop();
       }
