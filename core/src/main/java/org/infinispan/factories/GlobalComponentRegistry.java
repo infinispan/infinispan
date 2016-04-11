@@ -6,6 +6,8 @@ import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
+import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -239,6 +241,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
                l.cacheManagerStarted(this);
             }
          }
+         warnAboutUberJarDuplicates();
       } catch (RuntimeException rte) {
          EmbeddedCacheManagerStartupException exception = new EmbeddedCacheManagerStartupException(rte);
          state = ComponentStatus.FAILED;
@@ -250,6 +253,15 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          }
          throw exception;
       }
+   }
+
+   private final void warnAboutUberJarDuplicates() {
+      UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
+      scanner.isClasspathCorrectAsync()
+              .thenAcceptAsync(isClasspathCorrect -> {
+                 if(!isClasspathCorrect)
+                    log.warnAboutUberJarDuplicates();
+              });
    }
 
    @Override

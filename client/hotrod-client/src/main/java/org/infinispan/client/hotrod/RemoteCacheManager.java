@@ -24,6 +24,8 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
+import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -104,6 +106,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    public Configuration getConfiguration() {
       return configuration;
    }
+
 
    /**
     * @since 4.2
@@ -272,7 +275,18 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       // Print version to help figure client version run
       log.version(RemoteCacheManager.class.getPackage().getImplementationVersion());
 
+      warnAboutUberJarDuplicates();
+
       started = true;
+   }
+
+   private final void warnAboutUberJarDuplicates() {
+      UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
+      scanner.isClasspathCorrectAsync()
+              .thenAcceptAsync(isClasspathCorrect -> {
+                 if(!isClasspathCorrect)
+                    log.warnAboutUberJarDuplicates();
+              });
    }
 
    /**
