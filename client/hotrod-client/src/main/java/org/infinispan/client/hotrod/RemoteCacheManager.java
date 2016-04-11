@@ -36,6 +36,8 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
+import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
@@ -281,6 +283,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    public Configuration getConfiguration() {
       return configuration;
    }
+
 
    /**
     * Retrieves a clone of the properties currently in use.  Note that making any changes to the properties instance
@@ -585,7 +588,18 @@ public class RemoteCacheManager implements BasicCacheContainer {
       // Print version to help figure client version run
       log.version(RemoteCacheManager.class.getPackage().getImplementationVersion());
 
+      warnAboutUberJarDuplicates();
+
       started = true;
+   }
+
+   private final void warnAboutUberJarDuplicates() {
+      UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
+      scanner.isClasspathCorrectAsync()
+              .thenAcceptAsync(isClasspathCorrect -> {
+                 if(!isClasspathCorrect)
+                    log.warnAboutUberJarDuplicates();
+              });
    }
 
    /**

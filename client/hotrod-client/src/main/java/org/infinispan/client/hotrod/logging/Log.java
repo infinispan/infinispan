@@ -256,4 +256,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Tracking key %s belonging to segment %d, already tracked? = %b", id = 4064)
    void trackingSegmentKey(String key, int segment, boolean isTracked);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 4065)
+   void warnAboutUberJarDuplicates();
+
 }

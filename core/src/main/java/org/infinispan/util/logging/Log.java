@@ -1400,4 +1400,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
    CacheConfigurationException classNotIndexable(String className);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 411)
+   void warnAboutUberJarDuplicates();
 }
+
