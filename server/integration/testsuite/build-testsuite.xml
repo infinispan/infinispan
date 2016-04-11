@@ -327,7 +327,13 @@
                    addSecRealm="${other.parts}/ldap-authz-security-realm.xml"
                    addConnection="${other.parts}/ldap-connection.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
-                   addKrbSecDomain="${other.parts}/kerberos-security-domain.xml"/>    	
+                   addKrbSecDomain="${other.parts}/kerberos-security-domain.xml"/>
+        <transform in="clustered.xml" out="testsuite/hotrod-auth-external-ssl.xml"
+                   modifyInfinispan="${infinispan.parts}/clustered-secured-external.xml"
+                   hotrodAuth="${infinispan.parts}/hotrod-auth-external.xml"
+                   hotrodEncrypt="${infinispan.parts}/hotrod-ssl-external-realm.xml"
+                   addSecRealm="${other.parts}/sasl-external-realm.xml"
+                   addVault="${other.parts}/vault.xml" />
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-0.xml"  
     	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
     	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml"

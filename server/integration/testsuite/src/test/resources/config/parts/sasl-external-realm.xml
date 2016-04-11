@@ -1,0 +1,10 @@
+            <security-realm name="SaslExteramlRealm">
+                <authentication>
+                    <truststore path="truststore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
+                </authentication>
+                <server-identities>
+                  <ssl>
+                    <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
+                  </ssl>
+                </server-identities>
+            </security-realm>
