@@ -667,5 +667,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(value = AuthorizationPermission.LIFECYCLE, needsSecurityManager = true)
    public void testShutdown(SecureCache<String, String> cache) {
       cache.shutdown();
+      cache.start();
    }
 }
