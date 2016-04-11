@@ -1408,4 +1408,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Node %s attempting to join cache %s with incompatible state", id = 410)
    CacheJoinException nodeWithIncompatibleStateJoiningCache(Address joiner, String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 411)
+   void warnAboutUberJarDuplicates();
 }
