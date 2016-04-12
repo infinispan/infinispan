@@ -101,9 +101,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    public void validate() {
       if (enabled) {
          if (sslContext == null) {
-            if (keyStoreFileName == null) {
-               throw log.noSSLKeyManagerConfiguration();
-            }
             if (keyStoreFileName != null && keyStorePassword == null) {
                throw log.missingKeyStorePassword(keyStoreFileName);
             }

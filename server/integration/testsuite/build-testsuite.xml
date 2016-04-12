@@ -346,6 +346,10 @@
                   addJGroupsSasl="${other.parts}/jgroups-sasl-krb-1.xml"		
     	           addKrbOpts="${other.parts}/kerberos-properties.xml"
     	           addKrbSecDomain="${other.parts}/kerberos-sec-domain-node1.xml" />
+        <transform in="clustered.xml" out="testsuite/hotrod-ssl-no-auth.xml"
+                   hotrodEncrypt="${infinispan.parts}/hotrod-ssl-no-auth.xml"
+                   addSecRealm="${other.parts}/hotrod-ssl-realm-no-auth.xml"
+                   addVault="${other.parts}/vault.xml" />
     </target>
 
     <macrodef name="transform">
