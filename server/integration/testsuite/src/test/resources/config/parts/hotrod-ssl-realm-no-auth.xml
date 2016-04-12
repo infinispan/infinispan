@@ -1,0 +1,7 @@
+            <security-realm name="SSLRealm">
+                <server-identities>
+                    <ssl>
+                        <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="${VAULT::keystore::password::1}"/> <!-- password: secret -->
+                    </ssl>
+                </server-identities>
+            </security-realm>
