@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.0.0.Alpha1</version>
       <relativePath>../bom/pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-parent</artifactId>
@@ -2062,13 +2062,13 @@
                         </goals>
                         <configuration>
                            <target>
-                              <ac:if xmlns:ac="antlib:net.sf.antcontrib">
-                                 <ac:available file="${project.build.directory}/classes" type="dir"/>
-                                 <ac:then>
+                              <ns2:if xmlns:ns2="antlib:net.sf.antcontrib">
+                                 <ns2:available file="${project.build.directory}/classes" type="dir" />
+                                 <ns2:then>
                               <echo>Copying test classes to jacoco folder.</echo>
                               <copydir dest="${jacoco.reportPath}/classes" src="${project.build.directory}/classes" />
-                                 </ac:then>
-                              </ac:if>
+                                 </ns2:then>
+                              </ns2:if>
                            </target>
                         </configuration>
                      </execution>
