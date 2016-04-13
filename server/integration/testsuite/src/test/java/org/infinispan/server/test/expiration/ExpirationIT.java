@@ -58,7 +58,7 @@ public class ExpirationIT {
         Assert.assertEquals(2, server1.getCacheManager("clustered").getClusterSize());
         // specific entry timeToLiveSeconds and maxIdleTimeSeconds that overrides the default
         post(key1Path, "v1", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text",
-                "timeToLiveSeconds", "3", "maxIdleTimeSeconds", "3");
+                "timeToLiveSeconds", "4", "maxIdleTimeSeconds", "4");
         // no value means never expire
         post(key2Path, "v2", "application/text", HttpServletResponse.SC_OK, "Content-Type", "application/text");
         // 0 value means use default
@@ -71,7 +71,7 @@ public class ExpirationIT {
         get(key1Path, "v1");
         get(key3Path, "v3");
         get(key4Path, "v4");
-        sleepForSecs(1.1);
+        sleepForSecs(2);
         // k3 and k4 expired
         get(key1Path, "v1");
         head(key3Path, HttpServletResponse.SC_NOT_FOUND);
