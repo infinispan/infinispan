@@ -244,10 +244,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       Message msg = new Message();
       msg.setBuffer(buf);
       encodeDeliverMode(msg, deliverOrder);
-      //some issues with the new bundler. put back the DONT_BUNDLE flag.
-      if (deliverOrder == DeliverOrder.NONE || mode != ResponseMode.GET_NONE) {
-         msg.setFlag(Message.Flag.DONT_BUNDLE.value());
-      }
       // Only the commands in total order must be received by the originator.
       if (deliverOrder != DeliverOrder.TOTAL) {
          msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK.value());
