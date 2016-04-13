@@ -93,6 +93,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -137,7 +138,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private DataContainer dataContainer;
    private CacheNotifier<Object, Object> notifier;
    private Cache<Object, Object> cache;
-   private String cacheName;
+   private ByteString cacheName;
    private boolean totalOrderProtocol;
 
    private InterceptorChain interceptorChain;
@@ -209,7 +210,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Start(priority = 1)
    // needs to happen early on
    public void start() {
-      cacheName = cache.getName();
+      cacheName = ByteString.fromString(cache.getName());
       this.totalOrderProtocol = configuration.transaction().transactionProtocol().isTotalOrder();
    }
 
@@ -548,7 +549,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public String getCacheName() {
-      return cacheName;
+      return cacheName.toString();
    }
 
    @Override

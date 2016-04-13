@@ -13,6 +13,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
@@ -56,7 +57,7 @@ public class XSiteAdminOperations {
 
    public Map<String, SiteStatus> clusterStatus()  {
       Map<String, Boolean> localNodeStatus = backupSender.status();
-      XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), null, XSiteAdminCommand.AdminOperation.STATUS, null, null);
+      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), null, XSiteAdminCommand.AdminOperation.STATUS, null, null);
       Map<Address, Response> responses = invokeRemotely(command);
       List<Address> errors = checkForErrors(responses);
       if (!errors.isEmpty()) {
@@ -101,7 +102,7 @@ public class XSiteAdminOperations {
          return "Incorrect site name: " + site;
       log.tracef("This node's status is %s", offlineStatus);
 
-      XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), site, XSiteAdminCommand.AdminOperation.SITE_STATUS, null, null);
+      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.SITE_STATUS, null, null);
       Map<Address, Response> responses = invokeRemotely(command);
       List<Address> online = new ArrayList<>(responses.size());
       List<Address> offline = new ArrayList<>(responses.size());
@@ -147,7 +148,7 @@ public class XSiteAdminOperations {
    public String status() {
       //also consider local node
       Map<String, Boolean> localNodeStatus = backupSender.status();
-      XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), null, XSiteAdminCommand.AdminOperation.STATUS, null, null);
+      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), null, XSiteAdminCommand.AdminOperation.STATUS, null, null);
       Map<Address, Response> responses = invokeRemotely(command);
       List<Address> errors = checkForErrors(responses);
       if (!errors.isEmpty()) {
@@ -206,7 +207,7 @@ public class XSiteAdminOperations {
       backupSender.takeSiteOffline(site);
       log.tracef("Is site offline in node %s? %s", rpcManager.getAddress(), offlineStatus.isOffline());
 
-      XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), site, XSiteAdminCommand.AdminOperation.TAKE_OFFLINE, null, null);
+      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.TAKE_OFFLINE, null, null);
       Map<Address, Response> responses = invokeRemotely(command);
 
       List<Address> failed = checkForErrors(responses);
@@ -259,7 +260,7 @@ public class XSiteAdminOperations {
          return "Incorrect site name: " + site;
       backupSender.bringSiteOnline(site);
 
-      XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), site, XSiteAdminCommand.AdminOperation.BRING_ONLINE, null, null);
+      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.BRING_ONLINE, null, null);
       Map<Address, Response> responses = invokeRemotely(command);
 
       List<Address> failed = checkForErrors(responses);
@@ -364,7 +365,7 @@ public class XSiteAdminOperations {
       if (offlineStatus == null)
          return incorrectSiteName(site);
 
-      XSiteAdminCommand command = new XSiteAdminCommand(cache.getName(), site, XSiteAdminCommand.AdminOperation.AMEND_TAKE_OFFLINE,
+      XSiteAdminCommand command = new XSiteAdminCommand(ByteString.fromString(cache.getName()), site, XSiteAdminCommand.AdminOperation.AMEND_TAKE_OFFLINE,
                                                         afterFailures, minTimeToWait);
       Map<Address, Response> responses = invokeRemotely(command);
 

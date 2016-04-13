@@ -5,6 +5,7 @@ import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.query.impl.ModuleCommandIds;
+import org.infinispan.util.ByteString;
 
 import java.util.List;
 
@@ -18,14 +19,14 @@ public class IndexUpdateCommand extends AbstractUpdateCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.UPDATE_INDEX;
 
-   public IndexUpdateCommand(String cacheName) {
+   public IndexUpdateCommand(ByteString cacheName) {
       super(cacheName);
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (queryInterceptor.isStopping()) {
-         throw log.cacheIsStoppingNoCommandAllowed(cacheName);
+         throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
       }
       IndexManager indexManager = searchFactory.getIndexManager(indexName);
       if (indexManager == null) {

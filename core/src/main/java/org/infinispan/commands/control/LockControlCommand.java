@@ -12,6 +12,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -49,11 +50,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super(null); // For command id uniqueness test
    }
 
-   public LockControlCommand(String cacheName) {
+   public LockControlCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public LockControlCommand(Collection<?> keys, String cacheName, long flags, GlobalTransaction gtx) {
+   public LockControlCommand(Collection<?> keys, ByteString cacheName, long flags, GlobalTransaction gtx) {
       super(cacheName);
       if (keys != null) {
          //building defensive copies is here in order to support replaceKey operation
@@ -65,7 +66,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       this.globalTx = gtx;
    }
 
-   public LockControlCommand(Object key, String cacheName, long flags, GlobalTransaction gtx) {
+   public LockControlCommand(Object key, ByteString cacheName, long flags, GlobalTransaction gtx) {
       this(cacheName);
       this.keys = new ArrayList<>(1);
       this.keys.add(key);

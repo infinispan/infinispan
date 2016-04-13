@@ -9,6 +9,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.query.clustered.ClusteredQueryCommand;
 import org.infinispan.query.indexmanager.IndexUpdateCommand;
 import org.infinispan.query.indexmanager.IndexUpdateStreamCommand;
+import org.infinispan.util.ByteString;
 
 /**
 * Remote commands factory implementation
@@ -35,7 +36,7 @@ public class CommandFactory implements ExtendedModuleCommandFactory {
    }
 
    @Override
-   public CacheRpcCommand fromStream(byte commandId, String cacheName) {
+   public CacheRpcCommand fromStream(byte commandId, ByteString cacheName) {
       CacheRpcCommand c;
       switch (commandId) {
          case ClusteredQueryCommand.COMMAND_ID:

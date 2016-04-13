@@ -2,6 +2,7 @@ package org.infinispan.commands.remote;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,12 +23,12 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
       super(null); // For command id uniqueness test
    }
 
-   public SingleRpcCommand(String cacheName, ReplicableCommand command) {
+   public SingleRpcCommand(ByteString cacheName, ReplicableCommand command) {
       super(cacheName);
       this.command = command;
    }
 
-   public SingleRpcCommand(String cacheName) {
+   public SingleRpcCommand(ByteString cacheName) {
       super(cacheName);
    }
 

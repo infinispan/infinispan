@@ -1,10 +1,9 @@
 package org.infinispan.commands.tx.totalorder;
 
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -20,11 +19,11 @@ public class TotalOrderRollbackCommand extends RollbackCommand {
    public static final byte COMMAND_ID = 37;
    private static final Log log = LogFactory.getLog(TotalOrderRollbackCommand.class);
 
-   public TotalOrderRollbackCommand(String cacheName, GlobalTransaction globalTransaction) {
+   public TotalOrderRollbackCommand(ByteString cacheName, GlobalTransaction globalTransaction) {
       super(cacheName, globalTransaction);
    }
 
-   public TotalOrderRollbackCommand(String cacheName) {
+   public TotalOrderRollbackCommand(ByteString cacheName) {
       super(cacheName);
    }
 

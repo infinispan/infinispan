@@ -1,5 +1,6 @@
 package org.infinispan.util.logging;
 
+import org.infinispan.util.ByteString;
 import org.jboss.logging.Logger;
 import org.jboss.logging.NDC;
 
@@ -29,6 +30,11 @@ public class LogFactory {
    public static void pushNDC(String cacheName, boolean isTrace) {
       if (isTrace)
          NDC.push(cacheName);
+   }
+
+   public static void pushNDC(ByteString cacheName, boolean isTrace) {
+      if (isTrace)
+         NDC.push(cacheName.toString());
    }
 
    public static void popNDC(boolean isTrace) {

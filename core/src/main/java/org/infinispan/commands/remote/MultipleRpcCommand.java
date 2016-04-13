@@ -5,6 +5,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -37,12 +38,12 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
       super(null); // For command id uniqueness test
    }
 
-   public MultipleRpcCommand(List<ReplicableCommand> modifications, String cacheName) {
+   public MultipleRpcCommand(List<ReplicableCommand> modifications, ByteString cacheName) {
       super(cacheName);
       commands = modifications.toArray(new ReplicableCommand[modifications.size()]);
    }
 
-   public MultipleRpcCommand(String cacheName) {
+   public MultipleRpcCommand(ByteString cacheName) {
       super(cacheName);
    }
 

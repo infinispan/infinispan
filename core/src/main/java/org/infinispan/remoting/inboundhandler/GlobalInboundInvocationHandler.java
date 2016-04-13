@@ -16,6 +16,7 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupReceiver;
@@ -96,7 +97,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          log.tracef("Handling command %s from remote site %s", command, origin);
       }
 
-      BackupReceiver receiver = backupReceiverRepository.getBackupReceiver(origin, command.getCacheName());
+      BackupReceiver receiver = backupReceiverRepository.getBackupReceiver(origin, command.getCacheName().toString());
       Runnable runnable = create(command, receiver, reply);
       if (order.preserveOrder()) {
          runnable.run();
@@ -111,7 +112,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       if (trace) {
          log.tracef("Attempting to execute CacheRpcCommand: %s [sender=%s]", command, origin);
       }
-      String cacheName = command.getCacheName();
+      ByteString cacheName = command.getCacheName();
       ComponentRegistry cr = globalComponentRegistry.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {

@@ -5,6 +5,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -22,7 +23,7 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
    private static final Log log = LogFactory.getLog(BaseRpcInvokingCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   protected BaseRpcInvokingCommand(String cacheName) {
+   protected BaseRpcInvokingCommand(ByteString cacheName) {
       super(cacheName);
    }
 

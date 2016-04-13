@@ -16,6 +16,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -61,7 +62,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    @Override
    public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
-      IndexUpdateCommand command = new IndexUpdateCommand(cacheName);
+      IndexUpdateCommand command = new IndexUpdateCommand(ByteString.fromString(cacheName));
       //Use Search's custom Avro based serializer as it includes support for back/future compatibility
       byte[] serializedModel = indexManager.getSerializer().toSerializedModel(workList);
       command.setSerializedWorkList(serializedModel);
@@ -93,7 +94,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
-      final IndexUpdateStreamCommand streamCommand = new IndexUpdateStreamCommand(cacheName);
+      final IndexUpdateStreamCommand streamCommand = new IndexUpdateStreamCommand(ByteString.fromString(cacheName));
       final List<LuceneWork> operations = Collections.singletonList(singleOperation);
       final byte[] serializedModel = indexManager.getSerializer().toSerializedModel(operations);
       streamCommand.setSerializedWorkList(serializedModel);

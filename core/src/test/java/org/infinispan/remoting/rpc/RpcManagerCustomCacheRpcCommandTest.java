@@ -1,6 +1,7 @@
 package org.infinispan.remoting.rpc;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.util.ByteString;
 import org.testng.annotations.Test;
 
 /**
@@ -12,6 +13,6 @@ public class RpcManagerCustomCacheRpcCommandTest extends RpcManagerCustomReplica
 
    @Override
    protected ReplicableCommand createReplicableCommandForTest(Object arg) {
-      return new CustomCacheRpcCommand(TEST_CACHE, arg);
+      return new CustomCacheRpcCommand(ByteString.fromString(TEST_CACHE), arg);
    }
 }

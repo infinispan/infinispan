@@ -36,6 +36,7 @@ import org.infinispan.transaction.synchronization.SynchronizationAdapter;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -355,7 +356,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    private void killTransaction(GlobalTransaction gtx) {
-      RollbackCommand rc = new RollbackCommand(cacheName, gtx);
+      RollbackCommand rc = new RollbackCommand(ByteString.fromString(cacheName), gtx);
       rc.init(invoker, icf, TransactionTable.this);
       try {
          rc.perform(null);

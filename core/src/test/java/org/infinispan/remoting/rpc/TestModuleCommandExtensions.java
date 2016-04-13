@@ -7,6 +7,7 @@ import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.ByteString;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class TestModuleCommandExtensions implements ModuleCommandExtensions {
          }
 
          @Override
-         public CacheRpcCommand fromStream(byte commandId, String cacheName) {
+         public CacheRpcCommand fromStream(byte commandId, ByteString cacheName) {
             CacheRpcCommand c;
             switch (commandId) {
                case CustomCacheRpcCommand.COMMAND_ID:

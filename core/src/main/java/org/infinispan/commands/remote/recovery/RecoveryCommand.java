@@ -2,6 +2,7 @@ package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.ByteString;
 
 /**
  * Base class for recovery-related rpc-commands.
@@ -17,7 +18,7 @@ public abstract class RecoveryCommand extends BaseRpcCommand {
       super(null); // For command id uniqueness test
    }
 
-   protected RecoveryCommand(String cacheName) {
+   protected RecoveryCommand(ByteString cacheName) {
       super(cacheName);
    }
 

@@ -2,6 +2,7 @@ package org.infinispan.remoting.rpc;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -20,11 +21,11 @@ public class SleepingCacheRpcCommand extends BaseRpcCommand {
       super(null);
    }
 
-   public SleepingCacheRpcCommand(String cacheName) {
+   public SleepingCacheRpcCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public SleepingCacheRpcCommand(String cacheName, long sleepTime) {
+   public SleepingCacheRpcCommand(ByteString cacheName, long sleepTime) {
       super(cacheName);
       this.sleepTime = sleepTime;
    }

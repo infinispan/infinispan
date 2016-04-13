@@ -20,6 +20,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.util.ByteString;
 
 /**
  * DistributedExecuteCommand is used to migrate Callable and execute it in remote JVM.
@@ -43,11 +44,11 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
 
    private UUID uuid;
 
-   public DistributedExecuteCommand(String cacheName) {
+   public DistributedExecuteCommand(ByteString cacheName) {
       this(cacheName, null, null);
    }
 
-   public DistributedExecuteCommand(String cacheName, Collection<Object> inputKeys, Callable<V> callable) {
+   public DistributedExecuteCommand(ByteString cacheName, Collection<Object> inputKeys, Callable<V> callable) {
       super(cacheName);
       if (inputKeys == null || inputKeys.isEmpty())
          this.keys = Collections.emptySet();

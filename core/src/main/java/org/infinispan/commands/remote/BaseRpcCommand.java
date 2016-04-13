@@ -1,18 +1,19 @@
 package org.infinispan.commands.remote;
 
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 
 public abstract class BaseRpcCommand implements CacheRpcCommand {
-   protected final String cacheName;
+   protected final ByteString cacheName;
 
    private Address origin;
 
-   protected BaseRpcCommand(String cacheName) {
+   protected BaseRpcCommand(ByteString cacheName) {
       this.cacheName = cacheName;
    }
 
    @Override
-   public String getCacheName() {
+   public ByteString getCacheName() {
       return cacheName;
    }
 
@@ -22,12 +23,12 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
             "cacheName='" + cacheName + '\'' +
             '}';
    }
-   
+
    @Override
    public Address getOrigin() {
       return origin;
    }
-   
+
    @Override
    public void setOrigin(Address origin) {
       this.origin = origin;

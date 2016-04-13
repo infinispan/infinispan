@@ -4,6 +4,7 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 
 import java.util.List;
 
@@ -19,11 +20,11 @@ public class TotalOrderVersionedPrepareCommand extends VersionedPrepareCommand i
    public static final byte COMMAND_ID = 39;
    private boolean skipWriteSkewCheck;
 
-   public TotalOrderVersionedPrepareCommand(String cacheName, GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
+   public TotalOrderVersionedPrepareCommand(ByteString cacheName, GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
       super(cacheName, gtx, modifications, onePhase);
    }
 
-   public TotalOrderVersionedPrepareCommand(String cacheName) {
+   public TotalOrderVersionedPrepareCommand(ByteString cacheName) {
       super(cacheName);
    }
 

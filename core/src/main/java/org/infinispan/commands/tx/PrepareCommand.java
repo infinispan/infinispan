@@ -18,6 +18,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -54,7 +55,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    protected RecoveryManager recoveryManager;
    private transient boolean replayEntryWrapping  = false;
    protected boolean retriedCommand;
-   
+
    private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
 
    public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
@@ -66,21 +67,21 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       super(null); // For command id uniqueness test
    }
 
-   public PrepareCommand(String cacheName, GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
+   public PrepareCommand(ByteString cacheName, GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
       super(cacheName);
       this.globalTx = gtx;
       this.modifications = modifications;
       this.onePhaseCommit = onePhaseCommit;
    }
 
-   public PrepareCommand(String cacheName, GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
+   public PrepareCommand(ByteString cacheName, GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
       super(cacheName);
       this.globalTx = gtx;
       this.modifications = commands == null || commands.isEmpty() ? null : commands.toArray(new WriteCommand[commands.size()]);
       this.onePhaseCommit = onePhaseCommit;
    }
 
-   public PrepareCommand(String cacheName) {
+   public PrepareCommand(ByteString cacheName) {
       super(cacheName);
    }
 

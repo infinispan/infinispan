@@ -22,6 +22,7 @@ import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
@@ -107,7 +108,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       PerCacheInboundInvocationHandler handler = TestingUtil.extractComponent(cache(0), PerCacheInboundInvocationHandler.class);
       StateChunk stateChunk0 = new StateChunk(0, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
       StateChunk stateChunk1 = new StateChunk(1, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
-      StateResponseCommand stateResponseCommand = new StateResponseCommand(CacheContainer.DEFAULT_CACHE_NAME,
+      StateResponseCommand stateResponseCommand = new StateResponseCommand(ByteString.fromString(CacheContainer.DEFAULT_CACHE_NAME),
             address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1));
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));

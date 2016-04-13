@@ -50,6 +50,7 @@ import org.infinispan.security.impl.PrincipalRoleMapperContextImpl;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.impl.CacheContainerStatsImpl;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.logging.Log;
@@ -515,7 +516,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
       if (cacheComponentRegistry != null) {
-         RemoveCacheCommand cmd = new RemoveCacheCommand(cacheName, this);
+         RemoveCacheCommand cmd = new RemoveCacheCommand(ByteString.fromString(cacheName), this);
          Transport transport = getTransport();
          try {
             CompletableFuture<?> future = null;

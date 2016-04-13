@@ -24,6 +24,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -52,12 +53,12 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
       super(null, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetAllCommand(String cacheName) {
+   public ClusteredGetAllCommand(ByteString cacheName) {
       super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetAllCommand(String cacheName, List<?> keys, long flags,
-         GlobalTransaction gtx, Equivalence<? super K> keyEquivalence) {
+   public ClusteredGetAllCommand(ByteString cacheName, List<?> keys, long flags,
+                                 GlobalTransaction gtx, Equivalence<? super K> keyEquivalence) {
       super(cacheName, flags);
       this.keys = keys;
       this.gtx = gtx;

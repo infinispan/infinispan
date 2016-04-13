@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -48,11 +49,11 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       super(null);  // for command id uniqueness test
    }
 
-   public StateRequestCommand(String cacheName) {
+   public StateRequestCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public StateRequestCommand(String cacheName, Type type, Address origin, int topologyId, Set<Integer> segments) {
+   public StateRequestCommand(ByteString cacheName, Type type, Address origin, int topologyId, Set<Integer> segments) {
       super(cacheName);
       this.type = type;
       setOrigin(origin);

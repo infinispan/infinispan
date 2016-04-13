@@ -1,10 +1,9 @@
 package org.infinispan.commands.tx.totalorder;
 
 import org.infinispan.commands.tx.VersionedCommitCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -19,11 +18,11 @@ public class TotalOrderVersionedCommitCommand extends VersionedCommitCommand {
    public static final byte COMMAND_ID = 36;
    private static final Log log = LogFactory.getLog(TotalOrderVersionedCommitCommand.class);
 
-   public TotalOrderVersionedCommitCommand(String cacheName, GlobalTransaction gtx) {
+   public TotalOrderVersionedCommitCommand(ByteString cacheName, GlobalTransaction gtx) {
       super(cacheName, gtx);
    }
 
-   public TotalOrderVersionedCommitCommand(String cacheName) {
+   public TotalOrderVersionedCommitCommand(ByteString cacheName) {
       super(cacheName);
    }
 

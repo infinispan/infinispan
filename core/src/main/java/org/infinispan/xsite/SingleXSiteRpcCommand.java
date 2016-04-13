@@ -2,6 +2,7 @@ package org.infinispan.xsite;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -18,12 +19,12 @@ public class SingleXSiteRpcCommand extends XSiteReplicateCommand {
    public static final int COMMAND_ID = 40;
    private VisitableCommand command;
 
-   public SingleXSiteRpcCommand(String cacheName, VisitableCommand command) {
+   public SingleXSiteRpcCommand(ByteString cacheName, VisitableCommand command) {
       super(cacheName);
       this.command = command;
    }
 
-   public SingleXSiteRpcCommand(String cacheName) {
+   public SingleXSiteRpcCommand(ByteString cacheName) {
       super(cacheName);
    }
 

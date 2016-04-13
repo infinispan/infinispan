@@ -41,6 +41,7 @@ import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.stream.impl.StreamSegmentResponseCommand;
+import org.infinispan.util.ByteString;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.XSiteAdminCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -110,8 +111,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    public void writeObject(ObjectOutput output, CacheRpcCommand command) throws IOException {
       //header: type + method id.
       cmdExt.writeCommandHeader(output, command);
-      String cacheName = command.getCacheName();
-      output.writeUTF(cacheName);
+      ByteString cacheName = command.getCacheName();
+      ByteString.writeObject(output, cacheName);
 
       StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
 
@@ -145,7 +146,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       //header
       byte type = input.readByte();
       byte methodId = (byte) input.readShort();
-      String cacheName = input.readUTF();
+      ByteString cacheName = ByteString.readObject(input);
 
       StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
 
@@ -181,7 +182,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       return Ids.CACHE_RPC_COMMAND;
    }
 
-   private StreamingMarshaller getCacheMarshaller(String cacheName) {
+   private StreamingMarshaller getCacheMarshaller(ByteString cacheName) {
       ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
       if (registry == null || registry.getStatus() != ComponentStatus.RUNNING) {
          // When starting, even though the command is directed at a cache,

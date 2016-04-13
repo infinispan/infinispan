@@ -1,6 +1,7 @@
 package org.infinispan.xsite;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.util.ByteString;
 
 /**
  * Abstract class to invoke RPC on the remote site.
@@ -12,7 +13,7 @@ public abstract class XSiteReplicateCommand extends BaseRpcCommand {
 
    private String originSite;
 
-   protected XSiteReplicateCommand(String cacheName) {
+   protected XSiteReplicateCommand(ByteString cacheName) {
       super(cacheName);
    }
 

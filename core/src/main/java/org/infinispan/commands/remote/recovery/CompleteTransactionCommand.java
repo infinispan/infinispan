@@ -1,6 +1,8 @@
 package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
+
 import javax.transaction.xa.Xid;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -30,11 +32,11 @@ public class CompleteTransactionCommand extends RecoveryCommand {
       super(null); // For command id uniqueness test
    }
 
-   public CompleteTransactionCommand(String cacheName) {
+   public CompleteTransactionCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public CompleteTransactionCommand(String cacheName, Xid xid, boolean commit) {
+   public CompleteTransactionCommand(ByteString cacheName, Xid xid, boolean commit) {
       super(cacheName);
       this.xid = xid;
       this.commit = commit;

@@ -23,6 +23,7 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -100,7 +101,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
             // Wait for the commit command to block replaying the prepare on the new backup
             sequencer.advance("sim:before_extra_commit");
             // And try to run another commit command
-            CommitCommand command = new CommitCommand(newBackupOwnerCache.getName(), gtx);
+            CommitCommand command = new CommitCommand(ByteString.fromString(newBackupOwnerCache.getName()), gtx);
             command.setTopologyId(currentTopologyId);
             CommandsFactory cf = TestingUtil.extractCommandsFactory(newBackupOwnerCache);
             cf.initializeReplicableCommand(command, true);

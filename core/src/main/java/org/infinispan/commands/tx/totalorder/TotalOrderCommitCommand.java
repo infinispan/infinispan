@@ -1,10 +1,9 @@
 package org.infinispan.commands.tx.totalorder;
 
 import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -19,11 +18,11 @@ public class TotalOrderCommitCommand extends CommitCommand {
    public static final byte COMMAND_ID = 35;
    private static final Log log = LogFactory.getLog(TotalOrderCommitCommand.class);
 
-   public TotalOrderCommitCommand(String cacheName, GlobalTransaction gtx) {
+   public TotalOrderCommitCommand(ByteString cacheName, GlobalTransaction gtx) {
       super(cacheName, gtx);
    }
 
-   public TotalOrderCommitCommand(String cacheName) {
+   public TotalOrderCommitCommand(ByteString cacheName) {
       super(cacheName);
    }
 
