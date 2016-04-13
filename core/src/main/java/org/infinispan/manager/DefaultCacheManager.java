@@ -671,11 +671,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             log.tracef("Ignoring cache %s, which hasn't properly started yet!", cacheName);
             return;
          }
+         unregisterCacheMBean(cache);
          if (cache.getStatus().isTerminated()) {
             log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
             return;
          }
-         unregisterCacheMBean(cache);
          cache.stop();
       }
    }
