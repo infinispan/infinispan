@@ -132,6 +132,10 @@ public final class LazyInitializingBlockingTaskAwareExecutorService implements B
       delegate.execute(command);
    }
 
+   public BlockingTaskAwareExecutorService getExecutorService() {
+      return delegate;
+   }
+
    private void initIfNeeded() {
       if (delegate == null) {
          synchronized (this) {
