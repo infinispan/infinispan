@@ -27,6 +27,7 @@ import org.infinispan.registry.impl.InternalCacheRegistryImpl;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -83,7 +84,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    final Collection<ModuleLifecycle> moduleLifecycles;
 
-   final ConcurrentMap<String, ComponentRegistry> namedComponents = new ConcurrentHashMap<String, ComponentRegistry>(4);
+   final ConcurrentMap<ByteString, ComponentRegistry> namedComponents = new ConcurrentHashMap<ByteString, ComponentRegistry>(4);
 
    protected final WeakReference<ClassLoader> defaultClassLoader;
 
@@ -196,15 +197,20 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    public final ComponentRegistry getNamedComponentRegistry(String name) {
       //no need so sync this method as namedComponents is thread safe and correctly published (final)
+      return getNamedComponentRegistry(ByteString.fromString(name));
+   }
+
+   public final ComponentRegistry getNamedComponentRegistry(ByteString name) {
+      //no need so sync this method as namedComponents is thread safe and correctly published (final)
       return namedComponents.get(name);
    }
 
    public synchronized final void registerNamedComponentRegistry(ComponentRegistry componentRegistry, String name) {
-      namedComponents.put(name, componentRegistry);
+      namedComponents.put(ByteString.fromString(name), componentRegistry);
    }
 
    public synchronized final void unregisterNamedComponentRegistry(String name) {
-      namedComponents.remove(name);
+      namedComponents.remove(ByteString.fromString(name));
    }
 
    public synchronized final void rewireNamedRegistries() {

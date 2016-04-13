@@ -10,6 +10,7 @@ import org.infinispan.query.clustered.commandworkers.ClusteredQueryCommandWorker
 import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.ModuleCommandIds;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -41,7 +42,7 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
    private Integer docIndex = ZERO;
 
    private ClusteredQueryCommand(ClusteredQueryCommandType type, String cacheName) {
-      super(cacheName);
+      super(ByteString.fromString(cacheName));
       commandType = type;
    }
 
@@ -49,13 +50,13 @@ public class ClusteredQueryCommand extends BaseRpcCommand implements ReplicableC
     * For CommandFactory only. To create a ClusteredQueryCommand, use createLazyIterator(),
     * destroyLazyQuery(), getResultSize() or retrieveKeyFromLazyQuery()
     */
-   public ClusteredQueryCommand(String cacheName) {
+   public ClusteredQueryCommand(ByteString cacheName) {
       super(cacheName);
    }
 
    @Override
    public void fetchExecutionContext(CommandInitializer ci) {
-      this.cache = ci.getCacheManager().getCache(cacheName);
+      this.cache = ci.getCacheManager().getCache(cacheName.toString());
    }
 
    public static ClusteredQueryCommand createLazyIterator(HSQuery query, Cache<?, ?> cache, UUID id) {

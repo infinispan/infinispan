@@ -1,6 +1,7 @@
 package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -20,7 +21,7 @@ public class GetInDoubtTxInfoCommand extends RecoveryCommand {
       super(null); // For command id uniqueness test
    }
 
-   public GetInDoubtTxInfoCommand(String cacheName) {
+   public GetInDoubtTxInfoCommand(ByteString cacheName) {
       super(cacheName);
    }
 

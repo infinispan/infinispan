@@ -4,6 +4,7 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -26,11 +27,11 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
    // Only here for CommandIdUniquenessTest
    protected StreamResponseCommand() { super(null); }
 
-   public StreamResponseCommand(String cacheName) {
+   public StreamResponseCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public StreamResponseCommand(String cacheName, Address origin, Object id, boolean complete, R response) {
+   public StreamResponseCommand(ByteString cacheName, Address origin, Object id, boolean complete, R response) {
       super(cacheName);
       setOrigin(origin);
       this.id = id;

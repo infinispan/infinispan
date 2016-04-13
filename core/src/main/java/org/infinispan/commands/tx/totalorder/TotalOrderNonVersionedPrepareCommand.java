@@ -4,6 +4,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 
 import java.util.List;
 
@@ -18,15 +19,15 @@ public class TotalOrderNonVersionedPrepareCommand extends PrepareCommand impleme
 
    public static final byte COMMAND_ID = 38;
 
-   public TotalOrderNonVersionedPrepareCommand(String cacheName, GlobalTransaction gtx, WriteCommand... modifications) {
+   public TotalOrderNonVersionedPrepareCommand(ByteString cacheName, GlobalTransaction gtx, WriteCommand... modifications) {
       super(cacheName, gtx, true, modifications);
    }
 
-   public TotalOrderNonVersionedPrepareCommand(String cacheName, GlobalTransaction gtx, List<WriteCommand> commands) {
+   public TotalOrderNonVersionedPrepareCommand(ByteString cacheName, GlobalTransaction gtx, List<WriteCommand> commands) {
       super(cacheName, gtx, commands, true);
    }
 
-   public TotalOrderNonVersionedPrepareCommand(String cacheName) {
+   public TotalOrderNonVersionedPrepareCommand(ByteString cacheName) {
       super(cacheName);
    }
 

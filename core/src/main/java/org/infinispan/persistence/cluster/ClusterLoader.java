@@ -20,6 +20,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -43,11 +44,13 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
 
    private ClusterLoaderConfiguration configuration;
    private InitializationContext ctx;
+   private ByteString cacheName;
 
    @Override
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       cache = ctx.getCache().getAdvancedCache();
+      cacheName = ByteString.fromString(cache.getName());
       rpcManager = cache.getRpcManager();
       this.configuration = ctx.getConfiguration();
    }
@@ -57,7 +60,7 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
       if (!isCacheReady()) return null;
 
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
-            key, cache.getName(), EnumUtil.EMPTY_BIT_SET, false, null,
+            key, cacheName, EnumUtil.EMPTY_BIT_SET, false, null,
             cache.getCacheConfiguration().dataContainer().keyEquivalence());
 
       Collection<Response> responses = doRemoteCall(clusteredGetCommand);

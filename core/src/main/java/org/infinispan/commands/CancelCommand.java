@@ -8,12 +8,13 @@ import java.util.UUID;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * Command to cancel commands executing in remote VM
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 5.2
  */
@@ -29,11 +30,11 @@ public class CancelCommand extends BaseRpcCommand {
       super(null);
    }
 
-   public CancelCommand(String ownerCacheName) {
+   public CancelCommand(ByteString ownerCacheName) {
       super(ownerCacheName);
    }
 
-   public CancelCommand(String ownerCacheName, UUID commandToCancel) {
+   public CancelCommand(ByteString ownerCacheName, UUID commandToCancel) {
       super(ownerCacheName);
       this.commandToCancel = commandToCancel;
    }

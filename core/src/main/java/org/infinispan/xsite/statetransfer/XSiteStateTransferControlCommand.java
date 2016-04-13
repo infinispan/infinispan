@@ -2,6 +2,7 @@ package org.infinispan.xsite.statetransfer;
 
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -27,13 +28,13 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
    private boolean statusOk;
    private int topologyId;
 
-   public XSiteStateTransferControlCommand(String cacheName, StateTransferControl control, String siteName) {
+   public XSiteStateTransferControlCommand(ByteString cacheName, StateTransferControl control, String siteName) {
       super(cacheName);
       this.control = control;
       this.siteName = siteName;
    }
 
-   public XSiteStateTransferControlCommand(String cacheName) {
+   public XSiteStateTransferControlCommand(ByteString cacheName) {
       super(cacheName);
    }
 
@@ -171,7 +172,7 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
 
    public XSiteStateTransferControlCommand copyForCache(String cacheName) {
       //cache name is final. we need to copy the command.
-      XSiteStateTransferControlCommand copy = new XSiteStateTransferControlCommand(cacheName);
+      XSiteStateTransferControlCommand copy = new XSiteStateTransferControlCommand(ByteString.fromString(cacheName));
       copy.control = this.control;
       copy.provider = this.provider;
       copy.consumer = this.consumer;

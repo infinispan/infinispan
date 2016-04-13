@@ -5,6 +5,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.util.ByteString;
 
 import java.util.Map;
 
@@ -46,5 +47,5 @@ public interface ModuleCommandFactory {
     * @param cacheName  cache name at which command to be created is directed
     * @return           a {@link CacheRpcCommand}
     */
-   CacheRpcCommand fromStream(byte commandId, String cacheName);
+   CacheRpcCommand fromStream(byte commandId, ByteString cacheName);
 }

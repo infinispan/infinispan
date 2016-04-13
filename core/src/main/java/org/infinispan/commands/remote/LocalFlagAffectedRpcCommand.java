@@ -3,6 +3,7 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
+import org.infinispan.util.ByteString;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -10,7 +11,7 @@ import org.infinispan.context.Flag;
 public abstract class LocalFlagAffectedRpcCommand extends BaseRpcCommand implements LocalFlagAffectedCommand {
    private long flags;
 
-   protected LocalFlagAffectedRpcCommand(String cacheName, long flagBitSet) {
+   protected LocalFlagAffectedRpcCommand(ByteString cacheName, long flagBitSet) {
       super(cacheName);
       this.flags = flagBitSet;
    }

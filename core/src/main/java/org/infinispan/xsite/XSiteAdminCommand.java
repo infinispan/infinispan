@@ -3,6 +3,7 @@ package org.infinispan.xsite;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -43,11 +44,11 @@ public class XSiteAdminCommand extends BaseRpcCommand {
       super(null);// For command id uniqueness test
    }
 
-   public XSiteAdminCommand(String cacheName) {
+   public XSiteAdminCommand(ByteString cacheName) {
       super(cacheName);// For command id uniqueness test
    }
 
-   public XSiteAdminCommand(String cacheName, String siteName, AdminOperation op, Integer afterFailures, Long minTimeToWait) {
+   public XSiteAdminCommand(ByteString cacheName, String siteName, AdminOperation op, Integer afterFailures, Long minTimeToWait) {
       this(cacheName);
       this.siteName = siteName;
       this.adminOperation = op;

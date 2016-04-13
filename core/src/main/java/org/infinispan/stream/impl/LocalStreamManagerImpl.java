@@ -24,6 +24,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -59,6 +60,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private Address localAddress;
 
    private final ConcurrentMap<Object, SegmentListener> changeListener = CollectionFactory.makeConcurrentMap();
+   private ByteString cacheName;
 
    class SegmentListener {
       private final Set<Integer> segments;
@@ -105,6 +107,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    public void inject(Cache<K, V> cache, ComponentRegistry registry, StateTransferManager stm, RpcManager rpc,
            Configuration configuration, CommandsFactory factory) {
       this.cache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      this.cacheName = ByteString.fromString(cache.getName());
       this.registry = registry;
       this.stm = stm;
       this.rpc = rpc;
@@ -386,7 +389,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
                throw new CacheException(e);
             }
          } else {
-            rpc.invokeRemotely(Collections.singleton(origin), new StreamResponseCommand<>(cache.getName(), localAddress,
+            rpc.invokeRemotely(Collections.singleton(origin), new StreamResponseCommand<>(cacheName, localAddress,
                     requestId, false, response), rpc.getDefaultRpcOptions(true));
          }
       }
@@ -405,7 +408,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
                // This way we don't send more than 1 response to the originating node but still inside managed blocker
                // so we don't consume a thread
                synchronized (NonRehashIntermediateCollector.this) {
-                  rpc.invokeRemotely(Collections.singleton(origin), new StreamResponseCommand<>(cache.getName(), localAddress,
+                  rpc.invokeRemotely(Collections.singleton(origin), new StreamResponseCommand<>(cacheName, localAddress,
                           requestId, false, response), rpc.getDefaultRpcOptions(true));
                }
             }

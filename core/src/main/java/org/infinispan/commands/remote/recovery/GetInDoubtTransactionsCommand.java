@@ -1,6 +1,7 @@
 package org.infinispan.commands.remote.recovery;
 
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -27,7 +28,7 @@ public class GetInDoubtTransactionsCommand extends RecoveryCommand {
       super(null); // For command id uniqueness test
    }
 
-   public GetInDoubtTransactionsCommand(String cacheName) {
+   public GetInDoubtTransactionsCommand(ByteString cacheName) {
       super(cacheName);
    }
 

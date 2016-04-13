@@ -16,6 +16,7 @@ import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.logging.Log;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    protected byte[] serializedModel;
    protected QueryInterceptor queryInterceptor;
 
-   protected AbstractUpdateCommand(String cacheName) {
+   protected AbstractUpdateCommand(ByteString cacheName) {
       super(cacheName);
    }
 
@@ -70,14 +71,15 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
     */
    @Override
    public void fetchExecutionContext(CommandInitializer ci) {
-      if (ci.getCacheManager().cacheExists(cacheName)) {
-         Cache cache = ci.getCacheManager().getCache(cacheName);
+      String name = cacheName.toString();
+      if (ci.getCacheManager().cacheExists(name)) {
+         Cache cache = ci.getCacheManager().getCache(name);
          SearchManager searchManager = Search.getSearchManager(cache);
          searchFactory = searchManager.unwrap(SearchIntegrator.class);
          queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       }
       else {
-         throw new CacheException("Cache named '"+ cacheName + "' does not exist on this CacheManager, or was not started" );
+         throw new CacheException("Cache named '"+ name + "' does not exist on this CacheManager, or was not started" );
       }
    }
 

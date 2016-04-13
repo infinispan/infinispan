@@ -9,6 +9,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -29,14 +30,14 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    private static boolean trace = log.isTraceEnabled();
 
    protected GlobalTransaction globalTx;
-   protected final String cacheName;
+   protected final ByteString cacheName;
    protected InterceptorChain invoker;
    protected InvocationContextFactory icf;
    protected TransactionTable txTable;
    private Address origin;
    private int topologyId = -1;
 
-   public AbstractTransactionBoundaryCommand(String cacheName) {
+   public AbstractTransactionBoundaryCommand(ByteString cacheName) {
       this.cacheName = cacheName;
    }
 
@@ -57,7 +58,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    @Override
-   public String getCacheName() {
+   public ByteString getCacheName() {
       return cacheName;
    }
 
@@ -156,12 +157,12 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    private void markGtxAsRemote() {
       globalTx.setRemote(true);
    }
-   
+
    @Override
    public Address getOrigin() {
       return origin;
    }
-   
+
    @Override
    public void setOrigin(Address origin) {
       this.origin = origin;

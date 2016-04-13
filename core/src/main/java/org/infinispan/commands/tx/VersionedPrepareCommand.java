@@ -4,6 +4,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -23,15 +24,15 @@ public class VersionedPrepareCommand extends PrepareCommand {
    private EntryVersionsMap versionsSeen = null;
 
    public VersionedPrepareCommand() {
-      super("");
+      super(null);
    }
 
-   public VersionedPrepareCommand(String cacheName, GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
+   public VersionedPrepareCommand(ByteString cacheName, GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
       // VersionedPrepareCommands are *always* 2-phase, except when retrying a prepare.
       super(cacheName, gtx, modifications, onePhase);
    }
 
-   public VersionedPrepareCommand(String cacheName) {
+   public VersionedPrepareCommand(ByteString cacheName) {
       super(cacheName);
    }
 

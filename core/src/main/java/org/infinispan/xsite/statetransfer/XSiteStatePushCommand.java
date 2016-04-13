@@ -2,6 +2,7 @@ package org.infinispan.xsite.statetransfer;
 
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -22,13 +23,13 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand {
    private long timeoutMillis;
    private XSiteStateConsumer consumer;
 
-   public XSiteStatePushCommand(String cacheName, XSiteState[] chunk, long timeoutMillis) {
+   public XSiteStatePushCommand(ByteString cacheName, XSiteState[] chunk, long timeoutMillis) {
       super(cacheName);
       this.chunk = chunk;
       this.timeoutMillis = timeoutMillis;
    }
 
-   public XSiteStatePushCommand(String cacheName) {
+   public XSiteStatePushCommand(ByteString cacheName) {
       super(cacheName);
    }
 

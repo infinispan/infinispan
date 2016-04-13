@@ -9,6 +9,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -38,15 +39,15 @@ public class CreateCacheCommand extends BaseRpcCommand {
       super(null);
    }
 
-   public CreateCacheCommand(String ownerCacheName) {
+   public CreateCacheCommand(ByteString ownerCacheName) {
       super(ownerCacheName);
    }
 
-   public CreateCacheCommand(String ownerCacheName, String cacheNameToCreate, String cacheConfigurationName) {
+   public CreateCacheCommand(ByteString ownerCacheName, String cacheNameToCreate, String cacheConfigurationName) {
       this(ownerCacheName, cacheNameToCreate, cacheConfigurationName, 0);
    }
 
-   public CreateCacheCommand(String cacheName, String cacheNameToCreate, String cacheConfigurationName,
+   public CreateCacheCommand(ByteString cacheName, String cacheNameToCreate, String cacheConfigurationName,
                              int expectedMembers) {
       super(cacheName);
       this.cacheNameToCreate = cacheNameToCreate;

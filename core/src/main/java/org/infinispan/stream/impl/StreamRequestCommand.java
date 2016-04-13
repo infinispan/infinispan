@@ -6,6 +6,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -58,11 +59,11 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
    // Only here for CommandIdUniquenessTest
    private StreamRequestCommand() { super(null); }
 
-   public StreamRequestCommand(String cacheName) {
+   public StreamRequestCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public StreamRequestCommand(String cacheName, Address origin, Object id, boolean parallelStream, Type type,
+   public StreamRequestCommand(ByteString cacheName, Address origin, Object id, boolean parallelStream, Type type,
                                Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
                                Object terminalOperation) {
       super(cacheName);

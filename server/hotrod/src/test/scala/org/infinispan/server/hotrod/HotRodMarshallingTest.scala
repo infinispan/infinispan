@@ -7,6 +7,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand
 import org.infinispan.server.core.AbstractMarshallingTest
 import org.infinispan.commons.api.BasicCacheContainer
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
+import org.infinispan.util.ByteString
 
 /**
  * Tests marshalling of Hot Rod classes.
@@ -27,7 +28,7 @@ class HotRodMarshallingTest extends AbstractMarshallingTest {
    def testMarshallingCommandWithBigByteArrayKey() {
       val cacheKey = getBigByteArray
       val command = new ClusteredGetCommand(cacheKey,
-         BasicCacheContainer.DEFAULT_CACHE_NAME, EnumUtil.EMPTY_BIT_SET, false, null,
+         ByteString.fromString(BasicCacheContainer.DEFAULT_CACHE_NAME), EnumUtil.EMPTY_BIT_SET, false, null,
          ByteArrayEquivalence.INSTANCE)
       val bytes = marshaller.objectToByteBuffer(command)
       val readCommand = marshaller.objectFromByteBuffer(bytes).asInstanceOf[ClusteredGetCommand]

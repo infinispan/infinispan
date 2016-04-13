@@ -3,6 +3,7 @@ package org.infinispan.stream.impl;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,11 +23,11 @@ public class StreamSegmentResponseCommand<R> extends StreamResponseCommand<R> {
    // Only here for CommandIdUniquenessTest
    protected StreamSegmentResponseCommand() { }
 
-   public StreamSegmentResponseCommand(String cacheName) {
+   public StreamSegmentResponseCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public StreamSegmentResponseCommand(String cacheName, Address origin, Object id, boolean complete, R response,
+   public StreamSegmentResponseCommand(ByteString cacheName, Address origin, Object id, boolean complete, R response,
                                        Set<Integer> missedSegments) {
       super(cacheName, origin, id, complete, response);
       this.missedSegments = missedSegments;

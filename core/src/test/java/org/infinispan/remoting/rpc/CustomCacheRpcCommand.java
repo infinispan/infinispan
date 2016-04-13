@@ -5,6 +5,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -27,11 +28,11 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
       super(null); // For command id uniqueness test
    }
 
-   public CustomCacheRpcCommand(String cacheName) {
+   public CustomCacheRpcCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public CustomCacheRpcCommand(String cacheName, Object arg) {
+   public CustomCacheRpcCommand(ByteString cacheName, Object arg) {
       this(cacheName);
       this.arg = arg;
    }

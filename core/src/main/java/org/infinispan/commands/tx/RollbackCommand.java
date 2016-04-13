@@ -5,6 +5,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 
 /**
  * Command corresponding to a transaction rollback.
@@ -19,12 +20,12 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
       super(null); // For command id uniqueness test
    }
 
-   public RollbackCommand(String cacheName, GlobalTransaction globalTransaction) {
+   public RollbackCommand(ByteString cacheName, GlobalTransaction globalTransaction) {
       super(cacheName);
       this.globalTx = globalTransaction;
    }
 
-   public RollbackCommand(String cacheName) {
+   public RollbackCommand(ByteString cacheName) {
       super(cacheName);
    }
 

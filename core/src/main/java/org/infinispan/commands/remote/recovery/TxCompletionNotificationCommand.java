@@ -7,6 +7,7 @@ import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -42,7 +43,7 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
       super(null); // For command id uniqueness test
    }
 
-   public TxCompletionNotificationCommand(Xid xid, GlobalTransaction gtx, String cacheName) {
+   public TxCompletionNotificationCommand(Xid xid, GlobalTransaction gtx, ByteString cacheName) {
       super(cacheName);
       this.xid = xid;
       this.gtx = gtx;
@@ -56,12 +57,12 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
    }
 
 
-   public TxCompletionNotificationCommand(long internalId, String cacheName) {
+   public TxCompletionNotificationCommand(long internalId, ByteString cacheName) {
       super(cacheName);
       this.internalId = internalId;
    }
 
-   public TxCompletionNotificationCommand(String cacheName) {
+   public TxCompletionNotificationCommand(ByteString cacheName) {
       super(cacheName);
    }
 

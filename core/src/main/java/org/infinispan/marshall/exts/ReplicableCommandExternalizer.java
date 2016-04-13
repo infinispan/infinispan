@@ -24,6 +24,7 @@ import org.infinispan.manager.impl.ReplicableCommandRunnable;
 import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -95,7 +96,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       }
    }
 
-   protected CacheRpcCommand fromStream(byte id, byte type, String cacheName) {
+   protected CacheRpcCommand fromStream(byte id, byte type, ByteString cacheName) {
       return cmdFactory.fromStream(id, type, cacheName);
    }
 

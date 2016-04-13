@@ -49,7 +49,7 @@ public class DefaultCommandMatcher implements CommandMatcher {
       if (commandClass != null && !commandClass.equals(command.getClass()))
          return false;
 
-      if (cacheName != null && !cacheName.equals(((CacheRpcCommand) command).getCacheName())) {
+      if (cacheName != null && !cacheName.equals(((CacheRpcCommand) command).getCacheName().toString())) {
          return false;
       }
 

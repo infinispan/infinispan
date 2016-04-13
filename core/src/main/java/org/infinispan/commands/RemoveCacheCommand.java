@@ -10,6 +10,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.DependencyGraph;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class RemoveCacheCommand extends BaseRpcCommand {
       super(null); // For command id uniqueness test
    }
 
-   public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager) {
+   public RemoveCacheCommand(ByteString cacheName, EmbeddedCacheManager cacheManager) {
       super(cacheName);
       this.cacheManager = cacheManager;
    }
@@ -44,18 +45,19 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    public Object perform(InvocationContext ctx) throws Throwable {
       GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
       ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
+      String name = cacheName.toString();
       if (cacheComponentRegistry != null) {
          cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
          cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
          cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
-         Cache<?, ?> cache = cacheManager.getCache(cacheName, false);
+         Cache<?, ?> cache = cacheManager.getCache(name, false);
          if (cache != null) {
             cache.stop();
          }
       }
-      globalComponentRegistry.removeCache(cacheName);
+      globalComponentRegistry.removeCache(name);
       // Remove cache configuration and remove it from the computed cache name list
-      globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(cacheName);
+      globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(name);
       // Remove cache from dependency graph
       //noinspection unchecked
       globalComponentRegistry.getComponent(DependencyGraph.class, CACHE_DEPENDENCY_GRAPH).remove(cacheName);

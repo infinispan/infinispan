@@ -7,6 +7,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -93,7 +94,7 @@ public class RpcManagerTimeoutTest extends MultipleCacheManagersTest {
       if (filter != null) {
          builder.responseFilter(filter);
       }
-      rpcManager.invokeRemotely(recipients, new SleepingCacheRpcCommand(CACHE_NAME, 5000), builder.build());
+      rpcManager.invokeRemotely(recipients, new SleepingCacheRpcCommand(ByteString.fromString(CACHE_NAME), 5000), builder.build());
       Assert.fail("Timeout exception wasn't thrown");
    }
 

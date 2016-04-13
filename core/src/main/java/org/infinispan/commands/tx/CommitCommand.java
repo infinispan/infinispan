@@ -1,12 +1,11 @@
 package org.infinispan.commands.tx;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -25,12 +24,12 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
       super(null); // For command id uniqueness test
    }
 
-   public CommitCommand(String cacheName, GlobalTransaction gtx) {
+   public CommitCommand(ByteString cacheName, GlobalTransaction gtx) {
       super(cacheName);
       this.globalTx = gtx;
    }
 
-   public CommitCommand(String cacheName) {
+   public CommitCommand(ByteString cacheName) {
       super(cacheName);
    }
 

@@ -16,6 +16,7 @@ import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.ByteString;
 import org.jgroups.blocks.RpcDispatcher;
 import org.testng.annotations.Test;
 
@@ -50,7 +51,7 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
          PutKeyValueCommand putCommand = new PutKeyValueCommand();
          putCommand.setKey(key);
          putCommand.setValue(value);
-         SingleRpcCommand rpcCommand = new SingleRpcCommand("replSync", putCommand);
+         SingleRpcCommand rpcCommand = new SingleRpcCommand(ByteString.fromString("replSync"), putCommand);
          when(mockMarshaller1.objectToBuffer(anyObject())).thenReturn(originalMarshaller1.objectToBuffer(rpcCommand));
          when(mockMarshaller.objectFromBuffer((byte[]) anyObject(), anyInt(), anyInt())).thenThrow(new EOFException());
          dispatcher1.setRequestMarshaller(mockMarshaller1);

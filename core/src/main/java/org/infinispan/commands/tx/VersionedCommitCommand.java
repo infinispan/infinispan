@@ -3,6 +3,7 @@ package org.infinispan.commands.tx;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -20,14 +21,14 @@ public class VersionedCommitCommand extends CommitCommand {
    private EntryVersionsMap updatedVersions;
 
    public VersionedCommitCommand() {
-      super("");
+      super(null);
    }
 
-   public VersionedCommitCommand(String cacheName, GlobalTransaction gtx) {
+   public VersionedCommitCommand(ByteString cacheName, GlobalTransaction gtx) {
       super(cacheName, gtx);
    }
 
-   public VersionedCommitCommand(String cacheName) {
+   public VersionedCommitCommand(ByteString cacheName) {
       super(cacheName);
    }
 
