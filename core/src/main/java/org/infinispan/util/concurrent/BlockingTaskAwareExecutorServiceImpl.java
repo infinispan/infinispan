@@ -116,6 +116,10 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       }
    }
 
+   public ExecutorService getExecutorService() {
+      return executorService;
+   }
+
    private void doExecute(BlockingRunnable runnable) {
       try {
          executorService.execute(runnable);

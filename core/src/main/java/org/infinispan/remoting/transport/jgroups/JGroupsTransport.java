@@ -9,6 +9,7 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.TransportConfiguration;
+import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -27,6 +28,7 @@ import org.infinispan.remoting.transport.AbstractTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -63,8 +65,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -82,10 +86,10 @@ import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
  * <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li>
  * <li><tt>configurationFile</tt> - String pointing to a JGroups XML configuration file</li>
  * <li><tt>channelLookup</tt> - Fully qualified class name of a
- * {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup} instance</li>
+ * {@link JGroupsChannelLookup} instance</li>
  * </ul>
  * These are normally passed in as Properties in
- * {@link org.infinispan.configuration.global.TransportConfigurationBuilder#withProperties(java.util.Properties)} or
+ * {@link TransportConfigurationBuilder#withProperties(Properties)} or
  * in the Infinispan XML configuration file.
  *
  * @author Manik Surtani
@@ -129,6 +133,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected Lock viewUpdateLock = new ReentrantLock();
    protected Condition viewUpdateCondition = viewUpdateLock.newCondition();
 
+   private final ThreadPoolProbeHandler handler;
+
    /**
     * This form is used when the transport is created by an external source and passed in to the
     * GlobalConfiguration.
@@ -142,9 +148,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          throw new IllegalArgumentException("Cannot deal with a null channel!");
       if (channel.isConnected())
          throw new IllegalArgumentException("Channel passed in cannot already be connected!");
+      handler = new ThreadPoolProbeHandler();
    }
 
    public JGroupsTransport() {
+      handler = new ThreadPoolProbeHandler();
    }
 
    @Override
@@ -171,13 +179,15 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
                           CacheManagerNotifier notifier, GlobalComponentRegistry gcr,
                           TimeService timeService, InboundInvocationHandler globalHandler,
-                          @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
+                          @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
+                          @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService executorService) {
       this.marshaller = marshaller;
       this.notifier = notifier;
       this.gcr = gcr;
       this.timeService = timeService;
       this.globalHandler = globalHandler;
       this.timeoutExecutor = timeoutExecutor;
+      this.handler.updateThreadPool(executorService);
    }
 
    @Override
@@ -191,6 +201,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       startJGroupsChannelIfNeeded();
 
       waitForInitialNodes();
+      channel.getProtocolStack().getTransport().registerProbeHandler(handler);
    }
 
    protected void startJGroupsChannelIfNeeded() {
@@ -257,6 +268,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public void stop() {
+      if (channel != null) {
+         channel.getProtocolStack().getTransport().unregisterProbeHandler(handler);
+      }
       String clusterName = configuration.transport().clusterName();
       try {
          if (disconnectChannel && channel != null && channel.isConnected()) {
