@@ -48,7 +48,7 @@ public class ManifestUberJarDuplicatedJarsWarner implements UberJarDuplicatedJar
     List<String> getBundleSymbolicNames() {
         List<String> symbolicNames = new ArrayList<>();
         try {
-            Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources(MANIFEST_LOCATION);
+            Enumeration<URL> resources = getClass().getClassLoader().getResources(MANIFEST_LOCATION);
             while (resources.hasMoreElements()) {
                 URL manifestUrl = resources.nextElement();
                 try (InputStream is = manifestUrl.openStream()) {
