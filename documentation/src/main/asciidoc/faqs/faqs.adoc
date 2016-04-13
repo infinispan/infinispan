@@ -289,7 +289,7 @@ As far as possible, internal components are shared between Cache instances.  No
 === Cache Mode questions
 
 ==== What is the difference between a replicated cache and a distributed cache?
-Distribution is a new cache mode in Infinispan, in addition to replication and invalidation.  In a replicated cache all nodes in a cluster hold all keys i.e. if a key exists on one nodes, it will also exist on _all_ other modes.  In a distributed cache, a number of copies are maintained to provide redundancy and fault tolerance, however this is typically far fewer than the number of nodes in the cluster. A distributed cache provides a far greater degree of scalability than a replicated cache.  
+Distribution is a new cache mode in Infinispan, in addition to replication and invalidation.  In a replicated cache all nodes in a cluster hold all keys i.e. if a key exists on one node, it will also exist on _all_ other nodes.  In a distributed cache, a number of copies are maintained to provide redundancy and fault tolerance, however this is typically far fewer than the number of nodes in the cluster. A distributed cache provides a far greater degree of scalability than a replicated cache. 
 
 A distributed cache is also able to transparently locate keys across a cluster, and provides an L1 cache for fast local read access of state that is stored remotely.  You can read more in the relevant link:$$../user_guide/user_guide.html$$[User Guide] chapter.
 
