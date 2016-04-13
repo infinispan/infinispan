@@ -68,10 +68,6 @@ public interface Log extends BasicLogger {
    void errorClosingSocket(TcpTransport transport, IOException e);
 
    @LogMessage(level = WARN)
-   @Message(value = "Exception while shutting down the connection pool.", id = 4010)
-   void errorClosingConnectionPool(@Cause Exception e);
-
-   @LogMessage(level = WARN)
    @Message(value = "No hash function configured for version: %d", id = 4011)
    void noHasHFunctionConfigured(int hashFunctionVersion);
 
@@ -110,13 +106,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Infinispan version: %s", id = 4021)
    void version(String version);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to invalidate transport for server: %s", id = 4022)
-   void unableToInvalidateTransport(SocketAddress serverAddress);
-
-   @Message(value = "SSL Enabled but no KeyStore specified", id = 4023)
-   CacheConfigurationException noSSLKeyManagerConfiguration();
 
    @Message(value = "SSL Enabled but no TrustStore specified", id = 4024)
    CacheConfigurationException noSSLTrustManagerConfiguration();
@@ -198,10 +187,6 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Invalid iteration id '%s'", id = 4048)
    NoSuchElementException errorRetrievingNext(String iterationId);
-
-   @LogMessage(level = WARN)
-   @Message(value = "No consistent hash is available in the client, starting iteration using the configured request balancing strategy", id = 4049)
-   void noConsistentHashAvailable();
 
    @LogMessage(level = INFO)
    @Message(value = "Switched to cluster '%s'", id = 4050)
