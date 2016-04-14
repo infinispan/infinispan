@@ -2,7 +2,6 @@ package org.infinispan.objectfilter.impl.hql;
 
 import org.antlr.runtime.tree.Tree;
 import org.hibernate.hql.ast.origin.hql.resolve.path.AggregationPropertyPath;
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.SingleEntityHavingQueryBuilder;
 import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
 import org.hibernate.hql.ast.spi.SingleEntityQueryRendererDelegate;
@@ -42,12 +41,11 @@ final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQueryRender
    private List<Class<?>> projectedTypes;
 
    FilterRendererDelegate(String jpaQuery,
-                          EntityNamesResolver entityNamesResolver,
                           ObjectPropertyHelper<TypeMetadata> propertyHelper,
                           SingleEntityQueryBuilder<BooleanExpr> builder,
                           SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder,
                           Map<String, Object> namedParameters) {
-      super(propertyHelper, entityNamesResolver, builder, namedParameters);
+      super(propertyHelper, propertyHelper.getEntityNamesResolver(), builder, namedParameters);
       this.jpaQuery = jpaQuery;
       this.propertyHelper = propertyHelper;
       this.havingBuilder = havingBuilder;

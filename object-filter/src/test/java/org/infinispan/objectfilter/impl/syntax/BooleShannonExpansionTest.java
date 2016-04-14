@@ -21,7 +21,7 @@ public class BooleShannonExpansionTest {
 
    private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
 
-   private final JPQLParser<Class<?>> parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
+   private final JPQLParser<Class<?>> parser = new JPQLParser<>();
 
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
@@ -44,7 +44,7 @@ public class BooleShannonExpansionTest {
     * @param expectedJpa     the expected equivalent JPA of the AST
     */
    private void assertExpectedTree(String jpaQuery, String expectedExprStr, String expectedJpa) {
-      FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery);
+      FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery, propertyHelper);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       expr = booleShannonExpansion.expand(expr);
       if (expectedExprStr != null) {

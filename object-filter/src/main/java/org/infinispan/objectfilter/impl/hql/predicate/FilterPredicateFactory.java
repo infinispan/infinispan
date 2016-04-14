@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl.hql.predicate;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate;
 import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate.Type;
 import org.hibernate.hql.ast.spi.predicate.ConjunctionPredicate;
@@ -25,18 +24,15 @@ import java.util.List;
  */
 public final class FilterPredicateFactory implements PredicateFactory<BooleanExpr> {
 
-   private final EntityNamesResolver entityNamesResolver;
-
    private final ObjectPropertyHelper propertyHelper;
 
-   public FilterPredicateFactory(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper propertyHelper) {
-      this.entityNamesResolver = entityNamesResolver;
+   public FilterPredicateFactory(ObjectPropertyHelper propertyHelper) {
       this.propertyHelper = propertyHelper;
    }
 
    @Override
    public RootPredicate<BooleanExpr> getRootPredicate(String entityType) {
-      if (entityNamesResolver.getClassFromName(entityType) == null) {
+      if (propertyHelper.getEntityNamesResolver().getClassFromName(entityType) == null) {
          throw new IllegalStateException("Unknown entity name " + entityType);
       }
       return new FilterRootPredicate();

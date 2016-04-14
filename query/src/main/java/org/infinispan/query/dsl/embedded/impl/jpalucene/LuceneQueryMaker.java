@@ -3,7 +3,6 @@ package org.infinispan.query.dsl.embedded.impl.jpalucene;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.builtin.NumericFieldBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
@@ -12,6 +11,7 @@ import org.hibernate.search.query.dsl.FieldCustomization;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.query.dsl.QueryContextBuilder;
 import org.hibernate.search.query.dsl.impl.FieldBridgeCustomization;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.syntax.AggregationExpr;
 import org.infinispan.objectfilter.impl.syntax.AndExpr;
@@ -26,6 +26,8 @@ import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.objectfilter.impl.util.StringHelper;
+import org.infinispan.query.logging.Log;
+import org.jboss.logging.Logger;
 
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -34,7 +36,9 @@ import java.util.regex.Pattern;
  * @author anistor@redhat.com
  * @since 9.0
  */
-class LuceneQueryMaker implements Visitor<Query, Query> {
+public final class LuceneQueryMaker implements Visitor<Query, Query> {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, LuceneQueryMaker.class.getName());
 
    private static final String LUCENE_SINGLE_CHARACTER_WILDCARD = "?";
    private static final String LUCENE_MULTIPLE_CHARACTERS_WILDCARD = "*";
@@ -43,34 +47,49 @@ class LuceneQueryMaker implements Visitor<Query, Query> {
    private static final Pattern SINGLE_CHARACTER_WILDCARD_PATTERN = Pattern.compile("_");
 
    private final QueryContextBuilder queryContextBuilder;
-   private final EntityNamesResolver entityNamesResolver;
-   private final JPALuceneTransformer.FieldBridgeProvider fieldBridgeProvider;
-   private final Map<String, Object> namedParameters;
+   private final HibernateSearchPropertyHelper propertyHelper;
+   private final FieldBridgeProvider fieldBridgeProvider;
 
+   private Map<String, Object> namedParameters;
    private QueryBuilder queryBuilder;
-   private String entityType;
+   private String entityTypeName;
 
-   LuceneQueryMaker(QueryContextBuilder queryContextBuilder, EntityNamesResolver entityNamesResolver,
-                    JPALuceneTransformer.FieldBridgeProvider fieldBridgeProvider, Map<String, Object> namedParameters) {
-      this.queryContextBuilder = queryContextBuilder;
-      this.entityNamesResolver = entityNamesResolver;
-      this.fieldBridgeProvider = fieldBridgeProvider;
-      this.namedParameters = namedParameters;
+   @FunctionalInterface
+   public interface FieldBridgeProvider {
+
+      /**
+       * Returns the field bridge to be applied when executing queries on the given property of the given entity type.
+       *
+       * @param typeName     the entity type hosting the given property; may either identify an actual Java type or a virtual type
+       *                     managed by the given implementation; never {@code null}
+       * @param propertyPath an array of strings denoting the property path; never {@code null}
+       * @return the field bridge to be used for querying the given property; may be {@code null}
+       */
+      FieldBridge getFieldBridge(String typeName, String[] propertyPath);
    }
 
-   <TypeMetadata> LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult) {
-      Query query = makeQuery(parsingResult.getTargetEntityName(), parsingResult.getWhereClause());
+   public LuceneQueryMaker(SearchIntegrator searchFactory, HibernateSearchPropertyHelper propertyHelper, FieldBridgeProvider fieldBridgeProvider) {
+      if (searchFactory == null) {
+         throw new IllegalArgumentException("searchFactory argument cannot be null");
+      }
+      if (propertyHelper == null && fieldBridgeProvider == null) {
+         throw new IllegalArgumentException("propertyHelper and fieldBridgeProvider argument cannot be both null");
+      }
+      this.propertyHelper = propertyHelper;
+      this.fieldBridgeProvider = fieldBridgeProvider != null ? fieldBridgeProvider : propertyHelper::getDefaultFieldBridge;
+      this.queryContextBuilder = searchFactory.buildQueryBuilder();
+   }
+
+   public <TypeMetadata> LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, Class<?> targetedType) {
+      this.namedParameters = namedParameters;
+      queryBuilder = queryContextBuilder.forEntity(targetedType).get();
+      this.entityTypeName = parsingResult.getTargetEntityName();
+      Query query = makeQuery(parsingResult.getWhereClause());
       Sort sort = makeSort(parsingResult.getSortFields());
       return new LuceneQueryParsingResult<>(query, parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(), parsingResult.getProjections(), sort);
    }
 
-   private Query makeQuery(String entityType, BooleanExpr expr) {
-      Class<?> targetedType = entityNamesResolver.getClassFromName(entityType);
-      if (targetedType == null) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
-      }
-      this.entityType = entityType;
-      queryBuilder = queryContextBuilder.forEntity(targetedType).get();
+   private Query makeQuery(BooleanExpr expr) {
       return expr == null ? queryBuilder.all().createQuery() : expr.acceptVisitor(this);
    }
 
@@ -83,7 +102,9 @@ class LuceneQueryMaker implements Visitor<Query, Query> {
       for (int i = 0; i < fields.length; i++) {
          org.infinispan.objectfilter.SortField sf = sortFields[i];
          SortField.Type sortType = SortField.Type.STRING;
-         FieldBridge fieldBridge = fieldBridgeProvider.getFieldBridge(entityType, sf.getPath().getPath());
+         String[] propertyPath = sf.getPath().getPath();
+         ensureNotAnalyzed(propertyPath);
+         FieldBridge fieldBridge = fieldBridgeProvider.getFieldBridge(entityTypeName, propertyPath);
          if (fieldBridge instanceof NullEncodingTwoWayFieldBridge) {
             fieldBridge = ((NullEncodingTwoWayFieldBridge) fieldBridge).unwrap();
          }
@@ -108,6 +129,12 @@ class LuceneQueryMaker implements Visitor<Query, Query> {
       }
 
       return new Sort(fields);
+   }
+
+   private void ensureNotAnalyzed(String[] path) {
+      if (propertyHelper != null && propertyHelper.hasAnalyzedProperty(entityTypeName, path)) {
+         throw log.getQueryOnAnalyzedPropertyNotSupportedException(entityTypeName, StringHelper.join(path));
+      }
    }
 
    @Override
@@ -147,6 +174,7 @@ class LuceneQueryMaker implements Visitor<Query, Query> {
    public Query visit(IsNullExpr isNullExpr) {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) isNullExpr.getChild();
       String[] propertyPath = propertyValueExpr.getPropertyPath();
+      ensureNotAnalyzed(propertyPath);
       return applyFieldBridge(propertyPath,
             queryBuilder.keyword().onField(StringHelper.join(propertyPath))).matching(null).createQuery();
    }
@@ -157,6 +185,7 @@ class LuceneQueryMaker implements Visitor<Query, Query> {
       ConstantValueExpr constantValueExpr = (ConstantValueExpr) comparisonExpr.getRightChild();
       Comparable value = constantValueExpr.getConstantValueAs(propertyValueExpr.getPrimitiveType(), namedParameters);
       String[] propertyPath = propertyValueExpr.getPropertyPath();
+      ensureNotAnalyzed(propertyPath);
       String path = StringHelper.join(propertyPath);
       switch (comparisonExpr.getComparisonType()) {
          case NOT_EQUAL:
@@ -187,6 +216,7 @@ class LuceneQueryMaker implements Visitor<Query, Query> {
    public Query visit(LikeExpr likeExpr) {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
       String[] propertyPath = propertyValueExpr.getPropertyPath();
+      ensureNotAnalyzed(propertyPath);
       String patternValue = MULTIPLE_CHARACTERS_WILDCARD_PATTERN.matcher(likeExpr.getPattern()).replaceAll(LUCENE_MULTIPLE_CHARACTERS_WILDCARD);
       patternValue = SINGLE_CHARACTER_WILDCARD_PATTERN.matcher(patternValue).replaceAll(LUCENE_SINGLE_CHARACTER_WILDCARD);
       return applyFieldBridge(propertyPath, queryBuilder.keyword().wildcard().onField(StringHelper.join(propertyPath)))
@@ -214,7 +244,7 @@ class LuceneQueryMaker implements Visitor<Query, Query> {
    }
 
    private <F extends FieldCustomization> F applyFieldBridge(String[] propertyPath, F f) {
-      FieldBridge fieldBridge = fieldBridgeProvider.getFieldBridge(entityType, propertyPath);
+      FieldBridge fieldBridge = fieldBridgeProvider.getFieldBridge(entityTypeName, propertyPath);
       if (fieldBridge != null) {
          ((FieldBridgeCustomization) f).withFieldBridge(fieldBridge);
          f.ignoreAnalyzer();

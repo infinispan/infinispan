@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl.hql;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -13,17 +12,18 @@ import static org.junit.Assert.assertNull;
  */
 public class ReflectionParsingTest extends AbstractParsingTest<Class<?>> {
 
-   @Override
-   protected JPQLParser<Class<?>> createParser() {
-      EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
-      ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
-      return new JPQLParser<>(entityNamesResolver, propertyHelper);
+   public ReflectionParsingTest() {
+      super(createPropertyHelper());
+   }
+
+   private static ObjectPropertyHelper<Class<?>> createPropertyHelper() {
+      return new ReflectionPropertyHelper(new ReflectionEntityNamesResolver(null));
    }
 
    @Test
    public void testParsingResult() throws Exception {
       String jpaQuery = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
-      FilterParsingResult<Class<?>> result = parser.parse(jpaQuery);
+      FilterParsingResult<Class<?>> result = parser.parse(jpaQuery, propertyHelper);
 
       assertNotNull(result.getWhereClause());
 

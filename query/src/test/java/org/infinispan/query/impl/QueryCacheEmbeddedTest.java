@@ -1,7 +1,6 @@
 package org.infinispan.query.impl;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.query.Search;
@@ -50,12 +49,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
-      cfg.transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL)
-            .indexing().index(Index.ALL)
-            .addIndexedEntity(UserHS.class)
-            .addProperty("default.directory_provider", "ram")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+      cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 

@@ -1,7 +1,7 @@
 package org.infinispan.objectfilter.impl;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.JPQLParser;
+import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
@@ -17,20 +17,16 @@ import java.util.List;
  */
 public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.PropertyAccessor, String> {
 
-   private final ReflectionPropertyHelper propertyHelper;
-
-   private final JPQLParser<Class<?>> parser;
+   public ReflectionMatcher(ObjectPropertyHelper<Class<?>> propertyHelper) {
+      super(propertyHelper);
+   }
 
    public ReflectionMatcher(ClassLoader classLoader) {
       this(new ReflectionEntityNamesResolver(classLoader));
    }
 
-   protected ReflectionMatcher(EntityNamesResolver entityNamesResolver) {
-      if (entityNamesResolver == null) {
-         throw new IllegalArgumentException("The EntityNamesResolver argument cannot be null");
-      }
-      propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
-      parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
+   public ReflectionMatcher(EntityNamesResolver entityNamesResolver) {
+      super(new ReflectionPropertyHelper(entityNamesResolver));
    }
 
    @Override
@@ -56,16 +52,6 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    @Override
    protected FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> getFilterRegistryForType(Class<?> entityType) {
       return filtersByType.get(entityType);
-   }
-
-   @Override
-   public JPQLParser<Class<?>> getParser() {
-      return parser;
-   }
-
-   @Override
-   public ReflectionPropertyHelper getPropertyHelper() {
-      return propertyHelper;
    }
 
    @Override

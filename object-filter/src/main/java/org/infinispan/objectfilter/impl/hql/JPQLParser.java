@@ -3,7 +3,6 @@ package org.infinispan.objectfilter.impl.hql;
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.AstProcessingChain;
 import org.hibernate.hql.ast.spi.AstProcessor;
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.QueryRendererProcessor;
 import org.hibernate.hql.ast.spi.QueryResolverProcessor;
 import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
@@ -25,25 +24,20 @@ public final class JPQLParser<TypeMetadata> {
 
    private static final QueryParser queryParser = new QueryParser();
 
-   private final EntityNamesResolver entityNamesResolver;
-
-   private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
-
-   public JPQLParser(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
-      this.entityNamesResolver = entityNamesResolver;
-      this.propertyHelper = propertyHelper;
+   public JPQLParser() {
    }
 
-   public FilterParsingResult<TypeMetadata> parse(String jpaQuery) {
-      QueryResolverProcessor resolverProcessor = new QueryResolverProcessor(new FilterQueryResolverDelegate(entityNamesResolver, propertyHelper));
+   public FilterParsingResult<TypeMetadata> parse(String jpaQuery, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
 
-      FilterPredicateFactory predicateFactory = new FilterPredicateFactory(entityNamesResolver, propertyHelper);
+      QueryResolverProcessor resolverProcessor = new QueryResolverProcessor(new FilterQueryResolverDelegate(propertyHelper));
+
+      FilterPredicateFactory predicateFactory = new FilterPredicateFactory(propertyHelper);
 
       SingleEntityQueryBuilder<BooleanExpr> queryBuilder = SingleEntityQueryBuilder.getInstance(predicateFactory, propertyHelper);
 
-      SingleEntityHavingQueryBuilderImpl havingQueryBuilder = new SingleEntityHavingQueryBuilderImpl(entityNamesResolver, propertyHelper);
+      SingleEntityHavingQueryBuilderImpl havingQueryBuilder = new SingleEntityHavingQueryBuilderImpl(propertyHelper.getEntityNamesResolver(), propertyHelper);
 
-      FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<>(jpaQuery, entityNamesResolver, propertyHelper, queryBuilder, havingQueryBuilder, makeParamPlaceholderMap());
+      FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<>(jpaQuery, propertyHelper, queryBuilder, havingQueryBuilder, makeParamPlaceholderMap());
 
       QueryRendererProcessor rendererProcessor = new QueryRendererProcessor(rendererDelegate);
 

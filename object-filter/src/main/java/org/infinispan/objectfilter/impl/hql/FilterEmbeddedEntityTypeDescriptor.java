@@ -6,23 +6,20 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class FilterEmbeddedEntityTypeDescriptor implements FilterTypeDescriptor {
+final class FilterEmbeddedEntityTypeDescriptor extends FilterEntityTypeDescriptor {
 
-   private final String entityType;
    private final List<String> propertyPath;
-   private final ObjectPropertyHelper propertyHelper;
 
    /**
     * Creates a new {@link FilterEmbeddedEntityTypeDescriptor}.
     *
     * @param entityType     the entity into which this entity is embedded
-    * @param path           the property path from the embedding entity to this entity
     * @param propertyHelper a helper for dealing with properties
+    * @param path           the property path from the embedding entity to this entity
     */
-   FilterEmbeddedEntityTypeDescriptor(String entityType, List<String> path, ObjectPropertyHelper propertyHelper) {
-      this.entityType = entityType;
+   FilterEmbeddedEntityTypeDescriptor(String entityType, ObjectPropertyHelper propertyHelper, List<String> path) {
+      super(entityType, propertyHelper);
       this.propertyPath = path;
-      this.propertyHelper = propertyHelper;
    }
 
    @Override
@@ -41,11 +38,6 @@ final class FilterEmbeddedEntityTypeDescriptor implements FilterTypeDescriptor {
       newPath = propertyPath.toArray(newPath);
       newPath[newPath.length - 1] = propName;
       return newPath;
-   }
-
-   @Override
-   public String getEntityType() {
-      return entityType;
    }
 
    @Override

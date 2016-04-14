@@ -16,6 +16,6 @@ public class ReflectionMatcherTest extends AbstractMatcherTest {
    }
 
    protected ReflectionMatcher createMatcher() {
-      return new ReflectionMatcher(null);
+      return new ReflectionMatcher((ClassLoader) null);
    }
 }

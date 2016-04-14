@@ -61,9 +61,13 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
 
    private final RowMetadata rowMetadata;
 
-   public RowPropertyHelper(RowMetadata rowMetadata) {
-      super(null);
-      this.rowMetadata = rowMetadata;
+   public RowPropertyHelper(RowPropertyHelper.ColumnMetadata[] columns) {
+      super(entityName -> Object[].class);
+      this.rowMetadata = new RowPropertyHelper.RowMetadata(columns);
+   }
+
+   public RowMetadata getRowMetadata() {
+      return rowMetadata;
    }
 
    @Override

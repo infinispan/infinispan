@@ -325,7 +325,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testBuildLuceneQuery() {
-      FilterParsingResult<?> parsingResult = qe.getMatcher().getParser().parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
+      FilterParsingResult<?> parsingResult = qe.getMatcher().getParser().parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", qe.getMatcher().getPropertyHelper());
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
       List<Object> list = q.list();
       assertEquals(3, list.size());
@@ -333,7 +333,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = "Unable to find field notes in org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS")
    public void testBuildLuceneQueryOnNonIndexedField() {
-      FilterParsingResult<?> parsingResult = qe.getMatcher().getParser().parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'");
+      FilterParsingResult<?> parsingResult = qe.getMatcher().getParser().parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.getMatcher().getPropertyHelper());
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
    }
 

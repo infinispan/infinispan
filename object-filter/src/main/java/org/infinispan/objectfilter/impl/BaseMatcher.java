@@ -40,6 +40,22 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    protected final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByType = new HashMap<>();
 
+   protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
+
+   protected final JPQLParser<TypeMetadata> parser = new JPQLParser<>();
+
+   protected BaseMatcher(ObjectPropertyHelper<TypeMetadata> propertyHelper) {
+      this.propertyHelper = propertyHelper;
+   }
+
+   public ObjectPropertyHelper<TypeMetadata> getPropertyHelper() {
+      return propertyHelper;
+   }
+
+   public JPQLParser<TypeMetadata> getParser() {
+      return parser;
+   }
+
    /**
     * Executes the registered filters and notifies each one of them whether it was satisfied or not by the given
     * instance.
@@ -122,7 +138,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(String jpaQuery, List<FieldAccumulator> acc) {
-      final FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery);
+      final FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery, getPropertyHelper());
       disallowGroupingAndAggregations(parsingResult);
 
       // if the query is a contradiction just return an ObjectFilter that rejects everything
@@ -165,7 +181,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(String jpaQuery, Map<String, Object> namedParameters, FilterCallback
          callback, Object... eventType) {
-      FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery);
+      FilterParsingResult<TypeMetadata> parsingResult = getParser().parse(jpaQuery, getPropertyHelper());
       disallowGroupingAndAggregations(parsingResult);
 
       write.lock();
@@ -235,10 +251,6 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
     * @return the MatcherEvalContext or {@code null} if no filter was registered for the instance
     */
    protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startSingleTypeContext(Object userContext, Object eventType, Object instance, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter);
-
-   public abstract JPQLParser<TypeMetadata> getParser();
-
-   public abstract ObjectPropertyHelper<TypeMetadata> getPropertyHelper();
 
    protected abstract MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> createMetadataAdapter(TypeMetadata entityType);
 

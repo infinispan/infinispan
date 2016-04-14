@@ -1,8 +1,6 @@
 package org.infinispan.query.dsl.embedded.impl.jpalucene;
 
 import org.apache.lucene.document.DateTools;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.hibernate.hql.ParsingException;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.search.bridge.FieldBridge;
@@ -22,6 +20,7 @@ import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
+import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.query.logging.Log;
 import org.jboss.logging.Logger;
 
@@ -39,9 +38,9 @@ public class HibernateSearchPropertyHelper extends ObjectPropertyHelper<Class<?>
 
    private final SearchIntegrator searchFactory;
 
-   private final JPALuceneTransformer.FieldBridgeProvider fieldBridgeProvider;
+   private final LuceneQueryMaker.FieldBridgeProvider fieldBridgeProvider;
 
-   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNamesResolver entityNamesResolver, JPALuceneTransformer.FieldBridgeProvider fieldBridgeProvider) {
+   public HibernateSearchPropertyHelper(SearchIntegrator searchFactory, EntityNamesResolver entityNamesResolver, LuceneQueryMaker.FieldBridgeProvider fieldBridgeProvider) {
       super(entityNamesResolver);
       this.searchFactory = searchFactory;
       this.fieldBridgeProvider = fieldBridgeProvider;
@@ -224,22 +223,14 @@ public class HibernateSearchPropertyHelper extends ObjectPropertyHelper<Class<?>
       if (isIdentifierProperty(docBuilder, propertyPath)) {
          return false;
       }
-
-      TypeMetadata typeMetadata = findTailTypeMetadata(docBuilder, propertyPath);
-      if (typeMetadata == null) {
-         return false;
-      }
-      String lastName = propertyPath[propertyPath.length - 1];
-      DocumentFieldMetadata fieldMetadata = typeMetadata.getPropertyMetadataForProperty(lastName).getFieldMetadataSet().iterator().next();
-
-      Index index = fieldMetadata.getIndex();
-      return index == Field.Index.ANALYZED || index == Field.Index.ANALYZED_NO_NORMS;
+      DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(docBuilder, propertyPath);
+      return fieldMetadata != null && fieldMetadata.getIndex().isAnalyzed();
    }
 
    private DocumentBuilderIndexedEntity getDocumentBuilder(String typeName) {
       Class<?> entityMetadata = getEntityMetadata(typeName);
       if (entityMetadata == null) {
-         throw new IllegalStateException("Unknown entity name " + typeName);
+         throw log.getNoIndexedEntityException(typeName);
       }
 
       EntityIndexBinding entityIndexBinding = searchFactory.getIndexBinding(entityMetadata);
@@ -275,5 +266,13 @@ public class HibernateSearchPropertyHelper extends ObjectPropertyHelper<Class<?>
          }
       }
       return null;
+   }
+
+   private DocumentFieldMetadata getDocumentFieldMetadata(DocumentBuilderIndexedEntity documentBuilder, String[] propertyPath) {
+      TypeMetadata typeMetadata = findTailTypeMetadata(documentBuilder, propertyPath);
+      if (typeMetadata == null) {
+         return null;
+      }
+      return typeMetadata.getDocumentFieldMetadataFor(StringHelper.join(propertyPath));
    }
 }

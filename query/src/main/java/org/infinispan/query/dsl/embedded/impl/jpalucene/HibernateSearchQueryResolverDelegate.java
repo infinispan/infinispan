@@ -1,7 +1,6 @@
 package org.infinispan.query.dsl.embedded.impl.jpalucene;
 
 import org.hibernate.hql.ast.origin.hql.resolve.path.PathedPropertyReferenceSource;
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.FilterQueryResolverDelegate;
 import org.infinispan.objectfilter.impl.hql.FilterTypeDescriptor;
 import org.infinispan.query.logging.Log;
@@ -17,8 +16,8 @@ public class HibernateSearchQueryResolverDelegate extends FilterQueryResolverDel
 
    private static final Log log = Logger.getMessageLogger(Log.class, HibernateSearchQueryResolverDelegate.class.getName());
 
-   public HibernateSearchQueryResolverDelegate(EntityNamesResolver entityNamesResolver, HibernateSearchPropertyHelper propertyHelper) {
-      super(entityNamesResolver, propertyHelper);
+   public HibernateSearchQueryResolverDelegate(HibernateSearchPropertyHelper propertyHelper) {
+      super(propertyHelper);
    }
 
    @Override

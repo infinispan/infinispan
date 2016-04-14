@@ -1,9 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.Util;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.PropertyPath;
 import org.infinispan.objectfilter.SortField;
@@ -36,7 +34,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.jpalucene.HibernateSearchPropertyHelper;
-import org.infinispan.query.dsl.embedded.impl.jpalucene.JPALuceneTransformer;
+import org.infinispan.query.dsl.embedded.impl.jpalucene.LuceneQueryMaker;
 import org.infinispan.query.dsl.embedded.impl.jpalucene.LuceneQueryParsingResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
@@ -208,7 +206,7 @@ public class QueryEngine {
             return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
          }
          if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
-            havingClause = JPATreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityName(), columns));
+            havingClause = JPATreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityName(), columns, propertyHelper));
          }
       }
 
@@ -310,9 +308,9 @@ public class QueryEngine {
     * Swaps all occurrences of PropertyPaths in given expression tree (the HAVING clause) with new PropertyPaths according to the mapping
     * found in {@code columns} map.
     */
-   private BooleanExpr swapVariables(final BooleanExpr expr, final String targetEntityName,
-                                     final LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns) {
-      final ObjectPropertyHelper<?> propertyHelper = getMatcher().getPropertyHelper();
+   private BooleanExpr swapVariables(BooleanExpr expr, String targetEntityName,
+                                     LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns,
+                                     ObjectPropertyHelper<?> propertyHelper) {
       class PropertyReplacer extends ExprVisitor {
 
          @Override
@@ -631,9 +629,11 @@ public class QueryEngine {
    /**
     * Make a new FilterParsingResult after normalizing the query. This FilterParsingResult is not supposed to have grouping/aggregation.
     */
-   private FilterParsingResult<?> makeFilterParsingResult(FilterParsingResult<?> parsingResult, BooleanExpr normalizedWhereClause, PropertyPath[] projection, Class<?>[] projectedTypes, SortField[] sortFields) {
+   private FilterParsingResult<?> makeFilterParsingResult(FilterParsingResult<?> parsingResult, BooleanExpr normalizedWhereClause,
+                                                          PropertyPath[] projection, Class<?>[] projectedTypes, SortField[] sortFields) {
       String jpaQuery = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), projection, normalizedWhereClause, sortFields);
-      return new FilterParsingResult(jpaQuery, parsingResult.getParameterNames(), normalizedWhereClause, null,
+      return new FilterParsingResult(jpaQuery, parsingResult.getParameterNames(),
+            normalizedWhereClause, null,
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
             projection, projectedTypes, null, sortFields);
    }
@@ -656,11 +656,11 @@ public class QueryEngine {
          KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(jpqlString, FilterParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
-            parsingResult = getMatcher().getParser().parse(jpqlString);
+            parsingResult = getMatcher().getParser().parse(jpqlString, getMatcher().getPropertyHelper());
             queryCache.put(queryCacheKey, parsingResult);
          }
       } else {
-         parsingResult = getMatcher().getParser().parse(jpqlString);
+         parsingResult = getMatcher().getParser().parse(jpqlString, getMatcher().getPropertyHelper());
       }
       return parsingResult;
    }
@@ -684,7 +684,7 @@ public class QueryEngine {
       return new HibernateSearchIndexedFieldProvider(getSearchFactory(), (Class<?>) parsingResult.getTargetEntityMetadata());
    }
 
-   protected JPAFilterAndConverter makeFilter(String jpaQuery, Map<String, Object> namedParameters) {
+   protected final JPAFilterAndConverter createAndWireFilter(String jpaQuery, Map<String, Object> namedParameters) {
       final JPAFilterAndConverter filter = createFilter(jpaQuery, namedParameters);
 
       SecurityActions.doPrivileged(() -> {
@@ -715,7 +715,7 @@ public class QueryEngine {
 
       LuceneQueryParsingResult luceneParsingResult = transform(filterParsingResult, namedParameters);
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
-      CacheQuery cacheQuery = getSearchManager().getQuery(luceneQuery, getTargetedClass(luceneParsingResult));
+      CacheQuery cacheQuery = getSearchManager().getQuery(luceneQuery, getTargetedClass(filterParsingResult));
 
       if (luceneParsingResult.getSort() != null) {
          cacheQuery = cacheQuery.sort(luceneParsingResult.getSort());
@@ -737,20 +737,27 @@ public class QueryEngine {
       return query;
    }
 
-   protected Class<?> getTargetedClass(LuceneQueryParsingResult<?> parsingResult) {
+   protected Class<?> getTargetedClass(FilterParsingResult<?> parsingResult) {
       return (Class<?>) parsingResult.getTargetEntityMetadata();
    }
 
-   //todo [anistor] we could cache the result of the transformation if there are no parameters
-   protected LuceneQueryParsingResult<?> transform(FilterParsingResult<?> parsingResult, Map<String, Object> namedParameters) {
-      EntityNamesResolver entityNamesResolver = entityName -> {
-         try {
-            return Util.loadClassStrict(entityName, null);
-         } catch (ClassNotFoundException e) {
-            return null;
+   private <TypeMetadata> LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
+      LuceneQueryParsingResult<TypeMetadata> luceneParsingResult;
+      if (queryCache != null && parsingResult.getParameterNames().isEmpty()) {
+         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<>(parsingResult.getJpaQuery(), LuceneQueryParsingResult.class);
+         luceneParsingResult = queryCache.get(queryCacheKey);
+         if (luceneParsingResult == null) {
+            luceneParsingResult = createLuceneMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
+            queryCache.put(queryCacheKey, luceneParsingResult);
          }
-      };
-      HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(getSearchFactory(), entityNamesResolver, null);
-      return JPALuceneTransformer.transform(parsingResult, getSearchFactory(), entityNamesResolver, propertyHelper::getDefaultFieldBridge, namedParameters);
+      } else {
+         luceneParsingResult = createLuceneMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
+      }
+      return luceneParsingResult;
+   }
+
+   protected LuceneQueryMaker createLuceneMaker() {
+      HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(getSearchFactory(), getMatcher().getPropertyHelper().getEntityNamesResolver(), null);
+      return new LuceneQueryMaker(getSearchFactory(), propertyHelper, null);
    }
 }

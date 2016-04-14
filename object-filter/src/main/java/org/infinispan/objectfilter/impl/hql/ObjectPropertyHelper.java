@@ -24,6 +24,9 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
 
    private static final Log log = Logger.getMessageLogger(Log.class, ObjectPropertyHelper.class.getName());
 
+   /**
+    * A map of all types that we consider to be 'primitives'. They are mapped to the equivalent 'boxed' type.
+    */
    protected static final Map<Class<?>, Class<?>> primitives = new HashMap<>();
 
    static {
@@ -51,7 +54,14 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
    protected final EntityNamesResolver entityNamesResolver;
 
    protected ObjectPropertyHelper(EntityNamesResolver entityNamesResolver) {
+      if (entityNamesResolver == null) {
+         throw new IllegalArgumentException("The EntityNamesResolver argument cannot be null");
+      }
       this.entityNamesResolver = entityNamesResolver;
+   }
+
+   public EntityNamesResolver getEntityNamesResolver() {
+      return entityNamesResolver;
    }
 
    /**
@@ -155,14 +165,23 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
    public abstract boolean isRepeatedProperty(String entityType, String[] propertyPath);
 
    /**
-    * This is an alternative to {@link EntityNamesResolver#getClassFromName}, because not everything is a {@link
-    * Class}.
+    * This is an alternative to {@link EntityNamesResolver#getClassFromName}, because the metadata may not always be a
+    * {@link Class}.
     *
     * @param targetTypeName the fully qualified type name
     * @return the metadata representation
     */
    public abstract TypeMetadata getEntityMetadata(String targetTypeName);
 
+   /**
+    * Converts the given property value into the type expected by the query backend.
+    *
+    * @param entityType   the entity type owning the property
+    * @param propertyPath the path from the entity to the property (will only contain more than one element in case the
+    *                     entity is hosted on an embedded entity).
+    * @param value        the value of the property
+    * @return the property value, converted into the type expected by the query backend
+    */
    @Override
    public Object convertToBackendType(String entityType, List<String> propertyPath, Object value) {
       return value;

@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl.hql;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.test.model.MarshallerRegistration;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -20,20 +19,20 @@ import static org.junit.Assert.assertNull;
  */
 public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
 
-   @Override
-   protected JPQLParser<Descriptor> createParser() throws IOException {
+   public ProtobufParsingTest() throws IOException {
+      super(createPropertyHelper());
+   }
+
+   private static ObjectPropertyHelper<Descriptor> createPropertyHelper() throws IOException {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
       MarshallerRegistration.registerMarshallers(serCtx);
-
-      EntityNamesResolver entityNamesResolver = new ProtobufEntityNamesResolver(serCtx);
-      ProtobufPropertyHelper propertyHelper = new ProtobufPropertyHelper(entityNamesResolver, serCtx);
-      return new JPQLParser<>(entityNamesResolver, propertyHelper);
+      return new ProtobufPropertyHelper(new ProtobufEntityNamesResolver(serCtx), serCtx);
    }
 
    @Test
    public void testParsingResult() throws Exception {
       String jpaQuery = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
-      FilterParsingResult<Descriptor> result = parser.parse(jpaQuery);
+      FilterParsingResult<Descriptor> result = parser.parse(jpaQuery, propertyHelper);
 
       assertNotNull(result.getWhereClause());
 

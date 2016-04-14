@@ -5,7 +5,6 @@ import org.hibernate.hql.ast.common.JoinType;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PathedPropertyReference;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PathedPropertyReferenceSource;
 import org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath;
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.QueryResolverDelegate;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.util.StringHelper;
@@ -25,17 +24,13 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    private static final Log log = Logger.getMessageLogger(Log.class, FilterQueryResolverDelegate.class.getName());
 
-   protected final Map<String, String> aliasToEntityType = new HashMap<>();
+   private final Map<String, String> aliasToEntityType = new HashMap<>();
 
-   protected final Map<String, PropertyPath> aliasToPropertyPath = new HashMap<>();
+   private final Map<String, PropertyPath> aliasToPropertyPath = new HashMap<>();
 
    protected final ObjectPropertyHelper propertyHelper;
 
-   protected final EntityNamesResolver entityNamesResolver;
-
-   protected String targetType;
-
-   protected Class<?> targetClass;
+   private String targetType;
 
    protected String alias;
 
@@ -45,8 +40,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    protected Status status;
 
-   public FilterQueryResolverDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper propertyHelper) {
-      this.entityNamesResolver = entityNamesResolver;
+   protected FilterQueryResolverDelegate(ObjectPropertyHelper propertyHelper) {
       this.propertyHelper = propertyHelper;
    }
 
@@ -62,7 +56,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
          throw new IllegalStateException("Can't target multiple types: " + targetType + " already selected before " + entityName);
       }
       targetType = entityName;
-      targetClass = entityNamesResolver.getClassFromName(entityName);
+      Class<?> targetClass = propertyHelper.getEntityNamesResolver().getClassFromName(entityName);
       if (targetClass == null) {
          throw new IllegalStateException("Unknown entity name " + entityName);
       }
@@ -109,7 +103,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
          FilterTypeDescriptor sourceType = (FilterTypeDescriptor) propertyPath.getNodes().get(0).getType();
          List<String> resolveAlias = resolveAlias(propertyPath);
 
-         return new PathedPropertyReference(aliasText, new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(), resolveAlias, propertyHelper), true);
+         return new PathedPropertyReference(aliasText, new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(), propertyHelper, resolveAlias), true);
       }
       throw log.getUnknownAliasException(aliasText);
    }
@@ -127,7 +121,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
          return new PathedPropertyReference(StringHelper.join(propertyPath.getNodeNamesWithoutAlias()), null, false);
       }
 
-      if (entityNamesResolver.getClassFromName(entityNameForAlias) == null) {
+      if (propertyHelper.getEntityNamesResolver().getClassFromName(entityNameForAlias) == null) {
          throw new IllegalStateException("Unknown entity name " + entityNameForAlias);
       }
 
@@ -144,7 +138,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
       List<String> newPath = resolveAlias(path);
       newPath.add(propertyName);
-      return new PathedPropertyReference(propertyName, new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(), newPath, propertyHelper), false);
+      return new PathedPropertyReference(propertyName, new FilterEmbeddedEntityTypeDescriptor(sourceType.getEntityType(), propertyHelper, newPath), false);
    }
 
    private List<String> resolveAlias(PropertyPath path) {
@@ -198,7 +192,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
       if (type.hasEmbeddedProperty(propertyName)) {
          List<String> newPath = new LinkedList<>(path);
          newPath.add(propertyName);
-         propType = new FilterEmbeddedEntityTypeDescriptor(type.getEntityType(), newPath, propertyHelper);
+         propType = new FilterEmbeddedEntityTypeDescriptor(type.getEntityType(), propertyHelper, newPath);
       } else {
          propType = new FilterPropertyTypeDescriptor();
       }

@@ -1,6 +1,5 @@
 package org.infinispan.objectfilter.impl;
 
-import org.infinispan.objectfilter.impl.hql.JPQLParser;
 import org.infinispan.objectfilter.impl.hql.ProtobufEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ProtobufPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
@@ -21,18 +20,12 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
 
    private final SerializationContext serializationContext;
 
-   private final ProtobufPropertyHelper propertyHelper;
-
    private final Descriptor wrappedMessageDescriptor;
 
-   private final JPQLParser<Descriptor> parser;
-
    public ProtobufMatcher(SerializationContext serializationContext) {
+      super(new ProtobufPropertyHelper(new ProtobufEntityNamesResolver(serializationContext), serializationContext));
       this.serializationContext = serializationContext;
-      wrappedMessageDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
-      ProtobufEntityNamesResolver entityNamesResolver = new ProtobufEntityNamesResolver(serializationContext);
-      propertyHelper = new ProtobufPropertyHelper(entityNamesResolver, serializationContext);
-      parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
+      this.wrappedMessageDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
    }
 
    @Override
@@ -57,16 +50,6 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    @Override
    protected FilterRegistry<Descriptor, FieldDescriptor, Integer> getFilterRegistryForType(Descriptor entityType) {
       return filtersByTypeName.get(entityType.getFullName());
-   }
-
-   @Override
-   public JPQLParser<Descriptor> getParser() {
-      return parser;
-   }
-
-   @Override
-   public ProtobufPropertyHelper getPropertyHelper() {
-      return propertyHelper;
    }
 
    @Override

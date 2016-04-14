@@ -1,7 +1,5 @@
 package org.infinispan.objectfilter.impl;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.objectfilter.impl.hql.JPQLParser;
 import org.infinispan.objectfilter.impl.hql.RowPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.RowMatcherEvalContext;
 
@@ -9,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * A matcher for projection rows. This matcher is not stateless so it cannot be reused.
+ *
  * @author anistor@redhat.com
  * @since 8.0
  */
@@ -16,15 +16,9 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
 
    private final RowPropertyHelper.RowMetadata rowMetadata;
 
-   private final RowPropertyHelper propertyHelper;
-
-   private final JPQLParser<RowPropertyHelper.RowMetadata> parser;
-
    public RowMatcher(RowPropertyHelper.ColumnMetadata[] columns) {
-      rowMetadata = new RowPropertyHelper.RowMetadata(columns);
-      propertyHelper = new RowPropertyHelper(rowMetadata);
-      EntityNamesResolver entityNamesResolver = entityName -> Object[].class;
-      parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
+      super(new RowPropertyHelper(columns));
+      rowMetadata = ((RowPropertyHelper) propertyHelper).getRowMetadata();
    }
 
    @Override
@@ -50,16 +44,6 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
    @Override
    protected FilterRegistry<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> getFilterRegistryForType(RowPropertyHelper.RowMetadata entityType) {
       return filtersByType.get(entityType);
-   }
-
-   @Override
-   public JPQLParser<RowPropertyHelper.RowMetadata> getParser() {
-      return parser;
-   }
-
-   @Override
-   public RowPropertyHelper getPropertyHelper() {
-      return propertyHelper;
    }
 
    @Override

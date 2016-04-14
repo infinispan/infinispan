@@ -42,7 +42,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
    private JPAFilterAndConverter createFilter() {
       // filter is created first time only
       if (filter == null) {
-         filter = queryEngine.makeFilter(jpaQuery, namedParameters);
+         filter = queryEngine.createAndWireFilter(jpaQuery, namedParameters);
 
          // force early validation!
          filter.getObjectFilter();

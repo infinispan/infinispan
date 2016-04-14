@@ -35,7 +35,7 @@ public final class ConstantValueExpr implements ValueExpr {
 
       @Override
       public int compareTo(Object o) {
-         return 0;  //todo [anistor] hack!
+         return name.compareTo(((ParamPlaceholder) o).getName());
       }
 
       @Override

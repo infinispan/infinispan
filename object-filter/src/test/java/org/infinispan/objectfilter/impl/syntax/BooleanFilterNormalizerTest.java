@@ -17,11 +17,11 @@ public class BooleanFilterNormalizerTest {
 
    private final EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
    private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
-   private final JPQLParser<Class<?>> parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
+   private final JPQLParser<Class<?>> parser = new JPQLParser<>();
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    private void assertExpectedTree(String jpaQuery, String expectedExprStr) {
-      FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery);
+      FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery, propertyHelper);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       assertEquals(expectedExprStr, expr.toString());
    }

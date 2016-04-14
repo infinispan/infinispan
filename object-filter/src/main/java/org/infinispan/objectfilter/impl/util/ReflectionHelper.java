@@ -251,7 +251,7 @@ public final class ReflectionHelper {
          throw new IllegalArgumentException("Property name cannot be null or empty");
       }
       if (propertyName.contains(".")) {
-         throw new IllegalArgumentException("The argument cannot be a nested property");
+         throw new IllegalArgumentException("The argument cannot be a nested property name");
       }
 
       // try getter method access

@@ -105,7 +105,7 @@ public class PerfTest {
    }
 
    protected Matcher createMatcher() throws Exception {
-      return new ReflectionMatcher(null);
+      return new ReflectionMatcher((ClassLoader) null);
    }
 
    protected Object createPerson1() throws Exception {
