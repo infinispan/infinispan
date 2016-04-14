@@ -3055,7 +3055,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
             .build();
 
       List<Object[]> list = q.list();
-      assertEquals(list.get(0)[0], "Bond Street");
+      assertEquals("Bond Street", list.get(0)[0]);
    }
 
    @Test
