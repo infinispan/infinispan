@@ -1,21 +1,20 @@
 package org.infinispan.commons.util;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 /**
  * SslContextFactory.
@@ -27,13 +26,17 @@ public class SslContextFactory {
    private static final Log log = LogFactory.getLog(SslContextFactory.class);
 
    public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, String trustStoreFileName, char[] trustStorePassword) {
+      return getContext(keyStoreFileName, keyStorePassword, null, trustStoreFileName, trustStorePassword);
+   }
+
+   public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword, String trustStoreFileName, char[] trustStorePassword) {
       try {
          KeyManager[] keyManagers = null;
          if (keyStoreFileName != null) {
             KeyStore ks = KeyStore.getInstance("JKS");
             loadKeyStore(ks, keyStoreFileName, keyStorePassword);
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(ks, keyStorePassword);
+            kmf.init(ks, keyStoreCertificatePassword == null ? keyStorePassword : keyStoreCertificatePassword);
             keyManagers = kmf.getKeyManagers();
          }
 

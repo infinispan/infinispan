@@ -13,16 +13,23 @@ public class SslConfiguration {
    private final boolean requireClientAuth;
    private final String keyStoreFileName;
    private final char[] keyStorePassword;
+   private final char[] keyStoreCertificatePassword;
    private final SSLContext sslContext;
    private final String trustStoreFileName;
    private final char[] trustStorePassword;
 
    SslConfiguration(boolean enabled, boolean requireClientAuth, String keyStoreFileName, char[] keyStorePassword, SSLContext sslContext, String trustStoreFileName,
+                    char[] trustStorePassword) {
+      this(enabled, requireClientAuth, keyStoreFileName, keyStorePassword, null, sslContext, trustStoreFileName, trustStorePassword);
+   }
+
+   SslConfiguration(boolean enabled, boolean requireClientAuth, String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword, SSLContext sslContext, String trustStoreFileName,
          char[] trustStorePassword) {
       this.enabled = enabled;
       this.requireClientAuth = requireClientAuth;
       this.keyStoreFileName = keyStoreFileName;
       this.keyStorePassword = keyStorePassword;
+      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
       this.sslContext = sslContext;
       this.trustStoreFileName = trustStoreFileName;
       this.trustStorePassword = trustStorePassword;
@@ -42,6 +49,10 @@ public class SslConfiguration {
 
    public char[] keyStorePassword() {
       return keyStorePassword;
+   }
+
+   public char[] keyStoreCertificatePassword() {
+      return keyStoreCertificatePassword;
    }
 
    public SSLContext sslContext() {

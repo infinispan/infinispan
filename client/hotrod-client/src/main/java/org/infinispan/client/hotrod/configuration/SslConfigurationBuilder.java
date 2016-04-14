@@ -20,6 +20,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private boolean enabled = false;
    private String keyStoreFileName;
    private char[] keyStorePassword;
+   private char[] keyStoreCertificatePassword;
    private String trustStoreFileName;
    private char[] trustStorePassword;
    private SSLContext sslContext;
@@ -72,6 +73,16 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return this;
    }
 
+   /**
+    * Specifies the password needed to access private key associated with certificate stored in specified
+    * {@link #keyStoreFileName(String)}. If password is not specified, password provided in
+    * {@link #keyStorePassword(String)} will be used.
+    */
+   public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
+      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
+      return this;
+   }
+
    public SslConfigurationBuilder sslContext(SSLContext sslContext) {
       this.sslContext = sslContext;
       return this;
@@ -120,7 +131,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
    @Override
    public SslConfiguration create() {
-      return new SslConfiguration(enabled, keyStoreFileName, keyStorePassword, sslContext, trustStoreFileName, trustStorePassword);
+      return new SslConfiguration(enabled, keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, sslContext, trustStoreFileName, trustStorePassword);
    }
 
    @Override
@@ -128,6 +139,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.enabled = template.enabled();
       this.keyStoreFileName = template.keyStoreFileName();
       this.keyStorePassword = template.keyStorePassword();
+      this.keyStoreCertificatePassword = template.keyStoreCertificatePassword();
       this.sslContext = template.sslContext();
       this.trustStoreFileName = template.trustStoreFileName();
       this.trustStorePassword = template.trustStorePassword();
