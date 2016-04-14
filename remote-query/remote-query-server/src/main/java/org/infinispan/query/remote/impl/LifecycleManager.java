@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl;
 
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -112,26 +113,12 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {
-         ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-         SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
-         cr.registerComponent(new ProtobufMatcher(serCtx), ProtobufMatcher.class);
-
-         boolean isCompatMode = cfg.compatibility().enabled();
-
-         if (isCompatMode) {
-            cr.registerComponent(new CompatibilityReflectionMatcher(serCtx), CompatibilityReflectionMatcher.class);
-         }
-
          boolean isIndexed = cfg.indexing().index().isEnabled();
-
+         boolean isCompatMode = cfg.compatibility().enabled();
          if (isIndexed && !isCompatMode) {
             log.infof("Registering RemoteValueWrapperInterceptor for cache %s", cacheName);
             createRemoteValueWrapperInterceptor(cr, cfg);
          }
-
-         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode, serCtx);
-         cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
       }
    }
 
@@ -164,14 +151,37 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
 
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
-      Configuration configuration = cr.getComponent(Configuration.class);
-      boolean remoteValueWrappingEnabled = configuration.indexing().index().isEnabled() && !configuration.compatibility().enabled();
-      if (remoteValueWrappingEnabled) {
-         if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
-            throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
+      InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      if (!icr.isInternalCache(cacheName)) {
+         Configuration cfg = cr.getComponent(Configuration.class);
+         boolean isIndexed = cfg.indexing().index().isEnabled();
+         boolean isCompatMode = cfg.compatibility().enabled();
+         if (isIndexed && !isCompatMode) {
+            if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
+               throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
+            }
+         } else if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
+            throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
          }
-      } else if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
-         throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
+
+         ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
+         cr.registerComponent(new ProtobufMatcher(serCtx), ProtobufMatcher.class);
+
+         if (isCompatMode) {
+            SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
+            CompatibilityReflectionMatcher compatibilityReflectionMatcher;
+            if (searchFactory == null) {
+               compatibilityReflectionMatcher = new CompatibilityReflectionMatcher(serCtx);
+            } else {
+               compatibilityReflectionMatcher = new CompatibilityReflectionMatcher(serCtx, searchFactory);
+            }
+            cr.registerComponent(compatibilityReflectionMatcher, CompatibilityReflectionMatcher.class);
+         }
+
+         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
+         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode, serCtx);
+         cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
       }
    }
 

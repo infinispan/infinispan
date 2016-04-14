@@ -70,7 +70,7 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
       }
 
       @Override
-      public List<Integer> translatePropertyPath(String[] path) {
+      public List<Integer> mapPropertyNamePathToFieldIdPath(String[] path) {
          if (path.length > 1) {
             throw new IllegalStateException("Nested attributes are not supported");
          }

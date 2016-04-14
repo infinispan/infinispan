@@ -10,7 +10,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.query.dsl.embedded.impl.jpalucene.LuceneQueryMaker;
+import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.logging.Log;
 

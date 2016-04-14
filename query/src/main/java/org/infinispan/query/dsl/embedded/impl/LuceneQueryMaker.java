@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.impl.jpalucene;
+package org.infinispan.query.dsl.embedded.impl;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;

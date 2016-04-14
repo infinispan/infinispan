@@ -3,6 +3,8 @@ package org.infinispan.objectfilter.impl;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
+import org.infinispan.objectfilter.impl.logging.Log;
+import org.jboss.logging.Logger;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,6 +17,8 @@ import java.util.Set;
  */
 abstract class ObjectFilterBase<TypeMetadata> implements ObjectFilter {
 
+   private static final Log log = Logger.getMessageLogger(Log.class, ObjectFilterBase.class.getName());
+
    protected final FilterParsingResult<TypeMetadata> parsingResult;
 
    protected final Map<String, Object> namedParameters;
@@ -22,6 +26,17 @@ abstract class ObjectFilterBase<TypeMetadata> implements ObjectFilter {
    protected ObjectFilterBase(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
       this.parsingResult = parsingResult;
       this.namedParameters = namedParameters != null ? Collections.unmodifiableMap(namedParameters) : null;
+   }
+
+   protected void validateParameters(Map<String, Object> namedParameters) {
+      if (namedParameters == null) {
+         throw log.getNamedParametersCannotBeNull();
+      }
+      for (String paramName : getParameterNames()) {
+         if (namedParameters.get(paramName) == null) {
+            throw new IllegalArgumentException("Query parameter '" + paramName + "' was not set");
+         }
+      }
    }
 
    @Override

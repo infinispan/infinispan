@@ -4,7 +4,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.TermQuery;
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.objectfilter.impl.BaseMatcher;
@@ -14,11 +13,10 @@ import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.LuceneQueryMaker;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.ResultProcessor;
 import org.infinispan.query.dsl.embedded.impl.RowProcessor;
-import org.infinispan.query.dsl.embedded.impl.jpalucene.HibernateSearchPropertyHelper;
-import org.infinispan.query.dsl.embedded.impl.jpalucene.LuceneQueryMaker;
 import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.impl.logging.Log;
@@ -36,14 +34,11 @@ final class RemoteQueryEngine extends QueryEngine {
 
    private final boolean isCompatMode;
 
-   private final SerializationContext serCtx;
-
    private final ProtobufFieldBridgeProvider protobufFieldBridgeProvider;
 
    public RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, boolean isCompatMode, SerializationContext serCtx) {
       super(cache, isIndexed);
       this.isCompatMode = isCompatMode;
-      this.serCtx = serCtx;
       protobufFieldBridgeProvider = new ProtobufFieldBridgeProvider(serCtx);
    }
 
@@ -121,18 +116,6 @@ final class RemoteQueryEngine extends QueryEngine {
 
    @Override
    protected LuceneQueryMaker createLuceneMaker() {
-      if (isCompatMode) {
-         EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
-            @Override
-            public Class<?> getClassFromName(String entityName) {
-               return serCtx.canMarshall(entityName) ? serCtx.getMarshaller(entityName).getJavaClass() : null;
-            }
-         };
-
-         HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(getSearchFactory(), entityNamesResolver, null);
-         return new LuceneQueryMaker(getSearchFactory(), propertyHelper, null);
-      } else {
-         return new LuceneQueryMaker(getSearchFactory(), null, protobufFieldBridgeProvider);
-      }
+      return isCompatMode ? super.createLuceneMaker() : new LuceneQueryMaker(getSearchFactory(), null, protobufFieldBridgeProvider);
    }
 }

@@ -6,6 +6,8 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 
+import java.util.function.BiFunction;
+
 /**
  * Tests if a field is indexed by examining the Protobuf metadata.
  *
@@ -16,36 +18,24 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
 
    private final Descriptor messageDescriptor;
 
-   public ProtobufIndexedFieldProvider(Descriptor messageDescriptor) {
+   ProtobufIndexedFieldProvider(Descriptor messageDescriptor) {
+      if (messageDescriptor == null) {
+         throw new IllegalArgumentException("argument cannot be null");
+      }
       this.messageDescriptor = messageDescriptor;
    }
 
    @Override
    public boolean isIndexed(String[] propertyPath) {
-      Descriptor md = messageDescriptor;
-      int i = 0;
-      for (String p : propertyPath) {
-         i++;
-         FieldDescriptor field = md.findFieldByName(p);
-         if (field == null) {
-            break;
-         }
-         if (field.getJavaType() == JavaType.MESSAGE) {
-            md = field.getMessageType();
-         } else {
-            if (i == propertyPath.length) {
-               IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-               return indexingMetadata == null || indexingMetadata.isFieldIndexed(field.getNumber());
-            } else {
-               break;
-            }
-         }
-      }
-      return false;
+      return getMetadata(propertyPath, IndexingMetadata::isFieldIndexed);
    }
 
    @Override
    public boolean isStored(String[] propertyPath) {
+      return getMetadata(propertyPath, IndexingMetadata::isFieldStored);
+   }
+
+   private boolean getMetadata(String[] propertyPath, BiFunction<IndexingMetadata, Integer, Boolean> metadataFun) {
       Descriptor md = messageDescriptor;
       int i = 0;
       for (String p : propertyPath) {
@@ -59,7 +49,7 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
          } else {
             if (i == propertyPath.length) {
                IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-               return indexingMetadata == null || indexingMetadata.isFieldStored(field.getNumber());
+               return indexingMetadata == null || metadataFun.apply(indexingMetadata, field.getNumber());
             } else {
                break;
             }

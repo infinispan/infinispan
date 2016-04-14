@@ -1,5 +1,8 @@
 package org.infinispan.objectfilter.impl.hql;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author anistor@redhat.com
  * @since 8.0
@@ -73,6 +76,22 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
    @Override
    public RowMetadata getEntityMetadata(String targetTypeName) {
       return rowMetadata;
+   }
+
+   @Override
+   public List<?> mapPropertyNamePathToFieldIdPath(RowMetadata type, String[] propertyPath) {
+      if (propertyPath.length > 1) {
+         throw new IllegalStateException("Nested attributes are not supported");
+      }
+
+      String columnName = propertyPath[0];
+      for (RowPropertyHelper.ColumnMetadata c : rowMetadata.getColumns()) {
+         if (c.getColumnName().equals(columnName)) {
+            return Collections.singletonList(c.getColumnIndex());
+         }
+      }
+
+      throw new IllegalArgumentException("Column not found : " + columnName);
    }
 
    @Override
