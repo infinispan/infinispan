@@ -2,7 +2,7 @@
 <!--  See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
 <config>
    <subsystems>
-      <subsystem>logging.xml</subsystem>
+      <subsystem>infinispan-logging.xml</subsystem>
       <subsystem>deployment-scanner.xml</subsystem>
       <subsystem>datasources.xml</subsystem>
       <subsystem>io.xml</subsystem>

@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.transport
 import io.netty.channel.{Channel, ChannelOutboundHandler}
 import io.netty.util.concurrent.{DefaultEventExecutorGroup, DefaultThreadFactory}
 import org.infinispan.server.core.transport.{NettyChannelInitializer, NettyTransport}
+import org.infinispan.server.hotrod.logging.{LoggingContextHandler, HotRodLoggingHandler}
 import org.infinispan.server.hotrod.{HotRodExceptionHandler, AuthenticationHandler, ContextHandler, HotRodServer}
 
 /**
@@ -25,5 +26,9 @@ class HotRodChannelInitializer(val server: HotRodServer, transport: => NettyTran
       }
       ch.pipeline.addLast(executionGroup, "handler", new ContextHandler(server, transport))
       ch.pipeline.addLast(executionGroup, "exception", new HotRodExceptionHandler)
+
+      // Logging handlers
+      ch.pipeline.addBefore("decoder", "logging", new HotRodLoggingHandler)
+      ch.pipeline.addAfter("encoder", "logging-context", LoggingContextHandler.getInstance);
    }
 }

@@ -28,9 +28,9 @@ public class HotRodExceptionHandler extends ChannelInboundHandlerAdapter {
       }
       if (t instanceof HotRodException) {
          // HotRodException is already translated to response
-         ch.writeAndFlush(((HotRodException) t).response(), ch.voidPromise());
+         ch.writeAndFlush(((HotRodException) t).response());
       } else {
-         ch.writeAndFlush(decodeCtx.createExceptionResponse(t), ch.voidPromise());
+         ch.writeAndFlush(decodeCtx.createExceptionResponse(t));
       }
    }
 }

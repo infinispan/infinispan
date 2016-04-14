@@ -19,8 +19,6 @@ import java.time.Instant;
  */
 public class StatsChannelHandler extends ChannelDuplexHandler {
    private final NettyTransport transport;
-   public static AttributeKey<Integer> bytesRead = AttributeKey.valueOf("__bytesRead");
-   public static AttributeKey<Instant> startInstant = AttributeKey.valueOf("__startInstant");
 
    public StatsChannelHandler(NettyTransport transport) {
       this.transport = transport;
@@ -28,14 +26,7 @@ public class StatsChannelHandler extends ChannelDuplexHandler {
 
    @Override
    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-      int readable = getByteSize(msg);
-
-      Attribute<Integer> count = ctx.channel().attr(bytesRead);
-      count.set(readable);
-      Attribute<Instant> start = ctx.channel().attr(startInstant);
-      start.set(Instant.now());
-
-      transport.updateTotalBytesRead(readable);
+      transport.updateTotalBytesRead(getByteSize(msg));
       super.channelRead(ctx, msg);
    }
 
@@ -47,7 +38,9 @@ public class StatsChannelHandler extends ChannelDuplexHandler {
 
    @Override
    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-      transport.updateTotalBytesWritten(getByteSize(msg));
+      int writable = getByteSize(msg);
+
+      transport.updateTotalBytesWritten(writable);
       super.write(ctx, msg, promise);
    }
 

@@ -1,8 +1,5 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.server.core.Operation._
-import scala.annotation.switch
-
 /**
  * @author Galder Zamarreño
  */
@@ -56,5 +53,46 @@ object OperationResponse extends Enumeration {
       OperationResponseJava.operationToResponse(request).asInstanceOf[OperationResponse]
    }
 
+   def fromResponse(response: OperationResponse): HotRodOperation = {
+      response match {
+         case PutResponse => HotRodOperation.PutRequest
+         case GetResponse => HotRodOperation.GetRequest
+         case PutIfAbsentResponse => HotRodOperation.PutIfAbsentRequest
+         case ReplaceResponse => HotRodOperation.ReplaceRequest
+         case ReplaceIfUnmodifiedResponse => HotRodOperation.ReplaceIfUnmodifiedRequest
+         case RemoveResponse => HotRodOperation.RemoveRequest
+         case RemoveIfUnmodifiedResponse => HotRodOperation.RemoveIfUnmodifiedRequest
+         case ContainsKeyResponse => HotRodOperation.ContainsKeyRequest
+         case GetWithVersionResponse => HotRodOperation.GetWithVersionRequest
+         case ClearResponse => HotRodOperation.ClearRequest
+         case StatsResponse => HotRodOperation.StatsRequest
+         case PingResponse => HotRodOperation.PingRequest
+         case BulkGetResponse => HotRodOperation.BulkGetRequest
+
+         case GetWithMetadataResponse => HotRodOperation.GetWithMetadataRequest
+         case BulkGetKeysResponse => HotRodOperation.BulkGetKeysRequest
+
+            // 1.3
+         case QueryResponse => HotRodOperation.QueryRequest
+
+            // 2.0
+         case AuthMechListResponse => HotRodOperation.AuthMechListRequest
+         case AuthResponse => HotRodOperation.AuthRequest
+         case AddClientListenerResponse => HotRodOperation.AddClientListenerRequest
+         case RemoveClientListenerResponse => HotRodOperation.RemoveClientListenerRequest
+         case SizeResponse => HotRodOperation.SizeRequest
+
+            // 2.1
+         case ExecResponse => HotRodOperation.ExecRequest
+         case PutAllResponse => HotRodOperation.PutAllRequest
+         case GetAllResponse => HotRodOperation.GetAllRequest
+
+            // 2.3
+         case IterationStartResponse => HotRodOperation.IterationStartRequest
+         case IterationNextResponse => HotRodOperation.IterationNextRequest
+         case IterationEndResponse => HotRodOperation.IterationEndRequest
+         case _ => null
+      }
+   }
 }
 
