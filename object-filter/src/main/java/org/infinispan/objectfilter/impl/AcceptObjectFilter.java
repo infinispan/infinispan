@@ -30,10 +30,7 @@ final class AcceptObjectFilter<TypeMetadata, AttributeMetadata, AttributeId exte
 
    @Override
    public ObjectFilter withParameters(Map<String, Object> namedParameters) {
-      if (namedParameters == null) {
-         throw new IllegalArgumentException("namedParameters argument cannot be null");
-      }
-      //todo validate params
+      validateParameters(namedParameters);
       return new AcceptObjectFilter<>(namedParameters, matcher, metadataAdapter, parsingResult);
    }
 

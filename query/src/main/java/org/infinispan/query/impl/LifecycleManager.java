@@ -1,13 +1,5 @@
 package org.infinispan.query.impl;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
@@ -37,14 +29,19 @@ import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
+import org.infinispan.query.continuous.impl.ContinuousQueryResult;
+import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
+import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
 import org.infinispan.query.dsl.embedded.impl.JPACacheEventFilterConverter;
-import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
@@ -62,15 +59,19 @@ import org.infinispan.query.impl.externalizers.LuceneTopFieldDocsExternalizer;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.impl.massindex.IndexWorker;
 import org.infinispan.query.logging.Log;
-import org.infinispan.query.continuous.impl.ContinuousQueryResult;
-import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
-import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import static org.infinispan.query.impl.IndexPropertyInspector.getDataCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheName;
@@ -101,18 +102,13 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
-         ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
-         cr.registerComponent(new ReflectionMatcher(classLoader), ReflectionMatcher.class);
-
          boolean isIndexed = cfg.indexing().index().isEnabled();
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
 
-         QueryEngine queryEngine = new QueryEngine(cache, isIndexed);
-         cr.registerComponent(queryEngine, QueryEngine.class);
-
+         SearchIntegrator searchFactory = null;
          if (isIndexed) {
             log.registeringQueryInterceptor(cacheName);
-            SearchIntegrator searchFactory = getSearchFactory(cacheName, cfg.indexing(), cr);
+            searchFactory = getSearchFactory(cacheName, cfg.indexing(), cr);
             createQueryInterceptorIfNeeded(cr, cfg, searchFactory);
             addCacheDependencyIfNeeded(cacheName, cache.getCacheManager(), cfg.indexing());
 
@@ -125,7 +121,24 @@ public class LifecycleManager extends AbstractModuleLifecycle {
             queryBox.setCache(cache);
             cr.registerComponent(queryBox, QueryBox.class);
          }
+
+         registerMatcher(cr, searchFactory);
+
+         QueryEngine queryEngine = new QueryEngine(cache, isIndexed);
+         cr.registerComponent(queryEngine, QueryEngine.class);
       }
+   }
+
+   private void registerMatcher(ComponentRegistry cr, SearchIntegrator searchFactory) {
+      ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
+      ReflectionMatcher reflectionMatcher;
+      if (searchFactory == null) {
+         reflectionMatcher = new ReflectionMatcher(classLoader);
+      } else {
+         ReflectionEntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
+         reflectionMatcher = new ReflectionMatcher(new HibernateSearchPropertyHelper(searchFactory, entityNamesResolver));
+      }
+      cr.registerComponent(reflectionMatcher, ReflectionMatcher.class);
    }
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, IndexingConfiguration indexingConfiguration) {
@@ -187,13 +200,13 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       Configuration configuration = cr.getComponent(Configuration.class);
       IndexingConfiguration indexingConfiguration = configuration.indexing();
       if (!indexingConfiguration.index().isEnabled()) {
-         if ( verifyChainContainsQueryInterceptor(cr) ) {
-            throw new IllegalStateException( "It was NOT expected to find the Query interceptor registered in the InterceptorChain as indexing was disabled, but it was found" );
+         if (verifyChainContainsQueryInterceptor(cr)) {
+            throw new IllegalStateException("It was NOT expected to find the Query interceptor registered in the InterceptorChain as indexing was disabled, but it was found");
          }
          return;
       }
-      if ( ! verifyChainContainsQueryInterceptor(cr) ) {
-         throw new IllegalStateException( "It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found" );
+      if (!verifyChainContainsQueryInterceptor(cr)) {
+         throw new IllegalStateException("It was expected to find the Query interceptor registered in the InterceptorChain but it wasn't found");
       }
 
       SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);

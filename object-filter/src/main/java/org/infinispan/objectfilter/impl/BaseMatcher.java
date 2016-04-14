@@ -156,8 +156,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       }
 
       FieldAccumulator[] accumulators = acc != null ? acc.toArray(new FieldAccumulator[acc.size()]) : null;
-      return new ObjectFilterImpl<>(this, metadataAdapter, jpaQuery, parsingResult.getParameterNames(),
-            parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), accumulators);
+      return new ObjectFilterImpl<>(this, metadataAdapter, parsingResult, accumulators);
    }
 
    @Override

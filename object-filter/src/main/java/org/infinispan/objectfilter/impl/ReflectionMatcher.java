@@ -8,7 +8,6 @@ import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalCont
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 import java.beans.IntrospectionException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -56,15 +55,18 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
 
    @Override
    protected MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> createMetadataAdapter(Class<?> clazz) {
-      return new MetadataAdapterImpl(clazz);
+      return new MetadataAdapterImpl(clazz, propertyHelper);
    }
 
    private static class MetadataAdapterImpl implements MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> {
 
       private final Class<?> clazz;
 
-      MetadataAdapterImpl(Class<?> clazz) {
+      private final ObjectPropertyHelper<Class<?>> propertyHelper;
+
+      MetadataAdapterImpl(Class<?> clazz, ObjectPropertyHelper<Class<?>> propertyHelper) {
          this.clazz = clazz;
+         this.propertyHelper = propertyHelper;
       }
 
       @Override
@@ -78,8 +80,8 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
       }
 
       @Override
-      public List<String> translatePropertyPath(String[] path) {
-         return Arrays.asList(path);
+      public List<String> mapPropertyNamePathToFieldIdPath(String[] path) {
+         return (List<String>) propertyHelper.mapPropertyNamePathToFieldIdPath(clazz, path);
       }
 
       @Override

@@ -33,9 +33,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.impl.jpalucene.HibernateSearchPropertyHelper;
-import org.infinispan.query.dsl.embedded.impl.jpalucene.LuceneQueryMaker;
-import org.infinispan.query.dsl.embedded.impl.jpalucene.LuceneQueryParsingResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 import org.infinispan.query.impl.ComponentRegistryUtils;
@@ -681,7 +678,8 @@ public class QueryEngine {
    }
 
    protected BooleShannonExpansion.IndexedFieldProvider getIndexedFieldProvider(FilterParsingResult<?> parsingResult) {
-      return new HibernateSearchIndexedFieldProvider(getSearchFactory(), (Class<?>) parsingResult.getTargetEntityMetadata());
+      return isIndexed ? getMatcher().getPropertyHelper().getIndexedFieldProvider(parsingResult.getTargetEntityMetadata()) :
+            BooleShannonExpansion.IndexedFieldProvider.NO_INDEXING;
    }
 
    protected final JPAFilterAndConverter createAndWireFilter(String jpaQuery, Map<String, Object> namedParameters) {
@@ -757,7 +755,6 @@ public class QueryEngine {
    }
 
    protected LuceneQueryMaker createLuceneMaker() {
-      HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(getSearchFactory(), getMatcher().getPropertyHelper().getEntityNamesResolver(), null);
-      return new LuceneQueryMaker(getSearchFactory(), propertyHelper, null);
+      return new LuceneQueryMaker(getSearchFactory(), (HibernateSearchPropertyHelper) getMatcher().getPropertyHelper(), null);
    }
 }

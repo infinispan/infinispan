@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl;
 
+import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.hql.ProtobufEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ProtobufPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
@@ -7,9 +8,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.protostream.descriptors.JavaType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -54,15 +53,17 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
 
    @Override
    protected MetadataAdapter<Descriptor, FieldDescriptor, Integer> createMetadataAdapter(Descriptor messageDescriptor) {
-      return new MetadataAdapterImpl(messageDescriptor);
+      return new MetadataAdapterImpl(messageDescriptor, propertyHelper);
    }
 
    private static class MetadataAdapterImpl implements MetadataAdapter<Descriptor, FieldDescriptor, Integer> {
 
       private final Descriptor messageDescriptor;
+      private final ObjectPropertyHelper<Descriptor> propertyHelper;
 
-      MetadataAdapterImpl(Descriptor messageDescriptor) {
+      MetadataAdapterImpl(Descriptor messageDescriptor, ObjectPropertyHelper<Descriptor> propertyHelper) {
          this.messageDescriptor = messageDescriptor;
+         this.propertyHelper = propertyHelper;
       }
 
       @Override
@@ -76,19 +77,8 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
       }
 
       @Override
-      public List<Integer> translatePropertyPath(String[] path) {
-         List<Integer> propPath = new ArrayList<>(path.length);
-         Descriptor md = messageDescriptor;
-         for (String prop : path) {
-            FieldDescriptor fd = md.findFieldByName(prop);
-            propPath.add(fd.getNumber());
-            if (fd.getJavaType() == JavaType.MESSAGE) {
-               md = fd.getMessageType();
-            } else {
-               md = null; // iteration is expected to stop here
-            }
-         }
-         return propPath;
+      public List<Integer> mapPropertyNamePathToFieldIdPath(String[] path) {
+         return (List<Integer>) propertyHelper.mapPropertyNamePathToFieldIdPath(messageDescriptor, path);
       }
 
       @Override

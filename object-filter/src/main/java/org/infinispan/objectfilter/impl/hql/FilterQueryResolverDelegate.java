@@ -20,7 +20,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class FilterQueryResolverDelegate implements QueryResolverDelegate {
+final class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    private static final Log log = Logger.getMessageLogger(Log.class, FilterQueryResolverDelegate.class.getName());
 
@@ -40,7 +40,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
 
    protected Status status;
 
-   protected FilterQueryResolverDelegate(ObjectPropertyHelper propertyHelper) {
+   FilterQueryResolverDelegate(ObjectPropertyHelper propertyHelper) {
       this.propertyHelper = propertyHelper;
    }
 

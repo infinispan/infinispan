@@ -10,6 +10,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.jboss.logging.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,6 +31,22 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    @Override
    public Descriptor getEntityMetadata(String targetTypeName) {
       return serializationContext.getMessageDescriptor(targetTypeName);
+   }
+
+   @Override
+   public List<?> mapPropertyNamePathToFieldIdPath(Descriptor messageDescriptor, String[] propertyPath) {
+      List<Integer> translatedPath = new ArrayList<>(propertyPath.length);
+      Descriptor md = messageDescriptor;
+      for (String prop : propertyPath) {
+         FieldDescriptor fd = md.findFieldByName(prop);
+         translatedPath.add(fd.getNumber());
+         if (fd.getJavaType() == JavaType.MESSAGE) {
+            md = fd.getMessageType();
+         } else {
+            md = null; // iteration is expected to stop here
+         }
+      }
+      return translatedPath;
    }
 
    @Override
@@ -162,7 +179,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    public Object convertToPropertyType(String entityType, List<String> propertyPath, String value) {
       FieldDescriptor field = getField(entityType, propertyPath.toArray(new String[propertyPath.size()]));
 
-      //todo [anistor] this is just for remote query because booleans and enums are handled as integers for historical reasons.
+      //todo [anistor] this is just for remote query because enums are handled as integers for historical reasons.
       if (field.getJavaType() == JavaType.BOOLEAN) {
          try {
             return Integer.parseInt(value) != 0;

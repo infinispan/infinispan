@@ -3,6 +3,7 @@ package org.infinispan.objectfilter.impl.hql;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.PropertyHelper;
 import org.infinispan.objectfilter.impl.logging.Log;
+import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
 import org.infinispan.objectfilter.impl.util.DateHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
@@ -164,6 +165,10 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
     */
    public abstract boolean isRepeatedProperty(String entityType, String[] propertyPath);
 
+   public BooleShannonExpansion.IndexedFieldProvider getIndexedFieldProvider(TypeMetadata typeMetadata) {
+      return BooleShannonExpansion.IndexedFieldProvider.NO_INDEXING;
+   }
+
    /**
     * This is an alternative to {@link EntityNamesResolver#getClassFromName}, because the metadata may not always be a
     * {@link Class}.
@@ -172,6 +177,8 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
     * @return the metadata representation
     */
    public abstract TypeMetadata getEntityMetadata(String targetTypeName);
+
+   public abstract List<?> mapPropertyNamePathToFieldIdPath(TypeMetadata type, String[] propertyPath);
 
    /**
     * Converts the given property value into the type expected by the query backend.

@@ -43,4 +43,7 @@ public interface Log extends BasicLogger {
 
    @Message(id = 412, value = "Unknown entity name %s")
    IllegalStateException getUnknownEntity(String entityType);
+
+   @Message(id = 413, value = "namedParameters cannot be null")
+   IllegalArgumentException getNamedParametersCannotBeNull();
 }

@@ -64,6 +64,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
             .addIndexedEntity(UserHS.class)
             .addIndexedEntity(AccountHS.class)
             .addIndexedEntity(TransactionHS.class)
+            .addIndexedEntity(TheEntity.class)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(1, cfg);
@@ -211,6 +212,9 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
 
       cache(0).put("notIndexed1", new NotIndexed("testing 123"));
       cache(0).put("notIndexed2", new NotIndexed("xyz"));
+
+      cache(0).put("entity1", new TheEntity("test value 1", new TheEntity.TheEmbeddedEntity("test embedded value 1")));
+      cache(0).put("entity2", new TheEntity("test value 2", new TheEntity.TheEmbeddedEntity("test embedded value 2")));
    }
 
    @Override
@@ -422,5 +426,41 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
                                     "having name >= 'A' and count(age) >= 1", null, -1, -1);
       List<User> list = q.list();
       assertEquals(2, list.size());
+   }
+
+   public void testRenamedFields1() {
+      Query q = qe.buildQuery(null, "select theField from org.infinispan.query.dsl.embedded.impl.TheEntity where theField >= 'a' order by theField", null, -1, -1);
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("test value 1", list.get(0)[0]);
+      assertEquals("test value 2", list.get(1)[0]);
+   }
+
+   public void testRenamedFields2() {
+      Query q = qe.buildQuery(null, "select theField from org.infinispan.query.dsl.embedded.impl.TheEntity order by theField", null, -1, -1);
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("test value 1", list.get(0)[0]);
+      assertEquals("test value 2", list.get(1)[0]);
+   }
+
+   public void testRenamedFields3() {
+      Query q = qe.buildQuery(null, "select e.embeddedEntity.anotherField from org.infinispan.query.dsl.embedded.impl.TheEntity e where e.embeddedEntity.anotherField >= 'a' order by e.theField", null, -1, -1);
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("test embedded value 1", list.get(0)[0]);
+      assertEquals("test embedded value 2", list.get(1)[0]);
+   }
+
+   public void testRenamedFields4() {
+      Query q = qe.buildQuery(null, "select e.embeddedEntity.anotherField from org.infinispan.query.dsl.embedded.impl.TheEntity e order by e.theField", null, -1, -1);
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("test embedded value 1", list.get(0)[0]);
+      assertEquals("test embedded value 2", list.get(1)[0]);
    }
 }
