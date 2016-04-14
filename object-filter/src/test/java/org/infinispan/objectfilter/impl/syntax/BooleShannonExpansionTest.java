@@ -8,6 +8,8 @@ import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author anistor@redhat.com
@@ -16,9 +18,25 @@ import static org.junit.Assert.assertEquals;
 public class BooleShannonExpansionTest {
 
    private final EntityNamesResolver entityNamesResolver = new ReflectionEntityNamesResolver(null);
+
    private final ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(entityNamesResolver);
+
    private final JPQLParser<Class<?>> parser = new JPQLParser<>(entityNamesResolver, propertyHelper);
+
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
+
+   private final BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new BooleShannonExpansion.IndexedFieldProvider() {
+      @Override
+      public boolean isIndexed(String[] propertyPath) {
+         String last = propertyPath[propertyPath.length - 1];
+         return !"number".equals(last) && !"license".equals(last);
+      }
+
+      @Override
+      public boolean isStored(String[] propertyPath) {
+         return isIndexed(propertyPath);
+      }
+   });
 
    /**
     * @param jpaQuery        the input JPA query to parse and expand
@@ -28,28 +46,24 @@ public class BooleShannonExpansionTest {
    private void assertExpectedTree(String jpaQuery, String expectedExprStr, String expectedJpa) {
       FilterParsingResult<Class<?>> parsingResult = parser.parse(jpaQuery);
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
-
-      BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new BooleShannonExpansion.IndexedFieldProvider() {
-         @Override
-         public boolean isIndexed(String[] propertyPath) {
-            String last = propertyPath[propertyPath.length - 1];
-            return !"number".equals(last) && !"license".equals(last);
-         }
-
-         @Override
-         public boolean isStored(String[] propertyPath) {
-            return isIndexed(propertyPath);
-         }
-      });
-
       expr = booleShannonExpansion.expand(expr);
       if (expectedExprStr != null) {
+         assertNotNull(expr);
          assertEquals(expectedExprStr, expr.toString());
+      } else {
+         assertNull(expr);
       }
       if (expectedJpa != null) {
          String jpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
          assertEquals(expectedJpa, jpaOut);
       }
+   }
+
+   @Test
+   public void testNothingToExpand() throws Exception {
+      assertExpectedTree("from org.infinispan.objectfilter.test.model.Person",
+                         null,
+                         "FROM org.infinispan.objectfilter.test.model.Person");
    }
 
    @Test
