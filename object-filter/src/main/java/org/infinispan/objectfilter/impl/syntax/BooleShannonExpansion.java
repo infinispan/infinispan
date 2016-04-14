@@ -248,7 +248,7 @@ public final class BooleShannonExpansion {
     * @return the expanded query if some of the fields are non-indexed or the input query if all fields are indexed
     */
    public BooleanExpr expand(BooleanExpr booleanExpr) {
-      if (booleanExpr instanceof ConstantBooleanExpr) {
+      if (booleanExpr == null || booleanExpr instanceof ConstantBooleanExpr) {
          return booleanExpr;
       }
 

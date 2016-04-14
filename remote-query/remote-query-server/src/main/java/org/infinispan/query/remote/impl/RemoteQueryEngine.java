@@ -110,13 +110,11 @@ final class RemoteQueryEngine extends QueryEngine {
 
    @Override
    protected org.apache.lucene.search.Query makeTypeQuery(org.apache.lucene.search.Query query, String targetEntityName) {
-      if (isCompatMode) {
-         return query;
-      }
-      BooleanQuery booleanQuery = new BooleanQuery();
-      booleanQuery.add(new BooleanClause(new TermQuery(new Term(QueryFacadeImpl.TYPE_FIELD_NAME, targetEntityName)), BooleanClause.Occur.MUST));
-      booleanQuery.add(new BooleanClause(query, BooleanClause.Occur.MUST));
-      return booleanQuery;
+      return isCompatMode ? query :
+            new BooleanQuery.Builder()
+                  .add(new BooleanClause(new TermQuery(new Term(QueryFacadeImpl.TYPE_FIELD_NAME, targetEntityName)), BooleanClause.Occur.MUST))
+                  .add(new BooleanClause(query, BooleanClause.Occur.MUST))
+                  .build();
    }
 
    @Override

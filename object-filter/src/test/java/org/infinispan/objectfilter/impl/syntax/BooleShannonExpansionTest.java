@@ -11,6 +11,8 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author anistor@redhat.com
@@ -47,12 +49,22 @@ public class BooleShannonExpansionTest {
 
       expr = booleShannonExpansion.expand(expr);
       if (expectedExprStr != null) {
+         assertNotNull(expr);
          assertEquals(expectedExprStr, expr.toString());
+      } else {
+         assertNull(expr);
       }
       if (expectedJpa != null) {
          String jpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
          assertEquals(expectedJpa, jpaOut);
       }
+   }
+
+   @Test
+   public void testNothingToExpand() throws Exception {
+      assertExpectedTree("from org.infinispan.objectfilter.test.model.Person",
+                         null,
+                         "FROM org.infinispan.objectfilter.test.model.Person");
    }
 
    @Test

@@ -117,6 +117,10 @@ public class QueryEngine {
    }
 
    public BaseQuery buildQuery(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+      if (log.isDebugEnabled()) {
+         log.debugf("Building query for : %s", jpqlString);
+      }
+
       if (authorizationManager != null) {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
@@ -516,7 +520,9 @@ public class QueryEngine {
          // the query is a contradiction, there are no matches
          return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
       }
-      if (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE || !isIndexed) {
+
+      // if cache is indexed but there is no actual 'where' filter clause and we do have sorting or projections we should still use the index, otherwise just go for a non-indexed fetch-all
+      if (!isIndexed || (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE) && parsingResult.getProjections() == null && parsingResult.getSortFields() == null) {
          // fully non-indexed execution because the filter matches everything or there is no indexing at all
          return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
@@ -695,6 +701,10 @@ public class QueryEngine {
     * Build a Lucene index query.
     */
    protected CacheQuery buildLuceneQuery(String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+      if (log.isDebugEnabled()) {
+         log.debugf("Building Lucene query for : %s", jpqlString);
+      }
+
       if (!isIndexed) {
          throw log.cannotRunLuceneQueriesIfNotIndexed();
       }
