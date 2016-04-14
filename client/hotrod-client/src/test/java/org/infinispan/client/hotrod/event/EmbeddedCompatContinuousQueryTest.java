@@ -4,10 +4,13 @@ package org.infinispan.client.hotrod.event;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.marshall.EmbeddedUserMarshaller;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,6 +20,8 @@ import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.filter.JPAContinuousQueryProtobufCacheEventFilterConverterFactory;
 import org.infinispan.test.TestingUtil;
@@ -39,11 +44,13 @@ import static org.junit.Assert.assertNull;
 
 
 /**
+ * Test remote continuous query in compat mode.
+ *
  * @author anistor@redhat.com
- * @since 8.0
+ * @since 9.0
  */
-@Test(groups = "functional", testName = "client.hotrod.event.RemoteContinuousQueryTest")
-public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
+@Test(enabled = false, description = "To be fixed by https://issues.jboss.org/browse/ISPN-6505", groups = "functional", testName = "client.hotrod.event.EmbeddedCompatContinuousQueryTest")
+public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
 
    private final int NUM_NODES = 5;
 
@@ -68,12 +75,20 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
+      for (int i = 0; i < NUM_NODES; i++) {
+         ProtobufMetadataManager protobufMetadataManager = manager(i).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
+         protobufMetadataManager.registerMarshaller(new GenderMarshaller());
+      }
+
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      cfgBuilder.dataContainer().keyEquivalence(AnyEquivalence.getInstance());
+      cfgBuilder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
       cfgBuilder.indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
@@ -90,7 +105,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
    /**
     * Using grouping and aggregation with continuous query is not allowed.
     */
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   @Test(enabled = false, description = "To be fixed by https://issues.jboss.org/browse/ISPN-6505", expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .select(max("age"))

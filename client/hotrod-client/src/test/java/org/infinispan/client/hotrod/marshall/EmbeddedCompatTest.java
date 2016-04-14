@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -109,6 +110,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       protobufMetadataManager.registerMarshaller(new EmbeddedAccountMarshaller());
       protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
+      protobufMetadataManager.registerMarshaller(new GenderMarshaller());
       protobufMetadataManager.registerMarshaller(new EmbeddedTransactionMarshaller());
       protobufMetadataManager.registerMarshaller(new NotIndexedMarshaller());
 
@@ -203,6 +205,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
+      user.setGender(User.Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -242,6 +245,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
+      user.setGender(User.Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -307,6 +311,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
+      user.setGender(User.Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -346,6 +351,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
+      user.setGender(User.Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -418,6 +424,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
+      user.setGender(User.Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
@@ -454,6 +461,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       user.setId(1);
       user.setName("test name");
       user.setSurname("test surname");
+      user.setGender(User.Gender.MALE);
       user.setNotes("1234567890");
       cache.put(1, user);
 
