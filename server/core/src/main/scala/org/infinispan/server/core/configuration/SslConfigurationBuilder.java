@@ -21,6 +21,7 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
    private boolean requireClientAuth = false;
    private String keyStoreFileName;
    private char[] keyStorePassword;
+   private char[] keyStoreCertificatePassword;
    private SSLContext sslContext;
    private String trustStoreFileName;
    private char[] trustStorePassword;
@@ -88,6 +89,16 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
    }
 
    /**
+    * Specifies the password needed to access private key associated with certificate stored in specified
+    * {@link #keyStoreFileName(String)}. If password is not specified, password provided in
+    * {@link #keyStorePassword(String)} will be used.
+    */
+   public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
+      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
+      return this;
+   }
+
+   /**
     * Specifies the filename of a truststore to use to create the {@link SSLContext} You also need
     * to specify a {@link #trustStorePassword(String)}. Alternatively specify an array of
     * {@link #trustManagers(TrustManager[])}
@@ -133,7 +144,7 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
 
    @Override
    public SslConfiguration create() {
-      return new SslConfiguration(enabled, requireClientAuth, keyStoreFileName, keyStorePassword, sslContext, trustStoreFileName, trustStorePassword);
+      return new SslConfiguration(enabled, requireClientAuth, keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, sslContext, trustStoreFileName, trustStorePassword);
    }
 
    @Override
@@ -142,6 +153,7 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
       this.requireClientAuth = template.requireClientAuth();
       this.keyStoreFileName = template.keyStoreFileName();
       this.keyStorePassword = template.keyStorePassword();
+      this.keyStoreCertificatePassword = template.keyStoreCertificatePassword();
       this.sslContext = template.sslContext();
       this.trustStoreFileName = template.trustStoreFileName();
       this.trustStorePassword = template.trustStorePassword();

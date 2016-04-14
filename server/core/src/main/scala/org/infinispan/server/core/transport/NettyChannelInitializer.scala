@@ -33,7 +33,7 @@ class NettyChannelInitializer(server: ProtocolServer,
       val sslContext = if (ssl.sslContext != null) {
          ssl.sslContext
       } else {
-         SslContextFactory.getContext(ssl.keyStoreFileName, ssl.keyStorePassword, ssl.trustStoreFileName, ssl.trustStorePassword)
+         SslContextFactory.getContext(ssl.keyStoreFileName, ssl.keyStorePassword, ssl.keyStoreCertificatePassword(), ssl.trustStoreFileName, ssl.trustStorePassword)
       }
       SslContextFactory.getEngine(sslContext, false, ssl.requireClientAuth)
    }
