@@ -88,6 +88,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
+import java.lang.Throwable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1683,7 +1684,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Object result;
       try {
          result = invoker.invoke(ctx, command);
-      } catch (RuntimeException e) {
+      } catch (Throwable e) {
          if (txInjected) tryRollback();
          throw e;
       }
