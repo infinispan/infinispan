@@ -1,9 +1,9 @@
 package org.infinispan.server.core.transport
 
-import org.infinispan.server.core.ProtocolServer
-import org.infinispan.server.core.configuration.SslConfiguration
 import io.netty.channel.{Channel, ChannelOutboundHandler}
 import io.netty.handler.timeout.IdleStateHandler
+import io.netty.util.concurrent.EventExecutorGroup
+import org.infinispan.server.core.ProtocolServer
 
 /**
  * A channel pipeline factory for environments where idle timeout is enabled.
@@ -12,8 +12,8 @@ import io.netty.handler.timeout.IdleStateHandler
  * @since 5.1
  */
 class TimeoutEnabledChannelInitializer(server: ProtocolServer,
-                                           encoder: ChannelOutboundHandler)
-      extends NettyChannelInitializer(server, encoder) {
+                                       encoder: ChannelOutboundHandler, executor: EventExecutorGroup)
+        extends NettyChannelInitializer(server, encoder, executor) {
 
    override def initChannel(ch: Channel): Unit = {
       super.initChannel(ch)

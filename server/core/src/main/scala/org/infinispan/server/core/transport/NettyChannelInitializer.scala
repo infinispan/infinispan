@@ -1,11 +1,13 @@
 package org.infinispan.server.core.transport
 
+import javax.net.ssl.SSLEngine
+
+import io.netty.channel.{Channel, ChannelInitializer, ChannelOutboundHandler}
+import io.netty.handler.ssl.SslHandler
+import io.netty.util.concurrent.EventExecutorGroup
+import org.infinispan.commons.util.SslContextFactory
 import org.infinispan.server.core.ProtocolServer
 import org.infinispan.server.core.configuration.SslConfiguration
-import javax.net.ssl.SSLEngine
-import org.infinispan.commons.util.SslContextFactory
-import io.netty.channel.{ChannelInitializer, Channel, ChannelOutboundHandler}
-import io.netty.handler.ssl.SslHandler
 
 /**
  * Pipeline factory for Netty based channels. For each pipeline created, a new decoder is created which means that
@@ -16,17 +18,17 @@ import io.netty.handler.ssl.SslHandler
  * @since 4.1
  */
 class NettyChannelInitializer(server: ProtocolServer,
-                                  encoder: ChannelOutboundHandler)
-      extends ChannelInitializer[Channel] {
+                              encoder: ChannelOutboundHandler, executor: EventExecutorGroup)
+        extends ChannelInitializer[Channel] {
 
    override def initChannel(ch: Channel): Unit = {
       val pipeline = ch.pipeline
       val ssl = server.getConfiguration.ssl
       if (ssl.enabled())
-         pipeline.addLast("ssl", new SslHandler(createSslEngine(ssl)))
-      pipeline.addLast("decoder", server.getDecoder)
+         pipeline.addLast(executor, "ssl", new SslHandler(createSslEngine(ssl)))
+      pipeline.addLast(executor, "decoder", server.getDecoder)
       if (encoder != null)
-         pipeline.addLast("encoder", encoder)
+         pipeline.addLast(executor, "encoder", encoder)
    }
 
    def createSslEngine(ssl: SslConfiguration): SSLEngine = {
