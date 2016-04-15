@@ -1,6 +1,6 @@
 package org.infinispan.scripting.utils;
 
-import org.infinispan.Cache;
+import org.infinispan.commons.api.BasicCache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.test.TestingUtil;
@@ -21,7 +21,7 @@ public class ScriptingUtils {
         return manager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
     }
 
-    public static void loadData(Cache<String, String> cache, String fileName) throws IOException {
+    public static void loadData(BasicCache<String, String> cache, String fileName) throws IOException {
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
                 ScriptingUtils.class.getResourceAsStream(fileName)))) {
             int chunkSize = 10;

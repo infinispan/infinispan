@@ -4,7 +4,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Immutables;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Optional;
@@ -90,7 +89,7 @@ public enum DataType {
 
       private static Object toBytes(Object obj, Marshaller marshaller) {
          try {
-            return marshaller.objectToByteBuffer(obj);
+            return obj instanceof byte[] ? obj : marshaller.objectToByteBuffer(obj);
          } catch (Exception e) {
             throw new CacheException(e);
          }
