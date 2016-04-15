@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public abstract class BaseJPAFilterIndexingServiceProvider implements FilterIndexingServiceProvider {
 
-   private final ConcurrentMap<Matcher, FilteringListenerInvocation<?, ?>> filteringInvocations = new ConcurrentHashMap<Matcher, FilteringListenerInvocation<?, ?>>(4);
+   private final ConcurrentMap<Matcher, FilteringListenerInvocation<?, ?>> filteringInvocations = new ConcurrentHashMap<>(4);
 
    private CacheNotifierImpl cacheNotifier;
 
@@ -76,7 +76,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
 
    @Override
    public <K, V> DelegatingCacheEntryListenerInvocation<K, V> interceptListenerInvocation(CacheEntryListenerInvocation<K, V> invocation) {
-      return new DelegatingCacheEntryListenerInvocationImpl<K, V>(invocation);
+      return new DelegatingCacheEntryListenerInvocationImpl<>(invocation);
    }
 
    @Override
@@ -94,7 +94,7 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       for (Class<? extends Annotation> annotation : listeners.keySet()) {
          eventTypes[i++] = getEventTypeFromAnnotation(annotation);
       }
-      Callback<K, V> callback = new Callback<K, V>(isDelta, matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
+      Callback<K, V> callback = new Callback<>(isDelta, matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
       callback.subscription = matcher.registerFilter(jpaQuery, namedParameters, callback, eventTypes);
    }
 
