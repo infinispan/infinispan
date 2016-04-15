@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.commons.marshall.StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
@@ -39,7 +40,7 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
    @BeforeClass
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<String, String>(
-            CACHE_NAME, new StringMarshaller(), CacheMode.LOCAL).setup();
+            CACHE_NAME, new StringMarshaller(Charset.forName("UTF-8")), CacheMode.LOCAL).setup();
    }
 
    @AfterClass
@@ -186,28 +187,6 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
       public void close() throws IOException {
          socket.close();
       }
-   }
-
-   static class StringMarshaller extends AbstractMarshaller {
-
-      private static final Charset DEFAULT_ENCODING = Charset.forName("UTF-8");
-
-      @Override
-      protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
-         byte[] bytes = ((String) o).getBytes(DEFAULT_ENCODING);
-         return new ByteBufferImpl(bytes, 0, bytes.length);
-      }
-
-      @Override
-      public Object objectFromByteBuffer(byte[] buf, int offset, int length) {
-         return new String(buf, DEFAULT_ENCODING);
-      }
-
-      @Override
-      public boolean isMarshallable(Object o) throws Exception {
-         return o instanceof String;
-      }
-
    }
 
 }
