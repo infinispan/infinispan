@@ -48,7 +48,9 @@ public enum DataType {
 
       @Override
       public Object fromDataType(Object obj, Optional<Marshaller> marshaller) {
-         return obj instanceof String ? ((String) obj).getBytes(CHARSET_UTF8) : obj;
+         return obj instanceof String
+               ? ((String) obj).getBytes(CHARSET_UTF8)
+               : obj.toString().getBytes(CHARSET_UTF8);
       }
 
       private static String asString(Object v) {
