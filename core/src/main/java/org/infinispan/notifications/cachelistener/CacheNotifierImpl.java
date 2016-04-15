@@ -26,7 +26,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -82,9 +81,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<Class<? extends Annotation>, Class<?>>(16);
-   private static final Map<Class<? extends Annotation>, Class<?>> clusterAllowedListeners =
-         new HashMap<Class<? extends Annotation>, Class<?>>(4);
+   private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<>(16);
+   private static final Map<Class<? extends Annotation>, Class<?>> clusterAllowedListeners = new HashMap<>(4);
 
    static {
       allowedListeners.put(CacheEntryCreated.class, CacheEntryCreatedEvent.class);
@@ -109,21 +107,21 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       clusterAllowedListeners.put(CacheEntryExpired.class, CacheEntryExpiredEvent.class);
    }
 
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryCreatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryRemovedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryVisitedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryModifiedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryActivatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryPassivatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryLoadedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryInvalidatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryCreatedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryRemovedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryVisitedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryModifiedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryActivatedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryPassivatedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryLoadedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryInvalidatedListeners = new CopyOnWriteArrayList<>();
    final List<CacheEntryListenerInvocation<K, V>> cacheEntryExpiredListeners = new CopyOnWriteArrayList<>();
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntriesEvictedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> transactionRegisteredListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> transactionCompletedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> dataRehashedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> topologyChangedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-   final List<CacheEntryListenerInvocation<K, V>> partitionChangedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntriesEvictedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> transactionRegisteredListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> transactionCompletedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> dataRehashedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> topologyChangedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> partitionChangedListeners = new CopyOnWriteArrayList<>();
 
    private Cache<K, V> cache;
    private ClusteringDependentLogic clusteringDependentLogic;
@@ -136,7 +134,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    private ComponentRegistry componentRegistry;
    private Equivalence<? super K> keyEquivalence;
 
-   private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<Object, UUID>();
+   private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<>();
 
    private Set<FilterIndexingServiceProvider> filterIndexingServiceProviders;
 
@@ -152,7 +150,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    private TypeConverter typeConverter;
 
    public CacheNotifierImpl() {
-      this(new ConcurrentHashMap<UUID, QueueingSegmentListener<K, V, ? extends Event<K, V>>>());
+      this(new ConcurrentHashMap<>());
    }
 
    CacheNotifierImpl(ConcurrentMap<UUID, QueueingSegmentListener<K, V, ? extends Event<K, V>>> handler) {
