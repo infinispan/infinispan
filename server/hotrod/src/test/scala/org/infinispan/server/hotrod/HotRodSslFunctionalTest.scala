@@ -16,9 +16,8 @@ import org.infinispan.commons.util.SslContextFactory
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodSslFunctionalTest")
 class HotRodSslFunctionalTest extends HotRodFunctionalTest {
 
-   private val tccl = Thread.currentThread().getContextClassLoader
-   private val keyStoreFileName = tccl.getResource("keystore.jks").getPath
-   private val trustStoreFileName = tccl.getResource("truststore.jks").getPath
+   private val keyStoreFileName = getClass.getClassLoader.getResource("default_server_keystore.jks").getPath
+   private val trustStoreFileName = getClass.getClassLoader.getResource("default_client_truststore.jks").getPath
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager) = {
       val builder = new HotRodServerConfigurationBuilder
