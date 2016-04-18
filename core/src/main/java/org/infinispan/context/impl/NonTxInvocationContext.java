@@ -30,14 +30,14 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    public NonTxInvocationContext(int numEntries, Address origin, Equivalence<Object> keyEq,
                                  SequentialInterceptorChain interceptorChain) {
       super(origin);
-      lookedUpEntries = CollectionFactory.makeMap(numEntries, keyEq, AnyEquivalence.<CacheEntry>getInstance());
+      lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(numEntries), keyEq, AnyEquivalence.getInstance());
       this.keyEq = keyEq;
    }
 
    public NonTxInvocationContext(Address origin, Equivalence<Object> keyEq,
                                  SequentialInterceptorChain interceptorChain) {
       super(origin);
-      lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY, keyEq, AnyEquivalence.<CacheEntry>getInstance());
+      lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY, keyEq, AnyEquivalence.getInstance());
       this.keyEq = keyEq;
    }
 

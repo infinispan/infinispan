@@ -4,6 +4,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
@@ -103,8 +104,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    public static final String CHANNEL_LOOKUP = "channelLookup";
    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "default-configs/default-jgroups-udp.xml";
 
-   static final Log log = LogFactory.getLog(JGroupsTransport.class);
-   static final boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(JGroupsTransport.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
    protected CommandAwareRpcDispatcher dispatcher;
@@ -507,7 +508,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public List<Address> getMembers() {
-      return members != null ? members : Collections.<Address>emptyList();
+      return members != null ? members : Collections.emptyList();
    }
 
    @Override
@@ -574,16 +575,20 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
          if (!ignoreLeavers) { // SYNCHRONOUS
             CompletableFuture<Map<Address, Response>> future = new CompletableFuture<>();
-            future.completeExceptionally(new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand));
+            future.completeExceptionally(new SuspectException(
+                  "One or more nodes have left the cluster while replicating command " + rpcCommand));
             return future;
          }
       }
 
       List<org.jgroups.Address> jgAddressList = toJGroupsAddressListExcludingSelf(recipients, totalOrder);
+      if (jgAddressList != null && jgAddressList.isEmpty()) {
+         return CompletableFutures.returnEmptyMap();
+      }
+
       List<Address> localMembers = this.members;
       int membersSize = localMembers.size();
-      boolean broadcast = jgAddressList == null || recipients.size() == membersSize;
-      if (membersSize < 3 || (jgAddressList != null && jgAddressList.size() < 2)) broadcast = false;
+      boolean broadcast = membersSize > 2 && (jgAddressList == null || recipients.size() == membersSize);
       CompletableFuture<RspList<Response>> rspListFuture = null;
       SingleResponseFuture singleResponseFuture = null;
       org.jgroups.Address singleJGAddress = null;
@@ -592,42 +597,41 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          rspListFuture = dispatcher.invokeRemoteCommands(null, rpcCommand, toJGroupsMode(mode), timeout,
                toJGroupsFilter(responseFilter), deliverOrder);
       } else if (totalOrder) {
-         rspListFuture = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode),
-               timeout, toJGroupsFilter(responseFilter), deliverOrder);
+         rspListFuture = dispatcher
+               .invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
+                     toJGroupsFilter(responseFilter), deliverOrder);
       } else {
-         if (jgAddressList == null || !jgAddressList.isEmpty()) {
-            boolean singleRecipient = false;
-            boolean skipRpc = false;
-            if (jgAddressList == null) {
-               if (membersSize == 1) {
-                  skipRpc = true;
-               } else if (!ignoreLeavers && membersSize == 2) {
-                  singleRecipient = true;
-                  if (localMembers.get(0).equals(self)) {
-                     singleJGAddress = toJGroupsAddress(localMembers.get(1));
-                  } else {
-                     singleJGAddress = toJGroupsAddress(localMembers.get(0));
-                  }
-               }
-            } else if (jgAddressList.size() == 1 && !ignoreLeavers) {
-               singleRecipient = true;
-               singleJGAddress = jgAddressList.get(0);
-            }
-            if (skipRpc) {
-               return CompletableFutures.returnEmptyMap();
-            }
-
+         boolean skipRpc;
+         boolean singleRecipient;
+         if (jgAddressList == null) {
+            skipRpc = membersSize < 2;
+            singleRecipient = !ignoreLeavers && membersSize == 2;
             if (singleRecipient) {
-               if (singleJGAddress == null) singleJGAddress = jgAddressList.get(0);
-               singleResponseFuture = dispatcher.invokeRemoteCommand(singleJGAddress, rpcCommand,
-                     toJGroupsMode(mode), timeout, deliverOrder);
-            } else {
-               rspListFuture = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(
-                     mode), timeout, toJGroupsFilter(responseFilter), deliverOrder);
-
+               if (localMembers.get(0).equals(self)) {
+                  singleJGAddress = toJGroupsAddress(localMembers.get(1));
+               } else {
+                  singleJGAddress = toJGroupsAddress(localMembers.get(0));
+               }
             }
          } else {
+            skipRpc = false;
+            singleRecipient = !ignoreLeavers && jgAddressList.size() == 1;
+            if (singleRecipient) {
+               singleJGAddress = jgAddressList.get(0);
+            }
+         }
+         if (skipRpc) {
             return CompletableFutures.returnEmptyMap();
+         }
+
+         if (singleRecipient) {
+            singleResponseFuture = dispatcher
+                  .invokeRemoteCommand(singleJGAddress, rpcCommand, toJGroupsMode(mode), timeout,
+                        deliverOrder);
+         } else {
+            rspListFuture = dispatcher
+                  .invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
+                        toJGroupsFilter(responseFilter), deliverOrder);
          }
       }
 
@@ -638,16 +642,19 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (singleResponseFuture != null) {
          // Unicast request
          return singleResponseFuture.thenApply(rsp -> {
-            if (trace) log.tracef("Response: %s", rsp);
+            if (trace)
+               log.tracef("Responses: %s", rsp);
             Address sender = fromJGroupsAddress(rsp.getSender());
-            Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), ignoreLeavers);
+            Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), false);
             return Collections.singletonMap(sender, response);
          });
       } else if (rspListFuture != null) {
          // Broadcast/anycast request
          return rspListFuture.thenApply(rsps -> {
-            if (trace) log.tracef("Responses: %s", rsps);
-            Map<Address, Response> retval = new HashMap<>(rsps.size());
+            if (trace)
+               log.tracef("Responses: %s", rsps);
+            Map<Address, Response> responseMap =
+                  new HashMap<>(CollectionFactory.computeCapacity(rsps.size()));
             boolean hasResponses = false;
             boolean hasValidResponses = false;
             for (Rsp<Response> rsp : rsps.values()) {
@@ -656,7 +663,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), ignoreLeavers);
                if (response != null) {
                   hasValidResponses = true;
-                  retval.put(sender, response);
+                  responseMap.put(sender, response);
                }
             }
 
@@ -670,15 +677,16 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                }
             }
 
-            if (recipients != null) {
-               for (Address dest : recipients) {
-                  if (!dest.equals(getAddress()) && !retval.containsKey(dest)) {
-                     retval.put(dest, CacheNotFoundResponse.INSTANCE);
+            if (mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS && recipients != null &&
+                  rsps.size() < recipients.size()) {
+               recipients.forEach(dest -> {
+                  if (!dest.equals(getAddress())) {
+                     responseMap.putIfAbsent(dest, CacheNotFoundResponse.INSTANCE);
                   }
-               }
+               });
             }
 
-            return retval;
+            return responseMap;
          });
       } else {
          throw new IllegalStateException("Should have one remote invocation future");
@@ -717,7 +725,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          log.tracef("commands=%s, mode=%s, timeout=%s", rpcCommands, mode, timeout);
       boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
 
-      SingleResponseFuture[] futures = new SingleResponseFuture[rpcCommands.size()];
+      CompletableFuture<Rsp<Response>>[] futures = new SingleResponseFuture[rpcCommands.size()];
       int i = 0;
       for (Map.Entry<Address, ReplicableCommand> entry : rpcCommands.entrySet()) {
          org.jgroups.Address recipient = toJGroupsAddress(entry.getKey());
@@ -734,12 +742,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       CompletableFuture<Void> bigFuture = CompletableFuture.allOf(futures);
       CompletableFutures.await(bigFuture);
 
-      List<Rsp<Response>> rsps = new ArrayList<>();
-      for (SingleResponseFuture future : futures) {
+      List<Rsp<Response>> rsps = new ArrayList<>(futures.length);
+      for (CompletableFuture<Rsp<Response>> future : futures) {
          rsps.add(future.get());
       }
 
-      Map<Address, Response> retval = new HashMap<>(rsps.size());
+      Map<Address, Response> retval = new HashMap<>(CollectionFactory.computeCapacity(rsps.size()));
       boolean hasResponses = false;
       for (Rsp<Response> rsp : rsps) {
          Address sender = fromJGroupsAddress(rsp.getSender());

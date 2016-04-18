@@ -32,7 +32,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.EmptySequentialInterceptorChain;
@@ -83,15 +82,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 
 /**
  * Simple local cache without interceptor stack.
@@ -227,7 +223,8 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public Map<K, V> getAll(Set<?> keys) {
-      Map<K, V> map = CollectionFactory.makeMap(keys.size(), keyEquivalence, valueEquivalence);
+      Map<K, V> map = CollectionFactory
+            .makeMap(CollectionFactory.computeCapacity(keys.size()), keyEquivalence, valueEquivalence);
       for (Object k : keys) {
          Objects.requireNonNull(k, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(k);
@@ -260,7 +257,9 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
-      Map<K, CacheEntry<K, V>> map = CollectionFactory.makeMap(keys.size(), keyEquivalence, AnyEquivalence.getInstance());
+      Map<K, CacheEntry<K, V>> map = CollectionFactory
+            .makeMap(CollectionFactory.computeCapacity(keys.size()), keyEquivalence,
+                  AnyEquivalence.getInstance());
       for (Object key : keys) {
          Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
          InternalCacheEntry<K, V> entry = getDataContainer().get(key);
@@ -561,6 +560,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return putIfAbsentInternal(key, value, metadata);
    }
 
+   @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
       return putIfAbsentInternal(key, value, applyDefaultMetadata(metadata));
    }
@@ -658,6 +658,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return replaceInternal(key, oldValue, value, metadata);
    }
 
+   @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
       return replaceInternal(key, oldValue, value, applyDefaultMetadata(metadata));
    }
@@ -738,25 +739,25 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       putAll(data);
-      return CompletableFuture.completedFuture((Void) null);
+      return CompletableFuture.completedFuture(null);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       putAll(data, lifespan, unit);
-      return CompletableFuture.completedFuture((Void) null);
+      return CompletableFuture.completedFuture(null);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-      return CompletableFuture.completedFuture((Void) null);
+      return CompletableFuture.completedFuture(null);
    }
 
    @Override
    public CompletableFuture<Void> clearAsync() {
       clear();
-      return CompletableFuture.completedFuture((Void) null);
+      return CompletableFuture.completedFuture(null);
    }
 
    @Override
@@ -1541,14 +1542,14 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       public CacheStream<V> stream() {
          LocalCacheStream<CacheEntry<K, V>> lcs = new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this,
                  null, getStreamSupplier(false)), false, componentRegistry);
-         return (CacheStream<V>) lcs.map(CacheEntry::getValue);
+         return lcs.map(CacheEntry::getValue);
       }
 
       @Override
       public CacheStream<V> parallelStream() {
          LocalCacheStream<CacheEntry<K, V>> lcs = new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this,
                  null, getStreamSupplier(false)), true, componentRegistry);
-         return (CacheStream<V>) lcs.map(CacheEntry::getValue);
+         return lcs.map(CacheEntry::getValue);
       }
    }
 

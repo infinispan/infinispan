@@ -321,6 +321,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                // We got an acceptable response
                theFuture.complete(rsps);
             } else {
+               // We only give up after we've received invalid responses from all recipients,
+               // even after the stagger timeout expired for them.
                boolean missingResponses = false;
                for (Rsp<Response> rsp1 : rsps) {
                   if (!rsp1.wasReceived()) {
