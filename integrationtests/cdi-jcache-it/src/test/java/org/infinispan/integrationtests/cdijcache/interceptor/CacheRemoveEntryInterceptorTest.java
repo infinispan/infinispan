@@ -12,7 +12,7 @@ import javax.cache.annotation.GeneratedCacheKey;
 import javax.inject.Inject;
 
 import org.infinispan.Cache;
-import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
+import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Custom;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheRemoveEntryService;

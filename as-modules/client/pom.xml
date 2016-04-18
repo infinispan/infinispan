@@ -30,6 +30,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi-common</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream</artifactId>
       </dependency>

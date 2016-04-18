@@ -1,7 +1,7 @@
 package org.infinispan.jcache.annotation;
 
-import org.infinispan.cdi.InfinispanExtensionEmbedded;
-import org.infinispan.cdi.util.BeanManagerProvider;
+import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;
+import org.infinispan.cdi.common.util.BeanManagerProvider;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.jcache.embedded.JCacheManager;
