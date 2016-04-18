@@ -2,6 +2,7 @@ package org.infinispan.jcache;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -18,7 +19,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @since // TODO
  */
 @Test(groups = "functional", testName = "jcache.JCacheConfigurationTest")
-public class JCacheConfigurationTest {
+public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
    public void testNamedCacheConfiguration() {
       withCacheManager(new CacheManagerCallable(

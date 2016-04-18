@@ -1,16 +1,5 @@
 package org.infinispan.integrationtests.cdijcache.interceptor;
 
-import static org.infinispan.integrationtests.cdijcache.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
-
-import javax.cache.CacheException;
-import javax.cache.annotation.GeneratedCacheKey;
-import javax.inject.Inject;
-
 import org.infinispan.Cache;
 import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
@@ -18,16 +7,29 @@ import org.infinispan.integrationtests.cdijcache.interceptor.config.Custom;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheRemoveEntryService;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CustomCacheKey;
 import org.infinispan.jcache.annotation.DefaultCacheKey;
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+
+import javax.cache.CacheException;
+import javax.cache.annotation.GeneratedCacheKey;
+import javax.inject.Inject;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
+
+import static org.infinispan.integrationtests.cdijcache.Deployments.baseDeployment;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
- * @see javax.cache.annotation.CacheRemoveEntry
+ * @see javax.cache.annotation.CacheRemove
  */
+@Listeners(TestResourceTrackingListener.class)
 @Test(groups = "functional", testName = "cdi.test.interceptor.CacheRemoveEntryInterceptorTest")
 public class CacheRemoveEntryInterceptorTest extends Arquillian {
 

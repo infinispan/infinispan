@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -18,7 +19,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
  * @since 4.1
  */
 @Test(testName = "client.hotrod.ServerShutdownTest", groups = "functional")
-public class ServerShutdownTest {
+public class ServerShutdownTest extends AbstractInfinispanTest {
 
    public void testServerShutdownWithConnectedClient() {
       withCacheManager(new CacheManagerCallable(

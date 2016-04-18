@@ -84,7 +84,7 @@
 
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <forkJvmArgs>-Xmx2G</forkJvmArgs>
-      <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
+      <testNGListener>org.infinispan.commons.test.TestNGTestListener</testNGListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
@@ -208,11 +208,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
             <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cachestore-jdbc</artifactId>
-            <version>${project.version}</version>
             <type>test-jar</type>
          </dependency>
          <dependency>
@@ -223,24 +218,9 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cachestore-remote</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cdi-common</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cdi-common</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cdi-remote</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -252,17 +232,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cdi-embedded</artifactId>
             <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cdi-embedded</artifactId>
-            <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-client-hotrod</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -275,22 +245,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-core</artifactId>
             <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-core</artifactId>
-            <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-lucene-directory</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-directory-provider</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -309,17 +264,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-core</artifactId>
             <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-server-core</artifactId>
-            <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-server-hotrod</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -331,44 +276,13 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-memcached</artifactId>
             <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-server-memcached</artifactId>
-            <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-server-rest</artifactId>
-            <classifier>classes</classifier>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-rest</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-tools</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-tree</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-jcache</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-jcache-remote</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -378,39 +292,9 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cli-client</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cli-interpreter</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-osgi</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-spring4-common</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-spring4-common</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-tasks-api</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-spring4-remote</artifactId>
-            <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
@@ -422,17 +306,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-spring4-embedded</artifactId>
             <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-spring4-embedded</artifactId>
-            <version>${project.version}</version>
             <type>test-jar</type>
-         </dependency>
-         <dependency>
-            <groupId>com.mchange</groupId>
-            <artifactId>c3p0</artifactId>
-            <version>${version.c3p0}</version>
          </dependency>
          <dependency>
             <groupId>com.h2database</groupId>
@@ -1886,14 +1760,14 @@
      <profile>
        <id>fail-all-tests</id>
        <properties>
-         <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener,org.infinispan.test.fwk.FailAllTestNGHook</testNGListener>
+         <testNGListener>org.infinispan.commons.test.TestNGTestListener,org.infinispan.test.fwk.FailAllTestNGHook</testNGListener>
          <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
        </properties>
      </profile>
      <profile>
        <id>fail-all-tests-setup</id>
        <properties>
-         <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener,org.infinispan.test.fwk.FailAllSetupTestNGHook</testNGListener>
+         <testNGListener>org.infinispan.commons.test.TestNGTestListener,org.infinispan.test.fwk.FailAllSetupTestNGHook</testNGListener>
          <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
        </properties>
      </profile>

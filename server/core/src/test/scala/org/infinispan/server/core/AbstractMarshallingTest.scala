@@ -2,8 +2,9 @@ package org.infinispan.server.core
 
 import org.testng.annotations.{AfterTest, BeforeTest}
 import java.util.Random
-import java.io.{ObjectOutputStream, ByteArrayOutputStream}
-import org.infinispan.test.TestingUtil
+import java.io.{ByteArrayOutputStream, ObjectOutputStream}
+
+import org.infinispan.test.{AbstractInfinispanTest, TestingUtil}
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
@@ -14,7 +15,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class AbstractMarshallingTest {
+abstract class AbstractMarshallingTest extends AbstractInfinispanTest {
 
    var marshaller : AbstractDelegatingMarshaller = _
    var cm : EmbeddedCacheManager = _

@@ -6,6 +6,7 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.impl.FileListCacheValue;
 import org.infinispan.lucene.testutils.TestSegmentReadLocker;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
@@ -30,7 +31,7 @@ import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
  */
 @SuppressWarnings("unchecked")
 @Test(groups = "functional", testName = "lucene.DirectoryOnMultipleCachesTest")
-public class DirectoryOnMultipleCachesTest {
+public class DirectoryOnMultipleCachesTest extends AbstractInfinispanTest {
 
    //timeout for test verifyIntendedLockCachesUsage()
    private static final long SLEEP = 60; //60 msecs

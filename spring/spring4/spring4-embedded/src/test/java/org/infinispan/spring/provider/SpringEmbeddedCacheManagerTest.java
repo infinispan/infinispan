@@ -2,6 +2,7 @@ package org.infinispan.spring.provider;
 
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
@@ -23,7 +24,7 @@ import static org.testng.AssertJUnit.*;
  *
  */
 @Test(testName = "spring.provider.SpringEmbeddedCacheManagerTest", groups = "unit")
-public class SpringEmbeddedCacheManagerTest {
+public class SpringEmbeddedCacheManagerTest extends AbstractInfinispanTest {
 
    private static final String CACHE_NAME_FROM_CONFIGURATION_FILE = "asyncCache";
 

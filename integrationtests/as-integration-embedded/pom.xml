@@ -26,8 +26,7 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <type>test-jar</type>
+         <artifactId>infinispan-commons-test</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -136,6 +135,12 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
                <testNGArtifactName>none:none</testNGArtifactName>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>org.infinispan.commons.test.JUnitTestListener</value>
+                  </property>
+               </properties>
             </configuration>
             <executions>
                <execution>

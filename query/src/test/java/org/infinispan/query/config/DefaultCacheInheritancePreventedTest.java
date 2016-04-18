@@ -8,6 +8,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
@@ -23,7 +24,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
  * @since 5.2
  */
 @Test(groups = "unit", testName = "query.config.DefaultCacheInheritancePreventedTest")
-public class DefaultCacheInheritancePreventedTest {
+public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest {
 
    @Test
    public void verifyIndexDisabledCorrectly() throws IOException {

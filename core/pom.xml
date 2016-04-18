@@ -47,6 +47,12 @@
       </dependency>
 
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.naming</groupId>
          <artifactId>jnp-client</artifactId>
          <scope>test</scope>

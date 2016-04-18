@@ -318,6 +318,13 @@
 
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <type>test-jar</type>
+            <version>${version.org.infinispan}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-parent</artifactId>
             <version>${version.org.infinispan}</version>
             <type>pom</type>

@@ -9,6 +9,7 @@ import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -21,7 +22,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "lucenedemo.CacheConfigurationTest")
-public class CacheConfigurationTest {
+public class CacheConfigurationTest extends AbstractInfinispanTest {
    
    private EmbeddedCacheManager cacheManager1;
    private EmbeddedCacheManager cacheManager2;

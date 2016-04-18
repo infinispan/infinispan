@@ -1,9 +1,11 @@
 package org.infinispan.cdi.test.cachemanager.xml;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import javax.inject.Inject;
 
@@ -16,6 +18,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Pete Muir
  * @see Config
  */
+@Listeners(TestResourceTrackingListener.class)
 @Test(groups = "functional", testName = "cdi.test.cachemanager.embedded.xml.XMLConfiguredCacheContainerTest")
 public class XMLConfiguredCacheContainerTest extends Arquillian {
 

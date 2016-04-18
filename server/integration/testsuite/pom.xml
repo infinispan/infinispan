@@ -56,6 +56,11 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-commons-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
             <scope>test</scope>
             <exclusions>
@@ -609,7 +614,7 @@
                     <properties>
                         <property>
                             <name>listener</name>
-                            <value>org.infinispan.server.test.util.TestsuiteListener</value>
+                            <value>org.infinispan.commons.test.JUnitTestListener</value>
                         </property>
                     </properties>
                 </configuration>

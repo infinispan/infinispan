@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -27,7 +28,7 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(groups = "functional", testName = "lucene.cachestore.IndexCacheLoaderTest")
-public class IndexCacheLoaderTest {
+public class IndexCacheLoaderTest extends AbstractInfinispanTest {
 
    private static final int SCALE = 600;
    protected final String parentDir = TestingUtil.tmpDirectory(this.getClass());

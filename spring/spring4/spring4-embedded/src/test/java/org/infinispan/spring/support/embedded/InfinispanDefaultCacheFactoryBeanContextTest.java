@@ -5,9 +5,12 @@ import org.infinispan.test.fwk.TestResourceTracker;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertNotNull;
@@ -28,13 +31,13 @@ public class InfinispanDefaultCacheFactoryBeanContextTest extends AbstractTestNG
 
    private static final String DEFAULT_CACHE_NAME = "testDefaultCache";
 
-   @BeforeSuite
-   public void beforeSuit() {
+   @BeforeTest(alwaysRun = true)
+   public void beforeTest() {
        TestResourceTracker.testStarted(getClass().getName());
    }
 
-   @AfterSuite
-   public void afterSuite() {
+   @AfterTest(alwaysRun = true)
+   public void afterTest() {
        TestResourceTracker.testFinished(getClass().getName());
    }
 

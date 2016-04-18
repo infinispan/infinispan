@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -19,7 +20,7 @@ import static org.testng.AssertJUnit.*;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "it.compatibility.ByteArrayValueReplEmbeddedHotRodTest")
-public class ByteArrayValueReplEmbeddedHotRodTest {
+public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest {
 
    CompatibilityCacheFactory<Object, Object> cacheFactory1;
    CompatibilityCacheFactory<Object, Object> cacheFactory2;

@@ -39,13 +39,18 @@
             <artifactId>metainf-services</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core</artifactId>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-commons-test</artifactId>
+          <scope>test</scope>
+       </dependency>
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-core</artifactId>
+          <type>test-jar</type>
+          <scope>test</scope>
+       </dependency>
+       <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <scope>test</scope>

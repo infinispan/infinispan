@@ -21,8 +21,7 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-core</artifactId>
-            <type>test-jar</type>
+            <artifactId>infinispan-commons-test</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -30,10 +29,11 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-core</artifactId>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-commons</artifactId>
+            <artifactId>infinispan-core</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

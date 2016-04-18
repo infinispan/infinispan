@@ -2,6 +2,7 @@ package org.infinispan.it.compatibility;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.it.compatibility.EmbeddedRestMemcachedHotRodTest.SpyMemcachedCompatibleMarshaller;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -22,7 +23,7 @@ import static org.testng.AssertJUnit.assertArrayEquals;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "it.compatibility.DistMemcachedEmbeddedTest")
-public class DistMemcachedEmbeddedTest {
+public class DistMemcachedEmbeddedTest extends AbstractInfinispanTest {
 
    private final int numOwners = 1;
    //make sure the number of entries is big enough so that at least on entry

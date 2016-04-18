@@ -3,6 +3,7 @@ package org.infinispan.spring.support.embedded;
 import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.spring.InfinispanDefaultCacheFactoryBean;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -20,7 +21,7 @@ import static org.testng.AssertJUnit.assertEquals;
  *
  */
 @Test(testName = "spring.support.InfinispanDefaultCacheFactoryBeanTest", groups = "unit")
-public class InfinispanDefaultCacheFactoryBeanTest {
+public class InfinispanDefaultCacheFactoryBeanTest extends AbstractInfinispanTest {
 
    /**
     * Test method for

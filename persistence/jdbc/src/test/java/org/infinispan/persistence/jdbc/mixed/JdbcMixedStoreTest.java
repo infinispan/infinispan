@@ -16,6 +16,7 @@ import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -34,7 +35,7 @@ import static org.infinispan.test.TestingUtil.internalMetadata;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "persistence.jdbc.mixed.JdbcMixedStoreTest")
-public class JdbcMixedStoreTest {
+public class JdbcMixedStoreTest extends AbstractInfinispanTest {
 
    private AdvancedLoadWriteStore cacheStore;
    private TableManipulation stringsTm;

@@ -21,12 +21,14 @@ import org.testng.annotations.Test;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import java.util.Arrays;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 import static org.infinispan.context.Flag.FAIL_SILENTLY;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 
@@ -49,6 +51,15 @@ public class APITest extends MultipleCacheManagersTest {
       registerCacheManager(cm1, cm2);
       cm1.getCache();
       cm2.getCache();
+   }
+
+   public void testProperties() {
+      Properties p = new Properties();
+
+      Object v = new Object();
+      p.put("bla", v);
+      assertEquals(v, p.get("bla"));
+      System.out.println(p.get("bla"));
    }
 
    public void testLockSuccess() throws Exception {

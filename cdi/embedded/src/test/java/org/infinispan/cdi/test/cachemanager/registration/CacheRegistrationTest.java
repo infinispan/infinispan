@@ -3,9 +3,11 @@ package org.infinispan.cdi.test.cachemanager.registration;
 import org.infinispan.Cache;
 import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -20,6 +22,7 @@ import static org.testng.Assert.assertTrue;
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@Listeners(TestResourceTrackingListener.class)
 @Test(groups = "functional", testName = "cdi.test.cachemanager.embedded.registration.CacheRegistrationTest")
 public class CacheRegistrationTest extends Arquillian {
 

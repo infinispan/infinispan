@@ -30,7 +30,7 @@
         <priority value="INFO" />
     </category>
 
-    <category name="org.infinispan.server.test.util.TestsuiteListener">
+    <category name="org.infinispan.commons.test.JUnitTestListener">
         <priority value="INFO" />
     </category>
 

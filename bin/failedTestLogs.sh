@@ -18,9 +18,13 @@ fi
 echo Processing $FILE
 
 if [ -z "$FAILED_TESTS" ] ; then
-  FAILED_TESTS=`$CAT $FILE | perl -ne '/Test .*\(.*\.(.*)\) (failed|skipped)\./ && print "$1\n";' | sort -u`
+  if $CAT $FILE | head -100 | grep -q TestSuiteProgress ; then
+    FAILED_TESTS=$($CAT $FILE | perl -ne '/\[TestSuiteProgress\] .* (?:failed|skipped): (.*)\.[^.]*/ && print "$1\n";' | sort -u)
+  else
+    FAILED_TESTS=$($CAT $FILE | perl -ne '/Test .*\(.*\.(.*)\) (failed|skipped)\./ && print "$1\n";' | sort -u)
+  fi
 fi
-echo Failed/skipped tests: $FAILED_TESTS 
+echo Failed/skipped tests: $FAILED_TESTS
 
 DATE=$(date +%Y%m%d)
 for TEST in $FAILED_TESTS ; do
