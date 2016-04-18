@@ -3,9 +3,12 @@ package org.infinispan.stats.impl;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetDefaultExecutorServiceAction;
 
 /**
@@ -28,6 +31,11 @@ final class SecurityActions {
 
    static DefaultExecutorService getDefaultExecutorService(final Cache<?, ?> cache) {
       GetDefaultExecutorServiceAction action = new GetDefaultExecutorServiceAction(cache);
+      return doPrivileged(action);
+   }
+
+   static Configuration getCacheConfiguration(final AdvancedCache<?, ?> cache) {
+      GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
       return doPrivileged(action);
    }
 }
