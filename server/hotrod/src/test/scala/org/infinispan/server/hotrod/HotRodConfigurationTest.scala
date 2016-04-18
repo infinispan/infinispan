@@ -6,13 +6,14 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.testng.Assert._
 import org.testng.annotations.Test
 import org.infinispan.server.core.test.Stoppable
-import org.infinispan.configuration.cache.{ConfigurationBuilder, Configuration}
+import org.infinispan.configuration.cache.{Configuration, ConfigurationBuilder}
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.util.concurrent.IsolationLevel
 import org.infinispan.commons.CacheConfigurationException
 import org.infinispan.configuration.cache.VersioningScheme
+import org.infinispan.test.AbstractInfinispanTest
 
 /**
  * Test to verify that configuration changes are reflected in backend caches.
@@ -21,7 +22,7 @@ import org.infinispan.configuration.cache.VersioningScheme
  * @since 4.2
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodConfigurationTest")
-class HotRodConfigurationTest {
+class HotRodConfigurationTest extends AbstractInfinispanTest {
 
    def testUserDefinedTimeouts() {
       val builder = new HotRodServerConfigurationBuilder

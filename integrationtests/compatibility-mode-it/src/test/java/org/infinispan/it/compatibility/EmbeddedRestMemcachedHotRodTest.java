@@ -17,6 +17,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -34,7 +35,7 @@ import static org.testng.AssertJUnit.*;
  * @since 5.3
  */
 @Test(groups = {"functional", "smoke"}, testName = "it.compatibility.EmbeddedRestMemcachedHotRodTest")
-public class EmbeddedRestMemcachedHotRodTest {
+public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
 
    final static String CACHE_NAME = "memcachedCache";
 

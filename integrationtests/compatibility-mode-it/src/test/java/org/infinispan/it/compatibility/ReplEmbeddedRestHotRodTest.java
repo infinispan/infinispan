@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "it.compatibility.ReplEmbeddedRestHotRodTest")
-public class ReplEmbeddedRestHotRodTest {
+public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
    CompatibilityCacheFactory<Object, Object> cacheFactory1;
    CompatibilityCacheFactory<Object, Object> cacheFactory2;

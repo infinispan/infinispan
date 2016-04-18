@@ -8,15 +8,16 @@ import org.infinispan.integrationtests.cdijcache.interceptor.service.CachePutSer
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CustomCacheKey;
 import org.infinispan.jcache.annotation.DefaultCacheKey;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-import javax.cache.annotation.CacheKey;
+import javax.cache.annotation.GeneratedCacheKey;
 import javax.inject.Inject;
-
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 
@@ -28,6 +29,7 @@ import static org.testng.Assert.assertTrue;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  * @see javax.cache.annotation.CachePut
  */
+@Listeners(TestResourceTrackingListener.class)
 @Test(groups = "functional", testName = "cdi.test.interceptor.CachePutInterceptorTest")
 public class CachePutInterceptorTest extends Arquillian {
 
@@ -49,7 +51,7 @@ public class CachePutInterceptorTest extends Arquillian {
 
    @Custom
    @Inject
-   private Cache<CacheKey, String> customCache;
+   private Cache<GeneratedCacheKey, String> customCache;
 
    @BeforeMethod
    public void beforeMethod() {
@@ -62,7 +64,7 @@ public class CachePutInterceptorTest extends Arquillian {
             .append(CachePutService.class.getName())
             .append(".put(long,java.lang.String)");
 
-      final Cache<CacheKey, String> cache = cacheContainer.getCache(cacheName.toString());
+      final Cache<GeneratedCacheKey, String> cache = cacheContainer.getCache(cacheName.toString());
 
       service.put(0l, "Manik");
       service.put(0l, "Kevin");

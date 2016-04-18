@@ -4,10 +4,12 @@ import org.testng.annotations.Test
 import org.infinispan.manager.EmbeddedCacheManager
 import org.testng.Assert._
 import java.lang.reflect.Method
+
 import test.Stoppable
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.server.core.configuration.MockServerConfigurationBuilder
 import org.infinispan.server.core.configuration.MockServerConfiguration
+import org.infinispan.test.AbstractInfinispanTest
 
 /**
  * Abstract protocol server test.
@@ -16,7 +18,7 @@ import org.infinispan.server.core.configuration.MockServerConfiguration
  * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.core.AbstractProtocolServerTest")
-class AbstractProtocolServerTest {
+class AbstractProtocolServerTest extends AbstractInfinispanTest {
 
    def testValidateNegativeWorkerThreads() {
       val b = new MockServerConfigurationBuilder

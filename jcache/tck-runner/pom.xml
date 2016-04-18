@@ -59,6 +59,11 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <scope>test</scope>
       </dependency>
@@ -217,7 +222,7 @@
                <properties>
                   <property>
                      <name>listener</name>
-                     <value>org.infinispan.jcache.test.tck.DummyTestListener</value>
+                     <value>org.infinispan.commons.test.JUnitTestListener</value>
                   </property>
                </properties>
             </configuration>

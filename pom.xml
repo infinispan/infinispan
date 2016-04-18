@@ -20,6 +20,7 @@
       <module>checkstyle</module>
       <module>parent</module>
       <module>commons</module>
+      <module>commons-test</module>
       <module>core</module>
       <module>extended-statistics</module>
       <module>tools</module>

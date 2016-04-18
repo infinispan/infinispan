@@ -1,6 +1,8 @@
 package org.infinispan.jcache;
 
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.testng.Arquillian;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import javax.cache.Cache;
@@ -17,6 +19,7 @@ import static org.testng.Assert.*;
  * @author Matej Cimbora
  */
 //TODO Test exception handling once implemented (e.g. cacheFor, evictFor, etc.)
+@Listeners(TestResourceTrackingListener.class)
 @Test(testName = "org.infinispan.jcache.AbstractTwoCachesAnnotationsTest", groups = "functional")
 public abstract class AbstractTwoCachesAnnotationsTest extends Arquillian {
 

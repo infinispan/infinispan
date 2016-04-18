@@ -141,6 +141,11 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cdi-common</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cdi-embedded</artifactId>
             <version>${project.version}</version>
          </dependency>
@@ -156,7 +161,22 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cli-client</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-cli-interpreter</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-commons</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-commons-test</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
@@ -172,6 +192,11 @@
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-directory-provider</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-osgi</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
@@ -232,6 +257,11 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-spring4-common</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-spring4-remote</artifactId>
             <version>${project.version}</version>
          </dependency>
@@ -243,6 +273,11 @@
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-tasks</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-tasks-api</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>

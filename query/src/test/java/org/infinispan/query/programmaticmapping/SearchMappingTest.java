@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
@@ -31,7 +32,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
  * @since 5.1.1
  */
 @Test(groups = "functional", testName = "query.programmaticmapping.SearchMappingTest")
-public class SearchMappingTest {
+public class SearchMappingTest extends AbstractInfinispanTest {
 
    /**
     * Here we use SearchMapping to have the ability to add Objects to the cache

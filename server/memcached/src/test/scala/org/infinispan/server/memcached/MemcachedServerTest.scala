@@ -7,6 +7,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
 import org.infinispan.configuration.cache.ConfigurationBuilder
 import org.infinispan.commons.CacheConfigurationException
+import org.infinispan.test.AbstractInfinispanTest
 
 /**
  * Memcached server unit test.
@@ -15,7 +16,7 @@ import org.infinispan.commons.CacheConfigurationException
  * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedServerTest")
-class MemcachedServerTest {
+class MemcachedServerTest extends AbstractInfinispanTest {
 
    def testValidateDefaultConfiguration {
       Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager()) { cm =>

@@ -5,6 +5,7 @@ import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.ITestContext;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -55,7 +56,14 @@ public class AbstractInfinispanTest {
    public static final TimeService TIME_SERVICE = new DefaultTimeService();
 
    @BeforeTest(alwaysRun = true)
-   protected void testClassStarted() {
+   protected void testClassStarted(ITestContext context) {
+      String fullName = context.getName();
+      String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
+      Class testClass = context.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
+      if (!simpleName.equals(testClass.getSimpleName()) && !Thread.currentThread().getName().equals("main")) {
+         log.warnf("Wrong test name %s for class %s", simpleName, testClass.getSimpleName());
+      }
+
       TestResourceTracker.testStarted(getClass().getName());
    }
 

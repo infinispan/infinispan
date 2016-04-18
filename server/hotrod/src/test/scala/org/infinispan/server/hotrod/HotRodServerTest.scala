@@ -6,6 +6,7 @@ import org.infinispan.server.core.test.Stoppable
 import org.infinispan.test.fwk.TestCacheManagerFactory._
 import test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
+import org.infinispan.test.AbstractInfinispanTest
 
 /**
  * Hot Rod server unit test.
@@ -14,7 +15,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
  * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodServerTest")
-class HotRodServerTest {
+class HotRodServerTest extends AbstractInfinispanTest {
 
    def testValidateProtocolServerNullProperties() {
       Stoppable.useCacheManager(createCacheManager(hotRodCacheConfiguration())) { cm =>
