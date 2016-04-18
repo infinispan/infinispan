@@ -1,6 +1,7 @@
 package org.infinispan.xsite;
 
 import org.infinispan.Cache;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -37,7 +38,8 @@ public class GlobalXSiteAdminOperations {
 
    private static void addCacheAdmin(Cache cache, List<CacheXSiteAdminOperation> list) {
       if (cache != null) {
-         XSiteAdminOperations operation = cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
+         ComponentRegistry cacheRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
+         XSiteAdminOperations operation = cacheRegistry.getComponent(XSiteAdminOperations.class);
          if (operation != null) {
             list.add(new CacheXSiteAdminOperation(cache.getName(), operation));
          }
