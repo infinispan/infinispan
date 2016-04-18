@@ -1186,43 +1186,6 @@
          <scope>test</scope>
       </dependency>
    </dependencies>
-   <repositories>
-      <repository>
-         <releases>
-            <enabled>true</enabled>
-         </releases>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-         <id>jboss-public-repository</id>
-         <name>JBoss Public Repository and Proxy for third party repositories</name>
-         <url>https://repository.jboss.org/nexus/content/groups/public</url>
-      </repository>
-   </repositories>
-   <pluginRepositories>
-      <pluginRepository>
-         <releases>
-            <enabled>true</enabled>
-         </releases>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-         <id>jboss-public-plugin-repository</id>
-         <name>JBoss Public Plugin Repository and Proxy for third party plugin repositories</name>
-         <url>https://repository.jboss.org/nexus/content/groups/public</url>
-      </pluginRepository>
-      <pluginRepository>
-         <releases>
-            <enabled>true</enabled>
-         </releases>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-         <id>jboss-public-thirdparty-snapshots</id>
-         <name>JBoss Public third party snapshots plugin repositories</name>
-         <url>https://repository.jboss.org/nexus/content/groups/public-thirdparty-snapshots</url>
-      </pluginRepository>
-   </pluginRepositories>
    <build>
       <directory>${buildDirectory}</directory>
       <finalName>${project.artifactId}</finalName>

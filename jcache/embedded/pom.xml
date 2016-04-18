@@ -76,21 +76,6 @@
       </dependency>
    </dependencies>
 
-   <repositories>
-      <repository>
-         <releases>
-            <enabled>true</enabled>
-         </releases>
-         <snapshots>
-            <enabled>true</enabled>
-         </snapshots>
-         <id>sonatype-snapshot-repository</id>
-         <name>Sonatype snapshot to be removed once everything becomes stable
-         </name>
-         <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      </repository>
-   </repositories>
-
    <build>
       <resources>
          <resource>
