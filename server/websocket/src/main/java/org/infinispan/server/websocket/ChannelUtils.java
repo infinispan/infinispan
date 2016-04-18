@@ -32,13 +32,13 @@ public class ChannelUtils {
       JsonObject responseObject = toJSON(key, value, cache.getName());
 
       // Write the JSON response out onto the channel...
-      ctx.channel().writeAndFlush(new TextWebSocketFrame(responseObject.toString()));
+      ctx.channel().writeAndFlush(new TextWebSocketFrame(responseObject.toString()), ctx.channel().voidPromise());
    }
 
    public static void pushErrorMessage(String errorMessage, ChannelHandlerContext ctx) {
       JsonObject errorObject = JsonObject.createNew();
       errorObject.put(OpHandler.ERROR, errorMessage);
-      ctx.channel().writeAndFlush(new TextWebSocketFrame(errorObject.toString()));
+      ctx.channel().writeAndFlush(new TextWebSocketFrame(errorObject.toString()), ctx.channel().voidPromise());
    }
 
    /**

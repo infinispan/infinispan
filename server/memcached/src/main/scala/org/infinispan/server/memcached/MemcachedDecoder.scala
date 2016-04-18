@@ -275,10 +275,10 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
          val errorResponse = createErrorResponse(cause)
          if (errorResponse != null) {
             errorResponse match {
-               case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a))
-               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8))
+               case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a), ch.voidPromise)
+               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8), ch.voidPromise)
                case null => // ignore
-               case _ => ch.writeAndFlush(errorResponse)
+               case _ => ch.writeAndFlush(errorResponse, ch.voidPromise)
             }
          }
       }
@@ -753,12 +753,12 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
             response match {
                // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
                case l: Array[ByteBuf] =>
-                  l.foreach(ch.write(_))
+                  l.foreach(buf => ch.write(buf, ch.voidPromise))
                   ch.flush
-               case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a))
-               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8))
+               case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a), ch.voidPromise)
+               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8), ch.voidPromise)
                case pr: PartialResponse => return pr
-               case _ => ch.writeAndFlush(response)
+               case _ => ch.writeAndFlush(response, ch.voidPromise)
             }
          }
          null

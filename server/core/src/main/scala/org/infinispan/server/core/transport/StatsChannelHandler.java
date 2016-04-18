@@ -47,13 +47,8 @@ public class StatsChannelHandler extends ChannelDuplexHandler {
 
    @Override
    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-      int readable = getByteSize(msg);
-
-      super.write(ctx, msg, promise.addListener(f -> {
-         if (f.isSuccess()) {
-            transport.updateTotalBytesWritten(readable);
-         }
-      }));
+      transport.updateTotalBytesWritten(getByteSize(msg));
+      super.write(ctx, msg, promise);
    }
 
    int getByteSize(Object msg) {

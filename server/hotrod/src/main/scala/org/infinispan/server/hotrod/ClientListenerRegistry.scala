@@ -116,12 +116,12 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                case t: Throwable => decoder.createErrorResponse(h, t)
                case _ => decoder.createSuccessResponse(h, null)
             }
-            ch.writeAndFlush(resp)
+            ch.writeAndFlush(resp, ch.voidPromise)
             ()
          })
       } else {
          cache.addListener(clientEventSender, filter.orNull, converter.orNull)
-         ch.writeAndFlush(decoder.createSuccessResponse(h, null))
+         ch.writeAndFlush(decoder.createSuccessResponse(h, null), ch.voidPromise)
       }
    }
 
@@ -223,7 +223,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          while(!eventQueue.isEmpty && ch.isWritable) {
             val event = eventQueue.poll()
             if (isTrace) tracef("Write event: %s to channel %s", event, ch)
-            ch.write(event)
+            ch.write(event, ch.voidPromise)
             written = true
          }
          if (written) {

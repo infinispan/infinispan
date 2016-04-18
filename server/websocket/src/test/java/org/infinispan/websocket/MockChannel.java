@@ -5,6 +5,8 @@ import io.netty.channel.*;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.Promise;
 import org.infinispan.server.websocket.json.JsonObject;
 
 import java.io.StringWriter;
@@ -20,7 +22,8 @@ import java.net.SocketAddress;
  */
 public class MockChannel implements Channel {
 
-   private StringWriter writer = new StringWriter();
+   private final StringWriter writer = new StringWriter();
+   private final ChannelPromise voidPromise = new DefaultChannelPromise(this);
 
    @Override
    public ChannelFuture write(Object message) {
@@ -160,7 +163,7 @@ public class MockChannel implements Channel {
 
     @Override
     public ChannelPromise voidPromise() {
-        return null;
+        return voidPromise;
     }
 
     @Override
@@ -231,7 +234,7 @@ public class MockChannel implements Channel {
     @Override
     public ChannelFuture write(Object msg, ChannelPromise promise) {
         write(msg);
-        return promise.setSuccess();
+        return promise;
     }
 
     @Override
@@ -242,7 +245,7 @@ public class MockChannel implements Channel {
     @Override
     public ChannelFuture writeAndFlush(Object msg, ChannelPromise promise) {
         write(msg);
-        return promise.setSuccess();
+        return promise;
     }
 
     @Override

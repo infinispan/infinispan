@@ -83,10 +83,10 @@ public class CacheListener {
          if(channel.channel.isOpen() && channel.onEvents.contains(eventType)) {
             if(channel.key != null) {
                if(event.getKey().equals(channel.key) || channel.key.equals("*")) {
-                  channel.channel.writeAndFlush(new TextWebSocketFrame(jsonString));
+                  channel.channel.writeAndFlush(new TextWebSocketFrame(jsonString), channel.channel.voidPromise());
                }
             } else {             
-               channel.channel.writeAndFlush(new TextWebSocketFrame(jsonString));
+               channel.channel.writeAndFlush(new TextWebSocketFrame(jsonString), channel.channel.voidPromise());
             }
          }
       }
