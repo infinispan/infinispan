@@ -26,7 +26,17 @@ import java.util.concurrent.ConcurrentMap;
  * @since 5.1
  */
 public class CollectionFactory {
-   
+   private static final float DEFAULT_LOAD_FACTOR = 0.75f;
+
+   public static int computeCapacity(int expectedSize) {
+      return computeCapacity(expectedSize, DEFAULT_LOAD_FACTOR);
+   }
+
+   public static int computeCapacity(int expectedSize, float loadFactor) {
+      return (int) (expectedSize / loadFactor + 1.0f);
+   }
+
+
    public static <K, V> ConcurrentMap<K, V> makeConcurrentMap() {
       return new ConcurrentHashMap<K, V>();
    }
@@ -151,6 +161,7 @@ public class CollectionFactory {
     * @param <T> type of elements
     * @return a set view of the specified array
     */
+   @SafeVarargs
    public static <T> Set<T> makeSet(T... entries) {
       return new HashSet<T>(Arrays.asList(entries));
    }
