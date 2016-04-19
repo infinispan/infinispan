@@ -55,7 +55,21 @@ public final class ProtobufValueWrapper {
 
    @Override
    public String toString() {
-      return "ProtobufValueWrapper(" + Arrays.toString(binary) + ')';
+      // Render only max 40 bytes
+      int len = Math.min(binary.length, 40);
+      StringBuilder sb = new StringBuilder(50 + 3 * len);
+      sb.append("ProtobufValueWrapper(length=").append(binary.length).append(", binary=[");
+      for (int i = 0; i < len; i++) {
+         if (i != 0) {
+            sb.append(' ');
+         }
+         sb.append(String.format("%02X", binary[i] & 0xff));
+      }
+      if (len < binary.length) {
+         sb.append("...");
+      }
+      sb.append("])");
+      return sb.toString();
    }
 
    public static final class Externalizer extends AbstractExternalizer<ProtobufValueWrapper> {
