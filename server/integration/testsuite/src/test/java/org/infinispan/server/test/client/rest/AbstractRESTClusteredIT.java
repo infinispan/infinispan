@@ -58,6 +58,7 @@ public abstract class AbstractRESTClusteredIT {
         delete(fullPathKey(KEY_A));
         delete(fullPathKey(KEY_B));
         delete(fullPathKey(KEY_C));
+        RESTHelper.clearServers();
     }
 
     @Test

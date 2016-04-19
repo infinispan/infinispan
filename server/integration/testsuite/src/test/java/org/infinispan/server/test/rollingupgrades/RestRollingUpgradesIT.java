@@ -13,6 +13,7 @@ import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -39,6 +40,11 @@ public class RestRollingUpgradesIT {
 
     @ArquillianResource
     ContainerController controller;
+
+    @AfterClass
+    public static void clearServers() {
+        RESTHelper.clearServers();
+    }
 
     @Test
     public void testRestRollingUpgradesDiffVersions() throws Exception {

@@ -41,6 +41,7 @@ public abstract class AbstractRESTAsyncIT {
     @After
     public void tearDown() throws Exception {
         delete(fullPathKey(null));
+        RESTHelper.clearServers();
     }
 
     @Test

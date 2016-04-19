@@ -53,8 +53,12 @@ public class RESTHelper {
     public static CloseableHttpClient client = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
 
 
-   public static void addServer(String hostname, String restServerPath) {
+    public static void addServer(String hostname, String restServerPath) {
         servers.add(new Server(hostname, restServerPath));
+    }
+
+    public static void clearServers() {
+        servers.clear();
     }
 
     public static void addServer(String hostname, int port, String restServerPath) {
@@ -168,7 +172,7 @@ public class RESTHelper {
         HttpResponse resp = client.execute(get);
         try {
             if (expectedCode != resp.getStatusLine().getStatusCode()) {
-               return false;
+                return false;
             }
             if (expectedResponseBody != null) {
                 if (!expectedResponseBody.equals(EntityUtils.toString(resp.getEntity()))) {
@@ -182,7 +186,7 @@ public class RESTHelper {
         }
         return true;
     }
-    
+
     public static HttpResponse put(URI uri, Object data, String contentType) throws Exception {
         return put(uri, data, contentType, HttpServletResponse.SC_OK);
     }
@@ -218,7 +222,7 @@ public class RESTHelper {
     public static void setCredentials(String username, String password) {
         Credentials credentials = new UsernamePasswordCredentials(username, password);
         credsProvider.setCredentials(
-              new AuthScope(servers.get(0).getHostname(), port), credentials);
+                new AuthScope(servers.get(0).getHostname(), port), credentials);
     }
 
     public static void clearCredentials() {
@@ -291,14 +295,14 @@ public class RESTHelper {
         final int connectionPort = port + offset;
 
         try {
-           final URL url = new URL("http", hostname, connectionPort, query);
-           try {
-              return new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), null);
-           } catch (URISyntaxException e) {
-              throw new RuntimeException(e);
-           }
+            final URL url = new URL("http", hostname, connectionPort, query);
+            try {
+                return new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), null);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
         } catch (MalformedURLException e) {
-           throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 

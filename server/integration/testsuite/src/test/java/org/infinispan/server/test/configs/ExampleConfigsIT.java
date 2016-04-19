@@ -43,6 +43,7 @@ import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -92,6 +93,11 @@ public class ExampleConfigsIT {
             rcmFactory.stopManagers();
         }
         rcmFactory = null;
+    }
+
+    @AfterClass
+    public static void clearServers() {
+        RESTHelper.clearServers();
     }
 
     @Test

@@ -35,7 +35,7 @@ public class RESTBasicSecurityIT extends AbstractBasicSecurity {
 
     @After
     public void tearDown() throws Exception {
-        RESTHelper.getServers().clear();
+        RESTHelper.clearServers();
     }
 
     @Test
