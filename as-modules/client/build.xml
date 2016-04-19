@@ -38,6 +38,10 @@
             <maven-resource group="org.infinispan" artifact="infinispan-cdi-remote"/>
         </module-def>
 
+        <module-def name="org.infinispan.cdi.common" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-cdi-common"/>
+        </module-def>
+
         <module-def name="org.infinispan.protostream" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan.protostream" artifact="protostream" />
         </module-def>

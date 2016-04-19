@@ -1,6 +1,6 @@
 package org.infinispan.integrationtests.cdijcache.interceptor.config;
 
-import org.infinispan.cdi.ConfigureCache;
+import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;

@@ -1,9 +1,5 @@
 package org.infinispan.test.integration.as.cdi;
 
-import static org.junit.Assert.assertEquals;
-
-import javax.inject.Inject;
-
 import org.infinispan.Version;
 import org.infinispan.eviction.EvictionStrategy;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -16,9 +12,12 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import javax.inject.Inject;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Kevin Pollet <pollet.kevin@gmail.com> (C) 2011
@@ -37,7 +36,7 @@ public class GreetingCacheManagerIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan.cdi:" + Version.getModuleSlot() + " services, org.infinispan.jcache:" + Version.getModuleSlot() +" services").exportAsString();
+            .attribute("Dependencies", "org.infinispan.cdi.embedded:" + Version.getModuleSlot() + " services, org.infinispan.jcache:" + Version.getModuleSlot() +" services").exportAsString();
       return new StringAsset(manifest);
    }
 
