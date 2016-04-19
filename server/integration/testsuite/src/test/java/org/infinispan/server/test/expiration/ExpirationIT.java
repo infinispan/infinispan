@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,6 +45,11 @@ public class ExpirationIT {
 
     @InfinispanResource("expiration-2")
     RemoteInfinispanServer server2;
+
+    @AfterClass
+    public static void clearServers() {
+        RESTHelper.clearServers();
+    }
 
     @Test
     public void testRESTExpiration() throws Exception {

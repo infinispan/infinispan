@@ -9,7 +9,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Arrays;
@@ -65,6 +69,8 @@ public abstract class AbstractRESTClientIT {
         delete(fullPathKey(KEY_B));
         delete(fullPathKey(KEY_C));
         delete(fullPathKey(REST_NAMED_CACHE, KEY_A));
+
+        RESTHelper.clearServers();
     }
 
     @Test
