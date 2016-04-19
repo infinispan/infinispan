@@ -1,7 +1,7 @@
 package org.infinispan.test.integration.as.cdi;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.cdi.DefaultEmbeddedCacheManagerProducer;
+import org.infinispan.cdi.embedded.DefaultEmbeddedCacheManagerProducer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -19,7 +19,7 @@ import javax.inject.Inject;
 import java.io.File;
 
 /**
- * Tests whether {@link org.infinispan.cdi.DefaultEmbeddedCacheManagerProducer} sets custom Cache name to avoid JMX
+ * Tests whether {@link DefaultEmbeddedCacheManagerProducer} sets custom Cache name to avoid JMX
  * name collision.
  *
  * @author Sebastian Laskawiec
@@ -50,7 +50,7 @@ public class DuplicatedDomainsCdiIT {
    DefaultEmbeddedCacheManagerProducer defaultEmbeddedCacheManagerProducer;
 
    /**
-    * Creates new {@link org.infinispan.cdi.DefaultEmbeddedCacheManagerProducer} with default {@link org.infinispan.configuration.cache.Configuration}.
+    * Creates new {@link DefaultEmbeddedCacheManagerProducer} with default {@link org.infinispan.configuration.cache.Configuration}.
     * This test will fail if CDI Extension registers and won't set Cache Manager's name.
     */
    @Test

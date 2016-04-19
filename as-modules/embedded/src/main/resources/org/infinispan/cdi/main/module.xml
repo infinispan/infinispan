@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<module-alias xmlns="urn:jboss:module:1.1" name="org.infinispan.cdi" slot="${slot}" 
-    target-name="org.infinispan.cdi.embedded" target-slot="${slot}"/>

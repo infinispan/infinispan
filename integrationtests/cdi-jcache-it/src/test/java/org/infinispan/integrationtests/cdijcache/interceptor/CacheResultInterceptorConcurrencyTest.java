@@ -1,6 +1,6 @@
 package org.infinispan.integrationtests.cdijcache.interceptor;
 
-import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
+import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheResultService;
 import org.jboss.arquillian.container.test.api.Deployment;

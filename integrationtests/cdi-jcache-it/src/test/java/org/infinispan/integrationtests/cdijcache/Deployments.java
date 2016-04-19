@@ -1,9 +1,9 @@
 package org.infinispan.integrationtests.cdijcache;
 
-import org.infinispan.cdi.ConfigureCache;
-import org.infinispan.cdi.event.AbstractEventBridge;
-import org.infinispan.cdi.event.cache.CacheEventBridge;
-import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
+import org.infinispan.cdi.embedded.ConfigureCache;
+import org.infinispan.cdi.embedded.event.AbstractEventBridge;
+import org.infinispan.cdi.embedded.event.cache.CacheEventBridge;
+import org.infinispan.cdi.embedded.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.jcache.annotation.CachePutInterceptor;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
