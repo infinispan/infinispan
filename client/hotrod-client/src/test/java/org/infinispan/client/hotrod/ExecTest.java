@@ -2,11 +2,11 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.utils.ScriptingUtils;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
@@ -19,8 +19,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.loadScript;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -70,7 +71,7 @@ public class ExecTest extends MultiHotRodServersTest {
 
    @Test(dataProvider = "CacheNameProvider")
    public void testEmbeddedScriptRemoteExecution(String cacheName) throws IOException {
-      withScript("/test.js", scriptName -> {
+      withScript(manager(0), "/test.js", scriptName -> {
          populateCache(cacheName);
          assertEquals(SIZE, clients.get(0).getCache(cacheName).size());
          Map<String, String> params = new HashMap<>();
@@ -83,7 +84,7 @@ public class ExecTest extends MultiHotRodServersTest {
 
    @Test(dataProvider = "CacheNameProvider")
    public void testRemoteScriptRemoteExecution(String cacheName) throws IOException {
-      withScript("/test.js", scriptName -> {
+      withScript(manager(0), "/test.js", scriptName -> {
          populateCache(cacheName);
 
          assertEquals(SIZE, clients.get(0).getCache(cacheName).size());
@@ -139,7 +140,8 @@ public class ExecTest extends MultiHotRodServersTest {
       RemoteCache<String, String> cache = clients.get(0).getCache(cacheName);
       RemoteCache<String, String> scriptCache = clients.get(1).getCache(SCRIPT_CACHE);
       ScriptingUtils.loadData(cache, "/macbeth.txt");
-      loadScript(scriptCache, "/wordCountStream_dist.js");
+      ScriptingManager scriptingManager = manager(0).getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+      loadScript("/wordCountStream_dist.js", scriptingManager, "wordCountStream_dist.js");
 
       ArrayList<Map<String, Long>> results = cache.execute("wordCountStream_dist.js", new HashMap<String, String>());
       assertEquals(2, results.size());
@@ -151,7 +153,7 @@ public class ExecTest extends MultiHotRodServersTest {
 
    @Test(dataProvider = "CacheNameProvider")
    public void testExecPutConstantGet(String cacheName) throws IOException {
-      withScript("/test-put-constant-get.js", scriptName -> {
+      withScript(manager(0), "/test-put-constant-get.js", scriptName -> {
          Map<String, String> params = new HashMap<>();
          String result = clients.get(0).getCache(cacheName).execute(scriptName, params);
          assertEquals("hoptimus prime", result);
@@ -159,30 +161,9 @@ public class ExecTest extends MultiHotRodServersTest {
       });
    }
 
-   void withScript(String scriptPath, Consumer<String> f) {
-      try {
-         String scriptName = loadScript(clients.get(0).getCache(SCRIPT_CACHE), scriptPath);
-         f.accept(scriptName);
-      } finally {
-         clients.get(0).getCache(SCRIPT_CACHE).remove(scriptPath);
-      }
-   }
-
    @DataProvider(name = "CacheNameProvider")
    private static Object[][] provideCacheMode() {
       return new Object[][] {{REPL_CACHE}, {DIST_CACHE}};
-   }
-
-
-   private String loadScript(BasicCache<String, String> scriptCache, String fileName) {
-      try (InputStream is = this.getClass().getResourceAsStream(fileName)) {
-         String script = TestingUtil.loadFileAsString(is);
-         String scriptName = fileName.replaceAll("\\/", "");
-         scriptCache.put(scriptName, script);
-         return scriptName;
-      } catch (IOException e) {
-         throw new AssertionError(e);
-      }
    }
 
 }
