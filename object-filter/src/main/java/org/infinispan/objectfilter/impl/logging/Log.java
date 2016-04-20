@@ -40,4 +40,7 @@ public interface Log extends BasicLogger {
 
    @Message(id = 411, value = "Filters cannot use grouping or aggregations")
    ParsingException getFiltersCannotUseGroupingOrAggregationException();
+
+   @Message(id = 412, value = "Unknown entity name %s")
+   IllegalStateException getUnknownEntity(String entityType);
 }

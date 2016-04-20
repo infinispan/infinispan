@@ -67,7 +67,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
       } catch (Exception e) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
 
       int i = 0;
@@ -91,7 +91,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
       } catch (Exception e) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
 
       int i = 0;
@@ -116,7 +116,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
       } catch (Exception e) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
 
       for (String p : propertyPath) {
@@ -139,7 +139,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
       try {
          messageDescriptor = serializationContext.getMessageDescriptor(entityType);
       } catch (Exception e) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
 
       for (String p : propertyPath) {

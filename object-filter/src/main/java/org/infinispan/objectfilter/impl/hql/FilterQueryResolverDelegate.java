@@ -58,7 +58,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
       targetType = entityName;
       Class<?> targetClass = propertyHelper.getEntityNamesResolver().getClassFromName(entityName);
       if (targetClass == null) {
-         throw new IllegalStateException("Unknown entity name " + entityName);
+         throw log.getUnknownEntity(entityName);
       }
    }
 
@@ -122,7 +122,7 @@ public class FilterQueryResolverDelegate implements QueryResolverDelegate {
       }
 
       if (propertyHelper.getEntityNamesResolver().getClassFromName(entityNameForAlias) == null) {
-         throw new IllegalStateException("Unknown entity name " + entityNameForAlias);
+         throw log.getUnknownEntity(entityNameForAlias);
       }
 
       return new PathedPropertyReference(alias, new FilterEntityTypeDescriptor(entityNameForAlias, propertyHelper), true);
