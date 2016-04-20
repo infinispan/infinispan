@@ -270,6 +270,11 @@ public class TcpTransportFactory implements TransportFactory {
       return borrowTransportFromPool(server);
    }
 
+   @Override
+   public SocketAddress getSocketAddress(Object key, byte[] cacheName) {
+      return topologyInfo.getHashAwareServer(key, cacheName).orElse(null);
+   }
+
    public Transport getTransport(Object key, Set<SocketAddress> failedServers, byte[] cacheName) {
       SocketAddress server;
       synchronized (lock) {

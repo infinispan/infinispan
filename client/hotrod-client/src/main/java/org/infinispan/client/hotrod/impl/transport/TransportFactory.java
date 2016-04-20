@@ -28,6 +28,8 @@ public interface TransportFactory {
 
    Transport getAddressTransport(SocketAddress server);
 
+   SocketAddress getSocketAddress(Object key, byte[] cacheName);
+
    void releaseTransport(Transport transport);
 
    void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ClientListenerNotifier listenerNotifier);

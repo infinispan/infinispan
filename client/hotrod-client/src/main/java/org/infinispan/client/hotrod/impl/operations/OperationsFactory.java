@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,10 +44,12 @@ public class OperationsFactory implements HotRodConstants {
 
    private final String cacheName;
 
-   public OperationsFactory(TransportFactory transportFactory, String cacheName,
-                            boolean forceReturnValue, Codec codec,
-                            ClientListenerNotifier listenerNotifier) {
+   private final ExecutorService executorService;
+
+   public OperationsFactory(TransportFactory transportFactory, String cacheName, boolean forceReturnValue, Codec
+           codec, ClientListenerNotifier listenerNotifier, ExecutorService executorService) {
       this.transportFactory = transportFactory;
+      this.executorService = executorService;
       this.cacheNameBytes = RemoteCacheManager.cacheNameBytes(cacheName);
       this.cacheName = cacheName;
       this.topologyId = transportFactory != null
@@ -70,9 +73,9 @@ public class OperationsFactory implements HotRodConstants {
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags());
    }
 
-   public <K, V> GetAllOperation<K, V> newGetAllOperation(Set<byte[]> keys) {
-      return new GetAllOperation<K, V>(
-            codec, transportFactory, keys, cacheNameBytes, topologyId, flags());
+   public <K, V> GetAllParallelOperation<K, V> newGetAllOperation(Set<byte[]> keys) {
+      return new GetAllParallelOperation<>(codec, transportFactory, keys, cacheNameBytes, topologyId, flags(),
+            executorService);
    }
 
    public <V> RemoveOperation<V> newRemoveOperation(Object key, byte[] keyBytes) {
@@ -114,11 +117,11 @@ public class OperationsFactory implements HotRodConstants {
             value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
-   public PutAllOperation newPutAllOperation(Map<byte[], byte[]> map,
-          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      return new PutAllOperation(
+   public PutAllParallelOperation newPutAllOperation(Map<byte[], byte[]> map,
+                                                     long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      return new PutAllParallelOperation(
             codec, transportFactory, map, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+              lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, executorService);
    }
 
    public <V> PutIfAbsentOperation<V> newPutIfAbsentOperation(Object key, byte[] keyBytes, byte[] value,
