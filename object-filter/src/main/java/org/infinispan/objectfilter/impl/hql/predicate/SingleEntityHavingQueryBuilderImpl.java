@@ -9,9 +9,11 @@ import org.hibernate.hql.ast.spi.predicate.Predicate;
 import org.hibernate.hql.ast.spi.predicate.RootPredicate;
 import org.infinispan.objectfilter.PropertyPath;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
+import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.syntax.AggregationExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,8 @@ import java.util.Stack;
  * @since 8.0
  */
 public final class SingleEntityHavingQueryBuilderImpl implements SingleEntityHavingQueryBuilder<BooleanExpr> {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, SingleEntityHavingQueryBuilderImpl.class.getName());
 
    private final EntityNamesResolver entityNamesResolver;
 
@@ -56,7 +60,7 @@ public final class SingleEntityHavingQueryBuilderImpl implements SingleEntityHav
    @Override
    public void setEntityType(String entityType) {
       if (entityNamesResolver.getClassFromName(entityType) == null) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
       this.entityType = entityType;
       rootPredicate = new FilterRootPredicate();

@@ -1,7 +1,9 @@
 package org.infinispan.objectfilter.impl.hql;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
+import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
+import org.jboss.logging.Logger;
 
 import java.beans.IntrospectionException;
 import java.util.Arrays;
@@ -14,6 +16,8 @@ import java.util.Map;
  * @since 7.0
  */
 public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, ReflectionPropertyHelper.class.getName());
 
    private static final Map<Class<?>, Class<?>> primitives = new HashMap<>();
 
@@ -52,7 +56,7 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
    public Class<?> getPrimitivePropertyType(String entityType, List<String> propertyPath) {
       Class<?> type = entityNamesResolver.getClassFromName(entityType);
       if (type == null) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
 
       try {
@@ -78,7 +82,7 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
    public boolean hasEmbeddedProperty(String entityType, List<String> propertyPath) {
       Class<?> entity = entityNamesResolver.getClassFromName(entityType);
       if (entity == null) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
 
       try {
@@ -93,7 +97,7 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
    public boolean isRepeatedProperty(String entityType, List<String> propertyPath) {
       Class<?> entity = entityNamesResolver.getClassFromName(entityType);
       if (entity == null) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
       try {
          ReflectionHelper.PropertyAccessor a = ReflectionHelper.getAccessor(entity, propertyPath.get(0));
@@ -115,7 +119,7 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
    private boolean hasProperty(String entityType, String... propertyPath) {
       Class<?> entity = entityNamesResolver.getClassFromName(entityType);
       if (entity == null) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
 
       try {

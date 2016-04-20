@@ -49,7 +49,7 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
          throw new UnsupportedOperationException("Alias reuse currently not supported: aliasTree " + alias + " already assigned to type " + prevAlias);
       }
       if (entityNamesResolver.getClassFromName(entityName) == null) {
-         throw new IllegalStateException("Unknown entity name " + entityName);
+         throw log.getUnknownEntity(entityName);
       }
       if (targetType != null) {
          throw new IllegalStateException("Can't target multiple types: " + targetType + " already selected before " + entityName);
@@ -95,7 +95,7 @@ final class FilterQueryResolverDelegate implements QueryResolverDelegate {
       }
 
       if (entityNamesResolver.getClassFromName(entityNameForAlias) == null) {
-         throw new IllegalStateException("Unknown entity name " + entityNameForAlias);
+         throw log.getUnknownEntity(entityNameForAlias);
       }
 
       return new PathedPropertyReference(root.getText(), new FilterEntityTypeDescriptor(entityNameForAlias, propertyHelper), true);

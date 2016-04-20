@@ -13,9 +13,11 @@ import org.hibernate.hql.ast.spi.predicate.PredicateFactory;
 import org.hibernate.hql.ast.spi.predicate.RangePredicate;
 import org.hibernate.hql.ast.spi.predicate.RootPredicate;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
+import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.ValueExpr;
+import org.jboss.logging.Logger;
 
 import java.util.List;
 
@@ -24,6 +26,8 @@ import java.util.List;
  * @since 7.0
  */
 public final class FilterPredicateFactory implements PredicateFactory<BooleanExpr> {
+
+   private static final Log log = Logger.getMessageLogger(Log.class, FilterPredicateFactory.class.getName());
 
    private final EntityNamesResolver entityNamesResolver;
 
@@ -37,7 +41,7 @@ public final class FilterPredicateFactory implements PredicateFactory<BooleanExp
    @Override
    public RootPredicate<BooleanExpr> getRootPredicate(String entityType) {
       if (entityNamesResolver.getClassFromName(entityType) == null) {
-         throw new IllegalStateException("Unknown entity name " + entityType);
+         throw log.getUnknownEntity(entityType);
       }
       return new FilterRootPredicate();
    }
