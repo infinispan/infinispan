@@ -18,14 +18,13 @@ import org.testng.annotations.Test
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodSslWithCertPasswdTest")
 class HotRodSslWithCertPasswdTest extends AbstractInfinispanTest {
 
-   private val tccl = Thread.currentThread().getContextClassLoader
-   private val keyStoreFileName = tccl.getResource("keystore2.jks").getPath
-   private val trustStoreFileName = tccl.getResource("truststore.jks").getPath
+   private val keyStoreFileName = getClass.getClassLoader.getResource("password_server_keystore.jks").getPath
+   private val trustStoreFileName = getClass.getClassLoader.getResource("password_client_truststore.jks").getPath
 
    def testServerStartWithSslAndCertPasswd() {
       val builder = new HotRodServerConfigurationBuilder
       builder.proxyHost(host).proxyPort(UniquePortThreadLocal.get.intValue).idleTimeout(0)
-      builder.ssl.enable().keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray).keyStoreCertificatePassword("changeme".toCharArray).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray)
+      builder.ssl.enable().keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray).keyStoreCertificatePassword("secret2".toCharArray).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray)
       Stoppable.useCacheManager(createCacheManager(hotRodCacheConfiguration())) { cm =>
          Stoppable.useServer(new HotRodServer) { server =>
             server.start(builder.build, cm)

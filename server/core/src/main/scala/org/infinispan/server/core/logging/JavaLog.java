@@ -109,4 +109,7 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Request to encode unexpected message %s", id = 5024)
    void errorUnexpectedMessage(Object msg);
 
+   @Message(value = "SSL Enabled but no SNI domain configured", id = 5025)
+   CacheConfigurationException noSniDomainConfigured();
+
 }

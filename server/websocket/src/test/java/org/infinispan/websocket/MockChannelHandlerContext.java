@@ -6,6 +6,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelHandlerInvoker;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelProgressivePromise;
 import io.netty.channel.ChannelPromise;
@@ -35,6 +36,11 @@ public class MockChannelHandlerContext implements ChannelHandlerContext {
 
     @Override
     public EventExecutor executor() {
+        return null;
+    }
+
+    @Override
+    public ChannelHandlerInvoker invoker() {
         return null;
     }
 
@@ -226,5 +232,10 @@ public class MockChannelHandlerContext implements ChannelHandlerContext {
     @Override
     public <T> Attribute<T> attr(AttributeKey<T> key) {
         return null;
+    }
+
+    @Override
+    public <T> boolean hasAttr(AttributeKey<T> attributeKey) {
+        return false;
     }
 }

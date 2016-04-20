@@ -25,7 +25,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    protected ProtocolServerConfigurationBuilder(int port) {
       this.port = port;
-      this.ssl = new SslConfigurationBuilder();
+      this.ssl = new SslConfigurationBuilder(this);
    }
 
    @Override

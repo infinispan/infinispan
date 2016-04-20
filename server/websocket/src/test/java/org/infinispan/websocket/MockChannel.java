@@ -77,6 +77,11 @@ public class MockChannel implements Channel {
    }
 
     @Override
+    public ChannelId id() {
+        return null;
+    }
+
+    @Override
     public EventLoop eventLoop() {
         return null;
     }
@@ -124,6 +129,16 @@ public class MockChannel implements Channel {
     @Override
     public boolean isWritable() {
         return false;
+    }
+
+    @Override
+    public long bytesBeforeUnwritable() {
+        return 0;
+    }
+
+    @Override
+    public long bytesBeforeWritable() {
+        return 0;
     }
 
     @Override
@@ -257,6 +272,11 @@ public class MockChannel implements Channel {
     @Override
     public <T> Attribute<T> attr(AttributeKey<T> key) {
         return null;
+    }
+
+    @Override
+    public <T> boolean hasAttr(AttributeKey<T> attributeKey) {
+        return false;  // TODO: Customise this generated block
     }
 
     @Override
