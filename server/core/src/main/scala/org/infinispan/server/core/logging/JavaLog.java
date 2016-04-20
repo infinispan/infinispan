@@ -113,6 +113,10 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Using Netty SocketChannel %s for %s", id = 5025)
    void createdSocketChannel(String channelClassName, String configuration);
 
+   @Message(value = "SSL Enabled but no SNI domain configured", id = 5025)
+   CacheConfigurationException noSniDomainConfigured();
+
+
    @LogMessage(level = DEBUG)
    @Message(value = "Using Netty EventLoop %s for %s", id = 5026)
    void createdNettyEventLoop(String eventLoopClassName, String configuration);

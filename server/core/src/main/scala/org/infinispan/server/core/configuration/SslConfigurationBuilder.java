@@ -1,32 +1,39 @@
 package org.infinispan.server.core.configuration;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.logging.JavaLog;
 import org.infinispan.util.logging.LogFactory;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
  * SSLConfigurationBuilder.
  *
  * @author Tristan Tarrant
+ * @author Sebastian Łaskawiec
  * @since 5.3
  */
-public class SslConfigurationBuilder implements Builder<SslConfiguration> {
+public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>> implements Builder<SslConfiguration>, ProtocolServerConfigurationChildBuilder<T, S> {
    private static final JavaLog log = LogFactory.getLog(SslConfigurationBuilder.class, JavaLog.class);
+   private final ProtocolServerConfigurationChildBuilder<T, S> parentConfigurationBuilder;
    private boolean enabled = false;
    private boolean requireClientAuth = false;
-   private String keyStoreFileName;
-   private char[] keyStorePassword;
-   private char[] keyStoreCertificatePassword;
-   private SSLContext sslContext;
-   private String trustStoreFileName;
-   private char[] trustStorePassword;
+   private SslEngineConfigurationBuilder defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);
+   private Map<String, SslEngineConfigurationBuilder> sniDomains;
 
-   SslConfigurationBuilder() {}
+   SslConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> parentConfigurationBuilder) {
+      this.parentConfigurationBuilder = parentConfigurationBuilder;
+      sniDomains = new HashMap<>();
+      defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);
+      sniDomains.put(SslConfiguration.DEFAULT_SNI_DOMAIN, defaultDomainConfigurationBuilder);
+   }
 
    /**
     * Disables the SSL support
@@ -61,10 +68,21 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
    }
 
    /**
+    * Returns SNI domain configuration.
+    *
+    * @param domain A domain which will hold configuration details. It is also possible to specify <code>*</code>
+    *               for all domains.
+    * @return {@link SslConfigurationBuilder} instance associated with specified domain.
+     */
+   public SslEngineConfigurationBuilder sniHostName(String domain) {
+      return sniDomains.computeIfAbsent(domain, (v) -> new SslEngineConfigurationBuilder(this));
+   }
+
+   /**
     * Sets the {@link SSLContext} to use for setting up SSL connections.
     */
    public SslConfigurationBuilder sslContext(SSLContext sslContext) {
-      this.sslContext = sslContext;
+      defaultDomainConfigurationBuilder.sslContext(sslContext);
       return this;
    }
 
@@ -74,7 +92,7 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
     * {@link #keyManagers(KeyManager[])}
     */
    public SslConfigurationBuilder keyStoreFileName(String keyStoreFileName) {
-      this.keyStoreFileName = keyStoreFileName;
+      defaultDomainConfigurationBuilder.keyStoreFileName(keyStoreFileName);
       return this;
    }
 
@@ -84,7 +102,7 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
     * {@link #keyManagers(KeyManager[])}
     */
    public SslConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
-      this.keyStorePassword = keyStorePassword;
+      defaultDomainConfigurationBuilder.keyStorePassword(keyStorePassword);
       return this;
    }
 
@@ -94,7 +112,7 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
     * {@link #keyStorePassword(String)} will be used.
     */
    public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
+      defaultDomainConfigurationBuilder.keyStoreCertificatePassword(keyStoreCertificatePassword);
       return this;
    }
 
@@ -104,7 +122,7 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
     * {@link #trustManagers(TrustManager[])}
     */
    public SslConfigurationBuilder trustStoreFileName(String trustStoreFileName) {
-      this.trustStoreFileName = trustStoreFileName;
+      defaultDomainConfigurationBuilder.trustStoreFileName(trustStoreFileName);
       return this;
    }
 
@@ -114,50 +132,102 @@ public class SslConfigurationBuilder implements Builder<SslConfiguration> {
     * {@link #trustManagers(TrustManager[])}
     */
    public SslConfigurationBuilder trustStorePassword(char[] trustStorePassword) {
-      this.trustStorePassword = trustStorePassword;
+      defaultDomainConfigurationBuilder.trustStorePassword(trustStorePassword);
       return this;
    }
 
    @Override
    public void validate() {
       if (enabled) {
-         if (sslContext == null) {
-            if (keyStoreFileName == null) {
-               throw log.noSSLKeyManagerConfiguration();
-            }
-            if (keyStoreFileName != null && keyStorePassword == null) {
-               throw log.missingKeyStorePassword(keyStoreFileName);
-            }
-            if (trustStoreFileName == null) {
-               throw log.noSSLTrustManagerConfiguration();
-            }
-            if (trustStoreFileName != null && trustStorePassword == null) {
-               throw log.missingTrustStorePassword(trustStoreFileName);
-            }
-         } else {
-            if (keyStoreFileName != null || trustStoreFileName != null) {
-               throw log.xorSSLContext();
-            }
-         }
+         sniDomains.forEach((domainName, config) -> config.validate());
       }
    }
 
    @Override
    public SslConfiguration create() {
-      return new SslConfiguration(enabled, requireClientAuth, keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, sslContext, trustStoreFileName, trustStorePassword);
+      Map<String, SslEngineConfiguration> producedSniConfigurations = sniDomains.entrySet()
+              .stream()
+              .collect(Collectors.toMap(Map.Entry::getKey,
+                      e -> e.getValue().create()));
+      return new SslConfiguration(enabled, requireClientAuth, producedSniConfigurations);
    }
 
    @Override
    public SslConfigurationBuilder read(SslConfiguration template) {
       this.enabled = template.enabled();
       this.requireClientAuth = template.requireClientAuth();
-      this.keyStoreFileName = template.keyStoreFileName();
-      this.keyStorePassword = template.keyStorePassword();
-      this.keyStoreCertificatePassword = template.keyStoreCertificatePassword();
-      this.sslContext = template.sslContext();
-      this.trustStoreFileName = template.trustStoreFileName();
-      this.trustStorePassword = template.trustStorePassword();
+
+      this.sniDomains = new HashMap<>();
+      template.sniDomainsConfiguration().entrySet()
+              .forEach(e -> sniDomains.put(e.getKey(), new SslEngineConfigurationBuilder(this).read(e.getValue())));
+
+      this.defaultDomainConfigurationBuilder = sniDomains
+              .computeIfAbsent(SslConfiguration.DEFAULT_SNI_DOMAIN, (v) -> new SslEngineConfigurationBuilder(this));
       return this;
    }
 
+   @Override
+   public S defaultCacheName(String defaultCacheName) {
+      return parentConfigurationBuilder.defaultCacheName(defaultCacheName);
+   }
+
+   @Override
+   public S name(String name) {
+      return parentConfigurationBuilder.name(name);
+   }
+
+   @Override
+   public S host(String host) {
+      return parentConfigurationBuilder.host(host);
+   }
+
+   @Override
+   public S port(int port) {
+      return parentConfigurationBuilder.port(port);
+   }
+
+   @Override
+   public S idleTimeout(int idleTimeout) {
+      return parentConfigurationBuilder.idleTimeout(idleTimeout);
+   }
+
+   @Override
+   public S tcpNoDelay(boolean tcpNoDelay) {
+      return parentConfigurationBuilder.tcpNoDelay(tcpNoDelay);
+   }
+
+   @Override
+   public S recvBufSize(int recvBufSize) {
+      return parentConfigurationBuilder.recvBufSize(recvBufSize);
+   }
+
+   @Override
+   public S sendBufSize(int sendBufSize) {
+      return parentConfigurationBuilder.sendBufSize(sendBufSize);
+   }
+
+   @Override
+   public SslConfigurationBuilder ssl() {
+      return parentConfigurationBuilder.ssl();
+   }
+
+   @Override
+   public S workerThreads(int workerThreads) {
+      return parentConfigurationBuilder.workerThreads(workerThreads);
+   }
+
+   @Override
+   public S ignoredCaches(Set<String> ignoredCaches) {
+      return parentConfigurationBuilder.ignoredCaches(ignoredCaches);
+   }
+
+   @Override
+   public T build() {
+      return parentConfigurationBuilder.build();
+   }
+
+   @Override
+   public S self() {
+      return parentConfigurationBuilder.self();
+   }
 }
