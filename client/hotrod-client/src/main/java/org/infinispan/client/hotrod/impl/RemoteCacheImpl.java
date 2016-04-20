@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
@@ -34,13 +33,13 @@ import org.infinispan.client.hotrod.impl.operations.BulkGetOperation;
 import org.infinispan.client.hotrod.impl.operations.ClearOperation;
 import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
 import org.infinispan.client.hotrod.impl.operations.ExecuteOperation;
-import org.infinispan.client.hotrod.impl.operations.GetAllOperation;
+import org.infinispan.client.hotrod.impl.operations.GetAllParallelOperation;
 import org.infinispan.client.hotrod.impl.operations.GetOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithVersionOperation;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
-import org.infinispan.client.hotrod.impl.operations.PutAllOperation;
+import org.infinispan.client.hotrod.impl.operations.PutAllParallelOperation;
 import org.infinispan.client.hotrod.impl.operations.PutIfAbsentOperation;
 import org.infinispan.client.hotrod.impl.operations.PutOperation;
 import org.infinispan.client.hotrod.impl.operations.RemoveClientListenerOperation;
@@ -220,7 +219,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
          byteMap.put(obj2bytes(entry.getKey(),  true), obj2bytes(entry.getValue(), false));
       }
-      PutAllOperation op = operationsFactory.newPutAllOperation(byteMap, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      PutAllParallelOperation op = operationsFactory.newPutAllOperation(byteMap, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       op.execute();
    }
 
@@ -368,7 +367,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       for (K key : keys) {
          byteKeys.add(obj2bytes(key, true));
       }
-      GetAllOperation<K, V> op = operationsFactory.newGetAllOperation(byteKeys);
+      GetAllParallelOperation<K, V> op = operationsFactory.newGetAllOperation(byteKeys);
       Map<K, V> result = op.execute();
       return Collections.unmodifiableMap(result);
    }
