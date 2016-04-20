@@ -83,7 +83,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                      callbackHandler = sap.getCallbackHandler(mech, authenticationConfig.mechProperties());
                      final SaslServerFactory ssf;
                      if ("EXTERNAL".equals(mech)) {
-                        SslHandler sslHandler = (SslHandler) ctx.pipeline().get("ssl");
+                        SslHandler sslHandler = ctx.pipeline().get(SslHandler.class);
                         try {
                            if (sslHandler != null)
                               ssf = new ExternalSaslServerFactory(sslHandler.engine().getSession().getPeerPrincipal());

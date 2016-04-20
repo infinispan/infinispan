@@ -1,6 +1,7 @@
 package org.infinispan.server.core.configuration;
 
 import javax.net.ssl.SSLContext;
+import java.util.Map;
 
 /**
  * SslConfiguration.
@@ -9,30 +10,17 @@ import javax.net.ssl.SSLContext;
  * @since 5.3
  */
 public class SslConfiguration {
+
+   public static final String DEFAULT_SNI_DOMAIN = "*";
+
    private final boolean enabled;
    private final boolean requireClientAuth;
-   private final String keyStoreFileName;
-   private final char[] keyStorePassword;
-   private final char[] keyStoreCertificatePassword;
-   private final SSLContext sslContext;
-   private final String trustStoreFileName;
-   private final char[] trustStorePassword;
+   private final Map<String, SslEngineConfiguration> sniDomainsConfiguration;
 
-   SslConfiguration(boolean enabled, boolean requireClientAuth, String keyStoreFileName, char[] keyStorePassword, SSLContext sslContext, String trustStoreFileName,
-                    char[] trustStorePassword) {
-      this(enabled, requireClientAuth, keyStoreFileName, keyStorePassword, null, sslContext, trustStoreFileName, trustStorePassword);
-   }
-
-   SslConfiguration(boolean enabled, boolean requireClientAuth, String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword, SSLContext sslContext, String trustStoreFileName,
-         char[] trustStorePassword) {
+   SslConfiguration(boolean enabled, boolean requireClientAuth, Map<String, SslEngineConfiguration> sniDomainsConfiguration) {
       this.enabled = enabled;
       this.requireClientAuth = requireClientAuth;
-      this.keyStoreFileName = keyStoreFileName;
-      this.keyStorePassword = keyStorePassword;
-      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
-      this.sslContext = sslContext;
-      this.trustStoreFileName = trustStoreFileName;
-      this.trustStorePassword = trustStorePassword;
+      this.sniDomainsConfiguration = sniDomainsConfiguration;
    }
 
    public boolean enabled() {
@@ -44,32 +32,39 @@ public class SslConfiguration {
    }
 
    public String keyStoreFileName() {
-      return keyStoreFileName;
+      return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).keyStoreFileName();
    }
 
    public char[] keyStorePassword() {
-      return keyStorePassword;
+      return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).keyStorePassword();
    }
 
    public char[] keyStoreCertificatePassword() {
-      return keyStoreCertificatePassword;
+      return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).keyStoreCertificatePassword();
    }
 
    public SSLContext sslContext() {
-      return sslContext;
+      return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).sslContext();
    }
 
    public String trustStoreFileName() {
-      return trustStoreFileName;
+      return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).trustStoreFileName();
    }
 
    public char[] trustStorePassword() {
-      return trustStorePassword;
+      return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).trustStorePassword();
+   }
+
+   public Map<String, SslEngineConfiguration> sniDomainsConfiguration() {
+      return sniDomainsConfiguration;
    }
 
    @Override
    public String toString() {
-      return "SslConfiguration [enabled=" + enabled + ", requireClientAuth=" + requireClientAuth + ", keyStoreFileName=" + keyStoreFileName + ", sslContext=" + sslContext
-            + ", trustStoreFileName=" + trustStoreFileName + "]";
+      return "SslConfiguration [" +
+              "enabled=" + enabled +
+              ", requireClientAuth=" + requireClientAuth +
+              ", sniDomainsConfiguration=" + sniDomainsConfiguration +
+              ']';
    }
 }
