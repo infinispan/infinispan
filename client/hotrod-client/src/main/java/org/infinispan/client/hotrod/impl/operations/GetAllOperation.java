@@ -53,6 +53,6 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(failedServers, cacheName);
+      return transportFactory.getTransport(keys.iterator().next(), failedServers, cacheName);
    }
 }

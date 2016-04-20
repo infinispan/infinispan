@@ -62,6 +62,6 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
 
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(failedServers, cacheName);
+      return transportFactory.getTransport(map.keySet().iterator().next(), failedServers, cacheName);
    }
 }

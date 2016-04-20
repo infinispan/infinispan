@@ -69,6 +69,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    private Marshaller marshaller;
    protected TransportFactory transportFactory;
    private ExecutorService asyncExecutorService;
+   private ExecutorService parallelExecutorService;
    protected ClientListenerNotifier listenerNotifier;
 
    /**
@@ -260,6 +261,14 @@ public class RemoteCacheManager implements RemoteCacheContainer {
          asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
       }
 
+      if (parallelExecutorService == null) {
+         ExecutorFactory executorFactory = configuration.parallelExecutorFactory().factory();
+         if (executorFactory == null) {
+            executorFactory = Util.getInstance(configuration.parallelExecutorFactory().factoryClass());
+         }
+         parallelExecutorService = executorFactory.getExecutor(configuration.parallelExecutorFactory().properties());
+      }
+
       listenerNotifier = ClientListenerNotifier.create(codec, marshaller);
       transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier);
 
@@ -286,6 +295,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
          listenerNotifier.stop();
          transportFactory.destroy();
          asyncExecutorService.shutdownNow();
+         parallelExecutorService.shutdownNow();
       }
       started = false;
    }
@@ -360,8 +370,8 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache;
       OperationsFactory operationsFactory = new OperationsFactory(
-            transportFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue,
-            codec, listenerNotifier);
+              transportFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue, codec, listenerNotifier,
+              parallelExecutorService);
       remoteCache.init(marshaller, asyncExecutorService, operationsFactory, configuration.keySizeEstimate(), configuration.valueSizeEstimate());
    }
 

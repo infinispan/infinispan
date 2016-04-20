@@ -21,6 +21,7 @@ import org.infinispan.commons.marshall.Marshaller;
 public class Configuration {
 
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
+   private final ExecutorFactoryConfiguration parallelExecutorFactory;
    private final Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass;
    private final FailoverRequestBalancingStrategy balancingStrategy;
    private final WeakReference<ClassLoader> classLoader;
@@ -43,12 +44,13 @@ public class Configuration {
    private final NearCacheConfiguration nearCache;
    private final List<ClusterConfiguration> clusters;
 
-   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
-         ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
-         String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
-         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
-         List<ClusterConfiguration> clusters) {
+   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, ExecutorFactoryConfiguration parallelExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
+                 ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
+                 String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
+                 Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
+                 List<ClusterConfiguration> clusters) {
       this.asyncExecutorFactory = asyncExecutorFactory;
+      this.parallelExecutorFactory = parallelExecutorFactory;
       this.balancingStrategyClass = balancingStrategyClass;
       this.balancingStrategy = balancingStrategy;
       this.maxRetries = maxRetries;
@@ -72,12 +74,13 @@ public class Configuration {
       this.clusters = clusters;
    }
 
-   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
-         ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
-         String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
-         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
-         List<ClusterConfiguration> clusters) {
+   Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, ExecutorFactoryConfiguration parallelExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
+                 ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
+                 String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
+                 Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
+                 List<ClusterConfiguration> clusters) {
       this.asyncExecutorFactory = asyncExecutorFactory;
+      this.parallelExecutorFactory = parallelExecutorFactory;
       this.balancingStrategyClass = balancingStrategyClass;
       this.balancingStrategy = balancingStrategy;
       this.maxRetries = maxRetries;
@@ -103,6 +106,10 @@ public class Configuration {
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
       return asyncExecutorFactory;
+   }
+
+   public ExecutorFactoryConfiguration parallelExecutorFactory() {
+      return parallelExecutorFactory;
    }
 
    public Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass() {
@@ -195,7 +202,7 @@ public class Configuration {
 
    @Override
    public String toString() {
-      return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyClass=" + balancingStrategyClass + ", balancingStrategy=" + balancingStrategy + ",classLoader=" + classLoader + ", connectionPool="
+      return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", parallelExecutorFactory=" + parallelExecutorFactory + ", balancingStrategyClass=" + balancingStrategyClass + ", balancingStrategy=" + balancingStrategy + ",classLoader=" + classLoader + ", connectionPool="
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
             + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay + ", tcpKeepAlive=" + tcpKeepAlive

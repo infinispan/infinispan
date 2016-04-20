@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
+import org.infinispan.client.hotrod.impl.async.DefaultParallelExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
@@ -25,7 +26,9 @@ public class ConfigurationProperties {
    public static final String SERVER_LIST = "infinispan.client.hotrod.server_list";
    public static final String MARSHALLER = "infinispan.client.hotrod.marshaller";
    public static final String ASYNC_EXECUTOR_FACTORY = "infinispan.client.hotrod.async_executor_factory";
+   public static final String PARALLEL_EXECUTOR_FACTORY = "infinispan.client.hotrod.parallel_executor_factory";
    public static final String DEFAULT_EXECUTOR_FACTORY_POOL_SIZE = "infinispan.client.hotrod.default_executor_factory.pool_size";
+   public static final String PARALLEL_EXECUTOR_FACTORY_POOL_SIZE = "infinispan.client.hotrod.parallel_executor_factory.pool_size";
    public static final String TCP_NO_DELAY = "infinispan.client.hotrod.tcp_no_delay";
    public static final String TCP_KEEP_ALIVE = "infinispan.client.hotrod.tcp_keep_alive";
    @Deprecated
@@ -36,6 +39,7 @@ public class ConfigurationProperties {
    public static final String FORCE_RETURN_VALUES = "infinispan.client.hotrod.force_return_values";
    public static final String HASH_FUNCTION_PREFIX = "infinispan.client.hotrod.hash_function_impl";
    public static final String DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE = "infinispan.client.hotrod.default_executor_factory.queue_size";
+   public static final String PARALLEL_EXECUTOR_FACTORY_QUEUE_SIZE = "infinispan.client.hotrod.parallel_executor_factory.queue_size";
    public static final String SO_TIMEOUT = "infinispan.client.hotrod.socket_timeout";
    public static final String CONNECT_TIMEOUT = "infinispan.client.hotrod.connect_timeout";
    public static final String PROTOCOL_VERSION = "infinispan.client.hotrod.protocol_version";
@@ -116,6 +120,18 @@ public class ConfigurationProperties {
 
    public int getDefaultExecutorFactoryQueueSize() {
       return props.getIntProperty(DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE, 10000);
+   }
+
+   public String getParallelExecutorFactory() {
+      return props.getProperty(PARALLEL_EXECUTOR_FACTORY, DefaultParallelExecutorFactory.class.getName());
+   }
+
+   public int getParallelExecutorFactoryPoolSize() {
+      return props.getIntProperty(PARALLEL_EXECUTOR_FACTORY_POOL_SIZE, 32);
+   }
+
+   public int getParallelExecutorFactoryQueueSize() {
+      return props.getIntProperty(PARALLEL_EXECUTOR_FACTORY_QUEUE_SIZE, 10000);
    }
 
    public boolean getTcpNoDelay() {

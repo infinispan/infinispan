@@ -41,6 +41,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public ExecutorFactoryConfigurationBuilder parallelExecutorFactory() {
+      return builder.parallelExecutorFactory();
+   }
+
+   @Override
    public ConfigurationBuilder balancingStrategy(String balancingStrategy) {
       return builder.balancingStrategy(balancingStrategy);
    }
