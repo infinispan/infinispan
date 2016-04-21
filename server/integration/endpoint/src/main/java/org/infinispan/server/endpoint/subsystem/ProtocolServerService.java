@@ -18,15 +18,6 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
-
-import java.net.InetSocketAddress;
-
-import javax.net.ssl.SSLContext;
-import javax.security.auth.Subject;
-import javax.security.auth.login.LoginContext;
-import javax.security.auth.login.LoginException;
-
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -47,6 +38,18 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 
+import javax.net.ssl.SSLContext;
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
 /**
  * The service that configures and starts the endpoints supported by data grid.
  *
@@ -66,6 +69,8 @@ class ProtocolServerService implements Service<ProtocolServer> {
    private final InjectedValue<SecurityDomainContext> saslSecurityDomain = new InjectedValue<SecurityDomainContext>();
    // The security realm for encryption that will be injected by the container
    private final InjectedValue<SecurityRealm> encryptionSecurityRealm = new InjectedValue<SecurityRealm>();
+   // A map of SNI host names and corresponding security domains
+   private final Map<String, InjectedValue<SecurityRealm>> sniDomains = new HashMap<>();
    // Te extension manager
    private final InjectedValue<ExtensionManagerService> extensionManager = new InjectedValue<>();
    // The configuration for this service
@@ -115,9 +120,17 @@ class ProtocolServerService implements Service<ProtocolServer> {
             if (configurationBuilder.ssl().create().requireClientAuth() && !encryptionRealm.getSupportedAuthenticationMechanisms().contains(AuthMechanism.CLIENT_CERT)) {
                throw ROOT_LOGGER.noSSLTrustStore(serverName, encryptionRealm.getName());
             }
-
             configurationBuilder.ssl().sslContext(sslContext);
-            qual = " (SSL)";
+
+            for(Map.Entry<String, InjectedValue<SecurityRealm>> sniConfiguration : sniDomains.entrySet()) {
+               String sniDomain = sniConfiguration.getKey();
+               SSLContext sniSslContext = Optional.ofNullable(sniConfiguration.getValue().getOptionalValue())
+                       .flatMap(s -> ofNullable(s.getSSLContext()))
+                       .orElseThrow(() -> ROOT_LOGGER.noSSLContextForSni(serverName, sniDomain));
+               configurationBuilder.ssl().sniHostName(sniDomain).sslContext(sniSslContext);
+            }
+
+            qual = isSniEnabled() ? " (SSL+SNI)" : " (SSL)";
          } else {
             qual = "";
          }
@@ -150,6 +163,10 @@ class ProtocolServerService implements Service<ProtocolServer> {
             doStop();
          }
       }
+   }
+
+   private boolean isSniEnabled() {
+      return sniDomains.keySet().size() > 0;
    }
 
    private void addToExtensionManagerIfHotRod() {
@@ -250,6 +267,10 @@ class ProtocolServerService implements Service<ProtocolServer> {
 
     public Transport getTransport() {
       return transport;
+   }
+
+   InjectedValue<SecurityRealm> getSniSecurityRealm(String sniHostName) {
+      return sniDomains.computeIfAbsent(sniHostName, v -> new InjectedValue<SecurityRealm>());
    }
 
    Subject getServerSubject(String serverSecurityDomain) throws LoginException

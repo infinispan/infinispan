@@ -62,6 +62,11 @@ public class EncryptionResource extends SimpleResourceDefinition {
    }
 
    @Override
+   public void registerChildren(ManagementResourceRegistration resourceRegistration) {
+      resourceRegistration.registerSubModel(new SniResource());
+   }
+
+   @Override
    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
        super.registerAttributes(resourceRegistration);
 
