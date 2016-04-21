@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -51,7 +52,7 @@ public class DSLQueryIT {
 
    @Test
    public void testDSLQuery() throws Exception {
-      service.store("00123", new Book("Functional Programming in Scala", "manning"), true);
+      service.store("00123", new Book("Functional Programming in Scala", "manning", new Date()), true);
       List<Object> results = service.findByPublisher("manning");
       Assert.assertEquals(1, results.size());
    }
