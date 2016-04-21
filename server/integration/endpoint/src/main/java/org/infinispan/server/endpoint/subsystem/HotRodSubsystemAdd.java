@@ -34,6 +34,7 @@ import org.jboss.dmr.Property;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
 
+
 /**
  * @author Tristan Tarrant
  */
@@ -80,9 +81,17 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
       EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
       EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
-      if (config.hasDefined(ModelKeys.ENCRYPTION) && config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME).isDefined()) {
-         EndpointUtils.addSecurityRealmDependency(builder, config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME, ModelKeys.SECURITY_REALM).asString(), service.getEncryptionSecurityRealm());
-      }
+
+      processEncryption(config, service, builder);
+      processAuthentication(config, configurationBuilder, service, builder);
+
+      // Extension manager dependency
+      builder.addDependency(Constants.EXTENSION_MANAGER_NAME, ExtensionManagerService.class, service.getExtensionManager());
+
+      builder.install();
+   }
+
+   private void processAuthentication(ModelNode config, HotRodServerConfigurationBuilder configurationBuilder, ProtocolServerService service, ServiceBuilder<?> builder) {
       if (config.hasDefined(ModelKeys.AUTHENTICATION) && config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME).isDefined()) {
          ModelNode authentication = config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
          EndpointUtils.addSecurityRealmDependency(builder, authentication.get(ModelKeys.SECURITY_REALM).asString(), service.getAuthenticationSecurityRealm());
@@ -118,11 +127,20 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
             }
          }
       }
+   }
 
-      // Extension manager dependency
-      builder.addDependency(Constants.EXTENSION_MANAGER_NAME, ExtensionManagerService.class, service.getExtensionManager());
-
-      builder.install();
+   private void processEncryption(ModelNode config, ProtocolServerService service, ServiceBuilder<?> builder) {
+      if (config.hasDefined(ModelKeys.ENCRYPTION) && config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME).isDefined()) {
+         EndpointUtils.addSecurityRealmDependency(builder, config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME, ModelKeys.SECURITY_REALM).asString(), service.getEncryptionSecurityRealm());
+         config = config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME);
+         if(config.get(ModelKeys.SNI).isDefined()) {
+            for(ModelNode sniConfiguration : config.get(ModelKeys.SNI).asList()) {
+               String sniHostName = sniConfiguration.get(0).get(ModelKeys.HOST_NAME).asString();
+               String securityRealm = sniConfiguration.get(0).get(ModelKeys.SECURITY_REALM).asString();
+               EndpointUtils.addSecurityRealmDependency(builder, securityRealm, service.getSniSecurityRealm(sniHostName));
+            }
+         }
+      }
    }
 
    private String listAsString(ModelNode node, String name) {

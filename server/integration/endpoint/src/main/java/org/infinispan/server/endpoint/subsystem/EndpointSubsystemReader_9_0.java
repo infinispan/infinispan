@@ -559,9 +559,42 @@ class EndpointSubsystemReader_9_0 implements XMLStreamConstants, XMLElementReade
             throw ParseUtils.unexpectedAttribute(reader, i);
          }
          }
-
       }
-      ParseUtils.requireNoContent(reader);
       operations.add(security);
+
+      //Since nextTag() moves the pointer, we need to make sure we won't move too far
+      boolean skipTagCheckAtTheEnd = reader.hasNext();
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case SNI: {
+               parseSni(reader, security, operations);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+
+      if(!skipTagCheckAtTheEnd)
+         ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseSni(final XMLExtendedStreamReader reader, final ModelNode encryption, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireAttributes(reader, Attribute.HOST_NAME.getLocalName(), Attribute.SECURITY_REALM.getLocalName());
+      String hostName = reader.getAttributeValue(null, Attribute.HOST_NAME.getLocalName());
+
+      PathAddress sniOpAddress = PathAddress.pathAddress(encryption.get(OP_ADDR)).append(ModelKeys.SNI, hostName);
+      ModelNode sniOp = Util.createAddOperation(sniOpAddress);
+
+      SniResource.HOST_NAME.parseAndSetParameter(hostName, sniOp, reader);
+
+      String securityRealm = reader.getAttributeValue(null, Attribute.SECURITY_REALM.getLocalName());
+      SniResource.SECURITY_REALM.parseAndSetParameter(securityRealm, sniOp, reader);
+
+      ParseUtils.requireNoContent(reader);
+      operations.add(sniOp);
    }
 }

@@ -44,6 +44,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+
+
 /**
  *
  * @author <a href="kabir.khan@jboss.com">Kabir Khan</a>
@@ -65,7 +67,7 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
       Object[][] data = new Object[][] {
             { "endpoint-7.2.xml", 16 },
             { "endpoint-8.0.xml", 16 },
-            { "endpoint-9.0.xml", 16 },
+            { "endpoint-9.0.xml", 20 },
       };
       return Arrays.asList(data);
    }
