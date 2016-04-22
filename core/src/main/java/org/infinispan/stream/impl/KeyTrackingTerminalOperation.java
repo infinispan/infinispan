@@ -4,7 +4,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.ComponentRegistry;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 

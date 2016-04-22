@@ -2,7 +2,6 @@ package org.infinispan.stream.impl;
 
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheStream;
-import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.util.AbstractDelegatingCloseableIteratorCollection;
 
 /**
