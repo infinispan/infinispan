@@ -1,8 +1,7 @@
 package org.infinispan.container;
 
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.expiration.ExpirationManager;
-import org.infinispan.metadata.Metadata;
+import static org.infinispan.commons.util.Util.toStr;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -16,14 +15,14 @@ import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.container.entries.StateChangingEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * {@link EntryFactory} implementation to be used for optimistic locking scheme.
@@ -36,7 +35,7 @@ public class EntryFactoryImpl implements EntryFactory {
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
    private final boolean trace = log.isTraceEnabled();
    
-   protected boolean useRepeatableRead;
+   private boolean useRepeatableRead;
    private DataContainer container;
    private boolean isL1Enabled; //cache the value
    private Configuration configuration;
@@ -167,6 +166,8 @@ public class EntryFactoryImpl implements EntryFactory {
             return false;
          }
          contextEntry.setValue(externalEntry.getValue());
+         contextEntry.setCreated(externalEntry.getCreated());
+         contextEntry.setLastUsed(externalEntry.getLastUsed());
          contextEntry.setMetadata(externalEntry.getMetadata());
          if (trace)
             log.tracef("Updated context entry %s", contextEntry);
@@ -296,14 +297,20 @@ public class EntryFactoryImpl implements EntryFactory {
                                           boolean skipRead) {
       Object value = null;
       Metadata metadata = null;
+      long created = 0, lastUsed = 0;
       if (cacheEntry != null) {
          value = cacheEntry.getValue();
          metadata = cacheEntry.getMetadata();
+         created = cacheEntry.getCreated();
+         lastUsed = cacheEntry.getLastUsed();
       }
 
       if (trace) log.tracef("Creating new entry for key %s", toStr(key));
       MVCCEntry mvccEntry = useRepeatableRead ? new RepeatableReadEntry(key, value, metadata) :
             new ReadCommittedEntry(key, value, metadata);
+
+      mvccEntry.setCreated(created);
+      mvccEntry.setLastUsed(lastUsed);
 
       // If the original entry has changeable state, copy state flags to the new MVCC entry.
       if (cacheEntry instanceof StateChangingEntry) {

@@ -129,17 +129,16 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
    def getKeyMetadata: GetWithMetadataResponse = {
       val ce = cache.getCacheEntry(key)
       if (ce != null) {
-         val ice = ce.asInstanceOf[InternalCacheEntry]
-         val version = ice.getMetadata.version() match {
+         val version = ce.getMetadata.version() match {
             case n: NumericVersion => n.getVersion
             case _ => 0
          }
          val v = ce.getValue
-         val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
-         val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
+         val lifespan = if (ce.getLifespan < 0) -1 else (ce.getLifespan / 1000).toInt
+         val maxIdle = if (ce.getMaxIdle < 0) -1 else (ce.getMaxIdle / 1000).toInt
          new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
             header.clientIntel, OperationResponse.GetWithMetadataResponse, Success, header.topologyId,
-            v, version, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
+            v, version, ce.getCreated, lifespan, ce.getLastUsed, maxIdle)
       } else {
          new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
             header.clientIntel, OperationResponse.GetWithMetadataResponse, KeyDoesNotExist, header.topologyId,
