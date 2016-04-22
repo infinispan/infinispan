@@ -144,6 +144,16 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
+   public long getCreated() {
+      return delegate().getCreated();
+   }
+
+   @Override
+   public long getLastUsed() {
+      return delegate().getLastUsed();
+   }
+
+   @Override
    public String toString() {
       return delegate().toString();
    }
