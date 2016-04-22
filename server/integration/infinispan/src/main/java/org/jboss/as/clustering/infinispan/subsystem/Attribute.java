@@ -67,6 +67,8 @@ public enum Attribute {
     DATASOURCE(ModelKeys.DATASOURCE),
     DEFAULT_CACHE(ModelKeys.DEFAULT_CACHE),
     @Deprecated DEFAULT_CACHE_CONTAINER("default-cache-container"),
+    DB_MAJOR_VERSION(ModelKeys.DB_MAJOR_VERSION),
+    DB_MINOR_VERSION(ModelKeys.DB_MINOR_VERSION),
     DIALECT(ModelKeys.DIALECT),
     DROP_ON_EXIT(ModelKeys.DROP_ON_EXIT),
     @Deprecated EAGER_LOCKING("eager-locking"),
