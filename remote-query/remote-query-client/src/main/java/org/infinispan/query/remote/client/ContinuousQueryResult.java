@@ -62,7 +62,7 @@ public final class ContinuousQueryResult {
          boolean isJoining = reader.readBoolean("isJoining");
          byte[] key = reader.readBytes("key");
          byte[] value = reader.readBytes("value");
-         List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<WrappedMessage>(), WrappedMessage.class);
+         List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<>(), WrappedMessage.class);
          Object[] p = null;
          if (!projection.isEmpty()) {
             p = new Object[projection.size()];

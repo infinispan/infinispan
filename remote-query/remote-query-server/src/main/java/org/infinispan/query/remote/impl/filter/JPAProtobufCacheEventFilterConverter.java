@@ -33,6 +33,7 @@ public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFil
    }
 
    @Inject
+   @SuppressWarnings("unused")
    protected void injectDependencies(EmbeddedCacheManager cacheManager) {
       serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
    }

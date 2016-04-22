@@ -34,7 +34,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
 
    private final SerializationContext serializationContext;
 
-   private final List<ClientEntryListener> listeners = new ArrayList<ClientEntryListener>();
+   private final List<ClientEntryListener> listeners = new ArrayList<>();
 
    public ContinuousQueryImpl(RemoteCache<K, V> cache) {
       if (cache == null) {
@@ -70,7 +70,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
    }
 
    public List<ContinuousQueryListener<K, ?>> getListeners() {
-      List<ContinuousQueryListener<K, ?>> queryListeners = new ArrayList<ContinuousQueryListener<K, ?>>(listeners.size());
+      List<ContinuousQueryListener<K, ?>> queryListeners = new ArrayList<>(listeners.size());
       for (ClientEntryListener l : listeners) {
          queryListeners.add(l.listener);
       }
