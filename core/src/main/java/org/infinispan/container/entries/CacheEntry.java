@@ -86,6 +86,20 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
    boolean skipLookup();
 
    /**
+    * @return timestamp when the entry was created
+    */
+   default long getCreated() {
+      return -1;
+   }
+
+   /**
+    * @return timestamp when the entry was last used
+    */
+   default long getLastUsed() {
+      return -1;
+   }
+
+   /**
     * Sets the value of the entry, returning the previous value
     *
     * @param value value to set
@@ -136,5 +150,9 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
    boolean undelete(boolean doUndelete);
 
    public CacheEntry<K, V> clone();
+
+   default void setCreated(long created) {}
+
+   default void setLastUsed(long lastUsed) {}
 
 }
