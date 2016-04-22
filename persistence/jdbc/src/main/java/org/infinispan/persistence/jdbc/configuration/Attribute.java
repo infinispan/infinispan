@@ -17,6 +17,8 @@ public enum Attribute {
    CONNECTION_URL("connection-url"),
    CREATE_ON_START("create-on-start"),
    DIALECT("dialect"),
+   DB_MAJOR_VERSION("db-major-version"),
+   DB_MINOR_VERSION("db-minor-version"),
    JNDI_URL("jndi-url"),
    DRIVER_CLASS("driver"),
    DROP_ON_EXIT("drop-on-exit"),

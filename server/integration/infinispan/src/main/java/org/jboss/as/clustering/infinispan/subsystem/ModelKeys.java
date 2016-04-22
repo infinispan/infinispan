@@ -85,6 +85,8 @@ public class ModelKeys {
     static final String DATA_COLUMN = "data-column";
     static final String DATASOURCE = "datasource";
     static final String DEFAULT_CACHE = "default-cache";
+    static final String DB_MAJOR_VERSION = "db-major-version";
+    static final String DB_MINOR_VERSION = "db-minor-version";
     static final String DIALECT = "dialect";
     static final String DISTRIBUTED_CACHE = "distributed-cache";
     static final String DISTRIBUTED_CACHE_CONFIGURATION = DISTRIBUTED_CACHE + CONFIGURATION_SUFFIX;
