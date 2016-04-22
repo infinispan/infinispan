@@ -43,8 +43,7 @@ public class ClientListenerNotifier {
    private static final Log log = LogFactory.getLog(ClientListenerNotifier.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private static final Map<Class<? extends Annotation>, Class<?>[]> allowedListeners =
-         new HashMap<Class<? extends Annotation>, Class<?>[]>(4);
+   private static final Map<Class<? extends Annotation>, Class<?>[]> allowedListeners = new HashMap<>(4);
 
    static {
       allowedListeners.put(ClientCacheEntryCreated.class, new Class[]{ClientCacheEntryCreatedEvent.class, ClientCacheEntryCustomEvent.class});
@@ -167,8 +166,7 @@ public class ClientListenerNotifier {
    }
 
    private Map<Class<? extends Annotation>, List<ClientListenerInvocation>> findMethods(Object listener) {
-      Map<Class<? extends Annotation>, List<ClientListenerInvocation>> listenerMethodMap =
-            new HashMap<Class<? extends Annotation>, List<ClientListenerInvocation>>(4, 0.99f);
+      Map<Class<? extends Annotation>, List<ClientListenerInvocation>> listenerMethodMap = new HashMap<>(4, 0.99f);
 
       for (Method m : listener.getClass().getMethods()) {
          // loop through all valid method annotations
@@ -181,7 +179,7 @@ public class ClientListenerNotifier {
                ClientListenerInvocation invocation = new ClientListenerInvocation(listener, m);
                List<ClientListenerInvocation> invocables = listenerMethodMap.get(annotationType);
                if (invocables == null) {
-                  invocables = new ArrayList<ClientListenerInvocation>();
+                  invocables = new ArrayList<>();
                   listenerMethodMap.put(annotationType, invocables);
                }
 

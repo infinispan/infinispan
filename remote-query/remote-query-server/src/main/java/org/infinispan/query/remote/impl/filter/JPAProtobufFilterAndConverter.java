@@ -34,6 +34,7 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
    }
 
    @Inject
+   @SuppressWarnings("unused")
    protected void injectDependencies(Configuration cfg) {
       usesValueWrapper = cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled();
    }

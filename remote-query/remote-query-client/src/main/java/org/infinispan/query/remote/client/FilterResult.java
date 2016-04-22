@@ -56,8 +56,8 @@ public final class FilterResult {
       @Override
       public FilterResult readFrom(ProtoStreamReader reader) throws IOException {
          byte[] instance = reader.readBytes("instance");
-         List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<WrappedMessage>(), WrappedMessage.class);
-         List<WrappedMessage> sortProjection = reader.readCollection("sortProjection", new ArrayList<WrappedMessage>(), WrappedMessage.class);
+         List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<>(), WrappedMessage.class);
+         List<WrappedMessage> sortProjection = reader.readCollection("sortProjection", new ArrayList<>(), WrappedMessage.class);
 
          Object i = null;
          if (instance != null) {
