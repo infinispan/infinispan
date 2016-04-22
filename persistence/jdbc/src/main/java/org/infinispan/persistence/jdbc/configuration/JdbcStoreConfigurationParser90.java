@@ -76,6 +76,12 @@ public class JdbcStoreConfigurationParser90 implements ConfigurationParser {
             case DIALECT:
                builder.dialect(DatabaseType.valueOf(value));
                break;
+            case DB_MAJOR_VERSION:
+               builder.dbMajorVersion(Integer.parseInt(value));
+               break;
+            case DB_MINOR_VERSION:
+               builder.dbMinorVersion(Integer.parseInt(value));
+               break;
             default:
                Parser90.parseStoreAttribute(reader, i, builder);
                break;
@@ -107,6 +113,12 @@ public class JdbcStoreConfigurationParser90 implements ConfigurationParser {
          switch (attribute) {
             case DIALECT:
                builder.dialect(DatabaseType.valueOf(value));
+               break;
+            case DB_MAJOR_VERSION:
+               builder.dbMajorVersion(Integer.parseInt(value));
+               break;
+            case DB_MINOR_VERSION:
+               builder.dbMinorVersion(Integer.parseInt(value));
                break;
             default:
                Parser90.parseStoreAttribute(reader, i, builder);
@@ -231,6 +243,12 @@ public class JdbcStoreConfigurationParser90 implements ConfigurationParser {
                break;
             case DIALECT:
                builder.dialect(DatabaseType.valueOf(value));
+               break;
+            case DB_MAJOR_VERSION:
+               builder.dbMajorVersion(Integer.parseInt(value));
+               break;
+            case DB_MINOR_VERSION:
+               builder.dbMinorVersion(Integer.parseInt(value));
                break;
             default:
                Parser90.parseStoreAttribute(reader, i, builder);

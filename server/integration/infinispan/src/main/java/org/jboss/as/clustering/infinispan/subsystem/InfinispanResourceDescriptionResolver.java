@@ -182,6 +182,8 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.PROPERTIES, "store");
 
         sharedAttributeResolver.put(ModelKeys.DATASOURCE, "jdbc-store");
+        sharedAttributeResolver.put(ModelKeys.DB_MAJOR_VERSION, "jdbc-store");
+        sharedAttributeResolver.put(ModelKeys.DB_MINOR_VERSION, "jdbc-store");
         sharedAttributeResolver.put(ModelKeys.DIALECT, "jdbc-store");
         sharedAttributeResolver.put(ModelKeys.BATCH_SIZE, "jdbc-store");
         sharedAttributeResolver.put(ModelKeys.FETCH_SIZE, "jdbc-store");

@@ -11,14 +11,19 @@ import org.infinispan.persistence.jdbc.DatabaseType;
 public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Boolean> MANAGE_CONNECTION_FACTORY = AttributeDefinition.builder("manageConnectionFactory", true).immutable().build();
    static final AttributeDefinition<DatabaseType> DIALECT = AttributeDefinition.builder("databaseType", null, DatabaseType.class).immutable().build();
+   static final AttributeDefinition<Integer> DB_MAJOR_VERSION = AttributeDefinition.builder("databaseMajorVersion", null, Integer.class).immutable().build();
+   static final AttributeDefinition<Integer> DB_MINOR_VERSION = AttributeDefinition.builder("databaseMinorVersion", null, Integer.class).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AbstractJdbcStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), MANAGE_CONNECTION_FACTORY, DIALECT);
+      return new AttributeSet(AbstractJdbcStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(),
+                              MANAGE_CONNECTION_FACTORY, DIALECT, DB_MAJOR_VERSION, DB_MINOR_VERSION);
    }
 
 
    private final Attribute<Boolean> manageConnectionFactory;
    private final Attribute<DatabaseType> dialect;
+   private final Attribute<Integer> dbMajorVersion;
+   private final Attribute<Integer> dbMinorVersion;
    private final ConnectionFactoryConfiguration connectionFactory;
 
    protected AbstractJdbcStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
@@ -27,6 +32,8 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
       this.connectionFactory = connectionFactory;
       manageConnectionFactory = attributes.attribute(MANAGE_CONNECTION_FACTORY);
       dialect = attributes.attribute(DIALECT);
+      dbMajorVersion = attributes.attribute(DB_MAJOR_VERSION);
+      dbMinorVersion = attributes.attribute(DB_MINOR_VERSION);
    }
 
    public ConnectionFactoryConfiguration connectionFactory() {
@@ -39,6 +46,14 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
 
    public DatabaseType dialect() {
       return dialect.get();
+   }
+
+   public Integer dbMajorVersion() {
+      return dbMajorVersion.get();
+   }
+
+   public Integer dbMinorVersion() {
+      return dbMinorVersion.get();
    }
 
    @Override
