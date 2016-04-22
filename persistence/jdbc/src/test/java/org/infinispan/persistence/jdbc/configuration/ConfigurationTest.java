@@ -91,7 +91,9 @@ public class ConfigurationTest {
          .lockConcurrencyLevel(32)
          .fetchSize(50)
          .batchSize(50)
-         .dialect(DatabaseType.H2);
+         .dialect(DatabaseType.H2)
+         .dbMajorVersion(1)
+         .dbMinorVersion(4);
       mixedBuilder.async().enable();
 
       mixedBuilder.binaryTable()
@@ -127,6 +129,8 @@ public class ConfigurationTest {
       assert store.batchSize() == 50;
       assert store.fetchSize() == 50;
       assert store.dialect() == DatabaseType.H2;
+      assert store.dbMajorVersion() == 1;
+      assert store.dbMinorVersion() == 4;
       assert store.fetchPersistentState();
       assert store.lockConcurrencyLevel() == 32;
       assert store.async().enabled();

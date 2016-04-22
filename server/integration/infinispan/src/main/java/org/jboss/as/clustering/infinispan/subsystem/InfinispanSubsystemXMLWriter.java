@@ -662,6 +662,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
 
     private void writeJdbcStoreAttributes(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {
         this.writeRequired(writer, Attribute.DATASOURCE, store, ModelKeys.DATASOURCE);
+        this.writeOptional(writer, Attribute.DB_MAJOR_VERSION, store, ModelKeys.DB_MAJOR_VERSION);
+        this.writeOptional(writer, Attribute.DB_MINOR_VERSION, store, ModelKeys.DB_MINOR_VERSION);
         this.writeOptional(writer, Attribute.DIALECT, store, ModelKeys.DIALECT);
         this.writeStoreAttributes(writer, store);
     }

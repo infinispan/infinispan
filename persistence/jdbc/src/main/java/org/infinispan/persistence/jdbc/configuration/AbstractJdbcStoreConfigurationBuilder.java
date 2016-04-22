@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DB_MAJOR_VERSION;
+import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DB_MINOR_VERSION;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.DIALECT;
 import static org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration.MANAGE_CONNECTION_FACTORY;
 
@@ -78,6 +80,16 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
 
    public S dialect(DatabaseType databaseType) {
       attributes.attribute(DIALECT).set(databaseType);
+      return self();
+   }
+
+   public S dbMajorVersion(Integer majorVersion) {
+      attributes.attribute(DB_MAJOR_VERSION).set(majorVersion);
+      return self();
+   }
+
+   public S dbMinorVersion(Integer minorVersion) {
+      attributes.attribute(DB_MINOR_VERSION).set(minorVersion);
       return self();
    }
 
