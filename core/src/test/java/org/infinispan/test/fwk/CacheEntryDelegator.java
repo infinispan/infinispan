@@ -89,6 +89,16 @@ public class CacheEntryDelegator implements CacheEntry {
    }
 
    @Override
+   public long getCreated() {
+      return delegate.getCreated();
+   }
+
+   @Override
+   public long getLastUsed() {
+      return delegate.getLastUsed();
+   }
+
+   @Override
    public Object setValue(Object value) {
       return delegate.setValue(value);
    }

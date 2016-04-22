@@ -395,14 +395,13 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    def getKeyMetadata(h: HotRodHeader, k: Array[Byte], cache: Cache): GetWithMetadataResponse = {
       val ce = cache.getCacheEntry(k)
       if (ce != null) {
-         val ice = ce.asInstanceOf[InternalCacheEntry]
-         val entryVersion = ice.getMetadata.version().asInstanceOf[NumericVersion]
+         val entryVersion = ce.getMetadata.version().asInstanceOf[NumericVersion]
          val v = ce.getValue
-         val lifespan = if (ice.getLifespan < 0) -1 else (ice.getLifespan / 1000).toInt
-         val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
+         val lifespan = if (ce.getLifespan < 0) -1 else (ce.getLifespan / 1000).toInt
+         val maxIdle = if (ce.getMaxIdle < 0) -1 else (ce.getMaxIdle / 1000).toInt
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithMetadataResponse, Success, h.topologyId,
-            Some(v), entryVersion.getVersion, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
+            Some(v), entryVersion.getVersion, ce.getCreated, lifespan, ce.getLastUsed, maxIdle)
       } else {
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithMetadataResponse, KeyDoesNotExist, h.topologyId,
