@@ -1,6 +1,5 @@
 package org.infinispan.commons.util;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
