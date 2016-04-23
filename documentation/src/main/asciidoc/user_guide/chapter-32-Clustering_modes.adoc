@@ -219,7 +219,7 @@ Configuration c = new ConfigurationBuilder()
 ----
 
 ==== Initial cluster size
-Infinispan's very dynamic nature in handling toplogy changes (i.e. nodes being added / removed
+Infinispan's very dynamic nature in handling topology changes (i.e. nodes being added / removed
 at runtime) means that, normally, a node doesn't wait for the presence of other nodes before 
 starting. While this is very flexible, it might not be suitable for applications which require
 a specific number of nodes to join the cluster before caches are started. For this reason,
