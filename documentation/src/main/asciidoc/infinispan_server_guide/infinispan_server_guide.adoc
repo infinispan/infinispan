@@ -567,7 +567,7 @@ The connector will create a supporting topology cache with default settings. If 
 
 The Hot Rod connector can be further tuned with additional settings such as concurrency and buffering. See the protocol connector settings paragraph for additional details
 
-Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117128$$[documentation] on this. Next add the `<security />` element to the HotRod connector as follows: 
+Furthermore the HotRod connector can be secured using SSL. First you need to declare an SSL server identity within a security realm in the management section of the configuration file. The SSL server identity should specify the path to a keystore and its secret. Refer to the AS link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117128$$[documentation] on this. Next add the `<security />` element to the HotRod connector as follows:
 
 [source,xml]
 ----
@@ -952,7 +952,7 @@ For brevity we used the same callback handler both for obtaining the client subj
 
 === Hot Rod encryption (SSL)
 
-The Hot Rod protocol also supports encryption using SSL/TLS. To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
+The Hot Rod protocol also supports encryption using SSL/TLS with optional TLS/SNI support (link:$$https://en.wikipedia.org/wiki/Server_Name_Indication$$[Server Name Indication]). To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
 
 .Security Realm configuration for SSL
 [source,xml]
@@ -966,7 +966,12 @@ The Hot Rod protocol also supports encryption using SSL/TLS. To set this up you 
 </security-realm>
 ----
 
-Next modify the +<hotrod-connector>+ element in the endpoint subsystem to require encryption:
+[NOTE]
+====
+When using SNI support there might be multiple Security Realms configured.
+====
+
+Next modify the +<hotrod-connector>+ element in the endpoint subsystem to require encryption. Optionally add SNI configuration:
 
 .Hot Rod connector SSL configuration
 
@@ -974,7 +979,10 @@ Next modify the +<hotrod-connector>+ element in the endpoint subsystem to requir
 ----
 <hotrod-connector socket-binding="hotrod" cache-container="local">
     <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
-    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="false"/>
+    <encryption security-realm="ApplicationRealm" require-ssl-client-auth="false">
+        <sni host-name="domain1" security-realm="Domain1ApplicationRealm" />
+        <sni host-name="domain2" security-realm="Domain2ApplicationRealm" />
+    </encryption>
 </hotrod-connector>
 ----
 
@@ -991,8 +999,9 @@ clientBuilder
      .security()
         .ssl()
            .enabled(sslClient)
+           .sniHostName("domain1")
            .trustStoreFileName("truststore.jks")
-           .trustStorePassword("secret".toCharArray())
+           .trustStorePassword("secret".toCharArray());
 remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
 ----
 
