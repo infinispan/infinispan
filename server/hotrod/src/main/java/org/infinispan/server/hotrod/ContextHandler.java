@@ -99,7 +99,8 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
             byte[] result = (byte[]) taskManager.runTask(execContext.name(),
                     new TaskContext().marshaller(marshaller).cache(msg.cache()).parameters(execContext.params())).get();
             writeResponse(msg, ctx.channel(),
-                    new ExecResponse(h.version(), h.messageId(), h.cacheName(), h.clientIntel(), h.topologyId(), result));
+                    new ExecResponse(h.version(), h.messageId(), h.cacheName(), h.clientIntel(), h.topologyId(),
+                          result == null ? new byte[]{} : result));
             break;
          case BulkGetRequest:
             int size = (int) msg.operationDecodeContext();
