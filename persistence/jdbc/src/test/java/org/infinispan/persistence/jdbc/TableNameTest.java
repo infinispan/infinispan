@@ -1,5 +1,6 @@
 package org.infinispan.persistence.jdbc;
 
+import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

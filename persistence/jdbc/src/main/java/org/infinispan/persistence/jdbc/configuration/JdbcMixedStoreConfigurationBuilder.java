@@ -41,7 +41,7 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
    /**
     * When doing repetitive DB inserts this will be batched
     * according to this parameter. This is an optional parameter, and if it is not specified it will
-    * be defaulted to {@link org.infinispan.persistence.jdbc.TableManipulation#DEFAULT_BATCH_SIZE}.
+    * be defaulted to {@link org.infinispan.persistence.jdbc.TableManager#DEFAULT_BATCH_SIZE}.
     */
    public JdbcMixedStoreConfigurationBuilder batchSize(int batchSize) {
       attributes.attribute(BATCH_SIZE).set(batchSize);
@@ -50,7 +50,7 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
 
    /**
     * For DB queries the fetch size will be set on {@link java.sql.ResultSet#setFetchSize(int)}. This is optional
-    * parameter, if not specified will be defaulted to {@link org.infinispan.persistence.jdbc.TableManipulation#DEFAULT_FETCH_SIZE}.
+    * parameter, if not specified will be defaulted to {@link org.infinispan.persistence.jdbc.TableManager#DEFAULT_FETCH_SIZE}.
     */
    public JdbcMixedStoreConfigurationBuilder fetchSize(int fetchSize) {
       attributes.attribute(FETCH_SIZE).set(fetchSize);

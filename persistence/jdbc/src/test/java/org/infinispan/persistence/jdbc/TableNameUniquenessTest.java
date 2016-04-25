@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.jdbc.mixed.JdbcMixedStore;
 import org.infinispan.persistence.jdbc.binary.JdbcBinaryStore;
@@ -42,7 +43,8 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcStringBasedStore firstCs = (JdbcStringBasedStore) TestingUtil.getFirstLoader(first);
          JdbcStringBasedStore secondCs = (JdbcStringBasedStore) TestingUtil.getFirstLoader(second);
 
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_STRING_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManager().getIdentifierQuoteString(),
+                              "second", "first", "ISPN_STRING_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
       } finally {
@@ -60,7 +62,7 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcBinaryStore firstCs = (JdbcBinaryStore) TestingUtil.getFirstLoader(first);
          JdbcBinaryStore secondCs = (JdbcBinaryStore) TestingUtil.getFirstLoader(second);
 
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_BUCKET_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getTableManager().getIdentifierQuoteString(), "second", "first", "ISPN_BUCKET_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
       } finally {
@@ -80,8 +82,8 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
          JdbcMixedStore firstCs = (JdbcMixedStore) TestingUtil.getFirstLoader(first);
          JdbcMixedStore secondCs = (JdbcMixedStore) TestingUtil.getFirstLoader(second);
 
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryStore().getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_STR_TABLE");
-         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryStore().getTableManipulation().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_BINARY_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryStore().getTableManager().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_STR_TABLE");
+         assertTableExistence(firstCs.getConnectionFactory().getConnection(), firstCs.getBinaryStore().getTableManager().getIdentifierQuoteString(), "second", "first", "ISPN_MIXED_BINARY_TABLE");
 
          assertNoOverlapingState(first, second, firstCs, secondCs);
 
@@ -137,9 +139,9 @@ public class TableNameUniquenessTest extends AbstractInfinispanTest {
    }
 
    private void assertTableExistence(Connection connection, String identifierQuote, String secondTable, String firstTable, String tablePrefix) throws Exception {
-      assert !TableManipulationTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, "")) : "this table should not exist!";
-      assert TableManipulationTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, firstTable));
-      assert TableManipulationTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, secondTable));
+      assert !TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, "")) : "this table should not exist!";
+      assert TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, firstTable));
+      assert TableManagerTest.existsTable(connection, new TableName(identifierQuote, tablePrefix, secondTable));
       connection.close();
    }
 
