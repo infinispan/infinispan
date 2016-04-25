@@ -1,15 +1,15 @@
 package org.infinispan.client.hotrod.configuration;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.TypedProperties;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.configuration.Builder;
+
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.TypedProperties;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.client.hotrod.logging.Log;
-
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -28,6 +28,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private String trustStoreFileName;
    private char[] trustStorePassword;
    private SSLContext sslContext;
+   private String sniHostName;
 
    protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
@@ -112,6 +113,15 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return this;
    }
 
+   /**
+    * Specifies the TLS SNI hostname for the connection
+    * @see javax.net.ssl.SSLParameters#setServerNames(List)
+     */
+   public SslConfigurationBuilder sniHostName(String sniHostName) {
+      this.sniHostName = sniHostName;
+      return this;
+   }
+
    @Override
    public void validate() {
       if (enabled) {
@@ -135,7 +145,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
    @Override
    public SslConfiguration create() {
-      return new SslConfiguration(enabled, keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, sslContext, trustStoreFileName, trustStorePassword);
+      return new SslConfiguration(enabled, keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, sslContext, trustStoreFileName, trustStorePassword, sniHostName);
    }
 
    @Override
@@ -147,6 +157,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.sslContext = template.sslContext();
       this.trustStoreFileName = template.trustStoreFileName();
       this.trustStorePassword = template.trustStorePassword();
+      this.sniHostName = template.sniHostName();
       return this;
    }
 
@@ -166,6 +177,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
       if (typed.containsKey(ConfigurationProperties.TRUST_STORE_PASSWORD))
          this.trustStorePassword(typed.getProperty(ConfigurationProperties.TRUST_STORE_PASSWORD).toCharArray());
+
+      if (typed.containsKey(ConfigurationProperties.SNI_HOST_NAME))
+         this.sniHostName(typed.getProperty(ConfigurationProperties.SNI_HOST_NAME));
 
       this.sslContext((SSLContext) typed.get(ConfigurationProperties.SSL_CONTEXT));
 

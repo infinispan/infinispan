@@ -1,11 +1,18 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
-import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedLong;
-import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
-import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedLong;
-import static org.infinispan.commons.io.SignedNumeric.writeSignedInt;
+import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.security.sasl.SaslClient;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -15,17 +22,11 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.net.ssl.SSLContext;
-import javax.security.sasl.SaslClient;
-
-import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.util.Util;
+import static org.infinispan.commons.io.SignedNumeric.writeSignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.*;
 
 /**
  * Transport implementation based on TCP.
@@ -58,9 +59,11 @@ public class TcpTransport extends AbstractTransport {
       this.serverAddress = serverAddress;
       try {
          if (transportFactory.getSSLContext() != null) {
-            SSLContext sslContext = transportFactory.getSSLContext();
             socketChannel = null; // We don't use a SocketChannel in the SSL case
-            socket = sslContext.getSocketFactory().createSocket();
+            SSLContext sslContext = transportFactory.getSSLContext();
+            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+            socket = sslSocketFactory.createSocket();
+            setSniHostName(transportFactory.getSniHostName());
          } else {
             socketChannel = SocketChannel.open();
             socket = socketChannel.socket();
@@ -76,6 +79,15 @@ public class TcpTransport extends AbstractTransport {
          String message = String.format("Could not connect to server: %s", serverAddress);
          log.tracef(e, "Could not connect to server: %s", serverAddress);
          throw new TransportException(message, e, serverAddress);
+      }
+   }
+
+   private void setSniHostName(String sniHostName) {
+      if(sniHostName != null) {
+         SSLSocket sslSocket = (SSLSocket) this.socket;
+         SSLParameters sslParameters = sslSocket.getSSLParameters();
+         sslParameters.setServerNames(Arrays.asList(new SNIHostName(sniHostName)));
+         sslSocket.setSSLParameters(sslParameters);
       }
    }
 
