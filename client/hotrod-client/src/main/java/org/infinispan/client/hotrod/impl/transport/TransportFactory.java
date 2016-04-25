@@ -1,12 +1,5 @@
 package org.infinispan.client.hotrod.impl.transport;
 
-import java.net.SocketAddress;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.SSLContext;
-
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
@@ -15,6 +8,13 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.ClusterSwitchStatus;
 import org.infinispan.commons.marshall.Marshaller;
+
+import javax.net.ssl.SSLContext;
+import java.net.SocketAddress;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Transport factory for building and managing {@link org.infinispan.client.hotrod.impl.transport.Transport} objects.
@@ -85,4 +85,6 @@ public interface TransportFactory {
    String getCurrentClusterName();
 
    int getTopologyAge();
+
+   String getSniHostName();
 }

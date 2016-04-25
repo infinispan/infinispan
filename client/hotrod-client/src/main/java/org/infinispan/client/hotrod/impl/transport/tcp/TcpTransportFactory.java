@@ -73,6 +73,7 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile int connectTimeout;
    private volatile int maxRetries;
    private volatile SSLContext sslContext;
+   private volatile String sniHostName;
    private volatile ClientListenerNotifier listenerNotifier;
    @GuardedBy("lock")
    private volatile TopologyInfo topologyInfo;
@@ -125,6 +126,7 @@ public class TcpTransportFactory implements TransportFactory {
             } else {
                sslContext = SslContextFactory.getContext(ssl.keyStoreFileName(), ssl.keyStorePassword(), ssl.keyStoreCertificatePassword(), ssl.trustStoreFileName(), ssl.trustStorePassword());
             }
+            sniHostName = ssl.sniHostName();
          }
 
          if (log.isDebugEnabled()) {
@@ -452,6 +454,11 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public SSLContext getSSLContext() {
       return sslContext;
+   }
+
+   @Override
+   public String getSniHostName() {
+      return sniHostName;
    }
 
    @Override

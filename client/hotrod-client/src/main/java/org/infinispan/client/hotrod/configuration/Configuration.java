@@ -1,12 +1,5 @@
 package org.infinispan.client.hotrod.configuration;
 
-import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -14,6 +7,13 @@ import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingS
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.TypedProperties;
+
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Configuration.
@@ -278,6 +278,9 @@ public class Configuration {
 
       if (security.ssl().trustStorePassword() != null)
          properties.setProperty(ConfigurationProperties.TRUST_STORE_PASSWORD, new String(security.ssl().trustStorePassword()));
+
+      if (security.ssl().sniHostName() != null)
+         properties.setProperty(ConfigurationProperties.SNI_HOST_NAME, new String(security.ssl().sniHostName()));
 
       if (security.ssl().sslContext() != null)
          properties.put(ConfigurationProperties.SSL_CONTEXT, security.ssl().sslContext());

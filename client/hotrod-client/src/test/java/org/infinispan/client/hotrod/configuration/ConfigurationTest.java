@@ -1,19 +1,12 @@
 package org.infinispan.client.hotrod.configuration;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
-
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
-import javax.net.ssl.SSLContext;
-import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-
 import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV2;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
@@ -23,6 +16,11 @@ import org.infinispan.client.hotrod.impl.transport.tcp.SaslTransportObjectFactor
 import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
 
+import javax.net.ssl.SSLContext;
+import javax.security.auth.Subject;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import static org.testng.AssertJUnit.assertEquals;
 @Test(testName = "client.hotrod.configuration.ConfigurationTest", groups = "functional" )
 public class ConfigurationTest {
 
@@ -54,6 +52,7 @@ public class ConfigurationTest {
       OPTIONS.put(MAX_RETRIES, Configuration::maxRetries);
       OPTIONS.put(USE_SSL, c -> c.security().ssl().enabled());
       OPTIONS.put(KEY_STORE_FILE_NAME, c -> c.security().ssl().keyStoreFileName());
+      OPTIONS.put(SNI_HOST_NAME, c -> c.security().ssl().sniHostName());
       OPTIONS.put(KEY_STORE_PASSWORD, c -> new String(c.security().ssl().keyStorePassword()));
       OPTIONS.put(KEY_STORE_CERTIFICATE_PASSWORD, c -> new String(c.security().ssl().keyStoreCertificatePassword()));
       OPTIONS.put(TRUST_STORE_FILE_NAME, c -> c.security().ssl().trustStoreFileName());
@@ -219,6 +218,23 @@ public class ConfigurationTest {
       validateSSLContextConfiguration(newConfiguration);
    }
 
+   public void testSni() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.security()
+              .ssl()
+              .enable()
+              .sslContext(getSSLContext())
+              .sniHostName("sni");
+
+      Configuration configuration = builder.build();
+      validateSniContextConfiguration(configuration);
+
+      ConfigurationBuilder newBuilder = new ConfigurationBuilder();
+      newBuilder.read(configuration);
+      Configuration newConfiguration = newBuilder.build();
+      validateSniContextConfiguration(newConfiguration);
+   }
+
    public void testWithPropertiesSSLContext() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       Properties p = new Properties();
@@ -230,6 +246,19 @@ public class ConfigurationTest {
       newBuilder.read(configuration);
       Configuration newConfiguration = newBuilder.build();
       validateSSLContextConfiguration(newConfiguration);
+   }
+
+   public void testWithPropertiesSni() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      Properties p = new Properties();
+      p.put(SNI_HOST_NAME, "sni");
+      Configuration configuration = builder.withProperties(p).build();
+      validateSniContextConfiguration(configuration);
+
+      ConfigurationBuilder newBuilder = new ConfigurationBuilder();
+      newBuilder.read(configuration);
+      Configuration newConfiguration = newBuilder.build();
+      validateSniContextConfiguration(newConfiguration);
    }
 
    public void testWithPropertiesAuthCallbackHandlerFQN() {
@@ -379,6 +408,10 @@ public class ConfigurationTest {
 
    private void validateSSLContextConfiguration(Configuration configuration) {
       assertEqualsConfig(getSSLContext(), SSL_CONTEXT, configuration);
+   }
+
+   private void validateSniContextConfiguration(Configuration configuration) {
+      assertEqualsConfig("sni", SNI_HOST_NAME, configuration);
    }
 
    private SSLContext getSSLContext() {
