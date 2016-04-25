@@ -38,12 +38,6 @@ public interface ConfigurationChildBuilder {
    ExecutorFactoryConfigurationBuilder asyncExecutorFactory();
 
    /**
-    * Configuration for the executor service used for parallel operations (operations that span across multiple nodes),
-    * like getAll / putAll operations.
-    */
-   ExecutorFactoryConfigurationBuilder parallelExecutorFactory();
-
-   /**
     * For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the
     * servers according to this strategy.
     */

@@ -16,7 +16,7 @@ import org.infinispan.commons.util.Util;
  */
 public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ExecutorFactoryConfiguration> {
 
-   private Class<? extends ExecutorFactory> factoryClass;
+   private Class<? extends ExecutorFactory> factoryClass = DefaultAsyncExecutorFactory.class;
    private ExecutorFactory factory;
    private Properties properties;
    private final ConfigurationBuilder builder;

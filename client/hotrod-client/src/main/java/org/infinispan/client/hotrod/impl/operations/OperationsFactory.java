@@ -44,12 +44,12 @@ public class OperationsFactory implements HotRodConstants {
 
    private final String cacheName;
 
-   private final ExecutorService parallelExecutorService;
+   private final ExecutorService executorService;
 
    public OperationsFactory(TransportFactory transportFactory, String cacheName, boolean forceReturnValue, Codec
-           codec, ClientListenerNotifier listenerNotifier, ExecutorService parallelExecutorService) {
+           codec, ClientListenerNotifier listenerNotifier, ExecutorService executorService) {
       this.transportFactory = transportFactory;
-      this.parallelExecutorService = parallelExecutorService;
+      this.executorService = executorService;
       this.cacheNameBytes = RemoteCacheManager.cacheNameBytes(cacheName);
       this.cacheName = cacheName;
       this.topologyId = transportFactory != null
@@ -75,7 +75,7 @@ public class OperationsFactory implements HotRodConstants {
 
    public <K, V> GetAllParallelOperation<K, V> newGetAllOperation(Set<byte[]> keys) {
       return new GetAllParallelOperation<>(codec, transportFactory, keys, cacheNameBytes, topologyId, flags(),
-              parallelExecutorService);
+            executorService);
    }
 
    public <V> RemoveOperation<V> newRemoveOperation(Object key, byte[] keyBytes) {
@@ -121,7 +121,7 @@ public class OperationsFactory implements HotRodConstants {
                                                      long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new PutAllParallelOperation(
             codec, transportFactory, map, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
-              lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, parallelExecutorService);
+              lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, executorService);
    }
 
    public <V> PutIfAbsentOperation<V> newPutIfAbsentOperation(Object key, byte[] keyBytes, byte[] value,
