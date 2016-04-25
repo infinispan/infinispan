@@ -39,17 +39,6 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    var getAllSet: Set[Bytes] = _
    var operationDecodeContext: Any = _
 
-   def resetParams(): Unit = {
-      decoder = null
-      header = null
-      params = null
-      key = null
-      rawValue = null
-      putAllMap = null
-      getAllSet = null
-      operationDecodeContext = null
-   }
-
     def createExceptionResponse(e: Throwable): (ErrorResponse) = {
       e match {
          case i: InvalidMagicIdException =>
