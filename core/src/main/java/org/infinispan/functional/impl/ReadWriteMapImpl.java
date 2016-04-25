@@ -71,8 +71,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public <R> Traversable<R> evalMany(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      ReadWriteManyEntriesCommand cmd = fmap.cmdFactory().buildReadWriteManyEntriesCommand(entries, f);
+      ReadWriteManyEntriesCommand cmd = fmap.cmdFactory().buildReadWriteManyEntriesCommand(entries, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, entries.size());
       return Traversables.of(((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
    }
@@ -80,8 +79,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public <R> Traversable<R> evalMany(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      ReadWriteManyCommand cmd = fmap.cmdFactory().buildReadWriteManyCommand(keys, f);
+      ReadWriteManyCommand cmd = fmap.cmdFactory().buildReadWriteManyCommand(keys, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
       return Traversables.of(((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
    }
@@ -89,9 +87,8 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public <R> Traversable<R> evalAll(Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalAll(%s)", params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
       CloseableIteratorSet<K> keys = fmap.cache.keySet();
-      ReadWriteManyCommand cmd = fmap.cmdFactory().buildReadWriteManyCommand(keys, f);
+      ReadWriteManyCommand cmd = fmap.cmdFactory().buildReadWriteManyCommand(keys, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
       return Traversables.of(((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
    }

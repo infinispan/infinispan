@@ -3,6 +3,7 @@ package org.infinispan.functional;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.BeforeClass;
 
@@ -25,14 +26,18 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       // Create local caches as default in a cluster of 2
-      createClusteredCaches(2, new ConfigurationBuilder());
+      ConfigurationBuilder localBuilder = new ConfigurationBuilder();
+      localBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+      createClusteredCaches(2, localBuilder);
       // Create distributed caches
       ConfigurationBuilder distBuilder = new ConfigurationBuilder();
       distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
+      distBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
       cacheManagers.stream().forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
       // Create replicated caches
       ConfigurationBuilder replBuilder = new ConfigurationBuilder();
       replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
+      replBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
       cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
       // Wait for cluster to form
       waitForClusterToForm(DIST, REPL);
