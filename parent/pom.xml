@@ -1213,16 +1213,8 @@
                   <failsOnError>true</failsOnError>
                   <violationSeverity>error</violationSeverity>
                   <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                  <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
                </configuration>
-               <executions>
-                  <execution>
-                     <id>checkstyle</id>
-                     <phase>process-sources</phase>
-                     <goals>
-                        <goal>checkstyle</goal>
-                     </goals>
-                  </execution>
-               </executions>
              </plugin>
              <plugin>
                 <groupId>org.scala-tools</groupId>
@@ -1345,7 +1337,19 @@
                <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
             </configuration>
          </plugin>
-
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>checkstyle</id>
+                  <phase>verify</phase>
+                  <goals>
+                     <goal>checkstyle</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-idea-plugin</artifactId>
