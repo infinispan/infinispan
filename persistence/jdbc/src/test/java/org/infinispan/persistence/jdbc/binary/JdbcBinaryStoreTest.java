@@ -2,9 +2,10 @@ package org.infinispan.persistence.jdbc.binary;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
-import org.infinispan.persistence.jdbc.TableManipulation;
+import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
+import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -48,8 +49,11 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
             .getDefaultCacheConfiguration(false);
       JdbcBinaryStoreConfigurationBuilder storeBuilder = builder
             .persistence()
-               .addStore(JdbcBinaryStoreConfigurationBuilder.class)
-                  .manageConnectionFactory(false);
+            .addStore(JdbcBinaryStoreConfigurationBuilder.class)
+            .manageConnectionFactory(false)
+            .dialect(DatabaseType.H2)
+            .dbMajorVersion(1)
+            .dbMinorVersion(4);
 
       storeBuilder.table().createOnStart(false);
 
@@ -60,14 +64,14 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
 
       /* this will make sure that if a method like stop is called on the connection then it will barf an exception */
       ConnectionFactory connectionFactory = mock(ConnectionFactory.class);
-      TableManipulation tableManipulation = mock(TableManipulation.class);
+      TableManager tableManager = mock(TableManager.class);
 
-      tableManipulation.start(connectionFactory);
-      tableManipulation.setCacheName("aName");
+      tableManager.start();
+      tableManager.setCacheName("aName");
       jdbcBucketCacheStore.doConnectionFactoryInitialization(connectionFactory);
 
       //stop should be called even if this is an externally managed connection
-      tableManipulation.stop();
+      tableManager.stop();
       jdbcBucketCacheStore.stop();
    }
 
