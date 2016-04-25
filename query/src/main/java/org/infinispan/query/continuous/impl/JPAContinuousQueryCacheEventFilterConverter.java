@@ -1,5 +1,6 @@
 package org.infinispan.query.continuous.impl;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
@@ -40,7 +41,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
    /**
     * The implementation class of the Matcher component to lookup and use.
     */
-   protected final Class<? extends Matcher> matcherImplClass;
+   protected Class<? extends Matcher> matcherImplClass;
 
    /**
     * Optional cache for query objects.
@@ -82,7 +83,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
     * Acquires a Matcher instance from the ComponentRegistry of the given Cache object.
     */
    @Inject
-   protected void injectDependencies(ComponentRegistry componentRegistry) {
+   protected void injectDependencies(ComponentRegistry componentRegistry, Cache c) {
       queryCache = componentRegistry.getComponent(QueryCache.class);
       matcher = componentRegistry.getComponent(matcherImplClass);
       if (matcher == null) {

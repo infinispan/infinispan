@@ -49,7 +49,7 @@ import static org.junit.Assert.assertNull;
  * @author anistor@redhat.com
  * @since 9.0
  */
-@Test(enabled = false, description = "To be fixed by https://issues.jboss.org/browse/ISPN-6505", groups = "functional", testName = "client.hotrod.event.EmbeddedCompatContinuousQueryTest")
+@Test(groups = "functional", testName = "client.hotrod.event.EmbeddedCompatContinuousQueryTest")
 public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
 
    private final int NUM_NODES = 5;
@@ -105,7 +105,7 @@ public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
    /**
     * Using grouping and aggregation with continuous query is not allowed.
     */
-   @Test(enabled = false, description = "To be fixed by https://issues.jboss.org/browse/ISPN-6505", expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .select(max("age"))

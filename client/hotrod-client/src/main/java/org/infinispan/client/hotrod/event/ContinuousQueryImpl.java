@@ -103,7 +103,8 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
       @ClientCacheEntryRemoved
       @ClientCacheEntryExpired
       public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent<byte[]> event) throws IOException {
-         ContinuousQueryResult cqr = ProtobufUtil.fromByteArray(serializationContext, event.getEventData(), ContinuousQueryResult.class);
+         byte[] eventData = event.getEventData();
+         ContinuousQueryResult cqr = (ContinuousQueryResult) ProtobufUtil.fromWrappedByteArray(serializationContext, eventData);
          Object key = ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getKey());
          Object value = cqr.getValue() != null ? ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getValue()) : cqr.getProjection();
          if (cqr.isJoining()) {

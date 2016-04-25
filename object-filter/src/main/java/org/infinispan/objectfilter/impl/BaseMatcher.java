@@ -36,8 +36,6 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    private final Lock write = readWriteLock.writeLock();
 
-   protected final Map<String, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByTypeName = new HashMap<>();
-
    protected final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByType = new HashMap<>();
 
    protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
@@ -185,10 +183,9 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
       write.lock();
       try {
-         FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filtersByTypeName.get(parsingResult.getTargetEntityName());
+         FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filtersByType.get(parsingResult.getTargetEntityMetadata());
          if (filterRegistry == null) {
             filterRegistry = new FilterRegistry<>(createMetadataAdapter(parsingResult.getTargetEntityMetadata()), true);
-            filtersByTypeName.put(parsingResult.getTargetEntityName(), filterRegistry);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
          return filterRegistry.addFilter(jpaQuery, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getProjectedTypes(), parsingResult.getSortFields(), callback, eventType);
@@ -205,17 +202,16 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public void unregisterFilter(FilterSubscription filterSubscription) {
-      FilterSubscriptionImpl filterSubscriptionImpl = (FilterSubscriptionImpl) filterSubscription;
+      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>) filterSubscription;
       write.lock();
       try {
-         FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filtersByTypeName.get(filterSubscriptionImpl.getEntityTypeName());
+         FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = filtersByType.get(filterSubscriptionImpl.getMetadataAdapter().getTypeMetadata());
          if (filterRegistry != null) {
             filterRegistry.removeFilter(filterSubscription);
          } else {
             throw new IllegalStateException("Reached illegal state");
          }
          if (filterRegistry.getFilterSubscriptions().isEmpty()) {
-            filtersByTypeName.remove(filterRegistry.getMetadataAdapter().getTypeName());
             filtersByType.remove(filterRegistry.getMetadataAdapter().getTypeMetadata());
          }
       } finally {
