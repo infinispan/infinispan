@@ -1,4 +1,4 @@
-package org.infinispan.persistence.jdbc;
+package org.infinispan.persistence.jdbc.table.management;
 
 import java.io.Serializable;
 

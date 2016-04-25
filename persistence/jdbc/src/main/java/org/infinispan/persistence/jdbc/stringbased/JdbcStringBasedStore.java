@@ -22,11 +22,12 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.jdbc.table.management.TableManager;
+import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
 import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.UnsupportedKeyTypeException;
@@ -80,7 +81,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
 
    private Key2StringMapper key2StringMapper;
    private ConnectionFactory connectionFactory;
-   private TableManipulation tableManipulation;
+   private TableManager tableManager;
    private InitializationContext ctx;
    private String cacheName;
    private GlobalConfiguration globalConfiguration;
@@ -107,7 +108,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          if (mapper instanceof Key2StringMapper) key2StringMapper = (Key2StringMapper) mapper;
       } catch (Exception e) {
          log.errorf("Trying to instantiate %s, however it failed due to %s", configuration.key2StringMapper(),
-               e.getClass().getName());
+                    e.getClass().getName());
          throw new IllegalStateException("This should not happen.", e);
       }
       if (trace) {
@@ -125,7 +126,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
    public void stop() {
       Throwable cause = null;
       try {
-         tableManipulation.stop();
+         tableManager.stop();
       } catch (Throwable t) {
          cause = t.getCause();
          if (cause == null) cause = t;
@@ -153,7 +154,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       String keyStr = key2Str(entry.getKey());
       try {
          connection = connectionFactory.getConnection();
-         String sql = tableManipulation.getSelectIdRowSql();
+         String sql = tableManager.getSelectIdRowSql();
          if (trace) {
             log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
@@ -161,14 +162,14 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
          ps.setString(1, keyStr);
          ResultSet rs = ps.executeQuery();
          if (rs.next()) {
-            sql = tableManipulation.getUpdateRowSql();
+            sql = tableManager.getUpdateRowSql();
          } else {
-            sql = tableManipulation.getInsertRowSql();
+            sql = tableManager.getInsertRowSql();
          }
          JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
          if (trace) {
-             log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
+            log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
          ps = connection.prepareStatement(sql);
          updateStatement(entry, keyStr, ps);
@@ -195,7 +196,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       ResultSet rs = null;
       MarshalledEntry storedValue = null;
       try {
-         String sql = tableManipulation.getSelectRowSql();
+         String sql = tableManager.getSelectRowSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          ps.setString(1, lockingKey);
@@ -228,7 +229,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       PreparedStatement ps = null;
       String keyStr = key2Str(key);
       try {
-         String sql = tableManipulation.getDeleteRowSql();
+         String sql = tableManager.getDeleteRowSql();
          if (trace) {
             log.tracef("Running sql '%s' on %s", sql, keyStr);
          }
@@ -250,7 +251,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       Connection conn = null;
       PreparedStatement ps = null;
       try {
-         String sql = tableManipulation.getDeleteAllRowsSql();
+         String sql = tableManager.getDeleteAllRowsSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          int result = ps.executeUpdate();
@@ -276,7 +277,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
             Connection conn = null;
             PreparedStatement ps = null;
             try {
-               String sql = tableManipulation.getDeleteExpiredRowsSql();
+               String sql = tableManager.getDeleteExpiredRowsSql();
                conn = connectionFactory.getConnection();
                ps = conn.prepareStatement(sql);
                ps.setLong(1, ctx.getTimeService().wallClockTime());
@@ -322,14 +323,14 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
             PreparedStatement ps = null;
             ResultSet rs = null;
             try {
-               String sql = tableManipulation.getLoadNonExpiredAllRowsSql();
+               String sql = tableManager.getLoadNonExpiredAllRowsSql();
                if (trace) {
                   log.tracef("Running sql %s", sql);
                }
                conn = connectionFactory.getConnection();
                ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                ps.setLong(1, ctx.getTimeService().wallClockTime());
-               ps.setFetchSize(tableManipulation.getFetchSize());
+               ps.setFetchSize(tableManager.getFetchSize());
                rs = ps.executeQuery();
 
                TaskContext taskContext = new TaskContextImpl();
@@ -378,7 +379,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       ResultSet rs = null;
       try {
          conn = connectionFactory.getConnection();
-         String sql = tableManipulation.getCountRowsSql();
+         String sql = tableManager.getCountRowsSql();
          ps = conn.prepareStatement(sql);
          rs = ps.executeQuery();
          rs.next();
@@ -413,23 +414,23 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
 
    /**
     * Keeps a reference to the connection factory for further use. Also initializes the {@link
-    * org.infinispan.persistence.jdbc.TableManipulation} that needs connections. This method should be called when you don't
+    * TableManager} that needs connections. This method should be called when you don't
     * want the store to manage the connection factory, perhaps because it is using an shared connection factory: see
     * {@link org.infinispan.persistence.jdbc.mixed.JdbcMixedStore} for such an example of this.
     */
    public void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
       this.connectionFactory = connectionFactory;
-      tableManipulation = new TableManipulation(configuration.table(), configuration.dialect());
-      tableManipulation.setCacheName(cacheName);
-      tableManipulation.start(connectionFactory);
+      tableManager = TableManagerFactory.getManager(connectionFactory, configuration);
+      tableManager.setCacheName(cacheName);
+      tableManager.start();
    }
 
    public ConnectionFactory getConnectionFactory() {
       return connectionFactory;
    }
 
-   public TableManipulation getTableManipulation() {
-      return tableManipulation;
+   public TableManager getTableManager() {
+      return tableManager;
    }
 
    private void enforceTwoWayMapper(String where) throws PersistenceException {

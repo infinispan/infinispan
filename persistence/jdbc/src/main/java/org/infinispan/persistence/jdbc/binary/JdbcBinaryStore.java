@@ -29,11 +29,12 @@ import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.jdbc.table.management.TableManager;
+import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -71,7 +72,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
    private JdbcBinaryStoreConfiguration configuration;
 
    private ConnectionFactory connectionFactory;
-   private TableManipulation tableManipulation;
+   private TableManager tableManager;
    private InitializationContext ctx;
    private Equivalence<Object> keyEquivalence;
 
@@ -96,7 +97,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
    public void stop() {
       Throwable cause = null;
       try {
-         tableManipulation.stop();
+         tableManager.stop();
       } catch (Throwable t) {
          cause = t;
          log.debug("Exception while stopping", t);
@@ -181,14 +182,14 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       PreparedStatement ps = null;
       ResultSet rs = null;
       try {
-         String sql = tableManipulation.getLoadNonExpiredAllRowsSql();
+         String sql = tableManager.getLoadNonExpiredAllRowsSql();
          if (trace) {
             log.tracef("Running sql %s", sql);
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
          ps.setLong(1, ctx.getTimeService().wallClockTime());
-         ps.setFetchSize(tableManipulation.getFetchSize());
+         ps.setFetchSize(tableManager.getFetchSize());
          rs = ps.executeQuery();
          ExecutorAllCompletionService ecs = new ExecutorAllCompletionService(executor);
          final TaskContextImpl taskContext = new TaskContextImpl();
@@ -205,7 +206,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
                         if (!taskContext.isStopped()) {
                            if (!fetchValue || !fetchMetadata) {
                               me = ctx.getMarshalledEntryFactory().newMarshalledEntry(me.getKey(),
-                                    fetchValue ? me.getValue() : null, fetchMetadata ? me.getMetadata() : null);
+                                                                                      fetchValue ? me.getValue() : null, fetchMetadata ? me.getMetadata() : null);
                            }
                            task.processEntry(me, taskContext);
                         }
@@ -237,7 +238,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       Connection conn = null;
       PreparedStatement ps = null;
       try {
-         String sql = tableManipulation.getDeleteAllRowsSql();
+         String sql = tableManager.getDeleteAllRowsSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          int result = ps.executeUpdate();
@@ -272,7 +273,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       int tasksScheduled = 0;
       int tasksCompleted = 0;
       try {
-         String sql = tableManipulation.getSelectExpiredRowsSql();
+         String sql = tableManager.getSelectExpiredRowsSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          ps.setLong(1, ctx.getTimeService().wallClockTime());
@@ -318,7 +319,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          // when all tasks have completed, we may have up to BATCH_SIZE empty buckets waiting to be deleted
          PreparedStatement deletePs = null;
          try {
-            deletePs = conn.prepareStatement(tableManipulation.getDeleteRowSql());
+            deletePs = conn.prepareStatement(tableManager.getDeleteRowSql());
             Bucket bucket;
             while ((bucket = emptyBuckets.poll()) != null) {
                deletePs.setString(1, bucket.getBucketIdAsString());
@@ -401,7 +402,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          {
             PreparedStatement ps = null;
             try {
-               String sql = tableManipulation.getUpdateRowSql();
+               String sql = tableManager.getUpdateRowSql();
                ps = conn.prepareStatement(sql);
                for (Bucket bucket : buckets) {
                   log.trace("Purging bucket " + bucket.getBucketId() + " with entries " + bucket.getStoredEntries());
@@ -433,7 +434,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          if (emptyBuckets.size() > BATCH_SIZE) {
             PreparedStatement ps = null;
             try {
-               String sql = tableManipulation.getDeleteRowSql();
+               String sql = tableManager.getDeleteRowSql();
                ps = conn.prepareStatement(sql);
                int deletionCount = 0;
                Bucket bucket;
@@ -461,7 +462,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       Connection conn = null;
       PreparedStatement ps = null;
       try {
-         String sql = tableManipulation.getInsertRowSql();
+         String sql = tableManager.getInsertRowSql();
          ByteBuffer byteBuffer = JdbcUtil.marshall(ctx.getMarshaller(), bucket.getStoredEntries());
          if (trace) {
             log.tracef("Running insertBucket. Sql: '%s', on bucket: %s stored value size is %d bytes", sql, bucket, byteBuffer.getLength());
@@ -494,7 +495,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       Connection conn = null;
       PreparedStatement ps = null;
       try {
-         String sql = tableManipulation.getUpdateRowSql();
+         String sql = tableManager.getUpdateRowSql();
          if (trace) {
             log.tracef("Running updateBucket. Sql: '%s', on bucket: %s", sql, bucket);
          }
@@ -528,7 +529,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       PreparedStatement ps = null;
       ResultSet rs = null;
       try {
-         String sql = tableManipulation.getSelectRowSql();
+         String sql = tableManager.getSelectRowSql();
          if (trace) {
             log.tracef("Running loadBucket. Sql: '%s', on key: %s", sql, bucketId);
          }
@@ -567,13 +568,13 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
    public void doConnectionFactoryInitialization(ConnectionFactory connectionFactory) {
       this.connectionFactory = connectionFactory;
-      this.tableManipulation = new TableManipulation(configuration.table(), configuration.dialect());
-      tableManipulation.setCacheName(ctx.getCache().getName());
-      tableManipulation.start(connectionFactory);
+      this.tableManager = TableManagerFactory.getManager(connectionFactory, configuration);
+      tableManager.setCacheName(ctx.getCache().getName());
+      tableManager.start();
    }
 
-   public TableManipulation getTableManipulation() {
-      return tableManipulation;
+   public TableManager getTableManager() {
+      return tableManager;
    }
 
    protected void storeInBucket(MarshalledEntry me, Integer bucketId) {

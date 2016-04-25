@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.TableName;
+import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
