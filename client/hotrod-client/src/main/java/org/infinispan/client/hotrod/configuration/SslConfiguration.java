@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
 import javax.net.ssl.SSLContext;
+import java.util.Arrays;
 
 /**
  * SslConfiguration.
@@ -16,14 +17,10 @@ public class SslConfiguration {
    private final SSLContext sslContext;
    private final String trustStoreFileName;
    private final char[] trustStorePassword;
-
-   SslConfiguration(boolean enabled, String keyStoreFileName, char[] keyStorePassword, SSLContext sslContext, String trustStoreFileName,
-                    char[] trustStorePassword) {
-      this(enabled, keyStoreFileName, keyStorePassword, null, sslContext, trustStoreFileName, trustStorePassword);
-   }
+   private String sniHostName;
 
    SslConfiguration(boolean enabled, String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword, SSLContext sslContext, String trustStoreFileName,
-         char[] trustStorePassword) {
+                    char[] trustStorePassword, String sniHostName) {
       this.enabled = enabled;
       this.keyStoreFileName = keyStoreFileName;
       this.keyStorePassword = keyStorePassword;
@@ -31,6 +28,7 @@ public class SslConfiguration {
       this.sslContext = sslContext;
       this.trustStoreFileName = trustStoreFileName;
       this.trustStorePassword = trustStorePassword;
+      this.sniHostName = sniHostName;
    }
 
    public boolean enabled() {
@@ -63,7 +61,17 @@ public class SslConfiguration {
 
    @Override
    public String toString() {
-      return "SslConfiguration [enabled=" + enabled + ", keyStoreFileName="
-            + keyStoreFileName + ", sslContext=" + sslContext + ", trustStoreFileName=" + trustStoreFileName + "]";
+      return "SslConfiguration [" +
+              "keyStoreFileName='" + keyStoreFileName + '\'' +
+              ", enabled=" + enabled +
+              ", keyStoreCertificatePassword=" + Arrays.toString(keyStoreCertificatePassword) +
+              ", sslContext=" + sslContext +
+              ", trustStoreFileName='" + trustStoreFileName + '\'' +
+              ", sniHostName=" + sniHostName +
+              ']';
+   }
+
+   public String sniHostName() {
+      return sniHostName;
    }
 }
