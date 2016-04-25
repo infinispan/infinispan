@@ -161,6 +161,14 @@ public class ExecTest extends MultiHotRodServersTest {
       });
    }
 
+   @Test(dataProvider = "CacheNameProvider")
+   public void testExecReturnNull(String cacheName) throws IOException {
+      withScript(manager(0), "/test-null-return.js", scriptName -> {
+         Object result = clients.get(0).getCache(cacheName).execute(scriptName, new HashMap<>());
+         assertEquals(null, result);
+      });
+   }
+
    @DataProvider(name = "CacheNameProvider")
    private static Object[][] provideCacheMode() {
       return new Object[][] {{REPL_CACHE}, {DIST_CACHE}};

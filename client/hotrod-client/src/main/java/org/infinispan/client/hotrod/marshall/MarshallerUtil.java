@@ -23,7 +23,7 @@ public final class MarshallerUtil {
 
    @SuppressWarnings("unchecked")
    public static <T> T bytes2obj(Marshaller marshaller, byte[] bytes, short status) {
-      if (bytes == null) return null;
+      if (bytes == null || bytes.length == 0) return null;
       try {
          Object ret = marshaller.objectFromByteBuffer(bytes);
          if (HotRodConstants.hasCompatibility(status)) {

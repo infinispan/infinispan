@@ -6,6 +6,7 @@ import org.infinispan.commons.util.Immutables;
 
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,8 @@ public enum DataType {
 
       @Override
       public Object fromDataType(Object obj, Optional<Marshaller> marshaller) {
-         return obj instanceof String
+         return Objects.isNull(obj)
+               ? null : obj instanceof String
                ? ((String) obj).getBytes(CHARSET_UTF8)
                : obj.toString().getBytes(CHARSET_UTF8);
       }

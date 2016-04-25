@@ -73,6 +73,16 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       });
    }
 
+   public void testPutGetEmptyString() throws Exception {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-put-get.js", scriptName -> {
+         Map<String, String> params = new HashMap<>();
+         params.put("k", "empty-key");
+         params.put("v", "");
+         String result = clients.get(0).getCache().execute(scriptName, params);
+         assertEquals("", result);
+      });
+   }
+
    public void testRemoteTypedScriptSizeExecute() throws Exception {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-size.js", scriptName -> {
          clients.get(0).getCache().clear();
@@ -85,6 +95,13 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-cachemanager-put-get.js", scriptName -> {
          String result = execClient.getCache().execute(scriptName, new HashMap<>());
          assertEquals("a", result);
+      });
+   }
+
+   public void testRemoteTypedScriptNullReturnExecute() throws Exception {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-null-return.js", scriptName -> {
+         String result = clients.get(0).getCache().execute(scriptName, new HashMap<>());
+         assertEquals(null, result);
       });
    }
 
