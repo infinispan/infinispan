@@ -80,7 +80,7 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    public CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f);
+      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
       return futureVoid(futureMode, ctx, cmd);
    }
@@ -90,7 +90,7 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       log.tracef("Invoked evalAll(%s)", params);
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
       CloseableIteratorSet<K> keys = fmap.cache.keySet();
-      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f);
+      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
       return futureVoid(futureMode, ctx, cmd);
    }

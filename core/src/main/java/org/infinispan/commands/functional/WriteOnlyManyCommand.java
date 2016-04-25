@@ -6,6 +6,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.lifecycle.ComponentStatus;
 
 import java.io.IOException;
@@ -24,14 +25,16 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    private Set<? extends K> keys;
    private Consumer<WriteEntryView<V>> f;
 
-   public WriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
+   public WriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params) {
       this.keys = keys;
       this.f = f;
+      this.params = params;
    }
 
    public WriteOnlyManyCommand(WriteOnlyManyCommand<K, V> command) {
       this.keys = command.getKeys();
       this.f = command.f;
+      this.params = command.params;
    }
 
    public WriteOnlyManyCommand() {
@@ -55,6 +58,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
+      Params.Externalizer.INSTANCE.writeObject(output, params);
    }
 
    @Override
@@ -62,6 +66,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       f = (Consumer<WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
+      params = Params.Externalizer.INSTANCE.readObject(input);
    }
 
    @Override

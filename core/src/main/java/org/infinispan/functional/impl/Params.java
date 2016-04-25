@@ -3,10 +3,17 @@ package org.infinispan.functional.impl;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.marshall.core.Ids;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
@@ -31,6 +38,10 @@ public final class Params {
       FutureMode.defaultValue(),
       PersistenceMode.defaultValue(),
    };
+   // TODO: as Params are immutable and there's only limited number of them,
+   // there could be a table with all the possible combinations and we
+   // wouldn't have to allocate at all
+   private static final Params DEFAULT_INSTANCE = new Params(DEFAULTS);
 
    final Param<?>[] params;
 
@@ -77,7 +88,7 @@ public final class Params {
    }
 
    public static Params create() {
-      return new Params(DEFAULTS);
+      return DEFAULT_INSTANCE;
    }
 
    public static Params from(Param<?>... ps) {
@@ -108,4 +119,35 @@ public final class Params {
       }
    }
 
+   public static class Externalizer implements AdvancedExternalizer<Params> {
+      public static Externalizer INSTANCE = new Externalizer();
+
+      @Override
+      public Set<Class<? extends Params>> getTypeClasses() {
+         return Collections.singleton(Params.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.PARAMS;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, Params params) throws IOException {
+         // There's no point in sending FutureMode over wire
+         output.writeInt(((PersistenceMode) params.get(PersistenceMode.ID).get()).ordinal());
+      }
+
+      @Override
+      public Params readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         PersistenceMode persistenceMode = PersistenceMode.values()[input.readInt()];
+         if (persistenceMode == PersistenceMode.defaultValue()) {
+            return DEFAULT_INSTANCE;
+         } else {
+            Param[] params = Arrays.copyOf(DEFAULTS, DEFAULTS.length);
+            params[PersistenceMode.ID] = persistenceMode;
+            return new Params(params);
+         }
+      }
+   }
 }
