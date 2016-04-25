@@ -17,7 +17,7 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class CompatibilityReflectionMatcher extends ReflectionMatcher {
+public final class CompatibilityReflectionMatcher extends ReflectionMatcher {
 
    private final SerializationContext serializationContext;
 

@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl.filter;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
@@ -24,9 +26,12 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
 
    private SerializationContext serCtx;
 
+   private boolean isCompatMode;
+
    @Inject
-   protected void injectDependencies(EmbeddedCacheManager cacheManager) {
+   protected void injectDependencies(EmbeddedCacheManager cacheManager, Cache c) {
       serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+      isCompatMode = c.getCacheConfiguration().compatibility().enabled();
    }
 
    @Override
@@ -36,11 +41,24 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
 
    @Override
    protected Object makeFilterResult(Object userContext, Object eventType, Object key, Object instance, Object[] projection, Comparable[] sortProjection) {
-      boolean isJoining = Boolean.TRUE.equals(eventType);
       try {
-         return ProtobufUtil.toByteArray(serCtx, new ContinuousQueryResult(isJoining, (byte[]) key, (byte[]) instance, projection));
+         if (isCompatMode) {
+            key = ProtobufUtil.toWrappedByteArray(serCtx, key);
+            if (instance != null) {
+               instance = ProtobufUtil.toWrappedByteArray(serCtx, instance);
+            }
+         }
+
+         boolean isJoining = Boolean.TRUE.equals(eventType);
+         Object result = new ContinuousQueryResult(isJoining, (byte[]) key, (byte[]) instance, projection);
+
+         if (!isCompatMode) {
+            result = ProtobufUtil.toWrappedByteArray(serCtx, result);
+         }
+
+         return result;
       } catch (IOException e) {
-         throw new RuntimeException(e);
+         throw new CacheException(e);
       }
    }
 }

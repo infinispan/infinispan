@@ -48,7 +48,7 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
 
    @Override
    protected FilterRegistry<Descriptor, FieldDescriptor, Integer> getFilterRegistryForType(Descriptor entityType) {
-      return filtersByTypeName.get(entityType.getFullName());
+      return filtersByType.get(entityType);
    }
 
    @Override
