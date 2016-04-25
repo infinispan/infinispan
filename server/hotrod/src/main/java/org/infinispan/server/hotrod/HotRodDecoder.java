@@ -27,8 +27,9 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    private final EmbeddedCacheManager cacheManager;
    private final NettyTransport transport;
    private final Predicate<? super String> ignoreCache;
+   private final HotRodServer server;
 
-   final CacheDecodeContext decodeCtx;
+   CacheDecodeContext decodeCtx;
 
    private HotRodDecoderState state = HotRodDecoderState.DECODE_HEADER;
 
@@ -39,6 +40,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
       this.cacheManager = cacheManager;
       this.transport = transport;
       this.ignoreCache = ignoreCache;
+      this.server = server;
 
       this.decodeCtx = new CacheDecodeContext(server);
    }
@@ -48,7 +50,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    }
 
    void resetNow() {
-      decodeCtx.resetParams();
+      decodeCtx = new CacheDecodeContext(server);
       decodeCtx.setHeader(new HotRodHeader());
       state = HotRodDecoderState.DECODE_HEADER;
       resetRequested = false;
@@ -114,16 +116,6 @@ public class HotRodDecoder extends ByteToMessageDecoder {
             case DECODE_VALUE_CUSTOM:
                readCustomValue(in, out);
                break;
-         }
-         int remainingBytes;
-         if (!out.isEmpty() && (remainingBytes = in.readableBytes()) > 0) {
-            // Clear out the request and wind bytes up to last so next caller isn't corrupted
-            out.clear();
-            in.readerIndex(in.writerIndex());
-            HotRodHeader header = decodeCtx.header();
-            throw new RequestParsingException("There are too many bytes for op " + header.op() +
-                    " for version " + header.version() + " - had " + remainingBytes + " left over",
-                    header.version(), header.messageId());
          }
       } catch (Throwable t) {
          decodeCtx.setError(t);
