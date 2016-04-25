@@ -3,11 +3,7 @@ package org.infinispan.interceptors.impl;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.functional.ParamsCommand;
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyCommand;
-import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.functional.*;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -53,6 +49,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -229,6 +226,12 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return visitWriteCommand(ctx, command);
    }
 
+   @Override
+   public CompletableFuture<Void> visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+      return visitWriteCommand(ctx, command);
+   }
+
+
    private <T extends DataWriteCommand & ParamsCommand> CompletableFuture<Void> visitWriteCommand(InvocationContext ctx, T command) throws Throwable {
       Object retval = ctx.forkInvocationSync(command);
       if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return ctx.shortCircuit(retval);
@@ -246,8 +249,9 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                } else if (entry.isChanged()) {
                   storeEntry(ctx, key, command);
                }
-               break;
             }
+            log.trace("Skipping cache store since entry was not found in context");
+            break;
          case SKIP:
             log.trace("Skipping cache store since persistence mode parameter is SKIP");
       }
@@ -255,16 +259,35 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
+   public CompletableFuture<Void> visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      return visitWriteManyCommand(ctx, command, command.getKeys());
+   }
+
+   @Override
    public CompletableFuture<Void> visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      return visitWriteManyCommand(ctx, command, command.getKeys());
+   }
+
+   @Override
+   public CompletableFuture<Void> visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      return visitWriteManyCommand(ctx, command, command.getKeys());
+   }
+
+   @Override
+   public CompletableFuture<Void> visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      return visitWriteManyCommand(ctx, command, command.getKeys());
+   }
+
+
+   public <T extends WriteCommand & ParamsCommand, K> CompletableFuture<Void> visitWriteManyCommand(InvocationContext ctx, T command, Set<Object> keys) throws Throwable {
       Object returnValue = ctx.forkInvocationSync(command);
       if (!isStoreEnabled(command) || ctx.isInTxScope()) return ctx.shortCircuit(returnValue);
 
       Param<PersistenceMode> persistMode = command.getParams().get(PersistenceMode.ID);
       switch (persistMode.get()) {
          case PERSIST:
-            Map<Object, Object> map = command.getEntries();
             int storedCount = 0;
-            for (Object key : map.keySet()) {
+            for (Object key : keys) {
                CacheEntry entry = ctx.lookupEntry(key);
                if (entry != null) {
                   if (entry.isRemoved()) {
@@ -278,6 +301,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             }
 
             if (getStatisticsEnabled()) cacheStores.getAndAdd(storedCount);
+            break;
          case SKIP:
             log.trace("Skipping cache store since persistence mode parameter is SKIP");
       }

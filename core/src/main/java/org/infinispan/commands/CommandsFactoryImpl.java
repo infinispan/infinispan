@@ -686,13 +686,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteManyCommand<>(keys, f);
+   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
+      return new ReadWriteManyCommand<>(keys, f, params);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteManyEntriesCommand<>(entries, f);
+   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
+      return new ReadWriteManyEntriesCommand<>(entries, f, params);
    }
 
    @Override
@@ -708,16 +708,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
-      return new WriteOnlyManyCommand<>(keys, f);
+   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params) {
+      return new WriteOnlyManyCommand<>(keys, f, params);
    }
 
    @Override
    public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
          Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params) {
-      WriteOnlyManyEntriesCommand<K, V> cmd = new WriteOnlyManyEntriesCommand<>(entries, f);
-      cmd.setParams(params);
-      return cmd;
+      return new WriteOnlyManyEntriesCommand<>(entries, f, params);
    }
 
    private ValueMatcher getValueMatcher(Object o) {
