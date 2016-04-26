@@ -2,8 +2,6 @@ package org.infinispan.rest.logging;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
-import org.jboss.resteasy.util.DateUtil;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -13,9 +11,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,8 +20,8 @@ import java.util.concurrent.TimeUnit;
  * @since 9.0
  */
 @Provider
-public class LoggingFilter implements ContainerResponseFilter, ContainerRequestFilter {
-   private final static JavaLog log = LogFactory.getLog(LoggingFilter.class, JavaLog.class);
+public class RestAccessLoggingHandler implements ContainerResponseFilter, ContainerRequestFilter {
+   private final static JavaLog log = LogFactory.getLog(RestAccessLoggingHandler.class, JavaLog.class);
 
    private final static String NANO_TIME = "NanoTime";
 

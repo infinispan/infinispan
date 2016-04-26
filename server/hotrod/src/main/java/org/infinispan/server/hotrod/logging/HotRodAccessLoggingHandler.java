@@ -19,8 +19,8 @@ import java.time.temporal.ChronoUnit;
  * @author wburns
  * @since 9.0
  */
-public class HotRodLoggingHandler extends ChannelDuplexHandler {
-   private static final JavaLog log = LogFactory.getLog(HotRodLoggingHandler.class, JavaLog.class);
+public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
+   private static final JavaLog log = LogFactory.getLog(HotRodAccessLoggingHandler.class, JavaLog.class);
 
    private LocalDateTime startTime;
    private int bytesRead = 0;
