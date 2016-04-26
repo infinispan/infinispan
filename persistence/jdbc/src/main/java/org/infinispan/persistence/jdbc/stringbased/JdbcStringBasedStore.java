@@ -150,14 +150,50 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
    @Override
    public void write(MarshalledEntry entry) {
       Connection connection = null;
-      PreparedStatement ps = null;
       String keyStr = key2Str(entry.getKey());
       try {
          connection = connectionFactory.getConnection();
-         String sql = tableManager.getSelectIdRowSql();
-         if (trace) {
-            log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
+         if (tableManager.isUpsertSupported()) {
+            executeUpsert(connection, entry, keyStr);
+         } else {
+            executeLegacyUpdate(connection, entry, keyStr);
          }
+      } catch (SQLException ex) {
+         log.sqlFailureStoringKey(keyStr, ex);
+         throw new PersistenceException(String.format("Error while storing string key to database; key: '%s'", keyStr), ex);
+      } catch (InterruptedException e) {
+         if (trace) {
+            log.trace("Interrupted while marshalling to store");
+         }
+         Thread.currentThread().interrupt();
+      } finally {
+         connectionFactory.releaseConnection(connection);
+      }
+   }
+
+   private void executeUpsert(Connection connection, MarshalledEntry entry, String keyStr)
+         throws InterruptedException, SQLException {
+      PreparedStatement ps = null;
+      String sql = tableManager.getUpsertRowSql();
+      if (trace) {
+         log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
+      } try {
+         ps = connection.prepareStatement(sql);
+         prepareUpdateStatement(entry, keyStr, ps);
+         ps.executeUpdate();
+      } finally {
+         JdbcUtil.safeClose(ps);
+      }
+   }
+
+   private void executeLegacyUpdate(Connection connection, MarshalledEntry entry, String keyStr)
+         throws InterruptedException, SQLException {
+      String sql = tableManager.getSelectIdRowSql();
+      if (trace) {
+         log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
+      }
+      PreparedStatement ps = null;
+      try {
          ps = connection.prepareStatement(sql);
          ps.setString(1, keyStr);
          ResultSet rs = ps.executeQuery();
@@ -172,19 +208,10 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
             log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
          ps = connection.prepareStatement(sql);
-         updateStatement(entry, keyStr, ps);
+         prepareUpdateStatement(entry, keyStr, ps);
          ps.executeUpdate();
-      } catch (SQLException ex) {
-         log.sqlFailureStoringKey(keyStr, ex);
-         throw new PersistenceException(String.format("Error while storing string key to database; key: '%s'", keyStr), ex);
-      } catch (InterruptedException e) {
-         if (trace) {
-            log.trace("Interrupted while marshalling to store");
-         }
-         Thread.currentThread().interrupt();
       } finally {
          JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(connection);
       }
    }
 
@@ -394,7 +421,7 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
       }
    }
 
-   private void updateStatement(MarshalledEntry entry, String key, PreparedStatement ps) throws InterruptedException, SQLException {
+   private void prepareUpdateStatement(MarshalledEntry entry, String key, PreparedStatement ps) throws InterruptedException, SQLException {
       ByteBuffer byteBuffer = JdbcUtil.marshall(ctx.getMarshaller(), new KeyValuePair(entry.getValueBytes(), entry.getMetadataBytes()));
       ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
       ps.setLong(2, getExpiryTime(entry.getMetadata()));
