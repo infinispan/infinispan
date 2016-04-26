@@ -9,6 +9,13 @@
                     >
                     <transaction mode="NONE" />
                 </local-cache>
+                <local-cache-configuration
+                        name="compatibilityCacheConfiguration"
+                        start="EAGER">
+                    <transaction mode="NONE"/>
+                    <compatibility enabled="true"/>
+                </local-cache-configuration>
+                <local-cache name="compatibilityCache" configuration="compatibilityCacheConfiguration"/>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <local-cache
                     name="memcachedCache"
