@@ -86,7 +86,7 @@ public class IterationNextOperation<E> extends HotRodOperation {
                value = new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
             }
 
-            if (segmentKeyTracker.track(key)) {
+            if (segmentKeyTracker.track(key, status)) {
                entries.add(new SimpleEntry<>(unmarshall(key, status), (E) value));
             }
          }

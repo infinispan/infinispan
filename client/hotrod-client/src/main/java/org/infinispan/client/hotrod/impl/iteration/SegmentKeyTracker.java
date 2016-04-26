@@ -1,9 +1,12 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 
@@ -23,8 +26,10 @@ class SegmentKeyTracker implements KeyTracker {
 
    private final AtomicReferenceArray<Set<byte[]>> keysPerSegment;
    private final SegmentConsistentHash segmentConsistentHash;
+   private final Marshaller marshaller;
 
-   public SegmentKeyTracker(SegmentConsistentHash segmentConsistentHash, Set<Integer> segments) {
+   public SegmentKeyTracker(Marshaller marshaller, SegmentConsistentHash segmentConsistentHash, Set<Integer> segments) {
+      this.marshaller = marshaller;
       int numSegments = segmentConsistentHash.getNumSegments();
       keysPerSegment = new AtomicReferenceArray<>(numSegments);
       if (log.isDebugEnabled()) log.debugf("Created SegmentKeyTracker with %d segments", numSegments);
@@ -34,8 +39,10 @@ class SegmentKeyTracker implements KeyTracker {
       segmentStream.forEach(i -> keysPerSegment.set(i, CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE)));
    }
 
-   public boolean track(byte[] key) {
-      int segment = segmentConsistentHash.getSegment(key);
+   public boolean track(byte[] key, short status) {
+      int segment = HotRodConstants.hasCompatibility(status) ?
+              segmentConsistentHash.getSegment(MarshallerUtil.bytes2obj(marshaller, key, status)) :
+              segmentConsistentHash.getSegment(key);
       boolean result = keysPerSegment.get(segment).add(key);
       if (log.isTraceEnabled())
          log.trackingSegmentKey(Util.printArray(key), segment, !result);
