@@ -2,17 +2,11 @@ package org.infinispan.server.hotrod.util;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.server.hotrod.HotRodTypeConverter;
 
-import java.io.IOException;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
@@ -21,7 +15,7 @@ import java.util.Set;
 public final class BulkUtil {
 
    // The scope constants correspond to values defined in by the Hot Rod protocol spec
-   // (http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_hot_rod_protocol_1_2)
+   // (http://infinispan.org/docs/9.0.x/user_guide/user_guide.html#_hot_rod_protocol_1_2)
    public static final int DEFAULT_SCOPE = 0;
    public static final int GLOBAL_SCOPE = 1;
    public static final int LOCAL_SCOPE = 2;
