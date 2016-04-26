@@ -1,4 +1,4 @@
-You can read more about how to build Infinispan using Maven in the documentation: http://infinispan.org/docs/7.0.x/contributing/contributing.html
+You can read more about how to build Infinispan using Maven in the documentation: http://infinispan.org/docs/9.0.x/contributing/contributing.html
 For convenience you can use the provided maven-settings.xml file which enables all additional repositories required for building Infinispan:
 
   mvn -s maven-settings.xml clean install
