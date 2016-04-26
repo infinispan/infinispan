@@ -9,7 +9,7 @@ import java.util.Set;
 class NoOpSegmentKeyTracker implements KeyTracker {
 
    @Override
-   public boolean track(byte[] key) {
+   public boolean track(byte[] key, short status) {
       return true;
    }
 
