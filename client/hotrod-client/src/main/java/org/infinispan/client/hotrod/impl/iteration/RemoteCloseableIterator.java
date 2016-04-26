@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 
 import java.util.LinkedList;
@@ -39,8 +40,8 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
    private KeyTracker segmentKeyTracker;
    private Transport transport;
    private String iterationId;
-   boolean endOfIteration = false;
-   boolean closed;
+   private boolean endOfIteration = false;
+   private boolean closed;
    private Queue<Entry<Object, E>> nextElements = new LinkedList<>();
 
    public RemoteCloseableIterator(OperationsFactory operationsFactory, String filterConverterFactory,
@@ -131,6 +132,8 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
 
    public void start() {
       IterationStartResponse startResponse = startInternal(segments);
-      this.segmentKeyTracker = KeyTrackerFactory.create(startResponse.getSegmentConsistentHash(), startResponse.getTopologyId(), segments);
+      Marshaller marshaller = startResponse.getTransport().getTransportFactory().getMarshaller();
+      this.segmentKeyTracker = KeyTrackerFactory.create(
+              marshaller, startResponse.getSegmentConsistentHash(), startResponse.getTopologyId(), segments);
    }
 }

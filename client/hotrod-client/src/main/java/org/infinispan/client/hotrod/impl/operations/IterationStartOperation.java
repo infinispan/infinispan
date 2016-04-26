@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -31,9 +32,9 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    private final TransportFactory transportFactory;
    private final boolean metadata;
 
-   protected IterationStartOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
-                                     String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments,
-                                     int batchSize, TransportFactory transportFactory, boolean metadata) {
+   IterationStartOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
+                           String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments,
+                           int batchSize, TransportFactory transportFactory, boolean metadata) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.filterConverterFactory = filterConverterFactory;
       this.filterParameters = filterParameters;

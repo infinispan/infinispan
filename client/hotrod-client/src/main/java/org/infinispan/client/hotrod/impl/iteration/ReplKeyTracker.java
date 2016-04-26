@@ -17,7 +17,7 @@ class ReplKeyTracker implements KeyTracker {
    private Set<byte[]> keys = CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE);
 
    @Override
-   public boolean track(byte[] key) {
+   public boolean track(byte[] key, short status) {
       return keys.add(key);
    }
 
