@@ -13,12 +13,11 @@ public class IterationStartResponse {
    private final int topologyId;
    private final Transport transport;
 
-   public IterationStartResponse(String iterationId, SegmentConsistentHash segmentConsistentHash, int topologyId, Transport transport) {
+   IterationStartResponse(String iterationId, SegmentConsistentHash segmentConsistentHash, int topologyId, Transport transport) {
       this.iterationId = iterationId;
       this.segmentConsistentHash = segmentConsistentHash;
       this.topologyId = topologyId;
       this.transport = transport;
-
    }
 
    public String getIterationId() {

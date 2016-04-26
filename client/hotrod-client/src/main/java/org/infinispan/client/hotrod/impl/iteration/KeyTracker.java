@@ -8,7 +8,7 @@ import java.util.Set;
  */
 public interface KeyTracker {
 
-   boolean track(byte[] key);
+   boolean track(byte[] key, short status);
 
    void segmentsFinished(byte[] finishedSegments);
 
