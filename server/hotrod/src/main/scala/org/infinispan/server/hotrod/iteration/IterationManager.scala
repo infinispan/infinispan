@@ -98,7 +98,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
       })
 
       val segmentListener = new IterationSegmentsListener
-      val compatInfo = CompatInfo(cacheManager.getCacheConfiguration(cacheName).compatibility())
+      val compatInfo = CompatInfo(cacheManager.getCache(cacheName).getCacheConfiguration.compatibility())
 
       val filteredStream = for {
          (name, params) <- namedFactory
