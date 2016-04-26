@@ -20,4 +20,14 @@ class MySQLTableManager extends AbstractTableManager {
    public int getFetchSize() {
       return Integer.MIN_VALUE;
    }
+
+   @Override
+   public String getUpsertRowSql() {
+      if (upsertRowSql == null) {
+         // Assumes that config.idColumnName is the primary key
+         upsertRowSql = String.format("%s ON DUPLICATE KEY UPDATE %s = ?, %s = ?", getInsertRowSql(),
+                                      config.dataColumnName(), config.timestampColumnName());
+      }
+      return upsertRowSql;
+   }
 }

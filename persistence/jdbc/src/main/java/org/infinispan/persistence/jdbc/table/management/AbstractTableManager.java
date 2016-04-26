@@ -29,6 +29,7 @@ public abstract class AbstractTableManager implements TableManager {
 
    protected String insertRowSql;
    protected String updateRowSql;
+   protected String upsertRowSql;
    protected String selectRowSql;
    protected String selectIdRowSql;
    protected String deleteRowSql;
@@ -148,6 +149,11 @@ public abstract class AbstractTableManager implements TableManager {
       return config.batchSize();
    }
 
+   @Override
+   public boolean isUpsertSupported() {
+      return !metaData.isUpsertDisabled();
+   }
+
    public String getIdentifierQuoteString() {
       return identifierQuoteString;
    }
@@ -253,5 +259,17 @@ public abstract class AbstractTableManager implements TableManager {
       return deleteExpiredRowsSql;
    }
 
+   @Override
+   public String getUpsertRowSql() {
+      if (upsertRowSql == null) {
+         upsertRowSql = String.format("MERGE INTO %1$s " +
+                              "USING (VALUES (?, ?, ?)) AS tmp (%2$s, %3$s, %4$s) " +
+                              "ON (%2$s = tmp.%2$s) " +
+                              "WHEN MATCHED THEN UPDATE SET %3$s = tmp.%3$s, %4$s = tmp.%4$s " +
+                              "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
+                              getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
 
+      }
+      return upsertRowSql;
+   }
 }
