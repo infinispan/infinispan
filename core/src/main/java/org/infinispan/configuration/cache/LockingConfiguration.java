@@ -15,10 +15,10 @@ import org.infinispan.util.concurrent.IsolationLevel;
  */
 public class LockingConfiguration {
    public static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder("concurrencyLevel", 32).immutable().build();
-   public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder("isolationLevel", IsolationLevel.READ_COMMITTED).immutable().build();
-   public static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder("lockAcquisitionTimeout", TimeUnit.SECONDS.toMillis(10)).build();
-   public static final AttributeDefinition<Boolean> USE_LOCK_STRIPING = AttributeDefinition.builder("useLockStriping", false).immutable().build();
-   public static final AttributeDefinition<Boolean> WRITE_SKEW_CHECK = AttributeDefinition.builder("writeSkewCheck", false).immutable().build();
+   public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder("isolationLevel", IsolationLevel.READ_COMMITTED).xmlName("isolation").immutable().build();
+   public static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder("lockAcquisitionTimeout", TimeUnit.SECONDS.toMillis(10)).xmlName("acquire-timeout").build();
+   public static final AttributeDefinition<Boolean> USE_LOCK_STRIPING = AttributeDefinition.builder("striping", false).immutable().build();
+   public static final AttributeDefinition<Boolean> WRITE_SKEW_CHECK = AttributeDefinition.builder("writeSkewCheck", false).xmlName("write-skew").immutable().build();
 
    static final AttributeSet attributeDefinitionSet() {
       return new AttributeSet(LockingConfiguration.class, CONCURRENCY_LEVEL, ISOLATION_LEVEL, LOCK_ACQUISITION_TIMEOUT, USE_LOCK_STRIPING, WRITE_SKEW_CHECK);

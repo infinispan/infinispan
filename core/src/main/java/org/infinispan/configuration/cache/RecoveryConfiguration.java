@@ -13,7 +13,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 public class RecoveryConfiguration {
    public static final String DEFAULT_RECOVERY_INFO_CACHE = "__recoveryInfoCacheName__";
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public static final AttributeDefinition<String> RECOVERY_INFO_CACHE_NAME = AttributeDefinition.builder("recoveryInfoCacheName", DEFAULT_RECOVERY_INFO_CACHE).immutable().build();
+   public static final AttributeDefinition<String> RECOVERY_INFO_CACHE_NAME = AttributeDefinition.builder("recoveryInfoCacheName", DEFAULT_RECOVERY_INFO_CACHE)
+         .xmlName("recovery-cache").immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RecoveryConfiguration.class, ENABLED, RECOVERY_INFO_CACHE_NAME);
    }

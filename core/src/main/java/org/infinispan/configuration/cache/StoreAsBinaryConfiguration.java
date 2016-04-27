@@ -16,9 +16,9 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @see StoreAsBinaryConfigurationBuilder
  */
 public class StoreAsBinaryConfiguration {
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).build();
-   public static final AttributeDefinition<Boolean> STORE_KEYS_AS_BINARY = AttributeDefinition.builder("storeKeysAsBinary", true).immutable().build();
-   public static final AttributeDefinition<Boolean> STORE_VALUES_AS_BINARY = AttributeDefinition.builder("storeValuesAsBinary", true).immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).autoPersist(false).build();
+   public static final AttributeDefinition<Boolean> STORE_KEYS_AS_BINARY = AttributeDefinition.builder("keys", true).immutable().build();
+   public static final AttributeDefinition<Boolean> STORE_VALUES_AS_BINARY = AttributeDefinition.builder("values", true).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StoreAsBinaryConfiguration.class, ENABLED, STORE_KEYS_AS_BINARY, STORE_VALUES_AS_BINARY);

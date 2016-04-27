@@ -3,7 +3,11 @@ package org.infinispan.commons.configuration.attributes;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 
 /**
  * Attribute. This class implements a configuration attribute value holder. A configuration attribute is defined by an {@link AttributeDefinition}.
@@ -62,6 +66,10 @@ public final class Attribute<T> implements Cloneable {
 
    public boolean isImmutable() {
       return definition.isImmutable();
+   }
+
+   public boolean isPersistent() {
+      return definition.isAutoPersist();
    }
 
    public boolean isModified() {
@@ -189,4 +197,20 @@ public final class Attribute<T> implements Cloneable {
       value = definition.getDefaultValue();
       modified = false;
    }
+
+   void write(XMLStreamWriter writer, String name) throws XMLStreamException {
+      if (modified && value != null) {
+         Class<?> klass = value.getClass();
+         if (klass == Class.class) {
+            writer.writeAttribute(name, ((Class) value).getName());
+         } else if (klass.isEnum()) {
+            writer.writeAttribute(name, ((Enum) value).name());
+         } else if (Util.isBasicType(klass)) {
+            writer.writeAttribute(name, value.toString());
+         } else {
+            writer.writeAttribute(name, klass.getName());
+         }
+      }
+   }
+
 }

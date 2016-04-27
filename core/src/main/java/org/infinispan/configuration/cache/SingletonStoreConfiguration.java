@@ -16,10 +16,10 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  *
  */
 public class SingletonStoreConfiguration {
-   final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   final static AttributeDefinition<Long> PUSH_STATE_TIMEOUT = AttributeDefinition.builder("pushStateTimeout", TimeUnit.SECONDS.toMillis(10)).immutable().build();
-   final static AttributeDefinition<Boolean> PUSH_STATE_WHEN_COORDINATOR = AttributeDefinition.builder("pushStateWhenCoordinator", true).immutable().build();
-   static AttributeSet attributeDefinitionSet() {
+   public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public final static AttributeDefinition<Long> PUSH_STATE_TIMEOUT = AttributeDefinition.builder("push-state-timeout", TimeUnit.SECONDS.toMillis(10)).immutable().build();
+   public final static AttributeDefinition<Boolean> PUSH_STATE_WHEN_COORDINATOR = AttributeDefinition.builder("push-state-when-coordinator", true).immutable().build();
+   public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SingletonStoreConfiguration.class, ENABLED, PUSH_STATE_TIMEOUT, PUSH_STATE_WHEN_COORDINATOR);
    }
 

@@ -12,7 +12,7 @@ import org.infinispan.commons.marshall.Marshaller;
  * @since 5.3
  */
 public final class CompatibilityModeConfiguration {
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(CompatibilityModeConfiguration.class, ENABLED, MARSHALLER);

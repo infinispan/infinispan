@@ -20,10 +20,10 @@ import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 public class HashConfiguration {
    public static final AttributeDefinition<ConsistentHashFactory> CONSISTENT_HASH_FACTORY  = AttributeDefinition.builder("consistentHashFactory", null, ConsistentHashFactory.class).immutable().build();
    public static final AttributeDefinition<Hash> HASH = AttributeDefinition.builder("hash", (Hash)MurmurHash3.getInstance()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners" , 2).immutable().build();
+   public static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners" , 2).xmlName("owners").immutable().build();
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)
-   public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder("numSegments", 256).immutable().build();
+   public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder("numSegments", 256).xmlName("segments").immutable().build();
    public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder("capacityFactor", 1.0f).immutable().build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
          .builder("keyPartitioner", new HashFunctionPartitioner(), KeyPartitioner.class)

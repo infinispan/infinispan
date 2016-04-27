@@ -1,4 +1,4 @@
-package org.infinispan.persistence.jpa;
+package org.infinispan.persistence.jpa.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;

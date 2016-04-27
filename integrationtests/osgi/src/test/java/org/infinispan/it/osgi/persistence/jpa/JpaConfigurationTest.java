@@ -17,7 +17,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
 @Category(PerSuite.class)
-public class JpaConfigurationTest extends org.infinispan.persistence.jpa.JpaConfigurationTest {
+public class JpaConfigurationTest extends org.infinispan.persistence.jpa.configuration.JpaConfigurationTest {
    @Configuration
    public Option[] config() throws Exception {
       return options(perSuiteOptions());

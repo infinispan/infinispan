@@ -11,17 +11,17 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.remoting.transport.Transport;
 
 public class TransportConfiguration {
-   static final AttributeDefinition<String> CLUSTER_NAME = AttributeDefinition.builder("clusterName", "ISPN")
+   public static final AttributeDefinition<String> CLUSTER_NAME = AttributeDefinition.builder("clusterName", "ISPN")
          .immutable().build();
-   static final AttributeDefinition<String> MACHINE_ID = AttributeDefinition.builder("machineId", null, String.class)
+   public static final AttributeDefinition<String> MACHINE_ID = AttributeDefinition.builder("machineId", null, String.class)
          .immutable().build();
-   static final AttributeDefinition<String> RACK_ID = AttributeDefinition.builder("rackId", null, String.class)
+   public static final AttributeDefinition<String> RACK_ID = AttributeDefinition.builder("rackId", null, String.class)
          .immutable().build();
-   static final AttributeDefinition<String> SITE_ID = AttributeDefinition.builder("siteId", null, String.class)
+   public static final AttributeDefinition<String> SITE_ID = AttributeDefinition.builder("siteId", null, String.class)
          .immutable().build();
-   static final AttributeDefinition<String> NODE_NAME = AttributeDefinition.builder("nodeName", null, String.class)
+   public static final AttributeDefinition<String> NODE_NAME = AttributeDefinition.builder("nodeName", null, String.class)
          .immutable().build();
-   static final AttributeDefinition<Long> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
+   public static final AttributeDefinition<Long> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
          "distributedSyncTimeout", TimeUnit.MINUTES.toMillis(4)).build();
    static final AttributeDefinition<Integer> INITIAL_CLUSTER_SIZE = AttributeDefinition.builder("initialClusterSize", -1)
          .immutable().build();
@@ -29,7 +29,7 @@ public class TransportConfiguration {
            "initialClusterTimeout", TimeUnit.MINUTES.toMillis(1)).build();
    static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition
          .builder("transport", null, Transport.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition
+   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition
          .builder("properties", null, TypedProperties.class).initializer(new AttributeInitializer<TypedProperties>() {
             @Override
             public TypedProperties initialize() {
@@ -139,7 +139,7 @@ public class TransportConfiguration {
       return totalOrderThreadPool;
    }
 
-   AttributeSet attributes() {
+   public AttributeSet attributes() {
       return attributes;
    }
 

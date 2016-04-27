@@ -49,4 +49,27 @@ public class SimpleConnectionFactoryConfiguration implements ConnectionFactoryCo
    public String toString() {
       return "SimpleConnectionFactoryConfiguration [connectionUrl=" + connectionUrl + ", driverClass=" + driverClass + ", username=" + username + ", password=" + password + "]";
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SimpleConnectionFactoryConfiguration that = (SimpleConnectionFactoryConfiguration) o;
+
+      if (connectionUrl != null ? !connectionUrl.equals(that.connectionUrl) : that.connectionUrl != null) return false;
+      if (driverClass != null ? !driverClass.equals(that.driverClass) : that.driverClass != null) return false;
+      if (username != null ? !username.equals(that.username) : that.username != null) return false;
+      return password != null ? password.equals(that.password) : that.password == null;
+
+   }
+
+   @Override
+   public int hashCode() {
+      int result = connectionUrl != null ? connectionUrl.hashCode() : 0;
+      result = 31 * result + (driverClass != null ? driverClass.hashCode() : 0);
+      result = 31 * result + (username != null ? username.hashCode() : 0);
+      result = 31 * result + (password != null ? password.hashCode() : 0);
+      return result;
+   }
 }
