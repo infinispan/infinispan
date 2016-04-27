@@ -22,7 +22,7 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
    protected static final int NUM_NODES = 4;
    protected List<Cache<String, Car>> caches = new ArrayList<Cache<String, Car>>(NUM_NODES);
 
-   protected static final String[] neededCacheNames = new String[]{
+   protected static final String[] neededCacheNames = {
          BasicCacheContainer.DEFAULT_CACHE_NAME,
          "LuceneIndexesMetadata",
          "LuceneIndexesData",

@@ -60,8 +60,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
       String cacheManagerName = manager(0).getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
       ObjectName massIndexerObjName = getMassIndexerObjectName(
             BASE_JMX_DOMAIN + 0, cacheManagerName, BasicCacheContainer.DEFAULT_CACHE_NAME);
-      server.invoke(massIndexerObjName,
-            "start", new Object[]{}, new String[]{});
+      server.invoke(massIndexerObjName, "start", new Object[0], new String[0]);
    }
 
    private ObjectName getMassIndexerObjectName(String jmxDomain, String cacheManagerName, String cacheName) {
