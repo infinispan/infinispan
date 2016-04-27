@@ -112,13 +112,13 @@
                 <include name="*.jks" />
                 <include name="*.properties"/>
                 <include name="*.keystore"/>
-            	<include name="*.keytab"/>
-            	<include name="*.conf"/>
+                <include name="*.keytab"/>
+                <include name="*.conf"/>
             </fileset>
         </copy>
         <copy todir="${server1.dist}/standalone/configuration/vault" overwrite="true">
             <fileset dir="${resources.dir}/vault">
-            	<include name="*" />
+                <include name="*" />
             </fileset>
         </copy>
     </target>
@@ -335,26 +335,31 @@
                    addSecRealm="${other.parts}/sasl-external-realm.xml"
                    addVault="${other.parts}/vault.xml" />
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-0.xml"  
-    	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
-    	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml"
+                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
+                   addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml"
                   addVault="${other.parts}/vault.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-1.xml"  
-    	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
-    	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-1.xml"
+                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
+                   addJGroupsSasl="${other.parts}/jgroups-sasl-md5-1.xml"
                   addVault="${other.parts}/vault.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-0.xml"  
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                   addJGroupsSasl="${other.parts}/jgroups-sasl-krb-0.xml"
-    	           addKrbOpts="${other.parts}/kerberos-properties.xml"
-    	           addKrbSecDomain="${other.parts}/kerberos-sec-domain-node0.xml" />
-    	<transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-1.xml"  
-    	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
+                   addKrbOpts="${other.parts}/kerberos-properties.xml"
+                   addKrbSecDomain="${other.parts}/kerberos-sec-domain-node0.xml" />
+        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-1.xml"
+                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
                   addJGroupsSasl="${other.parts}/jgroups-sasl-krb-1.xml"		
-    	           addKrbOpts="${other.parts}/kerberos-properties.xml"
-    	           addKrbSecDomain="${other.parts}/kerberos-sec-domain-node1.xml" />
+                   addKrbOpts="${other.parts}/kerberos-properties.xml"
+                   addKrbSecDomain="${other.parts}/kerberos-sec-domain-node1.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-no-auth.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-no-auth.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-no-auth.xml"
+                   addVault="${other.parts}/vault.xml" />
+        <transform in="clustered.xml" out="testsuite/hotrod-ssl-with-sni.xml"
+                   hotrodEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
+                   addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
+                   addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
                    addVault="${other.parts}/vault.xml" />
     </target>
 
@@ -379,14 +384,15 @@
         <attribute name="infinispanFile" default="false"/>
         <attribute name="filtering" default="false"/>
         <attribute name="addEncrypt" default="false"/>
-    	<attribute name="addJGroupsSasl" default="false"/>
+        <attribute name="addJGroupsSasl" default="false"/>
         <attribute name="hotrodAuth" default="false"/>
-    	<attribute name="hotrodEncrypt" default="false"/>
-    	<attribute name="addKrbOpts" default="false"/>
-    	<attribute name="addKrbSecDomain" default="false"/>
+        <attribute name="hotrodEncrypt" default="false"/>
+        <attribute name="addKrbOpts" default="false"/>
+        <attribute name="addKrbSecDomain" default="false"/>
         <attribute name="addVault" default="false"/>
-    	<attribute name="addSecRealm" default="false"/>
-    	<attribute name="addConnection" default="false"/>
+        <attribute name="addSecRealm" default="false"/>
+        <attribute name="addSecRealm2" default="false"/>
+        <attribute name="addConnection" default="false"/>
         <element name="jdbc-conf" optional="yes"/>
         <element name="rest-sec" optional="yes"/>
 
@@ -398,14 +404,15 @@
                 <param name="modifyStack" expression="@{modifyStack}"/>
                 <param name="modifyRelay" expression="@{modifyRelay}"/>
                 <param name="addEncrypt" expression="@{addEncrypt}"/>
-            	<param name="addJGroupsSasl" expression="@{addJGroupsSasl}"/>
+                <param name="addJGroupsSasl" expression="@{addJGroupsSasl}"/>
                 <param name="hotrodAuth" expression="@{hotrodAuth}"/>
-            	<param name="hotrodEncrypt" expression="@{hotrodEncrypt}"/>
-            	<param name="addKrbOpts" expression="@{addKrbOpts}"/>
-            	<param name="addKrbSecDomain" expression="@{addKrbSecDomain}"/>
-            	<param name="addSecRealm" expression="@{addSecRealm}"/>
+                <param name="hotrodEncrypt" expression="@{hotrodEncrypt}"/>
+                <param name="addKrbOpts" expression="@{addKrbOpts}"/>
+                <param name="addKrbSecDomain" expression="@{addKrbSecDomain}"/>
+                <param name="addSecRealm" expression="@{addSecRealm}"/>
+                <param name="addSecRealm2" expression="@{addSecRealm2}"/>
                 <param name="addVault" expression="@{addVault}"/>
-            	<param name="addConnection" expression="@{addConnection}"/>
+                <param name="addConnection" expression="@{addConnection}"/>
                 <param name="modifyMulticastAddress" expression="@{modifyMulticastAddress}"/>
                 <param name="modifyRemoteDestination" expression="@{modifyRemoteDestination}"/>
                 <param name="modifyOutboundSocketBindingHotRod" expression="@{modifyOutboundSocketBindingHotRod}"/>

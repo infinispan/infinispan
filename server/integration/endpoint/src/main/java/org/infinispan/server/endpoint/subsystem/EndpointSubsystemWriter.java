@@ -18,12 +18,6 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import java.util.Collections;
-import java.util.List;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleListAttributeDefinition;
@@ -34,6 +28,11 @@ import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
 import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The XML writer for the endpoint subsystem configuration.
@@ -149,8 +148,20 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       }
    }
 
+   private void writeSni(final XMLExtendedStreamWriter writer, final ModelNode encryption) throws XMLStreamException {
+      if (encryption.hasDefined(ModelKeys.SNI)) {
+         for (ModelNode mapping: encryption.get(ModelKeys.SNI).asList()) {
+            writer.writeStartElement(Element.SNI.getLocalName());
+            for (SimpleAttributeDefinition sniMappingAttribute : SniResource.SNI_ATTRIBUTES) {
+               sniMappingAttribute.marshallAsAttribute(mapping.get(0), true, writer);
+            }
+            writer.writeEndElement();
+         }
+      }
+   }
+
    private void writeAuthentication(final XMLExtendedStreamWriter writer, final ModelNode connector)
-         throws XMLStreamException {
+           throws XMLStreamException {
       if (connector.hasDefined(ModelKeys.AUTHENTICATION)) {
          ModelNode authentication = connector.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
          writer.writeStartElement(Element.AUTHENTICATION.getLocalName());
@@ -213,6 +224,7 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
          for (SimpleAttributeDefinition attribute : EncryptionResource.ENCRYPTION_ATTRIBUTES) {
             attribute.marshallAsAttribute(encryption, true, writer);
          }
+         writeSni(writer, encryption);
          writer.writeEndElement();
       }
    }

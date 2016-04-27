@@ -1,38 +1,29 @@
-package org.infinispan.client.hotrod.configuration;
+package org.infinispan.server.core.configuration;
 
 import javax.net.ssl.SSLContext;
-import java.util.Arrays;
 
 /**
- * SslConfiguration.
+ * SslEngineConfiguration
  *
- * @author Tristan Tarrant
- * @since 5.3
+ * @author Sebastian Łaskawiec
+ * @since 9.0
  */
-public class SslConfiguration {
-   private final boolean enabled;
+public class SslEngineConfiguration {
+
    private final String keyStoreFileName;
    private final char[] keyStorePassword;
-   private final char[] keyStoreCertificatePassword;
    private final SSLContext sslContext;
    private final String trustStoreFileName;
    private final char[] trustStorePassword;
-   private String sniHostName;
+   private final char[] keyStoreCertificatePassword;
 
-   SslConfiguration(boolean enabled, String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword, SSLContext sslContext, String trustStoreFileName,
-                    char[] trustStorePassword, String sniHostName) {
-      this.enabled = enabled;
+   SslEngineConfiguration(String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword, SSLContext sslContext, String trustStoreFileName, char[] trustStorePassword) {
       this.keyStoreFileName = keyStoreFileName;
       this.keyStorePassword = keyStorePassword;
       this.keyStoreCertificatePassword = keyStoreCertificatePassword;
       this.sslContext = sslContext;
       this.trustStoreFileName = trustStoreFileName;
       this.trustStorePassword = trustStorePassword;
-      this.sniHostName = sniHostName;
-   }
-
-   public boolean enabled() {
-      return enabled;
    }
 
    public String keyStoreFileName() {
@@ -61,17 +52,13 @@ public class SslConfiguration {
 
    @Override
    public String toString() {
-      return "SslConfiguration [" +
+      return "SslEngineConfiguration [" +
               "keyStoreFileName='" + keyStoreFileName + '\'' +
-              ", enabled=" + enabled +
-              ", keyStoreCertificatePassword=" + Arrays.toString(keyStoreCertificatePassword) +
+              ", keyStorePassword=***" +
               ", sslContext=" + sslContext +
               ", trustStoreFileName='" + trustStoreFileName + '\'' +
-              ", sniHostName=" + sniHostName +
+              ", trustStorePassword=***" +
+              ", keyStoreCertificatePassword=***" +
               ']';
-   }
-
-   public String sniHostName() {
-      return sniHostName;
    }
 }
