@@ -17,7 +17,7 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
    //if more sites are needed, you have to update these constants and the configuration file in config/xsite/relay-config.xml
    //the SITE_NAME should have the same site name as in configuration
    private static final int MAX_NUM_SITE = 3;
-   private static final String[] SITE_NAME = new String[]{"LON", "NYC", "SFO"};
+   private static final String[] SITE_NAME = {"LON", "NYC", "SFO"};
 
    /**
     * It returns the number of sites to create.

@@ -39,7 +39,7 @@ public class PerfTest extends MultipleCacheManagersTest {
    private static final int LOG_ON_EACH = 2000;
    private static final int NUMBER_OF_ITERATIONS = 50;
 
-   private static final String[] neededCacheNames = new String[]{
+   private static final String[] neededCacheNames = {
          BasicCacheContainer.DEFAULT_CACHE_NAME,
          "LuceneIndexesMetadata",
          "LuceneIndexesData",
