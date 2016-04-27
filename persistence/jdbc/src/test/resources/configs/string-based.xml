@@ -4,7 +4,7 @@
    <cache-container default-cache="default">
    <local-cache name="default">
       <persistence>
-         <string-keyed-jdbc-store fetch-state="false" read-only="false" purge="false">
+         <string-keyed-jdbc-store fetch-state="false" read-only="false" purge="false" key-to-string-mapper="org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper" dialect="H2">
             <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driver="org.h2.Driver"/>
             <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
                <id-column name="ID_COLUMN" type="VARCHAR(255)" />

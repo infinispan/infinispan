@@ -401,7 +401,7 @@ public class Parser implements ConfigurationParser {
          }
       }
 
-      DefaultThreadFactory threadFactory = new DefaultThreadFactory(
+      DefaultThreadFactory threadFactory = new DefaultThreadFactory(name,
             threadGroup, priority, threadNamePattern, null, null);
       threadFactories.put(name, threadFactory);
       ParseUtils.requireNoContent(reader);
@@ -1674,7 +1674,7 @@ public class Parser implements ConfigurationParser {
             case MODE: {
                TransactionMode txMode = TransactionMode.valueOf(value);
                builder.transaction().transactionMode(txMode.getMode());
-               builder.transaction().useSynchronization(!txMode.isXAEnabled());
+               builder.transaction().useSynchronization(!txMode.isXAEnabled() && txMode.getMode().isTransactional());
                builder.transaction().recovery().enabled(txMode.isRecoveryEnabled());
                builder.invocationBatching().enable(txMode.isBatchingEnabled());
                if (txMode.isRecoveryEnabled()) {

@@ -21,7 +21,7 @@ import org.infinispan.persistence.jpa.JpaStore;
 @ConfigurationFor(JpaStore.class)
 @SerializedWith(JpaStoreConfigurationSerializer.class)
 public class JpaStoreConfiguration extends AbstractStoreConfiguration {
-   static final AttributeDefinition<String> PERSISTENCE_UNIT_NAME = AttributeDefinition.builder("persistenceUnitName", null, String.class).immutable().build();
+   static final AttributeDefinition<String> PERSISTENCE_UNIT_NAME = AttributeDefinition.builder("persistenceUnitName", null, String.class).immutable().xmlName("persistence-unit").build();
    static final AttributeDefinition<Class> ENTITY_CLASS = AttributeDefinition.builder("entityClass", null, Class.class).immutable().build();
    static final AttributeDefinition<Long> BATCH_SIZE = AttributeDefinition.builder("batchSize", 100l).immutable().build();
    static final AttributeDefinition<Boolean> STORE_METADATA = AttributeDefinition.builder("storeMetadata", true).immutable().build();

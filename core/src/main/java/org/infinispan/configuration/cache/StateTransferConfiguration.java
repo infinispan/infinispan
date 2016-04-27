@@ -14,7 +14,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  */
 public class StateTransferConfiguration {
    public static final AttributeDefinition<Boolean> AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder("awaitInitialTransfer", true).immutable().build();
-   public static final AttributeDefinition<Boolean> FETCH_IN_MEMORY_STATE = AttributeDefinition.builder("fetchInMemoryState", true).immutable().build();
+   public static final AttributeDefinition<Boolean> FETCH_IN_MEMORY_STATE = AttributeDefinition.builder("fetchInMemoryState", true).xmlName("enabled").immutable().build();
    public static final AttributeDefinition<Long> TIMEOUT = AttributeDefinition.builder("timeout", TimeUnit.MINUTES.toMillis(4)).immutable().build();
    public static final AttributeDefinition<Integer> CHUNK_SIZE = AttributeDefinition.builder("chunkSize", 512).immutable().build();
 

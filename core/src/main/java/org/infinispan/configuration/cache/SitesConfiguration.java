@@ -16,8 +16,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 5.2
  */
 public class SitesConfiguration {
-   public static final AttributeDefinition<Boolean> DISABLE_BACKUPS = AttributeDefinition.builder("disableBackups", false).immutable().build();
-   public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("inUseBackupSites", null, (Class<Set<String>>)(Class<?>)Set.class)
+   public static final AttributeDefinition<Boolean> DISABLE_BACKUPS = AttributeDefinition.builder("disable", false).immutable().build();
+   public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("backup-sites-in-use", null, (Class<Set<String>>)(Class<?>)Set.class)
          .initializer(new AttributeInitializer<Set<String>>() {
             @Override
             public Set<String> initialize() {

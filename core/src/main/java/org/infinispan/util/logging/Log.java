@@ -1413,4 +1413,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Classpath does not look correct. Make sure you are not mixing uber and jars", id = 411)
    void warnAboutUberJarDuplicates();
+
+   @Message(value = "Cannot determine a synthetic transaction configuration from mode=%s, xaEnabled=%s, recoveryEnabled=%s, batchingEnabled=%s", id = 412)
+   CacheConfigurationException unknownTransactionConfiguration(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled, boolean batchingEnabled);
+
+   @Message(value = "Unable to instantiate serializer for StoreConfiguration %s", id = 413)
+   CacheConfigurationException unableToInstantiateSerializer(Class<?> storeConfigurationClass);
 }

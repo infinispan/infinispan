@@ -11,21 +11,23 @@ import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.*;
+
 /**
  * Verifies the Flags affect both local and remote nodes.
- * 
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  * @since 4.2.1
  */
 @Test(groups = "functional", testName = FlagsReplicationTest.TEST_NAME)
 public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String> {
-   
+
    static final String TEST_NAME = "replication.FlagsReplicationTest";
    static final String DATA_PROVIDER = TEST_NAME + ".dataprovider";
 
    private final Integer one = 1;
    private final String key = TEST_NAME;
-   
+
    public FlagsReplicationTest() {
       tx = true;
       cacheName = TEST_NAME;
@@ -33,7 +35,7 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
       lockingMode = LockingMode.PESSIMISTIC;
       lockTimeout = 1;
    }
-   
+
    @DataProvider(name = DATA_PROVIDER)
    public Object[][] createTestConfigurations() {
       return new Object[][] {
@@ -50,19 +52,19 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
       AdvancedCache cache1 = (cache1IsOwner ? getFirstOwner(key) : getFirstNonOwner(key)).getAdvancedCache();
       AdvancedCache cache2 = (cache2IsOwner ? getFirstOwner(key) : getFirstNonOwner(key)).getAdvancedCache();
 
-      assert null == cache1.put(key, one);
+      assertNull(cache1.put(key, one));
 
       haveSecondaryThreadTakeLock(cache2);
 
       cache1.getTransactionManager().begin();
       boolean locked = cache1.withFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.FAIL_SILENTLY).lock(key);
-      assert !locked;
+      assertFalse(locked);
       Object removed = cache1.withFlags(Flag.SKIP_LOCKING).remove(key);
-      assert one.equals(removed);
+      assertEquals(one, removed);
 
       haveSecondaryThreadReleaseLock(cache2);
       cache1.getTransactionManager().commit();
-      assert null == cache2.get(key);
+      assertNull(cache2.get(key));
       log.tracef("End cache1IsOwner = %s, cache2IsOwner %s", cache1IsOwner, cache2IsOwner);
    }
 
@@ -70,18 +72,18 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
       AtomicBoolean noerrors = new AtomicBoolean(true);
       Future<?> submit = fork(new LockingThread(viaCache, noerrors));
       submit.get(); //wait to be done
-      assert noerrors.get();
+      assertTrue(noerrors.get());
    }
-   
+
    private void haveSecondaryThreadReleaseLock(final AdvancedCache viaCache) throws InterruptedException, ExecutionException {
       AtomicBoolean noerrors = new AtomicBoolean(true);
       Future<?> submit = fork(new CommitThread(viaCache, noerrors));
       submit.get(); //wait to be done
-      assert noerrors.get();
+      assertTrue(noerrors.get());
    }
-   
+
    private class LockingThread implements Runnable {
-      
+
       private final AdvancedCache cache;
       private final AtomicBoolean allok;
 
@@ -105,9 +107,9 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
          }
       }
    }
-   
+
    static private class CommitThread implements Runnable {
-      
+
       private final AdvancedCache cache;
       private final AtomicBoolean allok;
 

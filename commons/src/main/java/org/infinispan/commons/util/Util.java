@@ -59,6 +59,8 @@ public final class Util {
 
    private static final Log log = LogFactory.getLog(Util.class);
 
+   private static final Set<Class<?>> BASIC_TYPES;
+
    /**
     * Current Java vendor. This variable is later used to differentiate LRU implementations
     * for different java vendors.
@@ -73,6 +75,16 @@ public final class Util {
          // Ignore
       }
       IS_OSGI_CONTEXT = osgi;
+      BASIC_TYPES = new HashSet<>();
+      BASIC_TYPES.add(Boolean.class);
+      BASIC_TYPES.add(Byte.class);
+      BASIC_TYPES.add(Character.class);
+      BASIC_TYPES.add(Double.class);
+      BASIC_TYPES.add(Float.class);
+      BASIC_TYPES.add(Integer.class);
+      BASIC_TYPES.add(Long.class);
+      BASIC_TYPES.add(Short.class);
+      BASIC_TYPES.add(String.class);
    }
 
    /**
@@ -945,7 +957,7 @@ public final class Util {
       return out.toString();
    }
 
-   /**
+  /**
     * Deletes directory recursively.
     *
     * @param directoryName Directory to be deleted
@@ -979,4 +991,24 @@ public final class Util {
       }
       absoluteFile.delete();
    }
+
+   public static boolean isBasicType(Class<?> type) {
+      return BASIC_TYPES.contains(type);
+   }
+
+
+   public static String xmlify(String s) {
+      StringBuilder sb = new StringBuilder();
+      for(int i=0; i < s.length(); i++) {
+         char ch = s.charAt(i);
+         if (Character.isUpperCase(ch)) {
+            sb.append('-');
+            sb.append(Character.toLowerCase(ch));
+         } else {
+            sb.append(ch);
+         }
+      }
+      return sb.toString();
+   }
 }
+

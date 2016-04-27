@@ -32,4 +32,19 @@ public class ManagedConnectionFactoryConfiguration implements ConnectionFactoryC
       return "ManagedConnectionFactoryConfiguration [jndiUrl=" + jndiUrl + "]";
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ManagedConnectionFactoryConfiguration that = (ManagedConnectionFactoryConfiguration) o;
+
+      return jndiUrl != null ? jndiUrl.equals(that.jndiUrl) : that.jndiUrl == null;
+
+   }
+
+   @Override
+   public int hashCode() {
+      return jndiUrl != null ? jndiUrl.hashCode() : 0;
+   }
 }

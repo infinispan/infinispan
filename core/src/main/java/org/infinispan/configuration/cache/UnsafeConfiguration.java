@@ -18,7 +18,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @see UnsafeConfigurationBuilder
  */
 public class UnsafeConfiguration {
-   public static final AttributeDefinition<Boolean> UNRELIABLE_RETURN_VALUES = AttributeDefinition.builder("unrealiableReturnValues", false).immutable().build();
+   public static final AttributeDefinition<Boolean> UNRELIABLE_RETURN_VALUES = AttributeDefinition.builder("unreliable-return-values", false).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(UnsafeConfiguration.class, UNRELIABLE_RETURN_VALUES);
    }

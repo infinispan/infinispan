@@ -15,7 +15,7 @@ import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 @ConfigurationFor(JdbcStringBasedStore.class)
 @SerializedWith(JdbcStringBasedStoreConfigurationSerializer.class)
 public class JdbcStringBasedStoreConfiguration extends AbstractJdbcStoreConfiguration {
-   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper" , DefaultTwoWayKey2StringMapper.class.getName()).immutable().build();
+   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper" , DefaultTwoWayKey2StringMapper.class.getName()).immutable().xmlName("key-to-string-mapper").build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(JdbcStringBasedStoreConfiguration.class, AbstractJdbcStoreConfiguration.attributeDefinitionSet(), KEY2STRING_MAPPER);

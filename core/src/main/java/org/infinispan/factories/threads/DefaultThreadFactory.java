@@ -13,6 +13,7 @@ public class DefaultThreadFactory implements ThreadFactory {
 
    public static final String DEFAULT_PATTERN = "%c-%n-p%f-t%t";
 
+   private final String name;
    private final ThreadGroup threadGroup;
    private final int initialPriority;
    private final String threadNamePattern;
@@ -26,6 +27,7 @@ public class DefaultThreadFactory implements ThreadFactory {
    private String node;
    private String component;
 
+
    /**
     * Construct a new instance.  The access control context of the calling thread will be the one used to create
     * new threads if a security manager is installed.
@@ -36,6 +38,21 @@ public class DefaultThreadFactory implements ThreadFactory {
     */
    public DefaultThreadFactory(ThreadGroup threadGroup, int initialPriority, String threadNamePattern,
          String node, String component) {
+      this(null, threadGroup, initialPriority, threadNamePattern, node, component);
+   }
+
+   /**
+    * Construct a new instance.  The access control context of the calling thread will be the one used to create
+    * new threads if a security manager is installed.
+    *
+    * @param name the name of this thread factory (may be {@code null})
+    * @param threadGroup the thread group to assign threads to by default (may be {@code null})
+    * @param initialPriority the initial thread priority, or {@code null} to use the thread group's setting
+    * @param threadNamePattern the name pattern string
+    */
+   public DefaultThreadFactory(String name, ThreadGroup threadGroup, int initialPriority, String threadNamePattern,
+         String node, String component) {
+      this.name = name;
       if (threadGroup == null) {
          final SecurityManager sm = System.getSecurityManager();
          threadGroup = sm != null ? sm.getThreadGroup() : Thread.currentThread().getThreadGroup();
@@ -49,6 +66,10 @@ public class DefaultThreadFactory implements ThreadFactory {
       this.threadNamePattern = threadNamePattern;
       this.node = node;
       this.component = component;
+   }
+
+   public String getName() {
+      return name;
    }
 
    public void setNode(String node) {

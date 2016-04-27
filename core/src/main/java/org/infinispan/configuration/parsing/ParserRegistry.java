@@ -5,25 +5,37 @@ import static javax.xml.stream.XMLStreamConstants.START_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
 
+import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.serializing.ConfigurationHolder;
+import org.infinispan.configuration.serializing.Serializer;
+import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
+import org.infinispan.configuration.serializing.XMLExtendedStreamWriterImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,26 +63,26 @@ public class ParserRegistry implements NamespaceMappingParser {
       this(classLoader, false);
    }
 
-   public ParserRegistry(ClassLoader classLoader, boolean defaultParsersOnly) {
+   public ParserRegistry(ClassLoader classLoader, boolean defaultOnly) {
       this.parserMappings = CollectionFactory.makeConcurrentMap();
-      this.cl = new WeakReference<ClassLoader>(classLoader);
+      this.cl = new WeakReference<>(classLoader);
       Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());
       for (ConfigurationParser parser : parsers) {
-         try {
-            Namespace[] namespaces = parser.getNamespaces();
-            if (namespaces == null) {
-               throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
-            }
 
-            boolean skipParser = defaultParsersOnly;
+         Namespace[] namespaces = parser.getNamespaces();
+         if (namespaces == null) {
+            throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
+         }
 
-            if (skipParser) {
-               for (Namespace ns : namespaces) {
-                  if ("".equals(ns.uri())) {
-                     skipParser = false;
-                  }
+         boolean skipParser = defaultOnly;
+
+         if (skipParser) {
+            for (Namespace ns : namespaces) {
+               if ("".equals(ns.uri())) {
+                  skipParser = false;
                }
             }
+         }
 
          if (!skipParser) {
             for (Namespace ns : namespaces) {
@@ -80,8 +92,6 @@ public class ParserRegistry implements NamespaceMappingParser {
                   log.parserRootElementAlreadyRegistered(qName, parser.getClass().getName(), existingParser.getClass().getName());
                }
             }
-         } catch (Exception e) {
-            //
          }
       }
    }
@@ -150,5 +160,22 @@ public class ParserRegistry implements NamespaceMappingParser {
       reader.setSchema(Schema.fromNamespaceURI(name.getNamespaceURI()));
       parser.readElement(reader, holder);
       reader.setSchema(oldSchema);
+   }
+
+   public void serialize(OutputStream os, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) throws XMLStreamException {
+      BufferedOutputStream output = new BufferedOutputStream(os);
+      XMLStreamWriter subWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(output);
+      XMLExtendedStreamWriter writer = new XMLExtendedStreamWriterImpl(subWriter);
+      serialize(writer, globalConfiguration, configurations);
+      subWriter.close();
+   }
+
+   public void serialize(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) throws XMLStreamException {
+      writer.writeStartDocument();
+      writer.writeStartElement("infinispan");
+      Serializer serializer = new Serializer();
+      serializer.serialize(writer, new ConfigurationHolder(globalConfiguration, configurations));
+      writer.writeEndElement();
+      writer.writeEndDocument();
    }
 }

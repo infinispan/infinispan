@@ -9,8 +9,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 5.2
  */
 public class TakeOfflineConfiguration {
-   public static final AttributeDefinition<Integer> AFTER_FAILURES = AttributeDefinition.builder("afterFailures", 0).immutable().build();
-   public static final AttributeDefinition<Long> MIN_TIME_TO_WAIT = AttributeDefinition.builder("minTimeToWait", 0l).immutable().build();
+   public static final AttributeDefinition<Integer> AFTER_FAILURES = AttributeDefinition.builder("after-failures", 0).immutable().build();
+   public static final AttributeDefinition<Long> MIN_TIME_TO_WAIT = AttributeDefinition.builder("min-wait", 0l).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TakeOfflineConfiguration.class, AFTER_FAILURES, MIN_TIME_TO_WAIT);
    }

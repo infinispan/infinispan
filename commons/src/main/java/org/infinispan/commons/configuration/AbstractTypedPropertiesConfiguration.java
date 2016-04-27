@@ -4,6 +4,7 @@ import static org.infinispan.commons.util.Immutables.immutableTypedProperties;
 
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -22,6 +23,7 @@ public abstract class AbstractTypedPropertiesConfiguration {
    };
 
    protected AttributeSet attributes;
+   private final Attribute<TypedProperties> properties;
 
    /**
     * @deprecated use {@link AbstractTypedPropertiesConfiguration#AbstractTypedPropertiesConfiguration(AttributeSet)} instead
@@ -29,13 +31,17 @@ public abstract class AbstractTypedPropertiesConfiguration {
    @Deprecated
    protected AbstractTypedPropertiesConfiguration(Properties properties) {
       this.attributes = attributeSet();
-      this.attributes.attribute(PROPERTIES).set(immutableTypedProperties(TypedProperties.toTypedProperties(properties)));
       this.attributes = attributes.protect();
+      this.properties = this.attributes.attribute(PROPERTIES);
+      this.attributes.attribute(PROPERTIES).set(immutableTypedProperties(TypedProperties.toTypedProperties(properties)));
    }
 
    protected AbstractTypedPropertiesConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-      this.attributes.attribute(PROPERTIES).set(immutableTypedProperties(properties()));
+      this.properties = this.attributes.attribute(PROPERTIES);
+      if (properties.isModified()) {
+         properties.set(immutableTypedProperties(properties.get()));
+      }
    }
 
    @Override
@@ -44,7 +50,7 @@ public abstract class AbstractTypedPropertiesConfiguration {
    }
 
    public TypedProperties properties() {
-      return this.attributes.attribute(PROPERTIES).get();
+      return properties.get();
    }
 
    @Override

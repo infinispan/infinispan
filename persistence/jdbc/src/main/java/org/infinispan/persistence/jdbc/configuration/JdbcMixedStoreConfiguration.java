@@ -25,7 +25,7 @@ import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 public class JdbcMixedStoreConfiguration extends AbstractJdbcStoreConfiguration {
    static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder("batchSize", TableManager.DEFAULT_BATCH_SIZE).immutable().build();
    static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder("fetchSize", TableManager.DEFAULT_FETCH_SIZE).immutable().build();
-   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", DefaultTwoWayKey2StringMapper.class.getName()).immutable().build();
+   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", DefaultTwoWayKey2StringMapper.class.getName()).immutable().xmlName("key-to-string-mapper").build();
    static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder("concurrencyLevel", 2048).immutable().build();
    static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT = AttributeDefinition.builder("lockAcquisitionTimeout", 60000l).immutable().build();
 

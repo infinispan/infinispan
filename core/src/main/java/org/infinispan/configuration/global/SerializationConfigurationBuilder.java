@@ -1,28 +1,30 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.Version;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.marshall.core.VersionAwareMarshaller;
-import org.jboss.marshalling.ClassResolver;
+import static org.infinispan.configuration.global.SerializationConfiguration.CLASS_RESOLVER;
+import static org.infinispan.configuration.global.SerializationConfiguration.MARSHALLER;
+import static org.infinispan.configuration.global.SerializationConfiguration.VERSION;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.infinispan.Version;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Marshaller;
+import org.jboss.marshalling.ClassResolver;
 
 /**
  * Configures serialization and marshalling settings.
  */
 public class SerializationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SerializationConfiguration> {
-
-   private Marshaller marshaller = new VersionAwareMarshaller();
-   private short marshallVersion = Version.getMarshallVersion();
-   private Map<Integer, AdvancedExternalizer<?>> advancedExternalizers = new HashMap<Integer, AdvancedExternalizer<?>>();
-   private ClassResolver classResolver;
+   private final AttributeSet attributes;
+   private Map<Integer, AdvancedExternalizer<?>> advancedExternalizers = new HashMap<>();
 
    SerializationConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+      attributes = SerializationConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -31,12 +33,12 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * @param marshaller
     */
    public SerializationConfigurationBuilder marshaller(Marshaller marshaller) {
-      this.marshaller = marshaller;
+      attributes.attribute(MARSHALLER).set(marshaller);
       return this;
    }
 
    public Marshaller getMarshaller() {
-      return marshaller;
+      return attributes.attribute(MARSHALLER).get();
    }
 
 
@@ -48,7 +50,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * @param marshallVersion
     */
    public SerializationConfigurationBuilder version(short marshallVersion) {
-      this.marshallVersion = marshallVersion;
+      attributes.attribute(VERSION).set(marshallVersion);
       return this;
    }
 
@@ -60,7 +62,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * @param marshallVersion
     */
    public SerializationConfigurationBuilder version(String marshallVersion) {
-      this.marshallVersion = Version.getVersionShort(marshallVersion);
+      this.version(Version.getVersionShort(marshallVersion));
       return this;
    }
 
@@ -120,7 +122,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * @param classResolver
     */
    public SerializationConfigurationBuilder classResolver(ClassResolver classResolver) {
-      this.classResolver = classResolver;
+      attributes.attribute(CLASS_RESOLVER).set(classResolver);
       return this;
    }
 
@@ -132,56 +134,21 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    @Override
    public
    SerializationConfiguration create() {
-      return new SerializationConfiguration(
-            marshaller, marshallVersion, advancedExternalizers, classResolver);
+      return new SerializationConfiguration(attributes.protect(), advancedExternalizers);
    }
 
    @Override
    public
    SerializationConfigurationBuilder read(SerializationConfiguration template) {
+      this.attributes.read(template.attributes());
       this.advancedExternalizers = template.advancedExternalizers();
-      this.marshaller = template.marshaller();
-      this.marshallVersion = template.version();
-      this.classResolver = template.classResolver();
 
       return this;
    }
 
    @Override
    public String toString() {
-      return "SerializationConfigurationBuilder{" +
-            "advancedExternalizers=" + advancedExternalizers +
-            ", marshaller=" + marshaller +
-            ", marshallVersion=" + marshallVersion +
-            ", classResolver=" + classResolver +
-            '}';
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      SerializationConfigurationBuilder that = (SerializationConfigurationBuilder) o;
-
-      if (marshallVersion != that.marshallVersion) return false;
-      if (advancedExternalizers != null ? !advancedExternalizers.equals(that.advancedExternalizers) : that.advancedExternalizers != null)
-         return false;
-      if (marshaller != null ? !marshaller.equals(that.marshaller) : that.marshaller != null)
-         return false;
-      if (classResolver != null ? !classResolver.equals(that.classResolver) : that.classResolver != null)
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = marshaller != null ? marshaller.hashCode() : 0;
-      result = 31 * result + marshallVersion;
-      result = 31 * result + (advancedExternalizers != null ? advancedExternalizers.hashCode() : 0);
-      result = 31 * result + (classResolver != null ? classResolver.hashCode() : 0);
-      return result;
+      return "SerializationConfigurationBuilder [attributes=" + attributes + ", advancedExternalizers=" + advancedExternalizers + "]";
    }
 
 }

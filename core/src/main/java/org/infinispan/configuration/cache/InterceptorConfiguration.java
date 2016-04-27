@@ -36,7 +36,7 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
    public static final AttributeDefinition<Class> AFTER = AttributeDefinition.builder("after", null, Class.class).immutable().build();
    public static final AttributeDefinition<Class> BEFORE = AttributeDefinition.builder("before", null, Class.class).immutable().build();
    public static final AttributeDefinition<SequentialInterceptor> INTERCEPTOR = AttributeDefinition.builder("interceptor", null, SequentialInterceptor.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Class> INTERCEPTOR_CLASS = AttributeDefinition.builder("interceptorClass", null, Class.class).immutable().build();
+   public static final AttributeDefinition<Class> INTERCEPTOR_CLASS = AttributeDefinition.builder("interceptorClass", null, Class.class).xmlName("class").immutable().build();
    public static final AttributeDefinition<Integer> INDEX = AttributeDefinition.builder("index", -1).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {

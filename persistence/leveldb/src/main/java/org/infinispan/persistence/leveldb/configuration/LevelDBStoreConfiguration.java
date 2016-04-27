@@ -24,13 +24,13 @@ public class LevelDBStoreConfiguration extends AbstractStoreConfiguration {
       AUTO, JAVA, JNI
    }
 
-   final static AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-LevelDBStore/data").immutable().build();
-   final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder("expiredLocation", "Infinispan-LevelDBStore/expired").immutable().build();
-   final static AttributeDefinition<ImplementationType> IMPLEMENTATION_TYPE = AttributeDefinition.builder("implementationType", ImplementationType.AUTO).immutable().build();
-   final static AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder("compressionType", CompressionType.NONE).immutable().build();
+   final static AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-LevelDBStore/data").immutable().xmlName("path").build();
+   final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder("expiredLocation", "Infinispan-LevelDBStore/expired").immutable().autoPersist(false).xmlName("path").build();
+   final static AttributeDefinition<ImplementationType> IMPLEMENTATION_TYPE = AttributeDefinition.builder("implementationType", ImplementationType.AUTO).immutable().autoPersist(false).build();
+   final static AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder("compressionType", CompressionType.NONE).immutable().autoPersist(false).build();
    final static AttributeDefinition<Integer> BLOCK_SIZE = AttributeDefinition.builder("blockSize", 0).immutable().build();
    final static AttributeDefinition<Long> CACHE_SIZE = AttributeDefinition.builder("cacheSize", 0l).immutable().build();
-   final static AttributeDefinition<Integer> EXPIRY_QUEUE_SIZE = AttributeDefinition.builder("expiryQueueSize", 10000).immutable().build();
+   final static AttributeDefinition<Integer> EXPIRY_QUEUE_SIZE = AttributeDefinition.builder("expiryQueueSize", 10000).immutable().autoPersist(false).build();
    final static AttributeDefinition<Integer> CLEAR_THRESHOLD = AttributeDefinition.builder("clearThreshold", 10000).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {

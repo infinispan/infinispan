@@ -54,4 +54,31 @@ public class ConnectionPoolConfiguration {
             + maxTotalConnections + ", bufferSize=" + bufferSize + ", socketTimeout=" + socketTimeout + ", tcpNoDelay="
             + tcpNoDelay + "]";
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ConnectionPoolConfiguration that = (ConnectionPoolConfiguration) o;
+
+      if (connectionTimeout != that.connectionTimeout) return false;
+      if (maxConnectionsPerHost != that.maxConnectionsPerHost) return false;
+      if (maxTotalConnections != that.maxTotalConnections) return false;
+      if (bufferSize != that.bufferSize) return false;
+      if (socketTimeout != that.socketTimeout) return false;
+      return tcpNoDelay == that.tcpNoDelay;
+
+   }
+
+   @Override
+   public int hashCode() {
+      int result = connectionTimeout;
+      result = 31 * result + maxConnectionsPerHost;
+      result = 31 * result + maxTotalConnections;
+      result = 31 * result + bufferSize;
+      result = 31 * result + socketTimeout;
+      result = 31 * result + (tcpNoDelay ? 1 : 0);
+      return result;
+   }
 }

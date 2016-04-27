@@ -9,7 +9,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * using optimistic transactions in a clustered environment, to be able to perform write-skew checks.
  */
 public class VersioningConfiguration {
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<VersioningScheme> SCHEME = AttributeDefinition.builder("scheme", VersioningScheme.NONE).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
