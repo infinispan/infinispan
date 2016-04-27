@@ -533,8 +533,8 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
             });
             if (lastCompleted[0] != null) {
                listenerNotifier.addSegmentsForObject(lastCompleted[0], segmentsCompleted);
-               return segmentsCompleted;
             }
+            return segmentsCompleted;
          }
          return null;
       }
