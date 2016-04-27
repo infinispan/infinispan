@@ -1,10 +1,11 @@
 package org.infinispan.commons.util;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.ServiceConfigurationError;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.Set;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -24,8 +25,8 @@ public class ServiceFinder {
 
    private static final Log LOG = LogFactory.getLog(ServiceFinder.class);
 
-   public static <T> Set<T> load(Class<T> contract, ClassLoader... loaders) {
-      Set<T> services = new LinkedHashSet<T>();
+   public static <T> Collection<T> load(Class<T> contract, ClassLoader... loaders) {
+      Map<String, T> services = new LinkedHashMap<>();
 
       if (loaders.length == 0) {
          try {
@@ -53,24 +54,26 @@ public class ServiceFinder {
       if (services.isEmpty()) {
          LOG.debugf("No service impls found: %s", contract.getSimpleName());
       }
-
-      return services;
+      return services.values();
    }
 
-   private static <T> void addServices(ServiceLoader<T> loadedServices, Set<T> services) {
+   private static <T> void addServices(ServiceLoader<T> loadedServices, Map<String, T> services) {
       Iterator<T> i = loadedServices.iterator();
       while (i.hasNext()) {
          try {
             T service = i.next();
-            LOG.debugf("Loading service impl: %s", service.getClass().getSimpleName());
-            services.add(service);
+            if (services.putIfAbsent(service.getClass().getName(), service) == null) {
+               LOG.debugf("Loading service impl: %s", service.getClass().getSimpleName());
+            } else {
+               LOG.debugf("Ignoring already loaded service: %s", service.getClass().getSimpleName());
+            }
          } catch (ServiceConfigurationError e) {
             LOG.debugf("Skipping service impl", e);
          }
       }
    }
 
-   private static <T> void addOsgiServices(Class<T> contract, Set<T> services) {
+   private static <T> void addOsgiServices(Class<T> contract, Map<String, T> services) {
       if (!Util.isOSGiContext()) {
           return;
       }
@@ -84,7 +87,11 @@ public class ServiceFinder {
             final Object[] osgiServices = serviceTracker.getServices();
             if (osgiServices != null) {
                for (Object osgiService : osgiServices) {
-                  services.add((T) osgiService);
+                  if (services.putIfAbsent(osgiService.getClass().getName(), (T) osgiService) == null) {
+                     LOG.debugf("Loading service impl: %s", osgiService.getClass().getSimpleName());
+                  } else {
+                     LOG.debugf("Ignoring already loaded service: %s", osgiService.getClass().getSimpleName());
+                  }
                }
             }
          } catch (Exception e) {

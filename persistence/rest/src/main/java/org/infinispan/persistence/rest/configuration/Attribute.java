@@ -25,8 +25,7 @@ public enum Attribute {
    PORT("port"),
    RAW_VALUES("raw-values"),
    SOCKET_TIMEOUT("socket-timeout"),
-   TCP_NO_DELAY("tcp-no-delay"), 
-   ;
+   TCP_NO_DELAY("tcp-no-delay"), ;
 
    private final String name;
 
@@ -59,5 +58,10 @@ public enum Attribute {
    public static Attribute forName(final String localName) {
       final Attribute attribute = attributes.get(localName);
       return attribute == null ? UNKNOWN : attribute;
+   }
+
+   @Override
+   public String toString() {
+      return name;
    }
 }

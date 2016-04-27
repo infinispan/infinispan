@@ -122,4 +122,9 @@ public enum Element {
         final Element element = MAP.get(localName);
         return element == null ? UNKNOWN : element;
     }
+
+   @Override
+   public String toString() {
+      return name;
+   }
 }

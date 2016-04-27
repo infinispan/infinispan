@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
+import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.leveldb.LevelDBStore;
 
 /**
@@ -17,6 +18,7 @@ import org.infinispan.persistence.leveldb.LevelDBStore;
  */
 @ConfigurationFor(LevelDBStore.class)
 @BuiltBy(LevelDBStoreConfigurationBuilder.class)
+@SerializedWith(LevelDBStoreConfigurationSerializer.class)
 public class LevelDBStoreConfiguration extends AbstractStoreConfiguration {
    public enum ImplementationType {
       AUTO, JAVA, JNI

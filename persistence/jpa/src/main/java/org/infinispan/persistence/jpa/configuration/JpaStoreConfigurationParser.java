@@ -8,7 +8,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser80;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
@@ -17,14 +17,18 @@ import javax.xml.stream.XMLStreamException;
 
 /**
  * @author Galder Zamarreño
- * @since 8.0
+ * @since 9.0
  */
 @MetaInfServices
 @Namespaces({
+   @Namespace(root = "jpa-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jpa:9.0", root = "jpa-store"),
    @Namespace(uri = "urn:infinispan:config:store:jpa:8.0", root = "jpa-store"),
-   @Namespace(root = "jpa-store")
+   @Namespace(uri = "urn:infinispan:config:store:jpa:7.2", root = "jpa-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jpa:7.1", root = "jpa-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jpa:7.0", root = "jpa-store"),
 })
-public class JpaStoreConfigurationParser80 implements ConfigurationParser {
+public class JpaStoreConfigurationParser implements ConfigurationParser {
    @Override
    public void readElement(XMLExtendedStreamReader reader,
          ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -67,13 +71,13 @@ public class JpaStoreConfigurationParser80 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser80.parseStoreAttribute(reader, i, builder);
+               Parser.parseStoreAttribute(reader, i, builder);
             }
          }
       }
 
-      if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         throw ParseUtils.unexpectedElement(reader);
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Parser.parseStoreElement(reader, builder);
       }
    }
 

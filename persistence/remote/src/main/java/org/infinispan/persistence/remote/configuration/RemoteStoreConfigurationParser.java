@@ -9,7 +9,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser80;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -24,18 +24,22 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  * Remote cache store parser.
  *
  * @author Galder Zamarreño
- * @since 8.0
+ * @since 9.0
  */
 @MetaInfServices
 @Namespaces({
+   @Namespace(root = "remote-store"),
+   @Namespace(uri = "urn:infinispan:config:store:remote:9.0", root = "remote-store"),
    @Namespace(uri = "urn:infinispan:config:store:remote:8.0", root = "remote-store"),
-   @Namespace(root = "remote-store")
+   @Namespace(uri = "urn:infinispan:config:store:remote:7.2", root = "remote-store"),
+   @Namespace(uri = "urn:infinispan:config:store:remote:7.1", root = "remote-store"),
+   @Namespace(uri = "urn:infinispan:config:store:remote:7.0", root = "remote-store"),
 })
-public class RemoteStoreConfigurationParser80 implements ConfigurationParser {
+public class RemoteStoreConfigurationParser implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(RemoteStoreConfigurationParser80.class, Log.class);
+   private static final Log log = LogFactory.getLog(RemoteStoreConfigurationParser.class, Log.class);
 
-   public RemoteStoreConfigurationParser80() {
+   public RemoteStoreConfigurationParser() {
    }
 
    @Override
@@ -76,7 +80,7 @@ public class RemoteStoreConfigurationParser80 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser80.parseStoreElement(reader, builder);
+               Parser.parseStoreElement(reader, builder);
                break;
             }
          }
@@ -101,7 +105,7 @@ public class RemoteStoreConfigurationParser80 implements ConfigurationParser {
          }
       }
 
-      builder.withExecutorProperties(Parser80.parseProperties(reader));
+      builder.withExecutorProperties(Parser.parseProperties(reader));
    }
 
    private void parseConnectionPool(XMLExtendedStreamReader reader, ConnectionPoolConfigurationBuilder builder) throws XMLStreamException {
@@ -238,7 +242,7 @@ public class RemoteStoreConfigurationParser80 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser80.parseStoreAttribute(reader, i, builder);
+               Parser.parseStoreAttribute(reader, i, builder);
                break;
             }
          }

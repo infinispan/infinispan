@@ -7,7 +7,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser90;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -23,14 +23,18 @@ import javax.xml.stream.XMLStreamException;
  */
 @MetaInfServices
 @Namespaces({
+   @Namespace(root = "leveldb-store"),
    @Namespace(uri = "urn:infinispan:config:store:leveldb:9.0", root = "leveldb-store"),
-   @Namespace(root = "leveldb-store")
+   @Namespace(uri = "urn:infinispan:config:store:leveldb:8.0", root = "leveldb-store"),
+   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.2", root = "leveldb-store"),
+   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.1", root = "leveldb-store"),
+   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.0", root = "leveldb-store"),
 })
-public class LevelDBStoreConfigurationParser90 implements ConfigurationParser {
+public class LevelDBStoreConfigurationParser implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(LevelDBStoreConfigurationParser90.class);
+   private static final Log log = LogFactory.getLog(LevelDBStoreConfigurationParser.class);
 
-   public LevelDBStoreConfigurationParser90() {
+   public LevelDBStoreConfigurationParser() {
    }
 
    @Override
@@ -78,7 +82,7 @@ public class LevelDBStoreConfigurationParser90 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser90.parseStoreAttribute(reader, i, builder);
+               Parser.parseStoreAttribute(reader, i, builder);
             }
          }
       }
@@ -99,7 +103,7 @@ public class LevelDBStoreConfigurationParser90 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser90.parseStoreElement(reader, builder);
+               Parser.parseStoreElement(reader, builder);
             }
          }
       }

@@ -64,4 +64,9 @@ public enum Attribute {
       final Attribute attribute = attributes.get(localName);
       return attribute == null ? UNKNOWN : attribute;
    }
+
+   @Override
+   public String toString() {
+      return name;
+   }
 }

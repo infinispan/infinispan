@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
+import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper;
 import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.rest.metadata.EmbeddedMetadataHelper;
@@ -20,6 +21,7 @@ import org.infinispan.persistence.rest.metadata.EmbeddedMetadataHelper;
  */
 @BuiltBy(RestStoreConfigurationBuilder.class)
 @ConfigurationFor(RestStore.class)
+@SerializedWith(RestStoreSerializer.class)
 public class RestStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", MarshalledValueOrPrimitiveMapper.class.getName()).immutable().build();
    static final AttributeDefinition<String> METADATA_HELPER = AttributeDefinition.builder("metadataHelper", EmbeddedMetadataHelper.class.getName()).immutable().build();
