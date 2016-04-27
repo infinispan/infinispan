@@ -6,7 +6,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.objectfilter.impl.BaseMatcher;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
@@ -37,15 +36,9 @@ final class RemoteQueryEngine extends QueryEngine {
    private final ProtobufFieldBridgeProvider protobufFieldBridgeProvider;
 
    public RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, boolean isCompatMode, SerializationContext serCtx) {
-      super(cache, isIndexed);
+      super(cache, isIndexed, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
       this.isCompatMode = isCompatMode;
       protobufFieldBridgeProvider = new ProtobufFieldBridgeProvider(serCtx);
-   }
-
-   @Override
-   protected BaseMatcher getMatcher() {
-      Class<? extends BaseMatcher> matcherImplClass = isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class;
-      return SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
    }
 
    @Override
@@ -100,7 +93,7 @@ final class RemoteQueryEngine extends QueryEngine {
    @Override
    protected JPAFilterAndConverter createFilter(String jpaQuery, Map<String, Object> namedParameters) {
       return isIndexed && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
-            new JPAFilterAndConverter(jpaQuery, namedParameters, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
+            new JPAFilterAndConverter(jpaQuery, namedParameters, matcher.getClass());
    }
 
    @Override
