@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * Enumerates the attributes used by the LevelDB cache stores configuration
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  */
 public enum Attribute {
@@ -34,7 +34,7 @@ public enum Attribute {
 
    /**
     * Get the local name of this element.
-    * 
+    *
     * @return the local name
     */
    public String getLocalName() {
@@ -57,5 +57,10 @@ public enum Attribute {
    public static Attribute forName(final String localName) {
       final Attribute attribute = attributes.get(localName);
       return attribute == null ? UNKNOWN : attribute;
+   }
+
+   @Override
+   public String toString() {
+      return name;
    }
 }

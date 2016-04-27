@@ -6,18 +6,18 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 
 public class TableManipulationConfiguration {
-   static final AttributeDefinition<String> ID_COLUMN_NAME = AttributeDefinition.builder("idColumnName", null, String.class).immutable().build();
-   static final AttributeDefinition<String> ID_COLUMN_TYPE = AttributeDefinition.builder("idColumnType", null, String.class).immutable().build();
-   static final AttributeDefinition<String> TABLE_NAME_PREFIX = AttributeDefinition.builder("tableNamePrefix", null, String.class).immutable().build();
-   static final AttributeDefinition<String> CACHE_NAME = AttributeDefinition.builder("cacheName", null, String.class).immutable().build();
-   static final AttributeDefinition<String> DATA_COLUMN_NAME = AttributeDefinition.builder("dataColumnName", null, String.class).immutable().build();
-   static final AttributeDefinition<String> DATA_COLUMN_TYPE = AttributeDefinition.builder("dataColumnType", null, String.class).immutable().build();
-   static final AttributeDefinition<String> TIMESTAMP_COLUMN_NAME = AttributeDefinition.builder("timestampColumnName", null, String.class).immutable().build();
-   static final AttributeDefinition<String> TIMESTAMP_COLUMN_TYPE = AttributeDefinition.builder("timestampColumnType", null, String.class).immutable().build();
-   static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder("batchSize", TableManager.DEFAULT_BATCH_SIZE).immutable().build();
-   static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder("fetchSize", TableManager.DEFAULT_FETCH_SIZE).immutable().build();
-   static final AttributeDefinition<Boolean> CREATE_ON_START = AttributeDefinition.builder("createOnStart", true).immutable().build();
-   static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder("dropOnExit", false).immutable().build();
+   public static final AttributeDefinition<String> ID_COLUMN_NAME = AttributeDefinition.builder("idColumnName", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> ID_COLUMN_TYPE = AttributeDefinition.builder("idColumnType", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> TABLE_NAME_PREFIX = AttributeDefinition.builder("tableNamePrefix", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> CACHE_NAME = AttributeDefinition.builder("cacheName", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> DATA_COLUMN_NAME = AttributeDefinition.builder("dataColumnName", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> DATA_COLUMN_TYPE = AttributeDefinition.builder("dataColumnType", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_NAME = AttributeDefinition.builder("timestampColumnName", null, String.class).immutable().build();
+   public static final AttributeDefinition<String> TIMESTAMP_COLUMN_TYPE = AttributeDefinition.builder("timestampColumnType", null, String.class).immutable().build();
+   public static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder("batchSize", TableManager.DEFAULT_BATCH_SIZE).immutable().build();
+   public static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder("fetchSize", TableManager.DEFAULT_FETCH_SIZE).immutable().build();
+   public static final AttributeDefinition<Boolean> CREATE_ON_START = AttributeDefinition.builder("createOnStart", true).immutable().build();
+   public static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder("dropOnExit", false).immutable().build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TableManipulationConfiguration.class, ID_COLUMN_NAME, ID_COLUMN_TYPE, TABLE_NAME_PREFIX, CACHE_NAME, DATA_COLUMN_NAME, DATA_COLUMN_TYPE,

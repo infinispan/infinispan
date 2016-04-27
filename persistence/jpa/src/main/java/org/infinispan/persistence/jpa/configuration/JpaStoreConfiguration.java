@@ -8,15 +8,18 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
+import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.jpa.JpaStore;
 
 /**
+ * JpaStoreConfiguration.
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
- *
+ * @since 6.0
  */
 @BuiltBy(JpaStoreConfigurationBuilder.class)
 @ConfigurationFor(JpaStore.class)
+@SerializedWith(JpaStoreConfigurationSerializer.class)
 public class JpaStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<String> PERSISTENCE_UNIT_NAME = AttributeDefinition.builder("persistenceUnitName", null, String.class).immutable().build();
    static final AttributeDefinition<Class> ENTITY_CLASS = AttributeDefinition.builder("entityClass", null, Class.class).immutable().build();

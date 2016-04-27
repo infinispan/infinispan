@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * An enumeration of all the recognized XML element local names for the LevelDB cache stores
- * 
+ *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  */
 public enum Element {
@@ -27,7 +27,7 @@ public enum Element {
 
    /**
     * Get the local name of this element.
-    * 
+    *
     * @return the local name
     */
    public String getLocalName() {
@@ -50,5 +50,10 @@ public enum Element {
    public static Element forName(final String localName) {
       final Element element = MAP.get(localName);
       return element == null ? UNKNOWN : element;
+   }
+
+   @Override
+   public String toString() {
+      return name;
    }
 }

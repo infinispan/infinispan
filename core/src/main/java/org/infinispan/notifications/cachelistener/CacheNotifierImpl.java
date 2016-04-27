@@ -136,7 +136,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<>();
 
-   private Set<FilterIndexingServiceProvider> filterIndexingServiceProviders;
+   private Collection<FilterIndexingServiceProvider> filterIndexingServiceProviders;
 
    /**
     * This map is used to store the handler used when a listener is registered which has includeCurrentState and

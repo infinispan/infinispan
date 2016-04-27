@@ -72,12 +72,12 @@ public class ParserRegistry implements NamespaceMappingParser {
                }
             }
 
-            if (!skipParser) {
-               for (Namespace ns : namespaces) {
-                  QName qName = new QName(ns.uri(), ns.root());
-                  if (parserMappings.putIfAbsent(qName, parser) != null) {
-                     throw log.parserRootElementAlreadyRegistered(qName);
-                  }
+         if (!skipParser) {
+            for (Namespace ns : namespaces) {
+               QName qName = new QName(ns.uri(), ns.root());
+               ConfigurationParser existingParser = parserMappings.putIfAbsent(qName, parser);
+               if (existingParser != null && !parser.getClass().equals(existingParser.getClass())) {
+                  log.parserRootElementAlreadyRegistered(qName, parser.getClass().getName(), existingParser.getClass().getName());
                }
             }
          } catch (Exception e) {

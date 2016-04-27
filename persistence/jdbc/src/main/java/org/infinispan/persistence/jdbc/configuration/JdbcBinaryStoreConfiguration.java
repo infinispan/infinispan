@@ -7,10 +7,12 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
+import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.jdbc.binary.JdbcBinaryStore;
 
 @BuiltBy(JdbcBinaryStoreConfigurationBuilder.class)
 @ConfigurationFor(JdbcBinaryStore.class)
+@SerializedWith(JdbcBinaryStoreConfigurationSerializer.class)
 public class JdbcBinaryStoreConfiguration extends AbstractJdbcStoreConfiguration {
    static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder("concurrencyLevel", 2048).immutable().build();
    static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT = AttributeDefinition.builder("lockAcquisitionTimeout", 60000l).immutable().build();

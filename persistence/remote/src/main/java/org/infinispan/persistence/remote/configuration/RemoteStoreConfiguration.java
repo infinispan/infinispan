@@ -15,10 +15,12 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
+import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.remote.RemoteStore;
 
 @BuiltBy(RemoteStoreConfigurationBuilder.class)
 @ConfigurationFor(RemoteStore.class)
+@SerializedWith(RemoteStoreConfigurationSerializer.class)
 public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<String> BALANCING_STRATEGY = AttributeDefinition.builder("balancingStrategy", RoundRobinBalancingStrategy.class.getName()).immutable().build();
    static final AttributeDefinition<Long> CONNECTION_TIMEOUT = AttributeDefinition.builder("connectionTimeout", (long)ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT).build();

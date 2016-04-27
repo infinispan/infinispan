@@ -7,6 +7,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
+import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.jdbc.mixed.JdbcMixedStore;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
@@ -20,6 +21,7 @@ import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
  */
 @BuiltBy(JdbcMixedStoreConfigurationBuilder.class)
 @ConfigurationFor(JdbcMixedStore.class)
+@SerializedWith(JdbcMixedStoreConfigurationSerializer.class)
 public class JdbcMixedStoreConfiguration extends AbstractJdbcStoreConfiguration {
    static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder("batchSize", TableManager.DEFAULT_BATCH_SIZE).immutable().build();
    static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder("fetchSize", TableManager.DEFAULT_FETCH_SIZE).immutable().build();

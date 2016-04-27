@@ -1,19 +1,19 @@
 package org.infinispan.persistence.sifs.configuration;
 
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser72;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
 /**
  *
@@ -22,17 +22,23 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespaces({
-   @Namespace(uri = "urn:infinispan:config:store:soft-index:7.0",
-         root = SoftIndexFileStoreConfigurationParser72.ROOT_ELEMENT),
-   @Namespace(uri = "urn:infinispan:config:store:soft-index:7.1",
-         root = SoftIndexFileStoreConfigurationParser72.ROOT_ELEMENT),
-   @Namespace(uri = "urn:infinispan:config:store:soft-index:7.2",
-         root = SoftIndexFileStoreConfigurationParser72.ROOT_ELEMENT),
+      @Namespace(root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
+      @Namespace(uri = "urn:infinispan:config:store:soft-index:9.0",
+                 root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
+      @Namespace(uri = "urn:infinispan:config:store:soft-index:8.0",
+            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
+      @Namespace(uri = "urn:infinispan:config:store:soft-index:7.2",
+            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
+      @Namespace(uri = "urn:infinispan:config:store:soft-index:7.1",
+            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
+      @Namespace(uri = "urn:infinispan:config:store:soft-index:7.0",
+            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT)
+
 })
-public class SoftIndexFileStoreConfigurationParser72 implements ConfigurationParser {
+public class SoftIndexFileStoreConfigurationParser implements ConfigurationParser {
    public static final String ROOT_ELEMENT = "soft-index-file-store";
 
-   public SoftIndexFileStoreConfigurationParser72() {
+   public SoftIndexFileStoreConfigurationParser() {
    }
 
    @Override
@@ -69,7 +75,7 @@ public class SoftIndexFileStoreConfigurationParser72 implements ConfigurationPar
                builder.compactionThreshold(Double.parseDouble(value));
                break;
             default:
-               Parser72.parseStoreAttribute(reader, i, builder);
+               Parser.parseStoreAttribute(reader, i, builder);
                break;
          }
       }
@@ -86,7 +92,7 @@ public class SoftIndexFileStoreConfigurationParser72 implements ConfigurationPar
                break;
             }
             default: {
-               Parser72.parseStoreElement(reader, builder);
+               Parser.parseStoreElement(reader, builder);
             }
          }
       }

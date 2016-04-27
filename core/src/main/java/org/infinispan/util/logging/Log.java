@@ -855,8 +855,9 @@ public interface Log extends BasicLogger {
    @Message(value="Cache is in an invalid state: %s", id = 232)
    IllegalStateException invalidCacheState(String cacheState);
 
-   @Message(value = "Root element for %s already registered in ParserRegistry", id = 234)
-   IllegalArgumentException parserRootElementAlreadyRegistered(QName qName);
+   @LogMessage(level = WARN)
+   @Message(value = "Root element for %s already registered in ParserRegistry by %s. Cannot install %s.", id = 234)
+   void parserRootElementAlreadyRegistered(QName qName, String oldParser, String newParser);
 
    @Message(value = "Configuration parser %s does not declare any Namespace annotations", id = 235)
    CacheConfigurationException parserDoesNotDeclareNamespaces(String name);
