@@ -14,7 +14,6 @@ import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-
 /**
  * Encapsulate all config properties here
  *
@@ -43,6 +42,7 @@ public class ConfigurationProperties {
    public static final String USE_SSL = "infinispan.client.hotrod.use_ssl";
    public static final String KEY_STORE_FILE_NAME = "infinispan.client.hotrod.key_store_file_name";
    public static final String KEY_STORE_PASSWORD = "infinispan.client.hotrod.key_store_password";
+   public static final String SNI_HOST_NAME = "infinispan.client.hotrod.sni_host_name";
    public static final String KEY_STORE_CERTIFICATE_PASSWORD = "infinispan.client.hotrod.key_store_certificate_password";
    public static final String TRUST_STORE_FILE_NAME = "infinispan.client.hotrod.trust_store_file_name";
    public static final String TRUST_STORE_PASSWORD = "infinispan.client.hotrod.trust_store_password";

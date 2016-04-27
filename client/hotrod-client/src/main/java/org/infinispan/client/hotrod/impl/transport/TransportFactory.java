@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.ClusterSwitchStatus;
 import org.infinispan.commons.marshall.Marshaller;
 
+
 /**
  * Transport factory for building and managing {@link org.infinispan.client.hotrod.impl.transport.Transport} objects.
  *
@@ -83,4 +84,6 @@ public interface TransportFactory {
    String getCurrentClusterName();
 
    int getTopologyAge();
+
+   String getSniHostName();
 }
