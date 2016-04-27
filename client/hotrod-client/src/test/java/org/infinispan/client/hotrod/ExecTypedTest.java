@@ -6,11 +6,13 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.marshall.StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
 import static org.testng.AssertJUnit.assertEquals;
@@ -53,27 +55,15 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       return new InternalRemoteCacheManager(clientBuilder.build());
    }
 
-   public void testRemoteTypedScriptPutGetExecute() throws Exception {
-      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-put-get.js", scriptName -> {
-         Map<String, String> params = new HashMap<>();
-         params.put("k", "typed-key");
-         params.put("v", "typed-value");
-         String result = execClient.getCache().execute(scriptName, params);
-         assertEquals("typed-value", result);
-      });
+   public void testLocalTypedExecPutGet() {
+      execPutGet("/typed-put-get.js", ExecMode.LOCAL, "local-typed-key", "local-typed-value");
    }
 
-   public void testRemoteTypedScriptPutGetExecuteCyrillic() throws Exception {
-      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-put-get.js", scriptName -> {
-         Map<String, String> params = new HashMap<>();
-         params.put("k", "բարև");
-         params.put("v", "привет");
-         String result = execClient.getCache().execute(scriptName, params);
-         assertEquals("привет", result);
-      });
+   public void testLocalTypedExecPutGetCyrillic() {
+      execPutGet("/typed-put-get.js", ExecMode.LOCAL, "բարև", "привет");
    }
 
-   public void testPutGetEmptyString() throws Exception {
+   public void testLocalTypedExecPutGetEmptyString() {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-put-get.js", scriptName -> {
          Map<String, String> params = new HashMap<>();
          params.put("k", "empty-key");
@@ -83,7 +73,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       });
    }
 
-   public void testRemoteTypedScriptSizeExecute() throws Exception {
+   public void testLocalTypedExecSize() {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-size.js", scriptName -> {
          clients.get(0).getCache().clear();
          String result = execClient.getCache().execute(scriptName, new HashMap<>());
@@ -91,18 +81,43 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       });
    }
 
-   public void testRemoteTypedCacheManagerScriptExecute() throws Exception {
+   public void testLocalTypedExecWithCacheManager() {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-cachemanager-put-get.js", scriptName -> {
          String result = execClient.getCache().execute(scriptName, new HashMap<>());
          assertEquals("a", result);
       });
    }
 
-   public void testRemoteTypedScriptNullReturnExecute() throws Exception {
+   public void testLocalTypedExecNullReturn() {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-null-return.js", scriptName -> {
          String result = clients.get(0).getCache().execute(scriptName, new HashMap<>());
          assertEquals(null, result);
       });
+   }
+
+   public void testDistTypedExecPutGet() {
+      execPutGet("/typed-put-get-dist.js", ExecMode.DIST, "dist-typed-key", "dist-typed-value");
+   }
+
+   private void execPutGet(String path, ExecMode mode, String key, String value) {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE), path, scriptName -> {
+         Map<String, String> params = new HashMap<>();
+         params.put("k", key);
+         params.put("v", value);
+         String result = execClient.getCache().execute(scriptName, params);
+         mode.assertResult.accept(value, result);
+      });
+   }
+
+   enum ExecMode {
+      LOCAL(AssertJUnit::assertEquals),
+      DIST((v, r) -> assertEquals(String.format("[\"%1$s\", \"%1$s\"]", v), r));
+
+      final BiConsumer<String, String> assertResult;
+
+      ExecMode(BiConsumer<String, String> assertResult) {
+         this.assertResult = assertResult;
+      }
    }
 
 }
