@@ -1,12 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -95,22 +90,6 @@ public class ConfigurationProperties {
 
    public String getTransportFactory() {
       return props.getProperty(TRANSPORT_FACTORY, TcpTransportFactory.class.getName());
-   }
-
-   public Collection<SocketAddress> getServerList() {
-      Set<SocketAddress> addresses = new HashSet<SocketAddress>();
-      String servers = props.getProperty(SERVER_LIST, "127.0.0.1:" + DEFAULT_HOTROD_PORT);
-      for (String server : servers.split(";")) {
-         String[] components = server.trim().split(":");
-         String host = components[0];
-         int port = DEFAULT_HOTROD_PORT;
-         if (components.length > 1) port = Integer.parseInt(components[1]);
-         addresses.add(new InetSocketAddress(host, port));
-      }
-
-      if (addresses.isEmpty()) throw new IllegalStateException("No Hot Rod servers specified!");
-
-      return addresses;
    }
 
    public String getMarshaller() {
