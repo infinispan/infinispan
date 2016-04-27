@@ -1,6 +1,7 @@
 package org.infinispan.scripting.impl;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Set;
 
 import javax.script.Bindings;
@@ -18,11 +19,13 @@ import org.infinispan.scripting.ScriptingManager;
  */
 class DistributedScript<T> implements DistributedCallable<Object, Object, T>, Serializable {
    private final ScriptMetadata metadata;
+   private final Map<String, ?> ctxParams;
    private transient ScriptingManagerImpl scriptManager;
    private transient Bindings bindings;
 
-   DistributedScript(ScriptMetadata metadata) {
+   DistributedScript(ScriptMetadata metadata, Map<String, ?> ctxParams) {
       this.metadata = metadata;
+      this.ctxParams = ctxParams;
    }
 
    @Override
@@ -36,5 +39,7 @@ class DistributedScript<T> implements DistributedCallable<Object, Object, T>, Se
       bindings = new SimpleBindings();
       bindings.put("inputKeys", inputKeys);
       bindings.put("cache", cache);
+      bindings.put("cacheManager", cache.getCacheManager());
+      ctxParams.entrySet().stream().forEach(e -> bindings.put(e.getKey(), e.getValue()));
    }
 }

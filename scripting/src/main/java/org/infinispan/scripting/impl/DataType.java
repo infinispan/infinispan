@@ -5,6 +5,7 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Immutables;
 
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,11 +48,15 @@ public enum DataType {
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public Object fromDataType(Object obj, Optional<Marshaller> marshaller) {
-         return Objects.isNull(obj)
-               ? null : obj instanceof String
-               ? ((String) obj).getBytes(CHARSET_UTF8)
-               : obj.toString().getBytes(CHARSET_UTF8);
+         if (obj instanceof List)
+            return ((List) obj).stream()
+                  .map(Object::toString)
+                  .collect(Collectors.joining("\", \"", "[\"", "\"]"))
+                  .toString().getBytes(CHARSET_UTF8);
+
+         return Objects.isNull(obj) ? null : obj.toString().getBytes(CHARSET_UTF8);
       }
 
       private static String asString(Object v) {

@@ -1,10 +1,10 @@
 package org.infinispan.scripting.impl;
 
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.distexec.DefaultExecutorService;
@@ -33,11 +33,19 @@ public class DistributedRunner implements ScriptRunner {
       }
       DefaultExecutorService des = new DefaultExecutorService(masterCacheNode);
       try {
-         List<CompletableFuture<T>> tasks = des.submitEverywhere(new DistributedScript<T>(metadata));
+         Map<String, Object> ctxParams = extractContextParams(metadata, binding);
+         List<CompletableFuture<T>> tasks = des.submitEverywhere(new DistributedScript<T>(metadata, ctxParams));
 
          return (CompletableFuture<T>) CompletableFutures.sequence(tasks);
       } finally {
          des.shutdown();
       }
    }
+
+   private Map<String, Object> extractContextParams(ScriptMetadata metadata, CacheScriptBindings binding) {
+      Map<String, Object> params = new HashMap<>();
+      metadata.parameters().stream().forEach(paramName -> params.put(paramName, binding.get(paramName)));
+      return params;
+   }
+
 }

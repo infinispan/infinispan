@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.utils.ScriptingUtils;
 import org.infinispan.test.TestingUtil;
+import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -16,9 +17,11 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.loadScript;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
@@ -169,9 +172,40 @@ public class ExecTest extends MultiHotRodServersTest {
       });
    }
 
+   @Test(dataProvider = "CacheNameProvider")
+   public void testLocalExecPutGet(String cacheName) {
+      execPutGet(cacheName, "/test-put-get.js", ExecMode.LOCAL, "local-key", "local-value");
+   }
+
+   @Test(dataProvider = "CacheNameProvider")
+   public void testDistExecPutGet(String cacheName) {
+      execPutGet(cacheName, "/test-put-get-dist.js", ExecMode.DIST, "dist-key", "dist-value");
+   }
+
+   private void execPutGet(String cacheName, String path, ExecMode mode, String key, String value) {
+      withScript(manager(0), path, scriptName -> {
+         Map<String, String> params = new HashMap<>();
+         params.put("k", key);
+         params.put("v", value);
+         Object results =  clients.get(0).getCache(cacheName).execute(scriptName, params);
+         mode.assertResult.accept(value, results);
+      });
+   }
+
    @DataProvider(name = "CacheNameProvider")
    private static Object[][] provideCacheMode() {
       return new Object[][] {{REPL_CACHE}, {DIST_CACHE}};
+   }
+
+   enum ExecMode {
+      LOCAL(AssertJUnit::assertEquals),
+      DIST((v, r) -> assertEquals(Arrays.asList(v, v), r));
+
+      final BiConsumer<String, Object> assertResult;
+
+      ExecMode(BiConsumer<String, Object> assertResult) {
+         this.assertResult = assertResult;
+      }
    }
 
 }
