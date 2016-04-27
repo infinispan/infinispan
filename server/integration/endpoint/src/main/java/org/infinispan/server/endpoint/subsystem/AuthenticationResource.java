@@ -55,6 +55,7 @@ public class AuthenticationResource extends SimpleResourceDefinition {
    @Override
    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
       resourceRegistration.registerSubModel(new SaslResource());
+      resourceRegistration.registerSubModel(new SniResource());
    }
 
    @Override
