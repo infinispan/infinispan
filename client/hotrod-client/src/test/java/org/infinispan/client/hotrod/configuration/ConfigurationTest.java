@@ -1,7 +1,14 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.function.Function;
 import javax.net.ssl.SSLContext;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -15,15 +22,6 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.SaslTransportObjectFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
-
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.function.Function;
-
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.*;
-import static org.testng.AssertJUnit.assertTrue;
 
 @Test(testName = "client.hotrod.configuration.ConfigurationTest", groups = "functional" )
 public class ConfigurationTest {
@@ -157,7 +155,7 @@ public class ConfigurationTest {
    public void testWithProperties() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       Properties p = new Properties();
-      p.setProperty(SERVER_LIST, "host1:11222;host2:11222");
+      p.setProperty(SERVER_LIST, "host1:11222; host2:11222");
       p.setProperty(ASYNC_EXECUTOR_FACTORY, "org.infinispan.client.hotrod.SomeAsyncExecutorFactory");
       p.setProperty(REQUEST_BALANCING_STRATEGY, "org.infinispan.client.hotrod.SomeRequestBalancingStrategy");
       p.setProperty(TRANSPORT_FACTORY, "org.infinispan.client.hotrod.SomeTransportfactory");
@@ -335,6 +333,10 @@ public class ConfigurationTest {
 
    private void validateConfiguration(Configuration configuration) {
       assertEquals(2, configuration.servers().size());
+      for (int i = 0; i < configuration.servers().size(); i++) {
+         assertEquals(String.format("host%d", i+1), configuration.servers().get(i).host());
+         assertEquals(11222, configuration.servers().get(i).port());
+      }
       assertEqualsConfig(SomeAsyncExecutorFactory.class, ASYNC_EXECUTOR_FACTORY, configuration);
       assertEqualsConfig(SomeRequestBalancingStrategy.class, REQUEST_BALANCING_STRATEGY, configuration);
       assertEqualsConfig(SomeTransportfactory.class, TRANSPORT_FACTORY, configuration);

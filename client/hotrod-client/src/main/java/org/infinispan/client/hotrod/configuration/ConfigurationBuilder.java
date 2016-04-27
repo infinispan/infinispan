@@ -1,5 +1,15 @@
 package org.infinispan.client.hotrod.configuration;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TypedProperties;
@@ -16,16 +26,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
-
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * ConfigurationBuilder used to generate immutable {@link Configuration} objects to pass to the
@@ -94,7 +94,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder addServers(String servers) {
       for (String server : servers.split(";")) {
-         Matcher matcher = ADDRESS_PATTERN.matcher(server);
+         Matcher matcher = ADDRESS_PATTERN.matcher(server.trim());
          if (matcher.matches()) {
             String v6host = matcher.group(2);
             String v4host = matcher.group(3);
