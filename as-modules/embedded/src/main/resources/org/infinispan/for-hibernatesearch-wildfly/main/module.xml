@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+This Module is meant to be used exclusively by Hibernate Search as used in combination with Hibernate ORM;
+(Not the Hibernate Search version used by Infinispan Query as an internal dependency).
+
+It is a slimmed down alternative for the combination of modules normally built by the Infinispan project:
+ - org.infinispan.lucene-directory
+ - org.infinispan
+
+As it needs to link to the classloaders of Hibernate Search without introducing possible linkage errors,
+it needs to point to the slot of module org.apache.lucene of the consuming Hibernate Search,
+and obviously needs to avoid dependencies to different versions of Hibernate Search.
+
+-->
+<module xmlns="urn:jboss:module:1.1" name="org.infinispan.hibernate-search.directory-provider"
+        slot="${hibernate-search-directory-wildfly-ref}">
+
+    <resources>
+        <!-- Insert resources here -->
+    </resources>
+
+    <dependencies>
+        <module name="org.apache.lucene" />
+        <module name="org.hibernate.search.engine"/>
+        <!-- Next dependencies are essentially a copy of those from module org.infinispan,
+             but filtering out the ones related to Apache Lucene, Infinispan Query and Hibernate Search. -->
+        <module name="javax.api"/>
+        <module name="javax.transaction.api"/>
+        <module name="javax.xml.bind.api"/>
+        <module name="org.apache.xerces" services="import"/>
+        <module name="org.jboss.jandex"/>
+        <module name="org.jboss.logging"/>
+        <module name="org.jboss.marshalling" slot="${infinispan.slot}" services="import"/>
+        <module name="org.jgroups" slot="${infinispan.slot}"/>
+        <module name="sun.jdk"/>
+    </dependencies>
+</module>
