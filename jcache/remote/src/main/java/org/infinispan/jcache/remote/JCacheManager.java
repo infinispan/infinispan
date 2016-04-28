@@ -1,8 +1,11 @@
 package org.infinispan.jcache.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Properties;
 
+import javax.cache.CacheException;
 import javax.cache.configuration.Configuration;
 import javax.cache.spi.CachingProvider;
 
@@ -10,6 +13,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheManager;
@@ -29,12 +33,7 @@ public class JCacheManager extends AbstractJCacheManager {
    public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider, Properties properties) {
       super(uri, classLoader, provider, properties, false);
 
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      if (properties != null) {
-         builder.withProperties(properties);
-      } else {
-         builder.addServer().host("127.0.0.1").port(11222);
-      }
+      ConfigurationBuilder builder = getConfigurationBuilder(properties);
 
       org.infinispan.client.hotrod.configuration.Configuration configuration = builder.build();
       cm = new RemoteCacheManager(configuration, true);
@@ -43,6 +42,33 @@ public class JCacheManager extends AbstractJCacheManager {
       cmForceReturnValue = new RemoteCacheManager(builder.build(), true);
 
       sm = new ServerManager(configuration.servers().get(0).host());
+   }
+
+   private ConfigurationBuilder getConfigurationBuilder(Properties userProperties) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      InputStream is;
+      if (userProperties != null && !userProperties.isEmpty()) {
+         this.properties = userProperties;
+         builder.withProperties(userProperties);
+      } else if ((is = findPropertiesFile()) != null) {
+         Properties fileProperties = new Properties();
+         try {
+            fileProperties.load(is);
+            this.properties = fileProperties;
+            builder.withProperties(fileProperties);
+         } catch (IOException e) {
+            throw new CacheException("Unable to load properties from `hotrod-client.properties`", e);
+         }
+      } else {
+         builder.addServer().host("127.0.0.1").port(11222);
+      }
+      return builder;
+   }
+
+   private InputStream findPropertiesFile() {
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      return FileLookupFactory.newInstance()
+            .lookupFile(RemoteCacheManager.HOTROD_CLIENT_PROPERTIES, cl);
    }
 
    @Override

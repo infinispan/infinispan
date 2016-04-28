@@ -31,7 +31,7 @@ public abstract class AbstractJCacheManager implements CacheManager {
 
    private final URI uri;
    private final CachingProvider provider;
-   private final Properties properties;
+   protected Properties properties;
 
    private final HashMap<String, AbstractJCache<?, ?>> caches = new HashMap<String, AbstractJCache<?, ?>>();
 
