@@ -40,4 +40,23 @@ public class KeyWithCodecCommandHandler extends KeyCommandHandler {
       }
 
    }
+
+   public static class RemoveProvider implements CommandHandlerProvider {
+
+      @Override
+      public CommandHandler createCommandHandler(CommandContext ctx) {
+         return new CacheNameArgumentCommandHandler(CacheCommand.REMOVE, CliCommandBuffer.INSTANCE);
+      }
+
+      @Override
+      public boolean isTabComplete() {
+         return true;
+      }
+
+      @Override
+      public String[] getNames() {
+         return new String[] { CacheCommand.REMOVE.getName() };
+      }
+
+   }
 }

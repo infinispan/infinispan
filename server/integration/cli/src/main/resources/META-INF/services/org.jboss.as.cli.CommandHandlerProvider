@@ -26,6 +26,8 @@ org.infinispan.server.cli.handlers.GrantCommandHandler$Provider
 org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$InfoProvider
 # put
 org.infinispan.server.cli.handlers.PutCommandHandler$Provider
+# remove
+org.infinispan.server.cli.handlers.KeyWithCodecCommandHandler$RemoveProvider
 # replace
 org.infinispan.server.cli.handlers.ReplaceCommandHandler$Provider
 # roles
