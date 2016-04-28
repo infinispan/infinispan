@@ -60,7 +60,7 @@
       <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
       
       <version.protostream>3.0.5.Final</version.protostream>
-      <version.aesh>0.33.14</version.aesh>
+      <version.aesh>0.66.4</version.aesh>
       <version.antlr>3.5.2</version.antlr>
       <version.c3p0>0.9.5</version.c3p0>
       <version.commons.pool>1.6</version.commons.pool>
@@ -196,27 +196,12 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-spring4-common</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-tasks-api</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-lucene-directory</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-directory-provider</artifactId>
-            <version>${project.version}</version>
-         </dependency>
-         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-osgi</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>
