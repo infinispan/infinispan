@@ -7,16 +7,14 @@ import java.util.regex.Pattern;
 
 import org.infinispan.cli.connection.jmx.AbstractJMXUrl;
 
-public class JMXRemotingUrl extends AbstractJMXUrl {
-   private static final Pattern JMX_URL = Pattern.compile("^(?:(?![^:@]+:[^:@/]*@)(remoting):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?(\\[[0-9A-Fa-f:]+\\]|[^:/?#]*)(?::(\\d*))?)(?:/([^/]*)(?:/(.*))?)?");
-   private static final int DEFAULT_REMOTING_PORT = 9999;
+public abstract class JMXRemotingUrl extends AbstractJMXUrl {
 
    public JMXRemotingUrl(String connectionString) {
       if (connectionString.length() == 0) {
          hostname = "localhost";
-         port = DEFAULT_REMOTING_PORT;
+         port = getDefaultPort();
       } else {
-         Matcher matcher = JMX_URL.matcher(connectionString);
+         Matcher matcher = getUrlPattern().matcher(connectionString);
          if (!matcher.matches()) {
             throw new IllegalArgumentException(connectionString);
          }
@@ -26,20 +24,28 @@ public class JMXRemotingUrl extends AbstractJMXUrl {
          if (matcher.group(7) != null) {
             port = Integer.parseInt(matcher.group(7));
          } else {
-            port = DEFAULT_REMOTING_PORT;
+            port = getDefaultPort();
          }
          container = nullIfEmpty(matcher.group(8));
          cache = nullIfEmpty(matcher.group(9));
       }
    }
 
+   private Pattern getUrlPattern() {
+      return Pattern.compile("^(?:(?![^:@]+:[^:@/]*@)(" + getProtocol() + "):)?(?://)?((?:(([^:@]*):?([^:@]*))?@)?(\\[[0-9A-Fa-f:]+\\]|[^:/?#]*)(?::(\\d*))?)(?:/([^/]*)(?:/(.*))?)?");
+   }
+
+   abstract String getProtocol();
+
+   abstract int getDefaultPort();
+
    @Override
    public String getJMXServiceURL() {
-      return "service:jmx:remoting-jmx://" + hostname + ":" + port;
+      return "service:jmx:" + getProtocol() + "-jmx://" + hostname + ":" + port;
    }
 
    @Override
    public String toString() {
-      return "remoting://" + (username == null ? "" : username + "@") + hostname + ":" + port;
+      return getProtocol() + "://" + (username == null ? "" : username + "@") + hostname + ":" + port;
    }
 }
