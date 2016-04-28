@@ -18,16 +18,21 @@
 Connects to an Infinispan instance using the specified protocol, host and port and with the supplied credentials.
 .SH ARGUMENTS
 .IP protocol
-currently only the 
+The currently supported protocols are
+.BR
 .I jmx 
-and the 
+for connecting over the standard JMX protocol
+.BR
 .I remoting 
-(JMX over JBoss Remoting) protocols are supported. The 
-.I jmx
-protocol should be used to connect to directly over the standard JMX protocol, whereas the
-.I remoting
-protocol should be used to connect to an Infinispan instance managed within an AS/EAP/JDG-style container. If the command is invoked 
-without specifying an argument, the CLI will default to remoting://localhost:9999.
+for connecting directly using the JBoss Remoting protocol (e.g. for JBoss AS 7.x / EAP 6)
+.BR
+.I http-remoting
+for connecting over an HTTP connection using the JBoss Remoting protocol (e.g. for WildFly 10.x / EAP 7)
+.BR
+.I https-remoting
+for connecting over an HTTPS connection using the JBoss Remoting protocol (e.g. for WildFly 10.x / EAP 7)
+.BR
+If the command is invoked without specifying an argument, the CLI will default to remoting://localhost:9999.
 .IP user (optional)
 The username to use when connecting if the server requires credentials
 .IP password (optional)

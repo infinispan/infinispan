@@ -6,15 +6,15 @@ import org.infinispan.cli.connection.jmx.JMXConnection;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
-public class JMXRemotingConnector implements Connector {
+public class HttpJMXRemotingConnector implements Connector {
 
-   public JMXRemotingConnector() {
+   public HttpJMXRemotingConnector() {
    }
 
    @Override
    public Connection getConnection(final String connectionString) {
       try {
-         return new JMXConnection(new JMXRemotingUrl(connectionString));
+         return new JMXConnection(new HttpJMXRemotingUrl(connectionString));
       } catch (Exception e) {
          return null;
       }
