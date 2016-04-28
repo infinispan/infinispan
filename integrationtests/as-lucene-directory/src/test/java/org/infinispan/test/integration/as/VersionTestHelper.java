@@ -32,6 +32,10 @@ public class VersionTestHelper {
       archive.add( manifestDependencies( "org.hibernate.search.orm:${hibernate-search.module.slot} services"), "META-INF/MANIFEST.MF" );
    }
 
+   public static void addMainHibernateSearchManifestDependencies(Archive<?> archive) {
+      archive.add( manifestDependencies( "org.hibernate.search.orm services"), "META-INF/MANIFEST.MF" );
+   }
+
    public static Asset manifestDependencies(String moduleDependencies) {
       return manifest( injectVariables( moduleDependencies ) );
    }
