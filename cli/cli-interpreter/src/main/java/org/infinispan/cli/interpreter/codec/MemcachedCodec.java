@@ -19,6 +19,14 @@ public class MemcachedCodec extends AbstractCodec {
    private static final Log log = LogFactory.getLog(Interpreter.class, Log.class);
    private Charset UTF8 = Charset.forName("UTF-8");
 
+   public MemcachedCodec() {
+      try {
+         Class.forName("org.infinispan.server.memcached.MemcachedServer");
+      } catch (ClassNotFoundException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    @Override
    public String getName() {
       return "memcached";
