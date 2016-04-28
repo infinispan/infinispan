@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.logging.Log;
@@ -74,6 +75,10 @@ public class QueryCache {
       getCache().put(queryKey, queryParsingResult);
    }
 
+   public void clear() {
+      getCache().clear();
+   }
+
    /**
     * Obtain the cache. Start it lazily when needed.
     */
@@ -100,7 +105,7 @@ public class QueryCache {
             .clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .expiration().maxIdle(ENTRY_LIFESPAN, TimeUnit.SECONDS)
-            .eviction().maxEntries(MAX_ENTRIES)
+            .eviction().type(EvictionType.COUNT).size(MAX_ENTRIES)
             .strategy(EvictionStrategy.LIRS);
       return cfgBuilder;
    }
