@@ -15,6 +15,7 @@ public enum CacheCommand {
    CONTAINER("container"),
    CREATE("create"),
    DENY("deny"),
+   DISCONNECT("disconnect"),
    ENCODING("encoding"),
    END("end", -1),
    EVICT("evict"),

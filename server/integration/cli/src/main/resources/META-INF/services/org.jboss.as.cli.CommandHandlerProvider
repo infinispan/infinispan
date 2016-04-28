@@ -12,6 +12,8 @@ org.infinispan.server.cli.handlers.ContainerCommandHandler$Provider
 org.infinispan.server.cli.handlers.CreateCommandHandler$Provider
 # deny
 org.infinispan.server.cli.handlers.DenyCommandHandler$Provider
+# disconnect
+org.infinispan.server.cli.handlers.DisconnectCommandHandler$Provider
 # encoding
 org.infinispan.server.cli.handlers.EncodingCommandHandler$Provider
 # end
