@@ -1,6 +1,8 @@
 package org.infinispan.commons.util;
 
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -13,7 +15,7 @@ import org.osgi.util.tracker.ServiceTracker;
 /**
  * ServiceFinder is a {@link java.util.ServiceLoader} replacement which understands multiple
  * classpaths
- * 
+ *
  * @author Tristan Tarrant
  * @author Brett Meyer
  * @since 6.0
@@ -21,10 +23,10 @@ import org.osgi.util.tracker.ServiceTracker;
 public class ServiceFinder {
 
    private static final Log LOG = LogFactory.getLog(ServiceFinder.class);
-   
+
    public static <T> Set<T> load(Class<T> contract, ClassLoader... loaders) {
       Set<T> services = new LinkedHashSet<T>();
-      
+
       if (loaders.length == 0) {
          try {
             ServiceLoader<T> loadedServices = ServiceLoader.load(contract);
@@ -45,21 +47,25 @@ public class ServiceFinder {
             }
          }
       }
-      
+
       addOsgiServices( contract, services );
-      
+
       if (services.isEmpty()) {
          LOG.debugf("No service impls found: %s", contract.getSimpleName());
       }
 
       return services;
    }
-   
+
    private static <T> void addServices(ServiceLoader<T> loadedServices, Set<T> services) {
-      if (loadedServices.iterator().hasNext()) {
-         for (T loadedService : loadedServices) {
-            LOG.debugf("Loading service impl: %s", loadedService.getClass().getSimpleName());
-            services.add(loadedService);
+      Iterator<T> i = loadedServices.iterator();
+      while (i.hasNext()) {
+         try {
+            T service = i.next();
+            LOG.debugf("Loading service impl: %s", service.getClass().getSimpleName());
+            services.add(service);
+         } catch (ServiceConfigurationError e) {
+            LOG.debugf("Skipping service impl", e);
          }
       }
    }

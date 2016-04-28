@@ -15,6 +15,14 @@ import org.kohsuke.MetaInfServices;
 public class RestCodec extends AbstractCodec {
    public static final Log log = LogFactory.getLog(RestCodec.class, Log.class);
 
+   public RestCodec() {
+      try {
+         Class.forName("org.infinispan.rest.Server");
+      } catch (ClassNotFoundException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    @Override
    public String getName() {
       return "rest";

@@ -17,6 +17,14 @@ public class HotRodCodec extends AbstractCodec {
    public static final Log log = LogFactory.getLog(HotRodCodec.class, Log.class);
    Marshaller marshaller = new GenericJBossMarshaller(); // FIXME: assumes that clients will marshall using this
 
+   public HotRodCodec() {
+      try {
+         Class.forName("org.infinispan.server.hotrod.HotRodServer");
+      } catch (ClassNotFoundException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    @Override
    public String getName() {
       return "hotrod";
