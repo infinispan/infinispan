@@ -5,20 +5,13 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
-import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.concurrent.StateSequencer;
-import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.mockito.ArgumentMatcher;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.TimeoutException;
-
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnComponentMethod;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
+import static org.infinispan.test.TestingUtil.extractComponentRegistry;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -80,7 +73,9 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
       splitCluster(p0.getNodes(), p1.getNodes());
 
       ss.enter("main:check_availability");
-      eventually(() -> partitionHandlingManager(p0.node(1)).getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE);
+      // Keys stay available in between the availability mode update and the topology update
+      StateTransferManager stmP0N1 = extractComponentRegistry(cache(p0.node(1))).getStateTransferManager();
+      eventuallyEquals(2, () -> stmP0N1.getCacheTopology().getActualMembers().size());
       assertEquals(AvailabilityMode.AVAILABLE, partitionHandlingManager(p0.node(0)).getAvailabilityMode());
 
       // The availability didn't change on p0.node0, check that keys owned by p1 are not accessible
@@ -117,7 +112,7 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
       private StateSequencer ss;
       private String[] states;
 
-      public BlockAvailabilityChangeListener(boolean blockPre, StateSequencer ss, String... states) {
+      BlockAvailabilityChangeListener(boolean blockPre, StateSequencer ss, String... states) {
          this.blockPre = blockPre;
          this.ss = ss;
          this.states = states;
