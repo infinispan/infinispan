@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:8.2 http://www.infinispan.org/schemas/infinispan-config-8.2.xsd"
+            xmlns="urn:infinispan:config:8.2">
+
+    <jgroups>
+        <stack-file name="default-jgroups-tcp" path="default-configs/default-jgroups-tcp.xml"/>
+    </jgroups>
+
+    <cache-container name="HibernateSearch" default-cache="default" statistics="false" shutdown-hook="DONT_REGISTER">
+        <transport stack="default-jgroups-tcp"/>
+        <jmx duplicate-domains="true"/>
+
+        <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
+            <persistence passivation="false">
+                <file-store preload="true" purge="true" path="${jboss.server.temp.dir}/indexes"/>
+            </persistence>
+            <indexing index="NONE"/>
+        </replicated-cache>
+
+        <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
+            <persistence passivation="false">
+                <file-store preload="true" purge="true" path="${jboss.server.temp.dir}/indexes"/>
+            </persistence>
+            <indexing index="NONE"/>
+        </distributed-cache>
+
+        <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
+            <persistence passivation="false">
+                <file-store preload="true" purge="true" path="${jboss.server.temp.dir}/indexes"/>
+            </persistence>
+            <indexing index="NONE"/>
+        </replicated-cache>
+    </cache-container>
+
+</infinispan>
