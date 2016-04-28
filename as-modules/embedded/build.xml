@@ -8,6 +8,7 @@
     <major-minor version="${version.lucene}" property="lucene.slot"/>
     <major-minor version="${version.hibernate.search}" property="hibernate.search.slot"/>
     <property name="hibernate-search-directory-provider-ref" value="for-hibernatesearch-${hibernate.search.slot}"/>
+    <property name="hibernate-search-directory-wildfly-ref" value="for-hibernatesearch-5.5"/>
 
     <target name="clean">
         <delete dir="${output.dir}" />
@@ -30,6 +31,8 @@
             <filter token="lucene.slot" value="${lucene.slot}" />
             <filter token="hibernate.search.slot" value="${hibernate.search.slot}" />
             <filter token="hibernate-search-directory-provider-ref" value="${hibernate-search-directory-provider-ref}" />
+            <filter token="hibernate-search-directory-wildfly-ref" value="${hibernate-search-directory-wildfly-ref}" />
+
         </filterset>
 
         <module-def name="org.antlr.antlr-runtime" slot="${infinispan.slot}">
@@ -111,6 +114,13 @@
         </module-def>
 
         <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${hibernate-search-directory-provider-ref}"  module.src="org.infinispan.for-hibernatesearch-alias"/>
+
+        <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${hibernate-search-directory-wildfly-ref}" module.src="org.infinispan.for-hibernatesearch-wildfly">
+            <maven-resource group="org.infinispan" artifact="infinispan-core"/>
+            <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory"/>
+            <maven-resource group="org.infinispan" artifact="infinispan-commons"/>
+            <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
+        </module-def>
 
         <module-def name="org.infinispan.objectfilter" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-objectfilter" />
