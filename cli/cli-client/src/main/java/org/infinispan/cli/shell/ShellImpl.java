@@ -29,7 +29,7 @@ import org.infinispan.cli.io.ConsoleIOAdapter;
 import org.infinispan.cli.io.StreamIOAdapter;
 import org.infinispan.cli.util.SystemUtils;
 import org.jboss.aesh.console.Console;
-import org.jboss.aesh.console.settings.Settings;
+import org.jboss.aesh.console.settings.SettingsBuilder;
 
 /**
  *
@@ -125,18 +125,20 @@ public class ShellImpl implements Shell {
    private void interactiveRun() throws IOException {
       config = new ConfigImpl(SystemUtils.getAppConfigFolder("InfinispanShell"));
       config.load();
-      Settings settings = Settings.getInstance();
-      settings.setAliasEnabled(false);
-      console = new Console();
+      SettingsBuilder settings = new SettingsBuilder();
+      settings.enableAlias(false).outputStream(System.out).outputStreamError(System.err).inputStream(System.in);
+      console = new Console(settings.create());
       context.setOutputAdapter(new ConsoleIOAdapter(console));
       console.addCompletion(new Completer(context));
+      console.setConsoleCallback(new CLIConsoleCallback());
+      console.start();
       ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
       sessionPingTask = executor.scheduleWithFixedDelay(new PingTask(), SESSION_PING_TIMEOUT, SESSION_PING_TIMEOUT, TimeUnit.SECONDS);
 
       while (!context.isQuitting()) {
          try {
             context.refreshProperties();
-            String line = console.read(getPrompt()).getBuffer();
+            String line = context.getOutputAdapter().readln(getPrompt());
 
             if (line != null) {
                if (!"".equals(line.trim())) {

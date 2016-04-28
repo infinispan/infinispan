@@ -22,18 +22,17 @@ public class ConsoleIOAdapter implements IOAdapter {
 
    @Override
    public String readln(String prompt) throws IOException {
-      return console.read(prompt).getBuffer();
+      return read(prompt, null);
    }
 
    @Override
    public String secureReadln(String prompt) throws IOException {
-      return console.read(new Prompt(prompt), (char) 0).getBuffer();
+      return read(prompt, (char)0);
    }
 
    @Override
    public void println(String s) throws IOException {
-      console.pushToStdOut(s);
-      console.pushToStdOut("\n");
+      console.getShell().out().println(s);
    }
 
    @Override
@@ -60,5 +59,24 @@ public class ConsoleIOAdapter implements IOAdapter {
    public void close() throws IOException {
       console.stop();
    }
+
+   private String read(String prompt, Character mask) {
+      Prompt origPrompt = null;
+      if (!console.getPrompt().getPromptAsString().equals(prompt)) {
+         origPrompt = console.getPrompt();
+         console.setPrompt(new Prompt(prompt, mask));
+      }
+      try {
+         return console.getInputLine();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } finally {
+         if (origPrompt != null) {
+            console.setPrompt(origPrompt);
+         }
+      }
+      return null;
+   }
+
 
 }
