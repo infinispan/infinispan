@@ -174,6 +174,7 @@
 
     <xs:complexType name="authentication">
         <xs:all>
+            <xs:element name="sni" type="tns:sni" minOccurs="0" />
             <xs:element name="sasl" type="tns:sasl" minOccurs="0" />
         </xs:all>
         <xs:attribute name="security-realm" type="xs:string" use="required">
@@ -361,6 +362,26 @@
         <xs:attribute name="security-realm" type="xs:string" use="required">
             <xs:annotation>
                 <xs:documentation>The name of the security realm to use for obtaining the SSL keystore</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="sni">
+        <xs:annotation>
+            <xs:documentation>
+                <![CDATA[
+                An element specifying a TLS SNI mapping.
+            ]]>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="host-name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>TLS SNI host name</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="security-realm" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>A corresponding security realm</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>

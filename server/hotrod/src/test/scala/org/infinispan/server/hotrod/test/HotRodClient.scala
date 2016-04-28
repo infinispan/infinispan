@@ -9,7 +9,7 @@ import collection.mutable
 import collection.immutable
 import java.lang.reflect.Method
 import HotRodTestingUtil._
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{Future, ConcurrentHashMap}
 import java.util.concurrent.atomic.AtomicLong
 import mutable.ListBuffer
 import org.infinispan.test.TestingUtil
@@ -158,11 +158,13 @@ class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTim
       handler.getResponse(expectedResponseMessageId)
    }
 
-   private def writeOp(op: Op) {
+   def writeOp(op: Op, assertSuccess: Boolean = true): Boolean = {
       idToOp.put(op.id, op)
       val future = ch.writeAndFlush(op)
       future.awaitUninterruptibly
-      assertTrue(future.isSuccess)
+      if (assertSuccess)
+         assertTrue(future.isSuccess)
+      return future.isSuccess
    }
 
    def get(k: Array[Byte], flags: Int): TestGetResponse = {

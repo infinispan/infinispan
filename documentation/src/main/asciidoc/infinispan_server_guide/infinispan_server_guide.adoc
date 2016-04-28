@@ -700,7 +700,7 @@ Just like embedded mode, the server supports cache authorization using the same 
    <cache-container default-cache="secured">
       <security>
          <authorization>
-	    <identity-role-mapper/>
+            <identity-role-mapper/>
             <role name="admin" permissions="ALL" />
             <role name="reader" permissions="READ" />
             <role name="writer" permissions="WRITE" />
@@ -830,6 +830,64 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 ----
 
 The actual type of callbacks that your CallbackHandler will need to be able to handle are mech-specific, so the above is just a simple example.
+
+==== Using Service Name Indication
+
+link:$$https://en.wikipedia.org/wiki/Server_Name_Indication$$[SNI] might be used to authenticate multiple clients against a single Hot Rod server.
+
+Usually the configuration requires multiple security realms as shown below:
+
+.Security Realms configuration for SSL
+[source,xml]
+----
+<security-realm name="Realm1">
+    <server-identities>
+        <ssl>
+            <keystore path="keystore_server1.jks" relative-to="jboss.server.config.dir" keystore-password="secret" />
+        </ssl>
+    </server-identities>
+</security-realm>
+<security-realm name="Realm2">
+    <server-identities>
+        <ssl>
+            <keystore path="keystore_server2.jks" relative-to="jboss.server.config.dir" keystore-password="secret" />
+        </ssl>
+    </server-identities>
+</security-realm>
+----
+
+Now, newly configured security realms can be used for SNI configuration:
+
+.Hot Rod connector configuration
+[source,xml]
+----
+<hotrod-connector socket-binding="hotrod" cache-container="default">
+   <authentication security-realm="ApplicationRealm">
+      <sni host-name="domain1" security-realm="Realm1" />
+      <sni host-name="domain2" security-realm="Realm2" />
+   </authentication>
+</hotrod-connector>
+----
+
+Finally, the clients needs to specify SNI host name as shown below:
+
+[source,java]
+----
+ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
+clientBuilder
+    .addServer()
+        .host("127.0.0.1")
+        .port(hotrodServer.getPort())
+     .security()
+        .ssl()
+           .enabled(sslClient)
+           .sniHostName("domain1")
+           .trustStoreFileName("truststore.jks")
+           .trustStorePassword("secret".toCharArray())
+remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+----
+
+Note that `sniHostName` and must match SNI configuration from the server.
 
 ==== Using GSSAPI/Kerberos
 

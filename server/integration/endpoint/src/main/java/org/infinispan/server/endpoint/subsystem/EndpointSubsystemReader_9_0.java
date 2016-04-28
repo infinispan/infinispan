@@ -380,21 +380,20 @@ class EndpointSubsystemReader_9_0 implements XMLStreamConstants, XMLElementReade
       }
       operations.add(authentication);
 
-      final EnumSet<Element> visited = EnumSet.noneOf(Element.class);
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          final Element element = Element.forName(reader.getLocalName());
-         if (visited.contains(element)) {
-            throw ParseUtils.unexpectedElement(reader);
-         }
-         visited.add(element);
          switch (element) {
-         case SASL: {
-            parseSasl(reader, authentication, operations);
-            break;
-         }
-         default: {
-            throw ParseUtils.unexpectedElement(reader);
-         }
+            case SASL: {
+               parseSasl(reader, authentication, operations);
+               break;
+            }
+            case SNI: {
+               parseSni(reader, authentication, operations);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
          }
       }
    }
@@ -559,9 +558,25 @@ class EndpointSubsystemReader_9_0 implements XMLStreamConstants, XMLElementReade
             throw ParseUtils.unexpectedAttribute(reader, i);
          }
          }
-
       }
-      ParseUtils.requireNoContent(reader);
       operations.add(security);
+
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseSni(final XMLExtendedStreamReader reader, final ModelNode encryption, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireAttributes(reader, Attribute.HOST_NAME.getLocalName(), Attribute.SECURITY_REALM.getLocalName());
+      String hostName = reader.getAttributeValue(null, Attribute.HOST_NAME.getLocalName());
+
+      PathAddress sniOpAddress = PathAddress.pathAddress(encryption.get(OP_ADDR)).append(ModelKeys.SNI, hostName);
+      ModelNode sniOp = Util.createAddOperation(sniOpAddress);
+
+      SniResource.HOST_NAME.parseAndSetParameter(hostName, sniOp, reader);
+
+      String securityRealm = reader.getAttributeValue(null, Attribute.SECURITY_REALM.getLocalName());
+      SniResource.SECURITY_REALM.parseAndSetParameter(securityRealm, sniOp, reader);
+
+      ParseUtils.requireNoContent(reader);
+      operations.add(sniOp);
    }
 }
