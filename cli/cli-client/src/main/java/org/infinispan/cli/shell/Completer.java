@@ -1,7 +1,7 @@
 package org.infinispan.cli.shell;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.cli.Context;
@@ -21,13 +21,12 @@ public class Completer implements Completion {
    @Override
    public void complete(CompleteOperation op) {
       String buffer = op.getBuffer();
-      List<String> candidates = op.getCompletionCandidates();
       if(buffer.isEmpty()) {
          // Nothing in the buffer, return all commands
          for(String name : context.getCommandRegistry().getCommandNames()) {
             Command command = context.getCommandRegistry().getCommand(name);
             if(command.isAvailable(context)) {
-               candidates.add(name);
+               op.addCompletionCandidate(name);
             }
          }
       } else {
@@ -37,7 +36,7 @@ public class Completer implements Completion {
             for(String name : context.getCommandRegistry().getCommandNames()) {
                Command command = context.getCommandRegistry().getCommand(name);
                if(command.isAvailable(context) && name.startsWith(procCmd.getCommand())) {
-                  candidates.add(name);
+                  op.addCompletionCandidate(name);
                }
             }
          } else {
@@ -51,12 +50,13 @@ public class Completer implements Completion {
                      break;
                   }
                }
+               List<String> candidates = new ArrayList<>();
                addPrefixMatches(procCmd.getCurrentArgument(), command.getOptions(), candidates);
                command.complete(context, procCmd, candidates);
+               op.addCompletionCandidates(candidates);
             }
          }
       }
-      Collections.sort(candidates);
    }
 
    public static void addPrefixMatches(Argument argument, Collection<String> all, List<String> candidates) {
