@@ -36,6 +36,7 @@
     <xsl:param name="addKrbOpts">false</xsl:param>
     <xsl:param name="addKrbSecDomain">false</xsl:param>
     <xsl:param name="addSecRealm">false</xsl:param>
+    <xsl:param name="addSecRealm2">false</xsl:param>
     <xsl:param name="addVault">false</xsl:param>
     <xsl:param name="addConnection">false</xsl:param>
     <xsl:param name="trace">none</xsl:param>
@@ -219,7 +220,14 @@
         <xsl:if test="$addSecRealm = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
-        <xsl:if test="$addSecRealm != 'false'">
+        <xsl:if test="$addSecRealm != 'false' and $addSecRealm2 != 'false'">
+            <xsl:copy>
+                <xsl:copy-of select="document($addSecRealm)"/>
+                <xsl:copy-of select="document($addSecRealm2)"/>
+                <xsl:apply-templates select="@* | node()"/>
+            </xsl:copy>
+        </xsl:if>
+        <xsl:if test="$addSecRealm != 'false' and $addSecRealm2 = 'false'">
             <xsl:copy>
                 <xsl:copy-of select="document($addSecRealm)"/>
                 <xsl:apply-templates select="@* | node()"/>
