@@ -31,7 +31,7 @@ public final class AttributeDefinition<T> {
    private final AttributeCopier copier;
    private final AttributeInitializer<? extends T> initializer;
    private final AttributeValidator<? super T> validator;
-   private final Class<?> type;
+   private final Class<T> type;
 
    AttributeDefinition(String name, String xmlName, T initialValue, Class<T> type, boolean immutable, boolean autoPersist, AttributeCopier copier, AttributeValidator<? super T> validator, AttributeInitializer<? extends T> initializer) {
       this.name = name;
@@ -53,9 +53,8 @@ public final class AttributeDefinition<T> {
       return xmlName;
    }
 
-   @SuppressWarnings("unchecked")
    public Class<T> getType() {
-      return (Class<T>) type;
+      return type;
    }
 
    public T getDefaultValue() {
@@ -94,11 +93,10 @@ public final class AttributeDefinition<T> {
 
    public static <T> Builder<T> builder(String name, T defaultValue) {
       if (defaultValue != null) {
-         return new Builder(name, defaultValue, defaultValue.getClass());
+         return new Builder<T>(name, defaultValue, (Class<T>) defaultValue.getClass());
       } else {
          throw new CacheConfigurationException("Must specify type when passing null for AttributeDefinition " + name);
       }
-
    }
 
    public static <T> Builder<T> builder(String name, T defaultValue, Class<T> klass) {
@@ -108,7 +106,7 @@ public final class AttributeDefinition<T> {
    public static final class Builder<T> {
       private final String name;
       private final T defaultValue;
-      private final Class<?> type;
+      private final Class<T> type;
 
       private boolean immutable = false;
       private boolean autoPersist = true;
@@ -155,7 +153,7 @@ public final class AttributeDefinition<T> {
       }
 
       public AttributeDefinition<T> build() {
-         return new AttributeDefinition(name, xmlName == null ? Util.xmlify(name) : xmlName, defaultValue, type, immutable, autoPersist, copier, validator, initializer);
+         return new AttributeDefinition<T>(name, xmlName == null ? Util.xmlify(name) : xmlName, defaultValue, type, immutable, autoPersist, copier, validator, initializer);
       }
    }
 
