@@ -116,16 +116,17 @@ public class DefaultPendingLockManager implements PendingLockManager {
    @Override
    public long awaitPendingTransactionsForKey(TxInvocationContext<?> ctx, Object key,
                                               long time, TimeUnit unit) throws InterruptedException {
-      PendingLockPromise pendingLockPromise = pendingLockPromiseMap.remove(ctx.getGlobalTransaction());
+      final GlobalTransaction gtx = ctx.getGlobalTransaction();
+      PendingLockPromise pendingLockPromise = pendingLockPromiseMap.remove(gtx);
       if (trace) {
-         log.tracef("Await for pending transactions using %s", pendingLockPromise);
+         log.tracef("Await for pending transactions for transaction %s using %s", gtx, pendingLockPromise);
       }
       if (pendingLockPromise != null) {
-         return awaitOn(pendingLockPromise, ctx.getGlobalTransaction(), time, unit);
+         return awaitOn(pendingLockPromise, gtx, time, unit);
       }
       final int txTopologyId = getTopologyId(ctx);
       if (txTopologyId != NO_PENDING_CHECK) {
-         return checkForPendingLock(key, ctx.getGlobalTransaction(), txTopologyId, unit.toMillis(time));
+         return checkForPendingLock(key, gtx, txTopologyId, unit.toMillis(time));
       }
 
       if (trace) {
@@ -137,16 +138,17 @@ public class DefaultPendingLockManager implements PendingLockManager {
    @Override
    public long awaitPendingTransactionsForAllKeys(TxInvocationContext<?> ctx, Collection<Object> keys,
                                                   long time, TimeUnit unit) throws InterruptedException {
-      PendingLockPromise pendingLockPromise = pendingLockPromiseMap.remove(ctx.getGlobalTransaction());
+      final GlobalTransaction gtx = ctx.getGlobalTransaction();
+      PendingLockPromise pendingLockPromise = pendingLockPromiseMap.remove(gtx);
       if (trace) {
-         log.tracef("Await for pending transactions using %s", pendingLockPromise);
+         log.tracef("Await for pending transactions for transaction %s using %s", gtx, pendingLockPromise);
       }
       if (pendingLockPromise != null) {
-         return awaitOn(pendingLockPromise, ctx.getGlobalTransaction(), time, unit);
+         return awaitOn(pendingLockPromise, gtx, time, unit);
       }
       final int txTopologyId = getTopologyId(ctx);
       if (txTopologyId != NO_PENDING_CHECK) {
-         return checkForAnyPendingLocks(keys, ctx.getGlobalTransaction(), txTopologyId, unit.toMillis(time));
+         return checkForAnyPendingLocks(keys, gtx, txTopologyId, unit.toMillis(time));
       }
 
       if (trace) {
@@ -345,8 +347,8 @@ public class DefaultPendingLockManager implements PendingLockManager {
    }
 
    private static class PendingTransaction {
-      public final CacheTransaction cacheTransaction;
-      public final Object key;
+      private final CacheTransaction cacheTransaction;
+      private final Object key;
       private final CompletableFuture<Void> keyReleased;
 
       private PendingTransaction(CacheTransaction cacheTransaction, Object key, CompletableFuture<Void> keyReleased) {
