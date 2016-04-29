@@ -9,5 +9,5 @@ package org.infinispan.commons.configuration.attributes;
  * @since 7.2
  */
 public interface AttributeCopier<T> {
-   public abstract T copyAttribute(T attribute);
+   T copyAttribute(T attribute);
 }
