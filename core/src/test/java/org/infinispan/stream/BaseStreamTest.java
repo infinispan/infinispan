@@ -1499,9 +1499,7 @@ private static class ForEachIntInjected implements IntConsumer,
       for (int i = 0; i < range; i++) {
          List<Double> res = createStream(keySet)
                  .sorted().skip(i).collect(Collectors.toList());
-         for (int j = 0; j < range - res.size(); j++) {
-            assertFalse(res.contains(j));
-         }
+         assertEquals(0, IntStream.range(0, range - res.size()).mapToDouble(v -> v).filter(res::contains).count());
       }
    }
 
@@ -1515,9 +1513,7 @@ private static class ForEachIntInjected implements IntConsumer,
       for (int i = 0; i < range; i++) {
          List<Integer> res = createStream(keySet)
                  .sorted().skip(i).collect(Collectors.toList());
-         for (int j = 0; j < range - res.size(); j++) {
-            assertFalse(res.contains(j));
-         }
+         assertEquals(0, IntStream.range(0, range - res.size()).filter(res::contains).count());
       }
    }
 
@@ -1532,9 +1528,7 @@ private static class ForEachIntInjected implements IntConsumer,
          List<Double> res = createStream(keySet)
                  .sorted().limit(i).collect(Collectors.toList());
          assertEquals(i, res.size());
-         for (int j = res.size(); j < range; j++) {
-            assertFalse(res.contains(j));
-         }
+         assertEquals(0, IntStream.range(res.size(), range).mapToDouble(v -> v).filter(res::contains).count());
       }
    }
 
@@ -1549,9 +1543,8 @@ private static class ForEachIntInjected implements IntConsumer,
          List<Integer> res = createStream(keySet)
                  .sorted().limit(i).collect(Collectors.toList());
          assertEquals(i, res.size());
-         for (int j = res.size(); j < range; j++) {
-            assertFalse(res.contains(j));
-         }
+         assertEquals(0, IntStream.range(res.size(), range).filter(res::contains).count());
+
       }
    }
 
