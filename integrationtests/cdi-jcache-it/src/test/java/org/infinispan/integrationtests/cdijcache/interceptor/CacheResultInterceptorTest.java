@@ -8,10 +8,12 @@ import org.infinispan.integrationtests.cdijcache.interceptor.config.Small;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheResultService;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CustomCacheKey;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import javax.cache.annotation.CacheKey;
@@ -27,6 +29,7 @@ import static org.testng.Assert.*;
  * @see javax.cache.annotation.CacheResult
  */
 @Test(groups = "functional", testName = "cdi.test.interceptor.CacheResultInterceptorTest", description = "https://issues.jboss.org/browse/ISPN-3316")
+@Listeners(TestResourceTrackingListener.class)
 public class CacheResultInterceptorTest extends Arquillian {
 
    @Deployment
