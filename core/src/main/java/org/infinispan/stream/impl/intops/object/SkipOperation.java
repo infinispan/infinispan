@@ -16,6 +16,6 @@ public class SkipOperation<S> implements IntermediateOperation<S, Stream<S>, S, 
 
    @Override
    public Stream<S> perform(Stream<S> stream) {
-      return stream.limit(n);
+      return stream.skip(n);
    }
 }
