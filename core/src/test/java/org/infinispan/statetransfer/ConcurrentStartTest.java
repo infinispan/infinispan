@@ -2,12 +2,10 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -15,8 +13,6 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
@@ -26,12 +22,9 @@ import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteReplicateCommand;
-import org.jgroups.Channel;
 import org.jgroups.JChannel;
 import org.testng.annotations.Test;
 
-import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -52,6 +45,9 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(testName = "statetransfer.ConcurrentStartTest", groups = "functional")
 public class ConcurrentStartTest extends MultipleCacheManagersTest {
 
+   public static final String REPL_CACHE_NAME = "repl";
+   public static final String DIST_CACHE_NAME = "dist";
+
    @Override
    protected void createCacheManagers() throws Throwable {
       // The test method will create the cache managers
@@ -62,31 +58,18 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       TestResourceTracker.testThreadStarted(this);
       final CheckPoint checkPoint = new CheckPoint();
 
+      String name1 = TestResourceTracker.getNextNodeName();
+      String name2 = TestResourceTracker.getNextNodeName();
+
       // Create and connect both channels beforehand
       // We need both nodes in the view when the coordinator's ClusterTopologyManagerImpl starts
       // in order to reproduce the ISPN-5106 deadlock
-      JChannel ch1 = new JChannel(JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartTest.class.getName(), new TransportFlags().withPortRange(0)));
-      ch1.setName(TestResourceTracker.getNextNodeName());
-      ch1.connect(ConcurrentStartTest.class.getSimpleName());
-      log.tracef("Channel %s connected: %s", ch1, ch1.getViewAsString());
-      JChannel ch2 = new JChannel(JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartTest.class.getName(), new TransportFlags().withPortRange(1)));
-      ch2.setName(TestResourceTracker.getNextNodeName());
-      ch2.connect(ConcurrentStartTest.class.getSimpleName());
-      log.tracef("Channel %s connected: %s", ch2, ch2.getViewAsString());
+      JChannel ch1 = createChannel(name1, 0);
+      JChannel ch2 = createChannel(name2, 1);
 
       // Use a JGroupsChannelLookup to pass the created channels to the transport
-      GlobalConfigurationBuilder gcb1 = new GlobalConfigurationBuilder();
-      gcb1.transport().nodeName(ch1.getName());
-      gcb1.globalJmxStatistics().allowDuplicateDomains(true);
-      CustomChannelLookup.registerChannel(ch1, gcb1.transport());
-      EmbeddedCacheManager cm1 = new DefaultCacheManager(gcb1.build(), false);
-      registerCacheManager(cm1);
-      GlobalConfigurationBuilder gcb2 = new GlobalConfigurationBuilder();
-      gcb2.transport().nodeName(ch2.getName());
-      gcb2.globalJmxStatistics().allowDuplicateDomains(true);
-      CustomChannelLookup.registerChannel(ch2, gcb2.transport());
-      EmbeddedCacheManager cm2 = new DefaultCacheManager(gcb2.build(), false);
-      registerCacheManager(cm2);
+      EmbeddedCacheManager cm1 = createCacheManager(name1, ch1);
+      EmbeddedCacheManager cm2 = createCacheManager(name2, ch2);
 
       // Install the blocking invocation handlers
       assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm1).getStatus());
@@ -94,14 +77,7 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm2).getStatus());
       replaceInboundInvocationHandler(cm2, checkPoint);
 
-      log.debugf("Channels created. Starting the caches");
-      Configuration replCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
-      Configuration distCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
-      cm1.defineConfiguration("repl", replCfg);
-      cm1.defineConfiguration("dist", distCfg);
-      cm2.defineConfiguration("repl", replCfg);
-      cm2.defineConfiguration("dist", distCfg);
-
+      log.debugf("Cache managers created. Starting the caches");
       Future<Object> repl1Future = fork(new CacheStartCallable(cm1, "repl"));
       Future<Object> repl2Future = fork(new CacheStartCallable(cm2, "repl"));
       Future<Object> dist1Future = fork(new CacheStartCallable(cm1, "dist"));
@@ -134,6 +110,30 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
 
       c1d.put("key", "value");
       assertEquals("value", c2d.get("key"));
+   }
+
+   private EmbeddedCacheManager createCacheManager(String name, JChannel channel) {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.transport().nodeName(name);
+      gcb.globalJmxStatistics().allowDuplicateDomains(true);
+      CustomChannelLookup.registerChannel(channel.getName(), channel, gcb, false);
+      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), false);
+      Configuration replCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();
+      cm.defineConfiguration(REPL_CACHE_NAME, replCfg);
+      Configuration distCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
+      cm.defineConfiguration(DIST_CACHE_NAME, distCfg);
+      registerCacheManager(cm);
+      return cm;
+   }
+
+   private JChannel createChannel(String name, int portRange) throws Exception {
+      JChannel channel = new JChannel(JGroupsConfigBuilder
+            .getJGroupsConfig(ConcurrentStartTest.class.getName(),
+                  new TransportFlags().withPortRange(portRange)));
+      channel.setName(name);
+      channel.connect(ConcurrentStartTest.class.getSimpleName());
+      log.tracef("Channel %s connected: %s", channel, channel.getViewAsString());
+      return channel;
    }
 
    private void replaceInboundInvocationHandler(EmbeddedCacheManager cm, CheckPoint checkPoint) {
@@ -185,39 +185,6 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       @Override
       public void handleFromRemoteSite(String origin, XSiteReplicateCommand command, Reply reply, DeliverOrder order) {
          delegate.handleFromRemoteSite(origin, command, reply, order);
-      }
-   }
-
-   public static class CustomChannelLookup implements JGroupsChannelLookup {
-      private static final Map<String, JChannel> channelMap = CollectionFactory.makeConcurrentMap();
-
-      public static void registerChannel(JChannel channel, TransportConfigurationBuilder tcb) {
-         String nodeName = channel.getName();
-         tcb.defaultTransport();
-         tcb.addProperty(JGroupsTransport.CHANNEL_LOOKUP, CustomChannelLookup.class.getName());
-         tcb.addProperty(CustomChannelLookup.class.getName(), nodeName);
-         channelMap.put(nodeName, channel);
-      }
-
-      @Override
-      public Channel getJGroupsChannel(Properties p) {
-         String nodeName = p.getProperty(CustomChannelLookup.class.getName());
-         return channelMap.remove(nodeName);
-      }
-
-      @Override
-      public boolean shouldConnect() {
-         return false;
-      }
-
-      @Override
-      public boolean shouldDisconnect() {
-         return true;
-      }
-
-      @Override
-      public boolean shouldClose() {
-         return true;
       }
    }
 }

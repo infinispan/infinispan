@@ -727,7 +727,7 @@ public interface Log extends BasicLogger {
    void rebalanceError(String cacheName, Address node, @Cause Throwable cause);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Failed to recover cluster state after the current node became the coordinator", id = 196)
+   @Message(value = "Failed to recover cluster state after the current node became the coordinator (or after merge)", id = 196)
    void failedToRecoverClusterState(@Cause Throwable cause);
 
    @LogMessage(level = WARN)
