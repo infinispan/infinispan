@@ -112,7 +112,7 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public LongStream skip(long n) {
-      LimitLongOperation op = new LimitLongOperation(n);
+      SkipLongOperation op = new SkipLongOperation(n);
       markSkip(IntermediateType.LONG);
       return addIntermediateOperation(op);
    }
