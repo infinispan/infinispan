@@ -619,6 +619,48 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       StreamSupport.stream(spliterator, false).forEach(e -> assertEquals(cache.get(e.getKey()), e.getValue()));
    }
 
+   public void testObjSortedSkipIterator() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      for (int i = 0; i < range; ++i) {
+         Iterator<Map.Entry<Integer, String>> iterator = createStream(entrySet).sorted(
+                 (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).skip(i).iterator();
+         AtomicInteger atomicInteger = new AtomicInteger(i);
+         iterator.forEachRemaining(e -> {
+            assertEquals(atomicInteger.getAndIncrement(), e.getKey().intValue());
+            assertEquals(cache.get(e.getKey()), e.getValue());
+         });
+         assertEquals(range, atomicInteger.get());
+      }
+   }
+
+   public void testObjSortedLimitIterator() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      for (int i = 1; i < range; ++i) {
+         Iterator<Map.Entry<Integer, String>> iterator = createStream(entrySet).sorted(
+                 (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).limit(i).iterator();
+         AtomicInteger atomicInteger = new AtomicInteger();
+         iterator.forEachRemaining(e -> {
+            assertEquals(atomicInteger.getAndIncrement(), e.getKey().intValue());
+            assertEquals(cache.get(e.getKey()), e.getValue());
+         });
+         assertEquals(i, atomicInteger.get());
+      }
+   }
+
    // IntStream tests
 
    static final SerializableToIntFunction<Map.Entry<Integer, String>> toInt = Map.Entry::getKey;
@@ -778,32 +820,32 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       }
    }
 
-private static class ForEachIntInjected implements IntConsumer,
-        CacheAware<Integer, String>, Serializable {
-   private transient Cache<?, ?> cache;
-   private final int cacheOffset;
-   private final int atomicOffset;
+   private static class ForEachIntInjected implements IntConsumer,
+           CacheAware<Integer, String>, Serializable {
+      private transient Cache<?, ?> cache;
+      private final int cacheOffset;
+      private final int atomicOffset;
 
-   private ForEachIntInjected(int cacheOffset, int atomicOffset) {
-      this.cacheOffset = cacheOffset;
-      this.atomicOffset = atomicOffset;
-   }
+      private ForEachIntInjected(int cacheOffset, int atomicOffset) {
+         this.cacheOffset = cacheOffset;
+         this.atomicOffset = atomicOffset;
+      }
 
-   @Override
-   public void injectCache(Cache<Integer, String> cache) {
-      this.cache = cache;
-   }
+      @Override
+      public void injectCache(Cache<Integer, String> cache) {
+         this.cache = cache;
+      }
 
-   @Override
-   public void accept(int value) {
-      Cache<?, ?> cache = getForEachObject(cacheOffset);
-      if (cache != null && this.cache != null && cache.getName().equals(this.cache.getName())) {
-         ((AtomicInteger) getForEachObject(atomicOffset)).addAndGet(value);
-      } else {
-         fail("Did not receive correct cache!");
+      @Override
+      public void accept(int value) {
+         Cache<?, ?> cache = getForEachObject(cacheOffset);
+         if (cache != null && this.cache != null && cache.getName().equals(this.cache.getName())) {
+            ((AtomicInteger) getForEachObject(atomicOffset)).addAndGet(value);
+         } else {
+            fail("Did not receive correct cache!");
+         }
       }
    }
-}
 
    private void testIntOperation(Supplier<Integer> intSupplier, Cache<Integer, String> cache) {
       int range = 10;
@@ -1043,6 +1085,40 @@ private static class ForEachIntInjected implements IntConsumer,
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(0, createStream(entrySet).mapToInt(toInt).min().getAsInt());
+   }
+
+   public void testIntSortedSkip() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      for (int i = 0; i < range; i++) {
+         IntSummaryStatistics stats = createStream(entrySet).mapToInt(toInt)
+                 .sorted().skip(i).summaryStatistics();
+         assertEquals(range - i, stats.getCount());
+         assertEquals(i, stats.getMin());
+         assertEquals(range - 1, stats.getMax());
+         assertEquals(IntStream.range(i, range).sum(), stats.getSum());
+      }
+   }
+
+   public void testIntSortedLimit() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      for (int i = 1; i < range; i++) {
+         IntSummaryStatistics stats = createStream(entrySet).mapToInt(toInt)
+                 .sorted().limit(i).summaryStatistics();
+         assertEquals(i, stats.getCount());
+         assertEquals(0, stats.getMin());
+         assertEquals(i - 1, stats.getMax());
+         assertEquals(IntStream.range(0, i).sum(), stats.getSum());
+      }
    }
 
 
@@ -1470,6 +1546,40 @@ private static class ForEachIntInjected implements IntConsumer,
       assertEquals(0, createStream(entrySet).mapToLong(toLong).min().getAsLong());
    }
 
+   public void testLongSortedSkip() {
+      Cache<Long, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      LongStream.range(0, range).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
+
+      for (int i = 0; i < range; i++) {
+         LongSummaryStatistics stats = createStream(entrySet).mapToLong(toLong)
+                 .sorted().skip(i).summaryStatistics();
+         assertEquals(range - i, stats.getCount());
+         assertEquals(i, stats.getMin());
+         assertEquals(range - 1, stats.getMax());
+         assertEquals(IntStream.range(i, range).sum(), stats.getSum());
+      }
+   }
+
+   public void testLongSortedLimit() {
+      Cache<Long, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      LongStream.range(0, range).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
+
+      for (int i = 1; i < range; i++) {
+         LongSummaryStatistics stats = createStream(entrySet).mapToLong(toLong)
+                 .sorted().limit(i).summaryStatistics();
+         assertEquals(i, stats.getCount());
+         assertEquals(0, stats.getMin());
+         assertEquals(i - 1, stats.getMax());
+         assertEquals(IntStream.range(0, i).sum(), stats.getSum());
+      }
+   }
+
    // DoubleStream tests
 
    static final SerializableToDoubleFunction<Map.Entry<Double, String>> toDouble = Map.Entry::getKey;
@@ -1487,67 +1597,6 @@ private static class ForEachIntInjected implements IntConsumer,
       assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> i > 5 && i < 0));
       assertTrue(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> i < 5));
       assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> Math.floor(i) == i));
-   }
-
-   public void testDoubleSkip() {
-      Cache<Double, String> cache = getCache(0);
-      int range = 10;
-      // First populate the cache with a bunch of values
-      IntStream.range(0, range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
-      CacheSet<Double> keySet = cache.keySet();
-
-      for (int i = 0; i < range; i++) {
-         List<Double> res = createStream(keySet)
-                 .sorted().skip(i).collect(Collectors.toList());
-         assertEquals(range - i, res.size());
-         assertEquals(0, IntStream.range(0, range - res.size()).mapToDouble(v -> v).filter(res::contains).count());
-      }
-   }
-
-   public void testIntegerSkip() {
-      Cache<Integer, String> cache = getCache(0);
-      int range = 10;
-      // First populate the cache with a bunch of values
-      IntStream.range(0, range).forEach(i -> cache.put(i, i + "-value"));
-      CacheSet<Integer> keySet = cache.keySet();
-
-      for (int i = 0; i < range; i++) {
-         List<Integer> res = createStream(keySet)
-                 .sorted().skip(i).collect(Collectors.toList());
-         assertEquals(range - i, res.size());
-         assertEquals(0, IntStream.range(0, range - res.size()).filter(res::contains).count());
-      }
-   }
-
-   public void testDoubleLimit() {
-      Cache<Double, String> cache = getCache(0);
-      int range = 10;
-      // First populate the cache with a bunch of values
-      IntStream.range(0, range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
-      CacheSet<Double> keySet = cache.keySet();
-
-      for (int i = 1; i < range; i++) {
-         List<Double> res = createStream(keySet)
-                 .sorted().limit(i).collect(Collectors.toList());
-         assertEquals(i, res.size());
-         assertEquals(0, IntStream.range(res.size(), range).mapToDouble(v -> v).filter(res::contains).count());
-      }
-   }
-
-   public void testIntegerLimit() {
-      Cache<Integer, String> cache = getCache(0);
-      int range = 10;
-      // First populate the cache with a bunch of values
-      IntStream.range(0, range).forEach(i -> cache.put(i, i + "-value"));
-      CacheSet<Integer> keySet = cache.keySet();
-
-      for (int i = 1; i < range; i++) {
-         List<Integer> res = createStream(keySet)
-                 .sorted().limit(i).collect(Collectors.toList());
-         assertEquals(i, res.size());
-         assertEquals(0, IntStream.range(res.size(), range).filter(res::contains).count());
-
-      }
    }
 
    public void testDoubleAnyMatch() {
@@ -1972,6 +2021,40 @@ private static class ForEachIntInjected implements IntConsumer,
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).min().getAsDouble());
+   }
+
+   public void testDoubleSortedSkip() {
+      Cache<Double, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
+
+      for (int i = 0; i < range; i++) {
+         DoubleSummaryStatistics stats = createStream(entrySet).mapToDouble(toDouble)
+                 .sorted().skip(i).summaryStatistics();
+         assertEquals(range - i, stats.getCount());
+         assertEquals((double) i, stats.getMin());
+         assertEquals((double) range - 1, stats.getMax());
+         assertEquals((double) IntStream.range(i, range).sum(), stats.getSum());
+      }
+   }
+
+   public void testDoubleSortedLimit() {
+      Cache<Double, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
+
+      for (int i = 1; i < range; i++) {
+         DoubleSummaryStatistics stats = createStream(entrySet).mapToDouble(toDouble)
+                 .sorted().limit(i).summaryStatistics();
+         assertEquals(i, stats.getCount());
+         assertEquals(0d, stats.getMin());
+         assertEquals((double) i - 1, stats.getMax());
+         assertEquals((double) IntStream.range(0, i).sum(), stats.getSum());
+      }
    }
 
    // KeySet Tests

@@ -17,6 +17,7 @@ import org.infinispan.stream.impl.intops.primitive.l.MapToDoubleLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.MapToIntLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.MapToObjLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.PeekLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.SkipLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.SortedLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjLongOperation;
@@ -189,7 +190,7 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public LongCacheStream skip(long n) {
-      LimitLongOperation op = new LimitLongOperation(n);
+      SkipLongOperation op = new SkipLongOperation(n);
       markSkip(IntermediateType.LONG);
       return addIntermediateOperation(op);
    }
