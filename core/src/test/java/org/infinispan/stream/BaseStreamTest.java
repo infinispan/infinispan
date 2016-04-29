@@ -1496,12 +1496,11 @@ private static class ForEachIntInjected implements IntConsumer,
       IntStream.range(0, range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
-      int cnt = range;
-      for (int i = 0; i < cnt; i++) {
+      for (int i = 0; i < range; i++) {
          List<Map.Entry<Double, String>> res = createStream(entrySet)
                  .sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey()))
                  .skip(i).collect(Collectors.toList());
-         for (int j = 0; j < cnt - res.size(); j++) {
+         for (int j = 0; j < range - res.size(); j++) {
             String targetValue = (double) j + "-value";
             assertFalse(res.stream().anyMatch(v -> v.getValue().equals(targetValue)));
          }
@@ -1515,13 +1514,12 @@ private static class ForEachIntInjected implements IntConsumer,
       IntStream.range(0, range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
-      int cnt = range;
-      for (int i = 1; i < cnt; i++) {
+      for (int i = 1; i < range; i++) {
          List<Map.Entry<Double, String>> res = createStream(entrySet)
                  .sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey()))
                  .limit(i).collect(Collectors.toList());
          assertEquals(i, res.size());
-         for (int j = res.size(); j < cnt; j++) {
+         for (int j = res.size(); j < range; j++) {
             String targetValue = (double) j + "-value";
             assertFalse(res.stream().anyMatch(v -> v.getValue().equals(targetValue)));
          }
