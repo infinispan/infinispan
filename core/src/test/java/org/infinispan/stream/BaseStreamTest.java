@@ -1489,6 +1489,48 @@ private static class ForEachIntInjected implements IntConsumer,
       assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> Math.floor(i) == i));
    }
 
+   public void testSkip() {
+      Cache<Double, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0,range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
+
+      int cnt = range;
+      for(int i = 0;i<cnt;i++){
+         List<Map.Entry<Double,String>> res = createStream(entrySet)
+                 .sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey()))
+                 .skip(i).collect(Collectors.toList());
+         for(int j = 0;j< cnt - res.size();j++){
+            String targetValue = (double)j + "-value";
+            assertFalse(res.stream().anyMatch(v -> v.getValue().equals(targetValue)));
+         }
+      }
+   }
+
+   public void testLimit() {
+      Cache<Double, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0,range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
+      List<Map.Entry<Double,String>> total = createStream(entrySet)
+              .sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey()))
+              .collect(Collectors.toList());
+
+      int cnt = range;
+      for(int i = 1;i<cnt;i++){
+         List<Map.Entry<Double,String>> res = createStream(entrySet)
+                 .sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey()))
+                 .limit(i).collect(Collectors.toList());
+         assertEquals(i,res.size());
+         for(int j = res.size();j< cnt;j++){
+            String targetValue = (double)j + "-value";
+            assertFalse(res.stream().anyMatch(v -> v.getValue().equals(targetValue)));
+         }
+      }
+   }
+
    public void testDoubleAnyMatch() {
       Cache<Double, String> cache = getCache(0);
       int range = 10;
