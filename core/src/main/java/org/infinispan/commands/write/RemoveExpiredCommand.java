@@ -139,7 +139,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
       commandInvocationId = (CommandInvocationId) args[i++];
       key = args[i++];
       value = args[i++];
-      lifespan = (long) args[i++];
+      lifespan = (Long) args[i++];
    }
 
    @Override
