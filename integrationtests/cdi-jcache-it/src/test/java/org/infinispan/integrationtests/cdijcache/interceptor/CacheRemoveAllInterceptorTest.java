@@ -5,10 +5,12 @@ import org.infinispan.cdi.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Config;
 import org.infinispan.integrationtests.cdijcache.interceptor.config.Custom;
 import org.infinispan.integrationtests.cdijcache.interceptor.service.CacheRemoveAllService;
+import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import javax.cache.CacheException;
@@ -24,6 +26,7 @@ import static org.testng.Assert.assertTrue;
  * @see javax.cache.annotation.CacheRemoveAll
  */
 @Test(groups = "functional", testName = "cdi.test.interceptor.CacheRemoveAllInterceptorTest")
+@Listeners(TestResourceTrackingListener.class)
 public class CacheRemoveAllInterceptorTest extends Arquillian {
 
    @Deployment
