@@ -3,8 +3,10 @@ package org.infinispan.jcache.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Objects;
 import java.util.Properties;
 
+import javax.cache.Cache;
 import javax.cache.CacheException;
 import javax.cache.configuration.Configuration;
 import javax.cache.spi.CachingProvider;
@@ -90,17 +92,49 @@ public class JCacheManager extends AbstractJCacheManager {
          throw log.cacheCreationFailed(cacheName, ex);
       }
 
+      return createJCache(cacheName, adapter);
+   }
+
+   private <K, V> AbstractJCache<K, V> createJCache(String cacheName, ConfigurationAdapter<K, V> adapter) {
+      RemoteCache<K, V> ispnCache = getRemoteCache(cm, cacheName);
+      RemoteCache<K, V> ispnCacheForceReturnValue = getRemoteCache(cmForceReturnValue, cacheName);
+      return new JCache<K, V>(ispnCache, ispnCacheForceReturnValue, this, adapter);
+   }
+
+   private <K, V> RemoteCache<K, V> getRemoteCache(RemoteCacheManager cm, String cacheName) {
       RemoteCache<K, V> ispnCache = cm.getCache(cacheName);
       if (ispnCache == null) {
          throw log.cacheNotFound(cacheName);
       }
+      return ispnCache;
+   }
 
+   @Override
+   public <K, V> Cache<K, V> getCache(String cacheName) {
+      Cache<K, V> cache = super.getCache(cacheName);
+      return Objects.isNull(cache)
+            ? createRegisterJCache(cacheName)
+            : cache;
+   }
+
+   public <K, V> Cache<K, V> createRegisterJCache(String cacheName) {
+      RemoteCache<K, V> ispnCache = cm.getCache(cacheName);
       RemoteCache<K, V> ispnCacheForceReturnValue = cmForceReturnValue.getCache(cacheName);
-      if (ispnCacheForceReturnValue == null) {
-         throw log.cacheNotFound(cacheName);
+      if (ispnCache != null && cmForceReturnValue != null) {
+         ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create();
+         JCache<K, V> jcache = new JCache<>(ispnCache, ispnCacheForceReturnValue, this, adapter);
+         registerPredefinedCache(cacheName, jcache);
+         return jcache;
       }
+      return null;
+   }
 
-      return new JCache<K, V>(ispnCache, ispnCacheForceReturnValue, this, adapter);
+   @Override
+   public <K, V> Cache<K, V> getCache(String cacheName, Class<K> keyType, Class<V> valueType) {
+      Cache<K, V> cache = super.getCache(cacheName, keyType, valueType);
+      return Objects.isNull(cache)
+            ? createRegisterJCache(cacheName)
+            : cache;
    }
 
    @Override
