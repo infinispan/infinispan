@@ -1489,39 +1489,68 @@ private static class ForEachIntInjected implements IntConsumer,
       assertFalse(createStream(entrySet).mapToDouble(toDouble).allMatch(i -> Math.floor(i) == i));
    }
 
-   public void testSkip() {
+   public void testDoubleSkip() {
       Cache<Double, String> cache = getCache(0);
       int range = 10;
       // First populate the cache with a bunch of values
       IntStream.range(0, range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
-      CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
+      CacheSet<Double> keySet = cache.keySet();
 
       for (int i = 0; i < range; i++) {
-         List<Map.Entry<Double, String>> res = createStream(entrySet)
-                 .sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey()))
-                 .skip(i).collect(Collectors.toList());
+         List<Double> res = createStream(keySet)
+                 .sorted().skip(i).collect(Collectors.toList());
          for (int j = 0; j < range - res.size(); j++) {
-            String targetValue = (double) j + "-value";
-            assertFalse(res.stream().anyMatch(v -> v.getValue().equals(targetValue)));
+            assertFalse(res.contains(j));
          }
       }
    }
 
-   public void testLimit() {
+   public void testIntegerSkip() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Integer> keySet = cache.keySet();
+
+      for (int i = 0; i < range; i++) {
+         List<Integer> res = createStream(keySet)
+                 .sorted().skip(i).collect(Collectors.toList());
+         for (int j = 0; j < range - res.size(); j++) {
+            assertFalse(res.contains(j));
+         }
+      }
+   }
+
+   public void testDoubleLimit() {
       Cache<Double, String> cache = getCache(0);
       int range = 10;
       // First populate the cache with a bunch of values
       IntStream.range(0, range).mapToDouble(value -> value).forEach(i -> cache.put(i, i + "-value"));
-      CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
+      CacheSet<Double> keySet = cache.keySet();
 
       for (int i = 1; i < range; i++) {
-         List<Map.Entry<Double, String>> res = createStream(entrySet)
-                 .sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey()))
-                 .limit(i).collect(Collectors.toList());
+         List<Double> res = createStream(keySet)
+                 .sorted().limit(i).collect(Collectors.toList());
          assertEquals(i, res.size());
          for (int j = res.size(); j < range; j++) {
-            String targetValue = (double) j + "-value";
-            assertFalse(res.stream().anyMatch(v -> v.getValue().equals(targetValue)));
+            assertFalse(res.contains(j));
+         }
+      }
+   }
+
+   public void testIntegerLimit() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).forEach(i -> cache.put(i, i + "-value"));
+      CacheSet<Integer> keySet = cache.keySet();
+
+      for (int i = 1; i < range; i++) {
+         List<Integer> res = createStream(keySet)
+                 .sorted().limit(i).collect(Collectors.toList());
+         assertEquals(i, res.size());
+         for (int j = res.size(); j < range; j++) {
+            assertFalse(res.contains(j));
          }
       }
    }
