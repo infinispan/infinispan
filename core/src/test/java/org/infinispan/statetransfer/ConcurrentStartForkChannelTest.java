@@ -99,6 +99,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       // but in a test it's easy to produce the correct payload.
       DefaultCacheManager manager = new DefaultCacheManager(true);
       try {
+         manager.getGlobalComponentRegistry().start();
          Method getOrCreateComponent = ReflectionUtil
                .findMethod(GlobalComponentRegistry.class, "getOrCreateComponent",
                      new Class[]{Class.class, String.class});
