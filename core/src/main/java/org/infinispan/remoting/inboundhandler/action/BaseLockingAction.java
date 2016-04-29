@@ -24,7 +24,7 @@ public abstract class BaseLockingAction implements Action {
          newUpdater(BaseLockingAction.class, InternalState.class, "internalState");
 
    private final ClusteringDependentLogic clusteringDependentLogic;
-   protected volatile InternalState internalState;
+   private volatile InternalState internalState;
 
    public BaseLockingAction(ClusteringDependentLogic clusteringDependentLogic) {
       this.clusteringDependentLogic = clusteringDependentLogic;

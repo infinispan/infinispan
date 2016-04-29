@@ -63,6 +63,11 @@ public class PendingTxAction extends BaseLockingAction implements PendingLockLis
       final long timeout = state.getTimeout();
       final List<Object> keysToLock = getAndUpdateFilteredKeys(state);
 
+      if (keysToLock.isEmpty()) {
+         cas(InternalState.CHECKING, InternalState.READY);
+         return ActionStatus.READY;
+      }
+
       RemoteLockCommand command = state.getCommand();
       if (command instanceof PrepareCommand && ((PrepareCommand) command).isRetriedCommand()) {
          //clear the backup locks
