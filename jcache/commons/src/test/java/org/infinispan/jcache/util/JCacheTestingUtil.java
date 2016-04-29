@@ -67,4 +67,8 @@ public class JCacheTestingUtil {
       return manager.createCache(cacheName, new MutableConfiguration());
    }
 
+   public static CacheManager createCacheManager(CachingProvider provider, Class invoker, String cacheName, Properties properties) {
+      return provider.getCacheManager(URI.create(invoker.getName()), new TestClassLoader(Thread.currentThread().getContextClassLoader()), properties);
+   }
+
 }
