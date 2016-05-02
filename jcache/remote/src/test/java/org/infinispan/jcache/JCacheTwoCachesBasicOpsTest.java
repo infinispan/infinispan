@@ -4,36 +4,35 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.jcache.util.JCacheTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import javax.cache.Cache;
+import javax.cache.CacheManager;
 import javax.cache.Caching;
 import java.lang.reflect.Method;
 import java.util.Properties;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.jcache.util.JCacheTestingUtil.createCacheWithProperties;
+import static org.infinispan.jcache.util.JCacheTestingUtil.createCacheManager;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * @author Matej Cimbora
  */
 @Test(testName = "org.infinispan.jcache.JCacheTwoCachesBasicOpsTest", groups = "functional")
-@CleanupAfterMethod
 public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
 
+   public static final String CACHE_NAME = "jcache-remote-cache";
    private HotRodServer hotRodServer1;
    private HotRodServer hotRodServer2;
-   private Cache cache1;
-   private Cache cache2;
+   private CacheManager cm1;
+   private CacheManager cm2;
    private ClassLoader testSpecificClassLoader;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-
-      createClusteredCaches(2, "default", hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC)));
+      createClusteredCaches(2, CACHE_NAME, hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC)));
 
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(0));
       hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(1));
@@ -41,11 +40,11 @@ public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
 
       Properties properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", hotRodServer1.getHost() + ":" + hotRodServer1.getPort());
-      cache1 = createCacheWithProperties(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, "default", properties);
+      cm1 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
 
       properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", hotRodServer2.getHost() + ":" + hotRodServer2.getPort());
-      cache2 = createCacheWithProperties(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, "default", properties);
+      cm2 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
 
       waitForClusterToForm("default");
    }
@@ -60,11 +59,11 @@ public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
 
    @Override
    public Cache getCache1(Method m) {
-      return cache1;
+      return cm1.getCache(CACHE_NAME);
    }
 
    @Override
    public Cache getCache2(Method m) {
-      return cache2;
+      return cm2.getCache(CACHE_NAME);
    }
 }
