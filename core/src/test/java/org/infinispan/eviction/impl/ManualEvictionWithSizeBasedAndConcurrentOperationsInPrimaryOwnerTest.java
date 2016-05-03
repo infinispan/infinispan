@@ -23,7 +23,6 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jboss.util.NotImplementedException;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -511,12 +510,12 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       @Override
       public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry< K, V>> action)
             throws InterruptedException {
-         throw new NotImplementedException();
+         throw new UnsupportedOperationException();
       }
 
       @Override
       public void executeTask(KeyValueFilter<? super K, ? super V> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
-         throw new NotImplementedException();
+         throw new UnsupportedOperationException();
       }
 
       private void run(Runnable runnable) {

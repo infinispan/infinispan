@@ -5,7 +5,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.jboss.util.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -137,11 +136,11 @@ public class QueryableDataContainer implements DataContainer<Object, Object> {
    @Override
    public void executeTask(final KeyFilter<? super Object> filter, BiConsumer<? super Object, InternalCacheEntry<Object, Object>> action)
          throws InterruptedException {
-      throw new NotImplementedException();
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public void executeTask(final KeyValueFilter<? super Object, ? super Object> filter, BiConsumer<? super Object, InternalCacheEntry<Object, Object>> action) throws InterruptedException {
-      throw new NotImplementedException();
+      throw new UnsupportedOperationException();
    }
 }
