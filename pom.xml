@@ -68,8 +68,6 @@
       <module>demos/distexec</module>
       <module>demos/lucene-directory-demo</module>
       <module>demos/gridfs-webdav</module>
-      <module>demos/nearcache</module>
-      <module>demos/nearcache-client</module>
       <module>cdi</module>
       <module>cdi/common</module>
       <module>cdi/embedded</module>

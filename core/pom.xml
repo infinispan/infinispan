@@ -53,30 +53,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss.naming</groupId>
-         <artifactId>jnp-client</artifactId>
-         <scope>test</scope>
-         <exclusions>
-            <exclusion>
-               <groupId>org.jboss.logging</groupId>
-               <artifactId>jboss-logging-spi</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss.naming</groupId>
-         <artifactId>jnpserver</artifactId>
-         <scope>test</scope>
-         <exclusions>
-            <exclusion>
-               <groupId>org.jboss.logging</groupId>
-               <artifactId>jboss-logging-spi</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-
-      <dependency>
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-math</artifactId>
          <scope>test</scope>
