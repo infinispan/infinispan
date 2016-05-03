@@ -13,17 +13,16 @@ import org.infinispan.registry.InternalCacheRegistry
 import org.infinispan.remoting.rpc.RpcManager
 import org.infinispan.server.core.ServerConstants
 import org.infinispan.server.hotrod.OperationStatus._
-import org.infinispan.server.hotrod.logging.Log
 
 /**
  * Invokes operations against the cache based on the state kept during decoding process
  *
  */
-class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log {
+class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
 
    type BytesResponse = Bytes => Response
 
-   val isTrace = isTraceEnabled
+   val isTrace = CacheDecodeContextLog.log.isTraceEnabled
 
    @scala.beans.BeanProperty
    var error: Throwable = _
@@ -42,16 +41,16 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
     def createExceptionResponse(e: Throwable): (ErrorResponse) = {
       e match {
          case i: InvalidMagicIdException =>
-            logExceptionReported(i)
+            CacheDecodeContextLog.log.exceptionReported(i)
             new ErrorResponse(0, 0, "", 1, InvalidMagicOrMsgId, 0, i.toString)
          case e: HotRodUnknownOperationException =>
-            logExceptionReported(e)
+            CacheDecodeContextLog.log.exceptionReported(e)
             new ErrorResponse(e.version, e.messageId, "", 1, UnknownOperation, 0, e.toString)
          case u: UnknownVersionException =>
-            logExceptionReported(u)
+            CacheDecodeContextLog.log.exceptionReported(u)
             new ErrorResponse(u.version, u.messageId, "", 1, UnknownVersion, 0, u.toString)
          case r: RequestParsingException =>
-            logExceptionReported(r)
+            CacheDecodeContextLog.log.exceptionReported(r)
             val msg =
                if (r.getCause == null)
                   r.toString
@@ -60,11 +59,11 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
             new ErrorResponse(r.version, r.messageId, "", 1, ParseError, 0, msg)
          case i: IllegalStateException =>
             // Some internal server code could throw this, so make sure it's logged
-            logExceptionReported(i)
+            CacheDecodeContextLog.log.exceptionReported(i)
             decoder.createErrorResponse(header, i)
          case t: Throwable if decoder != null => decoder.createErrorResponse(header, t)
          case t: Throwable =>
-            logErrorBeforeReadingRequest(t)
+            CacheDecodeContextLog.log.exceptionReported(t)
             new ErrorResponse(0, 0, "", 1, ServerError, 1, t.toString)
       }
    }
