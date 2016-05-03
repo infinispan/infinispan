@@ -58,7 +58,8 @@ class PostgresTableManager extends AbstractTableManager {
    @Override
    public boolean isUpsertSupported() {
       // ON CONFLICT added in Postgres 9.5
-      return super.isUpsertSupported() && metaData.getMajorVersion() > 8 && metaData.getMinorVersion() > 4;
+      return super.isUpsertSupported() && (metaData.getMajorVersion() >= 10 ||
+            (metaData.getMajorVersion() == 9 && metaData.getMinorVersion() >= 5));
    }
 
    @Override
