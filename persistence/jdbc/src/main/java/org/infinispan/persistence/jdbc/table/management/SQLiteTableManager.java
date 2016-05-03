@@ -19,7 +19,8 @@ class SQLiteTableManager extends AbstractTableManager {
    @Override
    public boolean isUpsertSupported() {
       // OR/ON CONFLICT introduced in 3.8.11
-      return super.isUpsertSupported() && metaData.getMajorVersion() > 2 && metaData.getMinorVersion() > 7;
+      return super.isUpsertSupported() && (metaData.getMajorVersion() >= 4 ||
+                                                 (metaData.getMajorVersion() >= 3 && metaData.getMinorVersion() >= 9));
    }
 
    @Override
