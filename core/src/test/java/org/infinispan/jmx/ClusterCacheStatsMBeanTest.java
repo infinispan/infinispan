@@ -63,7 +63,7 @@ public class ClusterCacheStatsMBeanTest extends MultipleCacheManagersTest {
       cache1.put("a3", "b3");
       cache1.put("a4", "b4");
 
-      assertAttributeValue(mBeanServer, clusterStats, "NumberOfEntries", 8);
+      assertAttributeValue(mBeanServer, clusterStats, "NumberOfEntries", 4);
       assertAttributeValue(mBeanServer, clusterStats, "Stores", 4);
       assertAttributeValue(mBeanServer, clusterStats, "Evictions", 0);
       assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "AverageWriteTime", 0);

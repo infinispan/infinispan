@@ -1,7 +1,6 @@
 package org.infinispan.stats.impl;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
@@ -76,7 +76,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    public static final long DEFAULT_STALE_STATS_THRESHOLD = 3000;
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatsImpl.class);
-   private transient Cache<?, ?> cache;
+   private transient AdvancedCache<?, ?> cache;
    private transient DefaultExecutorService des;
    private TimeService ts;
    private boolean statisticsEnabled = false;
@@ -99,22 +99,22 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    private double hitRatio;
 
    //LockManager
-   int numberOfLocksHeld;
-   int numberOfLocksAvailable;
+   private int numberOfLocksHeld;
+   private int numberOfLocksAvailable;
 
    //invalidation, passivation activation
-   long invalidations;
-   long activations;
-   long passivations;
+   private long invalidations;
+   private long activations;
+   private long passivations;
 
    //cacheloader metrics
-   long cacheLoaderLoads;
-   long cacheLoaderMisses;
-   long cacheWriterStores;
+   private long cacheLoaderLoads;
+   private long cacheLoaderMisses;
+   private long cacheWriterStores;
 
    @Inject
    public void injectDependencies(Cache<?, ?> cache, TimeService ts, Configuration configuration) {
-      this.cache = cache;
+      this.cache = cache.getAdvancedCache();
       this.ts = ts;
       this.statisticsEnabled = configuration.jmxStatistics().enabled();
    }
@@ -518,16 +518,15 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       }
    }
 
-   protected boolean launchNewDistTask() {
+   private boolean launchNewDistTask() {
       long duration = ts.timeDuration(statsUpdateTimestamp, ts.time(), TimeUnit.MILLISECONDS);
       return duration > staleStatsTreshold;
    }
 
-   protected synchronized void fetchClusterWideStatsIfNeeded() {
+   private synchronized void fetchClusterWideStatsIfNeeded() {
       if (launchNewDistTask()) {
-         List<CompletableFuture<Map<String, Number>>> responseList = Collections.emptyList();
          try {
-            responseList = des.submitEverywhere(new DistributedCacheStatsCallable());
+            List<CompletableFuture<Map<String, Number>>> responseList = des.submitEverywhere(new DistributedCacheStatsCallable());
             updateFieldsFromResponseMap(responseList);
          } catch (Exception e) {
             log.warn("Could not execute cluster wide cache stats operation ", e);
@@ -545,7 +544,9 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       evictions = addLongAttributes(responseList, EVICTIONS);
       hits = addLongAttributes(responseList, HITS);
       misses = addLongAttributes(responseList, MISSES);
-      numberOfEntries = addLongAttributes(responseList, NUMBER_OF_ENTRIES);
+      numberOfEntries = getCacheMode(cache).isReplicated() ?
+            cache.getStats().getCurrentNumberOfEntries() :
+            addLongAttributes(responseList, NUMBER_OF_ENTRIES);
       removeHits = addLongAttributes(responseList, REMOVE_HITS);
       removeMisses = addLongAttributes(responseList, REMOVE_MISSES);
       stores = addLongAttributes(responseList, STORES);
@@ -638,8 +639,12 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       return hitRatio;
    }
 
-   public static <T extends SequentialInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?,?> cache, Class<T> interceptorClass) {
+   private static <T extends SequentialInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?,?> cache, Class<T> interceptorClass) {
       return interceptorClass.cast(cache.getSequentialInterceptorChain().findInterceptorExtending(interceptorClass));
+   }
+
+   private static CacheMode getCacheMode(Cache cache) {
+      return cache.getCacheConfiguration().clustering().cacheMode();
    }
 
    private static class DistributedCacheStatsCallable implements
@@ -655,7 +660,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       @Override
       public Map<String, Number> call() throws Exception {
 
-         Map<String, Number> map = new HashMap<String, Number>();
+         Map<String, Number> map = new HashMap<>();
          Stats stats = remoteCache.getStats();
          map.put(AVERAGE_READ_TIME, stats.getAverageReadTime());
          map.put(AVERAGE_WRITE_TIME, stats.getAverageWriteTime());
@@ -663,9 +668,11 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
          map.put(EVICTIONS, stats.getEvictions());
          map.put(HITS, stats.getHits());
          map.put(MISSES, stats.getMisses());
-         if (isDistributed()) {
+         final CacheMode cacheMode = getCacheMode(remoteCache);
+         //for replicated caches, we don't need to send the number of entries since it is the same in all the nodes.
+         if (cacheMode.isDistributed()) {
             map.put(NUMBER_OF_ENTRIES, stats.getCurrentNumberOfEntries() / numOwners());
-         } else {
+         } else if (!cacheMode.isReplicated()){
             map.put(NUMBER_OF_ENTRIES, stats.getCurrentNumberOfEntries());
          }
          map.put(STORES, stats.getStores());
@@ -729,10 +736,6 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       @Override
       public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
          remoteCache = cache.getAdvancedCache();
-      }
-
-      private boolean isDistributed(){
-         return remoteCache.getCacheConfiguration().clustering().cacheMode().isDistributed();
       }
 
       private int numOwners(){
