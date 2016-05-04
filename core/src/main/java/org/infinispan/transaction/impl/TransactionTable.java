@@ -18,7 +18,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -53,11 +52,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
@@ -92,15 +88,13 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    protected Configuration configuration;
    protected InvocationContextFactory icf;
    protected TransactionCoordinator txCoordinator;
-   protected TransactionFactory txFactory;
+   private TransactionFactory txFactory;
    protected RpcManager rpcManager;
    protected CommandsFactory commandsFactory;
    protected ClusteringDependentLogic clusteringLogic;
-   private InterceptorChain invoker;
    private CacheNotifier notifier;
    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    private CompletedTransactionsInfo completedTransactionsInfo;
-   private ScheduledExecutorService cleanupExecutor;
    private String cacheName;
    private TimeService timeService;
    private CacheManagerNotifier cacheManagerNotifier;
@@ -116,7 +110,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration, InvocationContextFactory icf,
-         InterceptorChain invoker, CacheNotifier notifier, TransactionFactory gtf,
+         CacheNotifier notifier, TransactionFactory gtf,
          TransactionCoordinator txCoordinator,
          TransactionSynchronizationRegistry transactionSynchronizationRegistry,
          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache,
@@ -126,7 +120,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icf = icf;
-      this.invoker = invoker;
       this.notifier = notifier;
       this.txFactory = gtf;
       this.txCoordinator = txCoordinator;
@@ -143,13 +136,12 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    @Start(priority = 9) // Start before cache loader manager
-   @SuppressWarnings("unused")
    public void start() {
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       //use the IdentityEquivalence because some Transaction implementation does not have a stable hash code function
       //and it can cause some leaks in the concurrent map.
       localTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel,
-            new IdentityEquivalence<Transaction>(),
+                                                              new IdentityEquivalence<>(),
             AnyEquivalence.getInstance());
       globalToLocalTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
 
@@ -157,17 +149,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       if (clustered && transactional) {
          minTopologyRecalculationLock = new ReentrantLock();
          remoteTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-
-         ThreadFactory tf = new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-               String address = rpcManager != null ? rpcManager.getTransport().getAddress().toString() : "local";
-               Thread th = new Thread(r, "TxCleanupService," + cacheName + "," + address);
-               th.setDaemon(true);
-               return th;
-            }
-         };
-         cleanupExecutor = Executors.newSingleThreadScheduledExecutor(tf);
 
          notifier.addListener(this);
          cacheManagerNotifier.addListener(this);
@@ -178,19 +159,10 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
             // Periodically run a task to cleanup the transaction table of completed transactions.
             long interval = configuration.transaction().reaperWakeUpInterval();
-            cleanupExecutor.scheduleAtFixedRate(new Runnable() {
-               @Override
-               public void run() {
-                  completedTransactionsInfo.cleanupCompletedTransactions();
-               }
-            }, interval, interval, TimeUnit.MILLISECONDS);
-
-            cleanupExecutor.scheduleAtFixedRate(new Runnable() {
-               @Override
-               public void run() {
-                  cleanupTimedOutTransactions();
-               }
-            }, interval, interval, TimeUnit.MILLISECONDS);
+            timeoutExecutor.scheduleAtFixedRate(() -> completedTransactionsInfo.cleanupCompletedTransactions(),
+                                                interval, interval, TimeUnit.MILLISECONDS);
+            timeoutExecutor.scheduleAtFixedRate(this::cleanupTimedOutTransactions,
+                                                interval, interval, TimeUnit.MILLISECONDS);
          }
       }
 
@@ -221,9 +193,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private void stop() {
       running = false;
       cacheManagerNotifier.removeListener(this);
-      if (cleanupExecutor != null)
-         cleanupExecutor.shutdownNow();
-
       if (clustered) {
          notifier.removeListener(this);
          currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID; // indicate that the cache has stopped
@@ -327,7 +296,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
    }
 
-   public void cleanupTimedOutTransactions() {
+   private void cleanupTimedOutTransactions() {
       if (trace) log.tracef("About to cleanup remote transactions older than %d ms", configuration.transaction().completedTxTimeout());
       long beginning = timeService.time();
       long cutoffCreationTime = beginning - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
@@ -349,14 +318,12 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
 
       // Rollback the orphaned transactions and release any held locks.
-      for (GlobalTransaction gtx : toKill) {
-         killTransaction(gtx);
-      }
+      toKill.forEach(this::killTransaction);
    }
 
    private void killTransaction(GlobalTransaction gtx) {
       RollbackCommand rc = new RollbackCommand(cacheName, gtx);
-      rc.init(invoker, icf, TransactionTable.this);
+      commandsFactory.initializeReplicableCommand(rc, false);
       try {
          rc.perform(null);
          if (trace) log.tracef("Rollback of transaction %s complete.", gtx);
@@ -443,7 +410,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       return localTransaction != null && (removeLocalTransactionInternal(localTransaction.getTransaction()) != null);
    }
 
-   protected final LocalTransaction removeLocalTransactionInternal(Transaction tx) {
+   private LocalTransaction removeLocalTransactionInternal(Transaction tx) {
       LocalTransaction localTx = localTransactions.get(tx);
       if (localTx != null) {
          globalToLocalTransactions.remove(localTx.getGlobalTransaction());
@@ -551,18 +518,10 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    @ViewChanged
    public void onViewChange(final ViewChangedEvent e) {
-      try {
-         cleanupExecutor.submit(new Callable<Void>() {
-            public Void call() {
-               cleanupLeaverTransactions(e.getNewMembers());
-               return null;
-            }
+         timeoutExecutor.submit((Callable<Void>) () -> {
+            cleanupLeaverTransactions(e.getNewMembers());
+            return null;
          });
-      } catch (RejectedExecutionException x) {
-         if (!cleanupExecutor.isShutdown())
-            throw x;
-         // Otherwise we are shutting down, ignore the exception
-      }
    }
 
    /**
@@ -626,20 +585,16 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
 
       if (remoteTransactions != null) {
-         Future<?> remoteTxsFuture = timeoutExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-               int transactions = 0;
-               for (RemoteTransaction tx : remoteTransactions.values()) {
-                  // By synchronizing on the transaction we are waiting for in-progress commands affecting
-                  // this transaction (and synchronizing on it in TransactionSynchronizerInterceptor).
-                  synchronized (tx) {
-                     // Don't actually roll back the transaction, it would just delay the shutdown
-                     tx.markForRollback(true);
-                  }
-                  if (Thread.currentThread().isInterrupted())
-                     break;
+         Future<?> remoteTxsFuture = timeoutExecutor.submit(() -> {
+            for (RemoteTransaction tx : remoteTransactions.values()) {
+               // By synchronizing on the transaction we are waiting for in-progress commands affecting
+               // this transaction (and synchronizing on it in TransactionSynchronizerInterceptor).
+               synchronized (tx) {
+                  // Don't actually roll back the transaction, it would just delay the shutdown
+                  tx.markForRollback(true);
                }
+               if (Thread.currentThread().isInterrupted())
+                  break;
             }
          });
 
@@ -811,9 +766,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             }
 
             // Finally, remove nodes that are no longer members and don't have any "active" completed transactions.
-            for (Address e : leavers) {
-               nodeMaxPrunedTxIds.remove(e);
-            }
+            leavers.forEach(nodeMaxPrunedTxIds::remove);
 
             long duration = timeService.timeDuration(beginning, TimeUnit.MILLISECONDS);
 
