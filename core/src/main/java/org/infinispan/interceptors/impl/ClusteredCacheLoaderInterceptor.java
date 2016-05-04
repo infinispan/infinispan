@@ -42,6 +42,36 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    }
 
    @Override
+   protected boolean skipLoadForFunctionalWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
+      // the custom loading behaviour for functional commands happens only in DIST mode:
+      if (distributed
+            // TODO: functional API is not yet implemented for TX mode
+            && !transactional) {
+         /*
+          * Functional API in DIST: if we're the originator, we load only when
+          * we're the primary owner because the primary owner is responsible for
+          * replicating the command to other owners - and if we're not the
+          * primary owner, we forward it to one. And if we're not the
+          * originator, then this is either forwarded from non-primary owner, or
+          * replicated by primary owner to secondary owners, and the semantics
+          * of Functional API require that we must load.
+          */
+         if ((ctx.isOriginLocal() ? !cdl.localNodeIsPrimaryOwner(key) : !cdl.localNodeIsOwner(key))
+               // TODO Do we replicate CACHE_MODE_LOCAL commands?
+               && !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+            if (trace) {
+               log.tracef("Skip load for functional command %s. This node is not an owner of %s", cmd, key);
+            }
+            return true;
+         } else {
+            // we can short-circuit here for we must load and no other condition will change it
+            return false;
+         }
+      }
+      return super.skipLoadForFunctionalWriteCommand(cmd, key, ctx);
+   }
+
+   @Override
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
       if (!cmd.alwaysReadsExistingValues()) {
          if (transactional) {
