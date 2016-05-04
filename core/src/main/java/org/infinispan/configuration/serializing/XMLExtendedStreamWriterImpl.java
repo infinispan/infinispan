@@ -1,15 +1,12 @@
 package org.infinispan.configuration.serializing;
 
-import java.lang.reflect.UndeclaredThrowableException;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Spliterator;
-
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.util.ArrayDeque;
+import java.util.Iterator;
 
 /**
  * XMLExtendedStreamWriterImpl.

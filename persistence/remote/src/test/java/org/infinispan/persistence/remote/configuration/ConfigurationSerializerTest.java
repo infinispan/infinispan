@@ -1,6 +1,8 @@
 package org.infinispan.persistence.remote.configuration;
 
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
+import org.testng.AssertJUnit;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -12,5 +14,13 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       return new Object[][] {
             {"remote-cl-config.xml"}
       };
+   }
+
+   @Override
+   protected void compareStoreConfiguration(String name, StoreConfiguration beforeStore, StoreConfiguration afterStore) {
+      super.compareStoreConfiguration(name, beforeStore, afterStore);
+      RemoteStoreConfiguration before = (RemoteStoreConfiguration) beforeStore;
+      RemoteStoreConfiguration after = (RemoteStoreConfiguration) afterStore;
+      AssertJUnit.assertEquals("Wrong connection pool for " + name + " configuration.", before.connectionPool(), after.connectionPool());
    }
 }

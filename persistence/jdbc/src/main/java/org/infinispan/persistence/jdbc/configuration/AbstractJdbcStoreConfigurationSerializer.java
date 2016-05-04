@@ -1,13 +1,11 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
-import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
+
+import javax.xml.stream.XMLStreamException;
 
 import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
 

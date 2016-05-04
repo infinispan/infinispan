@@ -11,7 +11,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
 
-import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;;
+import static org.infinispan.configuration.serializing.SerializeUtils.writeTypedProperties;
 /**
  * AbstractStoreSerializer.
  *

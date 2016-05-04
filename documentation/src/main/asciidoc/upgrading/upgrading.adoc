@@ -102,6 +102,10 @@ As such all of these classes have been moved into a new package org.infinispan.f
 
 The new org.infinispan.filter.KeyFilter interface has replaced both of the previous interfaces and all previous references use the new interface.
 
+=== Declarative configuration
+
+The XML schema for the embedded configuration has changed to more closely follow the server configuration. Use the `config-converter.sh` or `config-converter.bat` scripts to convert an Infinispan 6.0 to the current format.
+
 == Upgrading from 5.3 to 6.0
 === Declarative configuration
 In order to use all of the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
