@@ -34,18 +34,18 @@ public class ResponseWriting {
             log.tracef("Write response %s", response);
          }
          if (response instanceof Response) {
-            ch.writeAndFlush(response, ch.newPromise());
+            ch.writeAndFlush(response);
          } else if (response instanceof ByteBuf[]) {
             for (ByteBuf buf : (ByteBuf[]) response) {
-               ch.write(buf, ch.voidPromise());
+               ch.write(buf);
             }
             ch.flush();
          } else if (response instanceof byte[]) {
-            ch.writeAndFlush(Unpooled.wrappedBuffer((byte[]) response), ch.newPromise());
+            ch.writeAndFlush(Unpooled.wrappedBuffer((byte[]) response));
          } else if (response instanceof CharSequence) {
-            ch.writeAndFlush(Unpooled.copiedBuffer((CharSequence) response, CharsetUtil.UTF_8), ch.newPromise());
+            ch.writeAndFlush(Unpooled.copiedBuffer((CharSequence) response, CharsetUtil.UTF_8));
          } else {
-            ch.writeAndFlush(response, ch.newPromise());
+            ch.writeAndFlush(response);
          }
       }
    }
