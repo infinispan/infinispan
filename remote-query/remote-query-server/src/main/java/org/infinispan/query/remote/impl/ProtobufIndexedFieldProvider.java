@@ -44,15 +44,15 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
          if (field == null) {
             break;
          }
+         IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+         boolean res = indexingMetadata == null || metadataFun.apply(indexingMetadata, field.getNumber());
+         if (!res) {
+            break;
+         }
          if (field.getJavaType() == JavaType.MESSAGE) {
             md = field.getMessageType();
          } else {
-            if (i == propertyPath.length) {
-               IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-               return indexingMetadata == null || metadataFun.apply(indexingMetadata, field.getNumber());
-            } else {
-               break;
-            }
+            return i == propertyPath.length;
          }
       }
       return false;
