@@ -22,18 +22,12 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.AttributeMarshaller;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.SimpleMapAttributeDefinition;
 import org.jboss.as.controller.SimpleResourceDefinition;
-import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
@@ -41,7 +35,6 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
-import org.jboss.dmr.Property;
 
 /**
  * Base class for cache resources which require common cache attributes only.
@@ -74,47 +67,6 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setAlternatives(ModelKeys.MODE)
                     .build();
-
-    static final SimpleAttributeDefinition INDEXING =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.INDEXING, ModelType.STRING, true)
-                    .setXmlName(Attribute.INDEX.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new EnumValidator<>(Indexing.class, true, false))
-                    .setDefaultValue(new ModelNode().set(Indexing.NONE.name()))
-                    .build();
-
-    static final SimpleAttributeDefinition INDEXING_AUTO_CONFIG =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.AUTO_CONFIG, ModelType.BOOLEAN, true)
-                    .setXmlName(Attribute.AUTO_CONFIG.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
-                    .build();
-
-   static final StringListAttributeDefinition INDEXED_ENTITIES = new StringListAttributeDefinition.Builder(ModelKeys.INDEXED_ENTITIES)
-         .setAllowNull(true)
-         .setAllowExpression(false)
-         .build();
-
-   static final SimpleMapAttributeDefinition INDEXING_PROPERTIES = new SimpleMapAttributeDefinition.Builder(ModelKeys.INDEXING_PROPERTIES, true)
-            .setAllowExpression(true)
-            .setAttributeMarshaller(new AttributeMarshaller() {
-                @Override
-                public void marshallAsElement(AttributeDefinition attribute, ModelNode resourceModel, boolean marshallDefault, XMLStreamWriter writer) throws XMLStreamException {
-                    resourceModel = resourceModel.get(attribute.getName());
-                    if (!resourceModel.isDefined()) {
-                        return;
-                    }
-                    for (Property property : resourceModel.asPropertyList()) {
-                        writer.writeStartElement(org.jboss.as.controller.parsing.Element.PROPERTY.getLocalName());
-                        writer.writeAttribute(org.jboss.as.controller.parsing.Element.NAME.getLocalName(), property.getName());
-                        writer.writeCharacters(property.getValue().asString());
-                        writer.writeEndElement();
-                    }
-                }
-            })
-            .build();
 
     static final SimpleAttributeDefinition JNDI_NAME =
             new SimpleAttributeDefinitionBuilder(ModelKeys.JNDI_NAME, ModelType.STRING, true)
@@ -176,7 +128,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                    .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = {BATCHING, CACHE_MODULE, CONFIGURATION, INDEXING, INDEXING_AUTO_CONFIG, INDEXED_ENTITIES, INDEXING_PROPERTIES, JNDI_NAME, SIMPLE_CACHE, START, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE, TEMPLATE};
+    static final AttributeDefinition[] ATTRIBUTES = {BATCHING, CACHE_MODULE, CONFIGURATION, JNDI_NAME, SIMPLE_CACHE, START, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE, TEMPLATE};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =
@@ -226,6 +178,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
         resourceRegistration.registerSubModel(new EvictionConfigurationResource(this));
         resourceRegistration.registerSubModel(new ExpirationConfigurationResource(this));
         resourceRegistration.registerSubModel(new CompatibilityConfigurationResource(this));
+        resourceRegistration.registerSubModel(new IndexingConfigurationResource(this));
         resourceRegistration.registerSubModel(new LoaderConfigurationResource(this));
         resourceRegistration.registerSubModel(new ClusterLoaderConfigurationResource(this));
         resourceRegistration.registerSubModel(new BackupSiteConfigurationResource(this));

@@ -980,7 +980,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 break;
             }
             case INDEXING: {
-                this.parseIndexing(reader, cache);
+                this.parseIndexing(reader, cache, operations);
                 break;
             }
             case SECURITY: {
@@ -2001,16 +2001,19 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         operations.put(propertyAddress, property);
     }
 
-    private void parseIndexing(XMLExtendedStreamReader reader, ModelNode node) throws XMLStreamException {
+    private void parseIndexing(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress indexingAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(ModelKeys.INDEXING, ModelKeys.INDEXING_NAME);
+        ModelNode indexing = Util.createAddOperation(indexingAddress);
+
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case INDEX:
-                    CacheConfigurationResource.INDEXING.parseAndSetParameter(value, node, reader);
+                    IndexingConfigurationResource.INDEXING.parseAndSetParameter(value, indexing, reader);
                     break;
                 case AUTO_CONFIG:
-                    CacheConfigurationResource.INDEXING_AUTO_CONFIG.parseAndSetParameter(value, node, reader);
+                    IndexingConfigurationResource.INDEXING_AUTO_CONFIG.parseAndSetParameter(value, indexing, reader);
                     break;
                 default:
                     throw ParseUtils.unexpectedAttribute(reader, i);
@@ -2021,7 +2024,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
                 case INDEXED_ENTITIES: {
-                    parseIndexedEntities(reader, node);
+                    parseIndexedEntities(reader, indexing);
                     break;
                 }
                 case PROPERTY: {
@@ -2044,7 +2047,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                         throw ParseUtils.missingRequired(reader, Collections.singleton(Attribute.NAME));
                     }
                     String value = reader.getElementText();
-                    CacheConfigurationResource.INDEXING_PROPERTIES.parseAndAddParameterElement(property, value, node, reader);
+                    IndexingConfigurationResource.INDEXING_PROPERTIES.parseAndAddParameterElement(property, value, indexing, reader);
                     break;
                 }
                 default: {
@@ -2052,7 +2055,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
             }
         }
-       // ParseUtils.requireNoContent(reader);
+        operations.put(indexingAddress, indexing);
     }
 
     private void parseIndexedEntities(XMLExtendedStreamReader reader, ModelNode node) throws XMLStreamException {
@@ -2063,7 +2066,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 case INDEXED_ENTITY: {
                     ParseUtils.requireNoAttributes(reader);
                     String value = reader.getElementText();
-                    CacheConfigurationResource.INDEXED_ENTITIES.parseAndAddParameterElement(value, node, reader);
+                    IndexingConfigurationResource.INDEXED_ENTITIES.parseAndAddParameterElement(value, node, reader);
                     break;
                 }
                 default: {

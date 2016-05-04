@@ -111,15 +111,11 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         }
         final ServiceController.Mode initialMode = startMode.getMode();
 
-        // get container Model to pick up the value of the default cache of the container
-        // AS7-3488 make default-cache no required attribute
-        String defaultCache = CacheContainerResource.DEFAULT_CACHE.resolveModelAttribute(context, containerModel).asString();
-
         ServiceTarget target = context.getServiceTarget();
 
         Collection<ServiceController<?>> controllers = new ArrayList<>(2);
         // now install the corresponding cache service (starts a configured cache)
-        controllers.add(this.installCacheService(target, containerName, cacheName, defaultCache, initialMode, configuration));
+        controllers.add(this.installCacheService(target, containerName, cacheName, initialMode, configuration));
         // install a name service entry for the cache
         /*
         final String jndiName = ((resolvedValue = CacheConfigurationResource.JNDI_NAME.resolveModelAttribute(context, cacheModel)).isDefined()) ? resolvedValue.asString() : null;
@@ -164,7 +160,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         return containerAddress ;
     }
 
-    ServiceController<?> installCacheService(ServiceTarget target, String containerName, String cacheName, String defaultCache, ServiceController.Mode initialMode,
+    ServiceController<?> installCacheService(ServiceTarget target, String containerName, String cacheName, ServiceController.Mode initialMode,
             String configurationName) {
 
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<>();

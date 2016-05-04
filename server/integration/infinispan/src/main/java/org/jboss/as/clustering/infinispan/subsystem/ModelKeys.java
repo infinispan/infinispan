@@ -117,6 +117,7 @@ public class ModelKeys {
     static final String INDEXED_ENTITIES = "indexed-entities";
     static final String INDEXED_ENTITY = "indexed-entity";
     static final String INDEXING = "indexing";
+    static final String INDEXING_NAME = "INDEXING";
     static final String INDEXING_PROPERTIES = "indexing-properties";
     static final String INITIAL_CLUSTER_SIZE = "initial-cluster-size";
     static final String INITIAL_CLUSTER_TIMEOUT = "initial-cluster-timeout";

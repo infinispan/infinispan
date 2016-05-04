@@ -68,15 +68,12 @@ public abstract class ClusteredCacheConfigurationAdd extends CacheConfigurationA
         // process cache attributes and elements
         super.processModelNode(context, containerName, cache, builder, dependencies);
 
-        // required attribute MODE (ASYNC/SYNC)
-        final Mode mode = Mode.valueOf(ClusteredCacheConfigurationResource.MODE.resolveModelAttribute(context, cache).asString()) ;
-
-        final long remoteTimeout = ClusteredCacheConfigurationResource.REMOTE_TIMEOUT.resolveModelAttribute(context, cache).asLong();
-
         // adjust the cache mode used based on the value of clustered attribute MODE
-        CacheMode cacheMode = mode.apply(this.mode);
+        ModelNode modeModel = ClusteredCacheConfigurationResource.MODE.resolveModelAttribute(context, cache);
+        CacheMode cacheMode = modeModel.isDefined() ? Mode.valueOf(modeModel.asString()).apply(this.mode) : this.mode;
         builder.clustering().cacheMode(cacheMode);
 
+        final long remoteTimeout = ClusteredCacheConfigurationResource.REMOTE_TIMEOUT.resolveModelAttribute(context, cache).asLong();
         // process clustered cache attributes and elements
         if (cacheMode.isSynchronous()) {
             builder.clustering().remoteTimeout(remoteTimeout);

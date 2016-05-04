@@ -27,7 +27,7 @@ import org.jboss.dmr.ModelNode;
 
 public class OperationTestCaseBase extends AbstractSubsystemTest {
 
-    static final String SUBSYSTEM_XML_FILE = "subsystem-infinispan_8_0.xml" ;
+    static final String SUBSYSTEM_XML_FILE = "subsystem-infinispan_9_0.xml" ;
     static final String JDBC_STORE_NAME = "jdbc-store" ;
 
     public OperationTestCaseBase() {

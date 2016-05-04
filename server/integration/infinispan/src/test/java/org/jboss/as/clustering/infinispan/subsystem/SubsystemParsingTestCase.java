@@ -66,14 +66,14 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     @Parameters
     public static Collection<Object[]> data() {
       Object[][] data = new Object[][] {
-                                         { Namespace.INFINISPAN_SERVER_6_0, 103, "schema/jboss-infinispan-core_6_0.xsd" },
-                                         { Namespace.INFINISPAN_SERVER_7_0, 126, "schema/jboss-infinispan-core_7_0.xsd" },
-                                         { Namespace.INFINISPAN_SERVER_7_1, 126, "schema/jboss-infinispan-core_7_1.xsd" },
-                                         { Namespace.INFINISPAN_SERVER_7_2, 126, "schema/jboss-infinispan-core_7_2.xsd" },
-                                         { Namespace.INFINISPAN_SERVER_8_0, 138, "schema/jboss-infinispan-core_8_0.xsd" },
-                                         { Namespace.INFINISPAN_SERVER_8_1, 139, "schema/jboss-infinispan-core_8_1.xsd" },
-                                         { Namespace.INFINISPAN_SERVER_8_2, 139, "schema/jboss-infinispan-core_8_2.xsd" },
-                                         { Namespace.INFINISPAN_SERVER_9_0, 139, "schema/jboss-infinispan-core_9_0.xsd"},
+                                         { Namespace.INFINISPAN_SERVER_6_0, 110, "schema/jboss-infinispan-core_6_0.xsd" },
+                                         { Namespace.INFINISPAN_SERVER_7_0, 133, "schema/jboss-infinispan-core_7_0.xsd" },
+                                         { Namespace.INFINISPAN_SERVER_7_1, 133, "schema/jboss-infinispan-core_7_1.xsd" },
+                                         { Namespace.INFINISPAN_SERVER_7_2, 133, "schema/jboss-infinispan-core_7_2.xsd" },
+                                         { Namespace.INFINISPAN_SERVER_8_0, 145, "schema/jboss-infinispan-core_8_0.xsd" },
+                                         { Namespace.INFINISPAN_SERVER_8_1, 146, "schema/jboss-infinispan-core_8_1.xsd" },
+                                         { Namespace.INFINISPAN_SERVER_8_2, 146, "schema/jboss-infinispan-core_8_2.xsd" },
+                                         { Namespace.INFINISPAN_SERVER_9_0, 146, "schema/jboss-infinispan-core_9_0.xsd"},
       };
       return Arrays.asList(data);
     }
@@ -82,8 +82,6 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     protected String getSubsystemXsdPath() throws Exception {
         return xsdPath;
     }
-
-
 
     @Override
     protected Properties getResolvedProperties() {

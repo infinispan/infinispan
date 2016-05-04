@@ -348,37 +348,41 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         builder.jmxStatistics().enabled(CacheConfigurationResource.STATISTICS.resolveModelAttribute(context, cache).asBoolean());
         builder.jmxStatistics().available(CacheConfigurationResource.STATISTICS_AVAILABLE.resolveModelAttribute(context, cache).asBoolean());
 
-        final Indexing indexing = Indexing.valueOf(CacheConfigurationResource.INDEXING.resolveModelAttribute(context, cache).asString());
-        final boolean autoConfig = CacheConfigurationResource.INDEXING_AUTO_CONFIG.resolveModelAttribute(context, cache).asBoolean();
         final boolean batching = CacheConfigurationResource.BATCHING.resolveModelAttribute(context, cache).asBoolean();
-
         builder.simpleCache(CacheConfigurationResource.SIMPLE_CACHE.resolveModelAttribute(context, cache).asBoolean());
         // set the cache mode (may be modified when setting up clustering attributes)
         builder.clustering().cacheMode(this.mode);
-        final ModelNode indexingPropertiesModel = CacheConfigurationResource.INDEXING_PROPERTIES.resolveModelAttribute(context, cache);
-        Properties indexingProperties = new Properties();
-        if (indexing.isEnabled() && indexingPropertiesModel.isDefined()) {
-            for (Property p : indexingPropertiesModel.asPropertyList()) {
-                String value = p.getValue().asString();
-                indexingProperties.put(p.getName(), value);
+
+        if (cache.hasDefined(ModelKeys.INDEXING) && cache.get(ModelKeys.INDEXING, ModelKeys.INDEXING_NAME).isDefined()) {
+            ModelNode indexingModel = cache.get(ModelKeys.INDEXING, ModelKeys.INDEXING_NAME);
+            final Indexing indexing = Indexing.valueOf(IndexingConfigurationResource.INDEXING.resolveModelAttribute(context, indexingModel).asString());
+            final boolean autoConfig = IndexingConfigurationResource.INDEXING_AUTO_CONFIG.resolveModelAttribute(context, indexingModel).asBoolean();
+
+            final ModelNode indexingPropertiesModel = IndexingConfigurationResource.INDEXING_PROPERTIES.resolveModelAttribute(context, indexingModel);
+            Properties indexingProperties = new Properties();
+            if (indexing.isEnabled() && indexingPropertiesModel.isDefined()) {
+                for (Property p : indexingPropertiesModel.asPropertyList()) {
+                    String value = p.getValue().asString();
+                    indexingProperties.put(p.getName(), value);
+                }
             }
-        }
-        builder.indexing()
-                .index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE)
-                .withProperties(indexingProperties)
-                .autoConfig(autoConfig)
-        ;
-        final ModelNode indexedEntitiesModel = CacheConfigurationResource.INDEXED_ENTITIES.resolveModelAttribute(context, cache);
-        if (indexing.isEnabled() && indexedEntitiesModel.isDefined()) {
-            for (ModelNode indexedEntityNode : indexedEntitiesModel.asList()) {
-                String className = indexedEntityNode.asString();
-// TODO This is ignored for now because we do not have access to the proper ClassLoader
-//                try {
-//                    Class<?> entityClass = CacheConfigurationAdd.class.getClassLoader().loadClass(className);
-//                    builder.indexing().addIndexedEntity(entityClass);
-//                } catch (ClassNotFoundException e) {
-//                    throw InfinispanMessages.MESSAGES.unableToInstantiateClass(className);
-//                }
+            builder.indexing()
+                  .index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE)
+                  .withProperties(indexingProperties)
+                  .autoConfig(autoConfig)
+            ;
+            final ModelNode indexedEntitiesModel = IndexingConfigurationResource.INDEXED_ENTITIES.resolveModelAttribute(context, indexingModel);
+            if (indexing.isEnabled() && indexedEntitiesModel.isDefined()) {
+                for (ModelNode indexedEntityNode : indexedEntitiesModel.asList()) {
+                    String className = indexedEntityNode.asString();
+                    // TODO This is ignored for now because we do not have access to the proper ClassLoader
+                    //                try {
+                    //                    Class<?> entityClass = CacheConfigurationAdd.class.getClassLoader().loadClass(className);
+                    //                    builder.indexing().addIndexedEntity(entityClass);
+                    //                } catch (ClassNotFoundException e) {
+                    //                    throw InfinispanMessages.MESSAGES.unableToInstantiateClass(className);
+                    //                }
+                }
             }
         }
 
