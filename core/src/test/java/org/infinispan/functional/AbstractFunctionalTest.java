@@ -14,6 +14,11 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    static final String DIST = "dist";
    static final String REPL = "repl";
 
+   // Create local caches as default in a cluster of 2
+   int numNodes = 2;
+   int numDistOwners = 1;
+   boolean isPersistenceEnabled = true;
+
    FunctionalMapImpl<Integer, String> fmapL1;
    FunctionalMapImpl<Integer, String> fmapL2;
 
@@ -25,19 +30,24 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      // Create local caches as default in a cluster of 2
       ConfigurationBuilder localBuilder = new ConfigurationBuilder();
-      localBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      createClusteredCaches(2, localBuilder);
+      if (isPersistenceEnabled) {
+         localBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+      }
+      createClusteredCaches(numNodes, localBuilder);
       // Create distributed caches
       ConfigurationBuilder distBuilder = new ConfigurationBuilder();
-      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
-      distBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(numDistOwners);
+      if (isPersistenceEnabled) {
+         distBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+      }
       cacheManagers.stream().forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
       // Create replicated caches
       ConfigurationBuilder replBuilder = new ConfigurationBuilder();
       replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      replBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+      if (isPersistenceEnabled) {
+         replBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
+      }
       cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
       // Wait for cluster to form
       waitForClusterToForm(DIST, REPL);
@@ -47,6 +57,16 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    @BeforeClass
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
+      if (cleanupAfterTest()) initMaps();
+   }
+
+   @Override
+   public void createBeforeMethod() throws Throwable {
+      super.createBeforeMethod();
+      if (cleanupAfterMethod()) initMaps();
+   }
+
+   private void initMaps() {
       fmapL1 = FunctionalMapImpl.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
       fmapL2 = FunctionalMapImpl.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
       fmapD1 = FunctionalMapImpl.create(cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache());
