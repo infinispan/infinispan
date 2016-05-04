@@ -46,7 +46,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       Cache mockCache = mock(Cache.class);
       Configuration configuration = new ConfigurationBuilder().build();
       XaTransactionTable txTable = new XaTransactionTable();
-      txTable.initialize(null, configuration, null, null, null, null,
+      txTable.initialize(null, configuration, null, null, null,
                          null, null, null, null, mockCache, null, null, null, null);
       txTable.start();
       txTable.startXidMapping();
