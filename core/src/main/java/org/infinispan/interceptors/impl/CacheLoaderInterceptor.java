@@ -5,6 +5,8 @@ import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.functional.AbstractWriteKeyCommand;
+import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
@@ -394,7 +396,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
 
       boolean skip;
-      if (cmd instanceof WriteCommand) {
+      if (cmd instanceof AbstractWriteKeyCommand || cmd instanceof AbstractWriteManyCommand) {
+         skip = skipLoadForFunctionalWriteCommand((WriteCommand) cmd, key, ctx);
+         if (trace) {
+            log.tracef("Skip load for functional write command %s? %s", cmd, skip);
+         }
+      } else if (cmd instanceof WriteCommand) {
          skip = skipLoadForWriteCommand((WriteCommand) cmd, key, ctx);
          if (trace) {
             log.tracef("Skip load for write command %s? %s", cmd, skip);
@@ -407,6 +414,10 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          }
       }
       return skip;
+   }
+
+   protected boolean skipLoadForFunctionalWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
+      return skipLoadForWriteCommand(cmd, key, ctx);
    }
 
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {

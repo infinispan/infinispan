@@ -10,7 +10,7 @@ import org.infinispan.metadata.Metadata;
 
 import java.util.Set;
 
-abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, ParamsCommand {
+public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, ParamsCommand {
 
    boolean isForwarded = false;
    int topologyId = -1;
