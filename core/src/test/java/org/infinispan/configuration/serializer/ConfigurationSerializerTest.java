@@ -1,6 +1,5 @@
 package org.infinispan.configuration.serializer;
 
-import org.infinispan.configuration.cache.Configuration;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

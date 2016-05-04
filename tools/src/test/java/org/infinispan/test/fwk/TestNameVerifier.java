@@ -19,9 +19,9 @@ import java.util.regex.Pattern;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "test.fwk.TestNameVerifier")
+@Test(groups = "manual", testName = "test.fwk.TestNameVerifier")
 public class TestNameVerifier {
-    
+
    String dir = "src" + File.separator + "test" + File.separator + "java" + File.separator + "org" + File.separator + "infinispan";
 
    Pattern packageLinePattern = Pattern.compile("package org.infinispan[^;]*");
@@ -76,7 +76,7 @@ public class TestNameVerifier {
    private String replaceAtTestAnnotation(String javaString, String testNameStr) {
       Matcher matcher = atAnnotationPattern.matcher(javaString);
       boolean found = matcher.find();
-      assert found;
+      assert found : javaString;
       String theMatch = matcher.group();
       return matcher.replaceFirst(theMatch + testNameStr);
    }

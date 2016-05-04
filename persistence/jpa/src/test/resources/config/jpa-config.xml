@@ -22,6 +22,7 @@
                   persistence-unit="org.infinispan.persistence.jpa.configurationTest"
                   entity-class="org.infinispan.persistence.jpa.entity.Vehicle"
                   batch-size="1">
+          <write-behind flush-lock-timeout="1" />
         </jpa-store>
       </persistence>
     </local-cache>

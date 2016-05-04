@@ -19,7 +19,7 @@ import org.infinispan.persistence.sifs.SoftIndexFileStore;
 public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<String> DATA_LOCATION = AttributeDefinition.builder("dataLocation", "Infinispan-SoftIndexFileStore-Data").immutable().autoPersist(false).xmlName("path").build();
    static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", "Infinispan-SoftIndexFileStore-Index").immutable().autoPersist(false).xmlName("path").build();
-   static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 3).immutable().autoPersist(false).autoPersist(false).xmlName("segments").build();
+   static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 3).immutable().autoPersist(false).xmlName("segments").build();
    static final AttributeDefinition<Integer> MAX_FILE_SIZE = AttributeDefinition.builder("maxFileSize", 16 * 1024 * 1024).immutable().autoPersist(false).build();
    static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder("minNodeSize", -1).immutable().autoPersist(false).build();
    static final AttributeDefinition<Integer> MAX_NODE_SIZE = AttributeDefinition.builder("maxNodeSize", 4096).immutable().autoPersist(false).build();
