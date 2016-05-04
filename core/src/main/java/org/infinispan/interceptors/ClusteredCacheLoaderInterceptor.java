@@ -1,5 +1,6 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.functional.AbstractWriteKeyCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -49,8 +50,17 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
                return true;
             }
          } else {
-            // TODO Do we replicate CACHE_MODE_LOCAL commands?
-            if (!cdl.localNodeIsPrimaryOwner(key) && !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+            if (distributed && cmd instanceof AbstractWriteKeyCommand) {
+               // functional API in DIST: don't skip on owners, but skip on the originating node it it's not an owner
+               if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(key)) {
+                  if (trace) {
+                     log.tracef("Skip load for functional command %s. This node is the originator and not an owner of %s", cmd, key);
+                  }
+                  return true;
+               }
+            } else if (!cdl.localNodeIsPrimaryOwner(key)
+                    // TODO Do we replicate CACHE_MODE_LOCAL commands?
+                    && !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
                if (trace) {
                   log.tracef("Skip load for command %s. This node is not the primary owner of %s", cmd, key);
                }

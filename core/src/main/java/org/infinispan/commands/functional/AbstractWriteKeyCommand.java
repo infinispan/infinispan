@@ -5,7 +5,7 @@ import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.functional.impl.Params;
 
-abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements ParamsCommand {
+public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements ParamsCommand {
 
    Params params;
    ValueMatcher valueMatcher;
