@@ -34,7 +34,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
 
    private HotRodDecoderState state = HotRodDecoderState.DECODE_HEADER;
 
-   private volatile boolean resetRequested = true;
+   private boolean resetRequested = true;
 
    public HotRodDecoder(EmbeddedCacheManager cacheManager, NettyTransport transport, HotRodServer server,
            Predicate<? super String> ignoreCache) {

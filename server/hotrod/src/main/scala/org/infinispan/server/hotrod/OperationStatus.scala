@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod
 
+import scala.annotation.switch
+
 /**
  * Hot Rod operation possible status outcomes.
  *
@@ -30,11 +32,13 @@ object OperationStatus extends Enumeration {
    val IllegalLifecycleState = Value(0x88)
 
    def withCompatibility(st: OperationStatus, isCompatibilityEnabled: Boolean): OperationStatus = {
-      st match {
-         case Success if isCompatibilityEnabled => SuccessCompat;
-         case SuccessWithPrevious if isCompatibilityEnabled => SuccessWithPreviousCompat;
-         case NotExecutedWithPrevious if isCompatibilityEnabled => NotExecutedWithPreviousCompat;
-         case _ => st
-      }
+      if (isCompatibilityEnabled) {
+         (st: @switch) match {
+            case Success => SuccessCompat;
+            case SuccessWithPrevious => SuccessWithPreviousCompat;
+            case NotExecutedWithPrevious => NotExecutedWithPreviousCompat;
+            case _ => st
+         }
+      } else st
    }
 }
