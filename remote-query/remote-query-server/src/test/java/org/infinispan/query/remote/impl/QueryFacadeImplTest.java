@@ -13,14 +13,14 @@ import static org.junit.Assert.assertEquals;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Test(groups = "functional", testName = "query.remote.QueryFacadeImplTest")
+@Test(groups = "functional", testName = "query.remote.impl.QueryFacadeImplTest")
 public class QueryFacadeImplTest {
 
    /**
     * Test there is exactly one loadable provider.
     */
    public void testProvider() {
-      List<QueryFacade> implementations = new ArrayList<QueryFacade>();
+      List<QueryFacade> implementations = new ArrayList<>();
       for (QueryFacade impl : ServiceLoader.load(QueryFacade.class)) {
          implementations.add(impl);
       }

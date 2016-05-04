@@ -24,7 +24,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@Test(groups = "functional", testName = "query.remote.ProtobufMetadataManagerInterceptorTest")
+@Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataManagerInterceptorTest")
 public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(ProtobufMetadataManagerInterceptorTest.class, Log.class);
