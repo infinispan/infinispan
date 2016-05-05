@@ -416,10 +416,10 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       h.op match {
          case HotRodOperation.PutAllRequest =>
             val maxLength =  hrCtx.params.valueLength
-            var map = hrCtx.putAllMap
+            var map = hrCtx.operationDecodeContext.asInstanceOf[java.util.Map[Bytes, Bytes]]
             if (map == null) {
               map = new HashMap[Bytes, Bytes](maxLength)
-              hrCtx.putAllMap = map
+              hrCtx.operationDecodeContext = map
             }
             @tailrec def addEntry(): Boolean = {
                val complete = for {
@@ -443,10 +443,10 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             }
          case HotRodOperation.GetAllRequest =>
             val maxLength =  hrCtx.params.valueLength
-            var set = hrCtx.getAllSet
+            var set = hrCtx.operationDecodeContext.asInstanceOf[java.util.Set[Bytes]]
             if (set == null) {
                set = new HashSet[Bytes](maxLength)
-               hrCtx.getAllSet = set
+               hrCtx.operationDecodeContext = set
             }
             @tailrec def addItem(): Boolean = {
                if (readMaybeRangedBytes(buffer).exists(k => {
@@ -551,34 +551,34 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
 
       var optCache = c
       h.op match {
-         case op if h.op.isConditional() && isClustered && !isTransactional =>
+         case op if h.op.isConditional && isClustered && !isTransactional =>
             warnConditionalOperationNonTransactional(h.op.toString)
          case _ => // no-op
       }
 
       if (hasFlag(h, SkipCacheLoader)) {
          h.op match {
-            case op if h.op.canSkipCacheLoading() =>
+            case op if h.op.canSkipCacheLoading =>
                optCache = optCache.withFlags(SKIP_CACHE_LOAD)
             case _ =>
          }
       }
       if (hasFlag(h, SkipIndexing)) {
          h.op match {
-            case op if h.op.canSkipIndexing() =>
+            case op if h.op.canSkipIndexing =>
                optCache = optCache.withFlags(SKIP_INDEXING)
             case _ =>
          }
       }
       if (!hasFlag(h, ForceReturnPreviousValue)) {
          h.op match {
-            case op if h.op.isNotConditionalAndCanReturnPrevious() =>
+            case op if h.op.isNotConditionalAndCanReturnPrevious =>
                optCache = optCache.withFlags(IGNORE_RETURN_VALUES)
             case _ =>
          }
       } else {
          h.op match {
-            case op if h.op.canReturnPreviousValue() && !isTransactional =>
+            case op if h.op.canReturnPreviousValue && !isTransactional =>
                warnForceReturnPreviousNonTransactional(h.op.toString)
             case _ => // no-op
          }
