@@ -59,8 +59,6 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
             writeResponse(msg, ctx.channel(), msg.containsKey());
             break;
          case GetRequest:
-            writeResponse(msg, ctx.channel(), msg.get());
-            break;
          case GetWithVersionRequest:
             writeResponse(msg, ctx.channel(), msg.get());
             break;
