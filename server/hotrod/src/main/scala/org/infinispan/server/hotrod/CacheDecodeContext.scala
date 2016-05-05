@@ -32,10 +32,7 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
    var header: HotRodHeader = _
    var cache: AdvancedCache[Bytes, Bytes] = _
    var key: Bytes = _
-   var rawValue: Bytes = _
    var params: RequestParameters = _
-   var putAllMap: Map[Bytes, Bytes] = _
-   var getAllSet: Set[Bytes] = _
    var operationDecodeContext: Any = _
 
     def createExceptionResponse(e: Throwable): (ErrorResponse) = {
@@ -74,7 +71,7 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
       var prev = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).get(key)
       if (prev != null) {
          // Generate new version only if key present
-         prev = cache.replace(key, rawValue, buildMetadata)
+         prev = cache.replace(key, operationDecodeContext.asInstanceOf[Bytes], buildMetadata)
       }
       if (prev != null)
          successResp(prev)
@@ -165,7 +162,7 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
          val prev = entry.getValue
          val streamVersion = new NumericVersion(params.streamVersion)
          if (entry.getMetadata.version() == streamVersion) {
-            val v = rawValue
+            val v = operationDecodeContext.asInstanceOf[Bytes]
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             val replaced = cache.replace(key, prev, v, buildMetadata)
             if (replaced)
@@ -182,7 +179,7 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
       var prev = cache.get(key)
       if (prev == null) {
          // Generate new version only if key not present
-         prev = cache.putIfAbsent(key, rawValue, buildMetadata)
+         prev = cache.putIfAbsent(key, operationDecodeContext.asInstanceOf[Bytes], buildMetadata)
       }
       if (prev == null)
          successResp(prev)
@@ -192,7 +189,7 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
 
    def put: Response = {
       // Get an optimised cache in case we can make the operation more efficient
-      val prev = cache.put(key, rawValue, buildMetadata)
+      val prev = cache.put(key, operationDecodeContext.asInstanceOf[Bytes], buildMetadata)
       successResp(prev)
    }
 

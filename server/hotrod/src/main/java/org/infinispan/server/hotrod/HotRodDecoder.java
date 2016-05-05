@@ -287,7 +287,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          }
          byte[] bytes = new byte[valueLength];
          in.readBytes(bytes);
-         decodeCtx.rawValue_$eq(bytes);
+         decodeCtx.operationDecodeContext_$eq(bytes);
       }
       switch (op.getDecoderRequirements()) {
          case VALUE_CUSTOM:

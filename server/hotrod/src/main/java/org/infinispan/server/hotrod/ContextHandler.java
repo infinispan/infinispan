@@ -18,6 +18,7 @@ import scala.Tuple4;
 
 import java.util.BitSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
@@ -165,11 +166,11 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
                     removed ? OperationStatus.Success() : OperationStatus.InvalidIteration(), h.topologyId()));
             break;
          case PutAllRequest:
-            msg.cache().putAll(msg.putAllMap(), msg.buildMetadata());
+            msg.cache().putAll((Map<byte[], byte[]>) msg.operationDecodeContext(), msg.buildMetadata());
             writeResponse(msg, ctx.channel(), msg.decoder().createSuccessResponse(h, null));
             break;
          case GetAllRequest:
-            Map<byte[], byte[]> map = msg.cache().getAll(msg.getAllSet());
+            Map<byte[], byte[]> map = msg.cache().getAll((Set<byte[]>) msg.operationDecodeContext());
             writeResponse(msg, ctx.channel(), new GetAllResponse(h.version(), h.messageId(), h.cacheName(),
                     h.clientIntel(), h.topologyId(), map));
             break;
