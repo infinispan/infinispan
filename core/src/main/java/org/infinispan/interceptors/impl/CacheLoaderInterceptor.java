@@ -6,8 +6,11 @@ import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -183,6 +186,16 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return visitDataCommand(ctx, command);
    }
 
+   private <T extends FlagAffectedCommand> CompletableFuture<Void> visitManyDataCommand(InvocationContext ctx, T command, Set<?> keys)
+         throws Throwable {
+      if (enabled) {
+         for (Object key : keys) {
+            loadIfNeeded(ctx, key, command);
+         }
+      }
+      return ctx.continueInvocation();
+   }
+
    private CompletableFuture<Void> visitDataCommand(InvocationContext ctx, AbstractDataCommand command)
          throws Throwable {
       if (enabled) {
@@ -275,6 +288,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Override
+   public CompletableFuture<Void> visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command)
+         throws Throwable {
+      return visitManyDataCommand(ctx, command, command.getKeys());
+   }
+
+   @Override
    public CompletableFuture<Void> visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
          throws Throwable {
       return visitDataCommand(ctx, command);
@@ -284,6 +303,16 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    public CompletableFuture<Void> visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
          throws Throwable {
       return visitDataCommand(ctx, command);
+   }
+
+   @Override
+   public CompletableFuture<Void> visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      return visitManyDataCommand(ctx, command, command.getKeys());
+   }
+
+   @Override
+   public CompletableFuture<Void> visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      return visitManyDataCommand(ctx, command, command.getKeys());
    }
 
    protected final boolean isConditional(WriteCommand cmd) {
