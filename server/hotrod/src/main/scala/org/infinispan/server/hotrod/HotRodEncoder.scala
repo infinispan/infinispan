@@ -74,11 +74,11 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
 
    private def getEncoder(version: Byte): AbstractVersionedEncoder = {
       version match {
-         case ver if Constants.isVersion10(ver) => Encoders.Encoder10
-         case ver if Constants.isVersion11(ver) => Encoders.Encoder11
-         case ver if Constants.isVersion12(ver) => Encoders.Encoder12
-         case ver if Constants.isVersion13(ver) => Encoders.Encoder13
          case ver if Constants.isVersion2x(ver) => Encoder2x
+         case ver if Constants.isVersion13(ver) => Encoders.Encoder13
+         case ver if Constants.isVersion12(ver) => Encoders.Encoder12
+         case ver if Constants.isVersion11(ver) => Encoders.Encoder11
+         case ver if Constants.isVersion10(ver) => Encoders.Encoder10
          case 0 => Encoder2x
       }
    }

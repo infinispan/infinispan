@@ -63,9 +63,9 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       val newTopology = getTopologyResponse(r, addressCache, cacheMode, cacheTopology)
 
 
-      buf.writeByte(MAGIC_RES.byteValue)
+      buf.writeByte(MAGIC_RES)
       writeUnsignedLong(r.messageId, buf)
-      buf.writeByte(r.operation.id.byteValue)
+      buf.writeByte(r.operation.id)
       writeStatus(r, buf, server)
       newTopology match {
          case Some(topology) => topology match {
