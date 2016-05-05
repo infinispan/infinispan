@@ -24,8 +24,10 @@ class HotRodChannelInitializer(val server: HotRodServer, transport: => NettyTran
 
    override def initChannel(ch: Channel): Unit = {
       super.initChannel(ch)
-      if (server.getConfiguration.authentication().enabled()) {
-         ch.pipeline().addLast("authentication", new AuthenticationHandler(server))
+      val authHandler = if (server.getConfiguration.authentication().enabled()) new AuthenticationHandler(server) else null
+      if (authHandler != null) {
+         // TODO: We need to move this to the executor thread as well
+         ch.pipeline().addLast("authentication-1", authHandler)
       }
       ch.pipeline.addLast("local-handler", new LocalContextHandler(transport))
 

@@ -5,15 +5,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.UnsignedNumeric;
 import org.infinispan.server.core.logging.JavaLog;
-import org.infinispan.server.core.transport.ExtendedByteBuf;
+import org.infinispan.server.core.transport.ExtendedByteBufJava;
 import org.infinispan.server.core.transport.NettyTransport;
-import scala.Option;
 
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.OptionalLong;
 import java.util.function.Predicate;
 
 /**
@@ -31,6 +28,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    private final HotRodServer server;
 
    CacheDecodeContext decodeCtx;
+   Throwable previousException;
 
    private HotRodDecoderState state = HotRodDecoderState.DECODE_HEADER;
 
@@ -120,7 +118,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
                break;
          }
       } catch (Throwable t) {
-         decodeCtx.setError(t);
+         previousException = t;
          resetRequested = true;
          // Faster than throwing exception
          ctx.pipeline().fireExceptionCaught(new HotRodException(decodeCtx.createExceptionResponse(t), t));
@@ -171,21 +169,20 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          }
          short magic = buffer.readUnsignedByte();
          if (magic != Constants$.MODULE$.MAGIC_REQ()) {
-            if (decodeCtx.getError() == null) {
+            if (previousException == null) {
                throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic);
             } else {
                log.tracef("Error happened previously, ignoring %d byte until we find the magic number again", magic);
                return false;
             }
          } else {
-            decodeCtx.setError(null);
+            previousException = null;
          }
 
-         OptionalLong optLong = UnsignedNumeric.readOptionalUnsignedLong(buffer);
-         if (!optLong.isPresent()) {
+         long messageId = ExtendedByteBufJava.readMaybeVLong(buffer);
+         if (messageId == Integer.MIN_VALUE) {
             return false;
          }
-         long messageId = optLong.getAsLong();
          header.messageId_$eq(messageId);
          if (buffer.readableBytes() < 1) {
             buffer.resetReaderIndex();
@@ -202,7 +199,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
             throw new UnknownVersionException("Unknown version:" + version, version, messageId);
          }
          decodeCtx.setDecoder(decoder);
-         // This way we won't have to reread the decoder related material
+         // This way we won't have to reread the decoder related material again
          buffer.markReaderIndex();
       }
 
@@ -233,10 +230,10 @@ public class HotRodDecoder extends ByteToMessageDecoder {
       HotRodOperation op = decodeCtx.getHeader().op();
       // If we want a single key read that - else we do try for custom read
       if (op.requiresKey()) {
-         Option<byte[]> bytes = ExtendedByteBuf.readMaybeRangedBytes(in);
+         byte[] bytes = ExtendedByteBufJava.readMaybeRangedBytes(in);
          // If the bytes don't exist then we need to reread
-         if (bytes.isDefined()) {
-            decodeCtx.key_$eq(bytes.get());
+         if (bytes != null) {
+            decodeCtx.key_$eq(bytes);
          } else {
             return false;
          }
@@ -264,9 +261,9 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    }
 
    boolean decodeParameters(ByteBuf in, List<Object> out) {
-      Option<RequestParameters> params = decodeCtx.decoder().readParameters(decodeCtx.header(), in);
-      if (params.isDefined()) {
-         decodeCtx.params_$eq(params.get());
+      RequestParameters params = decodeCtx.decoder().readParameters(decodeCtx.header(), in);
+      if (params != null) {
+         decodeCtx.params_$eq(params);
          if (decodeCtx.header().op().getDecoderRequirements() == DecoderRequirements.PARAMETERS) {
             out.add(decodeCtx);
             resetRequested = true;

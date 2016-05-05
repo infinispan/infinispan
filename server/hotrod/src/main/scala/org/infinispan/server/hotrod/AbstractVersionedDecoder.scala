@@ -3,8 +3,6 @@ package org.infinispan.server.hotrod
 import java.util.concurrent.TimeUnit
 
 import io.netty.buffer.ByteBuf
-import io.netty.channel.Channel
-import io.netty.channel.ChannelHandlerContext
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.server.core.transport.NettyTransport
@@ -29,7 +27,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Read the parameters of the operation, if present.
     */
-   def readParameters(header: HotRodHeader, buffer: ByteBuf): Option[RequestParameters]
+   def readParameters(header: HotRodHeader, buffer: ByteBuf): RequestParameters
 
    /**
     * Create a successful response.

@@ -84,30 +84,29 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       part2.isDefined
    }
 
-   override def readParameters(header: HotRodHeader, buffer: ByteBuf): Option[RequestParameters] = {
+   override def readParameters(header: HotRodHeader, buffer: ByteBuf): RequestParameters = {
       header.op match {
-         case HotRodOperation.RemoveRequest => Some(null)
          case HotRodOperation.RemoveIfUnmodifiedRequest =>
             readMaybeLong(buffer).map(l => {
                new RequestParameters(-1, new ExpirationParam(-1, TimeUnitValue.SECONDS), new ExpirationParam(-1, TimeUnitValue.SECONDS), l)
-            })
+            }).orNull
          case HotRodOperation.ReplaceIfUnmodifiedRequest =>
-            for {
+            (for {
                lifespan <- readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
                maxIdle <- readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
                version <- readMaybeLong(buffer)
                valueLength <- readMaybeVInt(buffer)
             } yield {
                new RequestParameters(valueLength, new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS), version)
-            }
+            }).orNull
          case _ =>
-            for {
+            (for {
                lifespan <- readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
                maxIdle <- readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
                valueLength <- readMaybeVInt(buffer)
             } yield {
                new RequestParameters(valueLength, new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS), -1)
-            }
+            }).orNull
       }
    }
 

@@ -25,8 +25,6 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
    val isTrace = CacheDecodeContextLog.log.isTraceEnabled
 
    @scala.beans.BeanProperty
-   var error: Throwable = _
-   @scala.beans.BeanProperty
    var decoder: AbstractVersionedDecoder = _
    @scala.beans.BeanProperty
    var header: HotRodHeader = _
