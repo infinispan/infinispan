@@ -13,9 +13,9 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.util.ITestUtils;
-import org.infinispan.test.TestingUtil;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Iq80DBFactory;
@@ -59,10 +59,10 @@ public class LevelDBCacheStoreIT {
 
     private void removeDataFilesIfExists() {
         if (dataDir.exists()) {
-            TestingUtil.recursiveFileRemove(dataDir);
+            Util.recursiveFileRemove(dataDir);
         }
         if (expiredDir.exists()) {
-            TestingUtil.recursiveFileRemove(expiredDir);
+            Util.recursiveFileRemove(expiredDir);
         }
     }
 

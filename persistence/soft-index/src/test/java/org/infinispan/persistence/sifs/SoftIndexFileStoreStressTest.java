@@ -1,5 +1,6 @@
 package org.infinispan.persistence.sifs;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.testng.Assert.fail;
-import static org.infinispan.test.TestingUtil.recursiveFileRemove;
+import static org.infinispan.commons.util.Util.recursiveFileRemove;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -56,7 +57,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
-      recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
       marshaller = new TestObjectStreamMarshaller();
       factory = new InternalEntryFactoryImpl();
       store = new SoftIndexFileStore();

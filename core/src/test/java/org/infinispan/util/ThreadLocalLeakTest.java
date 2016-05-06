@@ -54,7 +54,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      org.infinispan.commons.util.Util.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();
    }
 

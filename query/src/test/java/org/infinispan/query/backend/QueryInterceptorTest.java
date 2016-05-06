@@ -3,6 +3,7 @@ package org.infinispan.query.backend;
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -27,7 +28,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.LongAdder;
 
-import static org.infinispan.test.TestingUtil.recursiveFileRemove;
+import static org.infinispan.commons.util.Util.recursiveFileRemove;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -59,8 +60,8 @@ public class QueryInterceptorTest {
 
    @AfterMethod
    protected void tearDown() {
-      recursiveFileRemove(indexDir);
-      recursiveFileRemove(storeDir);
+      Util.recursiveFileRemove(indexDir);
+      Util.recursiveFileRemove(storeDir);
    }
 
    @Test

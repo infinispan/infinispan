@@ -2,6 +2,7 @@ package org.infinispan.persistence.file;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -46,7 +47,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(this.location);
+      Util.recursiveFileRemove(this.location);
    }
 
    @Override

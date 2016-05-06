@@ -1,6 +1,7 @@
 package org.infinispan.persistence.leveldb.config;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -13,7 +14,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
    }
 
    public void testConfigBuilder() {
@@ -74,7 +74,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       cache.stop();
       cacheManager.stop();
 
-      TestingUtil.recursiveFileRemove("/tmp/leveldb/60");
+      Util.recursiveFileRemove("/tmp/leveldb/60");
    }
 
 }

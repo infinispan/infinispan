@@ -1,11 +1,11 @@
 package org.infinispan.persistence.leveldb;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 
 import java.io.File;
 
@@ -14,7 +14,7 @@ public abstract class LevelDBStoreFunctionalTest extends BaseStoreFunctionalTest
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
    }
 
    LevelDBStoreConfigurationBuilder createStoreBuilder(PersistenceConfigurationBuilder loaders) {

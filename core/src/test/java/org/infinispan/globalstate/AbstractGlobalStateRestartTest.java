@@ -1,15 +1,13 @@
 package org.infinispan.globalstate;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
@@ -19,7 +17,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import static org.testng.AssertJUnit.*;
 
@@ -41,7 +38,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      TestingUtil.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass().getSimpleName()));
+      Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass().getSimpleName()));
       createStatefulCacheManagers(true, -1, false);
    }
 
@@ -63,7 +60,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
    private void createStatefulCacheManager(String id, boolean clear) {
       String stateDirectory = TestingUtil.tmpDirectory(this.getClass().getSimpleName() + File.separator + id);
       if (clear)
-         TestingUtil.recursiveFileRemove(stateDirectory);
+         Util.recursiveFileRemove(stateDirectory);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       global.globalState().enable().persistentLocation(stateDirectory);
 

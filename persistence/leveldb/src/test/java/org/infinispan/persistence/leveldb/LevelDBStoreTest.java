@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -20,7 +21,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.leveldb.LevelDBStoreTest")
@@ -30,7 +30,7 @@ public class LevelDBStoreTest extends BaseStoreTest {
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
    }
 
    protected LevelDBStoreConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder lcb) {

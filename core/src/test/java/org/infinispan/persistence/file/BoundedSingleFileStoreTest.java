@@ -1,5 +1,6 @@
 package org.infinispan.persistence.file;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -15,7 +16,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.infinispan.test.TestingUtil.recursiveFileRemove;
+import static org.infinispan.commons.util.Util.recursiveFileRemove;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -38,7 +39,7 @@ public class BoundedSingleFileStoreTest extends AbstractInfinispanTest {
 
    @AfterClass
    protected void clearTempDir() {
-      recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
    }
 
    @BeforeMethod

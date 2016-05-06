@@ -21,6 +21,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.ClusteredCacheFactory;
@@ -141,7 +142,7 @@ public class IndexReadingStressTest {
    @AfterClass
    public static void afterTest() {
       cacheFactory.stop();
-      TestingUtil.recursiveFileRemove(indexName);
+      Util.recursiveFileRemove(indexName);
    }
 
    private static class IndependentLuceneReaderThread extends LuceneUserThread {

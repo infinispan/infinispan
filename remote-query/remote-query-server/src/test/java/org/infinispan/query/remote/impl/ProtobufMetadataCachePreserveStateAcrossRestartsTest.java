@@ -2,6 +2,7 @@ package org.infinispan.query.remote.impl;
 
 import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -25,7 +26,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestartsTest extends Abstra
 
    public void testStatePreserved() throws Exception {
       String persistentStateLocation = TestingUtil.tmpDirectory(this.getClass());
-      TestingUtil.recursiveFileRemove(persistentStateLocation);
+      Util.recursiveFileRemove(persistentStateLocation);
 
       TestingUtil.withCacheManager(new CacheManagerCallable(createCacheManager(persistentStateLocation)) {
          @Override

@@ -1,5 +1,6 @@
 package org.infinispan.persistence.file;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreTest;
@@ -10,7 +11,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.infinispan.test.TestingUtil.recursiveFileRemove;
+import static org.infinispan.commons.util.Util.recursiveFileRemove;
 
 /**
  * Low level single-file cache store tests.
@@ -30,7 +31,7 @@ public class SingleFileStoreTest extends BaseStoreTest {
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
    }
 
    @Override
