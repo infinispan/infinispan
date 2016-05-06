@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -58,7 +59,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
             }
          });
       } finally {
-         if(file != null) TestingUtil.recursiveFileRemove(file);
+         if(file != null) Util.recursiveFileRemove(file);
       }
    }
 
@@ -110,7 +111,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
             }
          });
       } finally {
-         TestingUtil.recursiveFileRemove(rootDir);
+         Util.recursiveFileRemove(rootDir);
       }
    }
 }

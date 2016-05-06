@@ -15,6 +15,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.impl.DirectoryBuilderImpl;
 import org.infinispan.lucene.impl.DirectoryExtensions;
@@ -60,7 +61,7 @@ public class InfinispanDirectoryIOTest {
       if (cacheManager != null) {
          cacheManager.getCache().clear();
       }
-      TestingUtil.recursiveFileRemove(indexDir);
+      Util.recursiveFileRemove(indexDir);
    }
 
    @Test

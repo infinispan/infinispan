@@ -1,7 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -30,7 +30,7 @@ public class LocalCachePerformantConfTest extends LocalCacheTest {
 
    @Override
    protected void setup() throws Exception {
-      TestingUtil.recursiveFileRemove(indexDirectory);
+      Util.recursiveFileRemove(indexDirectory);
       boolean created = new File(indexDirectory).mkdirs();
       assertTrue(created);
       super.setup();
@@ -41,7 +41,7 @@ public class LocalCachePerformantConfTest extends LocalCacheTest {
       try {
          super.teardown();
       } finally {
-         TestingUtil.recursiveFileRemove(indexDirectory);
+         Util.recursiveFileRemove(indexDirectory);
       }
    }
 }

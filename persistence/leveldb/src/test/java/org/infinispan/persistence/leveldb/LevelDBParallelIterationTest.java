@@ -1,5 +1,6 @@
 package org.infinispan.persistence.leveldb;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.persistence.ParallelIterationTest;
@@ -31,7 +32,7 @@ public class LevelDBParallelIterationTest extends ParallelIterationTest {
 
    @Override
    protected void teardown() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
       super.teardown();
    }
 

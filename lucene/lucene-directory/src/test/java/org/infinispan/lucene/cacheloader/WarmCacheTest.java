@@ -2,6 +2,7 @@ package org.infinispan.lucene.cacheloader;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
@@ -10,7 +11,6 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.LuceneUtils;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -75,7 +75,7 @@ public class WarmCacheTest extends MultipleCacheManagersTest {
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(indexDir);
+      Util.recursiveFileRemove(indexDir);
    }
 
 }

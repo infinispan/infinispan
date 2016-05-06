@@ -1,11 +1,11 @@
 package org.infinispan.persistence.leveldb;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.persistence.MultiStoresFunctionalTest;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -19,7 +19,7 @@ public class LevelDBMultiCacheStoreFunctionalTest extends MultiStoresFunctionalT
    @BeforeMethod
    protected void cleanDataFiles() {
       if (tmpDir.exists()) {
-         TestingUtil.recursiveFileRemove(tmpDir);
+         Util.recursiveFileRemove(tmpDir);
       }
    }
 

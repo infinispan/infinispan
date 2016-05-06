@@ -160,33 +160,17 @@ public class LevelDBStore implements AdvancedLoadWriteStore {
         } catch (IOException e) {
             if (dbFactory instanceof JniDBFactory) {
                 // Level DB JNI does not remove files correctly on Windows - so let's do a clean up manually
-                deleteFilesFromDirectory(dir);
+                // Now here comes the fun part - Windows does not allow removing files opened with FileChannel.map
+                // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4715154
+                // However adding a GC should deallocate direct buffers and we should be able to delete them
+                System.gc();
+                Util.recursiveFileRemove(dir);
                 log.warnAboutExceptionInLevelDB(e);
             } else {
                 throw e;
             }
         }
 
-    }
-
-    private void deleteFilesFromDirectory(File directory) {
-        if (directory.exists() && directory.isDirectory()) {
-            // Now here comes the fun part - Windows does not allow removing files opened with FileChannel.map
-            // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4715154
-            // However adding a GC should deallocate direct buffers and we should be able to delete them
-            System.gc();
-            File[] files = directory.listFiles();
-            if (null != files) {
-                for (int i = 0; i < files.length; i++) {
-                    if (files[i].isDirectory()) {
-                        deleteFilesFromDirectory(files[i]);
-                    } else {
-                        files[i].delete();
-                    }
-                }
-            }
-            directory.delete();
-        }
     }
 
     protected DB reinitDatabase(String location, Options options) throws IOException {

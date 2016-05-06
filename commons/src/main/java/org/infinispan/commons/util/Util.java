@@ -1,7 +1,17 @@
 package org.infinispan.commons.util;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
+
+import javax.naming.Context;
+import javax.security.auth.Subject;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,16 +41,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-
-import javax.naming.Context;
-import javax.security.auth.Subject;
-
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * General utility methods used throughout the Infinispan code base.
@@ -943,5 +943,40 @@ public final class Util {
          }
       }
       return out.toString();
+   }
+
+   /**
+    * Deletes directory recursively.
+    *
+    * @param directoryName Directory to be deleted
+     */
+   public static void recursiveFileRemove(String directoryName) {
+      File file = new File(directoryName);
+      recursiveFileRemove(file);
+   }
+
+   /**
+    * Deletes directory recursively.
+    *
+    * @param directory Directory to be deleted
+     */
+   public static void recursiveFileRemove(File directory) {
+      if (directory.exists()) {
+         log.tracef("Deleting file %s", directory);
+         recursiveDelete(directory);
+      }
+   }
+
+   private static void recursiveDelete(File f) {
+      File absoluteFile = f.getAbsoluteFile();
+      if (absoluteFile.isDirectory()) {
+         File[] files = absoluteFile.listFiles();
+         if (files != null) {
+            for (File file : files) {
+               recursiveDelete(file);
+            }
+         }
+      }
+      absoluteFile.delete();
    }
 }

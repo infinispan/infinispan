@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
@@ -58,13 +59,13 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
 
    @AfterMethod
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory1);
+      Util.recursiveFileRemove(tmpDirectory1);
       new File(tmpDirectory1).mkdirs();
-      TestingUtil.recursiveFileRemove(tmpDirectory2);
+      Util.recursiveFileRemove(tmpDirectory2);
       new File(tmpDirectory2).mkdirs();
-      TestingUtil.recursiveFileRemove(tmpDirectory3);
+      Util.recursiveFileRemove(tmpDirectory3);
       new File(tmpDirectory3).mkdirs();
-      TestingUtil.recursiveFileRemove(tmpDirectory4);
+      Util.recursiveFileRemove(tmpDirectory4);
       new File(tmpDirectory4).mkdirs();
    }
 

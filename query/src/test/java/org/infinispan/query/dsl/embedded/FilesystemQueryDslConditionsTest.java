@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.test.TestingUtil;
@@ -25,7 +26,7 @@ public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      TestingUtil.recursiveFileRemove(indexDirectory);
+      Util.recursiveFileRemove(indexDirectory);
       boolean created = new File(indexDirectory).mkdirs();
       assertTrue(created);
 
@@ -48,7 +49,7 @@ public class FilesystemQueryDslConditionsTest extends QueryDslConditionsTest {
          super.destroy();
       } finally {
          //delete the index otherwise it will mess up the index for next tests
-         TestingUtil.recursiveFileRemove(indexDirectory);
+         Util.recursiveFileRemove(indexDirectory);
       }
    }
 }

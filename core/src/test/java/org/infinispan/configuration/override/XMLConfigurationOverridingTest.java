@@ -1,6 +1,7 @@
 package org.infinispan.configuration.override;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.junit.Assert;
@@ -223,7 +224,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          }
       });
      }finally {
-      TestingUtil.recursiveFileRemove(tmpDir);
+      Util.recursiveFileRemove(tmpDir);
    }
    }
 

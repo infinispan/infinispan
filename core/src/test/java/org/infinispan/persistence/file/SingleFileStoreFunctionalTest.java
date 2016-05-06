@@ -1,6 +1,7 @@
 package org.infinispan.persistence.file;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -35,7 +36,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();
    }
 
@@ -70,7 +71,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             assertEquals(-1, cacheLoader.getConfiguration().maxEntries());
          }
       });
-      TestingUtil.recursiveFileRemove("Infinispan-SingleFileStore");
+      Util.recursiveFileRemove("Infinispan-SingleFileStore");
    }
 
    public void testParsingElement() throws Exception {
@@ -96,7 +97,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             assertEquals(0.75f, store.getConfiguration().fragmentationFactor(), 0f);
          }
       });
-      TestingUtil.recursiveFileRemove("other-location");
+      Util.recursiveFileRemove("other-location");
    }
 
 }
