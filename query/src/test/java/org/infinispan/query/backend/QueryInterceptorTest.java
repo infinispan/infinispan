@@ -28,7 +28,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.LongAdder;
 
-import static org.infinispan.commons.util.Util.recursiveFileRemove;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;

@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.testng.Assert.fail;
-import static org.infinispan.commons.util.Util.recursiveFileRemove;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
