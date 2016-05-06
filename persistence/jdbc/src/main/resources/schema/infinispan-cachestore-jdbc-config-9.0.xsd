@@ -54,6 +54,14 @@
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
+    <xs:attribute name="key-to-string-mapper" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          The class name of a org.infinispan.persistence.keymappers.Key2StringMapper to use for mapping keys to strings suitable for storage in a database table.
+          Defaults to org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="binary-keyed-jdbc-store">
@@ -93,6 +101,14 @@
         </xs:sequence>
       </xs:extension>
     </xs:complexContent>
+    <xs:attribute name="key-to-string-mapper" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>
+          The class name of a org.infinispan.persistence.keymappers.Key2StringMapper to use for mapping keys to strings suitable for storage in a database table.
+          Defaults to org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="string-keyed-table">
