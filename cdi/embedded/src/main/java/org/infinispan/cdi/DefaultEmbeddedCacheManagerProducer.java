@@ -1,15 +1,16 @@
 package org.infinispan.cdi;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.Vetoed;
+
 import org.infinispan.cdi.util.defaultbean.DefaultBean;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Produces;
 
 /**
  * <p>The default {@link EmbeddedCacheManager} producer.</p>
@@ -21,6 +22,7 @@ import javax.enterprise.inject.Produces;
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@Vetoed
 public class DefaultEmbeddedCacheManagerProducer {
 
    private static final String CACHE_NAME = "CDIExtensionDefaultCacheManager";
