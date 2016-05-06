@@ -1,6 +1,7 @@
 package org.infinispan.persistence.leveldb.logging;
 
 import org.infinispan.persistence.spi.PersistenceException;
+import org.iq80.leveldb.DBException;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -44,4 +45,8 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Could not load any LevelDB Factories: : %s", id = 23007)
    PersistenceException cannotLoadlevelDBFactories(String formattedArrayOfClassNames);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "An internal LevelDB exception occurred", id = 23008)
+   void warnAboutExceptionInLevelDB(@Cause Exception e);
 }

@@ -15,10 +15,10 @@ public abstract class LevelDBStoreFunctionalTest extends BaseStoreFunctionalTest
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
-      new File(tmpDirectory).mkdirs();
    }
 
    LevelDBStoreConfigurationBuilder createStoreBuilder(PersistenceConfigurationBuilder loaders) {
+      new File(tmpDirectory).mkdirs();
       return loaders.addStore(LevelDBStoreConfigurationBuilder.class).location(tmpDirectory + "/data").expiredLocation(tmpDirectory + "/expiry").clearThreshold(2);
    }
 }
