@@ -16,8 +16,8 @@ import org.jboss.logging.annotations.MessageLogger;
 @MessageLogger(projectCode = "ISPN")
 public interface RemoteLog extends BasicLogger {
 
-	   @LogMessage(level = DEBUG)
-	   @Message(value = "Overriding default remote cache manager not found - adding default implementation", id = 17004)
-	   void addDefaultRemoteCacheManager();
+   @LogMessage(level = DEBUG)
+   @Message(value = "Overriding default remote cache manager not found - adding default implementation", id = 17004)
+   void addDefaultRemoteCacheManager();
 
 }

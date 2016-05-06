@@ -107,7 +107,7 @@ public class InfinispanExtensionRemote implements Extension {
          event.addBean(createDefaultRemoteCacheManagerBean(beanManager));
       }
 
-	   for (Map.Entry<Type, Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
+      for (Map.Entry<Type, Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
 
          event.addBean(new BeanBuilder(beanManager)
                              .readFromType(beanManager.createAnnotatedType(Reflections.getRawType(entry.getKey())))
