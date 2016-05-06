@@ -273,7 +273,8 @@ public class TcpTransportFactory implements TransportFactory {
       SocketAddress server;
       synchronized (lock) {
          Optional<SocketAddress> hashAwareServer = topologyInfo.getHashAwareServer(key, cacheName);
-         server = hashAwareServer.orElse(getNextServer(failedServers, cacheName));
+         Optional<SocketAddress> filtered = hashAwareServer.filter(a -> failedServers == null || !failedServers.contains(a));
+         server = filtered.orElse(getNextServer(failedServers, cacheName));
       }
       return borrowTransportFromPool(server);
    }
