@@ -1299,9 +1299,6 @@
         </xs:annotation>
       </xs:element>
     </xs:sequence>
-    <xs:attribute name="name" type="xs:string">
-      <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
-    </xs:attribute>
     <xs:attribute name="shared" type="xs:boolean" default="false">
       <xs:annotation>
         <xs:documentation>This setting should be set to true when multiple cache instances share the same cache store (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared database.) Setting this to true avoids multiple cache instances writing the same modification multiple times. If enabled, only the node where the modification originated will write to the cache store. If disabled, each individual cache reacts to a potential remote update by storing the data to the cache store.</xs:documentation>
