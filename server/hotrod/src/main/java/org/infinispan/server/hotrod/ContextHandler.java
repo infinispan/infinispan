@@ -19,6 +19,7 @@ import scala.Tuple4;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
@@ -34,14 +35,26 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
 
    private final HotRodServer server;
    private final NettyTransport transport;
+   private final Executor executor;
 
-   public ContextHandler(HotRodServer server, NettyTransport transport) {
+   public ContextHandler(HotRodServer server, NettyTransport transport, Executor executor) {
       this.server = server;
       this.transport = transport;
+      this.executor = executor;
    }
 
    @Override
    protected void channelRead0(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
+      executor.execute(() -> {
+         try {
+            realRead(ctx, msg);
+         } catch (Exception e) {
+            ctx.fireExceptionCaught(e);
+         }
+      });
+   }
+
+   protected void realRead(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
       HotRodHeader h = msg.header();
       switch (h.op()) {
          case PutRequest:
