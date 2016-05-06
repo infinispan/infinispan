@@ -2,6 +2,7 @@
 <features name="infinispan-cachestore-leveldb-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
    <feature name="infinispan-cachestore-leveldb-jni" version="${project.version}">
       <bundle>mvn:org.fusesource.leveldbjni/leveldbjni-all/${version.leveldbjni}</bundle>
+      <bundle>mvn:org.fusesource.leveldbjni/leveldbjni/${version.leveldbjni}</bundle>
       <bundle>mvn:org.infinispan/infinispan-cachestore-leveldb/${project.version}</bundle>
    </feature>
    <feature name="infinispan-cachestore-leveldb-java" version="${project.version}">
