@@ -29,9 +29,6 @@ import org.infinispan.cdi.util.ContextualLifecycle;
 import org.infinispan.cdi.util.ContextualReference;
 import org.infinispan.cdi.util.DefaultLiteral;
 import org.infinispan.cdi.util.Reflections;
-import org.infinispan.cdi.util.defaultbean.DefaultBean;
-import org.infinispan.cdi.util.defaultbean.DefaultBeanHolder;
-import org.infinispan.cdi.util.defaultbean.Installed;
 import org.infinispan.cdi.util.logging.EmbeddedLog;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
@@ -142,12 +139,6 @@ public class InfinispanExtensionEmbedded implements Extension {
                }).create());
    }
 
-   public void observeDefaultEmbeddedCacheManagerInstalled(@Observes @Installed DefaultBeanHolder bean) {
-       if (bean.getBean().getTypes().contains(EmbeddedCacheManager.class)) {
-           installedEmbeddedCacheManagers.add(bean.getBean().getQualifiers());
-       }
-   }
-
    public Set<InstalledCacheManager> getInstalledEmbeddedCacheManagers(BeanManager beanManager) {
        Set<InstalledCacheManager> installedCacheManagers = new HashSet<InstalledCacheManager>();
        for (Set<Annotation> qualifiers : installedEmbeddedCacheManagers) {
@@ -159,8 +150,7 @@ public class InfinispanExtensionEmbedded implements Extension {
    }
 
    public void observeEmbeddedCacheManagerBean(@Observes ProcessBean<?> processBean) {
-       if (processBean.getBean().getTypes().contains(EmbeddedCacheManager.class) && !processBean.getAnnotated().isAnnotationPresent(DefaultBean.class)) {
-           // Install any non-default EmbeddedCacheManager producers. We handle default ones separately, to ensure we only pick them up if installed
+       if (processBean.getBean().getTypes().contains(EmbeddedCacheManager.class)) {
            installedEmbeddedCacheManagers.add(processBean.getBean().getQualifiers());
        }
    }
