@@ -147,8 +147,9 @@ public class ScriptingManagerImpl implements ScriptingManager {
    public <T> CompletableFuture<T> runScript(String scriptName, TaskContext context) {
       ScriptMetadata metadata = getScriptMetadata(scriptName);
       if (globalAuthzHelper != null) {
-         if (context.getCache().isPresent()) {
-            AuthorizationManager authorizationManager = SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache());
+         AuthorizationManager authorizationManager = context.getCache().isPresent() ?
+            SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
+         if (authorizationManager != null) {
             authorizationManager.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
          } else {
             globalAuthzHelper.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));

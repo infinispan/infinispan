@@ -1,5 +1,14 @@
 package org.infinispan.scripting;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.concurrent.ExecutionException;
+import javax.security.auth.Subject;
+
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,14 +22,6 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.security.auth.Subject;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.concurrent.ExecutionException;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "scripting.SecureScriptingTest")
 public class SecureScriptingTest extends AbstractScriptingTest {
@@ -53,7 +54,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
 
    @Override
    protected String[] getScripts() {
-      return new String[] { "test.js", "testRole.js" };
+      return new String[] { "test.js", "testRole.js", "testRoleWithCache.js" };
    }
 
    @Override
@@ -62,6 +63,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
          @Override
          public Void run() throws Exception {
             SecureScriptingTest.super.setup();
+            cacheManager.defineConfiguration("nonSecuredCache", TestCacheManagerFactory.getDefaultCacheConfiguration(true).build());
             return null;
          }
       });
@@ -126,27 +128,29 @@ public class SecureScriptingTest extends AbstractScriptingTest {
       assertEquals("a", result);
    }
 
-   @Test(enabled = false, description = "Disabled until ISPN-6363 is fixed. ")
    public void testScriptOnNonSecuredCache() throws ExecutionException, InterruptedException, PrivilegedActionException {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            cacheManager.defineConfiguration("nonSecuredCache", TestCacheManagerFactory.getDefaultCacheConfiguration(true).build());
-            return null;
-         }
-      });
+      Cache<String, String> nonSecCache = cache("nonSecuredCache");
+      nonSecCache.put("a", "value");
+      assertEquals("value", nonSecCache.get("a"));
 
-      cache("nonSecuredCache").put("a", "value");
-      assertEquals("value", cacheManager.getCache("nonSecuredCache").get("a"));
-
-      String result = Security.doAs(RUNNER, new PrivilegedExceptionAction<String>() {
+      String result = Security.doAs(PHEIDIPPIDES, new PrivilegedExceptionAction<String>() {
          @Override
          public String run() throws Exception {
-            return (String) scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a").cache(cache("nonSecuredCache"))).get();
+            return (String) scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(nonSecCache)).get();
          }
       });
       assertEquals("a", result);
-      assertEquals("a", cacheManager.getCache("nonSecuredCache").get("a"));
+      assertEquals("a", nonSecCache.get("a"));
+   }
+
+   @Test(expectedExceptions= { PrivilegedActionException.class, CacheException.class} )
+   public void testScriptOnNonSecuredCacheWrongRole() throws ExecutionException, InterruptedException, PrivilegedActionException {
+      String result = Security.doAs(RUNNER, new PrivilegedExceptionAction<String>() {
+         @Override
+         public String run() throws Exception {
+            return (String) scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(cache("nonSecuredCache"))).get();
+         }
+      });
    }
 
 }
