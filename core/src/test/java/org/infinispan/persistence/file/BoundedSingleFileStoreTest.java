@@ -16,7 +16,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.infinispan.commons.util.Util.recursiveFileRemove;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
