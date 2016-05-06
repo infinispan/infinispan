@@ -1,23 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
-import javax.net.ssl.SSLContext;
-
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
-
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
@@ -43,6 +27,20 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 
+import javax.net.ssl.SSLContext;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -55,8 +53,11 @@ public class TcpTransportFactory implements TransportFactory {
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
 
    /**
-    * We need synchronization as the thread that calls {@link TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger, org.infinispan.client.hotrod.event.ClientListenerNotifier)}
-    * might(and likely will) be different from the thread(s) that calls {@link TransportFactory#getTransport(byte[], java.util.Set, byte[])} or other methods
+    * We need synchronization as the thread that calls {@link TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec,
+    * org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger,
+    * org.infinispan.client.hotrod.event.ClientListenerNotifier)}
+    * might(and likely will) be different from the thread(s) that calls {@link TransportFactory#getTransport(byte[],
+    * java.util.Set, byte[])} or other methods
     */
    private final Object lock = new Object();
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
@@ -86,7 +87,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    @GuardedBy("lock")
    private Map<byte[], Boolean> compatibilityCaches = CollectionFactory
-      .makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
+           .makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
 
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
@@ -96,15 +97,15 @@ public class TcpTransportFactory implements TransportFactory {
          boolean pingOnStartup = configuration.pingOnStartup();
          Collection<SocketAddress> servers = new ArrayList<>();
          initialServers = new ArrayList<>();
-         for(ServerConfiguration server : configuration.servers()) {
+         for (ServerConfiguration server : configuration.servers()) {
             servers.add(new InetSocketAddress(server.host(), server.port()));
          }
          initialServers.addAll(servers);
          if (!configuration.clusters().isEmpty()) {
             configuration.clusters().stream().forEach(cluster -> {
                Collection<SocketAddress> clusterAddresses = cluster.getCluster().stream()
-                  .map(server -> new InetSocketAddress(server.host(), server.port()))
-                  .collect(Collectors.toList());
+                       .map(server -> new InetSocketAddress(server.host(), server.port()))
+                       .collect(Collectors.toList());
                ClusterInfo clusterInfo = new ClusterInfo(cluster.getClusterName(), clusterAddresses);
                log.debugf("Add secondary cluster: %s", clusterInfo);
                clusters.add(clusterInfo);
@@ -131,7 +132,7 @@ public class TcpTransportFactory implements TransportFactory {
             log.debugf("Statically configured servers: %s", servers);
             log.debugf("Load balancer class: %s", configuration.balancingStrategyClass().getName());
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
-                       tcpNoDelay, soTimeout, connectTimeout);
+                    tcpNoDelay, soTimeout, connectTimeout);
          }
          TransportObjectFactory connectionFactory;
          if (configuration.security().authentication().enabled()) {
@@ -140,9 +141,9 @@ public class TcpTransportFactory implements TransportFactory {
             connectionFactory = new TransportObjectFactory(codec, this, defaultCacheTopologyId, pingOnStartup);
          }
          PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory =
-               new PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport>(
-                     connectionFactory,
-                     configuration.connectionPool());
+                 new PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport>(
+                         connectionFactory,
+                         configuration.connectionPool());
          createAndPreparePool(poolFactory);
          balancers = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
          addBalancer(RemoteCacheManager.cacheNameBytes());
@@ -184,20 +185,21 @@ public class TcpTransportFactory implements TransportFactory {
             // exceptions from nodes that might not be up any more.
             if (trace)
                log.tracef(e, "Ignoring exception pinging configured servers %s to establish a connection",
-                  servers);
+                       servers);
          }
       }
    }
 
    /**
-    * This will makes sure that, when the evictor thread kicks in the minIdle is set. We don't want to do this is the caller's thread,
+    * This will makes sure that, when the evictor thread kicks in the minIdle is set. We don't want to do this is the
+    * caller's thread,
     * as this is the user.
     */
    private void createAndPreparePool(PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory) {
       connectionPool = (GenericKeyedObjectPool<SocketAddress, TcpTransport>)
-            poolFactory.createPool();
+              poolFactory.createPool();
       Collection<SocketAddress> servers = topologyInfo.getServers();
-      for (SocketAddress addr: servers) {
+      for (SocketAddress addr : servers) {
          connectionPool.preparePool(addr, false);
       }
    }
@@ -223,8 +225,8 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash,
-         int numKeyOwners, short hashFunctionVersion, int hashSpace,
-         byte[] cacheName, AtomicInteger topologyId) {
+                                  int numKeyOwners, short hashFunctionVersion, int hashSpace,
+                                  byte[] cacheName, AtomicInteger topologyId) {
       synchronized (lock) {
          topologyInfo.updateTopology(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);
       }
@@ -232,7 +234,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
-         byte[] cacheName, AtomicInteger topologyId) {
+                                  byte[] cacheName, AtomicInteger topologyId) {
       synchronized (lock) {
          topologyInfo.updateTopology(segmentOwners, numSegments, hashFunctionVersion, cacheName, topologyId);
       }
@@ -391,7 +393,7 @@ public class TcpTransportFactory implements TransportFactory {
       if (trace) {
          KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
          log.tracef("For server %s: active = %d; idle = %d",
-               server, pool.getNumActive(server), pool.getNumIdle(server));
+                 server, pool.getNumActive(server), pool.getNumIdle(server));
       }
    }
 
@@ -492,15 +494,15 @@ public class TcpTransportFactory implements TransportFactory {
          String currentClusterName = this.currentClusterName;
          if (!isSwitchedClusterNotAvailable(failedClusterName, currentClusterName)) {
             log.debugf("Cluster already switched from failed cluster `%s` to `%s`, try again",
-               failedClusterName, currentClusterName);
+                    failedClusterName, currentClusterName);
             return ClusterSwitchStatus.IN_PROGRESS;
          }
 
          // Switch cluster if there has not been a topology id cluster switch reset recently,
          if (topologyInfo.isTopologyValid(cacheName)) {
-               if (trace)
+            if (trace)
                log.tracef("Switching clusters, failed cluster is '%s' and current cluster name is '%s'",
-                  failedClusterName, currentClusterName);
+                       failedClusterName, currentClusterName);
 
             List<ClusterInfo> candidateClusters = new ArrayList<>();
             for (ClusterInfo cluster : clusters) {
@@ -660,9 +662,9 @@ public class TcpTransportFactory implements TransportFactory {
       @Override
       public String toString() {
          return "ClusterInfo{" +
-            "name='" + clusterName + '\'' +
-            ", addresses=" + clusterAddresses +
-            '}';
+                 "name='" + clusterName + '\'' +
+                 ", addresses=" + clusterAddresses +
+                 '}';
       }
    }
 }
