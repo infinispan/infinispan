@@ -64,7 +64,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="connection-timeout" type="xs:int" default="60000">
+        <xs:attribute name="connect-timeout" type="xs:int" default="60000">
           <xs:annotation>
             <xs:documentation>
               This property defines the maximum socket connect timeout before giving up connecting to the server.
@@ -161,14 +161,14 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="min-idle" type="xs:int" default="1">
+    <xs:attribute name="min-idle-time" type="xs:int" default="1">
       <xs:annotation>
         <xs:documentation>
           Sets a target value for the minimum number of idle connections (per server) that should always be available. If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances available for each server. The default setting for this parameter is 1. 
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="time-between-eviction-runs" type="xs:long" default="120000">
+    <xs:attribute name="eviction-interval" type="xs:long" default="120000">
       <xs:annotation>
         <xs:documentation>
           Indicates how long the eviction thread should sleep before "runs" of examining idle connections. When non-positive, no eviction thread will be launched. The default setting for this parameter is 2 minutes. 
@@ -182,7 +182,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="test-while-idle" type="xs:boolean" default="true">
+    <xs:attribute name="test-idle" type="xs:boolean" default="true">
       <xs:annotation>
         <xs:documentation>
           Indicates whether or not idle connections should be validated by sending an TCP packet to the server, during idle connection eviction runs. Connections that fail to validate will be dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is true.  
