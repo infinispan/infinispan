@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
@@ -39,7 +40,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
    @Override
    protected void createCacheManagers() {
       tmpDir = new File(TestingUtil.tmpDirectory(this.getClass()));
-      TestingUtil.recursiveFileRemove(tmpDir);
+      Util.recursiveFileRemove(tmpDir);
 
       // reproduce the MODE-1754 config as closely as possible
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);
@@ -63,7 +64,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDir);
+      Util.recursiveFileRemove(tmpDir);
    }
 
    public void testStateTransfer() throws Exception {

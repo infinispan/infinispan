@@ -1,6 +1,7 @@
 package org.infinispan.expiry;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -18,7 +19,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -219,7 +219,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
          doTestEntrySetAfterExpiryInPut(m, cc);
       } finally {
          cc.stop();
-         TestingUtil.recursiveFileRemove(location);
+         Util.recursiveFileRemove(location);
       }
    }
 

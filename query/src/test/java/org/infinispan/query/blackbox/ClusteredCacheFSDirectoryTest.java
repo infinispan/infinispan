@@ -1,5 +1,6 @@
 package org.infinispan.query.blackbox;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -58,7 +59,7 @@ public class ClusteredCacheFSDirectoryTest extends ClusteredCacheTest {
          super.clearContent();
       } finally {
          //delete the index otherwise it will mess up the index for next tests
-         TestingUtil.recursiveFileRemove(TMP_DIR);
+         Util.recursiveFileRemove(TMP_DIR);
       }
    }
 }

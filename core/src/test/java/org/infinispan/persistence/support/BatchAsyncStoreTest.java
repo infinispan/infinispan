@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -100,6 +101,6 @@ public class BatchAsyncStoreTest extends SingleCacheManagerTest {
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
    }
 }

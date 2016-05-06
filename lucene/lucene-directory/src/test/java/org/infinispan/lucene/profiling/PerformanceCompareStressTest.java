@@ -19,6 +19,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.directory.BuildContext;
 import org.infinispan.lucene.directory.DirectoryBuilder;
@@ -246,7 +247,7 @@ public class PerformanceCompareStressTest extends AbstractInfinispanTest {
       for (EmbeddedCacheManager node : cacheManagers.values()) {
          TestingUtil.killCacheManagers(node);
       }
-      TestingUtil.recursiveFileRemove(indexName);
+      Util.recursiveFileRemove(indexName);
    }
 
    private void verifyDirectoryState() {

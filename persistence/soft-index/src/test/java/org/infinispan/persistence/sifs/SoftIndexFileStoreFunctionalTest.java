@@ -2,6 +2,7 @@ package org.infinispan.persistence.sifs;
 
 import java.io.File;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
@@ -24,7 +25,7 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();
    }
 

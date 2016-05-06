@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.query;
 
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -17,7 +18,7 @@ public class HotRodNonIndexedSingleFileStoreQueryTest extends HotRodNonIndexedQu
 
    @Override
    protected void setup() throws Exception {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
       super.setup();
    }
 
@@ -26,7 +27,7 @@ public class HotRodNonIndexedSingleFileStoreQueryTest extends HotRodNonIndexedQu
       try {
          super.teardown();
       } finally {
-         TestingUtil.recursiveFileRemove(tmpDirectory);
+         Util.recursiveFileRemove(tmpDirectory);
       }
    }
 

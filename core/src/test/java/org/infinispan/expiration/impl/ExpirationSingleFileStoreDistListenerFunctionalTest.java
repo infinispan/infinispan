@@ -1,6 +1,7 @@
 package org.infinispan.expiration.impl;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
@@ -13,7 +14,7 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.test.TestingUtil.recursiveFileRemove;
+import static org.infinispan.commons.util.Util.recursiveFileRemove;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationSingleFileStoreDistListenerFunctionalTest")
 public class ExpirationSingleFileStoreDistListenerFunctionalTest extends ExpirationStoreListenerFunctionalTest {
@@ -31,8 +32,8 @@ public class ExpirationSingleFileStoreDistListenerFunctionalTest extends Expirat
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
-      recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass()));
-      recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass().getSimpleName() + "2"));
+      Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass()));
+      Util.recursiveFileRemove(TestingUtil.tmpDirectory(this.getClass().getSimpleName() + "2"));
    }
 
    protected void removeFromContainer(String key) {

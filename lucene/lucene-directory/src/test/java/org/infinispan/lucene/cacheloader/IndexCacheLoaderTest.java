@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfigurationBuilder;
 import org.infinispan.lucene.directory.DirectoryBuilder;
@@ -49,7 +50,7 @@ public class IndexCacheLoaderTest extends AbstractInfinispanTest {
    @AfterMethod
    public void tearDown() {
       if(rootDir != null) {
-         TestingUtil.recursiveFileRemove(rootDir);
+         Util.recursiveFileRemove(rootDir);
       }
    }
 
