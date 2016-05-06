@@ -23,6 +23,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.cdi.util.AnyLiteral;
+import org.infinispan.cdi.util.Arrays2;
 import org.infinispan.cdi.util.BeanBuilder;
 import org.infinispan.cdi.util.Beans;
 import org.infinispan.cdi.util.ContextualLifecycle;
@@ -60,18 +61,15 @@ public class InfinispanExtensionEmbedded implements Extension {
 
    public InfinispanExtensionEmbedded() {
       new ConfigurationBuilder(); // Attempt to initialize a core class
-      this.configurations = new HashSet<InfinispanExtensionEmbedded.ConfigurationHolder>();
+      this.configurations = new HashSet<>();
    }
 
+   @SuppressWarnings("unchecked")
    void processProducers(@Observes ProcessProducer<?, ?> event, BeanManager beanManager) {
       final ConfigureCache annotation = event.getAnnotatedMember().getAnnotation(ConfigureCache.class);
-
       if (annotation != null) {
-         configurations.add(new ConfigurationHolder(
-               (Producer<Configuration>)event.getProducer(),
-               annotation.value(),
-               Reflections.getQualifiers(beanManager, event.getAnnotatedMember().getAnnotations())
-         ));
+         configurations.add(new ConfigurationHolder((Producer<Configuration>) event.getProducer(), annotation.value(),
+               Reflections.getQualifiers(beanManager, event.getAnnotatedMember().getAnnotations())));
       }
    }
 
@@ -88,19 +86,9 @@ public class InfinispanExtensionEmbedded implements Extension {
    @SuppressWarnings("unchecked")
    <T, X>void registerBeans(@Observes AfterBeanDiscovery event, final BeanManager beanManager) {
 
-      if (beanManager.getBeans(Configuration.class).isEmpty()) {
-         LOGGER.addDefaultEmbeddedConfiguration();
-         // TODO simulate processProducers()/@ConfigureCache
-         event.addBean(createDefaultEmbeddedConfigurationBean(beanManager));
-      }
-      if (beanManager.getBeans(EmbeddedCacheManager.class).isEmpty()) {
-         LOGGER.addDefaultEmbeddedCacheManager();
-         event.addBean(createDefaultEmbeddedCacheManagerBean(beanManager));
-      }
-
       for (final ConfigurationHolder holder : configurations) {
           // register a AdvancedCache producer for each configuration
-          Bean<?> b = new BeanBuilder(beanManager)
+          Bean<?> advancedCacheBean = new BeanBuilder(beanManager)
           .readFromType(beanManager.createAnnotatedType(AdvancedCache.class))
           .qualifiers(Beans.buildQualifiers(holder.getQualifiers()))
           .addType(new TypeLiteral<AdvancedCache<T, X>>() {}.getType())
@@ -112,8 +100,21 @@ public class InfinispanExtensionEmbedded implements Extension {
                  return new ContextualReference<AdvancedCacheProducer>(beanManager, AdvancedCacheProducer.class).create(Reflections.<CreationalContext<AdvancedCacheProducer>>cast(creationalContext)).get().getAdvancedCache(holder.getName(), holder.getQualifiers());
               }
            }).create();
-          event.addBean(b);
+          event.addBean(advancedCacheBean);
       }
+
+      if (beanManager.getBeans(Configuration.class).isEmpty()) {
+         LOGGER.addDefaultEmbeddedConfiguration();
+         final Configuration defaultConfiguration = new ConfigurationBuilder().build();
+         // Must be added after AdvancedCache producer registration - see also AdvancedCacheProducer.getDefaultAdvancedCache()
+         configurations.add(new ConfigurationHolder(defaultConfiguration, "", defaultQualifiers()));
+         event.addBean(createDefaultEmbeddedConfigurationBean(beanManager, defaultConfiguration));
+      }
+      if (beanManager.getBeans(EmbeddedCacheManager.class).isEmpty()) {
+         LOGGER.addDefaultEmbeddedCacheManager();
+         event.addBean(createDefaultEmbeddedCacheManagerBean(beanManager));
+      }
+
    }
 
    <K, V> void registerInputCacheCustomBean(@Observes AfterBeanDiscovery event, BeanManager beanManager) {
@@ -162,10 +163,10 @@ public class InfinispanExtensionEmbedded implements Extension {
                final CreationalContext<Configuration> ctx = beanManager.createCreationalContext(null);
                final EmbeddedCacheManager defaultCacheManager = cacheManagers.select(DefaultLiteral.INSTANCE).get();
 
-               for (ConfigurationHolder oneConfigurationHolder : configurations) {
-                  final String cacheName = oneConfigurationHolder.getName();
-                  final Configuration cacheConfiguration = oneConfigurationHolder.getProducer().produce(ctx);
-                  final Set<Annotation> cacheQualifiers = oneConfigurationHolder.getQualifiers();
+               for (ConfigurationHolder holder : configurations) {
+                  final String cacheName = holder.getName();
+                  final Configuration cacheConfiguration = holder.getConfiguration(ctx);
+                  final Set<Annotation> cacheQualifiers = holder.getQualifiers();
 
                   // if a specific cache manager is defined for this cache we use it
                   final Instance<EmbeddedCacheManager> specificCacheManager = cacheManagers.select(cacheQualifiers.toArray(new Annotation[cacheQualifiers.size()]));
@@ -203,16 +204,16 @@ public class InfinispanExtensionEmbedded implements Extension {
     * @param beanManager
     * @return a custom bean
     */
-   private Bean<Configuration> createDefaultEmbeddedConfigurationBean(BeanManager beanManager) {
+   private Bean<Configuration> createDefaultEmbeddedConfigurationBean(BeanManager beanManager, final Configuration configuration) {
       return new BeanBuilder<Configuration>(beanManager).beanClass(InfinispanExtensionEmbedded.class)
             .addTypes(Object.class, Configuration.class)
             .scope(Dependent.class)
-            .qualifiers(DefaultLiteral.INSTANCE, AnyLiteral.INSTANCE)
+            .qualifiers(defaultQualifiers())
             .beanLifecycle(new ContextualLifecycle<Configuration>() {
                @Override
                public Configuration create(Bean<Configuration> bean,
                      CreationalContext<Configuration> creationalContext) {
-                  return new ConfigurationBuilder().build();
+                  return configuration;
                }
             }).create();
    }
@@ -232,7 +233,7 @@ public class InfinispanExtensionEmbedded implements Extension {
       return new BeanBuilder<EmbeddedCacheManager>(beanManager).beanClass(InfinispanExtensionEmbedded.class)
             .addTypes(Object.class, EmbeddedCacheManager.class)
             .scope(ApplicationScoped.class)
-            .qualifiers(DefaultLiteral.INSTANCE, AnyLiteral.INSTANCE)
+            .qualifiers(defaultQualifiers())
             .beanLifecycle(new ContextualLifecycle<EmbeddedCacheManager>() {
 
                @Override
@@ -256,15 +257,31 @@ public class InfinispanExtensionEmbedded implements Extension {
             }).create();
    }
 
+   private Set<Annotation> defaultQualifiers() {
+      return Arrays2.asSet(DefaultLiteral.INSTANCE, AnyLiteral.INSTANCE);
+   }
+
    static class ConfigurationHolder {
+
       private final Producer<Configuration> producer;
       private final Set<Annotation> qualifiers;
       private final String name;
+      private final Configuration configuration;
 
       ConfigurationHolder(Producer<Configuration> producer, String name, Set<Annotation> qualifiers) {
+         this(producer, qualifiers, name, null);
+      }
+
+      ConfigurationHolder(Configuration configuration, String name, Set<Annotation> qualifiers) {
+         this(null, qualifiers, name, configuration);
+      }
+
+      private ConfigurationHolder(Producer<Configuration> producer, Set<Annotation> qualifiers, String name,
+            Configuration configuration) {
          this.producer = producer;
-         this.name = name;
          this.qualifiers = qualifiers;
+         this.name = name;
+         this.configuration = configuration;
       }
 
       public Producer<Configuration> getProducer() {
@@ -278,6 +295,11 @@ public class InfinispanExtensionEmbedded implements Extension {
       public Set<Annotation> getQualifiers() {
          return qualifiers;
       }
+
+      Configuration getConfiguration(CreationalContext<Configuration> ctx) {
+         return configuration != null ? configuration : producer.produce(ctx);
+      }
+
    }
 
    public static class InstalledCacheManager {
