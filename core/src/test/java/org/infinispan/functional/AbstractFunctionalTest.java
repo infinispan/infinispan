@@ -17,6 +17,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    // Create local caches as default in a cluster of 2
    int numNodes = 2;
    int numDistOwners = 1;
+   boolean isSync = true;
    boolean isPersistenceEnabled = true;
 
    FunctionalMapImpl<Integer, String> fmapL1;
@@ -37,14 +38,14 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
       createClusteredCaches(numNodes, localBuilder);
       // Create distributed caches
       ConfigurationBuilder distBuilder = new ConfigurationBuilder();
-      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(numDistOwners);
+      distBuilder.clustering().cacheMode(isSync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC).hash().numOwners(numDistOwners);
       if (isPersistenceEnabled) {
          distBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
       }
       cacheManagers.stream().forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
       // Create replicated caches
       ConfigurationBuilder replBuilder = new ConfigurationBuilder();
-      replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
+      replBuilder.clustering().cacheMode(isSync ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC);
       if (isPersistenceEnabled) {
          replBuilder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
       }
