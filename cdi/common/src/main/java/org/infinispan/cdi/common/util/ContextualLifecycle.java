@@ -28,6 +28,8 @@ public interface ContextualLifecycle<T> {
      * @param instance          the contextual instance to destroy
      * @param creationalContext the context in which this instance was created
      */
-    public void destroy(Bean<T> bean, T instance, CreationalContext<T> creationalContext);
+    default void destroy(Bean<T> bean, T instance, CreationalContext<T> creationalContext) {
+       // No-op
+    }
 
 }

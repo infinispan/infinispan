@@ -1,5 +1,11 @@
 package org.infinispan.cdi.common.util;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.spi.AnnotatedType;
@@ -9,11 +15,6 @@ import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
 import javax.enterprise.inject.spi.PassivationCapable;
 import javax.inject.Named;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * <p>
@@ -64,6 +65,7 @@ public class BeanBuilder<T> {
      */
     public BeanBuilder(BeanManager beanManager) {
         this.beanManager = beanManager;
+        this.types = new HashSet<Type>();
     }
 
     /**
@@ -96,7 +98,6 @@ public class BeanBuilder<T> {
         this.injectionPoints = injectionTarget.getInjectionPoints();
         this.qualifiers = new HashSet<Annotation>();
         this.stereotypes = new HashSet<Class<? extends Annotation>>();
-        this.types = new HashSet<Type>();
         for (Annotation annotation : type.getAnnotations()) {
             if (beanManager.isQualifier(annotation.annotationType())) {
                 this.qualifiers.add(annotation);

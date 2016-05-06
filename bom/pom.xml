@@ -56,9 +56,9 @@
       <infinispan.core.schema.version>9.0</infinispan.core.schema.version>
 
       <version.java>1.8</version.java>
-      
+
       <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
-      
+
       <version.protostream>3.0.5.Final</version.protostream>
       <version.aesh>0.66.4</version.aesh>
       <version.antlr>3.5.2</version.antlr>
@@ -69,7 +69,7 @@
       <version.hibernate.core>5.0.9.Final</version.hibernate.core>
       <version.hibernate.search>5.6.0.Alpha3</version.hibernate.search>
       <version.javax.cache>1.0.0</version.javax.cache>
-      <version.cdi>1.0-SP4</version.cdi>
+      <version.cdi>1.2</version.cdi>
       <version.jboss.marshalling>1.4.10.Final</version.jboss.marshalling>
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
       <version.jgroups>3.6.9.Final</version.jgroups>
@@ -108,7 +108,7 @@
 
    <dependencyManagement>
       <dependencies>
-         
+
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
@@ -311,7 +311,7 @@
             <version>${project.version}</version>
          </dependency>
 
-         
+
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-embedded</artifactId>
@@ -388,7 +388,7 @@
             <artifactId>hibernate-core</artifactId>
             <version>${version.hibernate.core}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-engine</artifactId>
@@ -404,7 +404,7 @@
               <artifactId>hibernate-entitymanager</artifactId>
               <version>${version.hibernate.core}</version>
           </dependency>
-         
+
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
@@ -464,7 +464,7 @@
             <artifactId>commons-pool</artifactId>
             <version>${version.commons.pool}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
@@ -503,14 +503,14 @@
          </activation>
 
          <properties>
-            
+
             <uberjar.deps.optional>false</uberjar.deps.optional>
          </properties>
 
          <build>
             <pluginManagement>
                <plugins>
-                  
+
                   <plugin>
                      <groupId>org.eclipse.m2e</groupId>
                      <artifactId>lifecycle-mapping</artifactId>

@@ -1,7 +1,6 @@
 package org.infinispan.test.integration.as.cdi;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.cdi.embedded.DefaultEmbeddedCacheManagerProducer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -45,9 +44,6 @@ public class DuplicatedDomainsCdiIT {
 
    @Inject
    private AdvancedCache<Object, Object> greetingCache;
-
-   @Inject
-   DefaultEmbeddedCacheManagerProducer defaultEmbeddedCacheManagerProducer;
 
    /**
     * Creates new {@link DefaultEmbeddedCacheManagerProducer} with default {@link org.infinispan.configuration.cache.Configuration}.
