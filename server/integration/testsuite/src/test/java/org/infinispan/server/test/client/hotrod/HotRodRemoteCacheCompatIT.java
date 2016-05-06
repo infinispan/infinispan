@@ -51,6 +51,7 @@ public class HotRodRemoteCacheCompatIT {
    @AfterClass
    public static void release() {
       if (remoteCacheManager != null) {
+         remoteCacheManager.getCache(CACHE_NAME).clear();
          remoteCacheManager.stop();
       }
    }
