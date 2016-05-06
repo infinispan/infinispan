@@ -7,6 +7,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
+import static org.infinispan.commons.util.Util.recursiveFileRemove;
 import static org.infinispan.test.TestingUtil.*;
 
 /**
