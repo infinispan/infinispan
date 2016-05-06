@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.File;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -27,7 +28,7 @@ public class GlobalStateRestartTest extends MultipleCacheManagersTest {
    private void createStatefulCacheManager(String id, boolean clear) {
       String stateDirectory = TestingUtil.tmpDirectory(GlobalStateRestartTest.class.getSimpleName() + "_" + id);
       if (clear)
-         TestingUtil.recursiveFileRemove(stateDirectory);
+         Util.recursiveFileRemove(stateDirectory);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       global.globalState().enable().persistentLocation(stateDirectory);
 
