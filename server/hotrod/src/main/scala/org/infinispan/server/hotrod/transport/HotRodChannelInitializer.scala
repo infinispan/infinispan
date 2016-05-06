@@ -4,10 +4,10 @@ import java.util.concurrent.Executors
 
 import io.netty.channel.{Channel, ChannelOutboundHandler}
 import io.netty.util.concurrent.DefaultThreadFactory
-import org.infinispan.server.core.ExecutionHandler
 import org.infinispan.server.core.transport.{NettyChannelInitializer, NettyTransport}
 import org.infinispan.server.hotrod.logging.{LoggingContextHandler, HotRodAccessLoggingHandler}
 import org.infinispan.server.hotrod._
+import org.infinispan.util.concurrent.WithinThreadExecutor
 
 /**
   * HotRod specific channel initializer
@@ -19,8 +19,9 @@ class HotRodChannelInitializer(val server: HotRodServer, transport: => NettyTran
                                val encoder: ChannelOutboundHandler, threadNamePrefix: String)
       extends NettyChannelInitializer(server, transport, encoder) {
 
-   val executionHandler = new ExecutionHandler(Executors.newFixedThreadPool(server.getConfiguration.workerThreads(),
-      new DefaultThreadFactory(threadNamePrefix + "ServerHandler")))
+   val executor = Executors.newFixedThreadPool(server.getConfiguration.workerThreads(),
+      new DefaultThreadFactory(threadNamePrefix + "ServerHandler"))
+//   val executor = new WithinThreadExecutor
 
    override def initChannel(ch: Channel): Unit = {
       super.initChannel(ch)
@@ -31,10 +32,7 @@ class HotRodChannelInitializer(val server: HotRodServer, transport: => NettyTran
       }
       ch.pipeline.addLast("local-handler", new LocalContextHandler(transport))
 
-      // All inbound handlers after this are performed in the executor
-      ch.pipeline.addLast("execution-handler", executionHandler)
-
-      ch.pipeline.addLast("handler", new ContextHandler(server, transport))
+      ch.pipeline.addLast("handler", new ContextHandler(server, transport, executor))
       ch.pipeline.addLast("exception", new HotRodExceptionHandler)
 
       // Logging handlers
