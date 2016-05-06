@@ -1,6 +1,6 @@
 package org.infinispan.cdi.logging;
 
-import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.INFO;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.LogMessage;
@@ -16,7 +16,7 @@ import org.jboss.logging.annotations.MessageLogger;
 @MessageLogger(projectCode = "ISPN")
 public interface RemoteLog extends BasicLogger {
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = INFO)
    @Message(value = "Overriding default remote cache manager not found - adding default implementation", id = 17004)
    void addDefaultRemoteCacheManager();
 

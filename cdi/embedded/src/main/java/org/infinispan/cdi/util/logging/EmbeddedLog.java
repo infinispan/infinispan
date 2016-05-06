@@ -1,6 +1,5 @@
 package org.infinispan.cdi.util.logging;
 
-import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.INFO;
 
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -22,11 +21,11 @@ public interface EmbeddedLog extends BasicLogger {
    @Message(value = "Configuration for cache '%s' has been defined in cache manager '%s'", id = 17002)
    void cacheConfigurationDefined(String cacheName, EmbeddedCacheManager cacheManager);
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = INFO)
    @Message(value = "Overriding default embedded configuration not found - adding default implementation", id = 17003)
    void addDefaultEmbeddedConfiguration();
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = INFO)
    @Message(value = "Overriding default embedded cache manager not found - adding default implementation", id = 17004)
    void addDefaultEmbeddedCacheManager();
 
