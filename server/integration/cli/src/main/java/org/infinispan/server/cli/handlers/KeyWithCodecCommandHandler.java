@@ -26,7 +26,7 @@ public class KeyWithCodecCommandHandler extends KeyCommandHandler {
 
       @Override
       public CommandHandler createCommandHandler(CommandContext ctx) {
-         return new CacheNameArgumentCommandHandler(CacheCommand.GET, CliCommandBuffer.INSTANCE);
+         return new KeyWithCodecCommandHandler(CacheCommand.GET, CliCommandBuffer.INSTANCE);
       }
 
       @Override
@@ -45,7 +45,7 @@ public class KeyWithCodecCommandHandler extends KeyCommandHandler {
 
       @Override
       public CommandHandler createCommandHandler(CommandContext ctx) {
-         return new CacheNameArgumentCommandHandler(CacheCommand.REMOVE, CliCommandBuffer.INSTANCE);
+         return new KeyWithCodecCommandHandler(CacheCommand.REMOVE, CliCommandBuffer.INSTANCE);
       }
 
       @Override
