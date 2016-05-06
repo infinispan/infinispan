@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -306,7 +307,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
-      TestingUtil.recursiveFileRemove(rootDir);
+      Util.recursiveFileRemove(rootDir);
       super.teardown();
    }
 

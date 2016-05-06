@@ -7,7 +7,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -43,13 +42,10 @@ import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -74,7 +70,6 @@ import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,22 +79,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -613,31 +593,6 @@ public class TestingUtil {
 
    public static void sleepRandom(int maxTime) {
       sleepThread(random.nextInt(maxTime));
-   }
-
-   public static void recursiveFileRemove(String directoryName) {
-      File file = new File(directoryName);
-      recursiveFileRemove(file);
-   }
-
-   public static void recursiveFileRemove(File file) {
-      if (file.exists()) {
-         log.tracef("Deleting file %s", file);
-         recursiveDelete(file);
-      }
-   }
-
-   private static void recursiveDelete(File f) {
-      File absoluteFile = f.getAbsoluteFile();
-      if (absoluteFile.isDirectory()) {
-         File[] files = absoluteFile.listFiles();
-         if (files != null) {
-            for (File file : files) {
-               recursiveDelete(file);
-            }
-         }
-      }
-      absoluteFile.delete();
    }
 
    public static void killCacheManagers(CacheContainer... cacheContainers) {

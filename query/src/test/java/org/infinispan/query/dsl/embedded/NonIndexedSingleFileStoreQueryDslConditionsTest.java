@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -24,13 +25,13 @@ public class NonIndexedSingleFileStoreQueryDslConditionsTest extends NonIndexedQ
       try {
          super.destroy();
       } finally {
-         TestingUtil.recursiveFileRemove(tmpDirectory);
+         Util.recursiveFileRemove(tmpDirectory);
       }
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
+      Util.recursiveFileRemove(tmpDirectory);
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.persistence()
             .addStore(SingleFileStoreConfigurationBuilder.class)

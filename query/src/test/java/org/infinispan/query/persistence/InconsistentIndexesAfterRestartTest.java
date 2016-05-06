@@ -9,6 +9,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -169,7 +170,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
 
     @AfterClass
     protected void clearTempDir() {
-       TestingUtil.recursiveFileRemove(TMP_DIR);
+       Util.recursiveFileRemove(TMP_DIR);
     }
 
 }

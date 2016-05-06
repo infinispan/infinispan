@@ -1,10 +1,10 @@
 package org.infinispan.configuration.override;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.DDSequentialInterceptor;
-import org.infinispan.interceptors.BaseSequentialInterceptor;
 import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -225,7 +225,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
          }
       });
      }finally {
-      TestingUtil.recursiveFileRemove(tmpDir);
+      Util.recursiveFileRemove(tmpDir);
    }
    }
 

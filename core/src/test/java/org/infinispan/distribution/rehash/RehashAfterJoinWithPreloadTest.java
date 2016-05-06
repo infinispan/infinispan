@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -144,6 +145,6 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(fileCacheStoreTmpDir);
+      Util.recursiveFileRemove(fileCacheStoreTmpDir);
    }
 }

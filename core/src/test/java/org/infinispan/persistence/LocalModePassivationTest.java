@@ -1,13 +1,13 @@
 package org.infinispan.persistence;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -60,7 +60,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheStoreDir = new File(TestingUtil.tmpDirectory(this.getClass()));
-      TestingUtil.recursiveFileRemove(cacheStoreDir);
+      Util.recursiveFileRemove(cacheStoreDir);
 
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
@@ -83,7 +83,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
 
    @AfterClass
    protected void clearTempDir() {
-      TestingUtil.recursiveFileRemove(cacheStoreDir);
+      Util.recursiveFileRemove(cacheStoreDir);
    }
 
    public void testStoreAndLoad() throws Exception {
