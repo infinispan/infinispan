@@ -16,7 +16,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.BaseSequentialInterceptor;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
@@ -42,7 +42,7 @@ import static org.infinispan.commons.util.Util.toStr;
  * @author Galder Zamarreño
  * @since 9.0
  */
-public class InvocationContextInterceptor extends DDSequentialInterceptor {
+public class InvocationContextInterceptor extends BaseSequentialInterceptor {
 
    private TransactionManager tm;
    private ComponentRegistry componentRegistry;
@@ -52,6 +52,29 @@ public class InvocationContextInterceptor extends DDSequentialInterceptor {
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
    private volatile boolean shuttingDown = false;
+
+   private final ReturnHandler defaultReturnHandler = new ReturnHandler() {
+      @Override
+      public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
+            Throwable throwable) throws Throwable {
+         invocationContextContainer.clearThreadLocal();
+         if (throwable == null)
+            return null;
+
+         if (throwable instanceof InvalidCacheUsageException) {
+            throw throwable;
+         } else {
+            rethrowException(rCtx, rCommand, throwable);
+         }
+         if (rCommand instanceof LockControlCommand) {
+            // Return null to return the same value without allocating a CompletableFuture
+            return rv != null ? null : CompletableFuture.completedFuture(Boolean.FALSE);
+         } else {
+            // To ignore the exception, we need to return a CompletableFuture
+            return CompletableFuture.completedFuture(rv);
+         }
+      }
+   };
 
    @Start(priority = 1)
    private void setStartStatus() {
@@ -71,80 +94,61 @@ public class InvocationContextInterceptor extends DDSequentialInterceptor {
       this.invocationContextContainer = invocationContextContainer;
    }
 
-   @Override
-   public CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return ctx.shortCircuit(handleAll(ctx, command));
-   }
 
    @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand lcc) throws Throwable {
-      Object retval = handleAll(ctx, lcc);
-      return ctx.shortCircuit(retval == null ? false : retval);
-   }
+   public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      if (trace)
+         log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
+      if (ctx == null)
+         throw new IllegalStateException("Null context not allowed!!");
 
-   private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      try {
-         ComponentStatus status = componentRegistry.getStatus();
-         if (command.ignoreCommandOnStatus(status)) {
-            log.debugf("Status: %s : Ignoring %s command", status, command);
-            return null;
-         }
-
+      ComponentStatus status = componentRegistry.getStatus();
+      if (command.ignoreCommandOnStatus(status)) {
+         log.debugf("Status: %s : Ignoring %s command", status, command);
+            return ctx.shortCircuit(null);
+      } else {
          if (status.isTerminated()) {
             throw log.cacheIsTerminated(getCacheNamePrefix());
          } else if (stoppingAndNotAllowed(status, ctx)) {
             throw log.cacheIsStopping(getCacheNamePrefix());
          }
+      }
 
-         LogFactory.pushNDC(componentRegistry.getCacheName(), trace);
+      invocationContextContainer.setThreadLocal(ctx);
+      return ctx.onReturn(defaultReturnHandler);
+   }
 
-         invocationContextContainer.setThreadLocal(ctx);
-         try {
-            if (trace) log.tracef("Invoked with command %s and InvocationContext [%s]", command, ctx);
-            if (ctx == null) throw new IllegalStateException("Null context not allowed!!");
-
-            try {
-               return ctx.forkInvocationSync(command);
-            } catch (InvalidCacheUsageException ex) {
-               throw ex; // Propagate back client usage errors regardless of flag
-            } catch (Throwable th) {
-               // Only check for fail silently if there's a failure :)
-               boolean suppressExceptions = (command instanceof FlagAffectedCommand)
-                     && ((FlagAffectedCommand) command).hasFlag(Flag.FAIL_SILENTLY);
-               // If we are shutting down there is every possibility that the invocation fails.
-               suppressExceptions = suppressExceptions || shuttingDown;
-               if (suppressExceptions) {
-                  if (shuttingDown)
-                     log.trace("Exception while executing code, but we're shutting down so failing silently.", th);
-                  else
-                     log.trace("Exception while executing code, failing silently...", th);
-                  return null;
-               } else {
-                  if (th instanceof WriteSkewException) {
-                     // We log this as DEBUG rather than ERROR - see ISPN-2076
-                     log.debug("Exception executing call", th);
-                  } else if (th instanceof OutdatedTopologyException) {
-                     log.outdatedTopology(th);
-                  } else if (th instanceof RetryPrepareException) {
-                     log.debugf("Retrying total order prepare command for transaction %s, affected keys %s",
-                           ctx.getLockOwner(), toStr(extractWrittenKeys(ctx, command)));
-                  } else {
-                     Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
-                     log.executionError(command.getClass().getSimpleName(), toStr(affectedKeys), th);
-                  }
-                  if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-                     if (trace) log.trace("Transaction marked for rollback as exception was received.");
-                     markTxForRollbackAndRethrow(ctx, th);
-                     throw new IllegalStateException("This should not be reached");
-                  }
-                  throw th;
-               }
-            }
-         } finally {
-            LogFactory.popNDC(trace);
+   private void rethrowException(InvocationContext ctx, VisitableCommand command, Throwable th)
+         throws Throwable {
+      // Only check for fail silently if there's a failure :)
+      boolean suppressExceptions = (command instanceof FlagAffectedCommand)
+            && ((FlagAffectedCommand) command).hasFlag(Flag.FAIL_SILENTLY);
+      // If we are shutting down there is every possibility that the invocation fails.
+      suppressExceptions = suppressExceptions || shuttingDown;
+      if (suppressExceptions) {
+         if (shuttingDown)
+            log.trace("Exception while executing code, but we're shutting down so failing silently.", th);
+         else
+            log.trace("Exception while executing code, failing silently...", th);
+      } else {
+         if (th instanceof WriteSkewException) {
+            // We log this as DEBUG rather than ERROR - see ISPN-2076
+            log.debug("Exception executing call", th);
+         } else if (th instanceof OutdatedTopologyException) {
+            log.outdatedTopology(th);
+         } else if (th instanceof RetryPrepareException) {
+            log.debugf("Retrying total order prepare command for transaction %s, affected keys %s",
+                  ctx.getLockOwner(), toStr(extractWrittenKeys(ctx, command)));
+         } else {
+            Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
+            log.executionError(command.getClass().getSimpleName(), toStr(affectedKeys), th);
          }
-      } finally {
-         invocationContextContainer.clearThreadLocal();
+         if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+            if (trace) log.trace("Transaction marked for rollback as exception was received.");
+            markTxForRollbackAndRethrow(ctx, th);
+            throw new IllegalStateException("This should not be reached");
+         }
+         throw th;
       }
    }
 

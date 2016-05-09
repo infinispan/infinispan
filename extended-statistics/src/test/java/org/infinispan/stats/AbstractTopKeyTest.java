@@ -99,15 +99,18 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
 
       @Override
       public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         Object retVal = ctx.forkInvocationSync(command);
-         synchronized (this) {
-            prepareBlocked = true;
-            notifyAll();
-            while (!unblock) {
-               wait();
+         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            if (throwable == null) {
+               synchronized (this) {
+                  prepareBlocked = true;
+                  notifyAll();
+                  while (!unblock) {
+                     wait();
+                  }
+               }
             }
-         }
-         return ctx.shortCircuit(retVal);
+            return null;
+         });
       }
 
       public synchronized void reset() {

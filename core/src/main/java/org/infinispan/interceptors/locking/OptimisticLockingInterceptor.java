@@ -77,19 +77,26 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          }
       }
 
-      return ctx.shortCircuit(invokeNextAndCommitIf1Pc(ctx, command));
+      if (!command.isOnePhaseCommit()) {
+         return ctx.continueInvocation();
+      }
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         releaseLockOnTxCompletion(((TxInvocationContext) rCtx));
+         return null;
+      });
+
    }
 
    @Override
    protected CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
-         //locks need to be released in this situation as they might have been acquired from L1.
-         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
-      }
+
+      if (ctx.isInTxScope())
+         return ctx.continueInvocation();
+
+      //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
+      //locks need to be released in this situation as they might have been acquired from L1.
+      return ctx.onReturn(unlockAllReturnHandler);
    }
 
    @Override
@@ -111,32 +118,20 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      }
+      return ctx.onReturn(unlockAllReturnHandler);
    }
 
    @Override
    public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      }
+      return ctx.onReturn(unlockAllReturnHandler);
    }
 
    @Override
    protected CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      try {
-         // Regardless of whether is conditional so that
-         // write skews can be detected in both cases.
-         markKeyAsRead(ctx, command, command.isConditional());
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      }
+      // Regardless of whether is conditional so that
+      // write skews can be detected in both cases.
+      markKeyAsRead(ctx, command, command.isConditional());
+      return ctx.onReturn(unlockAllReturnHandler);
    }
 
    @Override

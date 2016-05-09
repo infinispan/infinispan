@@ -56,6 +56,7 @@ import static org.infinispan.util.DeltaCompositeKeyUtil.getAffectedKeysFromConte
  * Handles the distribution of the transactional caches.
  *
  * @author Mircea Markus
+ * @author Dan Berindei
  */
 public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
@@ -79,41 +80,55 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      try {
-         return ctx.shortCircuit(handleTxWriteCommand(ctx, command, command.getKey()));
-      } finally {
-         if (ctx.isOriginLocal()) {
-            // If the state transfer interceptor has to retry the command, it should ignore the previous value.
-            command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
-         }
+   public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
+         throws Throwable {
+      if (ctx.isOriginLocal()) {
+         ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            // If the state transfer interceptor has to retry the command, it should ignore the previous
+            // value.
+            ReplaceCommand replaceCommand = (ReplaceCommand) rCommand;
+            replaceCommand.setValueMatcher(
+                  replaceCommand.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
+            return null;
+         });
       }
+      return handleTxWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
-   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      try {
-         return ctx.shortCircuit(handleTxWriteCommand(ctx, command, command.getKey()));
-      } finally {
-         if (ctx.isOriginLocal()) {
-            // If the state transfer interceptor has to retry the command, it should ignore the previous value.
-            command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
-         }
+   public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command)
+         throws Throwable {
+      if (ctx.isOriginLocal()) {
+         ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            // If the state transfer interceptor has to retry the command, it should ignore the previous
+            // value.
+            RemoveCommand removeCommand = (RemoveCommand) rCommand;
+            removeCommand.setValueMatcher(
+                  removeCommand.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
+            return null;
+         });
       }
+      return handleTxWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
-   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
+         throws Throwable {
       if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
          return handleNonTxWriteCommand(ctx, command);
       }
 
-      Object returnValue = handleTxWriteCommand(ctx, command, command.getKey());
       if (ctx.isOriginLocal()) {
-         // If the state transfer interceptor has to retry the command, it should ignore the previous value.
-         command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
+         ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            // If the state transfer interceptor has to retry the command, it should ignore the previous
+            // value.
+            PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
+            putKeyValueCommand.setValueMatcher(
+                  putKeyValueCommand.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
+            return null;
+         });
       }
-      return ctx.shortCircuit(returnValue);
+      return handleTxWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
@@ -152,15 +167,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
+         TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) ctx;
          //In Pessimistic mode, the delta composite keys were sent to the wrong owner and never locked.
          final Collection<Address> affectedNodes = cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()));
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes == null ? dm.getConsistentHash()
-               .getMembers() : affectedNodes);
+         localTxCtx.getCacheTransaction()
+               .locksAcquired(affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
          Map<Address, Response> responseMap = rpcManager.invokeRemotely(affectedNodes, command, rpcOptions);
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx,
-                                 ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired());
+         checkTxCommandResponses(responseMap, command, localTxCtx,
+               localTxCtx.getCacheTransaction().getRemoteLocksAcquired());
       }
       return ctx.continueInvocation();
    }
@@ -172,22 +188,27 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          Collection<Address> recipients = getCommitNodes(ctx);
          Map<Address, Response> responseMap =
                rpcManager.invokeRemotely(recipients, command, createCommitRpcOptions());
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
+         checkTxCommandResponses(responseMap, command, ctx, recipients);
       }
       return ctx.continueInvocation();
    }
 
    @Override
-   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retVal = ctx.forkInvocationSync(command);
-
-      if (shouldInvokeRemoteTxCommand(ctx)) {
-         Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(ctx));
-         prepareOnAffectedNodes(ctx, command, recipients);
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(
-               recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
+   public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+         throws Throwable {
+      if (!ctx.isOriginLocal()) {
+         return ctx.continueInvocation();
       }
-      return ctx.shortCircuit(retVal);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null && shouldInvokeRemoteTxCommand(ctx)) {
+            TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) rCtx;
+            Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(localTxCtx));
+            prepareOnAffectedNodes(localTxCtx, (PrepareCommand) rCommand, recipients);
+            localTxCtx.getCacheTransaction().locksAcquired(
+                  recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
+         }
+         return null;
+      });
    }
 
    protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
@@ -205,7 +226,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> recipients = getCommitNodes(ctx);
          Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createRollbackRpcOptions());
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
+         checkTxCommandResponses(responseMap, command, ctx, recipients);
       }
 
       return ctx.continueInvocation();
@@ -218,8 +239,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return localTx.getCommitNodes(affectedNodes, rpcManager.getTopologyId(), members);
    }
 
-   protected void checkTxCommandResponses(Map<Address, Response> responseMap, TransactionBoundaryCommand command,
-                                          LocalTxInvocationContext context, Collection<Address> recipients) {
+   protected void checkTxCommandResponses(Map<Address, Response> responseMap,
+         TransactionBoundaryCommand command, TxInvocationContext<LocalTransaction> context,
+         Collection<Address> recipients) {
       OutdatedTopologyException outdatedTopologyException = null;
       for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
          Address recipient = e.getKey();
@@ -251,8 +273,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private boolean checkCacheNotFoundResponseInPartitionHandling(TransactionBoundaryCommand command,
-                                                                 LocalTxInvocationContext context,
-                                                                 Collection<Address> recipients) {
+         TxInvocationContext<LocalTransaction> context, Collection<Address> recipients) {
       final GlobalTransaction globalTransaction = command.getGlobalTransaction();
       final Collection<Object> lockedKeys = context.getLockedKeys();
       if (command instanceof RollbackCommand) {
@@ -276,11 +297,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
+   private CompletableFuture<Void> handleTxWriteCommand(InvocationContext ctx, WriteCommand command,
+         Object key) throws Throwable {
       // see if we need to load values from remote sources first
-      remoteGetBeforeWrite(ctx, command, key);
-
-      return ctx.forkInvocationSync(command);
+      return remoteGetBeforeWrite(ctx, command, key);
    }
 
    @Override
@@ -314,11 +334,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
+   @Override
+   protected CompletableFuture<Void> remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command,
+         Object key) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
       if (!valueIsMissing(entry)) {
          // The entry already exists in the context, and it shouldn't be re-fetched
-         return;
+         return ctx.continueInvocation();
       }
       InternalCacheEntry remoteEntry = null;
       if (writeNeedsRemoteValue(ctx, command, key)) {
@@ -333,6 +355,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             localGet(ctx, key, true);
          }
       }
+      return ctx.continueInvocation();
    }
 
    protected InternalCacheEntry remoteGet(InvocationContext ctx, Object key, boolean isWrite,
@@ -340,7 +363,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (trace) log.tracef("Doing a remote get for key %s", key);
 
       // attempt a remote lookup
-      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command, isWrite);
+      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command, isWrite).get();
 
       if (ice != null) {
          if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {

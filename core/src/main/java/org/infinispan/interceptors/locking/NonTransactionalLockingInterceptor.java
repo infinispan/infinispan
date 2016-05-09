@@ -28,11 +28,9 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    protected final CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       assertNonTransactional(ctx);
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         lockManager.unlockAll(ctx);//possibly needed because of L1 locks being acquired
-      }
+      // TODO Check if the return handler is really needed
+      //possibly needed because of L1 locks being acquired
+      return ctx.onReturn(unlockAllReturnHandler);
    }
 
    @Override
@@ -44,23 +42,20 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       assertNonTransactional(ctx);
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         lockManager.unlockAll(ctx);//possibly needed because of L1 locks being acquired
-      }
+      // TODO Check if the return handler is really needed
+      //possibly needed because of L1 locks being acquired
+      return ctx.onReturn(unlockAllReturnHandler);
    }
 
+   @Override
    public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       assertNonTransactional(ctx);
-      try {
-         if (!command.isForwarded() && !hasSkipLocking(command)) {
-            lockAllAndRecord(ctx, command.getMap().keySet().stream().filter(this::shouldLockKey), getLockTimeoutMillis(command));
-         }
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         lockManager.unlockAll(ctx);
+      if (command.isForwarded() || hasSkipLocking(command)) {
+         return ctx.continueInvocation();
       }
+      ctx.onReturn(unlockAllReturnHandler);
+      lockAllAndRecord(ctx, command.getMap().keySet().stream().filter(this::shouldLockKey), getLockTimeoutMillis(command));
+      return ctx.continueInvocation();
    }
 
    private void assertNonTransactional(InvocationContext ctx) {

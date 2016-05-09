@@ -2,6 +2,7 @@ package org.infinispan.interceptors.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.cache.impl.Caches;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -73,7 +74,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import static org.infinispan.cache.impl.Caches.*;
 import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.persistence.PersistenceUtil.convert;
 
@@ -221,46 +221,15 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Override
    public CompletableFuture<Void> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command)
          throws Throwable {
-      CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) ctx.forkInvocationSync(command);
-      if (!enabled || hasSkipLoadFlag(command)) {
-         return ctx.shortCircuit(entrySet);
-      }
-      CacheSet<CacheEntry<K, V>> wrappedEntrySet =
-            new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), entrySet) {
-               @Override
-               public CloseableIterator<CacheEntry<K, V>> iterator() {
-                  CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
-            Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
-                              keyEquivalence);
-                  // TODO: how to handle concurrent activation....
-            return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
-                              // TODO: how to pass in key filter...
-                    new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
-                            new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048)), e -> e.getKey(),
-                    seenKeys);
-               }
-
-               @Override
-               public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
-                  return spliteratorFromIterator(iterator());
-               }
-
-               private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
-            return new IteratorAsSpliterator.Builder<>(iterator)
-                    .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
-                    .get();
-               }
-
-               @Override
-               public int size() {
-                  long size = stream().count();
-                  if (size > Integer.MAX_VALUE) {
-                     return Integer.MAX_VALUE;
-                  }
-                  return (int) size;
-               }
-            };
-      return ctx.shortCircuit(wrappedEntrySet);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null || !enabled || hasSkipLoadFlag(command)) {
+            // Continue with the existing throwable/return value
+            return null;
+         }
+         CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
+         CacheSet<CacheEntry<K, V>> wrappedEntrySet = new WrappedEntrySet(command, entrySet);
+         return CompletableFuture.completedFuture(wrappedEntrySet);
+      });
    }
 
    class SupplierFunction<K, V> implements CloseableSupplier<K> {
@@ -288,47 +257,16 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Override
    public CompletableFuture<Void> visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
          throws Throwable {
-      CacheSet<K> keySet = (CacheSet<K>) ctx.forkInvocationSync(command);
-      if (!enabled || hasSkipLoadFlag(command)) {
-         return ctx.shortCircuit(keySet);
-      }
-      CacheSet<K> wrappedKeySet =
-            new AbstractDelegatingKeyCacheSet<K, V>(getCacheWithFlags(cache, command), keySet) {
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null || !enabled || hasSkipLoadFlag(command)) {
+            // Continue with the existing throwable/return value
+            return null;
+         }
 
-               @Override
-               public CloseableIterator<K> iterator() {
-                  CloseableIterator<K> iterator = Closeables.iterator(keySet.stream());
-            Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
-                              keyEquivalence);
-                  // TODO: how to handle concurrent activation....
-            return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
-                    new SupplierFunction<>(new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,
-                                    // TODO: how to pass in key filter...
-                            iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048))),
-                    Function.identity(), seenKeys);
-               }
-
-               @Override
-               public CloseableSpliterator<K> spliterator() {
-                  return spliteratorFromIterator(iterator());
-               }
-
-               private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
-            return new IteratorAsSpliterator.Builder<>(iterator)
-                    .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
-                    .get();
-               }
-
-               @Override
-               public int size() {
-                  long size = stream().count();
-                  if (size > Integer.MAX_VALUE) {
-                     return Integer.MAX_VALUE;
-                  }
-                  return (int) size;
-               }
-            };
-      return ctx.shortCircuit(wrappedKeySet);
+         CacheSet<K> keySet = (CacheSet<K>) rv;
+         CacheSet<K> wrappedKeySet = new WrappedKeySet(command, keySet);
+         return CompletableFuture.completedFuture(wrappedKeySet);
+      });
    }
 
    @Override
@@ -533,5 +471,89 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
    public void disableInterceptor() {
       enabled = false;
+   }
+
+   private class WrappedEntrySet extends AbstractDelegatingEntryCacheSet<K, V> {
+      private final CacheSet<CacheEntry<K, V>> entrySet;
+
+      public WrappedEntrySet(EntrySetCommand command, CacheSet<CacheEntry<K, V>> entrySet) {
+         super(Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command), entrySet);
+         this.entrySet = entrySet;
+      }
+
+      @Override
+      public CloseableIterator<CacheEntry<K, V>> iterator() {
+         CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
+         Set<K> seenKeys =
+               new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(), keyEquivalence);
+         // TODO: how to handle concurrent activation....
+         return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
+
+               // TODO: how to pass in key filter...
+               new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
+                     new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048)), e -> e.getKey(),
+               seenKeys);
+      }
+
+      @Override
+      public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+         return spliteratorFromIterator(iterator());
+      }
+
+      private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
+         return new IteratorAsSpliterator.Builder<>(iterator)
+               .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+      }
+
+      @Override
+      public int size() {
+         long size = stream().count();
+         if (size > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+         }
+         return (int) size;
+      }
+   }
+
+   private class WrappedKeySet extends AbstractDelegatingKeyCacheSet<K, V> {
+
+      private final CacheSet<K> keySet;
+
+      public WrappedKeySet(KeySetCommand command, CacheSet<K> keySet) {
+         super(Caches.getCacheWithFlags(CacheLoaderInterceptor.this.cache, command), keySet);
+         this.keySet = keySet;
+      }
+
+      @Override
+      public CloseableIterator<K> iterator() {
+         CloseableIterator<K> iterator = Closeables.iterator(keySet.stream());
+         Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
+               keyEquivalence);
+         // TODO: how to handle concurrent activation....
+         return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(new SupplierFunction<>(
+               new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,
+                     // TODO: how to pass in key filter...
+                     iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048))),
+               Function.identity(), seenKeys);
+      }
+
+      @Override
+      public CloseableSpliterator<K> spliterator() {
+         return spliteratorFromIterator(iterator());
+      }
+
+      private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
+         return new IteratorAsSpliterator.Builder<>(iterator).setCharacteristics(
+               Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL).get();
+      }
+
+      @Override
+      public int size() {
+         long size = stream().count();
+         if (size > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+         }
+         return (int) size;
+      }
    }
 }

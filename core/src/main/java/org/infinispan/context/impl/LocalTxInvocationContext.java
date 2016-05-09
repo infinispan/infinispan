@@ -1,6 +1,5 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 
@@ -20,9 +19,8 @@ import java.util.Collection;
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext<LocalTransaction> {
 
-   public LocalTxInvocationContext(LocalTransaction localTransaction,
-                                   SequentialInterceptorChain interceptorChain) {
-      super(localTransaction, null, interceptorChain);
+   public LocalTxInvocationContext(LocalTransaction localTransaction) {
+      super(localTransaction, null);
    }
 
    @Override

@@ -8,8 +8,10 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
@@ -29,12 +31,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Base class for various L1 tests for use with distributed cache.  Note these only currently work for synchronous based
@@ -78,7 +80,8 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          Class<? extends SequentialInterceptor> interceptorPosition,
                                          boolean blockAfterCommand) {
       BlockingInterceptor bi = new BlockingInterceptor(barrier, commandClass, blockAfterCommand, false);
-      cache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(bi, interceptorPosition);
+      SequentialInterceptorChain interceptorChain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      assertTrue(interceptorChain.addInterceptorBefore(bi, interceptorPosition));
       return bi;
    }
 
@@ -183,8 +186,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       CyclicBarrier invalidationBarrier = new CyclicBarrier(2);
       // We want to block right before the invalidation would hit the L1 interceptor to prevent it from invaliding until we want
-      nonOwnerCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(
-            new BlockingInterceptor(invalidationBarrier, InvalidateL1Command.class, false, false), getL1InterceptorClass());
+      addBlockingInterceptor(nonOwnerCache, invalidationBarrier, InvalidateL1Command.class, getL1InterceptorClass(), false);
 
       try {
          assertEquals(firstValue, nonOwnerCache.get(key));
@@ -319,12 +321,10 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       // Add a barrier to block the owner/backupowner from going further after retrieving the value before coming back into the L1
       // interceptor
       CyclicBarrier getBarrier = new CyclicBarrier(3);
-      ownerCache.getAdvancedCache().getSequentialInterceptorChain()
-            .addInterceptorAfter(new BlockingInterceptor(getBarrier, GetCacheEntryCommand.class, true, false),
-                  getL1InterceptorClass());
-      backupOwnerCache.getAdvancedCache().getSequentialInterceptorChain()
-            .addInterceptorAfter(new BlockingInterceptor(getBarrier, GetCacheEntryCommand.class, true, false),
-                  getL1InterceptorClass());
+      addBlockingInterceptor(ownerCache, getBarrier, GetCacheEntryCommand.class,
+            getL1InterceptorClass(), true);
+      addBlockingInterceptor(backupOwnerCache, getBarrier, GetCacheEntryCommand.class,
+            getL1InterceptorClass(), true);
 
       try {
          Future<String> future = nonOwnerCache.getAsync(key);
@@ -369,11 +369,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       Future<String> putFuture = ownerCache.putAsync(key, secondValue);
 
-      try {
-         putFuture.get(1, TimeUnit.SECONDS);
-         fail("Should have thrown a TimeoutException");
-      } catch (TimeoutException e) {
-      }
+      Exceptions.expectException(TimeoutException.class, () -> putFuture.get(1, TimeUnit.SECONDS));
 
       // Let the get complete finally
       checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
@@ -407,11 +403,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          Future<String> getFuture2 = nonOwnerCache.getAsync(key);
 
-         try {
-            getFuture2.get(1, TimeUnit.SECONDS);
-            fail("Should have thrown a TimeoutException");
-         } catch (TimeoutException e) {
-         }
+         Exceptions.expectException(TimeoutException.class, () -> getFuture2.get(1, TimeUnit.SECONDS));
 
          // Let the get complete finally
          checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
@@ -446,11 +438,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          Future<String> getFuture2 = nonOwnerCache.getAsync(key);
 
-         try {
-            getFuture2.get(1, TimeUnit.SECONDS);
-            fail("Should have thrown a TimeoutException");
-         } catch (TimeoutException e) {
-         }
+         Exceptions.expectException(TimeoutException.class, () -> getFuture2.get(1, TimeUnit.SECONDS));
 
          // Let the get complete finally
          checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
@@ -484,11 +472,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       Future<String> putFuture = nonOwnerCache.putAsync(key, secondValue);
 
-      try {
-         putFuture.get(1, TimeUnit.SECONDS);
-         fail("Should have thrown a TimeoutException");
-      } catch (TimeoutException e) {
-      }
+      Exceptions.expectException(TimeoutException.class, () -> putFuture.get(1, TimeUnit.SECONDS));
 
       // Let the get complete finally
       checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
@@ -543,11 +527,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          Future<CacheEntry<Object, String>> getFuture2 = fork(() -> nonOwnerCache.getAdvancedCache().getCacheEntry(key));
 
-         try {
-            getFuture2.get(1, TimeUnit.SECONDS);
-            fail("Should have thrown a TimeoutException");
-         } catch (TimeoutException e) {
-         }
+         Exceptions.expectException(TimeoutException.class, () -> getFuture2.get(1, TimeUnit.SECONDS));
 
          // Let the get complete finally
          checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");

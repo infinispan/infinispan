@@ -27,7 +27,7 @@ import static org.infinispan.commons.util.Immutables.immutableListRemove;
 import static org.infinispan.commons.util.Immutables.immutableListReplace;
 
 /**
- * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.
+ * Knows how to build and manage a chain of interceptors. Also in charge with invoking methods on the chain.
  *
  * @author Dan Berindei
  * @since 9.0
@@ -40,9 +40,9 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          new ImmutableListCopy<>(new SequentialInterceptor[0]);
    private static final Log log = LogFactory.getLog(SequentialInterceptorChainImpl.class);
 
-   final ComponentMetadataRepo componentMetadataRepo;
+   private final ComponentMetadataRepo componentMetadataRepo;
 
-   final ReentrantLock lock = new ReentrantLock();
+   private final ReentrantLock lock = new ReentrantLock();
 
    // Modifications are guarded with "lock", but reads do not need synchronization
    private volatile List<SequentialInterceptor> interceptors = EMPTY_INTERCEPTORS_LIST;
@@ -81,6 +81,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
                                                      System.identityHashCode(this) + " more than once!");
    }
 
+   @Override
    public void addInterceptor(SequentialInterceptor interceptor, int position) {
       final ReentrantLock lock = this.lock;
       lock.lock();
@@ -95,6 +96,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
+   @Override
    public void removeInterceptor(int position) {
       final ReentrantLock lock = this.lock;
       lock.lock();
@@ -106,10 +108,12 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
+   @Override
    public int size() {
       return interceptors.size();
    }
 
+   @Override
    public void removeInterceptor(Class<? extends SequentialInterceptor> clazz) {
       final ReentrantLock lock = this.lock;
       lock.lock();
@@ -125,12 +129,13 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
-   protected boolean interceptorMatches(SequentialInterceptor interceptor,
+   private boolean interceptorMatches(SequentialInterceptor interceptor,
                                         Class<? extends SequentialInterceptor> clazz) {
       Class<? extends SequentialInterceptor> interceptorType = interceptor.getClass();
       return clazz == interceptorType;
    }
 
+   @Override
    public boolean addInterceptorAfter(SequentialInterceptor toAdd,
                                       Class<? extends SequentialInterceptor> afterInterceptor) {
       lock.lock();
@@ -160,6 +165,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       return addInterceptorBefore(toAdd, beforeInterceptor);
    }
 
+   @Override
    public boolean addInterceptorBefore(SequentialInterceptor toAdd,
                                        Class<? extends SequentialInterceptor> beforeInterceptor) {
       lock.lock();
@@ -180,6 +186,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
+   @Override
    public boolean replaceInterceptor(SequentialInterceptor replacingInterceptor,
                                      Class<? extends SequentialInterceptor> existingInterceptorType) {
       final ReentrantLock lock = this.lock;
@@ -202,6 +209,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
+   @Override
    public void appendInterceptor(SequentialInterceptor ci, boolean isCustom) {
       lock.lock();
       try {
@@ -217,6 +225,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
+   @Override
    public CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command) {
       return ((BaseSequentialInvocationContext) ctx).invoke(command, firstInterceptor);
    }
@@ -235,6 +244,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
+   @Override
    public <T extends SequentialInterceptor> T findInterceptorExtending(Class<T> interceptorClass) {
       List<SequentialInterceptor> localInterceptors = this.interceptors;
       for (SequentialInterceptor interceptor : localInterceptors) {
@@ -267,6 +277,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       return sb.toString();
    }
 
+   @Override
    public boolean containsInstance(SequentialInterceptor interceptor) {
       List<SequentialInterceptor> localInterceptors = this.interceptors;
       for (SequentialInterceptor current : localInterceptors) {
@@ -277,6 +288,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       return false;
    }
 
+   @Override
    public boolean containsInterceptorType(Class<? extends SequentialInterceptor> interceptorType) {
       return containsInterceptorType(interceptorType, false);
    }
@@ -306,10 +318,11 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    private void rebuildInterceptors() {
-      this.firstInterceptor = null;
+      InterceptorListNode node = null;
       ListIterator<SequentialInterceptor> it = interceptors.listIterator(interceptors.size());
       while (it.hasPrevious()) {
-         firstInterceptor = new InterceptorListNode(it.previous(), firstInterceptor);
+         node = new InterceptorListNode(it.previous(), node);
       }
+      this.firstInterceptor = node;
    }
 }

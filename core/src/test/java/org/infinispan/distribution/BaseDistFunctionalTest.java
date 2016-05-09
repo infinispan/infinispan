@@ -48,6 +48,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected LockingMode lockingMode;
    protected boolean onePhaseCommitOptimization = false;
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
       configuration = buildConfiguration();
@@ -147,7 +148,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
          }
       }
       // Allow some time for all ClusteredGetCommands to finish executing
-      TestingUtil.sleepThread(1000);
+      TestingUtil.sleepThread(100);
    }
 
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {

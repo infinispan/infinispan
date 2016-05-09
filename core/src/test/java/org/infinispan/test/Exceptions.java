@@ -18,7 +18,7 @@ public class Exceptions {
 
    public static void assertException(Class<? extends Throwable> exceptionClass, Throwable t) {
       if (t == null) {
-         throw new AssertionError("Should have thrown an " + exceptionClass, t);
+         throw new AssertionError("Should have thrown an " + exceptionClass, null);
       }
       if (t.getClass() != exceptionClass) {
          throw new AssertionError(
@@ -60,7 +60,17 @@ public class Exceptions {
          String messageRegex, ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);
       assertException(wrapperExceptionClass, t);
+      assertException(exceptionClass, t.getCause());
       assertException(exceptionClass, messageRegex, t.getCause());
+   }
+
+   public static void expectException(Class<? extends Throwable> wrapperExceptionClass2,
+         Class<? extends Throwable> wrapperExceptionClass1, Class<? extends Throwable> exceptionClass,
+         ExceptionRunnable runnable) {
+      Throwable t = extractException(runnable);
+      assertException(wrapperExceptionClass2, t);
+      assertException(wrapperExceptionClass1, t.getCause());
+      assertException(exceptionClass, t.getCause().getCause());
    }
 
    public static void expectException(Class<? extends Throwable> exceptionClass, ExceptionRunnable runnable) {

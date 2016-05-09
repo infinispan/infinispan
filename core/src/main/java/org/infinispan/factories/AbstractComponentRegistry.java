@@ -817,7 +817,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
                }
                Method m = meta.getMethod();
                if (m == null) {
-                  m = ReflectionUtil.findMethod(clazz, meta.getMethodName(), parameterClasses);
+                  try {
+                     m = ReflectionUtil.findMethod(clazz, meta.getMethodName(), parameterClasses);
+                  } catch (CacheException e) {
+                     throw new CacheException("Injection method not found in class " + clazz + ": " + meta.getMethodName() + Arrays.toString(parameterClasses), e);
+                  }
                   meta.setMethod(m);
                }
             }
@@ -848,9 +852,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          PrioritizedMethod that = (PrioritizedMethod) o;
 
          if (component != null ? !component.equals(that.component) : that.component != null) return false;
-         if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) return false;
+         return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;
 
-         return true;
       }
 
       @Override

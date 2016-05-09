@@ -70,63 +70,62 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public CompletableFuture<Void> visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      Object returnValue = ctx.forkInvocationSync(command);
-      if (getStatisticsEnabled(command))
-         evictions.increment();
+      if (!getStatisticsEnabled(command))
+         return ctx.continueInvocation();
 
-      return ctx.shortCircuit(returnValue);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         evictions.increment();
+         return null;
+      });
    }
 
    @Override
    public final CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
+
    @Override
    public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       return visitDataReadCommand(ctx, command);
    }
+
    private CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
-      long start = 0;
       boolean statisticsEnabled = getStatisticsEnabled(command);
-      if (statisticsEnabled)
-         start = timeService.time();
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return ctx.continueInvocation();
 
-      Object retval = ctx.forkInvocationSync(command);
-
-      if (statisticsEnabled && ctx.isOriginLocal()) {
+      long start = timeService.time();
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-         if (retval == null) {
+         if (rv == null) {
             missTimes.add(intervalMilliseconds);
             misses.increment();
          } else {
             hitTimes.add(intervalMilliseconds);
             hits.increment();
          }
-      }
-
-      return ctx.shortCircuit(retval);
+         return null;
+      });
    }
 
    @SuppressWarnings("unchecked")
    @Override
    public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      long start = 0;
       boolean statisticsEnabled = getStatisticsEnabled(command);
-      if (statisticsEnabled)
-         start = timeService.time();
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return ctx.continueInvocation();
 
-      Object retval = ctx.forkInvocationSync(command);
-
-      if (statisticsEnabled && ctx.isOriginLocal()) {
+      long start = timeService.time();
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-         int requests = command.getKeys().size();
+         int requests = ((GetAllCommand) rCommand).getKeys().size();
          int hitCount = 0;
-         for (Entry<Object, Object> entry : ((Map<Object, Object>) retval).entrySet()) {
+         for (Entry<Object, Object> entry : ((Map<Object, Object>) rv).entrySet()) {
             if (entry.getValue() != null) {
                hitCount++;
             }
          }
-         
+
          int missCount = requests - hitCount;
          if (hitCount > 0) {
             hits.add(hitCount);
@@ -136,30 +135,26 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
             misses.add(missCount);
             missTimes.add(intervalMilliseconds * missCount / requests);
          }
-      }
-
-      return ctx.shortCircuit(retval);
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      long start = 0;
       boolean statisticsEnabled = getStatisticsEnabled(command);
-      if (statisticsEnabled)
-         start = timeService.time();
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return ctx.continueInvocation();
 
-      final Object retval = ctx.forkInvocationSync(command);
-
-      if (statisticsEnabled && ctx.isOriginLocal()) {
+      long start = timeService.time();
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-         final Map<Object, Object> data = command.getMap();
+         final Map<Object, Object> data = ((PutMapCommand) rCommand).getMap();
          if (data != null && !data.isEmpty()) {
             storeTimes.add(intervalMilliseconds);
             stores.add(data.size());
          }
-      }
-
-      return ctx.shortCircuit(retval);
+         return null;
+      });
    }
 
    @Override
@@ -174,46 +169,43 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private CompletableFuture<Void> updateStoreStatistics(InvocationContext ctx, WriteCommand command) throws Throwable {
-      long start = 0;
       boolean statisticsEnabled = getStatisticsEnabled(command);
-      if (statisticsEnabled)
-         start = timeService.time();
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return ctx.continueInvocation();
 
-      Object retval = ctx.forkInvocationSync(command);
-
-      if (statisticsEnabled && ctx.isOriginLocal() && command.isSuccessful()) {
-         long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
-         storeTimes.add(intervalMilliseconds);
-         stores.increment();
-      }
-
-      return ctx.shortCircuit(retval);
+      long start = timeService.time();
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (command.isSuccessful()) {
+            long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+            storeTimes.add(intervalMilliseconds);
+            stores.increment();
+         }
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      long start = 0;
       boolean statisticsEnabled = getStatisticsEnabled(command);
-      if (statisticsEnabled)
-         start = timeService.time();
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return ctx.continueInvocation();
 
-      Object retval = ctx.forkInvocationSync(command);
-
-      if (statisticsEnabled && ctx.isOriginLocal()) {
-         if (command.isConditional()) {
-            if (command.isSuccessful())
+      long start = timeService.time();
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         RemoveCommand removeCommand = (RemoveCommand) rCommand;
+         if (removeCommand.isConditional()) {
+            if (removeCommand.isSuccessful())
                increaseRemoveHits(start);
             else
                increaseRemoveMisses();
          } else {
-            if (retval == null)
+            if (rv == null)
                increaseRemoveMisses();
             else
                increaseRemoveHits(start);
          }
-      }
-
-      return ctx.shortCircuit(retval);
+         return null;
+      });
    }
 
    private void increaseRemoveHits(long start) {

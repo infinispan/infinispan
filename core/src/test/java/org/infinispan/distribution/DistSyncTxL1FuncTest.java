@@ -15,6 +15,7 @@ import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.mockito.AdditionalAnswers;
@@ -37,9 +38,13 @@ import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.testng.AssertJUnit.*;
-
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "functional", testName = "distribution.DistSyncTxL1FuncTest")
 public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
@@ -163,13 +168,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          barrier.await(5, TimeUnit.SECONDS);
 
          Future<String> futureGet = nonOwnerCache.getAsync(key);
-
-         try {
-            futureGet.get(100, TimeUnit.MILLISECONDS);
-            fail("Get shouldn't return until after the replace completes");
-         } catch (TimeoutException e) {
-
-         }
+         Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
 
          // Let the replace now finish
          barrier.await(5, TimeUnit.SECONDS);
@@ -200,7 +199,8 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
             throw new RemoteException("FAIL", new TimeoutException());
          }
          // Only throw exception on the first call just in case if test calls it more than once to fail properly
-      }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager).invokeRemotely(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
+      }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager)
+            .invokeRemotelyAsync(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
 
       TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, mockManager, true);
       try {
@@ -211,12 +211,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
          Future<String> futureGet = nonOwnerCache.getAsync(key);
 
-         try {
-            futureGet.get(100, TimeUnit.MILLISECONDS);
-            fail("Get shouldn't return until after the replace completes");
-         } catch (TimeoutException e) {
-
-         }
+         Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
 
          // Let the replace now finish
          barrier.await(5, TimeUnit.SECONDS);

@@ -1,17 +1,5 @@
 package org.infinispan.query.backend;
 
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
-
 import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
@@ -49,6 +37,17 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.logging.LogFactory;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
@@ -153,39 +152,55 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      Object toReturn = ctx.forkInvocationSync(command);
-      processPutKeyValueCommand(command, ctx, toReturn, null);
-      return ctx.shortCircuit(toReturn);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            processPutKeyValueCommand(((PutKeyValueCommand) rCommand), rCtx, rv, null);
+         }
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       // remove the object out of the cache first.
-      Object valueRemoved = ctx.forkInvocationSync(command);
-      processRemoveCommand(command, ctx, valueRemoved, null);
-      return ctx.shortCircuit(valueRemoved);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            processRemoveCommand(((RemoveCommand) rCommand), rCtx, rv, null);
+         }
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      Object valueReplaced = ctx.forkInvocationSync(command);
-      processReplaceCommand(command, ctx, valueReplaced, null);
-      return ctx.shortCircuit(valueReplaced);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            processReplaceCommand(((ReplaceCommand) rCommand), rCtx, rv, null);
+         }
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Map<Object, Object> previousValues = (Map<Object, Object>) ctx.forkInvocationSync(command);
-      processPutMapCommand(command, ctx, previousValues, null);
-      return ctx.shortCircuit(previousValues);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            Map<Object, Object> previousValues = (Map<Object, Object>) rv;
+            processPutMapCommand(((PutMapCommand) rCommand), rCtx, previousValues, null);
+         }
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitClearCommand(final InvocationContext ctx, final ClearCommand command) throws Throwable {
       // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
-      Object returnValue = ctx.forkInvocationSync(command);
-      processClearCommand(command, ctx, null);
-      return ctx.shortCircuit(returnValue);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            processClearCommand(((ClearCommand) rCommand), rCtx, null);
+         }
+         return null;
+      });
    }
 
    /**
@@ -325,26 +340,33 @@ public final class QueryInterceptor extends DDSequentialInterceptor {
          }
       }
 
-      final Object toReturn = ctx.forkInvocationSync(command);
-
-      if (ctx.isTransactionValid()) {
-         final TransactionContext transactionContext = makeTransactionalEventContext();
-         for (int i = 0; i < writeCommands.length; i++) {
-            final WriteCommand writeCommand = writeCommands[i];
-            if (writeCommand instanceof PutKeyValueCommand) {
-               processPutKeyValueCommand((PutKeyValueCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            } else if (writeCommand instanceof PutMapCommand) {
-               processPutMapCommand((PutMapCommand) writeCommand, ctx, (Map<Object, Object>) stateBeforePrepare[i], transactionContext);
-            } else if (writeCommand instanceof RemoveCommand) {
-               processRemoveCommand((RemoveCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            } else if (writeCommand instanceof ReplaceCommand) {
-               processReplaceCommand((ReplaceCommand) writeCommand, ctx, stateBeforePrepare[i], transactionContext);
-            } else if (writeCommand instanceof ClearCommand) {
-               processClearCommand((ClearCommand) writeCommand, ctx, transactionContext);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
+            if (txInvocationContext.isTransactionValid()) {
+               final TransactionContext transactionContext = makeTransactionalEventContext();
+               for (int i = 0; i < writeCommands.length; i++) {
+                  final WriteCommand writeCommand = writeCommands[i];
+                  if (writeCommand instanceof PutKeyValueCommand) {
+                     processPutKeyValueCommand((PutKeyValueCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
+                           transactionContext);
+                  } else if (writeCommand instanceof PutMapCommand) {
+                     processPutMapCommand((PutMapCommand) writeCommand, txInvocationContext,
+                           (Map<Object, Object>) stateBeforePrepare[i], transactionContext);
+                  } else if (writeCommand instanceof RemoveCommand) {
+                     processRemoveCommand((RemoveCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
+                           transactionContext);
+                  } else if (writeCommand instanceof ReplaceCommand) {
+                     processReplaceCommand((ReplaceCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
+                           transactionContext);
+                  } else if (writeCommand instanceof ClearCommand) {
+                     processClearCommand((ClearCommand) writeCommand, txInvocationContext, transactionContext);
+                  }
+               }
             }
          }
-      }
-      return ctx.shortCircuit(toReturn);
+         return null;
+      });
    }
 
    private Map<Object, Object> getPreviousValues(Set<Object> keySet) {

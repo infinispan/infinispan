@@ -15,9 +15,11 @@ import java.util.Map;
 import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromResponse;
 
 /**
- * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
+ * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are
+ * versioned.
  *
  * @author Manik Surtani
+ * @author Dan Berindei
  */
 public class VersionedDistributionInterceptor extends TxDistributionInterceptor {
 

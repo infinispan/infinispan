@@ -1,12 +1,11 @@
 package org.infinispan.statetransfer;
 
-import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.DDSequentialInterceptor;
-import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.interceptors.BaseSequentialInterceptor;
+import org.infinispan.transaction.impl.RemoteTransaction;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -31,53 +30,24 @@ import java.util.concurrent.CompletableFuture;
  * @author Mircea Markus
  * @since 5.2
  */
-public class TransactionSynchronizerInterceptor extends DDSequentialInterceptor {
+public class TransactionSynchronizerInterceptor extends BaseSequentialInterceptor {
 
    @Override
-   public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         CacheTransaction cacheTransaction = ctx.getCacheTransaction();
-         synchronized (cacheTransaction) {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         }
-      } else {
+   public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
+         throws Throwable {
+      if (!(command instanceof TransactionBoundaryCommand))
          return ctx.continueInvocation();
-      }
-   }
 
-   @Override
-   public final CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         CacheTransaction cacheTransaction = ctx.getCacheTransaction();
-         synchronized (cacheTransaction) {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         }
-      } else {
+      if (ctx.isOriginLocal())
          return ctx.continueInvocation();
-      }
-   }
 
-   @Override
-   public final CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         CacheTransaction cacheTransaction = ctx.getCacheTransaction();
-         synchronized (cacheTransaction) {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         }
-      } else {
-         return ctx.continueInvocation();
-      }
-   }
+      CompletableFuture<Void> releaseFuture = new CompletableFuture<>();
+      ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         releaseFuture.complete(null);
+         return null;
+      });
 
-   @Override
-   public CompletableFuture<Void> visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      if (!ctx.isOriginLocal()) {
-         CacheTransaction cacheTransaction = ctx.getCacheTransaction();
-         synchronized (cacheTransaction) {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         }
-      } else {
-         return ctx.continueInvocation();
-      }
+      RemoteTransaction remoteTransaction = ((TxInvocationContext<RemoteTransaction>) ctx).getCacheTransaction();
+      return remoteTransaction.enterSynchronizationAsync(releaseFuture);
    }
 }

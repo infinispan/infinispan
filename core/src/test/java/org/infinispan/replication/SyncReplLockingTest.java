@@ -5,10 +5,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
@@ -17,6 +13,9 @@ import org.testng.annotations.Test;
 import javax.transaction.TransactionManager;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tests for lock API
@@ -38,6 +37,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       return CacheMode.REPL_SYNC;
    }
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(getCacheMode(), true);
       cfg.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
@@ -130,7 +130,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       assertNull("Should be null", cache2.get(k));
       final CountDownLatch latch = new CountDownLatch(1);
 
-      Thread t = new Thread() {
+      Thread t = getTestThreadFactory("Worker").newThread(new Runnable() {
          @Override
          public void run() {
             log.info("Concurrent " + (useTx ? "tx" : "non-tx") + " write started "
@@ -162,7 +162,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
                latch.countDown();
             }
          }
-      };
+      });
 
       String name = "Infinispan";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);

@@ -1,8 +1,10 @@
 package org.infinispan.interceptors.impl;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDSequentialInterceptor;
@@ -18,6 +20,19 @@ import java.util.concurrent.CompletableFuture;
  */
 public class NotificationInterceptor extends DDSequentialInterceptor {
    private CacheNotifier notifier;
+   private final ReturnHandler transactionCompleteReturnHandler = new ReturnHandler() {
+      @Override
+      public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
+            Throwable throwable) throws Throwable {
+         if (throwable != null)
+            return null;
+
+         boolean successful = !(rCommand instanceof RollbackCommand);
+         notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), successful,
+               rCtx);
+         return null;
+      }
+   };
 
    @Inject
    public void injectDependencies(CacheNotifier notifier) {
@@ -26,22 +41,19 @@ public class NotificationInterceptor extends DDSequentialInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retval = ctx.forkInvocationSync(command);
-      if (command.isOnePhaseCommit()) notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), true, ctx);
-      return ctx.shortCircuit(retval);
+      if (!command.isOnePhaseCommit())
+         return ctx.continueInvocation();
+
+      return ctx.onReturn(transactionCompleteReturnHandler);
    }
 
    @Override
    public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      Object retval = ctx.forkInvocationSync(command);
-      notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), true, ctx);
-      return ctx.shortCircuit(retval);
+      return ctx.onReturn(transactionCompleteReturnHandler);
    }
 
    @Override
    public CompletableFuture<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      Object retval = ctx.forkInvocationSync(command);
-      notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), false, ctx);
-      return ctx.shortCircuit(retval);
+      return ctx.onReturn(transactionCompleteReturnHandler);
    }
 }

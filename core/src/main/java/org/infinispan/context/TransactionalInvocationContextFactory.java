@@ -68,18 +68,18 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
          throw new IllegalArgumentException("Cannot create a transactional context without a valid Transaction instance.");
       }
       LocalTransaction localTransaction = transactionTable.getOrCreateLocalTransaction(tx, implicitTransaction);
-      return new LocalTxInvocationContext(localTransaction, interceptorChain);
+      return new LocalTxInvocationContext(localTransaction);
    }
 
    @Override
    public LocalTxInvocationContext createTxInvocationContext(LocalTransaction localTransaction) {
-      return new LocalTxInvocationContext(localTransaction, interceptorChain);
+      return new LocalTxInvocationContext(localTransaction);
    }
 
    @Override
    public RemoteTxInvocationContext createRemoteTxInvocationContext(
          RemoteTransaction tx, Address origin) {
-      RemoteTxInvocationContext ctx = new RemoteTxInvocationContext(tx, interceptorChain);
+      RemoteTxInvocationContext ctx = new RemoteTxInvocationContext(tx);
       return ctx;
    }
 
@@ -104,7 +104,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
    }
 
    protected final NonTxInvocationContext newNonTxInvocationContext(Address origin) {
-      NonTxInvocationContext ctx = new NonTxInvocationContext(origin, keyEq, interceptorChain);
+      NonTxInvocationContext ctx = new NonTxInvocationContext(origin, keyEq);
       return ctx;
    }
 }

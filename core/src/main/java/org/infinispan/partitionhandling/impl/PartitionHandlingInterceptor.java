@@ -1,17 +1,11 @@
 package org.infinispan.partitionhandling.impl;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -34,6 +28,12 @@ import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public class PartitionHandlingInterceptor extends DDSequentialInterceptor {
    private static final Log log = LogFactory.getLog(PartitionHandlingInterceptor.class);
@@ -120,58 +120,57 @@ public class PartitionHandlingInterceptor extends DDSequentialInterceptor {
 
    @Override
    public final CompletableFuture<Void> visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      Object key = command.getKey();
-      Object result;
-      try {
-         result = ctx.forkInvocationSync(command);
-      } catch (RpcException e) {
-         if (performPartitionCheck(ctx, command)) {
-            // We must have received an AvailabilityException from one of the owners.
-            // There is no way to verify the cause here, but there isn't any other way to get an invalid get response.
-            throw log.degradedModeKeyUnavailable(key);
-         } else {
-            throw e;
-         }
-      }
-      postOperationPartitionCheck(ctx, command, key, result);
-      return ctx.shortCircuit(result);
+      return handleDataReadCommand(ctx, command);
    }
 
    @Override
    public final CompletableFuture<Void> visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      return handleDataReadCommand(ctx, command);
+   }
+
+   private CompletableFuture<Void> handleDataReadCommand(InvocationContext ctx, DataCommand command) {
       Object key = command.getKey();
-      Object result;
-      try {
-         result = ctx.forkInvocationSync(command);
-      } catch (RpcException e) {
-         if (performPartitionCheck(ctx, command)) {
-            // We must have received an AvailabilityException from one of the owners.
-            // There is no way to verify the cause here, but there isn't any other way to get an invalid get response.
-            throw log.degradedModeKeyUnavailable(key);
-         } else {
-            throw e;
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null) {
+            if (throwable instanceof RpcException && performPartitionCheck(rCtx, ((DataCommand) rCommand))) {
+               // We must have received an AvailabilityException from one of the owners.
+               // There is no way to verify the cause here, but there isn't any other way to get an invalid
+               // get response.
+               throw log.degradedModeKeyUnavailable(key);
+            } else {
+               throw throwable;
+            }
          }
-      }
-      postOperationPartitionCheck(ctx, command, key, result);
-      return ctx.shortCircuit(result);
+
+         postOperationPartitionCheck(rCtx, ((DataCommand) rCommand), key, rv);
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object result = ctx.forkInvocationSync(command);
-      if (ctx.isOriginLocal()) {
-         postTxCommandCheck(ctx);
+      if (!ctx.isOriginLocal()) {
+         return ctx.continueInvocation();
       }
-      return ctx.shortCircuit(result);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            postTxCommandCheck(((TxInvocationContext) rCtx));
+         }
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      Object result = ctx.forkInvocationSync(command);
-      if (ctx.isOriginLocal()) {
-         postTxCommandCheck(ctx);
+      if (!ctx.isOriginLocal()) {
+         return ctx.continueInvocation();
       }
-      return ctx.shortCircuit(result);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null) {
+            postTxCommandCheck(((TxInvocationContext) rCtx));
+         }
+         return null;
+      });
    }
 
    protected void postTxCommandCheck(TxInvocationContext ctx) {
@@ -182,7 +181,7 @@ public class PartitionHandlingInterceptor extends DDSequentialInterceptor {
       }
    }
 
-   private Object postOperationPartitionCheck(InvocationContext ctx, AbstractDataCommand command, Object key, Object result) throws Throwable {
+   private Object postOperationPartitionCheck(InvocationContext ctx, DataCommand command, Object key, Object result) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          // We do the availability check after the read, because the cache may have entered degraded mode
          // while we were reading from a remote node.
@@ -205,47 +204,49 @@ public class PartitionHandlingInterceptor extends DDSequentialInterceptor {
 
    @Override
    public CompletableFuture<Void> visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      Map<Object, Object> result;
-      try {
-         result = (Map<Object, Object>) ctx.forkInvocationSync(command);
-      } catch (RpcException e) {
-         if (performPartitionCheck(ctx, command)) {
-            // We must have received an AvailabilityException from one of the owners.
-            // There is no way to verify the cause here, but there isn't any other way to get an invalid get response.
-            throw log.degradedModeKeysUnavailable(command.getKeys());
-         } else {
-            throw e;
-         }
-      }
-
-      if (performPartitionCheck(ctx, command)) {
-         // We do the availability check after the read, because the cache may have entered degraded mode
-         // while we were reading from a remote node.
-         for (Object key : command.getKeys()) {
-            partitionHandlingManager.checkRead(key);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         GetAllCommand getAllCommand = (GetAllCommand) rCommand;
+         if (throwable != null) {
+            if (throwable instanceof RpcException && performPartitionCheck(rCtx, getAllCommand)) {
+               // We must have received an AvailabilityException from one of the owners.
+               // There is no way to verify the cause here, but there isn't any other way to get an invalid
+               // get response.
+               throw log.degradedModeKeysUnavailable(((GetAllCommand) rCommand).getKeys());
+            } else {
+               throw throwable;
+            }
          }
 
-         // If all owners left and we still haven't received the availability update yet, we could return
-         // an incorrect value. So we need a special check for missing results.
-         if (result.size() != command.getKeys().size()) {
-            // Unlike in PartitionHandlingManager.checkRead(), here we ignore the availability status
-            // and we only fail the operation if _all_ owners have left the cluster.
-            // TODO Move this to the availability strategy when implementing ISPN-4624
-            Set<Object> missingKeys = new HashSet<>(command.getKeys());
-            missingKeys.removeAll(result.keySet());
-            for (Iterator<Object> it = missingKeys.iterator(); it.hasNext();) {
-               Object key = it.next();
-               if (InfinispanCollections.containsAny(transport.getMembers(), distributionManager.locate(key))) {
-                  it.remove();
+         if (performPartitionCheck(rCtx, getAllCommand)) {
+            // We do the availability check after the read, because the cache may have entered degraded mode
+            // while we were reading from a remote node.
+            for (Object key : getAllCommand.getKeys()) {
+               partitionHandlingManager.checkRead(key);
+            }
+
+            Map<Object, Object> result = ((Map<Object, Object>) rv);
+            // If all owners left and we still haven't received the availability update yet, we could return
+            // an incorrect value. So we need a special check for missing results.
+            if (result.size() != getAllCommand.getKeys().size()) {
+               // Unlike in PartitionHandlingManager.checkRead(), here we ignore the availability status
+               // and we only fail the operation if _all_ owners have left the cluster.
+               // TODO Move this to the availability strategy when implementing ISPN-4624
+               Set<Object> missingKeys = new HashSet<>(getAllCommand.getKeys());
+               missingKeys.removeAll(result.keySet());
+               for (Iterator<Object> it = missingKeys.iterator(); it.hasNext(); ) {
+                  Object key = it.next();
+                  if (InfinispanCollections.containsAny(transport.getMembers(), distributionManager.locate(key))) {
+                     it.remove();
+                  }
+               }
+               if (!missingKeys.isEmpty()) {
+                  throw log.degradedModeKeysUnavailable(missingKeys);
                }
             }
-            if (!missingKeys.isEmpty()) {
-               throw log.degradedModeKeysUnavailable(missingKeys);
-            }
          }
-      }
 
-      // TODO We can still return a stale value if the other partition stayed active without us and we haven't entered degraded mode yet.
-      return ctx.shortCircuit(result);
+         // TODO We can still return a stale value if the other partition stayed active without us and we haven't entered degraded mode yet.
+         return null;
+      });
    }
 }
