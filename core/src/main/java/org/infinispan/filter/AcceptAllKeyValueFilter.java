@@ -1,12 +1,12 @@
 package org.infinispan.filter;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -38,7 +38,7 @@ public class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Object> {
    public static class Externalizer extends AbstractExternalizer<AcceptAllKeyValueFilter> {
       @Override
       public Set<Class<? extends AcceptAllKeyValueFilter>> getTypeClasses() {
-         return Util.<Class<? extends AcceptAllKeyValueFilter>>asSet(AcceptAllKeyValueFilter.class);
+         return Collections.singleton(AcceptAllKeyValueFilter.class);
       }
 
       @Override

@@ -2,7 +2,6 @@ package org.infinispan.filter;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.Ids;
@@ -10,6 +9,7 @@ import org.infinispan.marshall.core.Ids;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -43,7 +43,7 @@ public class CompositeKeyFilter<K> implements KeyFilter<K> {
 
       @Override
       public Set<Class<? extends CompositeKeyFilter>> getTypeClasses() {
-         return Util.<Class<? extends CompositeKeyFilter>>asSet(CompositeKeyFilter.class);
+         return Collections.singleton(CompositeKeyFilter.class);
       }
 
       @Override

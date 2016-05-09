@@ -3,12 +3,12 @@ package org.infinispan.query.impl.externalizers;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.SortField.Type;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 
 /**
@@ -21,7 +21,7 @@ public class LuceneSortFieldExternalizer extends AbstractExternalizer<SortField>
 
    @Override
    public Set<Class<? extends SortField>> getTypeClasses() {
-      return Util.<Class<? extends SortField>>asSet(SortField.class);
+      return Collections.singleton(SortField.class);
    }
 
    @Override

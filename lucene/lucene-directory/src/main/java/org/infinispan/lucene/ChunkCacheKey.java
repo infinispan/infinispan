@@ -3,11 +3,11 @@ package org.infinispan.lucene;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 /**
  * Used as a key to distinguish file chunk in cache.
@@ -149,7 +149,7 @@ public final class ChunkCacheKey implements IndexScopedKey {
 
       @Override
       public Set<Class<? extends ChunkCacheKey>> getTypeClasses() {
-         return Util.<Class<? extends ChunkCacheKey>>asSet(ChunkCacheKey.class);
+         return Collections.singleton(ChunkCacheKey.class);
       }
 
    }

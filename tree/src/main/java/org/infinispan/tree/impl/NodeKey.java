@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
@@ -104,7 +105,7 @@ public class NodeKey implements Serializable {
 
       @Override
       public Set<Class<? extends NodeKey>> getTypeClasses() {
-         return Util.<Class<? extends NodeKey>>asSet(NodeKey.class);
+         return Collections.singleton(NodeKey.class);
       }
    }
 }

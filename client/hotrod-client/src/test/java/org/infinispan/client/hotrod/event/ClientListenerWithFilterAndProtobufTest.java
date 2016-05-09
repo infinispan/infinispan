@@ -108,7 +108,7 @@ public class ClientListenerWithFilterAndProtobufTest extends MultiHotRodServersT
    @ClientListener(filterFactoryName = "custom-filter-factory")
    public static class ClientEntryListener {
 
-      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<ClientCacheEntryCreatedEvent>();
+      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<>();
 
       @ClientCacheEntryCreated
       @SuppressWarnings("unused")

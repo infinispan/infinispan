@@ -1,12 +1,12 @@
 package org.infinispan.lucene.impl;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.ExternalizerIds;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -50,9 +50,8 @@ public class DeleteOperation implements Operation {
    public static class DeleteElementOperationExternalizer implements AdvancedExternalizer<DeleteOperation> {
 
       @Override
-      @SuppressWarnings("unchecked")
       public Set<Class<? extends DeleteOperation>> getTypeClasses() {
-         return Util.<Class<? extends DeleteOperation>>asSet(DeleteOperation.class);
+         return Collections.singleton(DeleteOperation.class);
       }
 
       @Override

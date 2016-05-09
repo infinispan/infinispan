@@ -9,13 +9,12 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
 
 /**
  * ScriptMetadata. Holds meta information about a script obtained either implicitly by the script
- * name and extension, or explictly by its header. See the "Script metadata" chapter in the User Guide for
+ * name and extension, or explicitly by its header. See the "Script metadata" chapter in the User Guide for
  * the syntax and format.
  *
  * @author Tristan Tarrant
@@ -229,7 +228,7 @@ public class ScriptMetadata implements Metadata {
 
       @Override
       public Set<Class<? extends ScriptMetadata>> getTypeClasses() {
-         return Util.<Class<? extends ScriptMetadata>> asSet(ScriptMetadata.class);
+         return Collections.singleton(ScriptMetadata.class);
       }
 
       @Override

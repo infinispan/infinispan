@@ -1,12 +1,12 @@
 package org.infinispan.filter;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -36,7 +36,7 @@ public class NullValueConverter implements Converter<Object, Object, Void> {
    public static class Externalizer extends AbstractExternalizer<NullValueConverter> {
       @Override
       public Set<Class<? extends NullValueConverter>> getTypeClasses() {
-         return Util.<Class<? extends NullValueConverter>>asSet(NullValueConverter.class);
+         return Collections.singleton(NullValueConverter.class);
       }
 
       @Override

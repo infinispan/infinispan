@@ -3,12 +3,12 @@ package org.infinispan.query.impl.externalizers;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 /**
  * WARNING: this Externalizer implementation drops some state associated to the TermQuery instance.
@@ -21,7 +21,7 @@ public class LuceneTermQueryExternalizer extends AbstractExternalizer<TermQuery>
 
    @Override
    public Set<Class<? extends TermQuery>> getTypeClasses() {
-      return Util.<Class<? extends TermQuery>>asSet(TermQuery.class);
+      return Collections.singleton(TermQuery.class);
    }
 
    @Override

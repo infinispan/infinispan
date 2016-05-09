@@ -3,19 +3,19 @@ package org.infinispan.query.impl.externalizers;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 public class LuceneTopDocsExternalizer extends AbstractExternalizer<TopDocs> {
 
    @Override
    public Set<Class<? extends TopDocs>> getTypeClasses() {
-      return Util.<Class<? extends TopDocs>>asSet(TopDocs.class);
+      return Collections.singleton(TopDocs.class);
    }
 
    @Override

@@ -2,7 +2,6 @@ package org.infinispan.notifications.cachelistener.cluster;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
@@ -17,6 +16,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -73,9 +73,9 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
          metadata = ((EventImpl)event).getMetadata();
       }
 
-      ClusterEvent<K, V> clusterEvent = new ClusterEvent<K, V>(event.getKey(), event.getValue(), oldValue, metadata,
-                                                               eventType, event.getCache().getCacheManager().getAddress(),
-                                                               transaction, commandRetried);
+      ClusterEvent<K, V> clusterEvent = new ClusterEvent<>(event.getKey(), event.getValue(), oldValue, metadata,
+            eventType, event.getCache().getCacheManager().getAddress(),
+            transaction, commandRetried);
       clusterEvent.cache = event.getCache();
       return clusterEvent;
    }
@@ -155,7 +155,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
 
       @Override
       public Set<Class<? extends ClusterEvent>> getTypeClasses() {
-         return Util.<Class<? extends ClusterEvent>>asSet(ClusterEvent.class);
+         return Collections.singleton(ClusterEvent.class);
       }
 
       @Override

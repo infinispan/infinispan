@@ -1,12 +1,12 @@
 package org.infinispan.util;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -55,9 +55,8 @@ public class KeyValuePair<K,V> {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public Set<Class<? extends KeyValuePair>> getTypeClasses() {
-         return Util.<Class<? extends KeyValuePair>>asSet(KeyValuePair.class);
+         return Collections.singleton(KeyValuePair.class);
       }
    }
 

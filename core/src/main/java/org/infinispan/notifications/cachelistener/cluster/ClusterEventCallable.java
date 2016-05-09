@@ -2,7 +2,6 @@ package org.infinispan.notifications.cachelistener.cluster;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.util.logging.Log;
@@ -62,7 +61,7 @@ public class ClusterEventCallable<K, V> implements DistributedCallable<K, V, Voi
    public static class Externalizer extends AbstractExternalizer<ClusterEventCallable> {
       @Override
       public Set<Class<? extends ClusterEventCallable>> getTypeClasses() {
-         return Util.<Class<? extends ClusterEventCallable>>asSet(ClusterEventCallable.class);
+         return Collections.singleton(ClusterEventCallable.class);
       }
 
       @Override

@@ -1,7 +1,6 @@
 package org.infinispan.notifications.cachelistener.filter;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
@@ -12,6 +11,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -42,7 +42,7 @@ public class CacheEventFilterConverterAsKeyValueFilterConverter<K, V, C> extends
 
       @Override
       public Set<Class<? extends CacheEventFilterConverterAsKeyValueFilterConverter>> getTypeClasses() {
-         return Util.<Class<? extends CacheEventFilterConverterAsKeyValueFilterConverter>>asSet(CacheEventFilterConverterAsKeyValueFilterConverter.class);
+         return Collections.singleton(CacheEventFilterConverterAsKeyValueFilterConverter.class);
       }
 
       @Override

@@ -108,7 +108,7 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
    @ClientListener
    private static class NoopEventListener {
 
-      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<ClientCacheEntryCreatedEvent>();
+      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<>();
 
       @ClientCacheEntryCreated
       public void handleCreatedEvent(ClientCacheEntryCreatedEvent<?> e) {

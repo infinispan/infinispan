@@ -2,7 +2,6 @@ package org.infinispan.query.impl.massindex;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DistributedCallable;
@@ -18,6 +17,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -103,9 +103,8 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    public static class Externalizer extends AbstractExternalizer<IndexWorker> {
 
       @Override
-      @SuppressWarnings("ALL")
       public Set<Class<? extends IndexWorker>> getTypeClasses() {
-         return Util.<Class<? extends IndexWorker>>asSet(IndexWorker.class);
+         return Collections.singleton(IndexWorker.class);
       }
 
       @Override
