@@ -150,7 +150,6 @@ public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(40);
-      user3.setAccountIds(Collections.emptySet());
 
       remoteCache.put("user" + user1.getId(), user1);
       remoteCache.put("user" + user2.getId(), user2);
@@ -252,7 +251,6 @@ public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(40);
-      user3.setAccountIds(Collections.emptySet());
 
       remoteCache.put("user" + user1.getId(), user1);
       remoteCache.put("user" + user2.getId(), user2);
