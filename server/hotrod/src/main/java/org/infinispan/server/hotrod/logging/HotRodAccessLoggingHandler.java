@@ -27,15 +27,13 @@ public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
 
    @Override
    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-      if (log.isTraceEnabled()) {
-         if (startTime == null) {
-            startTime = LocalDateTime.now();
-         }
-         bytesRead += getByteSize(msg);
-
-         // Make sure we don't have a decode context between requests
-         ctx.channel().attr(LoggingContextHandler.DECODE_CONTEXT_KEY).remove();
+      if (startTime == null) {
+         startTime = LocalDateTime.now();
       }
+      bytesRead += getByteSize(msg);
+
+      // Make sure we don't have a decode context between requests
+      ctx.channel().attr(LoggingContextHandler.DECODE_CONTEXT_KEY).remove();
 
       super.channelRead(ctx, msg);
    }
