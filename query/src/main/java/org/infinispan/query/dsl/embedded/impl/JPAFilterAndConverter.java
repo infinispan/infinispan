@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
@@ -45,7 +46,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
    /**
     * The implementation class of the Matcher component to lookup and use.
     */
-   private final Class<? extends Matcher> matcherImplClass;
+   protected Class<? extends Matcher> matcherImplClass;
 
    /**
     * The Matcher, acquired via dependency injection.
@@ -70,9 +71,10 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
     * Acquires a Matcher instance from the ComponentRegistry of the given Cache object.
     */
    @Inject
-   public void injectDependencies(Cache cache) {
+   protected void injectDependencies(Cache cache) {
       this.queryCache = cache.getCacheManager().getGlobalComponentRegistry().getComponent(QueryCache.class);
-      matcher = cache.getAdvancedCache().getComponentRegistry().getComponent(matcherImplClass);
+      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      matcher = componentRegistry.getComponent(matcherImplClass);
       if (matcher == null) {
          throw new CacheException("Expected component not found in registry: " + matcherImplClass.getName());
       }

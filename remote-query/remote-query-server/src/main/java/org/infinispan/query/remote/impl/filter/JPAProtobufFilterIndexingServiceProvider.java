@@ -1,7 +1,7 @@
 package org.infinispan.query.remote.impl.filter;
 
+import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.protostream.ProtobufUtil;
@@ -23,9 +23,12 @@ public final class JPAProtobufFilterIndexingServiceProvider extends JPAFilterInd
 
    private SerializationContext serCtx;
 
+   private boolean isCompatMode;
+
    @Inject
-   protected void injectDependencies(EmbeddedCacheManager cacheManager) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+   protected void injectDependencies(Cache cache) {
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+      isCompatMode = cache.getCacheConfiguration().compatibility().enabled();
    }
 
    @Override
@@ -35,10 +38,16 @@ public final class JPAProtobufFilterIndexingServiceProvider extends JPAFilterInd
 
    @Override
    protected Object makeFilterResult(Object userContext, Object eventType, Object key, Object instance, Object[] projection, Comparable[] sortProjection) {
-      try {
-         return ProtobufUtil.toWrappedByteArray(serCtx, new FilterResult(instance, projection, sortProjection));
-      } catch (IOException e) {
-         throw new RuntimeException(e);
+      Object result = new FilterResult(instance, projection, sortProjection);
+
+      if (!isCompatMode) {
+         try {
+            result = ProtobufUtil.toWrappedByteArray(serCtx, result);
+         } catch (IOException e) {
+            throw new RuntimeException(e);
+         }
       }
+
+      return result;
    }
 }
