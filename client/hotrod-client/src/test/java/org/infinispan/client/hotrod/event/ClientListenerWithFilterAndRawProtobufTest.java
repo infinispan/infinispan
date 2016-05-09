@@ -103,7 +103,7 @@ public class ClientListenerWithFilterAndRawProtobufTest extends MultiHotRodServe
    @ClientListener(filterFactoryName = "custom-filter-factory", useRawData = true)
    public static class ClientEntryListener {
 
-      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<ClientCacheEntryCreatedEvent>();
+      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<>();
 
       @ClientCacheEntryCreated
       @SuppressWarnings("unused")
