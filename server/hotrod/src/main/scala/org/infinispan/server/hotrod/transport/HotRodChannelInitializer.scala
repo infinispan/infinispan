@@ -4,10 +4,10 @@ import java.util.concurrent.Executors
 
 import io.netty.channel.{Channel, ChannelOutboundHandler}
 import io.netty.util.concurrent.DefaultThreadFactory
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.server.core.transport.{NettyChannelInitializer, NettyTransport}
-import org.infinispan.server.hotrod.logging.{LoggingContextHandler, HotRodAccessLoggingHandler}
 import org.infinispan.server.hotrod._
-import org.infinispan.util.concurrent.WithinThreadExecutor
+import org.infinispan.server.hotrod.logging.{HotRodAccessLoggingHandler, JavaLog, LoggingContextHandler}
 
 /**
   * HotRod specific channel initializer
@@ -36,7 +36,9 @@ class HotRodChannelInitializer(val server: HotRodServer, transport: => NettyTran
       ch.pipeline.addLast("exception", new HotRodExceptionHandler)
 
       // Logging handlers
-      ch.pipeline.addBefore("decoder", "logging", new HotRodAccessLoggingHandler)
-      ch.pipeline.addAfter("encoder", "logging-context", LoggingContextHandler.getInstance);
+      if (LogFactory.getLog(classOf[HotRodAccessLoggingHandler], classOf[JavaLog]).isTraceEnabled) {
+         ch.pipeline.addBefore("decoder", "logging", new HotRodAccessLoggingHandler)
+         ch.pipeline.addAfter("encoder", "logging-context", LoggingContextHandler.getInstance)
+      }
    }
 }
