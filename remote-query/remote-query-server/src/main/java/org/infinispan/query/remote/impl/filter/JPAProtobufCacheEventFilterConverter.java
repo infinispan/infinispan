@@ -1,8 +1,8 @@
 package org.infinispan.query.remote.impl.filter;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.ObjectFilter;
@@ -24,9 +24,11 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFilterConverter<Object, Object, byte[]> {
+public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFilterConverter<Object, Object, Object> {
 
    private SerializationContext serCtx;
+
+   private boolean isCompatMode;
 
    public JPAProtobufCacheEventFilterConverter(JPAFilterAndConverter<Object, Object> filterAndConverter) {
       super(filterAndConverter);
@@ -34,19 +36,24 @@ public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFil
 
    @Inject
    @SuppressWarnings("unused")
-   protected void injectDependencies(EmbeddedCacheManager cacheManager) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
+   protected void injectDependencies(Cache cache) {
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+      isCompatMode = cache.getCacheConfiguration().compatibility().enabled();
    }
 
    @Override
-   public byte[] filterAndConvert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
+   public Object filterAndConvert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
       ObjectFilter.FilterResult filterResult = filterAndConverter.filterAndConvert(key, newValue, newMetadata);
       if (filterResult != null) {
-         try {
-            return ProtobufUtil.toWrappedByteArray(serCtx, new FilterResult(filterResult.getInstance(), filterResult.getProjection(), filterResult.getSortProjection()));
-         } catch (IOException e) {
-            throw new RuntimeException(e);
+         Object result = new FilterResult(filterResult.getInstance(), filterResult.getProjection(), filterResult.getSortProjection());
+         if (!isCompatMode) {
+            try {
+               result = ProtobufUtil.toWrappedByteArray(serCtx, result);
+            } catch (IOException e) {
+               throw new RuntimeException(e);
+            }
          }
+         return result;
       }
       return null;
    }

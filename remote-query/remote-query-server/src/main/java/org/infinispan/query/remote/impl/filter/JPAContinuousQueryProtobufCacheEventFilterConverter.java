@@ -5,7 +5,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
@@ -44,15 +43,15 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
    }
 
    @Override
-   protected void injectDependencies(ComponentRegistry componentRegistry, Cache c) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(c.getCacheManager());
-      Configuration cfg = c.getCacheConfiguration();
+   protected void injectDependencies(Cache cache) {
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+      Configuration cfg = cache.getCacheConfiguration();
       isCompatMode = cfg.compatibility().enabled();
       usesValueWrapper = cfg.indexing().index().isEnabled() && !isCompatMode;
       if (isCompatMode) {
          matcherImplClass = CompatibilityReflectionMatcher.class;
       }
-      super.injectDependencies(componentRegistry, c);
+      super.injectDependencies(cache);
    }
 
    @Override

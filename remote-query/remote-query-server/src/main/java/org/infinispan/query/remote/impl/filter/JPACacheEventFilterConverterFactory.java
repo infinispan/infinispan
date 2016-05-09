@@ -24,7 +24,6 @@ public final class JPACacheEventFilterConverterFactory implements CacheEventFilt
    public CacheEventFilterConverter<?, ?, ?> getFilterConverter(Object[] params) {
       String jpql = unmarshallJPQL(params);
       Map<String, Object> namedParams = unmarshallParams(params);
-      //todo [anistor] test this in compat mode too!
       return new JPAProtobufCacheEventFilterConverter(new JPAProtobufFilterAndConverter(jpql, namedParams));
    }
 }

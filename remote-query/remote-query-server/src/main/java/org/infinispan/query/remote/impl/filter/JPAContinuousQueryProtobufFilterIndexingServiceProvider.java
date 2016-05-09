@@ -3,7 +3,6 @@ package org.infinispan.query.remote.impl.filter;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.protostream.ProtobufUtil;
@@ -29,9 +28,9 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
    private boolean isCompatMode;
 
    @Inject
-   protected void injectDependencies(EmbeddedCacheManager cacheManager, Cache c) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
-      isCompatMode = c.getCacheConfiguration().compatibility().enabled();
+   protected void injectDependencies(Cache cache) {
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+      isCompatMode = cache.getCacheConfiguration().compatibility().enabled();
    }
 
    @Override

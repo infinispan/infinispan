@@ -83,7 +83,8 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
     * Acquires a Matcher instance from the ComponentRegistry of the given Cache object.
     */
    @Inject
-   protected void injectDependencies(ComponentRegistry componentRegistry, Cache c) {
+   protected void injectDependencies(Cache cache) {
+      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       queryCache = componentRegistry.getComponent(QueryCache.class);
       matcher = componentRegistry.getComponent(matcherImplClass);
       if (matcher == null) {

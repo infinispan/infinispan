@@ -1,13 +1,14 @@
 package org.infinispan.query.remote.impl.filter;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.remote.impl.CompatibilityReflectionMatcher;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
@@ -29,14 +30,21 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
 
    private boolean usesValueWrapper;
 
+   private boolean isCompatMode;
+
    public JPAProtobufFilterAndConverter(String jpaQuery, Map<String, Object> namedParameters) {
       super(jpaQuery, namedParameters, ProtobufMatcher.class);
    }
 
-   @Inject
-   @SuppressWarnings("unused")
-   protected void injectDependencies(Configuration cfg) {
-      usesValueWrapper = cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled();
+   @Override
+   protected void injectDependencies(Cache cache) {
+      Configuration cfg = cache.getCacheConfiguration();
+      isCompatMode = cfg.compatibility().enabled();
+      if (isCompatMode) {
+         matcherImplClass = CompatibilityReflectionMatcher.class;
+      }
+      usesValueWrapper = cfg.indexing().index().isEnabled() && !isCompatMode;
+      super.injectDependencies(cache);
    }
 
    @Override
