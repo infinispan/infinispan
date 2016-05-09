@@ -13,7 +13,7 @@ import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -163,7 +163,7 @@ public final class SecurityActions {
         return doPrivileged(action);
     }
 
-    public static List<SequentialInterceptor> getInterceptorChain(final AdvancedCache<?, ?> cache) {
+    public static List<AsyncInterceptor> getInterceptorChain(final AdvancedCache<?, ?> cache) {
         GetCacheInterceptorChainAction action = new GetCacheInterceptorChainAction(cache);
         return doPrivileged(action);
     }

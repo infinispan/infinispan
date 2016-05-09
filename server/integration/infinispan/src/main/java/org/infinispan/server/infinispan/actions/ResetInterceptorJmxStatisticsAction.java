@@ -1,7 +1,7 @@
 package org.infinispan.server.infinispan.actions;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 
 import static org.jboss.as.clustering.infinispan.subsystem.CacheMetricsHandler.getFirstInterceptorWhichExtends;
@@ -14,7 +14,7 @@ import static org.jboss.as.clustering.infinispan.subsystem.CacheMetricsHandler.g
  * @author wburns
  * @since 7.0
  */
-public class ResetInterceptorJmxStatisticsAction<T extends SequentialInterceptor & JmxStatisticsExposer> extends AbstractAdvancedCacheAction<Void> {
+public class ResetInterceptorJmxStatisticsAction<T extends AsyncInterceptor & JmxStatisticsExposer> extends AbstractAdvancedCacheAction<Void> {
    private final Class<T> interceptorClass;
 
    public ResetInterceptorJmxStatisticsAction(AdvancedCache<?, ?> cache, Class<T> interceptorClass) {
@@ -24,7 +24,7 @@ public class ResetInterceptorJmxStatisticsAction<T extends SequentialInterceptor
 
    @Override
    public Void run() {
-      T interceptor = getFirstInterceptorWhichExtends(cache.getSequentialInterceptorChain().getInterceptors(), interceptorClass);
+      T interceptor = getFirstInterceptorWhichExtends(cache.getAsyncInterceptorChain().getInterceptors(), interceptorClass);
       if (interceptor != null) {
          interceptor.resetStatistics();
       }

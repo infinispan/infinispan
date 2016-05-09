@@ -12,7 +12,20 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
-import org.infinispan.notifications.cachelistener.event.*;
+import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
+import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
+import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -27,8 +40,11 @@ import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
-import static org.testng.AssertJUnit.*;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")

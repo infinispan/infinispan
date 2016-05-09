@@ -8,8 +8,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  * @author Pedro Ruivo
  * @since 5.3
  */
-public class TransactionTrackInterceptor extends BaseCustomSequentialInterceptor {
+public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(TransactionTrackInterceptor.class);
    private static final GlobalTransaction CLEAR_TRANSACTION = new ClearGlobalTransaction();
@@ -44,7 +44,7 @@ public class TransactionTrackInterceptor extends BaseCustomSequentialInterceptor
    }
 
    public static TransactionTrackInterceptor injectInCache(Cache<?, ?> cache) {
-      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
       if (chain.containsInterceptorType(TransactionTrackInterceptor.class)) {
          return chain.findInterceptorWithClass(TransactionTrackInterceptor.class);
       }

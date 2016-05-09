@@ -7,8 +7,8 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.Exceptions;
@@ -77,17 +77,17 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
    protected BlockingInterceptor addBlockingInterceptor(Cache<?, ?> cache, final CyclicBarrier barrier,
                                          Class<? extends VisitableCommand> commandClass,
-         Class<? extends SequentialInterceptor> interceptorPosition,
+         Class<? extends AsyncInterceptor> interceptorPosition,
                                          boolean blockAfterCommand) {
       BlockingInterceptor bi = new BlockingInterceptor(barrier, commandClass, blockAfterCommand, false);
-      SequentialInterceptorChain interceptorChain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain interceptorChain = cache.getAdvancedCache().getAsyncInterceptorChain();
       assertTrue(interceptorChain.addInterceptorBefore(bi, interceptorPosition));
       return bi;
    }
 
-   protected abstract Class<? extends SequentialInterceptor> getDistributionInterceptorClass();
+   protected abstract Class<? extends AsyncInterceptor> getDistributionInterceptorClass();
 
-   protected abstract Class<? extends SequentialInterceptor> getL1InterceptorClass();
+   protected abstract Class<? extends AsyncInterceptor> getL1InterceptorClass();
 
    protected <K> void assertL1StateOnLocalWrite(Cache<? super K,?> cache, Cache<?, ?> updatingCache, K key, Object valueWrite) {
       // Default just assumes it invalidated the cache

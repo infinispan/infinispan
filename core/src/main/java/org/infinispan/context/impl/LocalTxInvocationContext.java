@@ -6,7 +6,6 @@ import org.infinispan.transaction.impl.LocalTransaction;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-
 import java.util.Collection;
 
 /**

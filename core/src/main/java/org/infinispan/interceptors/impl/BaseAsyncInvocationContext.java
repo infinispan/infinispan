@@ -2,9 +2,9 @@ package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.context.AsyncInvocationContext;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.SequentialInvocationContext;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -15,17 +15,16 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 /**
- * This base class implements the {@link org.infinispan.context.SequentialInvocationContext} methods.
+ * This base class implements the {@link AsyncInvocationContext} methods.
  *
  * @author Dan Berindei
  * @since 9.0
  */
-public abstract class BaseSequentialInvocationContext
-      implements InvocationContext, SequentialInvocationContext {
-   private static final Log log = LogFactory.getLog(BaseSequentialInvocationContext.class);
+public abstract class BaseAsyncInvocationContext implements InvocationContext {
+   private static final Log log = LogFactory.getLog(BaseAsyncInvocationContext.class);
    private static final boolean trace = log.isTraceEnabled();
-   // Enable when debugging BaseSequentialInvocationContext itself
-   private static final boolean EXTRA_LOGS = SecurityActions.getBooleanProperty("org.infinispan.debug.BaseSequentialInvocationContext");
+   // Enable when debugging BaseAsyncInvocationContext itself
+   private static final boolean EXTRA_LOGS = SecurityActions.getBooleanProperty("org.infinispan.debug.BaseAsyncInvocationContext");
 
    private static final CompletableFuture<Void> CONTINUE_INVOCATION = CompletableFuture.completedFuture(null);
    private static final int INVOKE_NEXT = 0;
@@ -44,7 +43,7 @@ public abstract class BaseSequentialInvocationContext
    private Object actionValue;
 
    @Override
-   public final CompletableFuture<Void> onReturn(SequentialInterceptor.ReturnHandler returnHandler) {
+   public final CompletableFuture<Void> onReturn(AsyncInterceptor.ReturnHandler returnHandler) {
       nextReturnHandler = new ReturnHandlerNode(returnHandler, nextReturnHandler);
       return CONTINUE_INVOCATION;
    }
@@ -64,7 +63,7 @@ public abstract class BaseSequentialInvocationContext
 
    @Override
    public final CompletableFuture<Void> forkInvocation(VisitableCommand newCommand,
-         SequentialInterceptor.ForkReturnHandler forkReturnHandler) {
+         AsyncInterceptor.ForkReturnHandler forkReturnHandler) {
       preActionCheck();
       InterceptorListNode localNode = this.nextInterceptor;
       if (localNode == null) {
@@ -119,7 +118,7 @@ public abstract class BaseSequentialInvocationContext
       ReturnHandlerNode returnHandlerNode = nextReturnHandler;
       nextReturnHandler = null;
       while (returnHandlerNode != null) {
-         SequentialInterceptor.ReturnHandler current = returnHandlerNode.returnHandler;
+         AsyncInterceptor.ReturnHandler current = returnHandlerNode.returnHandler;
          returnHandlerNode = returnHandlerNode.nextNode;
 
          try {
@@ -181,7 +180,7 @@ public abstract class BaseSequentialInvocationContext
          }
          action = INVOKE_NEXT;
          if (interceptorNode != null) {
-            SequentialInterceptor interceptor = interceptorNode.interceptor;
+            AsyncInterceptor interceptor = interceptorNode.interceptor;
             interceptorNode = interceptorNode.nextNode;
             nextInterceptor = interceptorNode;
             if (trace) {
@@ -217,7 +216,7 @@ public abstract class BaseSequentialInvocationContext
             }
          } else if (nextReturnHandler != null) {
             // Interceptors are done, continue with the return handlers
-            SequentialInterceptor.ReturnHandler returnHandler = nextReturnHandler.returnHandler;
+            AsyncInterceptor.ReturnHandler returnHandler = nextReturnHandler.returnHandler;
             nextReturnHandler = nextReturnHandler.nextNode;
             if (trace)
                log.tracef("Executing return handler %s with return value/exception %s/%s", nextReturnHandler,
@@ -296,7 +295,7 @@ public abstract class BaseSequentialInvocationContext
       // For interceptors extending DDSequentialInterceptor, this will also inline the hottest visit method,
       // usually visitGetKeyValueCommand.
       InterceptorListNode interceptorNode = firstInterceptorNode;
-      SequentialInterceptor interceptor = interceptorNode.interceptor;
+      AsyncInterceptor interceptor = interceptorNode.interceptor;
       interceptorNode = beforeVisit(command, interceptorNode, interceptor);
       CompletableFuture<Void> nextVisitFuture = interceptor.visitCommand(this, command);
       if (afterVisit(command, nextVisitFuture)) {
@@ -445,7 +444,7 @@ public abstract class BaseSequentialInvocationContext
    }
 
    private InterceptorListNode beforeVisit(VisitableCommand command, InterceptorListNode interceptorNode,
-         SequentialInterceptor interceptor) {
+         AsyncInterceptor interceptor) {
       interceptorNode = interceptorNode.nextNode;
       this.nextInterceptor = interceptorNode;
 
@@ -485,7 +484,7 @@ public abstract class BaseSequentialInvocationContext
       CompletableFutures.await(handlerFuture);
    }
 
-   private Object invokeReturnHandlerSync(SequentialInterceptor.ReturnHandler returnHandler,
+   private Object invokeReturnHandlerSync(AsyncInterceptor.ReturnHandler returnHandler,
          VisitableCommand command, Object returnValue, Throwable throwable) throws Throwable {
       if (trace)
          log.tracef("Invoking return handler %s with return value/exception: %s/%s",
@@ -539,20 +538,20 @@ public abstract class BaseSequentialInvocationContext
    @Override
    public InvocationContext clone() {
       try {
-         BaseSequentialInvocationContext clone = (BaseSequentialInvocationContext) super.clone();
+         BaseAsyncInvocationContext clone = (BaseAsyncInvocationContext) super.clone();
          return clone;
       } catch (CloneNotSupportedException e) {
          throw new CacheException("Impossible", e);
       }
    }
 
-   private static class ForkInfo implements SequentialInterceptor.ReturnHandler {
+   private static class ForkInfo implements AsyncInterceptor.ReturnHandler {
       final VisitableCommand newCommand;
-      final SequentialInterceptor.ForkReturnHandler forkReturnHandler;
+      final AsyncInterceptor.ForkReturnHandler forkReturnHandler;
       InterceptorListNode savedInterceptor;
       VisitableCommand savedCommand;
 
-      ForkInfo(VisitableCommand newCommand, SequentialInterceptor.ForkReturnHandler forkReturnHandler) {
+      ForkInfo(VisitableCommand newCommand, AsyncInterceptor.ForkReturnHandler forkReturnHandler) {
          this.newCommand = newCommand;
          this.forkReturnHandler = forkReturnHandler;
       }
@@ -565,15 +564,15 @@ public abstract class BaseSequentialInvocationContext
       @Override
       public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
             Throwable throwable) throws Throwable {
-         return ((BaseSequentialInvocationContext) rCtx).handleForkReturn(this, rv, throwable);
+         return ((BaseAsyncInvocationContext) rCtx).handleForkReturn(this, rv, throwable);
       }
    }
 
    private static class ReturnHandlerNode {
-      final SequentialInterceptor.ReturnHandler returnHandler;
+      final AsyncInterceptor.ReturnHandler returnHandler;
       final ReturnHandlerNode nextNode;
 
-      ReturnHandlerNode(SequentialInterceptor.ReturnHandler returnHandler, ReturnHandlerNode next) {
+      ReturnHandlerNode(AsyncInterceptor.ReturnHandler returnHandler, ReturnHandlerNode next) {
          this.returnHandler = returnHandler;
          this.nextNode = next;
       }

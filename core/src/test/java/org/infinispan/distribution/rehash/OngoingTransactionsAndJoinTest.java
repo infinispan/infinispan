@@ -8,7 +8,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -74,7 +74,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       PrepareDuringRehashTask pt = new PrepareDuringRehashTask(firstNode, txsStarted, txsReady, joinEnded, rehashStarted);
       CommitDuringRehashTask ct = new CommitDuringRehashTask(firstNode, txsStarted, txsReady, joinEnded, rehashStarted);
 
-      SequentialInterceptorChain ic = firstNode.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain ic = firstNode.getAdvancedCache().getAsyncInterceptorChain();
       ic.addInterceptorAfter(pt, TxInterceptor.class);
       ic.addInterceptorAfter(ct, TxInterceptor.class);
 

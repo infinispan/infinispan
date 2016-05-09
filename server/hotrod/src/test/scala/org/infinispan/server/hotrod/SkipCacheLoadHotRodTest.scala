@@ -1,11 +1,12 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.interceptors.base.BaseCustomInterceptor
-import org.infinispan.context.{Flag, InvocationContext}
+import java.lang.reflect.Method
+
 import org.infinispan.commands.{LocalFlagAffectedCommand, VisitableCommand}
 import org.infinispan.commons.CacheException
-import java.lang.reflect.Method
-import test.HotRodTestingUtil._
+import org.infinispan.context.{Flag, InvocationContext}
+import org.infinispan.interceptors.base.BaseCustomInterceptor
+import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.testng.annotations.Test
 
 /**
@@ -141,15 +142,13 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
    }
 
    private def init(): FlagCheckCommandInterceptor = {
-      val iterator = cacheManager.getCache(cacheName).getAdvancedCache.getInterceptorChain.iterator()
-      while (iterator.hasNext) {
-         val commandInterceptor = iterator.next()
-         if (commandInterceptor.isInstanceOf[FlagCheckCommandInterceptor])
-            return commandInterceptor.asInstanceOf[FlagCheckCommandInterceptor]
-      }
+      val interceptorChain = cacheManager.getCache(cacheName).getAdvancedCache.getAsyncInterceptorChain
+      val interceptor = interceptorChain.findInterceptorExtending(classOf[FlagCheckCommandInterceptor])
+      if (interceptor != null)
+         return interceptor
 
       val ci = new FlagCheckCommandInterceptor
-      cacheManager.getCache(cacheName).getAdvancedCache.getSequentialInterceptorChain().addInterceptor(ci, 1)
+      interceptorChain.addInterceptor(ci, 1)
       ci
    }
 

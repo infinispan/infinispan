@@ -18,7 +18,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +39,7 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
  * @author Galder Zamarreño
  * @since 9.0
  */
-public class IsMarshallableInterceptor extends DDSequentialInterceptor {
+public class IsMarshallableInterceptor extends DDAsyncInterceptor {
 
    private StreamingMarshaller marshaller;
    private DistributionManager distManager;

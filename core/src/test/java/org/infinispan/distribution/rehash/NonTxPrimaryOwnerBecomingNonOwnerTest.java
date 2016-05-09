@@ -34,7 +34,9 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * Tests that a conditional write is retried properly if the write is unsuccessful on the primary owner
@@ -141,7 +143,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       CyclicBarrier beforeCache0Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(beforeCache0Barrier,
             op.getCommandClass(), false, true);
-      cache0.getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
+      cache0.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
 
       // Write from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
       Future<Object> future = fork(new Callable<Object>() {

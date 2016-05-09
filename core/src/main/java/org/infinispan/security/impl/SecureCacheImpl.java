@@ -15,7 +15,7 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -193,9 +193,9 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public SequentialInterceptorChain getSequentialInterceptorChain() {
+   public AsyncInterceptorChain getAsyncInterceptorChain() {
       authzManager.checkPermission(AuthorizationPermission.ADMIN);
-      return delegate.getSequentialInterceptorChain();
+      return delegate.getAsyncInterceptorChain();
    }
 
    @Override

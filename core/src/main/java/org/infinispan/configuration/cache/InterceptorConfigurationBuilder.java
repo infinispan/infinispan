@@ -5,11 +5,11 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.configuration.cache.InterceptorConfiguration.*;
+import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -17,7 +17,12 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Properties;
 
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
-import static org.infinispan.configuration.cache.InterceptorConfiguration.*;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.AFTER;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.BEFORE;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.INDEX;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.INTERCEPTOR;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.INTERCEPTOR_CLASS;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.POSITION;
 
 /**
  * This builder defines details of a specific custom interceptor.
@@ -38,7 +43,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
     *
     * @param after the class of the interceptor to look for
     */
-   public InterceptorConfigurationBuilder after(Class<? extends SequentialInterceptor> after) {
+   public InterceptorConfigurationBuilder after(Class<? extends AsyncInterceptor> after) {
       attributes.attribute(AFTER).set(after);
       return this;
    }
@@ -50,22 +55,22 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
     *
     * @param before the class of the interceptor to look for
     */
-   public InterceptorConfigurationBuilder before(Class<? extends SequentialInterceptor> before) {
+   public InterceptorConfigurationBuilder before(Class<? extends AsyncInterceptor> before) {
       attributes.attribute(BEFORE).set(before);
       return this;
    }
 
    /**
     * Class of the new custom interceptor to add to the configuration.
-    * @param interceptorClass an instance of {@link SequentialInterceptor}
+    * @param interceptorClass an instance of {@link AsyncInterceptor}
     */
-   public InterceptorConfigurationBuilder interceptorClass(Class<? extends SequentialInterceptor> interceptorClass) {
+   public InterceptorConfigurationBuilder interceptorClass(Class<? extends AsyncInterceptor> interceptorClass) {
       attributes.attribute(INTERCEPTOR_CLASS).set(interceptorClass);
       return this;
    }
 
    /**
-    * @deprecated Since 9.0, please use {@link #interceptor(SequentialInterceptor)} instead.
+    * @deprecated Since 9.0, please use {@link #interceptor(AsyncInterceptor)} instead.
     */
    @Deprecated
    public InterceptorConfigurationBuilder interceptor(CommandInterceptor interceptor) {
@@ -78,9 +83,9 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
     * Warning: if you use this configuration for multiple caches, the interceptor instance will
     * be shared, which will corrupt interceptor stack. Use {@link #interceptorClass} instead.
     *
-    * @param interceptor an instance of {@link SequentialInterceptor}
+    * @param interceptor an instance of {@link AsyncInterceptor}
     */
-   public InterceptorConfigurationBuilder interceptor(SequentialInterceptor interceptor) {
+   public InterceptorConfigurationBuilder interceptor(AsyncInterceptor interceptor) {
       attributes.attribute(INTERCEPTOR).set(interceptor);
       return this;
    }
@@ -147,7 +152,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    @Override
    public void validate() {
       Attribute<Class> interceptorClassAttribute = attributes.attribute(INTERCEPTOR_CLASS);
-      Attribute<SequentialInterceptor> interceptorAttribute = attributes.attribute(INTERCEPTOR);
+      Attribute<AsyncInterceptor> interceptorAttribute = attributes.attribute(INTERCEPTOR);
 
 
       if (!interceptorClassAttribute.isNull() && !interceptorAttribute.isNull()) {
@@ -155,13 +160,13 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       } else if (interceptorClassAttribute.isNull() && interceptorAttribute.isNull()) {
          throw log.customInterceptorMissingClass();
       }
-      Class<? extends SequentialInterceptor> interceptorClass = interceptorClassAttribute.get();
+      Class<? extends AsyncInterceptor> interceptorClass = interceptorClassAttribute.get();
       if (interceptorClass == null) {
          interceptorClass = interceptorAttribute.get().getClass();
       }
 
       if (!BaseCustomInterceptor.class.isAssignableFrom(interceptorClass) &&
-            !BaseCustomSequentialInterceptor.class.isAssignableFrom(interceptorClass)) {
+            !BaseCustomAsyncInterceptor.class.isAssignableFrom(interceptorClass)) {
          final String className = interceptorClass.getName();
          //Suppress noisy warnings if the interceptor is one of our own (like one of those from Query):
          if (! className.startsWith("org.infinispan.")) {

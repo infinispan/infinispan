@@ -1,11 +1,12 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.interceptors.base.BaseCustomInterceptor
-import org.infinispan.context.{Flag, InvocationContext}
+import java.lang.reflect.Method
+
 import org.infinispan.commands.{LocalFlagAffectedCommand, VisitableCommand}
 import org.infinispan.commons.CacheException
-import java.lang.reflect.Method
-import test.HotRodTestingUtil._
+import org.infinispan.context.{Flag, InvocationContext}
+import org.infinispan.interceptors.base.BaseCustomInterceptor
+import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.testng.annotations.Test
 
 /**
@@ -148,7 +149,7 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       }
 
       val ci = new SkipIndexingFlagCheckCommandInterceptor
-      cacheManager.getCache(cacheName).getAdvancedCache.getSequentialInterceptorChain().addInterceptor(ci, 1)
+      cacheManager.getCache(cacheName).getAdvancedCache.getAsyncInterceptorChain().addInterceptor(ci, 1)
       ci
    }
 

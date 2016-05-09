@@ -40,8 +40,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
       failureInterceptor0 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
       failureInterceptor1 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
-      advancedCache(0).getSequentialInterceptorChain().addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
-      advancedCache(1).getSequentialInterceptorChain().addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
+      advancedCache(0).getAsyncInterceptorChain().addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
+      advancedCache(1).getAsyncInterceptorChain().addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
    }
 
    @BeforeMethod
@@ -110,6 +110,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       assertCleanup(0, 1, 2);
    }
 
+   @Override
    protected int getTxParticipant(boolean txParticipant) {
       int expectedNumber = txParticipant ? 1 : 0;
 

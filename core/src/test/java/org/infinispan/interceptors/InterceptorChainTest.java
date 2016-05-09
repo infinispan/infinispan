@@ -3,9 +3,8 @@ package org.infinispan.interceptors;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.impl.SequentialInterceptorChainImpl;
+import org.infinispan.interceptors.impl.AsyncInterceptorChainImpl;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -32,11 +31,11 @@ public class InterceptorChainTest extends AbstractInfinispanTest {
 
    public void testConcurrentAddRemove() throws Exception {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
-      componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(), InterceptorChainTest.class.getClassLoader());
-      SequentialInterceptorChainImpl sequentialInterceptorChain =
-            new SequentialInterceptorChainImpl(componentMetadataRepo);
+      componentMetadataRepo.initialize(Collections.emptyList(), InterceptorChainTest.class.getClassLoader());
+      AsyncInterceptorChainImpl asyncInterceptorChain =
+            new AsyncInterceptorChainImpl(componentMetadataRepo);
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
-      InterceptorChain ic = new InterceptorChain(sequentialInterceptorChain);
+      InterceptorChain ic = new InterceptorChain(asyncInterceptorChain);
       ic.setFirstInChain(new DummyCallInterceptor());
       ic.addInterceptor(new DummyActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);

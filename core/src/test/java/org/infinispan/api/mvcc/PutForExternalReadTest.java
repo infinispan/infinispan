@@ -25,7 +25,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.BaseSequentialInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
@@ -55,7 +55,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       final Cache<MagicKey, String> cache2 = cache(1, CACHE_NAME);
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
-      cache1.getAdvancedCache().getSequentialInterceptorChain().addInterceptor(new BaseSequentialInterceptor() {
+      cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseAsyncInterceptor() {
          @Override
          public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {
@@ -167,7 +167,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       Cache<String, String> cache1 = cache(0, CACHE_NAME);
       Cache<String, String> cache2 = cache(1, CACHE_NAME);
 
-      assertTrue(cache1.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(new BaseSequentialInterceptor() {
+      assertTrue(cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(new BaseAsyncInterceptor() {
          @Override
          public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {

@@ -50,8 +50,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -87,8 +87,6 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
-
-import java.lang.Throwable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -130,7 +128,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    protected InvocationContextContainer icc;
    protected InvocationContextFactory invocationContextFactory;
    protected CommandsFactory commandsFactory;
-   protected SequentialInterceptorChain invoker;
+   protected AsyncInterceptorChain invoker;
    protected Configuration config;
    protected CacheNotifier notifier;
    protected BatchContainer batchContainer;
@@ -169,7 +167,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   InvocationContextFactory invocationContextFactory,
                                   InvocationContextContainer icc,
                                   CommandsFactory commandsFactory,
-                                  SequentialInterceptorChain interceptorChain,
+                                  AsyncInterceptorChain interceptorChain,
                                   Configuration configuration,
                                   CacheNotifier notifier,
                                   ComponentRegistry componentRegistry,
@@ -952,7 +950,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public List<CommandInterceptor> getInterceptorChain() {
-      List<SequentialInterceptor> interceptors = invoker.getInterceptors();
+      List<AsyncInterceptor> interceptors = invoker.getInterceptors();
       ArrayList<CommandInterceptor> list = new ArrayList<>(interceptors.size());
       interceptors.forEach(interceptor -> {
          if (interceptor instanceof CommandInterceptor) {
@@ -968,7 +966,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public SequentialInterceptorChain getSequentialInterceptorChain() {
+   public AsyncInterceptorChain getAsyncInterceptorChain() {
       return invoker;
    }
 

@@ -2,7 +2,6 @@ package org.infinispan.interceptors;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.SequentialInterceptor;
 
 /**
  * Base class for an interceptor in the new sequential invocation chain.
@@ -10,7 +9,7 @@ import org.infinispan.interceptors.SequentialInterceptor;
  * @author Dan Berindei
  * @since 9.0
  */
-public abstract class BaseSequentialInterceptor implements SequentialInterceptor {
+public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    protected Configuration cacheConfiguration;
 
    @Inject

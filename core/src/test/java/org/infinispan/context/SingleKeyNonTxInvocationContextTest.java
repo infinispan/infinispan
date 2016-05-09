@@ -6,7 +6,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -31,9 +31,9 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
       createCluster(c, 2);
       waitForClusterToForm();
       ci0 = new CheckInterceptor();
-      advancedCache(0).getSequentialInterceptorChain().addInterceptor(ci0, 1);
+      advancedCache(0).getAsyncInterceptorChain().addInterceptor(ci0, 1);
       ci1 = new CheckInterceptor();
-      advancedCache(1).getSequentialInterceptorChain().addInterceptor(ci1, 1);
+      advancedCache(1).getAsyncInterceptorChain().addInterceptor(ci1, 1);
    }
 
 
@@ -78,7 +78,7 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
    }
 
 
-   static class CheckInterceptor extends BaseCustomSequentialInterceptor {
+   static class CheckInterceptor extends BaseCustomAsyncInterceptor {
 
       private boolean putOkay;
       private boolean removeOkay;

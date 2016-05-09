@@ -26,7 +26,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
@@ -136,7 +138,7 @@ public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManager
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier,
             op.getCommandClass(), true, false);
-      cache1.getSequentialInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
+      cache1.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
 
       // Wait for cache0 to collect the state to send to cache1 (including our previous value).
       blockingRpcManager0.waitForCommandToBlock();

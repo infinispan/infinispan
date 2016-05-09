@@ -2,7 +2,7 @@ package org.infinispan.context;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.util.Experimental;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -16,7 +16,7 @@ import java.util.function.Function;
  * @author Dan Berindei
  * @since 9.0
  */
-public interface SequentialInvocationContext {
+public interface AsyncInvocationContext {
    /**
     * Execute a callback after the rest of the interceptors in the chain have finished executing.
     *
@@ -29,12 +29,12 @@ public interface SequentialInvocationContext {
     * Returning {@code null} will preserve the previous result or exception (equivalent to a
     * {@code finally} block in an old-style interceptor).
     */
-   CompletableFuture<Void> onReturn(SequentialInterceptor.ReturnHandler returnHandler);
+   CompletableFuture<Void> onReturn(AsyncInterceptor.ReturnHandler returnHandler);
 
    /**
     * Equivalent to {@code null}, when returned by
-    * {@link SequentialInterceptor#visitCommand(InvocationContext, VisitableCommand)} or
-    * {@link SequentialInterceptor.ReturnHandler#handle(InvocationContext, VisitableCommand, Object, Throwable)}.
+    * {@link AsyncInterceptor#visitCommand(InvocationContext, VisitableCommand)} or
+    * {@link AsyncInterceptor.ReturnHandler#handle(InvocationContext, VisitableCommand, Object, Throwable)}.
     *
     * <p>Unlike {@code null}, it can be used with {@link CompletableFuture#thenCompose(Function)}.
     * And unlike {@code CompletableFuture.completedFuture(null)}, it will not allocate a new object.</p>
@@ -65,14 +65,14 @@ public interface SequentialInvocationContext {
     * @param newCommand The command to fork
     * @param forkReturnHandler The return callback
     */
-   CompletableFuture<Void> forkInvocation(VisitableCommand newCommand, SequentialInterceptor.ForkReturnHandler forkReturnHandler);
+   CompletableFuture<Void> forkInvocation(VisitableCommand newCommand, AsyncInterceptor.ForkReturnHandler forkReturnHandler);
 
    /**
     * Fork the command invocation, and execute the remaining interceptors (and their return handlers)
     * synchronously.
     *
     * <p>Usually it is easier to use than
-    * {@link #forkInvocation(VisitableCommand, SequentialInterceptor.ForkReturnHandler)}.
+    * {@link #forkInvocation(VisitableCommand, AsyncInterceptor.ForkReturnHandler)}.
     * However, it is not recommended, because any asynchronous work in the remaining interceptors will block
     * the calling thread.</p>
     *
@@ -81,5 +81,5 @@ public interface SequentialInvocationContext {
     * @param newCommand The command to fork
     */
    @Experimental
-   Object forkInvocationSync(VisitableCommand newCommand) throws InterruptedException, Throwable;
+   Object forkInvocationSync(VisitableCommand newCommand) throws Throwable;
 }

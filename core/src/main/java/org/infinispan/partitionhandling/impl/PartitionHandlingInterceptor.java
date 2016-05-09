@@ -22,7 +22,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Transport;
@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-public class PartitionHandlingInterceptor extends DDSequentialInterceptor {
+public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(PartitionHandlingInterceptor.class);
    
    PartitionHandlingManager partitionHandlingManager;

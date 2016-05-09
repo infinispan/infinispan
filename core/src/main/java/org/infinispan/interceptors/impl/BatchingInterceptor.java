@@ -6,8 +6,8 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -21,17 +21,17 @@ import java.util.concurrent.CompletableFuture;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 9.0
  */
-public class BatchingInterceptor extends DDSequentialInterceptor {
+public class BatchingInterceptor extends DDAsyncInterceptor {
    private BatchContainer batchContainer;
    private TransactionManager transactionManager;
    private InvocationContextFactory invocationContextFactory;
-   private SequentialInterceptorChain invoker;
+   private AsyncInterceptorChain invoker;
 
    private static final Log log = LogFactory.getLog(BatchingInterceptor.class);
 
    @Inject
    private void inject(BatchContainer batchContainer, TransactionManager transactionManager,
-                       InvocationContextFactory invocationContextFactory, SequentialInterceptorChain invoker) {
+                       InvocationContextFactory invocationContextFactory, AsyncInterceptorChain invoker) {
       this.batchContainer = batchContainer;
       this.transactionManager = transactionManager;
       this.invocationContextFactory = invocationContextFactory;
@@ -77,10 +77,10 @@ public class BatchingInterceptor extends DDSequentialInterceptor {
 
       log.tracef("Called with a non-tx invocation context: %s", ctx);
       InvocationContext txInvocationContext = invocationContextFactory.createInvocationContext(true, -1);
-      // Before sequential interceptors, we could continue the invocation with the next interceptor,
+      // Before async interceptors, we could continue the invocation with the next interceptor,
       // with invokeNextInterceptor(txInvocationContext, command).
       // But now we keep track of the invocation state (e.g. the current interceptor) in the invocation
-      // context itself (BaseSequentialInvocationContext, to be precise), so we have to restart the
+      // context itself (BaseAsyncInvocationContext, to be precise), so we have to restart the
       // invocation with the new context instance.
       // TODO Move the creation of the proper invocation context out of the interceptor and into CacheImpl
       return invoker.invokeAsync(txInvocationContext, command).thenCompose(ctx::shortCircuit);

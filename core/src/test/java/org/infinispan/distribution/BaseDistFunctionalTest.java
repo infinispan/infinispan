@@ -11,7 +11,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.L1InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.Grouper;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -276,7 +276,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected static void removeAllBlockingInterceptorsFromCache(Cache<?, ?> cache) {
-      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
       BlockingInterceptor blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
       while (blockingInterceptor != null) {
          blockingInterceptor.suspend(true);

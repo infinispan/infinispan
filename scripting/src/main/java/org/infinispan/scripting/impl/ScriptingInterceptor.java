@@ -6,7 +6,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.scripting.ScriptingManager;
 
 import java.util.concurrent.CompletableFuture;
@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Tristan Tarrant
  * @since 7.2
  */
-public final class ScriptingInterceptor extends BaseCustomSequentialInterceptor {
+public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
 
    private ScriptingManagerImpl scriptingManager;
 

@@ -7,7 +7,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
- * Anyone using the {@link org.infinispan.interceptors.SequentialInterceptorChain#addInterceptor(SequentialInterceptor, int)} method (or any of its
+ * Anyone using the {@link AsyncInterceptorChain#addInterceptor(AsyncInterceptor, int)} method (or any of its
  * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own 
  * custom interceptors.
  * <p />
@@ -21,7 +21,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @author Dan Berindei
  * @since 9.0
  */
-public class BaseCustomSequentialInterceptor extends DDSequentialInterceptor {
+public class BaseCustomAsyncInterceptor extends DDAsyncInterceptor {
    protected Cache<?, ?> cache;
    protected EmbeddedCacheManager embeddedCacheManager;
 

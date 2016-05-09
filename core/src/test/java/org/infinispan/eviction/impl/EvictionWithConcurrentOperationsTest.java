@@ -12,8 +12,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.PassivationManager;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -37,7 +37,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Tests size-based eviction with concurrent read and/or write operation. In this test, we have no passivation.
@@ -600,7 +604,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    protected class AfterEntryWrappingInterceptor extends ControlledCommandInterceptor {
 
       public AfterEntryWrappingInterceptor injectThis(Cache<Object, Object> injectInCache) {
-         injectInCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(this, EntryWrappingInterceptor.class);
+         injectInCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(this, EntryWrappingInterceptor.class);
          return this;
       }
 
@@ -609,11 +613,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    private class AfterActivationOrCacheLoader extends ControlledCommandInterceptor {
 
       public AfterActivationOrCacheLoader injectThis(Cache<Object, Object> injectInCache) {
-         SequentialInterceptorChain chain =
-               TestingUtil.extractComponent(injectInCache, SequentialInterceptorChain.class);
-         SequentialInterceptor loaderInterceptor =
+         AsyncInterceptorChain chain =
+               TestingUtil.extractComponent(injectInCache, AsyncInterceptorChain.class);
+         AsyncInterceptor loaderInterceptor =
                chain.findInterceptorExtending(org.infinispan.interceptors.impl.CacheLoaderInterceptor.class);
-         injectInCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(this, loaderInterceptor.getClass());
+         injectInCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(this, loaderInterceptor.getClass());
          return this;
       }
 

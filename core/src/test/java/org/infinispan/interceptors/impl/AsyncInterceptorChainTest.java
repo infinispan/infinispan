@@ -3,10 +3,9 @@ package org.infinispan.interceptors.impl;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.factories.components.ModuleMetadataFileFinder;
-import org.infinispan.interceptors.BaseSequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -22,22 +21,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * Tests {@link SequentialInterceptorChainImpl} concurrent updates
+ * Tests {@link AsyncInterceptorChainImpl} concurrent updates
  *
  * @author Galder Zamarreño
  * @author Sanne Grinovero
  * @author Dan Berindei
  * @since 9.0
  */
-@Test(groups = "functional", testName = "interceptors.SequentialInterceptorChainTest")
-public class SequentialInterceptorChainTest {
+@Test(groups = "functional", testName = "interceptors.AsyncInterceptorChainTest")
+public class AsyncInterceptorChainTest {
 
-   private static final Log log = LogFactory.getLog(SequentialInterceptorChainTest.class);
+   private static final Log log = LogFactory.getLog(AsyncInterceptorChainTest.class);
 
    public void testConcurrentAddRemove() throws Exception {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
-      componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(), SequentialInterceptorChainTest.class.getClassLoader());
-      SequentialInterceptorChainImpl ic = new SequentialInterceptorChainImpl(componentMetadataRepo);
+      componentMetadataRepo.initialize(Collections.emptyList(), AsyncInterceptorChainTest.class.getClassLoader());
+      AsyncInterceptorChainImpl ic = new AsyncInterceptorChainImpl(componentMetadataRepo);
       ic.addInterceptor(new DummyCallInterceptor(), 0);
       ic.addInterceptor(new DummyActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
@@ -67,11 +66,11 @@ public class SequentialInterceptorChainTest {
    }
 
    private static class InterceptorChainUpdater implements Callable<Void> {
-      private final SequentialInterceptorChain ic;
+      private final AsyncInterceptorChain ic;
       private final CyclicBarrier barrier;
-      private final SequentialInterceptor interceptor;
+      private final AsyncInterceptor interceptor;
 
-      InterceptorChainUpdater(SequentialInterceptorChain ic, CyclicBarrier barrier, SequentialInterceptor interceptor) {
+      InterceptorChainUpdater(AsyncInterceptorChain ic, CyclicBarrier barrier, AsyncInterceptor interceptor) {
          this.ic = ic;
          this.barrier = barrier;
          this.interceptor = interceptor;
@@ -79,7 +78,7 @@ public class SequentialInterceptorChainTest {
 
       @Override
       public Void call() throws Exception {
-         final Class<? extends SequentialInterceptor> interceptorClass = interceptor.getClass();
+         final Class<? extends AsyncInterceptor> interceptorClass = interceptor.getClass();
          try {
             log.debug("Wait for all executions paths to be ready to perform calls");
             barrier.await();
@@ -98,7 +97,7 @@ public class SequentialInterceptorChainTest {
       }
    }
 
-   private static class DummyCallInterceptor extends BaseSequentialInterceptor {
+   private static class DummyCallInterceptor extends BaseAsyncInterceptor {
       @Override
       public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
             throws Throwable {

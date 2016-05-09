@@ -237,7 +237,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
                   primaryOwnerCache.put(mk, value);
                   log.tracef("Adding additional value on nonOwner value inserted: %s = %s", mk, value);
                }
-               primaryOwnerCache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(
+               primaryOwnerCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(
                      new BlockingInterceptor(cyclicBarrier, getVisitableCommand(op), true, false),
                      StateTransferInterceptor.class);
                return op.perform(primaryOwnerCache, key);
@@ -356,7 +356,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier,
                                                                          op.getCommandClass(), true, false);
-      nonOwnerCache.getSequentialInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
+      nonOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
 
       // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
       // The put command will be blocked on cache1 just before committing the entry.
@@ -438,7 +438,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier,
                                                                          getVisitableCommand(op), false, false);
-      primaryOwnerCache.getSequentialInterceptorChain().addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
+      primaryOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
 
       // Put/Replace/Remove from primary owner.  This will block before it is committing on remote nodes
       Future<Object> future = fork(new Callable<Object>() {

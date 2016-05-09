@@ -9,7 +9,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
@@ -54,7 +54,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testGetKeysInGroup() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches());
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
@@ -62,7 +62,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testGetKeysInGroupWithPersistence() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches(PERSISTENCE_CACHE));
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
@@ -70,7 +70,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testGetKeysInGroupWithPersistenceAndPassivation() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches(PERSISTENCE_PASSIVATION_CACHE));
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_PASSIVATION_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
@@ -78,7 +78,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testGetKeysInGroupWithPersistenceAndSkipCacheLoader() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches(PERSISTENCE_CACHE));
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.withFlags(Flag.SKIP_CACHE_LOAD).getGroup(GROUP);
       //noinspection unchecked
@@ -94,7 +94,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testGetKeyInGroupWithConcurrentActivation() throws TimeoutException, InterruptedException, ExecutionException {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches(PERSISTENCE_PASSIVATION_CACHE));
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_PASSIVATION_CACHE));
       initCache(testCache.primaryOwner);
       final BlockCommandInterceptor interceptor = injectIfAbsent(extractTargetCache(testCache));
 
@@ -128,7 +128,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testRemoveGroupKeys() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches());
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
@@ -139,7 +139,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testRemoveGroupKeysWithPersistence() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches(PERSISTENCE_CACHE));
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
@@ -150,7 +150,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testRemoveGroupKeysWithPersistenceAndPassivation() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches(PERSISTENCE_PASSIVATION_CACHE));
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_PASSIVATION_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
@@ -161,7 +161,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testRemoveGroupKeysWithPersistenceAndSkipCacheWriter() {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches(PERSISTENCE_CACHE));
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);
       Map<GroupKey, String> expectedGroupSet = createMap(0, 10);
@@ -206,7 +206,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
    @Override
    protected final void resetCaches(List<Cache<BaseUtilGroupTest.GroupKey, String>> cacheList) {
       for (Cache cache : cacheList) {
-         SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+         AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
          BlockCommandInterceptor interceptor = chain.findInterceptorExtending(BlockCommandInterceptor.class);
          if (interceptor != null) {
             interceptor.reset();
@@ -235,7 +235,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
 
    private BlockCommandInterceptor injectIfAbsent(Cache<?, ?> cache) {
       log.debugf("Injecting BlockCommandInterceptor in %s", cache);
-      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
       BlockCommandInterceptor interceptor = chain.findInterceptorExtending(BlockCommandInterceptor.class);
       if (interceptor == null) {
          interceptor = new BlockCommandInterceptor(log);

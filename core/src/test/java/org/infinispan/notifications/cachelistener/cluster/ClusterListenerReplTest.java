@@ -23,7 +23,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Cluster listener test having a configuration of non tx and replication
@@ -93,10 +96,10 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       CyclicBarrier barrier = new CyclicBarrier(3);
       BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
             true, false);
-      cache0.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
+      cache0.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
       BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
             true, false);
-      cache2.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(blockingInterceptor2, EntryWrappingInterceptor.class);
+      cache2.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor2, EntryWrappingInterceptor.class);
 
       final MagicKey key = new MagicKey(cache1, cache2);
       Future<String> future = fork(new Callable<String>() {
@@ -110,8 +113,8 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       barrier.await(10, TimeUnit.SECONDS);
 
       // Remove the interceptor so the next command can proceed properly
-      cache0.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
-      cache2.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+      cache0.getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+      cache2.getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
       blockingInterceptor0.suspend(true);
       blockingInterceptor2.suspend(true);
 

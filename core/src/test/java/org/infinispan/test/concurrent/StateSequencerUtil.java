@@ -2,7 +2,7 @@ package org.infinispan.test.concurrent;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public class StateSequencerUtil {
     * Start decorating interceptor {@code interceptorClass} on {@code cache} to interact with a {@code StateSequencer}.
     */
    public static InterceptorSequencerAction advanceOnInterceptor(StateSequencer stateSequencer, Cache<?, ?> cache,
-         Class<? extends SequentialInterceptor> interceptorClass, CommandMatcher matcher) {
+         Class<? extends AsyncInterceptor> interceptorClass, CommandMatcher matcher) {
       return new InterceptorSequencerAction(stateSequencer, cache, interceptorClass, matcher);
    }
 

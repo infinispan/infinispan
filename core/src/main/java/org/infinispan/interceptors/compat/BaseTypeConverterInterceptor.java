@@ -25,7 +25,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
@@ -50,7 +50,7 @@ import java.util.stream.StreamSupport;
  *
  * @author Galder Zamarreño
  */
-public abstract class BaseTypeConverterInterceptor<K, V> extends DDSequentialInterceptor {
+public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncInterceptor {
 
    private InternalEntryFactory entryFactory;
    private VersionGenerator versionGenerator;

@@ -103,8 +103,8 @@ public class SecureCacheTestDriver {
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testAddInterceptor_CommandInterceptor_int(SecureCache<String, String> cache) {
-      cache.getSequentialInterceptorChain().addInterceptor(interceptor, 0);
-      cache.getSequentialInterceptorChain().removeInterceptor(0);
+      cache.getAsyncInterceptorChain().addInterceptor(interceptor, 0);
+      cache.getAsyncInterceptorChain().removeInterceptor(0);
    }
 
    @TestCachePermission(AuthorizationPermission.LISTEN)
@@ -237,8 +237,8 @@ public class SecureCacheTestDriver {
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testAddInterceptorAfter_CommandInterceptor_Class(SecureCache<String, String> cache) {
-      cache.getSequentialInterceptorChain().addInterceptorAfter(interceptor, InvocationContextInterceptor.class);
-      cache.getSequentialInterceptorChain().removeInterceptor(interceptor.getClass());
+      cache.getAsyncInterceptorChain().addInterceptorAfter(interceptor, InvocationContextInterceptor.class);
+      cache.getAsyncInterceptorChain().removeInterceptor(interceptor.getClass());
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
@@ -410,7 +410,7 @@ public class SecureCacheTestDriver {
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testRemoveInterceptor_Class(SecureCache<String, String> cache) {
-      cache.getSequentialInterceptorChain().removeInterceptor(interceptor.getClass());
+      cache.getAsyncInterceptorChain().removeInterceptor(interceptor.getClass());
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
@@ -492,8 +492,8 @@ public class SecureCacheTestDriver {
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testRemoveInterceptor_int(SecureCache<String, String> cache) {
-      cache.getSequentialInterceptorChain().addInterceptor(interceptor, 0);
-      cache.getSequentialInterceptorChain().removeInterceptor(0);
+      cache.getAsyncInterceptorChain().addInterceptor(interceptor, 0);
+      cache.getAsyncInterceptorChain().removeInterceptor(0);
    }
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
@@ -593,8 +593,8 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testGetSequentialInterceptorChain(SecureCache<String, String> cache) {
-      cache.getSequentialInterceptorChain();
+   public void testGetAsyncInterceptorChain(SecureCache<String, String> cache) {
+      cache.getAsyncInterceptorChain();
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
@@ -614,8 +614,8 @@ public class SecureCacheTestDriver {
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testAddInterceptorBefore_CommandInterceptor_Class(SecureCache<String, String> cache) {
-      cache.getSequentialInterceptorChain().addInterceptorBefore(interceptor, InvocationContextInterceptor.class);
-      cache.getSequentialInterceptorChain().removeInterceptor(interceptor.getClass());
+      cache.getAsyncInterceptorChain().addInterceptorBefore(interceptor, InvocationContextInterceptor.class);
+      cache.getAsyncInterceptorChain().removeInterceptor(interceptor.getClass());
    }
 
    @TestCachePermission(AuthorizationPermission.READ)

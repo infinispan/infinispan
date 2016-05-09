@@ -139,7 +139,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    private void assertQueryInterceptorPresent(Cache<?, ?> c) {
       QueryInterceptor i = TestingUtil.findInterceptor(c, QueryInterceptor.class);
       assert i != null : "Expected to find a QueryInterceptor, only found " +
-            c.getAdvancedCache().getSequentialInterceptorChain().getInterceptors();
+            c.getAdvancedCache().getAsyncInterceptorChain().getInterceptors();
    }
 
    public void testModified() throws Exception {

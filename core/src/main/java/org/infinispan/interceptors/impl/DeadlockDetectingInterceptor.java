@@ -9,7 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -27,7 +27,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Mircea.Markus@jboss.com
  * @since 9.0
  */
-public class DeadlockDetectingInterceptor extends DDSequentialInterceptor {
+public class DeadlockDetectingInterceptor extends DDAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(DeadlockDetectingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();

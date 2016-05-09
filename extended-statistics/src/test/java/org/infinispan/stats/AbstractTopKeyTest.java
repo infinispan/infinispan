@@ -4,8 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.interceptors.DDSequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -27,8 +27,8 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
    }
 
    protected CacheUsageInterceptor getTopKey(Cache<?, ?> cache) {
-      SequentialInterceptorChain interceptorChain =
-            cache.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain interceptorChain =
+            cache.getAdvancedCache().getAsyncInterceptorChain();
       return interceptorChain.findInterceptorExtending(CacheUsageInterceptor.class);
    }
 
@@ -81,7 +81,7 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
    }
 
    protected PrepareCommandBlocker addPrepareBlockerIfAbsent(Cache<?, ?> cache) {
-      SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
 
       PrepareCommandBlocker blocker = chain.findInterceptorWithClass(PrepareCommandBlocker.class);
       if (blocker != null)
@@ -92,7 +92,7 @@ public abstract class AbstractTopKeyTest extends MultipleCacheManagersTest {
       return blocker;
    }
 
-   protected class PrepareCommandBlocker extends DDSequentialInterceptor {
+   protected class PrepareCommandBlocker extends DDAsyncInterceptor {
 
       private boolean unblock = false;
       private boolean prepareBlocked = false;

@@ -1,6 +1,6 @@
 package org.infinispan.tx;
 
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -22,7 +22,7 @@ public class NonTxCacheInterceptorTest extends SingleCacheManagerTest {
    }
 
    public void testNoTxInterceptor() {
-      final SequentialInterceptorChain interceptorChain = cache.getAdvancedCache().getSequentialInterceptorChain();
+      final AsyncInterceptorChain interceptorChain = cache.getAdvancedCache().getAsyncInterceptorChain();
       log.trace(interceptorChain);
       assertFalse(interceptorChain.containsInterceptorType(TxInterceptor.class));
    }

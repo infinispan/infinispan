@@ -3,7 +3,7 @@ package org.infinispan.marshall;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.logging.Log;
@@ -40,7 +40,7 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    private void assertMarshalledValueInterceptorPresent(Cache<?, ?> c) {
-      SequentialInterceptorChain ic1 = c.getAdvancedCache().getSequentialInterceptorChain();
+      AsyncInterceptorChain ic1 = c.getAdvancedCache().getAsyncInterceptorChain();
       assert ic1.containsInterceptorType(MarshalledValueInterceptor.class);
    }
 

@@ -3,9 +3,9 @@ package org.infinispan.test.concurrent;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.DDSequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 import java.util.List;
@@ -21,11 +21,11 @@ import java.util.concurrent.CompletableFuture;
 public class InterceptorSequencerAction {
    private final StateSequencer stateSequencer;
    private final Cache<?, ?> cache;
-   private final Class<? extends SequentialInterceptor> interceptorClass;
+   private final Class<? extends AsyncInterceptor> interceptorClass;
    private CommandMatcher matcher;
    private SequencerInterceptor ourInterceptor;
 
-   public InterceptorSequencerAction(StateSequencer stateSequencer, Cache<?, ?> cache, Class<? extends SequentialInterceptor> interceptorClass, CommandMatcher matcher) {
+   public InterceptorSequencerAction(StateSequencer stateSequencer, Cache<?, ?> cache, Class<? extends AsyncInterceptor> interceptorClass, CommandMatcher matcher) {
       this.stateSequencer = stateSequencer;
       this.cache = cache;
       this.interceptorClass = interceptorClass;
@@ -45,9 +45,9 @@ public class InterceptorSequencerAction {
 
    private void initOurInterceptor() {
       if (ourInterceptor == null) {
-         ourInterceptor = SequencerInterceptor.createUniqueInterceptor(cache.getAdvancedCache().getSequentialInterceptorChain());
+         ourInterceptor = SequencerInterceptor.createUniqueInterceptor(cache.getAdvancedCache().getAsyncInterceptorChain());
          ourInterceptor.init(stateSequencer, matcher);
-         cache.getAdvancedCache().getSequentialInterceptorChain().addInterceptorBefore(ourInterceptor, interceptorClass);
+         cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(ourInterceptor, interceptorClass);
       }
    }
 
@@ -62,7 +62,7 @@ public class InterceptorSequencerAction {
       return this;
    }
 
-   public static class SequencerInterceptor extends DDSequentialInterceptor {
+   public static class SequencerInterceptor extends DDAsyncInterceptor {
       private static final Class[] uniqueInterceptorClasses = {
             U1.class, U2.class, U3.class, U4.class, U5.class, U6.class, U7.class, U8.class, U9.class
       };
@@ -72,7 +72,7 @@ public class InterceptorSequencerAction {
       private volatile List<String> statesBefore;
       private volatile List<String> statesAfter;
 
-      public static SequencerInterceptor createUniqueInterceptor(SequentialInterceptorChain chain) {
+      public static SequencerInterceptor createUniqueInterceptor(AsyncInterceptorChain chain) {
          Class uniqueClass = findUniqueClass(chain);
          try {
             return (SequencerInterceptor) uniqueClass.newInstance();
@@ -81,8 +81,8 @@ public class InterceptorSequencerAction {
          }
       }
 
-      public static Class<?> findUniqueClass(SequentialInterceptorChain chain) {
-         for (Class<? extends SequentialInterceptor> clazz : uniqueInterceptorClasses) {
+      public static Class<?> findUniqueClass(AsyncInterceptorChain chain) {
+         for (Class<? extends AsyncInterceptor> clazz : uniqueInterceptorClasses) {
             if (!chain.containsInterceptorType(clazz)) {
                return clazz;
             }

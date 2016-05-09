@@ -4,7 +4,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -119,7 +119,7 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public CompletableFuture<Void> onReturn(SequentialInterceptor.ReturnHandler returnHandler) {
+   public CompletableFuture<Void> onReturn(AsyncInterceptor.ReturnHandler returnHandler) {
       throw new UnsupportedOperationException();
    }
 
@@ -135,7 +135,7 @@ public final class ImmutableContext implements InvocationContext {
 
    @Override
    public CompletableFuture<Void> forkInvocation(VisitableCommand newCommand,
-         SequentialInterceptor.ForkReturnHandler returnHandler) {
+         AsyncInterceptor.ForkReturnHandler returnHandler) {
       throw new UnsupportedOperationException();
    }
 

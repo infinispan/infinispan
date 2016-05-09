@@ -13,7 +13,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -61,32 +61,32 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    @Override
    public void addInterceptor(CommandInterceptor i, int position) {
-      cache.getSequentialInterceptorChain().addInterceptor(i, position);
+      cache.getAsyncInterceptorChain().addInterceptor(i, position);
    }
 
    @Override
-   public SequentialInterceptorChain getSequentialInterceptorChain() {
-      return cache.getSequentialInterceptorChain();
+   public AsyncInterceptorChain getAsyncInterceptorChain() {
+      return cache.getAsyncInterceptorChain();
    }
 
    @Override
    public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      return cache.getSequentialInterceptorChain().addInterceptorAfter(i, afterInterceptor);
+      return cache.getAsyncInterceptorChain().addInterceptorAfter(i, afterInterceptor);
    }
 
    @Override
    public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      return cache.getSequentialInterceptorChain().addInterceptorBefore(i, beforeInterceptor);
+      return cache.getAsyncInterceptorChain().addInterceptorBefore(i, beforeInterceptor);
    }
 
    @Override
    public void removeInterceptor(int position) {
-      cache.getSequentialInterceptorChain().removeInterceptor(position);
+      cache.getAsyncInterceptorChain().removeInterceptor(position);
    }
 
    @Override
    public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      cache.getSequentialInterceptorChain().removeInterceptor(interceptorType);
+      cache.getAsyncInterceptorChain().removeInterceptor(interceptorType);
    }
 
    @Override

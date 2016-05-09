@@ -34,7 +34,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -80,7 +80,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 9.0
  */
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
-public class TxInterceptor<K, V> extends DDSequentialInterceptor implements JmxStatisticsExposer {
+public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();

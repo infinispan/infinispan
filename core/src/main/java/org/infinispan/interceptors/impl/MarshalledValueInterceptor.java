@@ -26,7 +26,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
@@ -61,7 +61,7 @@ import static org.infinispan.marshall.core.MarshalledValue.isTypeExcluded;
  * @see MarshalledValue
  * @since 9.0
  */
-public class MarshalledValueInterceptor<K, V> extends DDSequentialInterceptor {
+public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
    private StreamingMarshaller marshaller;
    private boolean wrapKeys = true;
    private boolean wrapValues = true;

@@ -2,7 +2,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author William Burns
  * @since 6.0
  */
-public class BlockingInterceptor extends DDSequentialInterceptor {
+public class BlockingInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(BlockingInterceptor.class);
 
    private final CyclicBarrier barrier;

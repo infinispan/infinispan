@@ -43,7 +43,9 @@ import java.util.concurrent.TimeoutException;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 
 @Test(groups = "unit", testName = "notifications.cachelistener.BaseCacheNotifierImplInitialTransferTest")
@@ -87,7 +89,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       private final Event.Type type;
 
-      private Operation(Event.Type type) {
+      Operation(Event.Type type) {
          this.type = type;
       }
 

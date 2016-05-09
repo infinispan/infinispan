@@ -9,7 +9,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class GroupingInterceptor extends DDSequentialInterceptor {
+public class GroupingInterceptor extends DDAsyncInterceptor {
 
    private CacheNotifier<?, ?> cacheNotifier;
    private GroupManager groupManager;

@@ -4,7 +4,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.BaseSequentialInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.transaction.impl.RemoteTransaction;
 
 import java.util.concurrent.CompletableFuture;
@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Mircea Markus
  * @since 5.2
  */
-public class TransactionSynchronizerInterceptor extends BaseSequentialInterceptor {
+public class TransactionSynchronizerInterceptor extends BaseAsyncInterceptor {
 
    @Override
    public CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command)
