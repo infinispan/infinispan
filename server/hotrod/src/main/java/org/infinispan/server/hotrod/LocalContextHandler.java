@@ -7,6 +7,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.JavaLog;
@@ -18,6 +19,8 @@ import scala.Option;
 import scala.Tuple2;
 import scala.Tuple4;
 
+import javax.security.auth.Subject;
+import java.security.PrivilegedExceptionAction;
 import java.util.BitSet;
 import java.util.Map;
 
@@ -41,30 +44,41 @@ public class LocalContextHandler extends ChannelInboundHandlerAdapter {
    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
       if (msg instanceof CacheDecodeContext) {
          CacheDecodeContext cdc = (CacheDecodeContext) msg;
-         HotRodHeader h = cdc.header();
-         switch (h.op()) {
-            case ContainsKeyRequest:
-               writeResponse(cdc, ctx.channel(), cdc.containsKey());
-               break;
-            case GetRequest:
-            case GetWithVersionRequest:
-               writeResponse(cdc, ctx.channel(), cdc.get());
-               break;
-            case GetWithMetadataRequest:
-               writeResponse(cdc, ctx.channel(), cdc.getKeyMetadata());
-               break;
-            case PingRequest:
-               writeResponse(cdc, ctx.channel(), new Response(h.version(), h.messageId(), h.cacheName(),
-                       h.clientIntel(), OperationResponse.PingResponse(), OperationStatus.Success(), h.topologyId()));
-               break;
-            case StatsRequest:
-               writeResponse(cdc, ctx.channel(), cdc.decoder().createStatsResponse(cdc, transport));
-               break;
-            default:
-               super.channelRead(ctx, msg);
-         }
+         Subject subject = ((CacheDecodeContext) msg).getSubject();
+         if (subject == null)
+            realChannelRead(ctx, msg, cdc);
+         else Security.doAs(subject, (PrivilegedExceptionAction<Void>) () -> {
+            realChannelRead(ctx, msg, cdc);
+            return null;
+         });
       } else {
          super.channelRead(ctx, msg);
       }
    }
+
+   private void realChannelRead(ChannelHandlerContext ctx, Object msg, CacheDecodeContext cdc) throws Exception {
+      HotRodHeader h = cdc.header();
+      switch (h.op()) {
+         case ContainsKeyRequest:
+            writeResponse(cdc, ctx.channel(), cdc.containsKey());
+            break;
+         case GetRequest:
+         case GetWithVersionRequest:
+            writeResponse(cdc, ctx.channel(), cdc.get());
+            break;
+         case GetWithMetadataRequest:
+            writeResponse(cdc, ctx.channel(), cdc.getKeyMetadata());
+            break;
+         case PingRequest:
+            writeResponse(cdc, ctx.channel(), new Response(h.version(), h.messageId(), h.cacheName(),
+                    h.clientIntel(), OperationResponse.PingResponse(), OperationStatus.Success(), h.topologyId()));
+            break;
+         case StatsRequest:
+            writeResponse(cdc, ctx.channel(), cdc.decoder().createStatsResponse(cdc, transport));
+            break;
+         default:
+            super.channelRead(ctx, msg);
+      }
+   }
+
 }
