@@ -1,5 +1,6 @@
 package org.infinispan.topology;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -67,7 +68,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private final Map<String, LocalCacheStatus> runningCaches =
          Collections.synchronizedMap(new HashMap<String, LocalCacheStatus>());
    private volatile boolean running;
-   private volatile int latestStatusResponseViewId;
+   @GuardedBy("runningCaches")
+   private int latestStatusResponseViewId;
    private PersistentUUID persistentUUID;
 
    @Inject
@@ -86,6 +88,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    // Arbitrary value, only need to start after the (optional) GlobalStateManager and JGroupsTransport
    @Start(priority = 100)
+   // Start isn't called with any locks, but it runs before the component is accessible from other threads
+   @GuardedBy("runningCaches")
    public void start() {
       if (trace) {
          log.tracef("Starting LocalTopologyManager on %s", transport.getAddress());
@@ -193,14 +197,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       } catch (InterruptedException e) {
          // Shutting down, send back an empty status
          Thread.currentThread().interrupt();
-         return new ManagerStatusResponse(Collections.<String, CacheStatusResponse>emptyMap(), true);
+         return new ManagerStatusResponse(Collections.emptyMap(), true);
       }
 
-      latestStatusResponseViewId = viewId;
       Map<String, CacheStatusResponse> caches = new HashMap<String, CacheStatusResponse>();
       synchronized (runningCaches) {
+         latestStatusResponseViewId = viewId;
+
          for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
-            String cacheName = e.getKey();
+         String cacheName = e.getKey();
             LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
             caches.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
                     cacheStatus.getCurrentTopology(), cacheStatus.getStableTopology(),
@@ -318,30 +323,32 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    private boolean updateCacheTopology(String cacheName, CacheTopology cacheTopology, int viewId,
          Address sender, LocalCacheStatus cacheStatus) {
-      if (!validateCommandViewId(cacheTopology, viewId, sender, cacheName))
-         return false;
+      synchronized (runningCaches) {
+         if (!validateCommandViewId(cacheTopology, viewId, sender, cacheName))
+            return false;
 
-      log.debugf("Updating local topology for cache %s: %s", cacheName, cacheTopology);
-      cacheStatus.setCurrentTopology(cacheTopology);
-      return true;
+         log.debugf("Updating local topology for cache %s: %s", cacheName, cacheTopology);
+         cacheStatus.setCurrentTopology(cacheTopology);
+         return true;
+      }
    }
 
+   /**
+    * Synchronization is required to prevent topology updates while preparing the status response.
+    */
+   @GuardedBy("runningCaches")
    private boolean validateCommandViewId(CacheTopology cacheTopology, int viewId, Address sender,
          String cacheName) {
-      // Block if there is a status request in progress
-      // The caller should have already acquired the cacheStatus monitor
-      synchronized (runningCaches) {
-         if (!sender.equals(transport.getCoordinator())) {
-            log.debugf("Ignoring topology %d for cache %s from old coordinator %s",
-                  cacheTopology.getTopologyId(), cacheName, sender);
-            return false;
-         }
-         if (viewId < latestStatusResponseViewId) {
-            log.debugf(
-                  "Ignoring topology %d for cache %s from view %d received after status request from view %d",
-                  cacheTopology.getTopologyId(), cacheName, viewId, latestStatusResponseViewId);
-            return false;
-         }
+      if (!sender.equals(transport.getCoordinator())) {
+         log.debugf("Ignoring topology %d for cache %s from old coordinator %s",
+               cacheTopology.getTopologyId(), cacheName, sender);
+         return false;
+      }
+      if (viewId < latestStatusResponseViewId) {
+         log.debugf(
+               "Ignoring topology %d for cache %s from view %d received after status request from view %d",
+               cacheTopology.getTopologyId(), cacheName, viewId, latestStatusResponseViewId);
+         return false;
       }
       return true;
    }
@@ -388,10 +395,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    protected void doHandleStableTopologyUpdate(String cacheName, CacheTopology newStableTopology, int viewId,
          Address sender, LocalCacheStatus cacheStatus) {
-      if (!validateCommandViewId(newStableTopology, viewId, sender, cacheName))
-         return;
+      synchronized (runningCaches) {
+         if (!validateCommandViewId(newStableTopology, viewId, sender, cacheName))
+            return;
 
-      synchronized (cacheStatus) {
          CacheTopology stableTopology = cacheStatus.getStableTopology();
          if (stableTopology == null || stableTopology.getTopologyId() < newStableTopology.getTopologyId()) {
             log.tracef("Updating stable topology for cache %s: %s", cacheName, newStableTopology);
