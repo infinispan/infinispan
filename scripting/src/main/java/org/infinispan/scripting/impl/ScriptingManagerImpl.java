@@ -1,4 +1,4 @@
-   package org.infinispan.scripting.impl;
+package org.infinispan.scripting.impl;
 
 import java.util.EnumSet;
 import java.util.Map;
