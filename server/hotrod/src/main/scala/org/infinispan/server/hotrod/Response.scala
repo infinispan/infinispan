@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod
 
-import java.util.function.{BiConsumer, Consumer}
+import java.util.function.BiConsumer
 
 import OperationStatus._
 import OperationResponse._
@@ -51,7 +51,7 @@ class ResponseWithPrevious(override val version: Byte, override val messageId: L
 
 class GetResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
                   override val operation: OperationResponse, override val status: OperationStatus,
-                  override val topologyId: Int, val data: Option[Array[Byte]])
+                  override val topologyId: Int, val data: Array[Byte])
       extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
    override def toString = {
       new StringBuilder().append("GetResponse").append("{")
@@ -59,7 +59,7 @@ class GetResponse(override val version: Byte, override val messageId: Long, over
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(Util.printArray(data.orNull, true))
+         .append(", data=").append(Util.printArray(data, true))
          .append("}").toString
    }
 }
@@ -171,7 +171,7 @@ class GetWithVersionResponse(override val version: Byte, override val messageId:
                              override val clientIntel: Short, override val operation: OperationResponse,
                              override val status: OperationStatus,
                              override val topologyId: Int,
-                             override val data: Option[Array[Byte]], val dataVersion: Long)
+                             override val data: Array[Byte], val dataVersion: Long)
       extends GetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data) {
    override def toString = {
       new StringBuilder().append("GetWithVersionResponse").append("{")
@@ -179,7 +179,7 @@ class GetWithVersionResponse(override val version: Byte, override val messageId:
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(Util.printArray(data.orNull, true))
+         .append(", data=").append(Util.printArray(data, true))
          .append(", dataVersion=").append(dataVersion)
          .append("}").toString
    }
@@ -189,7 +189,7 @@ class GetWithMetadataResponse(override val version: Byte, override val messageId
                              override val clientIntel: Short, override val operation: OperationResponse,
                              override val status: OperationStatus,
                              override val topologyId: Int,
-                             override val data: Option[Array[Byte]], val dataVersion: Long, val created: Long, val lifespan: Int, val lastUsed: Long, val maxIdle: Int)
+                             override val data: Array[Byte], val dataVersion: Long, val created: Long, val lifespan: Int, val lastUsed: Long, val maxIdle: Int)
       extends GetResponse(version, messageId, cacheName, clientIntel, operation, status, topologyId, data) {
    override def toString = {
       new StringBuilder().append("GetWithMetadataResponse").append("{")
@@ -197,7 +197,7 @@ class GetWithMetadataResponse(override val version: Byte, override val messageId
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append(Util.printArray(data.orNull, true))
+         .append(", data=").append(Util.printArray(data, true))
          .append(", dataVersion=").append(dataVersion)
          .append(", created=").append(created)
          .append(", lifespan=").append(lifespan)
