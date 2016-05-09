@@ -270,12 +270,12 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          case g: GetWithVersionResponse =>
             if (g.status == Success) {
                buf.writeLong(g.dataVersion)
-               writeRangedBytes(g.data.get, buf)
+               writeRangedBytes(g.data, buf)
             }
          case g: GetWithMetadataResponse =>
             if (g.status == Success) {
                writeMetadata(g.lifespan, g.maxIdle, g.created, g.lastUsed, g.dataVersion, buf)
-               writeRangedBytes(g.data.get, buf)
+               writeRangedBytes(g.data, buf)
             }
          case g: BulkGetResponse =>
             if (isTrace) log.trace("About to respond to bulk get request")
@@ -314,7 +314,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
              }
            }
          case g: GetResponse =>
-            if (g.status == Success) writeRangedBytes(g.data.get, buf)
+            if (g.status == Success) writeRangedBytes(g.data, buf)
          case q: QueryResponse =>
             writeRangedBytes(q.result, buf)
          case a: AuthMechListResponse =>

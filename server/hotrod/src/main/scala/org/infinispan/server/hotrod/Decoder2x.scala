@@ -89,21 +89,21 @@ object Decoder2x extends AbstractVersionedDecoder with Log with Constants {
       if (entry != null && op == HotRodOperation.GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
             GetResponse, Success, h.topologyId,
-            Some(entry.getValue))
+            entry.getValue)
       else if (entry != null && op == HotRodOperation.GetWithVersionRequest) {
          val version = Option(entry.getMetadata.version())
              .map(v => v.asInstanceOf[NumericVersion].getVersion)
              .getOrElse(0L)
          new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
-            Some(entry.getValue), version)
+            entry.getValue, version)
       } else if (op == HotRodOperation.GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-            GetResponse, KeyDoesNotExist, h.topologyId, None)
+            GetResponse, KeyDoesNotExist, h.topologyId, null)
       else
          new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithVersionResponse, KeyDoesNotExist,
-            h.topologyId, None, 0)
+            h.topologyId, null, 0)
    }
 
    override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, hrCtx: CacheDecodeContext,
@@ -290,11 +290,11 @@ object Decoder2x extends AbstractVersionedDecoder with Log with Constants {
          val maxIdle = if (ce.getMaxIdle < 0) -1 else (ce.getMaxIdle / 1000).toInt
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithMetadataResponse, Success, h.topologyId,
-            Some(v), entryVersion.getVersion, ce.getCreated, lifespan, ce.getLastUsed, maxIdle)
+            v, entryVersion.getVersion, ce.getCreated, lifespan, ce.getLastUsed, maxIdle)
       } else {
          new GetWithMetadataResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithMetadataResponse, KeyDoesNotExist, h.topologyId,
-            None, 0, -1, -1, -1, -1)
+            null, 0, -1, -1, -1, -1)
       }
    }
 

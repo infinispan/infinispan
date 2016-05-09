@@ -139,11 +139,11 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
          val version = Option(entryVersion).map(e => e.getVersion).getOrElse(0L)
          new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
             header.clientIntel, OperationResponse.GetWithMetadataResponse, Success, header.topologyId,
-            Some(v), version, ce.getCreated, lifespan, ce.getLastUsed, maxIdle)
+            v, version, ce.getCreated, lifespan, ce.getLastUsed, maxIdle)
       } else {
          new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
             header.clientIntel, OperationResponse.GetWithMetadataResponse, KeyDoesNotExist, header.topologyId,
-            None, 0, -1, -1, -1, -1)
+            null, 0, -1, -1, -1, -1)
       }
    }
 
