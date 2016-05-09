@@ -23,6 +23,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -182,88 +183,78 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
    }
 
    public void testEventReceiveBasic() {
-      EventLogListener<Integer> eventListener = new EventLogListener<>(true);
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
-      RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      remote.addClientListener(eventListener);
-      try {
-         eventListener.expectNoEvents();
+      EventLogListener<Integer> l = new EventLogListener<>(cacheFactory.getHotRodCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
          remote.remove(1);
-         eventListener.expectNoEvents();
+         l.expectNoEvents();
          remote.put(1, "one");
-         assertEquals("one", embedded.get(1));
-         eventListener.expectOnlyCreatedEvent(1, embedded);
+         assertEquals("one", cacheFactory.getEmbeddedCache().get(1));
+         l.expectOnlyCreatedEvent(1);
          remote.put(1, "new-one");
-         assertEquals("new-one", embedded.get(1));
-         eventListener.expectOnlyModifiedEvent(1, embedded);
+         assertEquals("new-one", cacheFactory.getEmbeddedCache().get(1));
+         l.expectOnlyModifiedEvent(1);
          remote.remove(1);
-         eventListener.expectOnlyRemovedEvent(1, embedded);
-      } finally {
-         remote.removeClientListener(eventListener);
-      }
+         l.expectOnlyRemovedEvent(1);
+      });
    }
 
    public void testEventReceiveConditional() {
-      EventLogListener<Integer> eventListener = new EventLogListener<>(true);
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
-      RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      remote.addClientListener(eventListener);
-      try {
-         eventListener.expectNoEvents();
+      EventLogListener<Integer> l = new EventLogListener<>(cacheFactory.getHotRodCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
          // Put if absent
          remote.putIfAbsent(1, "one");
-         eventListener.expectOnlyCreatedEvent(1, embedded);
+         l.expectOnlyCreatedEvent(1);
          remote.putIfAbsent(1, "again");
-         eventListener.expectNoEvents();
+         l.expectNoEvents();
          // Replace
          remote.replace(1, "newone");
-         eventListener.expectOnlyModifiedEvent(1, embedded);
+         l.expectOnlyModifiedEvent(1);
          // Replace with version
          remote.replaceWithVersion(1, "one", 0);
-         eventListener.expectNoEvents();
-         VersionedValue<String> versioned = remote.getVersioned(1);
+         l.expectNoEvents();
+         VersionedValue<?> versioned = remote.getVersioned(1);
          remote.replaceWithVersion(1, "one", versioned.getVersion());
-         eventListener.expectOnlyModifiedEvent(1, embedded);
+         l.expectOnlyModifiedEvent(1);
          // Remove with version
          remote.removeWithVersion(1, 0);
-         eventListener.expectNoEvents();
+         l.expectNoEvents();
          versioned = remote.getVersioned(1);
          remote.removeWithVersion(1, versioned.getVersion());
-         eventListener.expectOnlyRemovedEvent(1, embedded);
-      } finally {
-         remote.removeClientListener(eventListener);
-      }
+         l.expectOnlyRemovedEvent(1);
+      });
    }
 
    public void testEventReplayAfterAddingListener() {
-      EventLogWithStateListener<Integer> eventListener = new EventLogWithStateListener<>(true);
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
-      RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      remote.put(1, "one");
-      assertEquals("one", embedded.get(1));
-      remote.put(2, "two");
-      assertEquals("two", embedded.get(2));
-      remote.put(3, "three");
-      assertEquals("three", embedded.get(3));
-      remote.remove(3);
-      assertNull(embedded.get(3));
-      eventListener.expectNoEvents();
-      remote.addClientListener(eventListener);
-      try {
-         eventListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+      EventLogWithStateListener<Integer> l = new EventLogWithStateListener<>(cacheFactory.getHotRodCache());
+      createRemove();
+      l.expectNoEvents();
+      withClientListener(l, remote -> {
+         l.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
          remote.remove(1);
-         eventListener.expectOnlyRemovedEvent(1, embedded);
+         l.expectOnlyRemovedEvent(1);
          remote.remove(2);
-         eventListener.expectOnlyRemovedEvent(2, embedded);
-      } finally {
-         remote.removeClientListener(eventListener);
-      }
+         l.expectOnlyRemovedEvent(2);
+      });
    }
 
    public void testEventNoReplayAfterAddingListener() {
-      EventLogListener<Integer> eventListener = new EventLogListener<>(true);
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      createRemove();
+      EventLogListener<Integer> l = new EventLogListener<>(cacheFactory.getHotRodCache());
+      l.expectNoEvents();
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.remove(1);
+         l.expectOnlyRemovedEvent(1);
+         remote.remove(2);
+         l.expectOnlyRemovedEvent(2);
+      });
+   }
+
+   private void createRemove() {
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
+      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
       remote.put(1, "one");
       assertEquals("one", embedded.get(1));
       remote.put(2, "two");
@@ -272,47 +263,33 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       assertEquals("three", embedded.get(3));
       remote.remove(3);
       assertNull(embedded.get(3));
-      eventListener.expectNoEvents();
-      remote.addClientListener(eventListener);
-      try {
-         eventListener.expectNoEvents();
-         remote.remove(1);
-         eventListener.expectOnlyRemovedEvent(1, embedded);
-         remote.remove(2);
-         eventListener.expectOnlyRemovedEvent(2, embedded);
-      } finally {
-         remote.removeClientListener(eventListener);
-      }
    }
 
    public void testEventFilteringStatic() {
-      StaticFilteredEventLogListener<Integer> eventListener = new StaticFilteredEventLogListener<>(true);
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
-      RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      remote.addClientListener(eventListener);
-      try {
-         eventListener.expectNoEvents();
+      StaticFilteredEventLogListener<Integer> l =
+            new StaticFilteredEventLogListener<>(cacheFactory.getHotRodCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
          remote.put(1, "one");
+         Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
          assertEquals("one", embedded.get(1));
-         eventListener.expectNoEvents();
+         l.expectNoEvents();
          remote.put(2, "two");
          assertEquals("two", embedded.get(2));
-         eventListener.expectOnlyCreatedEvent(2, embedded);
+         l.expectOnlyCreatedEvent(2);
          remote.remove(1);
          assertNull(embedded.get(1));
-         eventListener.expectNoEvents();
+         l.expectNoEvents();
          remote.remove(2);
          assertNull(embedded.get(2));
-         eventListener.expectOnlyRemovedEvent(2, embedded);
-      } finally {
-         remote.removeClientListener(eventListener);
-      }
+         l.expectOnlyRemovedEvent(2);
+      });
    }
 
    public void testEventFilteringDynamic() {
-      DynamicFilteredEventLogListener<Integer> eventListener = new DynamicFilteredEventLogListener<>(true);
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
+      DynamicFilteredEventLogListener<Integer> eventListener = new DynamicFilteredEventLogListener<>(remote);
+      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
       remote.addClientListener(eventListener, new Object[]{3}, null);
       try {
          eventListener.expectNoEvents();
@@ -324,7 +301,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          eventListener.expectNoEvents();
          remote.put(3, "three");
          assertEquals("three", embedded.get(3));
-         eventListener.expectOnlyCreatedEvent(3, embedded);
+         eventListener.expectOnlyCreatedEvent(3);
          remote.replace(1, "new-one");
          assertEquals("new-one", embedded.get(1));
          eventListener.expectNoEvents();
@@ -333,7 +310,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          eventListener.expectNoEvents();
          remote.replace(3, "new-three");
          assertEquals("new-three", embedded.get(3));
-         eventListener.expectOnlyModifiedEvent(3, embedded);
+         eventListener.expectOnlyModifiedEvent(3);
          remote.remove(1);
          assertNull(embedded.get(1));
          eventListener.expectNoEvents();
@@ -342,62 +319,53 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          eventListener.expectNoEvents();
          remote.remove(3);
          assertNull(embedded.get(3));
-         eventListener.expectOnlyRemovedEvent(3, embedded);
+         eventListener.expectOnlyRemovedEvent(3);
       } finally {
          remote.removeClientListener(eventListener);
       }
    }
 
    public void testCustomEvents() {
-      StaticCustomEventLogListener eventListener = new StaticCustomEventLogListener();
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
-      RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      remote.addClientListener(eventListener);
-      try {
-         eventListener.expectNoEvents();
+      StaticCustomEventLogListener<Integer> l =
+            new StaticCustomEventLogListener<>(cacheFactory.getHotRodCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
          remote.put(1, "one");
+         Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
          assertEquals("one", embedded.get(1));
-         eventListener.expectCreatedEvent(new CustomEvent(1, "one", 0));
+         l.expectCreatedEvent(new CustomEvent(1, "one", 0));
          remote.put(1, "new-one");
          assertEquals("new-one", embedded.get(1));
-         eventListener.expectModifiedEvent(new CustomEvent(1, "new-one", 0));
+         l.expectModifiedEvent(new CustomEvent(1, "new-one", 0));
          remote.remove(1);
          assertNull(embedded.get(1));
-         eventListener.expectRemovedEvent(new CustomEvent(1, null, 0));
-      } finally {
-         remote.removeClientListener(eventListener);
-      }
+         l.expectRemovedEvent(new CustomEvent(1, null, 0));
+      });
    }
 
    public void testCustomEventsDynamic() {
-      DynamicCustomEventLogListener eventListener = new DynamicCustomEventLogListener();
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
-      RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      remote.addClientListener(eventListener, null, new Object[]{2});
-      try {
-         eventListener.expectNoEvents();
+      DynamicCustomEventLogListener<Integer> l = new DynamicCustomEventLogListener<>(cacheFactory.getHotRodCache());
+      withClientListener(l, null, new Object[]{2}, remote -> {
+         l.expectNoEvents();
          remote.put(1, "one");
+         Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
          assertEquals("one", embedded.get(1));
-         eventListener.expectCreatedEvent(new CustomEvent(1, "one", 0));
+         l.expectCreatedEvent(new CustomEvent(1, "one", 0));
          remote.put(2, "two");
          assertEquals("two", embedded.get(2));
-         eventListener.expectCreatedEvent(new CustomEvent(2, null, 0));
+         l.expectCreatedEvent(new CustomEvent(2, null, 0));
          remote.remove(1);
          assertNull(embedded.get(1));
-         eventListener.expectRemovedEvent(new CustomEvent(1, null, 0));
+         l.expectRemovedEvent(new CustomEvent(1, null, 0));
          remote.remove(2);
          assertNull(embedded.get(2));
-         eventListener.expectRemovedEvent(new CustomEvent(2, null, 0));
-      } finally {
-         remote.removeClientListener(eventListener);
-      }
+         l.expectRemovedEvent(new CustomEvent(2, null, 0));
+      });
    }
 
    @ClientListener(includeCurrentState = true)
    public static class EventLogWithStateListener<K> extends EventLogListener<K> {
-      public EventLogWithStateListener(boolean compatibility) {
-         super(compatibility);
-      }
+      public EventLogWithStateListener(RemoteCache<K, ?> r) { super(r); }
    }
 
 }

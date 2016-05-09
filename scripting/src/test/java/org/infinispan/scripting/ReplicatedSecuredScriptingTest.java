@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -59,7 +60,9 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
             @Override
             public Void run() throws Exception {
                 createCluster(global, builder, 2);
-
+                defineConfigurationOnAllManagers(SecureScriptingTest.CACHE_NAME, builder);
+                for (EmbeddedCacheManager cm : cacheManagers)
+                    cm.getCache(SecureScriptingTest.CACHE_NAME);
                 waitForClusterToForm();
                 return null;
             }
@@ -108,7 +111,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
         Security.doAs(PHEIDIPPIDES, new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
-                Cache cache = manager(0).getCache();
+                Cache cache = manager(0).getCache(SecureScriptingTest.CACHE_NAME);
                 String value = (String) scriptingManager.runScript("testRole.js",
                         new TaskContext().cache(cache).addParameter("a", "value")).get();
 

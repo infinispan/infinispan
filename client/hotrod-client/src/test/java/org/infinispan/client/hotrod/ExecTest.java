@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.equivalence.AnyServerEquivalence;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.loadScript;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -182,11 +184,26 @@ public class ExecTest extends MultiHotRodServersTest {
       execPutGet(cacheName, "/test-put-get-dist.js", ExecMode.DIST, "dist-key", "dist-value");
    }
 
+   @Test(dataProvider = "CacheNameProvider")
+   public void testLocalExecPutGetWithListener(String cacheName) {
+      final EventLogListener<String> l = new EventLogListener<>(clients.get(0).getCache(cacheName));
+      withClientListener(l, remote ->
+         withScript(manager(0), "/test-put-get.js", scriptName -> {
+            Map<String, String> params = new HashMap<>();
+            params.put("k", "local-key-listen");
+            params.put("v", "local-value-listen");
+            String result = remote.execute(scriptName, params);
+            l.expectOnlyCreatedEvent("local-key-listen");
+            assertEquals("local-value-listen", result);
+      }));
+   }
+
    private void execPutGet(String cacheName, String path, ExecMode mode, String key, String value) {
       withScript(manager(0), path, scriptName -> {
          Map<String, String> params = new HashMap<>();
          params.put("k", key);
          params.put("v", value);
+         params.put("cacheName", cacheName);
          Object results =  clients.get(0).getCache(cacheName).execute(scriptName, params);
          mode.assertResult.accept(value, results);
       });

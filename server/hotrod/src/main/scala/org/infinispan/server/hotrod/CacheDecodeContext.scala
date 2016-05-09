@@ -142,9 +142,10 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
          val v = ce.getValue
          val lifespan = if (ce.getLifespan < 0) -1 else (ce.getLifespan / 1000).toInt
          val maxIdle = if (ce.getMaxIdle < 0) -1 else (ce.getMaxIdle / 1000).toInt
+         val version = Option(entryVersion).map(e => e.getVersion).getOrElse(0L)
          new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
             header.clientIntel, OperationResponse.GetWithMetadataResponse, Success, header.topologyId,
-            Some(v), entryVersion.getVersion, ce.getCreated, lifespan, ce.getLastUsed, maxIdle)
+            Some(v), version, ce.getCreated, lifespan, ce.getLastUsed, maxIdle)
       } else {
          new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
             header.clientIntel, OperationResponse.GetWithMetadataResponse, KeyDoesNotExist, header.topologyId,

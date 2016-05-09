@@ -31,12 +31,18 @@ public enum DataType {
    }
 
    interface Transformer {
+      Object toDataType(Object obj, Optional<Marshaller> marshaller);
       Map<String, ?> toDataType(Map<String, ?> objs, Optional<Marshaller> marshaller);
       Object fromDataType(Object obj, Optional<Marshaller> marshaller);
    }
 
    static final class Utf8Transformer implements Transformer {
       public static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
+
+      @Override
+      public Object toDataType(Object obj, Optional<Marshaller> marshaller) {
+         return obj instanceof byte[] ? asString(obj) : obj;
+      }
 
       @Override
       public Map<String, ?> toDataType(Map<String, ?> objs, Optional<Marshaller> marshaller) {
@@ -50,11 +56,14 @@ public enum DataType {
       @Override
       @SuppressWarnings("unchecked")
       public Object fromDataType(Object obj, Optional<Marshaller> marshaller) {
-         if (obj instanceof List)
+         if (obj instanceof List) {
             return ((List) obj).stream()
-                  .map(Object::toString)
+                  .map(x -> x == null ? "" : x.toString())
                   .collect(Collectors.joining("\", \"", "[\"", "\"]"))
                   .toString().getBytes(CHARSET_UTF8);
+         }  else if (obj instanceof byte[]) {
+            return obj;
+         }
 
          return Objects.isNull(obj) ? null : obj.toString().getBytes(CHARSET_UTF8);
       }
@@ -65,6 +74,12 @@ public enum DataType {
    }
 
    static final class DefaultTransformer implements Transformer {
+
+      @Override
+      public Object toDataType(Object obj, Optional<Marshaller> marshaller) {
+         return marshaller.map(m -> obj instanceof byte[] ? fromBytes(obj, m) : obj).orElse(obj);
+      }
+
       @Override
       public Map<String, ?> toDataType(Map<String, ?> objs, Optional<Marshaller> marshaller) {
          if (marshaller.isPresent()) {

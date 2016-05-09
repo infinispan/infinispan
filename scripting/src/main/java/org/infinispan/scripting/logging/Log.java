@@ -51,4 +51,8 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Script parameters must be declared using the array notation, e.g. [a,b,c]", id = 26011)
    IllegalArgumentException parametersNotArray();
+
+   @Message(value = "Scripts can only access named caches", id = 26012)
+   IllegalArgumentException scriptsCanOnlyAccessNamedCaches();
+
 }

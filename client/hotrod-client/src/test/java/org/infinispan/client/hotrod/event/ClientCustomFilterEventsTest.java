@@ -1,11 +1,9 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterCustomEventLogListener;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -39,24 +37,21 @@ public class ClientCustomFilterEventsTest extends SingleHotRodServerTest {
    }
 
    public void testFilterCustomEvents() {
-      final FilterCustomEventLogListener eventListener = new FilterCustomEventLogListener();
-      withClientListener(eventListener, new Object[]{1}, null, new RemoteCacheManagerCallable(remoteCacheManager) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> cache = rcm.getCache();
-            cache.put(1, "one");
-            eventListener.expectCreatedEvent(new CustomEvent(1, null, 1));
-            cache.put(1, "newone");
-            eventListener.expectModifiedEvent(new CustomEvent(1, null, 2));
-            cache.put(2, "two");
-            eventListener.expectCreatedEvent(new CustomEvent(2, "two", 3));
-            cache.put(2, "dos");
-            eventListener.expectModifiedEvent(new CustomEvent(2, "dos", 4));
-            cache.remove(1);
-            eventListener.expectRemovedEvent(new CustomEvent(1, null, 5));
-            cache.remove(2);
-            eventListener.expectRemovedEvent(new CustomEvent(2, null, 6));
-         }
+      final FilterCustomEventLogListener<Integer> l =
+            new FilterCustomEventLogListener<>(remoteCacheManager.getCache());
+      withClientListener(l, new Object[]{1}, null, remote -> {
+         remote.put(1, "one");
+         l.expectCreatedEvent(new CustomEvent(1, null, 1));
+         remote.put(1, "newone");
+         l.expectModifiedEvent(new CustomEvent(1, null, 2));
+         remote.put(2, "two");
+         l.expectCreatedEvent(new CustomEvent(2, "two", 3));
+         remote.put(2, "dos");
+         l.expectModifiedEvent(new CustomEvent(2, "dos", 4));
+         remote.remove(1);
+         l.expectRemovedEvent(new CustomEvent(1, null, 5));
+         remote.remove(2);
+         l.expectRemovedEvent(new CustomEvent(2, null, 6));
       });
    }
 

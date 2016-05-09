@@ -2,6 +2,7 @@ package org.infinispan.scripting.impl;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.script.Bindings;
@@ -38,8 +39,11 @@ class DistributedScript<T> implements DistributedCallable<Object, Object, T>, Se
       scriptManager = (ScriptingManagerImpl) SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(ScriptingManager.class);
       bindings = new SimpleBindings();
       bindings.put("inputKeys", inputKeys);
-      bindings.put("cache", cache);
-      bindings.put("cacheManager", cache.getCacheManager());
+      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(metadata.dataType(), Optional.empty(), cache.getCacheManager());
+      bindings.put("cacheManager", dataTypedCacheManager);
+      Cache<?, ?> c = cache.getCacheConfiguration().compatibility().enabled()
+            ? cache : new DataTypedCache<>(dataTypedCacheManager, cache);
+      bindings.put("cache", c);
       ctxParams.entrySet().stream().forEach(e -> bindings.put(e.getKey(), e.getValue()));
    }
 }

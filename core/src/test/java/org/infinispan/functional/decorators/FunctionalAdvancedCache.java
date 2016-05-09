@@ -3,7 +3,6 @@ package org.infinispan.functional.decorators;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
-import org.infinispan.CacheStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
@@ -12,9 +11,6 @@ import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -39,6 +35,8 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
+import org.infinispan.util.CollectionAsCacheCollection;
+import org.infinispan.util.SetAsCacheSet;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;
@@ -645,186 +643,4 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       }
    }
 
-   private static final class SetAsCacheSet<E> implements CacheSet<E> {
-      final Set<E> set;
-
-      private SetAsCacheSet(Set<E> set) {
-         this.set = set;
-      }
-
-      @Override
-      public CacheStream<E> stream() {
-         return null;
-      }
-
-      @Override
-      public CacheStream<E> parallelStream() {
-         return null;
-      }
-
-      @Override
-      public int size() {
-         return set.size();
-      }
-
-      @Override
-      public boolean isEmpty() {
-         return set.isEmpty();
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         return set.contains(o);
-      }
-
-      @Override
-      public CloseableIterator<E> iterator() {
-         return Closeables.iterator(set.iterator());
-      }
-
-      @Override
-      public Object[] toArray() {
-         return set.toArray();
-      }
-
-      @Override
-      public <T> T[] toArray(T[] a) {
-         return set.toArray(a);
-      }
-
-      @Override
-      public boolean add(E e) {
-         return set.add(e);
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         return set.remove(o);
-      }
-
-      @Override
-      public boolean containsAll(Collection<?> c) {
-         return set.containsAll(c);
-      }
-
-      @Override
-      public boolean addAll(Collection<? extends E> c) {
-         return set.addAll(c);
-      }
-
-      @Override
-      public boolean removeAll(Collection<?> c) {
-         return set.removeAll(c);
-      }
-
-      @Override
-      public boolean retainAll(Collection<?> c) {
-         return set.retainAll(c);
-      }
-
-      @Override
-      public void clear() {
-         set.clear();
-      }
-
-      @Override
-      public CloseableSpliterator<E> spliterator() {
-         return null;
-      }
-
-      @Override
-      public String toString() {
-         return "SetAsCacheSet{" +
-            "set=" + set +
-            '}';
-      }
-   }
-
-   private static class CollectionAsCacheCollection<E> implements CacheCollection<E> {
-      private final Collection<E> col;
-
-      public CollectionAsCacheCollection(Collection<E> col) {
-         this.col = col;
-      }
-
-      @Override
-      public int size() {
-         return col.size();
-      }
-
-      @Override
-      public boolean isEmpty() {
-         return col.isEmpty();
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         return col.contains(o);
-      }
-
-      @Override
-      public CloseableIterator<E> iterator() {
-         return Closeables.iterator(col.iterator());
-      }
-
-      @Override
-      public CloseableSpliterator<E> spliterator() {
-         return null;  // TODO: Customise this generated block
-      }
-
-      @Override
-      public Object[] toArray() {
-         return col.toArray();
-      }
-
-      @Override
-      public <T> T[] toArray(T[] a) {
-         return col.toArray(a);
-      }
-
-      @Override
-      public boolean add(E e) {
-         return col.add(e);
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         return col.remove(o);
-      }
-
-      @Override
-      public boolean containsAll(Collection<?> c) {
-         return col.containsAll(c);
-      }
-
-      @Override
-      public boolean addAll(Collection<? extends E> c) {
-         return col.addAll(c);
-      }
-
-      @Override
-      public boolean removeAll(Collection<?> c) {
-         return col.removeAll(c);
-      }
-
-      @Override
-      public boolean retainAll(Collection<?> c) {
-         return col.retainAll(c);
-      }
-
-      @Override
-      public void clear() {
-         col.clear();
-      }
-
-      @Override
-      public CacheStream<E> stream() {
-         return null;
-      }
-
-      @Override
-      public CacheStream<E> parallelStream() {
-         return null;
-      }
-   }
 }

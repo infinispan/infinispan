@@ -204,7 +204,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             GetResponse, Success, h.topologyId,
             Some(entry.getValue))
       else if (entry != null && op == HotRodOperation.GetWithVersionRequest) {
-         val version = entry.getMetadata.version().asInstanceOf[NumericVersion].getVersion
+         val version = Option(entry.getMetadata.version())
+             .map(v => v.asInstanceOf[NumericVersion].getVersion)
+             .getOrElse(0L)
          new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
             Some(entry.getValue), version)

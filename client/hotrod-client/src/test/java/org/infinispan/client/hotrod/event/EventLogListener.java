@@ -1,13 +1,12 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.Cache;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
@@ -19,6 +18,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +27,8 @@ import static org.infinispan.test.TestingUtil.assertAnyEquals;
 import static org.testng.AssertJUnit.*;
 
 @ClientListener
-public class EventLogListener<K> {
+public class EventLogListener<K> implements RemoteCacheSupplier<K> {
+
    public BlockingQueue<ClientCacheEntryCreatedEvent> createdEvents =
          new ArrayBlockingQueue<ClientCacheEntryCreatedEvent>(128);
    public BlockingQueue<ClientCacheEntryModifiedEvent> modifiedEvents =
@@ -36,14 +37,18 @@ public class EventLogListener<K> {
          new ArrayBlockingQueue<ClientCacheEntryRemovedEvent>(128);
    public BlockingQueue<ClientCacheEntryExpiredEvent> expiredEvents = new ArrayBlockingQueue<>(128);
 
-   private final boolean compatibility;
+   Optional<Marshaller> marshaller;
 
-   public EventLogListener(boolean compatibility) {
-      this.compatibility = compatibility;
+   private final RemoteCache<K, ?> remote;
+
+   public EventLogListener(RemoteCache<K, ?> remote) {
+      this.remote = remote;
    }
 
-   public EventLogListener() {
-      this.compatibility = false;
+   @Override
+   @SuppressWarnings("unchecked")
+   public <V> RemoteCache<K, V> get() {
+      return (RemoteCache<K, V>) remote;
    }
 
    @SuppressWarnings("unchecked")
@@ -113,45 +118,45 @@ public class EventLogListener<K> {
       }
    }
 
-   public void expectOnlyCreatedEvent(K key, Cache cache) {
-      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, cache);
+   public void expectOnlyCreatedEvent(K key) {
+      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
-   public void expectOnlyModifiedEvent(K key, Cache cache) {
-      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED, cache);
+   public void expectOnlyModifiedEvent(K key) {
+      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
-   public void expectOnlyRemovedEvent(K key, Cache cache) {
-      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, cache);
+   public void expectOnlyRemovedEvent(K key) {
+      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
-   public void expectOnlyExpiredEvent(K key, Cache cache) {
-      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED, cache);
+   public void expectOnlyExpiredEvent(K key) {
+      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
    }
 
-   public void expectSingleEvent(K key, ClientEvent.Type type, Cache cache) {
+   public void expectSingleEvent(K key, ClientEvent.Type type) {
       switch (type) {
          case CLIENT_CACHE_ENTRY_CREATED:
             ClientCacheEntryCreatedEvent createdEvent = pollEvent(type);
             assertAnyEquals(key, createdEvent.getKey());
-            assertAnyEquals(serverDataVersion(cache, key), createdEvent.getVersion());
+            assertAnyEquals(serverDataVersion(remote, key), createdEvent.getVersion());
             break;
          case CLIENT_CACHE_ENTRY_MODIFIED:
             ClientCacheEntryModifiedEvent modifiedEvent = pollEvent(type);
             assertAnyEquals(key, modifiedEvent.getKey());
-            assertAnyEquals(serverDataVersion(cache, key), modifiedEvent.getVersion());
+            assertAnyEquals(serverDataVersion(remote, key), modifiedEvent.getVersion());
             break;
          case CLIENT_CACHE_ENTRY_REMOVED:
             ClientCacheEntryRemovedEvent removedEvent = pollEvent(type);
@@ -165,16 +170,11 @@ public class EventLogListener<K> {
       Assert.assertEquals(0, queue(type).size());
    }
 
-   private long serverDataVersion(Cache<Object, Object> cache, K key) {
-      Object lookupKey;
-      try {
-         lookupKey = compatibility ? key : new GenericJBossMarshaller().objectToByteBuffer(key);
-      } catch (Exception e) {
-         throw new AssertionError(e);
-      }
-
-      Metadata meta = cache.getAdvancedCache().getCacheEntry(lookupKey).getMetadata();
-      return ((NumericVersion) meta.version()).getVersion();
+   private long serverDataVersion(RemoteCache<K, ?> cache, K key) {
+      long v1 = cache.getVersioned(key).getVersion();
+      long v2 = cache.getWithMetadata(key).getVersion();
+      assertEquals(v1, v2);
+      return v1;
    }
 
    public void expectUnorderedEvents(ClientEvent.Type type, K... keys) {
@@ -220,30 +220,27 @@ public class EventLogListener<K> {
 
    @ClientListener(filterFactoryName = "static-filter-factory")
    public static class StaticFilteredEventLogListener<K> extends EventLogListener<K> {
-      public StaticFilteredEventLogListener() {}
-      public StaticFilteredEventLogListener(boolean compatibility) { super(compatibility); }
+      public StaticFilteredEventLogListener(RemoteCache<K, ?> r) { super(r); }
    }
 
    @ClientListener(filterFactoryName = "raw-static-filter-factory", useRawData = true)
    public static class RawStaticFilteredEventLogListener<K> extends EventLogListener<K> {
-      public RawStaticFilteredEventLogListener() {}
-      public RawStaticFilteredEventLogListener(boolean compatibility) { super(compatibility); }
+      public RawStaticFilteredEventLogListener(RemoteCache<K, ?> r) { super(r); }
    }
 
    @ClientListener(filterFactoryName = "static-filter-factory", includeCurrentState = true)
    public static class StaticFilteredEventLogWithStateListener<K> extends EventLogListener<K> {
-      public StaticFilteredEventLogWithStateListener() {}
+      public StaticFilteredEventLogWithStateListener(RemoteCache<K, ?> r) { super(r); }
    }
 
    @ClientListener(filterFactoryName = "dynamic-filter-factory")
    public static class DynamicFilteredEventLogListener<K> extends EventLogListener<K> {
-      public DynamicFilteredEventLogListener() {}
-      public DynamicFilteredEventLogListener(boolean compatibility) { super(compatibility); }
+      public DynamicFilteredEventLogListener(RemoteCache<K, ?> r) { super(r); }
    }
 
    @ClientListener(filterFactoryName = "dynamic-filter-factory", includeCurrentState = true)
    public static class DynamicFilteredEventLogWithStateListener<K> extends EventLogListener<K> {
-      public DynamicFilteredEventLogWithStateListener() {}
+      public DynamicFilteredEventLogWithStateListener(RemoteCache<K, ?> r) { super(r); }
    }
 
    @NamedFactory(name = "static-filter-factory")

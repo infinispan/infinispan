@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterCustomEventLogListener;
@@ -10,7 +9,6 @@ import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLo
 import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -51,25 +49,21 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
    public void testEventForwarding() {
       final Integer key0 = HotRodClientTestingUtil.getIntKeyForServer(server(0));
       final Integer key1 = HotRodClientTestingUtil.getIntKeyForServer(server(1));
-      final EventLogListener<Integer> eventListener = new EventLogListener<>();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> remote = client(0).getCache();
-            eventListener.expectNoEvents();
-            remote.put(key0, "one");
-            eventListener.expectOnlyCreatedEvent(key0, cache(0));
-            remote.put(key1, "two");
-            eventListener.expectOnlyCreatedEvent(key1, cache(0));
-            remote.replace(key0, "new-one");
-            eventListener.expectOnlyModifiedEvent(key0, cache(0));
-            remote.replace(key1, "new-two");
-            eventListener.expectOnlyModifiedEvent(key1, cache(0));
-            remote.remove(key0);
-            eventListener.expectOnlyRemovedEvent(key0, cache(0));
-            remote.remove(key1);
-            eventListener.expectOnlyRemovedEvent(key1, cache(0));
-         }
+      final EventLogListener<Integer> l = new EventLogListener<>(client(0).getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(key0, "one");
+         l.expectOnlyCreatedEvent(key0);
+         remote.put(key1, "two");
+         l.expectOnlyCreatedEvent(key1);
+         remote.replace(key0, "new-one");
+         l.expectOnlyModifiedEvent(key0);
+         remote.replace(key1, "new-two");
+         l.expectOnlyModifiedEvent(key1);
+         remote.remove(key0);
+         l.expectOnlyRemovedEvent(key0);
+         remote.remove(key1);
+         l.expectOnlyRemovedEvent(key1);
       });
    }
 
@@ -80,66 +74,54 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       for (HotRodServer server : servers)
          server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory(key1));
 
-      final StaticFilteredEventLogListener<Integer> eventListener = new StaticFilteredEventLogListener<>();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> remote = client(0).getCache();
-            eventListener.expectNoEvents();
-            remote.put(key0, "one");
-            eventListener.expectNoEvents();
-            remote.put(key1, "two");
-            eventListener.expectOnlyCreatedEvent(key1, cache(0));
-            remote.remove(key0);
-            eventListener.expectNoEvents();
-            remote.remove(key1);
-            eventListener.expectOnlyRemovedEvent(key1, cache(0));
-         }
+      final StaticFilteredEventLogListener<Integer> l = new StaticFilteredEventLogListener<>(client(0).getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(key0, "one");
+         l.expectNoEvents();
+         remote.put(key1, "two");
+         l.expectOnlyCreatedEvent(key1);
+         remote.remove(key0);
+         l.expectNoEvents();
+         remote.remove(key1);
+         l.expectOnlyRemovedEvent(key1);
       });
    }
 
    public void testConversionInCluster() {
       final Integer key0 = HotRodClientTestingUtil.getIntKeyForServer(server(0));
       final Integer key1 = HotRodClientTestingUtil.getIntKeyForServer(server(1));
-      final StaticCustomEventLogListener eventListener = new StaticCustomEventLogListener();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> c3 = client(0).getCache();
-            eventListener.expectNoEvents();
-            c3.put(key0, "one");
-            eventListener.expectCreatedEvent(new CustomEvent(key0, "one", 0));
-            c3.put(key1, "two");
-            eventListener.expectCreatedEvent(new CustomEvent(key1, "two", 0));
-            c3.remove(key0);
-            eventListener.expectRemovedEvent(new CustomEvent(key0, null, 0));
-            c3.remove(key1);
-            eventListener.expectRemovedEvent(new CustomEvent(key1, null, 0));
-         }
+      final StaticCustomEventLogListener<Integer> l = new StaticCustomEventLogListener<>(client(0).getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(key0, "one");
+         l.expectCreatedEvent(new CustomEvent(key0, "one", 0));
+         remote.put(key1, "two");
+         l.expectCreatedEvent(new CustomEvent(key1, "two", 0));
+         remote.remove(key0);
+         l.expectRemovedEvent(new CustomEvent(key0, null, 0));
+         remote.remove(key1);
+         l.expectRemovedEvent(new CustomEvent(key1, null, 0));
       });
    }
 
    public void testFilterCustomEventsInCluster() {
       final Integer key0 = HotRodClientTestingUtil.getIntKeyForServer(server(0));
       final Integer key1 = HotRodClientTestingUtil.getIntKeyForServer(server(1));
-      final FilterCustomEventLogListener eventListener = new FilterCustomEventLogListener();
-      withClientListener(eventListener, new Object[]{key0}, null, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> remote = client(0).getCache();
-            remote.put(key0, "one");
-            eventListener.expectCreatedEvent(new CustomEvent(key0, null, 1));
-            remote.put(key0, "newone");
-            eventListener.expectModifiedEvent(new CustomEvent(key0, null, 2));
-            remote.put(key1, "two");
-            eventListener.expectCreatedEvent(new CustomEvent(key1, "two", 1));
-            remote.put(key1, "dos");
-            eventListener.expectModifiedEvent(new CustomEvent(key1, "dos", 2));
-            remote.remove(key0);
-            eventListener.expectRemovedEvent(new CustomEvent(key0, null, 3));
-            remote.remove(key1);
-            eventListener.expectRemovedEvent(new CustomEvent(key1, null, 3));
-         }
+      final FilterCustomEventLogListener<Integer> l = new FilterCustomEventLogListener<>(client(0).getCache());
+      withClientListener(l, new Object[]{key0}, null, remote -> {
+         remote.put(key0, "one");
+         l.expectCreatedEvent(new CustomEvent(key0, null, 1));
+         remote.put(key0, "newone");
+         l.expectModifiedEvent(new CustomEvent(key0, null, 2));
+         remote.put(key1, "two");
+         l.expectCreatedEvent(new CustomEvent(key1, "two", 1));
+         remote.put(key1, "dos");
+         l.expectModifiedEvent(new CustomEvent(key1, "dos", 2));
+         remote.remove(key0);
+         l.expectRemovedEvent(new CustomEvent(key0, null, 3));
+         remote.remove(key1);
+         l.expectRemovedEvent(new CustomEvent(key1, null, 3));
       });
    }
 
