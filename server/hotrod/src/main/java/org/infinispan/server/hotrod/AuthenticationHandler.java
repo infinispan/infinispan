@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.AttributeKey;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.security.AuthorizingCallbackHandler;
@@ -138,10 +139,10 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                if (requireAuthentication && op.requiresAuthentication() && subject == ANONYMOUS) {
                   throw log.unauthorizedOperation();
                }
-               Security.doAs(subject, (PrivilegedExceptionAction) () -> {
-                  super.channelRead(ctx, msg);
-                  return null;
-               });
+               if (op.requiresAuthentication()) {
+                  ((CacheDecodeContext) msg).setSubject(subject);
+               }
+               super.channelRead(ctx, msg);
                break;
          }
       } else {

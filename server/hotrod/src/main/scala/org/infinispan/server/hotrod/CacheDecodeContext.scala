@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import java.util.{Map, Set}
+import javax.security.auth.Subject
 
 import org.infinispan.AdvancedCache
 import org.infinispan.container.entries.CacheEntry
@@ -28,6 +29,8 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
    var decoder: AbstractVersionedDecoder = _
    @scala.beans.BeanProperty
    var header: HotRodHeader = _
+   @scala.beans.BeanProperty
+   var subject: Subject = _
    var cache: AdvancedCache[Bytes, Bytes] = _
    var key: Bytes = _
    var params: RequestParameters = _
