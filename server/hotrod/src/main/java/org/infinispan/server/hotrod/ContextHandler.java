@@ -5,6 +5,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.JavaLog;
@@ -16,6 +17,9 @@ import scala.Option;
 import scala.Tuple2;
 import scala.Tuple4;
 
+import javax.security.auth.Subject;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +51,15 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
    protected void channelRead0(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
       executor.execute(() -> {
          try {
-            realRead(ctx, msg);
+            Subject subject = msg.getSubject();
+            if (subject == null)
+               realRead(ctx, msg);
+            else Security.doAs(subject, (PrivilegedExceptionAction<Void>) () -> {
+               realRead(ctx, msg);
+               return null;
+            });
+         } catch (PrivilegedActionException e) {
+            ctx.fireExceptionCaught(e.getCause());
          } catch (Exception e) {
             ctx.fireExceptionCaught(e);
          }
