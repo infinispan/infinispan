@@ -3,6 +3,7 @@ package org.infinispan.query.impl.externalizers;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.lucene.search.ScoreDoc;
@@ -10,13 +11,12 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 public class LuceneTopFieldDocsExternalizer extends AbstractExternalizer<TopFieldDocs> {
 
    @Override
    public Set<Class<? extends TopFieldDocs>> getTypeClasses() {
-      return Util.<Class<? extends TopFieldDocs>>asSet(TopFieldDocs.class);
+      return Collections.singleton(TopFieldDocs.class);
    }
 
    @Override

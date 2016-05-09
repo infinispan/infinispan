@@ -3,6 +3,7 @@ package org.infinispan.query.impl.externalizers;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -12,14 +13,13 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 
 
 public class LuceneBooleanQueryExternalizer extends AbstractExternalizer<BooleanQuery> {
 
    @Override
    public Set<Class<? extends BooleanQuery>> getTypeClasses() {
-      return Util.<Class<? extends BooleanQuery>>asSet(BooleanQuery.class);
+      return Collections.singleton(BooleanQuery.class);
    }
 
    @Override

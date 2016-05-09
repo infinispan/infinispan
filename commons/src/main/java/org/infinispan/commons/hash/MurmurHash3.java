@@ -4,11 +4,11 @@ import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.commons.marshall.exts.NoStateExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.commons.marshall.Ids;
 
 import java.io.ObjectInput;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -414,9 +414,8 @@ public class MurmurHash3 implements Hash {
 
    public static class Externalizer extends NoStateExternalizer<MurmurHash3> {
       @Override
-      @SuppressWarnings("unchecked")
       public Set<Class<? extends MurmurHash3>> getTypeClasses() {
-         return Util.<Class<? extends MurmurHash3>>asSet(MurmurHash3.class);
+         return Collections.singleton(MurmurHash3.class);
       }
 
       @Override

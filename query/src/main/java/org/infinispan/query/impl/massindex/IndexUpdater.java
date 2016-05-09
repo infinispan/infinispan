@@ -8,13 +8,14 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.DefaultInstanceInitializer;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collections;
 
 /**
  * Handle batch updates to an index.
@@ -41,12 +42,12 @@ public class IndexUpdater {
 
    public void flush(Class<?> entityType) {
       LOG.flushingIndex(entityType.getName());
-      defaultBatchBackend.flush(Util.<Class<?>>asSet(entityType));
+      defaultBatchBackend.flush(Collections.singleton(entityType));
    }
 
    public void purge(Class<?> entityType) {
       LOG.purgingIndex(entityType.getName());
-      defaultBatchBackend.purge(Util.<Class<?>>asSet(entityType));
+      defaultBatchBackend.purge(Collections.singleton(entityType));
    }
 
    public void updateIndex(Object key, Object value) {

@@ -1,11 +1,8 @@
 package org.infinispan.distribution.ch.impl;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.exts.NoStateExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.core.Ids;
@@ -13,8 +10,8 @@ import org.infinispan.marshall.core.Ids;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -87,9 +84,8 @@ public class HashFunctionPartitioner implements KeyPartitioner {
 
    public static class Externalizer extends NoStateExternalizer<HashFunctionPartitioner> {
       @Override
-      @SuppressWarnings("unchecked")
       public Set<Class<? extends HashFunctionPartitioner>> getTypeClasses() {
-         return Util.<Class<? extends HashFunctionPartitioner>>asSet(HashFunctionPartitioner.class);
+         return Collections.singleton(HashFunctionPartitioner.class);
       }
 
       @Override

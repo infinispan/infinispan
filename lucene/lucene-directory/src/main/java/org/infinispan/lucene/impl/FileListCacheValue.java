@@ -4,7 +4,6 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.ExternalizerIds;
 
 import java.io.IOException;
@@ -226,7 +225,7 @@ public final class FileListCacheValue implements DeltaAware {
 
       @Override
       public Set<Class<? extends FileListCacheValue>> getTypeClasses() {
-         return Util.<Class<? extends FileListCacheValue>>asSet(FileListCacheValue.class);
+         return Collections.singleton(FileListCacheValue.class);
       }
 
    }

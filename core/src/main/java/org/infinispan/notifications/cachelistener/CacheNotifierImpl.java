@@ -715,7 +715,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
    @Override
    public void addListener(Object listener, KeyFilter<? super K> filter, ClassLoader classLoader) {
-      addListener(listener, new KeyFilterAsCacheEventFilter<K>(filter), null, classLoader);
+      addListener(listener, new KeyFilterAsCacheEventFilter<>(filter), null, classLoader);
    }
 
    /**
@@ -1040,7 +1040,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                      handler = currentQueue;
                   }
                }
-               returnValue = new ClusteredListenerInvocation<K, V>(invocation, handler, filter, converter, annotation,
+               returnValue = new ClusteredListenerInvocation<>(invocation, handler, filter, converter, annotation,
                                                                    onlyPrimary, identifier, sync, observation);
             } else {
 //               TODO: this is removed until non cluster listeners are supported
@@ -1091,7 +1091,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          DelegatingCacheEntryListenerInvocation<K, V> invocation = provider.interceptListenerInvocation(super.build());
          List<DelegatingCacheEntryListenerInvocation<K, V>> invocations = listeners.get(invocation.getAnnotation());
          if (invocations == null) {
-            invocations = new ArrayList<DelegatingCacheEntryListenerInvocation<K, V>>(2);
+            invocations = new ArrayList<>(2);
             listeners.put(invocation.getAnnotation(), invocations);
          }
          invocations.add(invocation);

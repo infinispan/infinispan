@@ -13,6 +13,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -493,7 +494,7 @@ public class Fqn implements Comparable<Fqn>, Serializable {
 
       @Override
       public Set<Class<? extends Fqn>> getTypeClasses() {
-         return Util.<Class<? extends Fqn>>asSet(Fqn.class);
+         return Collections.singleton(Fqn.class);
       }
    }
 }

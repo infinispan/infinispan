@@ -1,7 +1,6 @@
 package org.infinispan.notifications.cachelistener.filter;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.Converter;
@@ -12,6 +11,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -45,7 +45,7 @@ public class CacheEventConverterAsConverter<K, V, C> implements Converter<K, V, 
    public static class Externalizer extends AbstractExternalizer<CacheEventConverterAsConverter> {
       @Override
       public Set<Class<? extends CacheEventConverterAsConverter>> getTypeClasses() {
-         return Util.<Class<? extends CacheEventConverterAsConverter>>asSet(CacheEventConverterAsConverter.class);
+         return Collections.singleton(CacheEventConverterAsConverter.class);
       }
 
       @Override

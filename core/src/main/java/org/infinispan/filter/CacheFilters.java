@@ -157,7 +157,7 @@ public final class CacheFilters {
       private static final int CONVERTER_FUNCTION = 1;
       private static final int FILTER_CONVERTER_FUNCTION = 2;
 
-      private final IdentityIntMap<Class<? extends Object>> objects = new IdentityIntMap<>();
+      private final IdentityIntMap<Class<?>> objects = new IdentityIntMap<>();
 
       public CacheFiltersExternalizer() {
          objects.put(KeyValueFilterAsPredicate.class, KEY_VALUE_FILTER_PREDICATE);
@@ -167,7 +167,7 @@ public final class CacheFilters {
 
       @Override
       public Set<Class<?>> getTypeClasses() {
-         return Util.<Class<? extends Object>>asSet(KeyValueFilterAsPredicate.class, ConverterAsCacheEntryFunction.class,
+         return Util.asSet(KeyValueFilterAsPredicate.class, ConverterAsCacheEntryFunction.class,
                  FilterConverterAsCacheEntryFunction.class);
       }
 

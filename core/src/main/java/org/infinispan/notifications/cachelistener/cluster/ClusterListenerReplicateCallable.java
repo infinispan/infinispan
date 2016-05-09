@@ -2,7 +2,6 @@ package org.infinispan.notifications.cachelistener.cluster;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.factories.ComponentRegistry;
@@ -20,6 +19,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -127,7 +127,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    public static class Externalizer extends AbstractExternalizer<ClusterListenerReplicateCallable> {
       @Override
       public Set<Class<? extends ClusterListenerReplicateCallable>> getTypeClasses() {
-         return Util.<Class<? extends ClusterListenerReplicateCallable>>asSet(ClusterListenerReplicateCallable.class);
+         return Collections.singleton(ClusterListenerReplicateCallable.class);
       }
 
       @Override

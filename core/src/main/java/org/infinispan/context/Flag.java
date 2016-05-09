@@ -13,7 +13,6 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -310,7 +309,7 @@ public enum Flag {
 
       @Override
       public Set<Class<? extends Flag>> getTypeClasses() {
-         return Util.asSet(Flag.class);
+         return Collections.singleton(Flag.class);
       }
 
       @Override

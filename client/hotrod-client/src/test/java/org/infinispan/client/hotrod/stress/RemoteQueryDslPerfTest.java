@@ -106,7 +106,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
          user1.setName("John" + id1);
          user1.setSurname("Doe" + id1);
          user1.setAge(22);
-         user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+         user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
          user1.setNotes("Lorem ipsum dolor sit amet");
 
          User user2 = new UserHS();
@@ -121,7 +121,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
          user3.setId(id3);
          user3.setName("Spider" + id3);
          user3.setSurname("Woman" + id3);
-         user3.setAccountIds(Collections.<Integer>emptySet());
+         user3.setAccountIds(Collections.emptySet());
 
          cache.put("user_" + user1.getId(), user1);
          cache.put("user_" + user2.getId(), user2);

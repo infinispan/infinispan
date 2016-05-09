@@ -118,7 +118,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
       user1.setAge(22);
-      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
       User user2 = new UserPB();
@@ -135,7 +135,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(40);
-      user3.setAccountIds(Collections.<Integer>emptySet());
+      user3.setAccountIds(Collections.emptySet());
 
       remoteCache.put("user" + user1.getId(), user1);
       remoteCache.put("user" + user2.getId(), user2);
@@ -150,8 +150,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
             .toBuilder().build()
             .setParameter("ageParam", 32);
 
-      final BlockingQueue<String> joined = new LinkedBlockingQueue<String>();
-      final BlockingQueue<String> left = new LinkedBlockingQueue<String>();
+      final BlockingQueue<String> joined = new LinkedBlockingQueue<>();
+      final BlockingQueue<String> left = new LinkedBlockingQueue<>();
 
       ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
 
@@ -220,7 +220,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
       user1.setAge(22);
-      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
       User user2 = new UserPB();
@@ -237,7 +237,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(40);
-      user3.setAccountIds(Collections.<Integer>emptySet());
+      user3.setAccountIds(Collections.emptySet());
 
       remoteCache.put("user" + user1.getId(), user1);
       remoteCache.put("user" + user2.getId(), user2);
@@ -252,8 +252,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
             .toBuilder().build()
             .setParameter("ageParam", 32);
 
-      final BlockingQueue<String> joined = new LinkedBlockingQueue<String>();
-      final BlockingQueue<String> left = new LinkedBlockingQueue<String>();
+      final BlockingQueue<String> joined = new LinkedBlockingQueue<>();
+      final BlockingQueue<String> left = new LinkedBlockingQueue<>();
 
       ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
 
