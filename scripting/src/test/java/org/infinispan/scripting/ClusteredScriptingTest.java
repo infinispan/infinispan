@@ -35,7 +35,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
          @Override
          public void call() throws IOException, ExecutionException, InterruptedException {
             ScriptingManager scriptingManager = getScriptingManager(cms[0]);
-            Cache cache = cms[0].getCache();
+            Cache cache = cms[0].getCache(ScriptingTest.CACHE_NAME);
             loadScript(scriptingManager, "/test.js");
             executeScriptOnManager("test.js", cms[0]);
             executeScriptOnManager("test.js", cms[1]);
@@ -224,7 +224,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
    private void executeScriptOnManager(String scriptName, EmbeddedCacheManager cacheManager) throws InterruptedException, ExecutionException {
       ScriptingManager scriptingManager = getScriptingManager(cacheManager);
       String value = (String) scriptingManager.runScript(scriptName, new TaskContext().addParameter("a", "value")).get();
-      assertEquals(value, cacheManager.getCache().get("a"));
+      assertEquals(value, cacheManager.getCache(ScriptingTest.CACHE_NAME).get("a"));
    }
 
    @DataProvider(name = "cacheModeProvider")

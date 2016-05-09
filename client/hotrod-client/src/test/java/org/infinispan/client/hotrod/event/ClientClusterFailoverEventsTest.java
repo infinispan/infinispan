@@ -58,29 +58,29 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
          clientBuilder.balancingStrategy(StickyServerLoadBalancingStrategy.class);
          RemoteCacheManager newClient = new RemoteCacheManager(clientBuilder.build());
          try {
-            WithStateEventLogListener<Integer> statefulListener = new WithStateEventLogListener<>();
-            EventLogListener<Integer> statelessListener = new EventLogListener<>();
-            FailoverEventLogListener<Integer> failoverListener = new FailoverEventLogListener<>();
             RemoteCache<Integer, String> c = newClient.getCache();
+            WithStateEventLogListener<Integer> statefulListener = new WithStateEventLogListener<>(c);
+            EventLogListener<Integer> statelessListener = new EventLogListener<>(c);
+            FailoverEventLogListener<Integer> failoverListener = new FailoverEventLogListener<>(c);
             c.addClientListener(statelessListener);
             c.addClientListener(statefulListener);
             c.addClientListener(failoverListener);
             c.put(key00, "zero");
-            statefulListener.expectOnlyCreatedEvent(key00, cache(0));
-            statelessListener.expectOnlyCreatedEvent(key00, cache(0));
-            failoverListener.expectOnlyCreatedEvent(key00, cache(0));
+            statefulListener.expectOnlyCreatedEvent(key00);
+            statelessListener.expectOnlyCreatedEvent(key00);
+            failoverListener.expectOnlyCreatedEvent(key00);
             c.put(key10, "one", 1000, TimeUnit.MILLISECONDS);
-            statefulListener.expectOnlyCreatedEvent(key10, cache(0));
-            statelessListener.expectOnlyCreatedEvent(key10, cache(0));
-            failoverListener.expectOnlyCreatedEvent(key10, cache(0));
+            statefulListener.expectOnlyCreatedEvent(key10);
+            statelessListener.expectOnlyCreatedEvent(key10);
+            failoverListener.expectOnlyCreatedEvent(key10);
             c.put(key11, "two");
-            statefulListener.expectOnlyCreatedEvent(key11, cache(0));
-            statelessListener.expectOnlyCreatedEvent(key11, cache(0));
-            failoverListener.expectOnlyCreatedEvent(key11, cache(0));
+            statefulListener.expectOnlyCreatedEvent(key11);
+            statelessListener.expectOnlyCreatedEvent(key11);
+            failoverListener.expectOnlyCreatedEvent(key11);
             c.put(key41, "three", 1000, TimeUnit.MILLISECONDS);
-            statefulListener.expectOnlyCreatedEvent(key41, cache(0));
-            statelessListener.expectOnlyCreatedEvent(key41, cache(0));
-            failoverListener.expectOnlyCreatedEvent(key41, cache(0));
+            statefulListener.expectOnlyCreatedEvent(key41);
+            statelessListener.expectOnlyCreatedEvent(key41);
+            failoverListener.expectOnlyCreatedEvent(key41);
             ts0.advance(1001);
             ts1.advance(1001);
             findServerAndKill(newClient, servers, cacheManagers);
@@ -111,6 +111,10 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
    }
 
    @ClientListener(includeCurrentState = true)
-   public static class WithStateEventLogListener<K> extends FailoverEventLogListener<K> {}
+   public static class WithStateEventLogListener<K> extends FailoverEventLogListener<K> {
+      public WithStateEventLogListener(RemoteCache<K, ?> remote) {
+         super(remote);
+      }
+   }
 
 }

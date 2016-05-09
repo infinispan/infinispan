@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.marshall.StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -14,7 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -28,16 +30,16 @@ public class ExecTypedTest extends MultiHotRodServersTest {
 
    private static final String SCRIPT_CACHE = "___script_cache";
    private static final int NUM_SERVERS = 2;
+   static final String NAME = "exec-typed-cache";
    RemoteCacheManager execClient;
    RemoteCacheManager addScriptClient;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      builder.dataContainer()
-            .keyEquivalence(AnyEquivalence.getInstance())
-            .valueEquivalence(AnyEquivalence.getInstance());
-      createHotRodServers(NUM_SERVERS, builder);
+      createHotRodServers(NUM_SERVERS, new ConfigurationBuilder());
+      ConfigurationBuilder builder = hotRodCacheConfiguration(
+            getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
+      defineInAll(NAME, builder);
       execClient = createExecClient();
       addScriptClient = createAddScriptClient();
    }
@@ -68,29 +70,29 @@ public class ExecTypedTest extends MultiHotRodServersTest {
          Map<String, String> params = new HashMap<>();
          params.put("k", "empty-key");
          params.put("v", "");
-         String result = clients.get(0).getCache().execute(scriptName, params);
-         assertEquals("", result);
+         String result = execClient.getCache(NAME).execute(scriptName, params);
+         assertEquals(null, result);
       });
    }
 
    public void testLocalTypedExecSize() {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-size.js", scriptName -> {
-         clients.get(0).getCache().clear();
-         String result = execClient.getCache().execute(scriptName, new HashMap<>());
+         execClient.getCache(NAME).clear();
+         String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
          assertEquals("0", result);
       });
    }
 
    public void testLocalTypedExecWithCacheManager() {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-cachemanager-put-get.js", scriptName -> {
-         String result = execClient.getCache().execute(scriptName, new HashMap<>());
+         String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
          assertEquals("a", result);
       });
    }
 
    public void testLocalTypedExecNullReturn() {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-null-return.js", scriptName -> {
-         String result = clients.get(0).getCache().execute(scriptName, new HashMap<>());
+         String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
          assertEquals(null, result);
       });
    }
@@ -99,12 +101,26 @@ public class ExecTypedTest extends MultiHotRodServersTest {
       execPutGet("/typed-put-get-dist.js", ExecMode.DIST, "dist-typed-key", "dist-typed-value");
    }
 
+   public void testLocalTypedExecPutGetWithListener() {
+      EventLogListener<String> l = new EventLogListener<>(execClient.getCache(NAME));
+      withClientListener(l, remote -> {
+         withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-put-get.js", scriptName -> {
+            Map<String, String> params = new HashMap<>();
+            params.put("k", "local-typed-key-listen");
+            params.put("v", "local-typed-value-listen");
+            String result = remote.execute(scriptName, params);
+            l.expectOnlyCreatedEvent("local-typed-key-listen");
+            assertEquals("local-typed-value-listen", result);
+         });
+      });
+   }
+
    private void execPutGet(String path, ExecMode mode, String key, String value) {
       withScript(addScriptClient.getCache(SCRIPT_CACHE), path, scriptName -> {
          Map<String, String> params = new HashMap<>();
          params.put("k", key);
          params.put("v", value);
-         String result = execClient.getCache().execute(scriptName, params);
+         String result = execClient.getCache(NAME).execute(scriptName, params);
          mode.assertResult.accept(value, result);
       });
    }

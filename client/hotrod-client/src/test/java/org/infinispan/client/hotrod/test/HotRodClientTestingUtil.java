@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.event.RemoteCacheSupplier;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
@@ -156,24 +157,23 @@ public class HotRodClientTestingUtil {
       }
    }
 
-   public static <K, V> void withClientListener(Object listener, RemoteCacheManagerCallable c) {
-      RemoteCache<K, V> cache = c.rcm.getCache();
-      cache.addClientListener(listener);
+   public static <K, V> void withClientListener(
+         RemoteCacheSupplier<K> l, Consumer<RemoteCache<K, V>> cons) {
+      l.get().addClientListener(l);
       try {
-         c.call();
+         cons.accept(l.get());
       } finally {
-         cache.removeClientListener(listener);
+         l.get().removeClientListener(l);
       }
    }
 
-   public static <K, V> void withClientListener(Object listener,
-         Object[] filterFactoryParams, Object[] converterFactoryParams, RemoteCacheManagerCallable c) {
-      RemoteCache<K, V> cache = c.rcm.getCache();
-      cache.addClientListener(listener, filterFactoryParams, converterFactoryParams);
+   public static <K, V> void withClientListener(RemoteCacheSupplier<K> listener,
+         Object[] fparams, Object[] cparams, Consumer<RemoteCache<K, V>> cons) {
+      listener.get().addClientListener(listener, fparams, cparams);
       try {
-         c.call();
+         cons.accept(listener.get());
       } finally {
-         cache.removeClientListener(listener);
+         listener.get().removeClientListener(listener);
       }
    }
 

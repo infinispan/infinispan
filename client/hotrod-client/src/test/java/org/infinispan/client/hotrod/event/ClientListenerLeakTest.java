@@ -31,11 +31,11 @@ public class ClientListenerLeakTest extends SingleHotRodServerTest {
          @Override
          public void call() {
             RemoteCache<Integer, String> remote = rcm.getCache(cacheName);
-            EventLogListener<Integer> eventListener = new EventLogListener<>();
+            EventLogListener<Integer> eventListener = new EventLogListener<>(remote);
             remote.addClientListener(eventListener);
             eventListener.expectNoEvents();
             remote.put(1, "one");
-            eventListener.expectOnlyCreatedEvent(1, cache(cacheName));
+            eventListener.expectOnlyCreatedEvent(1);
          }
       });
       detectThreadLeaks(".*Client-Listener-ClientListenerLeakTest-.*");

@@ -39,7 +39,7 @@ import static org.testng.AssertJUnit.assertEquals;
 @CleanupAfterMethod
 public class SecureExecTest extends AuthenticationTest {
     static final Subject ADMIN = TestingUtil.makeSubject("user", ScriptingManager.SCRIPT_MANAGER_ROLE);
-
+    static final String CACHE_NAME = "secured-exec";
     private RemoteCacheManager remoteCacheManager;
 
     @Override
@@ -57,6 +57,13 @@ public class SecureExecTest extends AuthenticationTest {
                 .marshaller(new GenericJBossMarshaller())
                 .security().authorization().enable().role("user");
         cacheManager = TestCacheManagerFactory.createCacheManager(global, config);
+        ConfigurationBuilder config2 = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+        config2
+              .dataContainer()
+                  .keyEquivalence(new AnyServerEquivalence())
+                  .valueEquivalence(new AnyServerEquivalence())
+              .security().authorization().enable().role("user");
+        cacheManager.defineConfiguration(CACHE_NAME, config2.build());
         cacheManager.getCache();
 
         return cacheManager;
@@ -127,9 +134,9 @@ public class SecureExecTest extends AuthenticationTest {
             scriptingManager.addScript(scriptName, script);
         }
 
-        String result = remoteCacheManager.getCache().execute(scriptName, params);
+        String result = remoteCacheManager.getCache(CACHE_NAME).execute(scriptName, params);
         assertEquals("guinness", result);
-        assertEquals("guinness", remoteCacheManager.getCache().get("a"));
+        assertEquals("guinness", remoteCacheManager.getCache(CACHE_NAME).get("a"));
     }
 
 }

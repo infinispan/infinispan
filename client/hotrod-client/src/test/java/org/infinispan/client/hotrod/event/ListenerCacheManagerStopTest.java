@@ -64,7 +64,7 @@ public class ListenerCacheManagerStopTest extends AbstractInfinispanTest {
 
    @Test
    public void testThreadsAreStopped() throws Exception {
-      final EventLogListener listener = new EventLogListener();
+      final EventLogListener listener = new EventLogListener<>(remoteCacheManager.getCache());
       cache.addClientListener(listener);
 
       final String listenerId = findListenerId(listener);

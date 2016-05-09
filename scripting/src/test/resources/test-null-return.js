@@ -1,2 +1,2 @@
-// mode=local,language=javascript,datatype='text/plain; charset=utf-8'
+// mode=local,language=javascript
 cache.get('key-not-present');

@@ -12,7 +12,6 @@ import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLo
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogWithStateListener;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -34,104 +33,82 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
    }
 
    public void testFilteredEvents() {
-      final StaticFilteredEventLogListener<Integer> eventListener = new StaticFilteredEventLogListener<>();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> cache = rcm.getCache();
-            eventListener.expectNoEvents();
-            cache.put(1, "one");
-            eventListener.expectNoEvents();
-            cache.put(2, "two");
-            eventListener.expectOnlyCreatedEvent(2, cache());
-            cache.remove(1);
-            eventListener.expectNoEvents();
-            cache.remove(2);
-            eventListener.expectOnlyRemovedEvent(2, cache());
-         }
+      final StaticFilteredEventLogListener<Integer> l = new StaticFilteredEventLogListener<>(remoteCacheManager.getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(1, "one");
+         l.expectNoEvents();
+         remote.put(2, "two");
+         l.expectOnlyCreatedEvent(2);
+         remote.remove(1);
+         l.expectNoEvents();
+         remote.remove(2);
+         l.expectOnlyRemovedEvent(2);
       });
    }
 
    public void testParameterBasedFiltering() {
-      final DynamicFilteredEventLogListener<Integer> eventListener = new DynamicFilteredEventLogListener<>();
-      withClientListener(eventListener, new Object[]{3}, null, new RemoteCacheManagerCallable(remoteCacheManager) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> cache = rcm.getCache();
-            eventListener.expectNoEvents();
-            cache.put(1, "one");
-            eventListener.expectNoEvents();
-            cache.put(2, "two");
-            eventListener.expectNoEvents();
-            cache.put(3, "three");
-            eventListener.expectOnlyCreatedEvent(3, cache());
-         }
+      final DynamicFilteredEventLogListener<Integer> l = new DynamicFilteredEventLogListener<>(remoteCacheManager.getCache());
+      withClientListener(l, new Object[]{3}, null, remote -> {
+         l.expectNoEvents();
+         remote.put(1, "one");
+         l.expectNoEvents();
+         remote.put(2, "two");
+         l.expectNoEvents();
+         remote.put(3, "three");
+         l.expectOnlyCreatedEvent(3);
       });
    }
 
    public void testFilteredEventsReplay() {
-      final StaticFilteredEventLogWithStateListener<Integer> staticEventListener =
-            new StaticFilteredEventLogWithStateListener<>();
       RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
+      final StaticFilteredEventLogWithStateListener<Integer> staticEventListener =
+            new StaticFilteredEventLogWithStateListener<>(cache);
       cache.put(1, "one");
       cache.put(2, "two");
-      withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
-         @Override
-         public void call() {
-            staticEventListener.expectOnlyCreatedEvent(2, cache());
-            RemoteCache<Integer, String> cache = rcm.getCache();
-            cache.remove(1);
-            cache.remove(2);
-            staticEventListener.expectOnlyRemovedEvent(2, cache());
-         }
+      withClientListener(staticEventListener, remote -> {
+         staticEventListener.expectOnlyCreatedEvent(2);
+         remote.remove(1);
+         remote.remove(2);
+         staticEventListener.expectOnlyRemovedEvent(2);
       });
       final DynamicFilteredEventLogWithStateListener<Integer> dynamicEventListener =
-            new DynamicFilteredEventLogWithStateListener<>();
+            new DynamicFilteredEventLogWithStateListener<>(cache);
       cache.put(1, "one");
       cache.put(2, "two");
       cache.put(3, "three");
-      withClientListener(dynamicEventListener, new Object[]{3}, null, new RemoteCacheManagerCallable(remoteCacheManager) {
-         @Override
-         public void call() {
-            dynamicEventListener.expectOnlyCreatedEvent(3, cache());
-            RemoteCache<Integer, String> cache = rcm.getCache();
-            cache.remove(1);
-            cache.remove(2);
-            cache.remove(3);
-            dynamicEventListener.expectOnlyRemovedEvent(3, cache());
-         }
+      withClientListener(dynamicEventListener, new Object[]{3}, null, remote -> {
+         dynamicEventListener.expectOnlyCreatedEvent(3);
+         remote.remove(1);
+         remote.remove(2);
+         remote.remove(3);
+         dynamicEventListener.expectOnlyRemovedEvent(3);
       });
    }
 
    public void testFilteredNoEventsReplay() {
-      final StaticFilteredEventLogListener<Integer> staticEventListener = new StaticFilteredEventLogListener<>();
       RemoteCache<Integer, String> cache = remoteCacheManager.getCache();
+      final StaticFilteredEventLogListener<Integer> staticEventListener =
+            new StaticFilteredEventLogListener<>(cache);
       cache.put(1, "one");
       cache.put(2, "two");
-      withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
-         @Override
-         public void call() {
-            staticEventListener.expectNoEvents();
-            RemoteCache<Integer, String> cache = rcm.getCache();
-            cache.remove(1);
-            cache.remove(2);
-            staticEventListener.expectOnlyRemovedEvent(2, cache());
-         }
+      withClientListener(staticEventListener, remote -> {
+         staticEventListener.expectNoEvents();
+         remote.remove(1);
+         remote.remove(2);
+         staticEventListener.expectOnlyRemovedEvent(2);
       });
-      final DynamicFilteredEventLogListener<Integer> dynamicEventListener = new DynamicFilteredEventLogListener<>();
+      final DynamicFilteredEventLogListener<Integer> dynamicEventListener =
+            new DynamicFilteredEventLogListener<>(cache);
       cache.put(1, "one");
       cache.put(2, "two");
       cache.put(3, "three");
-      withClientListener(dynamicEventListener, new Object[]{3}, null, new RemoteCacheManagerCallable(remoteCacheManager) {
-         @Override
-         public void call() {
-            staticEventListener.expectNoEvents();
-            RemoteCache<Integer, String> cache = rcm.getCache();
-            cache.remove(1);
-            cache.remove(2);
-            cache.remove(3);
-            dynamicEventListener.expectOnlyRemovedEvent(3, cache());
-         }
+      withClientListener(dynamicEventListener, new Object[]{3}, null, remote -> {
+         staticEventListener.expectNoEvents();
+         remote.remove(1);
+         remote.remove(2);
+         remote.remove(3);
+         dynamicEventListener.expectOnlyRemovedEvent(3);
       });
    }
 
@@ -141,30 +118,29 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
     */
    @Test(expectedExceptions = HotRodClientException.class)
    public void testNonExistingConverterFactoryCustomEvents() {
-      NonExistingFilterFactoryListener eventListener = new NonExistingFilterFactoryListener();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager));
+      NonExistingFilterFactoryListener l = new NonExistingFilterFactoryListener<>(remoteCacheManager.getCache());
+      withClientListener(l, remote -> {});
    }
 
    public void testRawFilteredEvents() {
-      final RawStaticFilteredEventLogListener<Integer> eventListener = new RawStaticFilteredEventLogListener<>();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> cache = rcm.getCache();
-            eventListener.expectNoEvents();
-            cache.put(1, "one");
-            eventListener.expectNoEvents();
-            cache.put(2, "two");
-            eventListener.expectOnlyCreatedEvent(2, cache());
-            cache.remove(1);
-            eventListener.expectNoEvents();
-            cache.remove(2);
-            eventListener.expectOnlyRemovedEvent(2, cache());
-         }
+      final RawStaticFilteredEventLogListener<Integer> l =
+            new RawStaticFilteredEventLogListener<>(remoteCacheManager.getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(1, "one");
+         l.expectNoEvents();
+         remote.put(2, "two");
+         l.expectOnlyCreatedEvent(2);
+         remote.remove(1);
+         l.expectNoEvents();
+         remote.remove(2);
+         l.expectOnlyRemovedEvent(2);
       });
    }
 
    @ClientListener(filterFactoryName = "non-existing-test-filter-factory")
-   public static class NonExistingFilterFactoryListener extends CustomEventLogListener {}
+   public static class NonExistingFilterFactoryListener<K> extends CustomEventLogListener<K, Object> {
+      public NonExistingFilterFactoryListener(RemoteCache<K, ?> r) { super(r); }
+   }
 
 }

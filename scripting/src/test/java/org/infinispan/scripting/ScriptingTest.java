@@ -22,6 +22,8 @@ import static org.testng.AssertJUnit.assertNotNull;
 @CleanupAfterMethod
 public class ScriptingTest extends AbstractScriptingTest {
 
+   static final String CACHE_NAME = "script-exec";
+
    protected String[] getScripts() {
       return new String[] { "test.js", "testMissingMetaProps.js", "testExecWithoutProp.js", "testInnerScriptCall.js" };
    }
@@ -127,7 +129,7 @@ public class ScriptingTest extends AbstractScriptingTest {
               new TaskContext().cache(cacheManager.getCache("test_cache")).addParameter("a", "ahoj")).get();
 
       assertEquals("script1:additionFromJavascript", result);
-      assertEquals("ahoj", cacheManager.getCache().get("a"));
+      assertEquals("ahoj", cacheManager.getCache(CACHE_NAME).get("a"));
    }
 
    public void testSimpleScriptWithMissingLanguageInMetaPropeties() throws Exception {

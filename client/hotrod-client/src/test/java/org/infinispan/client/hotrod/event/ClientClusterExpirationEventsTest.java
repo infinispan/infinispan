@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterCustomEventLogListener;
@@ -11,7 +10,6 @@ import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilte
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -68,18 +66,14 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
 
    public void testSimpleExpired() {
       final Integer key0 = HotRodClientTestingUtil.getIntKeyForServer(server(0));
-      final EventLogListener<Integer> eventListener = new EventLogListener<>();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> remote = client(0).getCache();
-            eventListener.expectNoEvents();
-            remote.put(key0, "one", 10, TimeUnit.MINUTES);
-            eventListener.expectOnlyCreatedEvent(key0, cache(0));
-            ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-            assertNull(remote.get(key0));
-            eventListener.expectOnlyExpiredEvent(key0, cache(0));
-         }
+      final EventLogListener<Integer> l = new EventLogListener<>(client(0).getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(key0, "one", 10, TimeUnit.MINUTES);
+         l.expectOnlyCreatedEvent(key0);
+         ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+         assertNull(remote.get(key0));
+         l.expectOnlyExpiredEvent(key0);
       });
    }
 
@@ -90,93 +84,78 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
       for (HotRodServer server : servers)
          server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory(key1));
 
-      final StaticFilteredEventLogListener<Integer> eventListener = new StaticFilteredEventLogListener<>();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> remote = client(0).getCache();
-            eventListener.expectNoEvents();
-            remote.put(key0, "one", 10, TimeUnit.MINUTES);
-            eventListener.expectNoEvents();
-            remote.put(key1, "two", 10, TimeUnit.MINUTES);
-            eventListener.expectOnlyCreatedEvent(key1, cache(1));
+      final StaticFilteredEventLogListener<Integer> l = new StaticFilteredEventLogListener<>(client(0).getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(key0, "one", 10, TimeUnit.MINUTES);
+         l.expectNoEvents();
+         remote.put(key1, "two", 10, TimeUnit.MINUTES);
+         l.expectOnlyCreatedEvent(key1);
 
-            // Now expire both
-            ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-            ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+         // Now expire both
+         ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+         ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
 
-            assertNull(remote.get(key0));
-            eventListener.expectNoEvents();
-            assertNull(remote.get(key1));
-            eventListener.expectOnlyExpiredEvent(key1, cache(1));
-         }
+         assertNull(remote.get(key0));
+         l.expectNoEvents();
+         assertNull(remote.get(key1));
+         l.expectOnlyExpiredEvent(key1);
       });
    }
 
    public void testConversionInCluster() {
       final Integer key0 = HotRodClientTestingUtil.getIntKeyForServer(server(0));
       final Integer key1 = HotRodClientTestingUtil.getIntKeyForServer(server(1));
-      final StaticCustomEventLogListener eventListener = new StaticCustomEventLogListener();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> c3 = client(0).getCache();
-            eventListener.expectNoEvents();
-            c3.put(key0, "one", 10, TimeUnit.MINUTES);
-            eventListener.expectCreatedEvent(new CustomEvent(key0, "one", 0));
-            c3.put(key1, "two", 10, TimeUnit.MINUTES);
-            eventListener.expectCreatedEvent(new CustomEvent(key1, "two", 0));
+      final StaticCustomEventLogListener<Integer> l = new StaticCustomEventLogListener<>(client(0).getCache());
+      withClientListener(l, remote -> {
+         l.expectNoEvents();
+         remote.put(key0, "one", 10, TimeUnit.MINUTES);
+         l.expectCreatedEvent(new CustomEvent(key0, "one", 0));
+         remote.put(key1, "two", 10, TimeUnit.MINUTES);
+         l.expectCreatedEvent(new CustomEvent(key1, "two", 0));
 
-            // Now expire both
-            ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-            ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+         // Now expire both
+         ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+         ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
 
-            assertNull(c3.get(key0));
-            eventListener.expectExpiredEvent(new CustomEvent(key0, "one", 0));
-            assertNull(c3.get(key1));
-            eventListener.expectExpiredEvent(new CustomEvent(key1, "two", 0));
-         }
+         assertNull(remote.get(key0));
+         l.expectExpiredEvent(new CustomEvent(key0, "one", 0));
+         assertNull(remote.get(key1));
+         l.expectExpiredEvent(new CustomEvent(key1, "two", 0));
       });
    }
 
    public void testFilterCustomEventsInCluster() {
       final Integer key0 = HotRodClientTestingUtil.getIntKeyForServer(server(0));
       final Integer key1 = HotRodClientTestingUtil.getIntKeyForServer(server(1));
-      final FilterCustomEventLogListener eventListener = new FilterCustomEventLogListener();
-      withClientListener(eventListener, new Object[]{key0}, null, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            RemoteCache<Integer, String> remote = client(0).getCache();
-            remote.put(key0, "one", 10, TimeUnit.MINUTES);
-            eventListener.expectCreatedEvent(new CustomEvent(key0, null, 1));
-            remote.put(key1, "two", 10, TimeUnit.MINUTES);
-            eventListener.expectCreatedEvent(new CustomEvent(key1, "two", 1));
+      final FilterCustomEventLogListener<Integer> l = new FilterCustomEventLogListener<>(client(0).getCache());
+      withClientListener(l, new Object[]{key0}, null, remote -> {
+         remote.put(key0, "one", 10, TimeUnit.MINUTES);
+         l.expectCreatedEvent(new CustomEvent(key0, null, 1));
+         remote.put(key1, "two", 10, TimeUnit.MINUTES);
+         l.expectCreatedEvent(new CustomEvent(key1, "two", 1));
 
-            // Now expire both
-            ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-            ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+         // Now expire both
+         ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+         ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
 
-            assertNull(remote.get(key0));
-            eventListener.expectExpiredEvent(new CustomEvent(key0, null, 2));
-            assertNull(remote.get(key1));
-            eventListener.expectExpiredEvent(new CustomEvent(key1, "two", 2));
-         }
+         assertNull(remote.get(key0));
+         l.expectExpiredEvent(new CustomEvent(key0, null, 2));
+         assertNull(remote.get(key1));
+         l.expectExpiredEvent(new CustomEvent(key1, "two", 2));
       });
    }
 
    public void testNullValueMetadataExpiration() {
       final Integer key = HotRodClientTestingUtil.getIntKeyForServer(server(0));
-      final EventLogListener<Integer> eventListener = new EventLogListener<>();
-      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
-         @Override
-         public void call() {
-            Cache<Integer, String> cache0 = cache(0);
-            CacheNotifier notifier = cache0.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
-            byte[] keyBytes = HotRodClientTestingUtil.toBytes(key);
-            // Note we are manually forcing an expiration event with a null value and metadata
-            notifier.notifyCacheEntryExpired(keyBytes, null, null, null);
-            eventListener.expectOnlyExpiredEvent(key, cache(0));
-         }
+      final EventLogListener<Integer> l = new EventLogListener<>(client(0).getCache());
+      withClientListener(l, remote -> {
+         Cache<Integer, String> cache0 = cache(0);
+         CacheNotifier notifier = cache0.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+         byte[] keyBytes = HotRodClientTestingUtil.toBytes(key);
+         // Note we are manually forcing an expiration event with a null value and metadata
+         notifier.notifyCacheEntryExpired(keyBytes, null, null, null);
+         l.expectOnlyExpiredEvent(key);
       });
    }
 }

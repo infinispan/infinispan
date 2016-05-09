@@ -79,6 +79,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
                     String script = TestingUtil.loadFileAsString(is);
                     scriptCache.put(SCRIPT_NAME, script);
                 }
+                cacheManager.getCache(SecureScriptingTest.CACHE_NAME);
                 return null;
             }
         });
