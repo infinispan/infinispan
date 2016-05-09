@@ -9,6 +9,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +23,8 @@ import java.util.Map;
  */
 @Listener
 public class TestCacheListener {
+   private static final Log log = LogFactory.getLog(TestCacheListener.class);
+
    //Map is used instead of List so we could test if key is correct too
    Map<Object, Object> created = new HashMap<Object, Object>();
    Map<Object, Object> removed = new HashMap<Object, Object>();
@@ -36,6 +40,7 @@ public class TestCacheListener {
    @CacheEntryCreated
    public void handleCreated(CacheEntryCreatedEvent e) {
       if (!e.isPre()) {
+         log.tracef("Created %s", e.getKey());
          created.put(e.getKey(), e.getValue());
          createdCounter++;
       }
@@ -45,6 +50,7 @@ public class TestCacheListener {
    @CacheEntryRemoved
    public void handleRemoved(CacheEntryRemovedEvent e) {
       if (!e.isPre()) {
+         log.tracef("Removed %s", e.getKey());
          removed.put(e.getKey(), e.getOldValue());
          removedCounter++;
       }
@@ -54,6 +60,7 @@ public class TestCacheListener {
    @CacheEntryModified
    public void handleModified(CacheEntryModifiedEvent e) {
       if (!e.isPre()) {
+         log.tracef("Modified %s", e.getKey());
          modified.put(e.getKey(), e.getValue());
          modifiedCounter++;
       }
@@ -63,6 +70,7 @@ public class TestCacheListener {
    @CacheEntryVisited
    public void handleVisited(CacheEntryVisitedEvent e) {
       if (!e.isPre()) {
+         log.tracef("Visited %s", e.getKey());
          visited.put(e.getKey(), e.getValue());
          visitedCounter++;
       }

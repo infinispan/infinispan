@@ -1,8 +1,8 @@
 package org.infinispan.marshall.core;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -10,16 +10,16 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.DDSequentialInterceptor;
 import org.infinispan.interceptors.SequentialInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
@@ -120,24 +121,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    public void testNonSerializable() {
       Cache cache1 = cache(0, "replSync");
       cache(1, "replSync");
-      try {
-         cache1.put("Hello", new Object());
-         fail("Should have failed");
-      }
-      catch (CacheException expected) {
 
-      }
-
+      Exceptions.expectException(CacheException.class, () -> cache1.put("Hello", new Object()));
       assertTrue("Call should not have gone beyond the MarshalledValueInterceptor", mvli.invocationCount == 0);
 
-      try {
-         cache1.put(new Object(), "Hello");
-         fail("Should have failed");
-      }
-      catch (CacheException expected) {
-
-      }
-
+      Exceptions.expectException(CacheException.class, () -> cache1.put(new Object(), "Hello"));
       assertTrue("Call should not have gone beyond the MarshalledValueInterceptor", mvli.invocationCount == 0);
    }
 
@@ -147,7 +135,6 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       assertTrue(cache1.isEmpty());
       Pojo value = new Pojo();
-      log.trace(TestingUtil.extractComponent(cache1, InterceptorChain.class).toString());
       cache1.put("key", value);
       assertTrue(cache1.containsKey("key"));
       assertSerializationCounts(1, 1);
@@ -271,11 +258,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
             // Ignore class cast in expired filtered set because
             // you cannot really add an Object type instance.
          }
-         try {
-            col.addAll(newObjCol);
-            fail("Should have thrown a UnsupportedOperationException");
-         } catch (UnsupportedOperationException uoe) {
-         }
+         Exceptions.expectException(UnsupportedOperationException.class, () -> col.addAll(newObjCol));
       }
    }
 
@@ -680,14 +663,13 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       }
    }
 
-   class MarshalledValueListenerInterceptor extends CommandInterceptor {
+   class MarshalledValueListenerInterceptor extends DDSequentialInterceptor {
       int invocationCount = 0;
 
       @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      public CompletableFuture<Void> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          invocationCount++;
-         Object retval = invokeNextInterceptor(ctx, command);
-         return retval;
+         return ctx.continueInvocation();
       }
 
    }
@@ -714,9 +696,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          Pojo pojo = (Pojo) o;
 
          if (b != pojo.b) return false;
-         if (i != pojo.i) return false;
-
-         return true;
+         return i == pojo.i;
       }
 
       @Override
@@ -754,6 +734,14 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       public int updateDeserializationCount() {
          return ++deserializationCount;
       }
+
+      @Override
+      public String toString() {
+         return "Pojo{" +
+               "b=" + b +
+               ", i=" + i +
+               '}';
+      }
    }
 
    public static class ObjectThatContainsACustomReadObjectMethod implements Serializable {
@@ -776,9 +764,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 //            return false;
          if (!safeEquals(balance, acct.balance))
             return false;
-         if (!safeEquals(anObjectWithCustomReadObjectMethod, acct.anObjectWithCustomReadObjectMethod))
-            return false;
-         return true;
+         return safeEquals(anObjectWithCustomReadObjectMethod, acct.anObjectWithCustomReadObjectMethod);
       }
 
       @Override
@@ -821,8 +807,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          if (!(obj instanceof CustomReadObjectMethod)) return false;
          CustomReadObjectMethod pk = (CustomReadObjectMethod) obj;
          if (!lastName.equals(pk.lastName)) return false;
-         if (!ssn.equals(pk.ssn)) return false;
-         return true;
+         return ssn.equals(pk.ssn);
       }
 
       @Override

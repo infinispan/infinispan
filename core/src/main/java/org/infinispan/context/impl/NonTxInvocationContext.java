@@ -4,7 +4,6 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -27,15 +26,13 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    private Object lockOwner;
 
 
-   public NonTxInvocationContext(int numEntries, Address origin, Equivalence<Object> keyEq,
-                                 SequentialInterceptorChain interceptorChain) {
+   public NonTxInvocationContext(int numEntries, Address origin, Equivalence<Object> keyEq) {
       super(origin);
       lookedUpEntries = CollectionFactory.makeMap(CollectionFactory.computeCapacity(numEntries), keyEq, AnyEquivalence.getInstance());
       this.keyEq = keyEq;
    }
 
-   public NonTxInvocationContext(Address origin, Equivalence<Object> keyEq,
-                                 SequentialInterceptorChain interceptorChain) {
+   public NonTxInvocationContext(Address origin, Equivalence<Object> keyEq) {
       super(origin);
       lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY, keyEq, AnyEquivalence.getInstance());
       this.keyEq = keyEq;

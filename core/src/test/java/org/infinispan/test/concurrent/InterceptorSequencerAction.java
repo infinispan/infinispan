@@ -100,11 +100,10 @@ public class InterceptorSequencerAction {
       protected CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          boolean commandAccepted = matcher.accept(command);
          StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesBefore);
-         try {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         } finally {
+         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
             StateSequencerUtil.advanceMultiple(stateSequencer, commandAccepted, statesAfter);
-         }
+            return null;
+         });
       }
 
       public void beforeStates(List<String> states) {

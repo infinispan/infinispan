@@ -3,7 +3,6 @@ package org.infinispan.interceptors.impl;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupManager;
@@ -54,32 +53,38 @@ public abstract class BaseStateTransferInterceptor extends DDSequentialIntercept
       final int commandTopologyId = command.getTopologyId();
 
       if (ctx.isOriginLocal()) {
-         //invoke next and check for exception
-         Object localResult;
-         try {
-            localResult = ctx.forkInvocationSync(command);
-            //if we are not the owner, we rely on the reply from the primary owner.
-            if (isOwner && currentTopologyId() != commandTopologyId) {
+         return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+            boolean shouldRetry;
+            if (throwable != null) {
+               // Must retry if we got an OutdatedTopologyException or SuspectException
+               Throwable ce = throwable;
+               while (ce instanceof RemoteException) {
+                  ce = ce.getCause();
+               }
+               shouldRetry = ce instanceof OutdatedTopologyException || ce instanceof SuspectException;
+            } else {
+               // Only check the topology id if if we are an owner
+               shouldRetry = isOwner && currentTopologyId() != commandTopologyId;
+            }
+            if (shouldRetry) {
                return retryVisitGetKeysInGroupCommand(ctx, command, commandTopologyId);
             }
-         } catch (CacheException e) {
-            Throwable ce = e;
-            while (ce instanceof RemoteException) {
-               ce = ce.getCause();
+            // No retry, either rethrow the exception or return the current result
+            if (throwable != null) {
+               throw throwable;
+            } else {
+               return ctx.shortCircuit(rv);
             }
-            if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-               throw e;
-
-            return retryVisitGetKeysInGroupCommand(ctx, command, commandTopologyId);
-         }
-         return ctx.shortCircuit(localResult);
+         });
       } else {
-         Object result = ctx.forkInvocationSync(command);
-         if (isOwner && currentTopologyId() != commandTopologyId) {
-            throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                                                      commandTopologyId + ", got " + currentTopologyId());
-         }
-         return ctx.shortCircuit(result);
+         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            if (isOwner && currentTopologyId() != commandTopologyId) {
+               throw new OutdatedTopologyException(
+                     "Cache topology changed while the command was executing: expected " +
+                           commandTopologyId + ", got " + currentTopologyId());
+            }
+            return null;
+         });
       }
    }
 

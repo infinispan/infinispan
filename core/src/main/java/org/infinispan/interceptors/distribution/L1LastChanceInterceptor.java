@@ -76,40 +76,50 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    public CompletableFuture<Void> visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) throws Throwable {
-      Object returnValue = ctx.forkInvocationSync(command);
-      Object key;
-      if (shouldUpdateOnWriteCommand(command) && command.isSuccessful() &&
-            cdl.localNodeIsOwner((key = command.getKey()))) {
-         if (trace) {
-            log.trace("Sending additional invalidation for requestors if necessary.");
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null)
+            throw throwable;
+
+         Object key;
+         DataWriteCommand writeCommand = (DataWriteCommand) rCommand;
+         if (shouldUpdateOnWriteCommand(writeCommand) && writeCommand.isSuccessful() &&
+               cdl.localNodeIsOwner((key = writeCommand.getKey()))) {
+            if (trace) {
+               log.trace("Sending additional invalidation for requestors if necessary.");
+            }
+            // Send out a last attempt L1 invalidation in case if someone cached the L1
+            // value after they already received an invalidation
+            blockOnL1FutureIfNeeded(l1Manager
+                  .flushCache(Collections.singleton(key), rCtx.getOrigin(), assumeOriginKeptEntryInL1));
          }
-         // Send out a last attempt L1 invalidation in case if someone cached the L1
-         // value after they already received an invalidation
-         blockOnL1FutureIfNeeded(l1Manager.flushCache(Collections.singleton(key), ctx.getOrigin(),
-                                                      assumeOriginKeptEntryInL1));
-      }
-      return ctx.shortCircuit(returnValue);
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Object returnValue = ctx.forkInvocationSync(command);
-      if (shouldUpdateOnWriteCommand(command)) {
-         Set<Object> keys = command.getMap().keySet();
-         Set<Object> toInvalidate = new HashSet<Object>(keys.size());
-         for (Object k : keys) {
-            if (cdl.localNodeIsOwner(k)) {
-               toInvalidate.add(k);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null)
+            throw throwable;
+
+         PutMapCommand putMapCommand = (PutMapCommand) rCommand;
+         if (shouldUpdateOnWriteCommand(putMapCommand)) {
+            Set<Object> keys = putMapCommand.getMap().keySet();
+            Set<Object> toInvalidate = new HashSet<Object>(keys.size());
+            for (Object k : keys) {
+               if (cdl.localNodeIsOwner(k)) {
+                  toInvalidate.add(k);
+               }
+            }
+            if (!toInvalidate.isEmpty()) {
+               if (trace) {
+                  log.trace("Sending additional invalidation for requestors if necessary.");
+               }
+               blockOnL1FutureIfNeeded(l1Manager.flushCache(toInvalidate, rCtx.getOrigin(), true));
             }
          }
-         if (!toInvalidate.isEmpty()) {
-            if (trace) {
-               log.trace("Sending additional invalidation for requestors if necessary.");
-            }
-            blockOnL1FutureIfNeeded(l1Manager.flushCache(toInvalidate, ctx.getOrigin(), true));
-         }
-      }
-      return ctx.shortCircuit(returnValue);
+         return null;
+      });
    }
 
    private boolean shouldUpdateOnWriteCommand(WriteCommand command) {
@@ -118,21 +128,29 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      Object retVal = ctx.forkInvocationSync(command);
-      if (command.isOnePhaseCommit()) {
-         blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(ctx));
-      }
-      return ctx.shortCircuit(retVal);
+      return ctx.onReturn((ctx1, command1, rv, throwable) -> {
+         if (throwable != null)
+            throw throwable;
+
+         if (((PrepareCommand) command1).isOnePhaseCommit()) {
+            blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(((TxInvocationContext<?>) ctx1)));
+         }
+         return null;
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      Object retVal = ctx.forkInvocationSync(command);
-      blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit(ctx));
-      return ctx.shortCircuit(retVal);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null)
+            throw throwable;
+
+         blockOnL1FutureIfNeededTx(handleLastChanceL1InvalidationOnCommit((TxInvocationContext<?>) rCtx));
+         return null;
+      });
    }
 
-   private Future<?> handleLastChanceL1InvalidationOnCommit(TxInvocationContext ctx) {
+   private Future<?> handleLastChanceL1InvalidationOnCommit(TxInvocationContext<?> ctx) {
       if (shouldFlushL1(ctx)) {
          if (trace) {
             log.tracef("Sending additional invalidation for requestors if necessary.");

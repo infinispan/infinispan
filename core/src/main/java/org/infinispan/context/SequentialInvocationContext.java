@@ -72,7 +72,7 @@ public interface SequentialInvocationContext {
     * synchronously.
     *
     * <p>Usually it is easier to use than
-    * {@link #forkInvocation(VisitableCommand, SequentialInterceptor.ReturnHandler)}.
+    * {@link #forkInvocation(VisitableCommand, SequentialInterceptor.ForkReturnHandler)}.
     * However, it is not recommended, because any asynchronous work in the remaining interceptors will block
     * the calling thread.</p>
     *

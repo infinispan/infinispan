@@ -7,9 +7,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionProtocol;
@@ -18,6 +17,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -35,14 +35,14 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
 
    public void testTimeoutCleanup() throws Exception {
       final CountDownLatch block = new CountDownLatch(1);
-      final CommandInterceptor interceptor = new BaseCustomInterceptor() {
+      final BaseCustomSequentialInterceptor interceptor = new BaseCustomSequentialInterceptor() {
          @Override
-         public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
             block.await();
-            return invokeNextInterceptor(ctx, command);
+            return ctx.continueInvocation();
          }
       };
-      final InterceptorChain chain = TestingUtil.extractComponent(cache(1), InterceptorChain.class);
+      final SequentialInterceptorChain chain = TestingUtil.extractComponent(cache(1), SequentialInterceptorChain.class);
       final Object key = new MagicKey(cache(1));
       try {
          chain.addInterceptor(interceptor, 0);
@@ -63,16 +63,17 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
 
    public void testTimeoutCleanupInLocalNode() throws Exception {
       final CountDownLatch block = new CountDownLatch(1);
-      final CommandInterceptor interceptor = new BaseCustomInterceptor() {
+      final BaseCustomSequentialInterceptor interceptor = new BaseCustomSequentialInterceptor() {
          @Override
-         public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+         public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
+               throws Throwable {
             if (!ctx.isOriginLocal()) {
                block.await();
             }
-            return invokeNextInterceptor(ctx, command);
+            return ctx.continueInvocation();
          }
       };
-      final InterceptorChain chain = TestingUtil.extractComponent(cache(0), InterceptorChain.class);
+      final SequentialInterceptorChain chain = TestingUtil.extractComponent(cache(0), SequentialInterceptorChain.class);
       final Object key1 = new MagicKey(cache(0));
       final Object key2 = new MagicKey(cache(1));
       try {

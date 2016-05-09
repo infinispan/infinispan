@@ -8,7 +8,7 @@ import org.infinispan.interceptors.SequentialInterceptor;
  * @author Dan Berindei
  * @since 9.0
  */
-public class InterceptorListNode {
+class InterceptorListNode {
    public final SequentialInterceptor interceptor;
    public final InterceptorListNode nextNode;
 

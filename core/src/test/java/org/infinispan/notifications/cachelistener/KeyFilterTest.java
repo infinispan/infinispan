@@ -8,7 +8,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.EmptySequentialInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
@@ -57,7 +56,7 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance(), EmptySequentialInterceptorChain.INSTANCE);
+      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
    }
 
    public void testFilters() {

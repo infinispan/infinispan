@@ -66,56 +66,58 @@ public class TotalOrderInterceptor extends DDSequentialInterceptor {
          throw new IllegalStateException("TotalOrderInterceptor can only handle TotalOrderPrepareCommand");
       }
 
-      try {
-         simulateLocking(ctx, command, clusteringDependentLogic);
-         if (ctx.isOriginLocal()) {
-            return ctx.shortCircuit(ctx.forkInvocationSync(command));
-         } else {
-            TotalOrderRemoteTransactionState state = getTransactionState(ctx);
+      TotalOrderRemoteTransactionState state = getTransactionState(ctx);
 
-            try {
-               state.preparing();
-               if (state.isRollbackReceived()) {
-                  //this means that rollback has already been received
-                  transactionTable.removeRemoteTransaction(command.getGlobalTransaction());
-                  throw new CacheException("Cannot prepare transaction" + command.getGlobalTransaction().globalId() +
-                                                 ". it was already marked as rollback");
-               }
-
-               if (state.isCommitReceived()) {
-                  log.tracef("Transaction %s marked for commit, skipping the write skew check and forcing 1PC",
-                             command.getGlobalTransaction().globalId());
-                  ((TotalOrderPrepareCommand) command).markSkipWriteSkewCheck();
-                  ((TotalOrderPrepareCommand) command).markAsOnePhaseCommit();
-               }
-
-
-               if (trace) {
-                  log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
-               }
-
-               //invoke next interceptor in the chain
-               Object result = ctx.forkInvocationSync(command);
-
-               if (command.isOnePhaseCommit()) {
-                  totalOrderManager.release(state);
-               }
-               return ctx.shortCircuit(result);
-            } finally {
-               state.prepared();
+      ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null) {
+            PrepareCommand prepareCommand = (PrepareCommand) rCommand;
+            if (log.isDebugEnabled()) {
+               log.debugf(throwable, "Exception while preparing for transaction %s. Local=%s",
+                     prepareCommand.getGlobalTransaction().globalId(), rCtx.isOriginLocal());
             }
+            if (prepareCommand.isOnePhaseCommit()) {
+               transactionTable.remoteTransactionRollback(prepareCommand.getGlobalTransaction());
+            }
+         }
+         return null;
+      });
 
-         }
-      } catch (Throwable exception) {
-         if (log.isDebugEnabled()) {
-            log.debugf(exception, "Exception while preparing for transaction %s. Local=%s",
-                       command.getGlobalTransaction().globalId(), ctx.isOriginLocal());
-         }
-         if (command.isOnePhaseCommit()) {
-            transactionTable.remoteTransactionRollback(command.getGlobalTransaction());
-         }
-         throw exception;
+      simulateLocking(ctx, command, clusteringDependentLogic);
+
+      if (ctx.isOriginLocal()) {
+         return ctx.continueInvocation();
       }
+
+      ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null && ((PrepareCommand) rCommand).isOnePhaseCommit()) {
+            totalOrderManager.release(state);
+         }
+         state.prepared();
+         return null;
+      });
+
+      state.preparing();
+      if (state.isRollbackReceived()) {
+         //this means that rollback has already been received
+         transactionTable.removeRemoteTransaction(command.getGlobalTransaction());
+         throw new CacheException("Cannot prepare transaction" + command.getGlobalTransaction().globalId() +
+               ". it was already marked as rollback");
+      }
+
+      if (state.isCommitReceived()) {
+         log.tracef(
+               "Transaction %s marked for commit, skipping the write skew check and forcing 1PC",
+               command.getGlobalTransaction().globalId());
+         ((TotalOrderPrepareCommand) command).markSkipWriteSkewCheck();
+         ((TotalOrderPrepareCommand) command).markAsOnePhaseCommit();
+      }
+
+      if (trace) {
+         log.tracef("Validating transaction %s ", command.getGlobalTransaction().globalId());
+      }
+
+      //invoke next interceptor in the chain
+      return ctx.continueInvocation();
    }
 
    @Override
@@ -142,19 +144,13 @@ public class TotalOrderInterceptor extends DDSequentialInterceptor {
 
       TotalOrderRemoteTransactionState state = getTransactionState(context);
 
-      try {
-         if (!processSecondCommand(state, commit) && !context.isOriginLocal()) {
-            //we can return here, because we set onePhaseCommit to prepare and it will release all the resources
-            return context.shortCircuit(null);
+      context.onReturn((ctx, command1, rv, throwable) -> {
+         if (throwable != null) {
+            if (log.isDebugEnabled()) {
+               log.debugf(throwable, "Exception while rollback transaction %s", gtx.globalId());
+            }
          }
 
-         return context.shortCircuit(context.forkInvocationSync(command));
-      } catch (Throwable exception) {
-         if (log.isDebugEnabled()) {
-            log.debugf(exception, "Exception while rollback transaction %s", gtx.globalId());
-         }
-         throw exception;
-      } finally {
          if (state != null && state.isFinished()) {
             totalOrderManager.release(state);
             if (commit) {
@@ -166,7 +162,16 @@ public class TotalOrderInterceptor extends DDSequentialInterceptor {
                executorService.checkForReadyTasks();
             }
          }
+
+         return null;
+      });
+
+      if (!processSecondCommand(state, commit) && !context.isOriginLocal()) {
+         //we can return here, because we set onePhaseCommit to prepare and it will release all the resources
+         return context.shortCircuit(null);
       }
+
+      return context.continueInvocation();
    }
 
    private TotalOrderRemoteTransactionState getTransactionState(TxInvocationContext context) {

@@ -3,6 +3,7 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.SequentialInvocationContext;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -17,21 +18,24 @@ import java.util.concurrent.CompletableFuture;
  */
 @Experimental
 public interface SequentialInterceptorChain {
+   /**
+    * @return An immutable list of the current interceptors.
+    */
    List<SequentialInterceptor> getInterceptors();
 
    /**
-    * Inserts the given interceptor at the specified position in the chain (o based indexing).
+    * Inserts the given interceptor at the specified position in the chain (0 based indexing).
     *
-    * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors in the
-    *                                  chain)
+    * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors
+    *       in the chain)
     */
    void addInterceptor(SequentialInterceptor interceptor, int position);
 
    /**
-    * Removes the interceptor at the given postion.
+    * Removes the interceptor at the given position.
     *
-    * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors in the
-    *                                  chain)
+    * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors
+    *       in the chain)
     */
    void removeInterceptor(int position);
 
@@ -41,28 +45,29 @@ public interface SequentialInterceptorChain {
    int size();
 
    /**
-    * Removes all the occurences of supplied interceptor type from the chain.
+    * Removes all the occurrences of supplied interceptor type from the chain.
     */
    void removeInterceptor(Class<? extends SequentialInterceptor> clazz);
 
    /**
     * Adds a new interceptor in list after an interceptor of a given type.
     *
-    * @return true if the interceptor was added; i.e. the afterInterceptor exists
+    * @return true if the interceptor was added; i.e. the {@code afterInterceptor} exists
     */
    boolean addInterceptorAfter(SequentialInterceptor toAdd, Class<? extends
          SequentialInterceptor> afterInterceptor);
 
    /**
-    * Adds a new interceptor in list after an interceptor of a given type.
+    * Adds a new interceptor in list before an interceptor of a given type.
     *
-    * @return true if the interceptor was added; i.e. the afterInterceptor exists
+    * @return true if the interceptor was added; i.e. the {@code beforeInterceptor} exists
     */
    boolean addInterceptorBefore(SequentialInterceptor toAdd,
                                                 Class<? extends SequentialInterceptor> beforeInterceptor);
 
    /**
-    * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor instance passed as parameter.
+    * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor
+    * instance passed as parameter.
     *
     * @param replacingInterceptor        the interceptor to add to the interceptor chain
     * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
@@ -80,11 +85,11 @@ public interface SequentialInterceptorChain {
     * Walks the command through the interceptor chain. The received ctx is being passed in.
     *
     * <p>Note: Reusing the context for multiple invocations is allowed. However, the two invocations
-    * must not overlap, so calling {@link #invoke(InvocationContext, VisitableCommand)} from an interceptor
-    * is not allowed. If an interceptor wants to invoke a new command and cannot use {@link org.infinispan
-    * .context.SequentialInvocationContext#forkInvocation(VisitableCommand, SequentialInterceptor
-    * .ForkReturnHandler)} or
-    * {@link org.infinispan.context.SequentialInvocationContext#forkInvocationSync(VisitableCommand)},
+    * must not overlap, so calling {@code invoke(InvocationContext, VisitableCommand)} from an interceptor
+    * is not allowed.
+    * If an interceptor wants to invoke a new command and cannot use
+    * {@link SequentialInvocationContext#forkInvocation(VisitableCommand, SequentialInterceptor.ForkReturnHandler)}
+    * or {@link SequentialInvocationContext#forkInvocationSync(VisitableCommand)},
     * it must first copy the invocation context with {@link InvocationContext#clone()}.</p>
     */
    Object invoke(InvocationContext ctx, VisitableCommand command);

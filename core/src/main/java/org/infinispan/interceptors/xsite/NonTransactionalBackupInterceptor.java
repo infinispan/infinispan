@@ -52,13 +52,18 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    }
 
    private CompletableFuture<Void> handleSingleKeyWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      Object result = ctx.forkInvocationSync(command);
-      if (skipXSiteBackup(command)) {
-         return ctx.shortCircuit(result);
-      } else if (command.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(command.getKey())) {
-         backupSender.processResponses(backupSender.backupWrite(transform(command)), command);
-      }
-      return ctx.shortCircuit(result);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null)
+            throw throwable;
+
+         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
+         if (!skipXSiteBackup(dataWriteCommand)) {
+            if (dataWriteCommand.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(dataWriteCommand.getKey())) {
+               backupSender.processResponses(backupSender.backupWrite(transform(dataWriteCommand)), dataWriteCommand);
+            }
+         }
+         return null;
+      });
    }
 
    private WriteCommand transform(DataWriteCommand command) {

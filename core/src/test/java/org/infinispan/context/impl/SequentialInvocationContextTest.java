@@ -7,7 +7,6 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.interceptors.InterceptorChainTest;
 import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.interceptors.SequentialInterceptorChain;
@@ -35,7 +34,7 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
    public void testSingleInterceptor() {
       SequentialInterceptor[] interceptors = {(ctx, command) -> ctx.shortCircuit(null)};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       Object returnValue = chain.invoke(context, command);
       assertEquals(null, returnValue);
@@ -45,7 +44,7 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
       CompletableFuture<Object> f = new CompletableFuture<>();
       SequentialInterceptor[] interceptors = {(ctx, command) -> f.handle((rv, t) -> null)};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       CompletableFuture<Object> invokeFuture = chain.invokeAsync(context, command);
       assertFalse(invokeFuture.isDone());
@@ -56,9 +55,9 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
 
    public void testOnReturnSync() {
       SequentialInterceptor[] interceptors = {(ctx, command) -> ctx
-            .onReturn((ctx1, command1, rv, t) -> CompletableFuture.completedFuture("v"))};
+            .onReturn((rCtx, rCommand, rv, t) -> CompletableFuture.completedFuture("v"))};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       Object returnValue = chain.invoke(context, command);
       assertEquals("v", returnValue);
@@ -66,9 +65,9 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
 
    public void testOnReturnAsync() throws ExecutionException, InterruptedException {
       CompletableFuture<Object> f = new CompletableFuture<>();
-      SequentialInterceptor[] interceptors = {(ctx, command) -> ctx.onReturn((ctx1, command1, rv, t) -> f)};
+      SequentialInterceptor[] interceptors = {(ctx, command) -> ctx.onReturn((rCtx, rCommand, rv, t) -> f)};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       CompletableFuture<Object> invokeFuture = chain.invokeAsync(context, command);
       assertFalse(invokeFuture.isDone());
@@ -81,7 +80,7 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
       CompletableFuture<Object> f = new CompletableFuture<>();
       SequentialInterceptor[] interceptors = {(ctx, command) -> f.thenCompose(v -> ctx.continueInvocation())};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       CompletableFuture<Object> invokeFuture = chain.invokeAsync(context, command);
       assertFalse(invokeFuture.isDone());
@@ -94,7 +93,7 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
       SequentialInterceptor[] interceptors =
             {(ctx, command) -> ctx.shortCircuit("v1"), (ctx, command) -> ctx.shortCircuit("v2")};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       Object returnValue = chain.invoke(context, command);
       assertEquals("v1", returnValue);
@@ -105,7 +104,7 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
       SequentialInterceptor[] interceptors = {(ctx, command) -> f.thenCompose(v -> ctx.shortCircuit("v1")),
                                               (ctx, command) -> ctx.shortCircuit("v2")};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       CompletableFuture<Object> invokeFuture = chain.invokeAsync(context, command);
       assertFalse(invokeFuture.isDone());
@@ -121,7 +120,7 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
       }, (ctx, command) -> ctx
             .shortCircuit(command instanceof LockControlCommand ? "subCommand" : "command")};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       Object returnValue = chain.invoke(context, command);
       assertEquals("subCommand", returnValue);
@@ -129,25 +128,24 @@ public class SequentialInvocationContextTest extends AbstractInfinispanTest {
 
    public void testForkInvocation() {
       SequentialInterceptor[] interceptors = {(ctx, command) -> ctx
-            .forkInvocation(subCommand, (ctx1, command1, rv, t) -> ctx.shortCircuit(rv)),
+            .forkInvocation(subCommand, (rCtx, rCommand, rv, t) -> rCtx.shortCircuit(rv)),
                                               (ctx, command) -> ctx
             .shortCircuit(command instanceof LockControlCommand ? "subCommand" : "command")};
       SequentialInterceptorChain chain = newInterceptorChain(interceptors);
-      InvocationContext context = newInvocationContext(chain);
+      InvocationContext context = newInvocationContext();
 
       Object returnValue = chain.invoke(context, command);
       assertEquals("subCommand", returnValue);
    }
 
-   protected SingleKeyNonTxInvocationContext newInvocationContext(SequentialInterceptorChain chain) {
+   protected SingleKeyNonTxInvocationContext newInvocationContext() {
       // Actual implementation doesn't matter, we are only testing the BaseSequentialInvocationContext methods
       return new SingleKeyNonTxInvocationContext(null, AnyEquivalence.getInstance());
    }
 
    protected SequentialInterceptorChain newInterceptorChain(SequentialInterceptor[] interceptors) {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
-      componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(),
-            InterceptorChainTest.class.getClassLoader());
+      componentMetadataRepo.initialize(Collections.emptyList(), InterceptorChainTest.class.getClassLoader());
 
       SequentialInterceptorChain chain = new SequentialInterceptorChainImpl(componentMetadataRepo);
       for (SequentialInterceptor i : interceptors) {

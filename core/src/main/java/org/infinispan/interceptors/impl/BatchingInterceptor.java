@@ -64,25 +64,25 @@ public class BatchingInterceptor extends DDSequentialInterceptor {
          return ctx.continueInvocation();
       }
 
-      try {
-         transactionManager.resume(tx);
-         InvocationContext txInvocationContext = ctx;
-         if (!ctx.isInTxScope()) {
-            // If there's no ongoing tx then BatchingInterceptor creates one and then invokes the chain again,
-            // so that all interceptors in the stack will be executed in a transactional context.
-            log.tracef("Called with a non-tx invocation context: %s", ctx);
-            txInvocationContext = invocationContextFactory.createInvocationContext(true, -1);
-         }
-         // Before sequential interceptors, we could continue the invocation with the next interceptor,
-         // with invokeNextInterceptor(txInvocationContext, command).
-         // But now we keep track of the invocation state (e.g. the current interceptor) in the invocation
-         // context itself (BaseSequentialInvocationContext, to be precise), so we have to restart the
-         // invocation with the new context instance.
-         // TODO Move the creation of the proper invocation context out of the interceptor and into CacheImpl
-         return ctx.shortCircuit(invoker.invoke(txInvocationContext, command));
-      } finally {
+      ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
             transactionManager.suspend();
+         return null;
+      });
+
+      transactionManager.resume(tx);
+      if (ctx.isInTxScope()) {
+         return ctx.continueInvocation();
       }
+
+      log.tracef("Called with a non-tx invocation context: %s", ctx);
+      InvocationContext txInvocationContext = invocationContextFactory.createInvocationContext(true, -1);
+      // Before sequential interceptors, we could continue the invocation with the next interceptor,
+      // with invokeNextInterceptor(txInvocationContext, command).
+      // But now we keep track of the invocation state (e.g. the current interceptor) in the invocation
+      // context itself (BaseSequentialInvocationContext, to be precise), so we have to restart the
+      // invocation with the new context instance.
+      // TODO Move the creation of the proper invocation context out of the interceptor and into CacheImpl
+      return invoker.invokeAsync(txInvocationContext, command).thenCompose(ctx::shortCircuit);
    }
 }

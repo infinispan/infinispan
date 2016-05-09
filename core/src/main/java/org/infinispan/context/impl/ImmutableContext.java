@@ -5,7 +5,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.impl.BaseSequentialInvocationContext;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -19,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
  * 
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
  */
-public final class ImmutableContext extends BaseSequentialInvocationContext {
+public final class ImmutableContext implements InvocationContext {
    
    public static final ImmutableContext INSTANCE = new ImmutableContext();
 

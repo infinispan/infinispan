@@ -4,11 +4,11 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -25,6 +25,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.impl.AsyncSubCommandInvoker;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -40,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 /**
  * Interceptor that handles L1 logic for non-transactional caches.
@@ -121,14 +123,11 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    protected CompletableFuture<Void> performCommandWithL1WriteIfAble(InvocationContext ctx, DataCommand command, boolean isEntry,
                                                 boolean shouldAlwaysRunNextInterceptor, boolean registerL1) throws Throwable {
-      Object returnValue;
       if (ctx.isOriginLocal()) {
          Object key = command.getKey();
          // If the command isn't going to return a remote value - just pass it down the interceptor chain
-         if (skipL1Lookup(command, key)) {
-            returnValue = ctx.forkInvocationSync(command);
-         } else {
-            returnValue = performL1Lookup(ctx, shouldAlwaysRunNextInterceptor, key, command, isEntry);
+         if (!skipL1Lookup(command, key)) {
+            return performL1Lookup(ctx, shouldAlwaysRunNextInterceptor, key, isEntry);
          }
       } else {
          // If this is a remote command, and we found a value in our cache
@@ -136,13 +135,12 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          if (registerL1) {
             l1Manager.addRequestor(command.getKey(), ctx.getOrigin());
          }
-         returnValue = ctx.forkInvocationSync(command);
       }
-      return ctx.shortCircuit(returnValue);
+      return ctx.continueInvocation();
    }
 
-   protected Object performL1Lookup(InvocationContext ctx, boolean runInterceptorOnConflict, Object key,
-                                     DataCommand command, boolean isEntry) throws Throwable {
+   protected CompletableFuture<Void> performL1Lookup(InvocationContext ctx, boolean runInterceptorOnConflict,
+         Object key, boolean isEntry) throws Throwable {
       // Most times the putIfAbsent will be successful, so not doing a get first
       L1WriteSynchronizer l1WriteSync = new L1WriteSynchronizer(dataContainer, l1Lifespan, stateTransferLock,
                                                                 cdl);
@@ -152,52 +150,42 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       // a concurrent request that also wants to do a remote get for the key.  If there was another thread requesting
       // the key we should wait until they get the value instead of doing another remote get.
       if (presentSync == null) {
-         try {
-            // Note this is the same synchronizer we just created that is registered with the L1Manager
-            l1Manager.registerL1WriteSynchronizer(key, l1WriteSync);
-            Object returnValue;
-            try {
-               returnValue = ctx.forkInvocationSync(command);
+         // Note this is the same synchronizer we just created that is registered with the L1Manager
+         l1Manager.registerL1WriteSynchronizer(key, l1WriteSync);
+         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            if (throwable != null) {
+               l1WriteSync.retrievalEncounteredException(throwable);
             }
-            finally {
-               l1Manager.unregisterL1WriteSynchronizer(key, l1WriteSync);
-            }
-            return returnValue;
-         }
-         catch (Throwable t) {
-            l1WriteSync.retrievalEncounteredException(t);
-            throw t;
-         }
-         finally {
+            // TODO Do we need try/finally here?
+            l1Manager.unregisterL1WriteSynchronizer(key, l1WriteSync);
             concurrentWrites.remove(key);
-         }
+            return null;
+         });
       } else {
          if (trace) {
             log.tracef("Found current request for key %s, waiting for their invocation's response", key);
          }
+         Object returnValue;
          try {
-            Object returnValue;
-            try {
-               returnValue = presentSync.get(replicationTimeout, TimeUnit.MILLISECONDS);
-               // Write commands could have different values so we always want to run them after we know the remote
-               // value is retrieved.  Gets however only need the return value so we don't need to run the additional
-               // interceptors
-               if (runInterceptorOnConflict) {
-                  returnValue = ctx.forkInvocationSync(command);
-               } else if (!isEntry && returnValue instanceof InternalCacheEntry) {
-                  returnValue = ((InternalCacheEntry)returnValue).getValue();
-               }
-            } catch (TimeoutException e) {
-               // This should never be required since the status is always set in a try catch above - but IBM doesn't...
-               log.warnf("Synchronizer didn't return in %s milliseconds - running command normally!", replicationTimeout);
-               // Always run next interceptor if a timeout occurs
-               returnValue = ctx.forkInvocationSync(command);
-            }
-            return returnValue;
-         }
-         catch (ExecutionException e) {
+            returnValue = presentSync.get(replicationTimeout, TimeUnit.MILLISECONDS);
+         } catch (TimeoutException e) {
+            // This should never be required since the status is always set in a try catch above - but IBM
+            // doesn't...
+            log.warnf("Synchronizer didn't return in %s milliseconds - running command normally!",
+                  replicationTimeout);
+            // Always run next interceptor if a timeout occurs
+            return ctx.continueInvocation();
+         } catch (ExecutionException e) {
             throw e.getCause();
          }
+         if (runInterceptorOnConflict) {
+            // The command needs to write something. Execute the rest of the invocation chain.
+            return ctx.continueInvocation();
+         } else if (!isEntry && returnValue instanceof InternalCacheEntry) {
+            // The command is read-only, and we found the value in the L1 cache. Return it.
+            returnValue = ((InternalCacheEntry) returnValue).getValue();
+         }
+         return ctx.shortCircuit(returnValue);
       }
    }
 
@@ -224,7 +212,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    @Override
    public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Future<?> invalidationFuture = null;
       Set<Object> keys = command.getMap().keySet();
       Set<Object> toInvalidate = new HashSet<Object>(keys.size());
       for (Object k : keys) {
@@ -232,19 +219,22 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             toInvalidate.add(k);
          }
       }
-      if (!toInvalidate.isEmpty()) {
-         invalidationFuture = l1Manager.flushCache(toInvalidate, ctx.getOrigin(), true);
-      }
 
-      Object result = ctx.forkInvocationSync(command);
-      processInvalidationResult(command, invalidationFuture);
-      //we also need to remove from L1 the keys that are not ours
-      for (Object o : command.getAffectedKeys()) {
-         if (!cdl.localNodeIsOwner(o)) {
-            removeFromL1(ctx, o);
-         }
-      }
-      return ctx.shortCircuit(result);
+      Future<?> invalidationFuture =
+            !toInvalidate.isEmpty() ? l1Manager.flushCache(toInvalidate, ctx.getOrigin(), true) : null;
+      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null)
+            throw throwable;
+
+         PutMapCommand putMapCommand = (PutMapCommand) rCommand;
+         processInvalidationResult(putMapCommand, invalidationFuture);
+         //we also need to remove from L1 the keys that are not ours
+         Stream<VisitableCommand> subCommandStream =
+               putMapCommand.getAffectedKeys().stream().filter(k -> !cdl.localNodeIsOwner(k))
+                     .map(k -> removeFromL1Command(rCtx, k));
+         return AsyncSubCommandInvoker.forEach(rCtx, rCommand, rv, subCommandStream,
+               (rCtx1, rCommand1, rv1, throwable1) -> rCtx1.shortCircuit(rv));
+      });
    }
 
    @Override
@@ -261,7 +251,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       return ctx.continueInvocation();
    }
 
-   private void abortL1UpdateOrWait(Object key) throws InterruptedException {
+   private void abortL1UpdateOrWait(Object key) {
       L1WriteSynchronizer sync = concurrentWrites.remove(key);
       if (sync != null) {
          if (sync.trySkipL1Update()) {
@@ -278,6 +268,10 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             try {
                sync.get();
                success = true;
+            } catch (InterruptedException e) {
+               success = false;
+               // Save the interruption status, but don't throw an explicit exception
+               Thread.currentThread().interrupt();
             }
             catch (ExecutionException e) {
                // We don't care what the L1 update exception was
@@ -297,22 +291,29 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          }
          return ctx.continueInvocation();
       }
-      Future<?> l1InvalidationFuture = invalidateL1(ctx, command, assumeOriginKeptEntryInL1);
-      Object returnValue = ctx.forkInvocationSync(command);
-      processInvalidationResult(command, l1InvalidationFuture);
-      removeFromLocalL1(ctx, command);
-      return ctx.shortCircuit(returnValue);
+      Future<?> l1InvalidationFuture = invalidateL1InCluster(ctx, command, assumeOriginKeptEntryInL1);
+      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null)
+            throw throwable;
+
+         DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
+         processInvalidationResult(dataWriteCommand, l1InvalidationFuture);
+         return removeFromLocalL1(rCtx, dataWriteCommand, rv);
+      });
    }
 
-   private void removeFromLocalL1(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   private CompletableFuture<Void> removeFromLocalL1(InvocationContext ctx, DataWriteCommand command,
+         Object returnValue) throws Throwable {
       if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
-         removeFromL1(ctx, command.getKey());
+         return ctx.forkInvocation(removeFromL1Command(ctx, command.getKey()),
+               (rCtx, rCommand, rv, throwable) -> rCtx.shortCircuit(returnValue));
       } else if (trace) {
          log.trace("Allowing entry to commit as local node is owner");
       }
+      return ctx.shortCircuit(returnValue);
    }
 
-   private void removeFromL1(InvocationContext ctx, Object key) throws Throwable {
+   private VisitableCommand removeFromL1Command(InvocationContext ctx, Object key) {
       if (trace) {
          log.tracef("Removing entry from L1 for key %s", key);
       }
@@ -320,8 +321,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       ctx.removeLookedUpEntry(key);
       entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, true, true);
 
-      InvalidateCommand command = commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET, Collections.singleton(key));
-      ctx.forkInvocationSync(command);
+      return commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET,
+            Collections.singleton(key));
    }
 
    private void processInvalidationResult(FlagAffectedCommand command, Future<?> l1InvalidationFuture) throws InterruptedException, ExecutionException {
@@ -332,7 +333,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   private Future<?> invalidateL1(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) {
+   private Future<?> invalidateL1InCluster(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) {
       Future<?> l1InvalidationFuture = null;
       if (cdl.localNodeIsOwner(command.getKey())) {
          l1InvalidationFuture = l1Manager.flushCache(Collections.singletonList(command.getKey()), ctx.getOrigin(), assumeOriginKeptEntryInL1);

@@ -24,7 +24,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -179,25 +178,29 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       CacheTopology beginTopology = stateTransferManager.getCacheTopology();
       consistentHashUpdater.accept(beginTopology.getReadConsistentHash());
       updateTopologyId(command);
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } catch (CacheException e) {
-         Throwable ce = e;
+      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null)
+            return rCtx.shortCircuit(rv);
+
+         Throwable ce = throwable;
          while (ce instanceof RemoteException) {
             ce = ce.getCause();
          }
          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-            throw e;
+            throw throwable;
 
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
-         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s", currentTopologyId(), command);
-         int newTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
-         command.setTopologyId(newTopologyId);
+         if (trace)
+            log.tracef("Retrying command because of topology change, current topology is %d: %s",
+                  currentTopologyId(), rCommand);
+         FlagAffectedCommand flagAffectedCommand = (FlagAffectedCommand) rCommand;
+         int newTopologyId = Math.max(currentTopologyId(), flagAffectedCommand.getTopologyId() + 1);
+         flagAffectedCommand.setTopologyId(newTopologyId);
          waitForTopology(newTopologyId);
 
-         return visitReadCommand(ctx, command, consistentHashUpdater);
-      }
+         return visitReadCommand(rCtx, flagAffectedCommand, consistentHashUpdater);
+      });
    }
 
    @Override
@@ -231,45 +234,50 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       }
       updateTopologyId(command);
 
-      int retryTopologyId = -1;
-      Object localResult = null;
-      try {
-         localResult = ctx.forkInvocationSync(command);
-      } catch (OutdatedTopologyException e) {
-         // This can only happen on the originator
-         retryTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
-      }
+      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+         Object localResult = rv;
+         TransactionBoundaryCommand txCommand = (TransactionBoundaryCommand) rCommand;
 
-      // We need to forward the command to the new owners, if the command was asynchronous
-      boolean async = isTxCommandAsync(command);
-      if (async) {
-         stateTransferManager.forwardCommandIfNeeded(command, getAffectedKeys(ctx, command), origin);
-         return ctx.shortCircuit(null);
-      }
+         int retryTopologyId = -1;
+         if (throwable instanceof OutdatedTopologyException) {
+            // This can only happen on the originator
+            retryTopologyId = Math.max(currentTopologyId(), txCommand.getTopologyId() + 1);
+         } else if (throwable != null) {
+            throw throwable;
+         }
 
-      if (ctx.isOriginLocal()) {
-         // On the originator, we only retry if we got an OutdatedTopologyException
-         // Which could be caused either by an owner leaving or by an owner having a newer topology
-         // No need to retry just because we have a new topology on the originator, all entries were wrapped anyway
-         if (retryTopologyId > 0) {
-            // Only the originator can retry the command
-            command.setTopologyId(retryTopologyId);
-            waitForTransactionData(retryTopologyId);
-            if (command instanceof PrepareCommand) {
-               ((PrepareCommand) command).setRetriedCommand(true);
+         // We need to forward the command to the new owners, if the command was asynchronous
+         boolean async = isTxCommandAsync(txCommand);
+         if (async) {
+            stateTransferManager.forwardCommandIfNeeded(txCommand, getAffectedKeys(rCtx, txCommand), origin);
+            return rCtx.shortCircuit(rv);
+         }
+
+         if (rCtx.isOriginLocal()) {
+            // On the originator, we only retry if we got an OutdatedTopologyException
+            // Which could be caused either by an owner leaving or by an owner having a newer topology
+            // No need to retry just because we have a new topology on the originator, all entries were
+            // wrapped anyway
+
+            if (retryTopologyId > 0) {
+               // Only the originator can retry the command
+               txCommand.setTopologyId(retryTopologyId);
+               waitForTransactionData(retryTopologyId);
+               if (txCommand instanceof PrepareCommand) {
+                  ((PrepareCommand) txCommand).setRetriedCommand(true);
+               }
+
+               log.tracef("Retrying command %s for topology %d", txCommand, retryTopologyId);
+               return handleTxCommand((TxInvocationContext) rCtx, txCommand);
             }
-
-            log.tracef("Retrying command %s for topology %d", command, retryTopologyId);
-            return handleTxCommand(ctx, command);
+         } else {
+            if (currentTopologyId() > txCommand.getTopologyId()) {
+               // Signal the originator to retry
+               localResult = UnsureResponse.INSTANCE;
+            }
          }
-      } else {
-         if (currentTopologyId() > command.getTopologyId()) {
-            // Signal the originator to retry
-            localResult = UnsureResponse.INSTANCE;
-         }
-      }
-
-      return ctx.shortCircuit(localResult);
+         return rCtx.shortCircuit(localResult);
+      });
    }
 
    private boolean isTxCommandAsync(TransactionBoundaryCommand command) {
@@ -301,37 +309,37 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       }
       updateTopologyId(command);
 
-      int retryTopologyId = -1;
-      Object localResult = null;
-      try {
-         localResult = ctx.forkInvocationSync(command);
-      } catch (OutdatedTopologyException e) {
-         // This can only happen on the originator
-         retryTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
-      }
-
-      if (ctx.isOriginLocal()) {
-         // On the originator, we only retry if we got an OutdatedTopologyException
-         // Which could be caused either by an owner leaving or by an owner having a newer topology
-         // No need to retry just because we have a new topology on the originator, all entries were wrapped anyway
-         if (retryTopologyId > 0) {
-            // Only the originator can retry the command
-            command.setTopologyId(retryTopologyId);
-            waitForTransactionData(retryTopologyId);
-
-            log.tracef("Retrying command %s for topology %d", command, retryTopologyId);
-            return handleTxWriteCommand(ctx, command);
+      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+         int retryTopologyId = -1;
+         WriteCommand writeCommand = (WriteCommand) rCommand;
+         if (throwable instanceof OutdatedTopologyException) {
+            // This can only happen on the originator
+            retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
+         } else if (throwable != null) {
+            throw throwable;
          }
-      } else {
-         if (currentTopologyId() > command.getTopologyId()) {
-            // Signal the originator to retry
-            return ctx.shortCircuit(UnsureResponse.INSTANCE);
-         }
-      }
 
-      // No need to forward tx write commands.
-      // Ancillary LockControlCommands will be forwarded by handleTxCommand on the target nodes.
-      return ctx.shortCircuit(localResult);
+         if (rCtx.isOriginLocal()) {
+            // On the originator, we only retry if we got an OutdatedTopologyException
+            // Which could be caused either by an owner leaving or by an owner having a newer topology
+            // No need to retry just because we have a new topology on the originator, all entries were
+            // wrapped anyway
+            if (retryTopologyId > 0) {
+               // Only the originator can retry the command
+               writeCommand.setTopologyId(retryTopologyId);
+               waitForTransactionData(retryTopologyId);
+
+               log.tracef("Retrying command %s for topology %d", writeCommand, retryTopologyId);
+               return handleTxWriteCommand(rCtx, writeCommand);
+            }
+         } else {
+            if (currentTopologyId() > writeCommand.getTopologyId()) {
+               // Signal the originator to retry
+               return rCtx.shortCircuit(UnsureResponse.INSTANCE);
+            }
+         }
+         return rCtx.shortCircuit(rv);
+      });
    }
 
    /**
@@ -354,29 +362,34 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          return ctx.continueInvocation();
       }
 
-      int commandTopologyId = command.getTopologyId();
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } catch (CacheException e) {
-         Throwable ce = e;
+      return ctx.forkInvocation(command, (rCtx, rCommand, rv, throwable) -> {
+         if (throwable == null)
+            return rCtx.shortCircuit(rv);
+
+         Throwable ce = throwable;
          while (ce instanceof RemoteException) {
             ce = ce.getCause();
          }
          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-            throw e;
+            throw throwable;
 
-         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
-         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
+         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the
+         // next topology.
+         // Without this, we could retry the command too fast and we could get the
+         // OutdatedTopologyException again.
          int currentTopologyId = currentTopologyId();
-         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s",
-               currentTopologyId, command);
+         WriteCommand writeCommand = (WriteCommand) rCommand;
+         if (trace)
+            log.tracef("Retrying command because of topology change, current topology is %d: %s",
+                  currentTopologyId, writeCommand);
+         int commandTopologyId = writeCommand.getTopologyId();
          int newTopologyId = Math.max(currentTopologyId, commandTopologyId + 1);
-         command.setTopologyId(newTopologyId);
+         writeCommand.setTopologyId(newTopologyId);
          waitForTransactionData(newTopologyId);
 
-         command.addFlag(Flag.COMMAND_RETRY);
-         return handleNonTxWriteCommand(ctx, command);
-      }
+         writeCommand.addFlag(Flag.COMMAND_RETRY);
+         return handleNonTxWriteCommand(rCtx, writeCommand);
+      });
    }
 
    @Override

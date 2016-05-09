@@ -16,7 +16,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.logging.Log;
 
@@ -42,7 +41,7 @@ public abstract class BaseRpcInterceptor extends DDSequentialInterceptor {
    protected abstract Log getLog();
 
    @Inject
-   public void inject(RpcManager rpcManager, StateConsumer stateConsumer) {
+   public void inject(RpcManager rpcManager) {
       this.rpcManager = rpcManager;
    }
 

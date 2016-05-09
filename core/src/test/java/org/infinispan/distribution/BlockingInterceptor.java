@@ -59,15 +59,14 @@ public class BlockingInterceptor extends DDSequentialInterceptor {
 
    @Override
    protected CompletableFuture<Void> handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      try {
-         if (!blockAfter) {
-            blockIfNeeded(ctx, command);
-         }
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         if (blockAfter) {
-            blockIfNeeded(ctx, command);
-         }
+      if (!blockAfter) {
+         blockIfNeeded(ctx, command);
       }
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (blockAfter) {
+            blockIfNeeded(rCtx, rCommand);
+         }
+         return null;
+      });
    }
 }

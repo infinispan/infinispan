@@ -48,33 +48,34 @@ public class GroupingInterceptor extends DDSequentialInterceptor {
       final String groupName = command.getGroupName();
       command.setGroupOwner(isGroupOwner(groupName));
       if (!command.isGroupOwner() || !isPassivationEnabled) {
-         Object result = ctx.forkInvocationSync(command);
-         if (result instanceof List) {
-            //noinspection unchecked
-            filter((List<CacheEntry>) result);
-         }
-         return ctx.shortCircuit(result);
+         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            if (rv instanceof List) {
+               //noinspection unchecked
+               filter((List<CacheEntry>) rv);
+            }
+            return null;
+         });
       }
+
       KeyListener listener = new KeyListener(groupName, groupManager, factory);
       //this is just to try to make the snapshot the most recent possible by picking some modification on the fly.
       cacheNotifier.addListener(listener);
-      try {
-         Object result = ctx.forkInvocationSync(command);
-         if (result instanceof List) {
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         cacheNotifier.removeListener(listener);
+
+         if (rv instanceof List) {
             //noinspection unchecked
-            ((List) result).addAll(listener.activatedKeys);
+            ((List) rv).addAll(listener.activatedKeys);
             //noinspection unchecked
-            filter((List<CacheEntry>) result);
-         } else if (result instanceof Map) {
+            filter((List<CacheEntry>) rv);
+         } else if (rv instanceof Map) {
             for (CacheEntry entry : listener.activatedKeys) {
                //noinspection unchecked
-               ((Map) result).put(entry.getKey(), entry.getValue());
+               ((Map) rv).put(entry.getKey(), entry.getValue());
             }
          }
-         return ctx.shortCircuit(result);
-      } finally {
-         cacheNotifier.removeListener(listener);
-      }
+         return null;
+      });
    }
 
    private void filter(List<CacheEntry> list) {

@@ -35,44 +35,50 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
 
    @Override
    public final CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-
       if (ctx.isOriginLocal()) {
          ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
          //for local mode keys
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
-         Object retVal = ctx.forkInvocationSync(command);
-         if (shouldCommitDuringPrepare(command, ctx)) {
-            commitContextEntries(ctx, null, null);
-         }
-         return ctx.shortCircuit(retVal);
+         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+            if (throwable == null && shouldCommitDuringPrepare((PrepareCommand) rCommand, ctx)) {
+               commitContextEntries(ctx, null, null);
+            }
+            return null;
+         });
       }
 
       //Remote context, delivered in total order
 
       wrapEntriesForPrepare(ctx, command);
 
-      Object retVal = ctx.forkInvocationSync(command);
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null)
+            throw throwable;
 
-      EntryVersionsMap versionsMap = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx,
-                                                                                (VersionedPrepareCommand) command);
+         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
+         VersionedPrepareCommand prepareCommand = (VersionedPrepareCommand) rCommand;
+         EntryVersionsMap versionsMap =
+               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
+                     prepareCommand);
 
-      if (command.isOnePhaseCommit()) {
-         commitContextEntries(ctx, null, null);
-      } else {
-         if (trace)
-            log.tracef("Transaction %s will be committed in the 2nd phase", ctx.getGlobalTransaction().globalId());
-      }
+         if (prepareCommand.isOnePhaseCommit()) {
+            commitContextEntries(txInvocationContext, null, null);
+         } else {
+            if (trace)
+               log.tracef("Transaction %s will be committed in the 2nd phase",
+                     txInvocationContext.getGlobalTransaction().globalId());
+         }
 
-      return ctx.shortCircuit(versionsMap == null ? retVal : new ArrayList<Object>(versionsMap.keySet()));
+         return CompletableFuture.completedFuture(versionsMap == null ? rv : new ArrayList<Object>(versionsMap.keySet()));
+      });
    }
 
    @Override
    public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      try {
-         return ctx.shortCircuit(ctx.forkInvocationSync(command));
-      } finally {
-         commitContextEntries(ctx, null, null);
-      }
+      return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         commitContextEntries(rCtx, null, null);
+         return null;
+      });
    }
 
    @Override

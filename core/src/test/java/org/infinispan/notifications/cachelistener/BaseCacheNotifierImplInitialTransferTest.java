@@ -12,7 +12,6 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.interceptors.EmptySequentialInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
@@ -116,7 +115,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
                            mock(DistributionManager.class), new InternalEntryFactoryImpl(),
                            mock(ClusterEventManager.class));
       n.start();
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance(), EmptySequentialInterceptorChain.INSTANCE);
+      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
    }
 
 //   TODO: commented out until local listners support includeCurrentState

@@ -29,7 +29,7 @@ public interface SequentialInterceptor {
     * <li>The interceptor can call {@link SequentialInvocationContext#shortCircuit(Object)} in order to skip
     * the execution of the rest of the chain (and the command itself).</li>
     * <li>The interceptor can call
-    * {@link SequentialInvocationContext#forkInvocation(VisitableCommand, ReturnHandler)} in order to invoke
+    * {@link SequentialInvocationContext#forkInvocation(VisitableCommand, ForkReturnHandler)} in order to invoke
     * a new command, starting with the next interceptor in the chain. The return handler then behaves as
     * another {@code visitCommand} invocation: it can allow the invocation of the original command to continue
     * with the next interceptor, short-circuit the invocation, or fork another command.</li>
@@ -39,8 +39,9 @@ public interface SequentialInterceptor {
     * </ul>
     *
     * <p>Thread safety: The interceptor must only invoke methods on the context or command in the thread
-    * calling {@link #visitCommand(InvocationContext, VisitableCommand)} or
-    * {@link ReturnHandler#handle(InvocationContext, VisitableCommand, Object, Throwable)}.</p>
+    * calling {@code visitCommand(InvocationContext, VisitableCommand)},
+    * {@link ReturnHandler#handle(InvocationContext, VisitableCommand, Object, Throwable)}, or
+    * {@link ForkReturnHandler#handle(InvocationContext, VisitableCommand, Object, Throwable)}.</p>
     */
    CompletableFuture<Void> visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
 
@@ -53,20 +54,23 @@ public interface SequentialInterceptor {
     * {@code CompletableFuture}. Returning {@code null} is allowed, and will continue the invocation with
     * the next return handler, without modifying the return value and without creating a new
     * {@code CompletableFuture} instance.</p>
+    *
+    * TODO Have different interfaces for processing the return value and for finally-like handlers that don't have access to the return value
+    * TODO At least prohibit null return values and require an already-completed CF with a known value instead.
     */
    interface ReturnHandler {
-      CompletableFuture<Object> handle(InvocationContext ctx, VisitableCommand command, Object rv,
+      CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
             Throwable throwable) throws Throwable;
    }
 
-   /*
-   * A return handler installed with
-   * {@link SequentialInvocationContext#forkInvocation(VisitableCommand, ForkHandler)}.
+   /**
+    * A return handler installed with
+    * {@link SequentialInvocationContext#forkInvocation(VisitableCommand, ForkReturnHandler)}.
     *
     * <p>It must behave just like {@link #visitCommand(InvocationContext, VisitableCommand)}.</p>
-   */
+    */
    interface ForkReturnHandler {
-      CompletableFuture<Void> handle(InvocationContext ctx, VisitableCommand command, Object rv,
+      CompletableFuture<Void> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
             Throwable throwable) throws Throwable;
    }
 }
