@@ -6,8 +6,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class FailoverEventLogListener<K> extends EventLogListener<K> {
-   public BlockingQueue<ClientCacheFailoverEvent> failoverEvents =
-         new ArrayBlockingQueue<ClientCacheFailoverEvent>(128);
+   public BlockingQueue<ClientCacheFailoverEvent> failoverEvents = new ArrayBlockingQueue<>(128);
 
    @Override @SuppressWarnings("unchecked")
    public <E extends ClientEvent> BlockingQueue<E> queue(ClientEvent.Type type) {

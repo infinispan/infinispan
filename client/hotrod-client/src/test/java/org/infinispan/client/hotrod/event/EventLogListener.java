@@ -24,16 +24,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.assertAnyEquals;
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 
 @ClientListener
 public class EventLogListener<K> {
-   public BlockingQueue<ClientCacheEntryCreatedEvent> createdEvents =
-         new ArrayBlockingQueue<ClientCacheEntryCreatedEvent>(128);
-   public BlockingQueue<ClientCacheEntryModifiedEvent> modifiedEvents =
-         new ArrayBlockingQueue<ClientCacheEntryModifiedEvent>(128);
-   public BlockingQueue<ClientCacheEntryRemovedEvent> removedEvents =
-         new ArrayBlockingQueue<ClientCacheEntryRemovedEvent>(128);
+   public BlockingQueue<ClientCacheEntryCreatedEvent> createdEvents = new ArrayBlockingQueue<>(128);
+   public BlockingQueue<ClientCacheEntryModifiedEvent> modifiedEvents = new ArrayBlockingQueue<>(128);
+   public BlockingQueue<ClientCacheEntryRemovedEvent> removedEvents = new ArrayBlockingQueue<>(128);
    public BlockingQueue<ClientCacheEntryExpiredEvent> expiredEvents = new ArrayBlockingQueue<>(128);
 
    private final boolean compatibility;
