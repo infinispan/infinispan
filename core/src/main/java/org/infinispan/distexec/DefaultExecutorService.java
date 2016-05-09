@@ -24,8 +24,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.responses.Response;
@@ -65,28 +65,28 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       @Override
       public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
          return thisAddress.isSameMachine(otherAddress);
-      };
+      }
    };
 
    private static final NodeFilter SAME_RACK_FILTER = new NodeFilter(){
       @Override
       public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
          return thisAddress.isSameRack(otherAddress);
-      };
+      }
    };
 
    private static final NodeFilter SAME_SITE_FILTER = new NodeFilter(){
       @Override
       public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
          return thisAddress.isSameSite(otherAddress);
-      };
+      }
    };
 
    private static final NodeFilter ALL_FILTER = new NodeFilter(){
       @Override
       public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
          return true;
-      };
+      }
    };
 
    public static final DistributedTaskFailoverPolicy NO_FAILOVER = new NoTaskFailoverPolicy();
@@ -97,7 +97,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    protected final AtomicBoolean isShutdown = new AtomicBoolean(false);
    protected final AdvancedCache cache;
    protected final RpcManager rpc;
-   protected final InterceptorChain invoker;
+   protected final AsyncInterceptorChain invoker;
    protected final CommandsFactory factory;
    protected final Marshaller marshaller;
    protected final ExecutorService localExecutorService;
@@ -181,7 +181,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
 
       this.rpc = SecurityActions.getCacheRpcManager(cache);
-      this.invoker = registry.getComponent(InterceptorChain.class);
+      this.invoker = registry.getComponent(AsyncInterceptorChain.class);
       this.factory = registry.getComponent(CommandsFactory.class);
       this.marshaller = registry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
       this.cancellationService = registry.getComponent(CancellationService.class);
@@ -657,7 +657,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
    }
 
    private void ensureFullCache(AdvancedCache<?, ?> cache) {
-      List<SequentialInterceptor> interceptors = SecurityActions.getInterceptorChain(cache);
+      List<AsyncInterceptor> interceptors = SecurityActions.getInterceptorChain(cache);
       if (interceptors == null || interceptors.isEmpty()) {
          throw log.distributedExecutorsNotSupported();
       }

@@ -42,7 +42,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    public void testContentsOfContext() throws Exception {
       Cache<Key, String> c = cacheManager.getCache();
       ContextExtractingInterceptor cex = new ContextExtractingInterceptor();
-      assertTrue(c.getAdvancedCache().getSequentialInterceptorChain().addInterceptorAfter(cex, InvocationContextInterceptor.class));
+      assertTrue(c.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(cex, InvocationContextInterceptor.class));
 
       c.put(new Key("k"), "v");
 

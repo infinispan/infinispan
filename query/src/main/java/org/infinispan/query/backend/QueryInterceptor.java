@@ -27,7 +27,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.query.Transformer;
@@ -62,7 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author anistor@redhat.com
  * @since 4.0
  */
-public final class QueryInterceptor extends DDSequentialInterceptor {
+public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;

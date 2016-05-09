@@ -4,7 +4,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -493,7 +493,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
       }
    }
 
-   private static class SimpleInterceptor extends DDSequentialInterceptor {
+   private static class SimpleInterceptor extends DDAsyncInterceptor {
       private boolean putOkay;
 
       @Override

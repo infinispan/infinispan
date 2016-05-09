@@ -7,7 +7,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public abstract class BaseStateTransferInterceptor extends DDSequentialInterceptor {
+public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
    protected StateTransferManager stateTransferManager;

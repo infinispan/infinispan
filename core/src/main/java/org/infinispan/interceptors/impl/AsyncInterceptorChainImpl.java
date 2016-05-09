@@ -12,8 +12,8 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,21 +34,21 @@ import static org.infinispan.commons.util.Immutables.immutableListReplace;
  */
 @Scope(Scopes.NAMED_CACHE)
 @SuppressWarnings("deprecation")
-public class SequentialInterceptorChainImpl implements SequentialInterceptorChain {
+public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    // Using the same list type everywhere may help with the optimization of the invocation context methods
-   private static final ImmutableListCopy<SequentialInterceptor> EMPTY_INTERCEPTORS_LIST =
-         new ImmutableListCopy<>(new SequentialInterceptor[0]);
-   private static final Log log = LogFactory.getLog(SequentialInterceptorChainImpl.class);
+   private static final ImmutableListCopy<AsyncInterceptor> EMPTY_INTERCEPTORS_LIST =
+         new ImmutableListCopy<>(new AsyncInterceptor[0]);
+   private static final Log log = LogFactory.getLog(AsyncInterceptorChainImpl.class);
 
    private final ComponentMetadataRepo componentMetadataRepo;
 
    private final ReentrantLock lock = new ReentrantLock();
 
    // Modifications are guarded with "lock", but reads do not need synchronization
-   private volatile List<SequentialInterceptor> interceptors = EMPTY_INTERCEPTORS_LIST;
+   private volatile List<AsyncInterceptor> interceptors = EMPTY_INTERCEPTORS_LIST;
    private volatile InterceptorListNode firstInterceptor = null;
 
-   public SequentialInterceptorChainImpl(ComponentMetadataRepo componentMetadataRepo) {
+   public AsyncInterceptorChainImpl(ComponentMetadataRepo componentMetadataRepo) {
       this.componentMetadataRepo = componentMetadataRepo;
    }
 
@@ -60,7 +60,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
-   private void validateCustomInterceptor(Class<? extends SequentialInterceptor> i) {
+   private void validateCustomInterceptor(Class<? extends AsyncInterceptor> i) {
       if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
@@ -74,7 +74,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
     *
     * @param clazz type of interceptor to check for
     */
-   private void checkInterceptor(Class<? extends SequentialInterceptor> clazz) {
+   private void checkInterceptor(Class<? extends AsyncInterceptor> clazz) {
       if (containsInterceptorType(clazz, false))
          throw new CacheConfigurationException("Detected interceptor of type [" + clazz.getName() +
                                                      "] being added to the interceptor chain " +
@@ -82,11 +82,11 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public void addInterceptor(SequentialInterceptor interceptor, int position) {
+   public void addInterceptor(AsyncInterceptor interceptor, int position) {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
-         Class<? extends SequentialInterceptor> interceptorClass = interceptor.getClass();
+         Class<? extends AsyncInterceptor> interceptorClass = interceptor.getClass();
          checkInterceptor(interceptorClass);
          validateCustomInterceptor(interceptorClass);
          interceptors = immutableListAdd(interceptors, position, interceptor);
@@ -114,7 +114,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public void removeInterceptor(Class<? extends SequentialInterceptor> clazz) {
+   public void removeInterceptor(Class<? extends AsyncInterceptor> clazz) {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
@@ -129,18 +129,18 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
-   private boolean interceptorMatches(SequentialInterceptor interceptor,
-                                        Class<? extends SequentialInterceptor> clazz) {
-      Class<? extends SequentialInterceptor> interceptorType = interceptor.getClass();
+   private boolean interceptorMatches(AsyncInterceptor interceptor,
+                                        Class<? extends AsyncInterceptor> clazz) {
+      Class<? extends AsyncInterceptor> interceptorType = interceptor.getClass();
       return clazz == interceptorType;
    }
 
    @Override
-   public boolean addInterceptorAfter(SequentialInterceptor toAdd,
-                                      Class<? extends SequentialInterceptor> afterInterceptor) {
+   public boolean addInterceptorAfter(AsyncInterceptor toAdd,
+                                      Class<? extends AsyncInterceptor> afterInterceptor) {
       lock.lock();
       try {
-         Class<? extends SequentialInterceptor> interceptorClass = toAdd.getClass();
+         Class<? extends AsyncInterceptor> interceptorClass = toAdd.getClass();
          checkInterceptor(interceptorClass);
          validateCustomInterceptor(interceptorClass);
          for (int i = 0; i < interceptors.size(); i++) {
@@ -157,8 +157,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Deprecated
-   public boolean addInterceptorBefore(SequentialInterceptor toAdd,
-                                       Class<? extends SequentialInterceptor> beforeInterceptor,
+   public boolean addInterceptorBefore(AsyncInterceptor toAdd,
+                                       Class<? extends AsyncInterceptor> beforeInterceptor,
                                        boolean isCustom) {
       if (isCustom)
          validateCustomInterceptor(toAdd.getClass());
@@ -166,11 +166,11 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public boolean addInterceptorBefore(SequentialInterceptor toAdd,
-                                       Class<? extends SequentialInterceptor> beforeInterceptor) {
+   public boolean addInterceptorBefore(AsyncInterceptor toAdd,
+                                       Class<? extends AsyncInterceptor> beforeInterceptor) {
       lock.lock();
       try {
-         Class<? extends SequentialInterceptor> interceptorClass = toAdd.getClass();
+         Class<? extends AsyncInterceptor> interceptorClass = toAdd.getClass();
          checkInterceptor(interceptorClass);
          validateCustomInterceptor(interceptorClass);
          for (int i = 0; i < interceptors.size(); i++) {
@@ -187,12 +187,12 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public boolean replaceInterceptor(SequentialInterceptor replacingInterceptor,
-                                     Class<? extends SequentialInterceptor> existingInterceptorType) {
+   public boolean replaceInterceptor(AsyncInterceptor replacingInterceptor,
+                                     Class<? extends AsyncInterceptor> existingInterceptorType) {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
-         Class<? extends SequentialInterceptor> interceptorClass = replacingInterceptor.getClass();
+         Class<? extends AsyncInterceptor> interceptorClass = replacingInterceptor.getClass();
          checkInterceptor(interceptorClass);
          validateCustomInterceptor(interceptorClass);
 
@@ -210,10 +210,10 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public void appendInterceptor(SequentialInterceptor ci, boolean isCustom) {
+   public void appendInterceptor(AsyncInterceptor ci, boolean isCustom) {
       lock.lock();
       try {
-         Class<? extends SequentialInterceptor> interceptorClass = ci.getClass();
+         Class<? extends AsyncInterceptor> interceptorClass = ci.getClass();
          if (isCustom)
             validateCustomInterceptor(interceptorClass);
          checkInterceptor(interceptorClass);
@@ -227,13 +227,13 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    @Override
    public CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command) {
-      return ((BaseSequentialInvocationContext) ctx).invoke(command, firstInterceptor);
+      return ((BaseAsyncInvocationContext) ctx).invoke(command, firstInterceptor);
    }
 
    @Override
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
       try {
-         return ((BaseSequentialInvocationContext) ctx).invokeSync(command, firstInterceptor);
+         return ((BaseAsyncInvocationContext) ctx).invokeSync(command, firstInterceptor);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
@@ -245,9 +245,9 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public <T extends SequentialInterceptor> T findInterceptorExtending(Class<T> interceptorClass) {
-      List<SequentialInterceptor> localInterceptors = this.interceptors;
-      for (SequentialInterceptor interceptor : localInterceptors) {
+   public <T extends AsyncInterceptor> T findInterceptorExtending(Class<T> interceptorClass) {
+      List<AsyncInterceptor> localInterceptors = this.interceptors;
+      for (AsyncInterceptor interceptor : localInterceptors) {
          boolean isSubclass = interceptorClass.isInstance(interceptor);
          if (isSubclass) {
             return interceptorClass.cast(interceptor);
@@ -257,9 +257,9 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public <T extends SequentialInterceptor> T findInterceptorWithClass(Class<T> interceptorClass) {
-      List<SequentialInterceptor> localInterceptors = this.interceptors;
-      for (SequentialInterceptor interceptor : localInterceptors) {
+   public <T extends AsyncInterceptor> T findInterceptorWithClass(Class<T> interceptorClass) {
+      List<AsyncInterceptor> localInterceptors = this.interceptors;
+      for (AsyncInterceptor interceptor : localInterceptors) {
          if (interceptorMatches(interceptor, interceptorClass)) {
             return interceptorClass.cast(interceptor);
          }
@@ -269,8 +269,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    public String toString() {
       StringBuilder sb = new StringBuilder();
-      List<SequentialInterceptor> localInterceptors = this.interceptors;
-      for (SequentialInterceptor interceptor : localInterceptors) {
+      List<AsyncInterceptor> localInterceptors = this.interceptors;
+      for (AsyncInterceptor interceptor : localInterceptors) {
          sb.append("\n\t>> ");
          sb.append(interceptor);
       }
@@ -278,9 +278,9 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public boolean containsInstance(SequentialInterceptor interceptor) {
-      List<SequentialInterceptor> localInterceptors = this.interceptors;
-      for (SequentialInterceptor current : localInterceptors) {
+   public boolean containsInstance(AsyncInterceptor interceptor) {
+      List<AsyncInterceptor> localInterceptors = this.interceptors;
+      for (AsyncInterceptor current : localInterceptors) {
          if (current == interceptor) {
             return true;
          }
@@ -289,16 +289,16 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public boolean containsInterceptorType(Class<? extends SequentialInterceptor> interceptorType) {
+   public boolean containsInterceptorType(Class<? extends AsyncInterceptor> interceptorType) {
       return containsInterceptorType(interceptorType, false);
    }
 
    @Override
-   public boolean containsInterceptorType(Class<? extends SequentialInterceptor> interceptorType,
+   public boolean containsInterceptorType(Class<? extends AsyncInterceptor> interceptorType,
                                           boolean alsoMatchSubClasses) {
-      List<SequentialInterceptor> localInterceptors = this.interceptors;
-      for (SequentialInterceptor interceptor : localInterceptors) {
-         Class<? extends SequentialInterceptor> currentInterceptorType = interceptor.getClass();
+      List<AsyncInterceptor> localInterceptors = this.interceptors;
+      for (AsyncInterceptor interceptor : localInterceptors) {
+         Class<? extends AsyncInterceptor> currentInterceptorType = interceptor.getClass();
          if (alsoMatchSubClasses) {
             if (interceptorType.isAssignableFrom(currentInterceptorType)) {
                return true;
@@ -313,13 +313,13 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public List<SequentialInterceptor> getInterceptors() {
+   public List<AsyncInterceptor> getInterceptors() {
       return interceptors;
    }
 
    private void rebuildInterceptors() {
       InterceptorListNode node = null;
-      ListIterator<SequentialInterceptor> it = interceptors.listIterator(interceptors.size());
+      ListIterator<AsyncInterceptor> it = interceptors.listIterator(interceptors.size());
       while (it.hasPrevious()) {
          node = new InterceptorListNode(it.previous(), node);
       }

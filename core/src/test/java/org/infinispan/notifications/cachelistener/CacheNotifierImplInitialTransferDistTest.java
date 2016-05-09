@@ -9,7 +9,7 @@ import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -44,8 +44,16 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplInitialTransferDistTest")
@@ -210,7 +218,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       final CheckPoint checkPoint = new CheckPoint();
 
-      SequentialInterceptorChain chain = mockStream(cache, (mock, real, additional) ->
+      AsyncInterceptorChain chain = mockStream(cache, (mock, real, additional) ->
               doAnswer(i -> {
                  // Wait for main thread to sync up
                  checkPoint.trigger("pre_retrieve_entry_invoked");
@@ -243,7 +251,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
          verifyEvents(isClustered(listener), listener, expectedValues);
       } finally {
-         TestingUtil.replaceComponent(cache, SequentialInterceptorChain.class, chain, true);
+         TestingUtil.replaceComponent(cache, AsyncInterceptorChain.class, chain, true);
          cache.removeListener(listener);
       }
    }
@@ -281,7 +289,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       CheckPoint checkPoint = new CheckPoint();
 
-      SequentialInterceptorChain chain = mockStream(cache, (mock, real, additional) -> {
+      AsyncInterceptorChain chain = mockStream(cache, (mock, real, additional) -> {
          doAnswer(i -> {
             // Wait for main thread to sync up
             checkPoint.trigger("pre_close_iter_invoked");
@@ -367,7 +375,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             assertEquals(event.getValue(), value);
          }
       } finally {
-         TestingUtil.replaceComponent(cache, SequentialInterceptorChain.class, chain, true);
+         TestingUtil.replaceComponent(cache, AsyncInterceptorChain.class, chain, true);
          cache.removeListener(listener);
       }
    }
@@ -730,9 +738,9 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       void additionalInformation(Stream mockStream, Stream realStream, StreamMocking ourselves);
    }
 
-   protected SequentialInterceptorChain mockStream(final Cache<?, ?> cache, StreamMocking mocking) {
-      SequentialInterceptorChain chain = TestingUtil.extractComponent(cache, SequentialInterceptorChain.class);
-      SequentialInterceptorChain mockChain = spy(chain);
+   protected AsyncInterceptorChain mockStream(final Cache<?, ?> cache, StreamMocking mocking) {
+      AsyncInterceptorChain chain = TestingUtil.extractComponent(cache, AsyncInterceptorChain.class);
+      AsyncInterceptorChain mockChain = spy(chain);
       doAnswer(i -> {
          CacheSet cacheSet = (CacheSet) i.callRealMethod();
 
@@ -747,7 +755,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
          return mockSet;
       }).when(mockChain).invoke(Mockito.any(InvocationContext.class),
               (VisitableCommand) argThat(new IsInstanceOf(EntrySetCommand.class)));
-      TestingUtil.replaceComponent(cache, SequentialInterceptorChain.class, mockChain, true);
+      TestingUtil.replaceComponent(cache, AsyncInterceptorChain.class, mockChain, true);
       return chain;
    }
 }

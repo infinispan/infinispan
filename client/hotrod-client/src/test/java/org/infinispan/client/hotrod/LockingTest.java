@@ -114,7 +114,7 @@ public class LockingTest extends SingleCacheManagerTest {
    private CheckPoint injectBlockingCommandInterceptor(String cacheName) {
       AdvancedCache<?, ?> advancedCache = cache(cacheName).getAdvancedCache();
       final CheckPoint checkPoint = new CheckPoint();
-      advancedCache.getSequentialInterceptorChain().addInterceptorBefore(new BaseCustomInterceptor() {
+      advancedCache.getAsyncInterceptorChain().addInterceptorBefore(new BaseCustomInterceptor() {
 
          private final AtomicBoolean first = new AtomicBoolean(false);
 
@@ -130,7 +130,7 @@ public class LockingTest extends SingleCacheManagerTest {
       return checkPoint;
    }
 
-   private static enum CacheName {
+   private enum CacheName {
       STRIPPED_LOCK {
          @Override
          void configure(ConfigurationBuilder builder) {

@@ -39,12 +39,12 @@ import org.infinispan.context.impl.TxInvocationContext;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Interface for sequential interceptors using double-dispatch.
+ * Interface for async interceptors using double-dispatch.
  *
  * @author Dan Berindei
  * @since 9.0
  */
-   public abstract class DDSequentialInterceptor extends BaseSequentialInterceptor implements Visitor {
+   public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements Visitor {
 
    @SuppressWarnings("unchecked")
    @Override

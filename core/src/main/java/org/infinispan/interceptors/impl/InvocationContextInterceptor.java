@@ -16,7 +16,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.BaseSequentialInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
@@ -42,7 +42,7 @@ import static org.infinispan.commons.util.Util.toStr;
  * @author Galder Zamarreño
  * @since 9.0
  */
-public class InvocationContextInterceptor extends BaseSequentialInterceptor {
+public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
    private TransactionManager tm;
    private ComponentRegistry componentRegistry;

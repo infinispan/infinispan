@@ -2,16 +2,13 @@ package org.infinispan.server.hotrod;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.List;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.interceptors.SequentialInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.Security;
@@ -20,7 +17,6 @@ import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
-import org.infinispan.security.actions.GetCacheInterceptorChainAction;
 import org.infinispan.security.actions.GetCacheRpcManagerAction;
 import org.infinispan.security.actions.RemoveListenerAction;
 

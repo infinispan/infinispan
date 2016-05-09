@@ -11,7 +11,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
@@ -34,7 +34,7 @@ import static org.infinispan.commons.util.Util.toStr;
  * @author Pedro Ruivo
  * @author Mircea.Markus@jboss.com
  */
-public class TotalOrderInterceptor extends DDSequentialInterceptor {
+public class TotalOrderInterceptor extends DDAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();

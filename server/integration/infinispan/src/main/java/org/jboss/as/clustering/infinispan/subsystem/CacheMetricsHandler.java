@@ -27,7 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.ActivationInterceptor;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
@@ -130,20 +130,20 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         final AttributeDefinition definition;
         final boolean clustered;
 
-        private CacheMetrics(final AttributeDefinition definition, final boolean clustered) {
+        CacheMetrics(final AttributeDefinition definition, final boolean clustered) {
             this.definition = definition;
             this.clustered = clustered;
         }
 
-        private CacheMetrics(String attributeName, ModelType type, boolean allowNull) {
+        CacheMetrics(String attributeName, ModelType type, boolean allowNull) {
             this(new SimpleAttributeDefinitionBuilder(attributeName, type, allowNull).setStorageRuntime().build(), false);
         }
 
-        private CacheMetrics(String attributeName, ModelType type, boolean allowNull, final boolean clustered) {
+        CacheMetrics(String attributeName, ModelType type, boolean allowNull, final boolean clustered) {
             this(new SimpleAttributeDefinitionBuilder(attributeName, type, allowNull).setStorageRuntime().build(), clustered);
         }
 
-        private CacheMetrics(String attributeName, ModelType outerType, ModelType innerType, boolean allowNull) {
+        CacheMetrics(String attributeName, ModelType outerType, ModelType innerType, boolean allowNull) {
             if (outerType != ModelType.LIST) {
                 throw new IllegalArgumentException();
             }
@@ -192,7 +192,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             AdvancedCache<?, ?> aCache = cache.getAdvancedCache();
             DefaultLockManager lockManager = (DefaultLockManager) SecurityActions.getLockManager(aCache);
             RpcManagerImpl rpcManager = (RpcManagerImpl) SecurityActions.getRpcManager(aCache);
-            List<SequentialInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
+            List<AsyncInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
             ComponentRegistry registry = SecurityActions.getComponentRegistry(aCache);
             ComponentStatus status = SecurityActions.getCacheStatus(aCache);
             switch (metric) {
@@ -383,9 +383,9 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         }
     }
 
-    public static <T extends SequentialInterceptor> T getFirstInterceptorWhichExtends(List<SequentialInterceptor> interceptors,
+    public static <T extends AsyncInterceptor> T getFirstInterceptorWhichExtends(List<AsyncInterceptor> interceptors,
                                                                                     Class<T> interceptorClass) {
-        for (SequentialInterceptor interceptor : interceptors) {
+        for (AsyncInterceptor interceptor : interceptors) {
             boolean isSubclass = interceptorClass.isAssignableFrom(interceptor.getClass());
             if (isSubclass) {
                 return (T) interceptor;

@@ -16,8 +16,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -38,11 +38,11 @@ import java.util.concurrent.CompletableFuture;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class ProtobufMetadataManagerInterceptor extends BaseCustomSequentialInterceptor implements ProtobufMetadataManagerConstants {
+final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInterceptor implements ProtobufMetadataManagerConstants {
 
    private CommandsFactory commandsFactory;
 
-   private SequentialInterceptorChain invoker;
+   private AsyncInterceptorChain invoker;
 
    private SerializationContext serializationContext;
 
@@ -165,7 +165,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomSequentialInter
    };
 
    @Inject
-   public void init(CommandsFactory commandsFactory, SequentialInterceptorChain invoker, ProtobufMetadataManager protobufMetadataManager) {
+   public void init(CommandsFactory commandsFactory, AsyncInterceptorChain invoker, ProtobufMetadataManager protobufMetadataManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = invoker;
       this.serializationContext = ((ProtobufMetadataManagerImpl) protobufMetadataManager).getSerializationContext();

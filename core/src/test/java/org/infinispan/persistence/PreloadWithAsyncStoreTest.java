@@ -132,11 +132,11 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
    }
 
    private ExceptionTrackerInterceptor getInterceptor(Cache cache) {
-      return cache.getAdvancedCache().getSequentialInterceptorChain()
+      return cache.getAdvancedCache().getAsyncInterceptorChain()
             .findInterceptorWithClass(ExceptionTrackerInterceptor.class);
    }
 
-   private static enum CacheType {
+   private enum CacheType {
       NO_TRANSACTIONAL("NO_TX"),
       TRANSACTIONAL_SYNCHRONIZATION(TRANSACTIONAL, "TX_SYNC", true, false),
       TRANSACTIONAL_XA(TRANSACTIONAL, "TX_XA", false, false),
@@ -146,14 +146,15 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
       final boolean useSynchronization;
       final boolean useRecovery;
 
-      private CacheType(TransactionMode transactionMode, String cacheName, boolean useSynchronization, boolean useRecovery) {
+      CacheType(TransactionMode transactionMode, String cacheName, boolean useSynchronization,
+            boolean useRecovery) {
          this.transactionMode = transactionMode;
          this.cacheName = cacheName;
          this.useSynchronization = useSynchronization;
          this.useRecovery = useRecovery;
       }
 
-      private CacheType(String cacheName) {
+      CacheType(String cacheName) {
          //no tx cache. the boolean parameters are ignored.
          this(NON_TRANSACTIONAL, cacheName, false, false);
       }

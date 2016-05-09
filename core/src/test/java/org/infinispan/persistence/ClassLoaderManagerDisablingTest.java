@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -86,10 +86,10 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
       PersistenceManager clm = TestingUtil.extractComponent(cache, PersistenceManager.class);
       assertEquals(count, clm.getStores(DummyInMemoryStore.class).size());
       clm.disableStore(DummyInMemoryStore.class.getName());
-      SequentialInterceptor interceptor = cache.getAdvancedCache().getSequentialInterceptorChain()
+      AsyncInterceptor interceptor = cache.getAdvancedCache().getAsyncInterceptorChain()
             .findInterceptorExtending(CacheLoaderInterceptor.class);
       assertNull(interceptor);
-      interceptor = cache.getAdvancedCache().getSequentialInterceptorChain()
+      interceptor = cache.getAdvancedCache().getAsyncInterceptorChain()
             .findInterceptorExtending(CacheWriterInterceptor.class);
       assertNull(interceptor);
    }

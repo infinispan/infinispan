@@ -49,7 +49,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -76,7 +76,7 @@ import static org.infinispan.commons.util.Util.toStr;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class EntryWrappingInterceptor extends DDSequentialInterceptor {
+public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private EntryFactory entryFactory;
    protected DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;

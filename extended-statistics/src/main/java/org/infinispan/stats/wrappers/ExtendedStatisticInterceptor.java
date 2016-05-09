@@ -15,7 +15,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -60,7 +60,7 @@ import static org.infinispan.stats.percentiles.PercentileStatistic.WR_REMOTE_EXE
  */
 @MBean(objectName = "ExtendedStatistics", description = "Component that manages and exposes extended statistics " +
       "relevant to transactions.")
-public class ExtendedStatisticInterceptor extends BaseCustomSequentialInterceptor {
+public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(ExtendedStatisticInterceptor.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();

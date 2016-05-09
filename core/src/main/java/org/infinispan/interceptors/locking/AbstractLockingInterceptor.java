@@ -20,7 +20,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockUtil;
@@ -41,7 +41,7 @@ import static org.infinispan.commons.util.Util.toStr;
  *
  * @author Mircea Markus
  */
-public abstract class AbstractLockingInterceptor extends DDSequentialInterceptor {
+public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
    protected LockManager lockManager;

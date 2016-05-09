@@ -1,6 +1,6 @@
 package org.infinispan.interceptors.impl;
 
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 
 /**
  * Node in a single-linked list of interceptors.
@@ -9,10 +9,10 @@ import org.infinispan.interceptors.SequentialInterceptor;
  * @since 9.0
  */
 class InterceptorListNode {
-   public final SequentialInterceptor interceptor;
+   public final AsyncInterceptor interceptor;
    public final InterceptorListNode nextNode;
 
-   public InterceptorListNode(SequentialInterceptor interceptor, InterceptorListNode next) {
+   public InterceptorListNode(AsyncInterceptor interceptor, InterceptorListNode next) {
       this.interceptor = interceptor;
       this.nextNode = next;
    }

@@ -42,13 +42,13 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
    private void retryExceptions(boolean throwJGroupsException) {
       AdvancedCache<?, ?> nextCache = cacheToHit(1);
       ErrorInducingInterceptor interceptor = new ErrorInducingInterceptor(throwJGroupsException);
-      nextCache.getSequentialInterceptorChain().addInterceptor(interceptor, 1);
+      nextCache.getAsyncInterceptorChain().addInterceptor(interceptor, 1);
       try {
          remoteCache.put(1, "v1");
          assertTrue(interceptor.suspectExceptionThrown);
          assertEquals("v1", remoteCache.get(1));
       } finally {
-         nextCache.getSequentialInterceptorChain().removeInterceptor(ErrorInducingInterceptor.class);
+         nextCache.getAsyncInterceptorChain().removeInterceptor(ErrorInducingInterceptor.class);
       }
    }
 

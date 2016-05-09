@@ -1,7 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -12,7 +12,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * @author Mircea.Markus@jboss.com
  * @since 9.0
  */
-public abstract class JmxStatsCommandInterceptor extends DDSequentialInterceptor implements JmxStatisticsExposer {
+public abstract class JmxStatsCommandInterceptor extends DDAsyncInterceptor implements JmxStatisticsExposer {
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statisticsEnabled = false;
 

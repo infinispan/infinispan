@@ -75,7 +75,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
 
          assertIsInL1(nonOwner, key);
       } finally {
-         nonOwner.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+         nonOwner.getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
       }
    }
 
@@ -137,7 +137,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
 
          assertIsNotInL1(nonOwner, key);
       } finally {
-         nonOwner.getAdvancedCache().getSequentialInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+         nonOwner.getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
       }
    }
 }

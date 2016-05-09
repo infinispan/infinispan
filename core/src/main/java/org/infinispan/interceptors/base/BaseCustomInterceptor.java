@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
@@ -20,7 +20,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * and {@link #stop()} as defined in this class.
  *
  * @author Manik Surtani
- * @deprecated Since 9.0, use {@link BaseCustomSequentialInterceptor} instead.
+ * @deprecated Since 9.0, use {@link BaseCustomAsyncInterceptor} instead.
  */
 @Deprecated
 public class BaseCustomInterceptor extends CommandInterceptor {

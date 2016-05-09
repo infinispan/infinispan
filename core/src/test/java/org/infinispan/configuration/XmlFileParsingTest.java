@@ -513,7 +513,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(!c.customInterceptors().interceptors().isEmpty());
       assertEquals(6, c.customInterceptors().interceptors().size());
       for(InterceptorConfiguration i : c.customInterceptors().interceptors()) {
-         if (i.sequentialInterceptor() instanceof FooInterceptor) {
+         if (i.asyncInterceptor() instanceof FooInterceptor) {
             assertEquals(i.properties().getProperty("foo"), "bar");
          }
       }

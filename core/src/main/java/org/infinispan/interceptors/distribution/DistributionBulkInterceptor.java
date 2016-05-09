@@ -21,7 +21,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.DistributedCacheStream;
@@ -47,7 +47,7 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXEC
  * @param <K> The key type of entries
  * @param <V> The value type of entries
  */
-public class DistributionBulkInterceptor<K, V> extends DDSequentialInterceptor {
+public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    private Cache<K, V> cache;
 
    @Inject

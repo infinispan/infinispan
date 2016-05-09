@@ -7,8 +7,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionProtocol;
@@ -35,14 +35,14 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
 
    public void testTimeoutCleanup() throws Exception {
       final CountDownLatch block = new CountDownLatch(1);
-      final BaseCustomSequentialInterceptor interceptor = new BaseCustomSequentialInterceptor() {
+      final BaseCustomAsyncInterceptor interceptor = new BaseCustomAsyncInterceptor() {
          @Override
          public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
             block.await();
             return ctx.continueInvocation();
          }
       };
-      final SequentialInterceptorChain chain = TestingUtil.extractComponent(cache(1), SequentialInterceptorChain.class);
+      final AsyncInterceptorChain chain = TestingUtil.extractComponent(cache(1), AsyncInterceptorChain.class);
       final Object key = new MagicKey(cache(1));
       try {
          chain.addInterceptor(interceptor, 0);
@@ -63,7 +63,7 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
 
    public void testTimeoutCleanupInLocalNode() throws Exception {
       final CountDownLatch block = new CountDownLatch(1);
-      final BaseCustomSequentialInterceptor interceptor = new BaseCustomSequentialInterceptor() {
+      final BaseCustomAsyncInterceptor interceptor = new BaseCustomAsyncInterceptor() {
          @Override
          public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
                throws Throwable {
@@ -73,7 +73,7 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
             return ctx.continueInvocation();
          }
       };
-      final SequentialInterceptorChain chain = TestingUtil.extractComponent(cache(0), SequentialInterceptorChain.class);
+      final AsyncInterceptorChain chain = TestingUtil.extractComponent(cache(0), AsyncInterceptorChain.class);
       final Object key1 = new MagicKey(cache(0));
       final Object key2 = new MagicKey(cache(1));
       try {

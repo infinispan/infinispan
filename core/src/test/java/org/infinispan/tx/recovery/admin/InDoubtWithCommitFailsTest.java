@@ -14,7 +14,10 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
-import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.rollbackTransaction;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -38,7 +41,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
             .clustering().l1().disable().stateTransfer().fetchInMemoryState(false);
       createCluster(configuration, 2);
       waitForClusterToForm();
-      advancedCache(1).getSequentialInterceptorChain().addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
+      advancedCache(1).getAsyncInterceptorChain().addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
    }
 
    public void testRecoveryInfoListCommit() throws Exception {

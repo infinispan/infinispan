@@ -7,7 +7,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.concurrent.CompletableFuture;
@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @since 9.0
  */
-public class NotificationInterceptor extends DDSequentialInterceptor {
+public class NotificationInterceptor extends DDAsyncInterceptor {
    private CacheNotifier notifier;
    private final ReturnHandler transactionCompleteReturnHandler = new ReturnHandler() {
       @Override

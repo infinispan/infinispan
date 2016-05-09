@@ -2,8 +2,7 @@ package org.infinispan.context;
 
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.interceptors.impl.BaseSequentialInvocationContext;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.impl.BaseAsyncInvocationContext;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -16,7 +15,7 @@ import java.util.Set;
  * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
 @Deprecated
-public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocationContext implements InvocationContext {
+public final class SingleKeyNonTxInvocationContext extends BaseAsyncInvocationContext implements InvocationContext {
 
    /**
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.
@@ -101,7 +100,7 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
 
    @Override
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return cacheEntry == null ? Collections.<Object, CacheEntry>emptyMap() : Collections.singletonMap(key, cacheEntry);
+      return cacheEntry == null ? Collections.emptyMap() : Collections.singletonMap(key, cacheEntry);
    }
 
    @Override

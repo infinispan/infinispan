@@ -139,7 +139,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       assertIsInL1(c3, key);
 
       CyclicBarrier barrier = new CyclicBarrier(2);
-      c3.getAdvancedCache().getSequentialInterceptorChain()
+      c3.getAdvancedCache().getAsyncInterceptorChain()
             .addInterceptorAfter(new BlockingInterceptor(barrier, InvalidateL1Command.class, true, false),
                   EntryWrappingInterceptor.class);
 

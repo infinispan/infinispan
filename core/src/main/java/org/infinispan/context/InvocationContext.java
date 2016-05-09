@@ -1,11 +1,11 @@
 package org.infinispan.context;
 
-import java.util.Set;
-
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;
+
+import java.util.Set;
 
 /**
  * A context that contains information pertaining to a given invocation.  These contexts typically have the lifespan of
@@ -15,7 +15,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public interface InvocationContext extends EntryLookup, SequentialInvocationContext, Cloneable {
+public interface InvocationContext extends EntryLookup, AsyncInvocationContext, Cloneable {
 
    /**
     * Returns true if the call was originated locally, false if it is the result of a remote rpc.

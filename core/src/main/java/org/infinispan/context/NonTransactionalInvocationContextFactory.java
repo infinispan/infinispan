@@ -9,7 +9,7 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -25,8 +25,9 @@ import javax.transaction.Transaction;
 @SurvivesRestarts
 public class NonTransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 
+   @Override
    @Inject
-   public void init(Configuration config, SequentialInterceptorChain interceptorChain) {
+   public void init(Configuration config, AsyncInterceptorChain interceptorChain) {
       super.init(config, interceptorChain);
    }
 

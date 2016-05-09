@@ -18,8 +18,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.SequentialInterceptor;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -269,15 +269,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
 
          if (loaders.isEmpty() && writers.isEmpty()) {
-            SequentialInterceptorChain chain = cache.getAdvancedCache().getSequentialInterceptorChain();
-            SequentialInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
+            AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
+            AsyncInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
             if (loaderInterceptor == null) {
                log.persistenceWithoutCacheLoaderInterceptor();
             } else {
                ((CacheLoaderInterceptor) loaderInterceptor).disableInterceptor();
                chain.removeInterceptor(loaderInterceptor.getClass());
             }
-            SequentialInterceptor writerInterceptor = chain.findInterceptorExtending(CacheWriterInterceptor.class);
+            AsyncInterceptor writerInterceptor = chain.findInterceptorExtending(CacheWriterInterceptor.class);
             if (writerInterceptor == null) {
                log.persistenceWithoutCacheWriteInterceptor();
             } else {

@@ -13,18 +13,18 @@ import java.util.concurrent.CompletableFuture;
  * @author Dan Berindei
  * @since 9.0
  */
-public class EmptySequentialInterceptorChain implements SequentialInterceptorChain {
-   public static final EmptySequentialInterceptorChain INSTANCE = new EmptySequentialInterceptorChain();
+public class EmptyAsyncInterceptorChain implements AsyncInterceptorChain {
+   public static final EmptyAsyncInterceptorChain INSTANCE = new EmptyAsyncInterceptorChain();
 
-   private static final Log log = LogFactory.getLog(EmptySequentialInterceptorChain.class);
+   private static final Log log = LogFactory.getLog(EmptyAsyncInterceptorChain.class);
 
    @Override
-   public List<SequentialInterceptor> getInterceptors() {
+   public List<AsyncInterceptor> getInterceptors() {
       return Collections.emptyList();
    }
 
    @Override
-   public void addInterceptor(SequentialInterceptor interceptor, int position) {
+   public void addInterceptor(AsyncInterceptor interceptor, int position) {
       throw log.interceptorStackNotSupported();
    }
 
@@ -39,30 +39,30 @@ public class EmptySequentialInterceptorChain implements SequentialInterceptorCha
    }
 
    @Override
-   public void removeInterceptor(Class<? extends SequentialInterceptor> clazz) {
+   public void removeInterceptor(Class<? extends AsyncInterceptor> clazz) {
       throw log.interceptorStackNotSupported();
    }
 
    @Override
-   public boolean addInterceptorAfter(SequentialInterceptor toAdd,
-         Class<? extends SequentialInterceptor> afterInterceptor) {
+   public boolean addInterceptorAfter(AsyncInterceptor toAdd,
+         Class<? extends AsyncInterceptor> afterInterceptor) {
       throw log.interceptorStackNotSupported();
    }
 
    @Override
-   public boolean addInterceptorBefore(SequentialInterceptor toAdd,
-         Class<? extends SequentialInterceptor> beforeInterceptor) {
+   public boolean addInterceptorBefore(AsyncInterceptor toAdd,
+         Class<? extends AsyncInterceptor> beforeInterceptor) {
       throw log.interceptorStackNotSupported();
    }
 
    @Override
-   public boolean replaceInterceptor(SequentialInterceptor replacingInterceptor,
-         Class<? extends SequentialInterceptor> toBeReplacedInterceptorType) {
+   public boolean replaceInterceptor(AsyncInterceptor replacingInterceptor,
+         Class<? extends AsyncInterceptor> toBeReplacedInterceptorType) {
       throw log.interceptorStackNotSupported();
    }
 
    @Override
-   public void appendInterceptor(SequentialInterceptor ci, boolean isCustom) {
+   public void appendInterceptor(AsyncInterceptor ci, boolean isCustom) {
       throw log.interceptorStackNotSupported();
    }
 
@@ -77,27 +77,27 @@ public class EmptySequentialInterceptorChain implements SequentialInterceptorCha
    }
 
    @Override
-   public <T extends SequentialInterceptor> T findInterceptorExtending(Class<T> interceptorClass) {
+   public <T extends AsyncInterceptor> T findInterceptorExtending(Class<T> interceptorClass) {
       return null;
    }
 
    @Override
-   public <T extends SequentialInterceptor> T findInterceptorWithClass(Class<T> interceptorClass) {
+   public <T extends AsyncInterceptor> T findInterceptorWithClass(Class<T> interceptorClass) {
       return null;
    }
 
    @Override
-   public boolean containsInstance(SequentialInterceptor interceptor) {
+   public boolean containsInstance(AsyncInterceptor interceptor) {
       return false;
    }
 
    @Override
-   public boolean containsInterceptorType(Class<? extends SequentialInterceptor> interceptorType) {
+   public boolean containsInterceptorType(Class<? extends AsyncInterceptor> interceptorType) {
       return false;
    }
 
    @Override
-   public boolean containsInterceptorType(Class<? extends SequentialInterceptor> interceptorType,
+   public boolean containsInterceptorType(Class<? extends AsyncInterceptor> interceptorType,
          boolean alsoMatchSubClasses) {
       return false;
    }

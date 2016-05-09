@@ -28,7 +28,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -54,7 +54,12 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.commons.marshall.MarshallableFunctions.*;
+import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasConsumer;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfAbsentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfPresentReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasReturnPrevOrNull;
 
 public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> {
 
@@ -280,8 +285,8 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public SequentialInterceptorChain getSequentialInterceptorChain() {
-      return cache.getSequentialInterceptorChain();
+   public AsyncInterceptorChain getAsyncInterceptorChain() {
+      return cache.getAsyncInterceptorChain();
    }
 
    @Override

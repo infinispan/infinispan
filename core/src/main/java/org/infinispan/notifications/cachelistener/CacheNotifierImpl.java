@@ -25,7 +25,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -192,7 +192,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public void start() {
       super.start();
-      SequentialInterceptorChain interceptorChain = SecurityActions.getSequentialInterceptorChain(cache);
+      AsyncInterceptorChain interceptorChain = SecurityActions.getAsyncInterceptorChain(cache);
       if (interceptorChain != null && !interceptorChain.getInterceptors().isEmpty()) {
          this.distExecutorService = SecurityActions.getDefaultExecutorService(cache);
       }
@@ -729,6 +729,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
     * @param <C>
     * @return
     */
+
+   @Override
    public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
                                            CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader) {
       final Listener l = testListenerClassValidity(listener.getClass());

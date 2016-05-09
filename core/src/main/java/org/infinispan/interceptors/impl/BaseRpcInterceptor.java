@@ -7,7 +7,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.DDSequentialInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SelfDeliverFilter;
@@ -31,7 +31,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 9.0
  */
-public abstract class BaseRpcInterceptor extends DDSequentialInterceptor {
+public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected boolean trace = getLog().isTraceEnabled();
 
    protected RpcManager rpcManager;

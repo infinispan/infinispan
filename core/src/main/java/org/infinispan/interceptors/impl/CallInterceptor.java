@@ -4,7 +4,7 @@ package org.infinispan.interceptors.impl;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BaseSequentialInterceptor;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -21,8 +21,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Dan Berindei
  * @since 9.0
  */
-public class CallInterceptor extends BaseSequentialInterceptor {
-   // TODO Invoke the command directly in BaseSequentialInvocationChain#invokeNext and remove this interceptor?
+public class CallInterceptor extends BaseAsyncInterceptor {
    private static final Log log = LogFactory.getLog(CallInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 

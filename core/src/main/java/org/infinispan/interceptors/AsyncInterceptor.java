@@ -2,8 +2,8 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.context.AsyncInvocationContext;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.SequentialInvocationContext;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -14,26 +14,26 @@ import java.util.concurrent.CompletableFuture;
  * @since 9.0
  */
 @Experimental
-public interface SequentialInterceptor {
+public interface AsyncInterceptor {
    /**
     * Perform some work for the command, before the command itself is executed.
     *
     * <p>Must return an instance of {@code CompletableFuture<Void>}.</p>
     *
     * <p>Can return an already-completed {@code CompletableFuture<Void>}
-    * (e.g. {@link SequentialInvocationContext#continueInvocation()}) if the interceptor is synchronous,
+    * (e.g. {@link AsyncInvocationContext#continueInvocation()}) if the interceptor is synchronous,
     * i.e. it finishes executing when {@code visitCommand} returns.</p>
     *
     * <p>The interceptor can also influence the execution of the following interceptors in the chain:</p>
     * <ul>
-    * <li>The interceptor can call {@link SequentialInvocationContext#shortCircuit(Object)} in order to skip
+    * <li>The interceptor can call {@link AsyncInvocationContext#shortCircuit(Object)} in order to skip
     * the execution of the rest of the chain (and the command itself).</li>
     * <li>The interceptor can call
-    * {@link SequentialInvocationContext#forkInvocation(VisitableCommand, ForkReturnHandler)} in order to invoke
+    * {@link AsyncInvocationContext#forkInvocation(VisitableCommand, ForkReturnHandler)} in order to invoke
     * a new command, starting with the next interceptor in the chain. The return handler then behaves as
     * another {@code visitCommand} invocation: it can allow the invocation of the original command to continue
     * with the next interceptor, short-circuit the invocation, or fork another command.</li>
-    * <li>{@link SequentialInvocationContext#forkInvocationSync(VisitableCommand)} is a synchronous
+    * <li>{@link AsyncInvocationContext#forkInvocationSync(VisitableCommand)} is a synchronous
     * alternative to {@code forkInvocation}. It is easier to use, however it is not recommended,
     * because any asynchronous work in the remaining interceptors will block the calling thread.</li>
     * </ul>
@@ -65,7 +65,7 @@ public interface SequentialInterceptor {
 
    /**
     * A return handler installed with
-    * {@link SequentialInvocationContext#forkInvocation(VisitableCommand, ForkReturnHandler)}.
+    * {@link AsyncInvocationContext#forkInvocation(VisitableCommand, ForkReturnHandler)}.
     *
     * <p>It must behave just like {@link #visitCommand(InvocationContext, VisitableCommand)}.</p>
     */

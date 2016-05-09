@@ -9,7 +9,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -55,12 +55,12 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    }
 
    @Override
-   protected Class<? extends SequentialInterceptor> getDistributionInterceptorClass() {
+   protected Class<? extends AsyncInterceptor> getDistributionInterceptorClass() {
       return TxDistributionInterceptor.class;
    }
 
    @Override
-   protected Class<? extends SequentialInterceptor> getL1InterceptorClass() {
+   protected Class<? extends AsyncInterceptor> getL1InterceptorClass() {
       return L1TxInterceptor.class;
    }
 

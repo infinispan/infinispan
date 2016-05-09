@@ -1,9 +1,9 @@
 package org.infinispan.security.actions;
 
-import java.util.List;
-
 import org.infinispan.AdvancedCache;
-import org.infinispan.interceptors.SequentialInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+
+import java.util.List;
 
 /**
  * GetCacheInterceptorChainAction.
@@ -11,15 +11,15 @@ import org.infinispan.interceptors.SequentialInterceptor;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class GetCacheInterceptorChainAction extends AbstractAdvancedCacheAction<List<SequentialInterceptor>> {
+public class GetCacheInterceptorChainAction extends AbstractAdvancedCacheAction<List<AsyncInterceptor>> {
 
    public GetCacheInterceptorChainAction(AdvancedCache<?, ?> cache) {
       super(cache);
    }
 
    @Override
-   public List<SequentialInterceptor> run() {
-      return cache.getSequentialInterceptorChain().getInterceptors();
+   public List<AsyncInterceptor> run() {
+      return cache.getAsyncInterceptorChain().getInterceptors();
    }
 
 }

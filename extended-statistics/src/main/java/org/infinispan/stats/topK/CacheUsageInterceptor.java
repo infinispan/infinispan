@@ -9,7 +9,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.BaseCustomSequentialInterceptor;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
  * @since 6.0
  */
 @MBean(objectName = "CacheUsageStatistics", description = "Keeps tracks of the accessed keys")
-public class CacheUsageInterceptor extends BaseCustomSequentialInterceptor {
+public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
 
    public static final int DEFAULT_TOP_KEY = 10;
    private static final Log log = LogFactory.getLog(CacheUsageInterceptor.class, Log.class);
