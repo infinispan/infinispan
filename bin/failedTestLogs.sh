@@ -19,7 +19,7 @@ echo Processing $FILE
 
 if [ -z "$FAILED_TESTS" ] ; then
   if $CAT $FILE | head -100 | grep -q TestSuiteProgress ; then
-    FAILED_TESTS=$($CAT $FILE | perl -ne '/\[TestSuiteProgress\] .* (?:failed|skipped): (.*)\.[^.]*/ && print "$1\n";' | sort -u)
+    FAILED_TESTS=$($CAT $FILE | perl -ne '/\[TestSuiteProgress\] .* (?:failed|skipped): .*\.([^.]*)\.[^.]*/ && print "$1\n";' | sort -u)
   else
     FAILED_TESTS=$($CAT $FILE | perl -ne '/Test .*\(.*\.(.*)\) (failed|skipped)\./ && print "$1\n";' | sort -u)
   fi

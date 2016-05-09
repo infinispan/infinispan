@@ -52,7 +52,7 @@ public class TestResourceTracker {
                cleaner.close();
             } catch (Throwable t) {
                log.fatalf(t, "Error cleaning resource %s for test %s", cleaner.ref, testName);
-               throw new IllegalStateException("Error cleaning resource " + cleaner.ref + " for test " + testName);
+               throw new IllegalStateException("Error cleaning resource " + cleaner.ref + " for test " + testName, t);
             }
          }
       }
@@ -98,7 +98,7 @@ public class TestResourceTracker {
       cleanUpResources(testName);
       if (!testName.equals(getCurrentTestName())) {
          cleanUpResources(getCurrentTestName());
-         throw new IllegalArgumentException("Current thread name was not set correctly: " + getCurrentTestName() +
+         throw new IllegalArgumentException("Current thread's test name was not set correctly: " + getCurrentTestName() +
                ", should have been " + testName);
       }
       setThreadTestName(null);

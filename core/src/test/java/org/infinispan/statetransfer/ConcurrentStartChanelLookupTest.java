@@ -31,7 +31,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Dan Berindei
  * @since 8.2
  */
-@Test(testName = "statetransfer.ConcurrentStartTest", groups = "functional")
+@Test(testName = "statetransfer.ConcurrentStartChanelLookupTest", groups = "functional")
 @CleanupAfterMethod
 public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
 

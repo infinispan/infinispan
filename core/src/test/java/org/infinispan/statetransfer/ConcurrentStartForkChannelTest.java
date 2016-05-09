@@ -40,7 +40,7 @@ import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
  * @author Dan Berindei
  * @since 9.0
  */
-@Test(testName = "statetransfer.ConcurrentStartTest", groups = "functional")
+@Test(testName = "statetransfer.ConcurrentStartForkChannelTest", groups = "functional")
 @CleanupAfterMethod
 public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
 

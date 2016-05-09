@@ -56,7 +56,7 @@ public class AbstractInfinispanTest {
    public static final TimeService TIME_SERVICE = new DefaultTimeService();
 
    @BeforeTest(alwaysRun = true)
-   protected void testClassStarted(ITestContext context) {
+   protected final void testClassStarted(ITestContext context) {
       String fullName = context.getName();
       String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
       Class testClass = context.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
@@ -68,7 +68,7 @@ public class AbstractInfinispanTest {
    }
 
    @AfterTest(alwaysRun = true)
-   protected void testClassFinished() {
+   protected final void testClassFinished() {
       killSpawnedThreads();
       TestResourceTracker.testFinished(getClass().getName());
    }
