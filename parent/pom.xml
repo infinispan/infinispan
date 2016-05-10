@@ -168,8 +168,8 @@
       <version.testng>6.8.8</version.testng>
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
-      <version.weld>1.1.13.Final</version.weld>
-      <version.weld-se>2.2.0.SP1</version.weld-se>
+      <version.weld>2.3.4.Final</version.weld>
+      <version.weld-se>2.3.4.Final</version.weld-se>
 
       <version.org.wildfly>10.0.0.Final</version.org.wildfly>
       <version.org.wildfly.core>2.0.10.Final</version.org.wildfly.core>
@@ -1728,7 +1728,7 @@
          <forkJvmArgs>${env.MAVEN_FORK_OPTS}</forkJvmArgs>
        </properties>
      </profile>
-      
+
       <profile>
          <id>root-dir1</id>
          <activation>

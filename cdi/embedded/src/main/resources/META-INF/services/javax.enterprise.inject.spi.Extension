@@ -1,3 +1,2 @@
 org.infinispan.cdi.InfinispanExtensionEmbedded
-org.infinispan.cdi.util.defaultbean.DefaultBeanExtension
 org.infinispan.cdi.util.BeanManagerProvider

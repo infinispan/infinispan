@@ -1,28 +1,43 @@
 package org.infinispan.cdi;
 
-import org.infinispan.cdi.logging.RemoteLog;
-import org.infinispan.cdi.util.BeanBuilder;
-import org.infinispan.cdi.util.ContextualLifecycle;
-import org.infinispan.cdi.util.Reflections;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.logging.LogFactory;
-
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.spi.*;
-import javax.enterprise.util.AnnotationLiteral;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.Annotated;
+import javax.enterprise.inject.spi.AnnotatedMember;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.InjectionPoint;
+import javax.enterprise.inject.spi.InjectionTarget;
+import javax.enterprise.inject.spi.ProcessAnnotatedType;
+import javax.enterprise.inject.spi.ProcessInjectionTarget;
+import javax.enterprise.inject.spi.ProcessProducer;
+import javax.enterprise.inject.spi.Producer;
+import javax.enterprise.util.AnnotationLiteral;
+
+import org.infinispan.cdi.logging.RemoteLog;
+import org.infinispan.cdi.util.AnyLiteral;
+import org.infinispan.cdi.util.BeanBuilder;
+import org.infinispan.cdi.util.ContextualLifecycle;
+import org.infinispan.cdi.util.DefaultLiteral;
+import org.infinispan.cdi.util.Reflections;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.logging.LogFactory;
+
 public class InfinispanExtensionRemote implements Extension {
 
-   private static final RemoteLog logger = LogFactory.getLog(InfinispanExtensionRemote.class, RemoteLog.class);
+   private static final RemoteLog LOGGER = LogFactory.getLog(InfinispanExtensionRemote.class, RemoteLog.class);
 
    private final Map<Type, Set<Annotation>> remoteCacheInjectionPoints;
 
@@ -47,7 +62,7 @@ public class InfinispanExtensionRemote implements Extension {
    @SuppressWarnings("unused")
    <T extends RemoteCacheManager> void removeDuplicatedRemoteCacheManager(@Observes ProcessAnnotatedType<T> bean) {
       if(RemoteCacheManager.class.getCanonicalName().equals(bean.getAnnotatedType().getJavaClass().getCanonicalName())) {
-         logger.info("removing duplicated  RemoteCacheManager" + bean.getAnnotatedType());
+         LOGGER.info("removing duplicated  RemoteCacheManager" + bean.getAnnotatedType());
          bean.veto();
       }
    }
@@ -85,7 +100,13 @@ public class InfinispanExtensionRemote implements Extension {
    }
 
    @SuppressWarnings("unchecked")
-   <T, X>void registerCacheBeans(@Observes AfterBeanDiscovery event, final BeanManager beanManager) {
+   <T, X>void registerBeans(@Observes AfterBeanDiscovery event, final BeanManager beanManager) {
+
+      if (beanManager.getBeans(RemoteCacheManager.class).isEmpty()) {
+         LOGGER.addDefaultRemoteCacheManager();
+         event.addBean(createDefaultRemoteCacheManagerBean(beanManager));
+      }
+
       for (Map.Entry<Type, Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
 
          event.addBean(new BeanBuilder(beanManager)
@@ -105,4 +126,34 @@ public class InfinispanExtensionRemote implements Extension {
                              }).create());
       }
    }
+
+   /**
+    * The default remote cache manager can be overridden by creating a producer which produces the
+    * new default remote cache manager. The remote cache manager produced must have the scope
+    * {@link ApplicationScoped} and the {@linkplain javax.enterprise.inject.Default Default}
+    * qualifier.
+    *
+    * @param beanManager
+    * @return a custom bean
+    */
+   private Bean<RemoteCacheManager> createDefaultRemoteCacheManagerBean(BeanManager beanManager) {
+      return new BeanBuilder<RemoteCacheManager>(beanManager).beanClass(InfinispanExtensionRemote.class)
+            .addTypes(Object.class, RemoteCacheManager.class).scope(ApplicationScoped.class)
+            .qualifiers(DefaultLiteral.INSTANCE, AnyLiteral.INSTANCE)
+            .beanLifecycle(new ContextualLifecycle<RemoteCacheManager>() {
+
+               @Override
+               public RemoteCacheManager create(Bean<RemoteCacheManager> bean,
+                     CreationalContext<RemoteCacheManager> creationalContext) {
+                  return new RemoteCacheManager();
+               }
+
+               @Override
+               public void destroy(Bean<RemoteCacheManager> bean, RemoteCacheManager instance,
+                     CreationalContext<RemoteCacheManager> creationalContext) {
+                  instance.stop();
+               }
+            }).create();
+   }
+
 }
