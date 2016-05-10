@@ -7,7 +7,7 @@
                         <role name="reader" permissions="READ" />
                         <role name="writer" permissions="WRITE" />
                         <role name="supervisor" permissions="READ WRITE EXEC BULK_READ BULK_WRITE"/>
-                        <role name="executor" permissions="READ WRITE EXEC ADMIN"/>
+                        <role name="executor" permissions="READ WRITE BULK_READ EXEC ADMIN"/>
                     </authorization>
                 </security>
                 <transport lock-timeout="240000"/>

@@ -1,19 +1,23 @@
 package org.infinispan.server.test.task;
 
+import static java.util.Arrays.asList;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.Task;
-import org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase;
 import org.infinispan.server.test.task.servertask.DistributedAuthServerTask;
-import org.infinispan.server.test.task.servertask.DistributedCacheUsingTask;
-import org.infinispan.server.test.task.servertask.DistributedJSExecutingServerTask;
 import org.infinispan.server.test.task.servertask.LocalAuthTestServerTask;
 import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
 import org.infinispan.tasks.ServerTask;
@@ -21,23 +25,13 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests in distributed mode the server task execution in case if authentication is required.
@@ -56,8 +50,6 @@ public class DistributedAuthServerTaskIT {
 
     @Rule
     public ExpectedException exceptionRule = ExpectedException.none();
-    public static final String EXECUTOR_LOGIN = "executor";
-    public static final String EXECUTOR_PASSWORD = "executorPassword";
 
     @BeforeClass
     public static void before() throws Exception {
@@ -121,7 +113,7 @@ public class DistributedAuthServerTaskIT {
     public void shouldThrowException() throws Exception {
         SaslConfigurationBuilder config = new SaslConfigurationBuilder("DIGEST-MD5");
         config.forIspnServer(server1).withServerName("node0");
-        config.forCredentials(HotRodSaslAuthTestBase.ADMIN_LOGIN, HotRodSaslAuthTestBase.ADMIN_PASSWD);
+        config.forCredentials(ADMIN_LOGIN, ADMIN_PASSWD);
         RemoteCacheManager rcm = new RemoteCacheManager(config.build(), true);
         RemoteCache remoteCache = rcm.getCache(DistributedAuthServerTask.CACHE_NAME);
 

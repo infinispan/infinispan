@@ -43,6 +43,8 @@ public abstract class HotRodSaslAuthTestBase {
    public static final String WRITER_PASSWD = "somePassword";
    public static final String SUPERVISOR_LOGIN = "supervisor";
    public static final String SUPERVISOR_PASSWD = "lessStrongPassword";
+   public static final String EXECUTOR_LOGIN = "executor";
+   public static final String EXECUTOR_PASSWORD = "executorPassword";
 
    protected RemoteCache<String, String> remoteCache;
    protected static RemoteCacheManager remoteCacheManager = null;
