@@ -1,27 +1,34 @@
 package org.infinispan.server.core.transport
 
 import io.netty.channel.group.DefaultChannelGroup
+
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.ProtocolServer
 import org.infinispan.commons.util.Util
 import org.infinispan.server.core.logging.Log
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 import java.net.InetSocketAddress
+
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.distexec.{DistributedCallable, DefaultExecutorService}
+import org.infinispan.distexec.{DefaultExecutorService, DistributedCallable}
 import org.infinispan.Cache
 import java.util
+
 import org.infinispan.jmx.JmxUtil
 import javax.management.ObjectName
 import java.util.concurrent.{ThreadFactory, TimeUnit}
+
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration
 import io.netty.util.concurrent.{DefaultThreadFactory, ImmediateEventExecutor}
-import io.netty.util.internal.logging.{Log4JLoggerFactory, InternalLoggerFactory}
+import io.netty.util.internal.logging.{InternalLoggerFactory, Log4JLoggerFactory}
 import io.netty.bootstrap.ServerBootstrap
-import io.netty.channel.{Channel, ChannelInitializer, ChannelOption}
+import io.netty.channel.{Channel, ChannelInitializer, ChannelOption, ServerChannel}
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.buffer.PooledByteBufAllocator
+import io.netty.channel.epoll.{EpollEventLoopGroup, EpollServerSocketChannel}
+
+import scala.util.Properties
 
 /**
  * A Netty based transport.
@@ -34,11 +41,17 @@ class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel
                      threadNamePrefix: String, cacheManager: EmbeddedCacheManager)
         extends Transport with Log {
 
+   val UseEpollProperty = "infinispan.server.channel.epoll"
+   val IsLinux = Properties.osName.toLowerCase.startsWith("linux")
+   val UseEpoll = Properties.propIsSetTo(UseEpollProperty, "true")
+
+   val useEPoll = IsLinux && UseEpoll
+
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE)
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted", ImmediateEventExecutor.INSTANCE)
 
-   private val masterGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(threadNamePrefix + "ServerMaster"))
-   private val workerGroup = new NioEventLoopGroup(0, new DefaultThreadFactory(threadNamePrefix + "ServerWorker"))
+   private val masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "ServerMaster"))
+   private val workerGroup = buildEventLoop(0, new DefaultThreadFactory(threadNamePrefix + "ServerWorker"))
 
    private val totalBytesWritten, totalBytesRead = new AtomicLong
    private val isGlobalStatsEnabled =
@@ -51,7 +64,7 @@ class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel
 
       val bootstrap = new ServerBootstrap()
       bootstrap.group(masterGroup, workerGroup)
-      bootstrap.channel(classOf[NioServerSocketChannel])
+      bootstrap.channel(getServerSocketChannel)
       bootstrap.childHandler(handler)
       bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
       bootstrap.childOption[java.lang.Boolean](ChannelOption.TCP_NODELAY, configuration.tcpNoDelay) // Sets server side tcpNoDelay
@@ -153,6 +166,19 @@ class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel
    private def needDistributedCalculation(): Boolean = {
       val transport = cacheManager.getTransport
       transport != null && transport.getMembers.size() > 1
+   }
+
+   def getServerSocketChannel: Class[_ <: ServerChannel] = {
+      val channel = if (useEPoll) classOf[EpollServerSocketChannel] else classOf[NioServerSocketChannel]
+      logCreatedSocketChannel(channel.getName, configuration.toString)
+      channel
+   }
+
+   def buildEventLoop(nThreads: Int, threadFactory: DefaultThreadFactory) = {
+      val eventLoop = if (useEPoll) new EpollEventLoopGroup(nThreads, threadFactory)
+      else new NioEventLoopGroup(nThreads, threadFactory)
+      logCreatedNettyEventLoop(eventLoop.getClass.getName, configuration.toString)
+      eventLoop
    }
 
    private def calculateGlobalConnections: java.lang.Integer = {

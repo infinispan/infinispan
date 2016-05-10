@@ -109,4 +109,12 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Request to encode unexpected message %s", id = 5024)
    void errorUnexpectedMessage(Object msg);
 
+   @LogMessage(level = DEBUG)
+   @Message(value = "Using Netty SocketChannel %s for %s", id = 5025)
+   void createdSocketChannel(String channelClassName, String configuration);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Using Netty EventLoop %s for %s", id = 5026)
+   void createdNettyEventLoop(String eventLoopClassName, String configuration);
+
 }
