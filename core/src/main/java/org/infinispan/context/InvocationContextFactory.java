@@ -38,9 +38,6 @@ public interface InvocationContextFactory {
 
    /**
     * Creates an invocation context
-    *
-    * @param tx
-    * @return
     */
    InvocationContext createInvocationContext(Transaction tx, boolean implicitTransaction);
 
@@ -87,7 +84,7 @@ public interface InvocationContextFactory {
     * As {@link #createRemoteInvocationContext(org.infinispan.remoting.transport.Address)},
     * but returning the flags to the context from the Command if any Flag was set.
     *
-    * @param cacheCommand
+    * @param cacheCommand the remote command
     * @param origin       the origin of the command, or null if local
     */
    InvocationContext createRemoteInvocationContextForCommand(VisitableCommand cacheCommand, Address origin);

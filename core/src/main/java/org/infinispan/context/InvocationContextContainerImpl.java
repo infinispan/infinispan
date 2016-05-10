@@ -9,7 +9,7 @@ import org.infinispan.factories.annotations.Stop;
  * InvocationContextContainer implementation.
  *
  * @author Dan Berindei
- * @since 7.0
+ * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
 public class InvocationContextContainerImpl implements InvocationContextContainer {
 
@@ -50,6 +50,14 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    @Override
    public void clearThreadLocal() {
       ctxHolder.remove();
+   }
+
+
+   @Override
+   public void clearThreadLocal(InvocationContext context) {
+      if (isThreadLocalRequired(context)) {
+         ctxHolder.remove();
+      }
    }
 
    private boolean isThreadLocalRequired(InvocationContext context) {

@@ -9,7 +9,7 @@ import org.infinispan.factories.scopes.Scopes;
  *
  * @author Manik Surtani (manik AT infinispan DOT org)
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 9.0, this interface is going to be moved to an internal package.
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface InvocationContextContainer {
@@ -35,4 +35,8 @@ public interface InvocationContextContainer {
     * Must be called as each thread exists the interceptor chain.
     */
    void clearThreadLocal();
+
+   default void clearThreadLocal(InvocationContext context) {
+      clearThreadLocal();
+   }
 }
