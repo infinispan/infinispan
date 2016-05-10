@@ -1,5 +1,6 @@
 package org.infinispan.scripting;
 
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.tasks.TaskContext;
@@ -58,4 +59,11 @@ public interface ScriptingManager {
     * @return the source code of the script
      */
    String getScript(String scriptName);
+
+   /**
+    * Retrieves names of all available scripts.
+    *
+    * @return {@link Set<String>} containing names of available scripts.
+    */
+   Set<String> getScriptNames();
 }

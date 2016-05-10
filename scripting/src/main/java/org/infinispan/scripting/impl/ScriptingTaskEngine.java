@@ -30,7 +30,7 @@ public class ScriptingTaskEngine implements TaskEngine {
    @Override
    public List<Task> getTasks() {
       List<Task> tasks = new ArrayList<>();
-      scriptingManager.getScriptCache().keySet().forEach(s -> {
+      scriptingManager.getScriptNames().forEach(s -> {
          ScriptMetadata scriptMetadata = scriptingManager.getScriptMetadata(s);
          tasks.add(new ScriptTask(s, scriptMetadata.mode().isClustered() ? TaskExecutionMode.ALL_NODES : TaskExecutionMode.ONE_NODE, scriptMetadata.parameters()));
       });
