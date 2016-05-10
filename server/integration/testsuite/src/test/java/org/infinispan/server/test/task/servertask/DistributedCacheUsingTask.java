@@ -8,7 +8,6 @@ import org.infinispan.tasks.TaskExecutionMode;
 import javax.transaction.TransactionManager;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Task verifying that the marshaller is passed properly and the value is properly put into the cache.
@@ -21,10 +20,8 @@ public class DistributedCacheUsingTask implements ServerTask {
     public static final String CACHE_NAME = "customTaskReplTx";
     public static final String VALUE_PREFIX = "modified:";
     public static final String PARAM_KEY = "param";
-    public static final String NEW_VALUE = "newValue";
 
     private TaskContext taskContext;
-    private static AtomicInteger counter = new AtomicInteger(0);
 
     @Override
     @SuppressWarnings("unchecked")
