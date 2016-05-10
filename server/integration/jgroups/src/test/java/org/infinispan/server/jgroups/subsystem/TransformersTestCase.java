@@ -159,7 +159,7 @@ public class TransformersTestCase extends OperationTestCaseBase {
         // set a property to have an expression and let Byteman intercept the performRuntime call
 
         // build an ADD command to add a transport property using expression value
-        ModelNode operation = getTransportPropertyAddOperation("maximal", "TCP", "bundler_type", "${the_bundler_type:new}");
+        ModelNode operation = getTransportPropertyAddOperation("maximal", "TCP", "bundler_type", "${the_bundler_type:transfer-queue}");
 
         // perform operation on the 1.1.1 model
         ModelNode mainResult = services.executeOperation(operation);

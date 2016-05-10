@@ -11,7 +11,7 @@
          max_bundle_size="31k"
          enable_diagnostics="false"
          tcp_nodelay="true"
-         bundler_type="sender-sends-with-timer"
+         bundler_type="transfer-queue"
 
          thread_naming_pattern="pl"
 
