@@ -10,7 +10,6 @@ import org.infinispan.tasks.TaskExecutionMode;
  */
 public class DistributedMapReduceServerTask extends LocalMapReduceServerTask {
     public static final String CACHE_NAME = "customTaskRepl";
-    public static final String DIST_CACHE_NAME = "customTaskDist";
     public static final String NAME = "dist_mapreduce_task";
 
     @Override

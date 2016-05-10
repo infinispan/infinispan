@@ -5,8 +5,11 @@ import org.wildfly.extras.creaper.core.online.OnlineOptions;
 import org.wildfly.extras.creaper.core.online.operations.Address;
 import org.wildfly.extras.creaper.core.online.operations.Operations;
 import org.wildfly.extras.creaper.core.online.operations.Values;
+import org.wildfly.extras.creaper.core.online.operations.admin.Administration;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The client connects to a running WildFly/EAP server and performs operations on DMR using
@@ -55,7 +58,6 @@ public class ManagementClient {
     }
 
     public void addDistributedCache(String name, String cacheContainer, String baseConfiguration) throws Exception {
-        addCacheConfiguration("distCacheConfiguration", cacheContainer, CacheTemplate.DIST);
         addCache(name, cacheContainer, baseConfiguration, "distributed-cache");
     }
 
@@ -105,6 +107,64 @@ public class ManagementClient {
                 Values.empty()
                         .and("mode", "SYNC")
                         .andOptional("start", "EAGER"));
+    }
+
+    public void addDistributedCacheConfiguration(String name, String cacheContainer) throws Exception {
+        addCacheConfiguration(name, cacheContainer, CacheTemplate.DIST);
+    }
+
+    public void addReplicatedCacheConfiguration(String name, String cacheContainer) throws Exception {
+        addCacheConfiguration(name, cacheContainer, CacheTemplate.REPL);
+    }
+
+    public void enableTransactionForDistConfiguration(String configurationName, String containerName, Map<String, String> txAttr) throws Exception {
+        enableTransactionConfiguration(configurationName, containerName, txAttr, CacheTemplate.DIST);
+    }
+
+    public void enableTransactionForReplConfiguration(String configurationName, String containerName, Map<String, String> txAttr) throws Exception {
+        enableTransactionConfiguration(configurationName, containerName, txAttr, CacheTemplate.REPL);
+    }
+
+    private void enableTransactionConfiguration(String configurationName, String containerName, Map<String, String> txAttr, CacheTemplate template) throws IOException {
+        //Adding transaction conf to created cache configuration
+        ops.add(Address.subsystem("datagrid-infinispan")
+                .and("cache-container", containerName)
+                .and("configurations", "CONFIGURATIONS")
+                .and(template.getType(), configurationName)
+                .and("transaction", "TRANSACTION"));
+
+        //Adding attributes to transaction
+        for (Map.Entry<String, String> attr : txAttr.entrySet()) {
+            ops.writeAttribute(Address.subsystem("datagrid-infinispan")
+                    .and("cache-container", containerName)
+                    .and("configurations", "CONFIGURATIONS")
+                    .and(template.getType(), configurationName)
+                    .and("transaction", "TRANSACTION"), attr.getKey(), attr.getValue());
+        }
+    }
+
+    public void enableCompatibilityForDistConfiguration(String configurationName, String containerName) throws Exception {
+        enableCompatibilityForConfiguration(configurationName, containerName, CacheTemplate.DIST);
+    }
+
+    public void enableCompatibilityForReplConfiguration(String configurationName, String containerName) throws Exception {
+        enableCompatibilityForConfiguration(configurationName, containerName, CacheTemplate.REPL);
+    }
+
+    private void enableCompatibilityForConfiguration(String configurationName, String containerName, CacheTemplate template) throws Exception {
+        //Adding compatibility conf to created cache configuration
+        ops.add(Address.subsystem("datagrid-infinispan")
+                .and("cache-container", containerName)
+                .and("configurations", "CONFIGURATIONS")
+                .and(template.getType(), configurationName)
+                .and("compatibility", "COMPATIBILITY"));
+
+        //Enabling compatibility
+        ops.writeAttribute(Address.subsystem("datagrid-infinispan")
+                .and("cache-container", containerName)
+                .and("configurations", "CONFIGURATIONS")
+                .and(template.getType(), configurationName)
+                .and("compatibility", "COMPATIBILITY"), "enabled", true);
     }
 
     public void removeLocalCacheConfiguration(String name, String cacheContainer) throws Exception {
@@ -232,6 +292,18 @@ public class ManagementClient {
     public void removeCacheContainer(String name) throws Exception {
         ops.removeIfExists(Address.subsystem("datagrid-infinispan")
                 .and("cache-container", name));
+    }
+
+    public void reloadServer() throws IOException, TimeoutException, InterruptedException {
+        Administration admin = new Administration(org.wildfly.extras.creaper.core.ManagementClient.online(OnlineOptions.domain()
+                .forHost("master")
+                .build()
+                .hostAndPort(NODE0_ADDRESS, NODE0_PORT)
+                .auth(LOGIN, PASSWORD)
+                .build()
+        ));
+
+        admin.reload();
     }
 
     private enum CacheTemplate {

@@ -39,6 +39,7 @@ public class HotRodRemoteCacheManagerDomainIT extends AbstractRemoteCacheManager
         client.enableJmx();
         if (isDistributedMode()) {
             testCache = "cmDistTestCache";
+            client.addDistributedCacheConfiguration("distCacheConfiguration", "clustered");
             client.addDistributedCache(testCache, "clustered", "distCacheConfiguration");
         } else {
             testCache = "cmReplTestCache";

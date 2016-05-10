@@ -69,6 +69,7 @@ public class HotRodRemoteCacheDomainIT extends AbstractRemoteCacheIT {
         client.enableJmx();
         if (isDistributedMode()) {
             testCache = "distTestCache";
+            client.addDistributedCacheConfiguration("distCacheConfiguration", "clustered");
             client.addDistributedCache(testCache, "clustered", "distCacheConfiguration");
         } else if (isLocalMode()) {
             final String targetContainer = "local";
