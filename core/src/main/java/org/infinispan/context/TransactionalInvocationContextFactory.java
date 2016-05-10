@@ -21,7 +21,7 @@ import javax.transaction.TransactionManager;
  * Invocation context to be used for transactional caches.
  *
  * @author Mircea.Markus@jboss.com
- * @since 4.0
+ * @deprecated Since 9.0, this class is going to be moved to an internal package.
  */
 public class TransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
 

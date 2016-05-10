@@ -57,7 +57,7 @@ public class InvocationContextInterceptor extends BaseSequentialInterceptor {
       @Override
       public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
             Throwable throwable) throws Throwable {
-         invocationContextContainer.clearThreadLocal();
+         invocationContextContainer.clearThreadLocal(rCtx);
          if (throwable == null)
             return null;
 
