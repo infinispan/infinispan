@@ -93,6 +93,8 @@ public final class RegexCondition implements Condition<String> {
                break;
 
             // regexp special characters need to be escaped
+            case '+':
+            case '*':
             case '(':
             case ')':
             case '[':
