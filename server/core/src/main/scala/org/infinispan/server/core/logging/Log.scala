@@ -1,10 +1,10 @@
 package org.infinispan.server.core.logging
 
 import java.net.SocketAddress
-import org.infinispan.distribution.ch.ConsistentHash
-import org.infinispan.remoting.transport.Address
-import org.infinispan.util.logging.LogFactory
+
 import io.netty.channel.Channel
+import org.infinispan.distribution.ch.ConsistentHash
+import org.infinispan.util.logging.LogFactory
 
 /**
  * A logging facade for Scala code.
@@ -90,4 +90,9 @@ trait Log {
    def logErrorEncodingMessage(msg: Any, t: Throwable) = log.errorEncodingMessage(msg, t)
 
    def logErrorUnexpectedMessage(msg: Any) = log.errorUnexpectedMessage(msg)
+
+   def logCreatedSocketChannel(channelClassName: String, configuration: String) = log.createdSocketChannel(channelClassName, configuration)
+
+   def logCreatedNettyEventLoop(eventLoopClassName: String, configuration: String) = log.createdNettyEventLoop(eventLoopClassName, configuration)
+
 }
