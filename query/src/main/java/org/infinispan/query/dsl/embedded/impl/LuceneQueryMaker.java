@@ -30,7 +30,6 @@ import org.infinispan.query.logging.Log;
 import org.jboss.logging.Logger;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * @author anistor@redhat.com
@@ -40,11 +39,8 @@ public final class LuceneQueryMaker implements Visitor<Query, Query> {
 
    private static final Log log = Logger.getMessageLogger(Log.class, LuceneQueryMaker.class.getName());
 
-   private static final String LUCENE_SINGLE_CHARACTER_WILDCARD = "?";
-   private static final String LUCENE_MULTIPLE_CHARACTERS_WILDCARD = "*";
-
-   private static final Pattern MULTIPLE_CHARACTERS_WILDCARD_PATTERN = Pattern.compile("%");
-   private static final Pattern SINGLE_CHARACTER_WILDCARD_PATTERN = Pattern.compile("_");
+   private static final char LUCENE_SINGLE_CHARACTER_WILDCARD = '?';
+   private static final char LUCENE_MULTIPLE_CHARACTERS_WILDCARD = '*';
 
    private final QueryContextBuilder queryContextBuilder;
    private final HibernateSearchPropertyHelper propertyHelper;
@@ -217,10 +213,24 @@ public final class LuceneQueryMaker implements Visitor<Query, Query> {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
       String[] propertyPath = propertyValueExpr.getPropertyPath();
       ensureNotAnalyzed(propertyPath);
-      String patternValue = MULTIPLE_CHARACTERS_WILDCARD_PATTERN.matcher(likeExpr.getPattern()).replaceAll(LUCENE_MULTIPLE_CHARACTERS_WILDCARD);
-      patternValue = SINGLE_CHARACTER_WILDCARD_PATTERN.matcher(patternValue).replaceAll(LUCENE_SINGLE_CHARACTER_WILDCARD);
+      StringBuilder lucenePattern = new StringBuilder(likeExpr.getPattern());
+      for (int i = 0; i < lucenePattern.length(); i++) {
+         switch (lucenePattern.charAt(i)) {
+            case LUCENE_MULTIPLE_CHARACTERS_WILDCARD:
+            case LUCENE_SINGLE_CHARACTER_WILDCARD:
+               lucenePattern.insert(i, '\\');
+               i++;
+               break;
+            case '%':
+               lucenePattern.setCharAt(i, LUCENE_MULTIPLE_CHARACTERS_WILDCARD);
+               break;
+            case '_':
+               lucenePattern.setCharAt(i, LUCENE_SINGLE_CHARACTER_WILDCARD);
+               break;
+         }
+      }
       return applyFieldBridge(propertyPath, queryBuilder.keyword().wildcard().onField(StringHelper.join(propertyPath)))
-            .matching(patternValue).createQuery();
+            .matching(lucenePattern.toString()).createQuery();
    }
 
    @Override
