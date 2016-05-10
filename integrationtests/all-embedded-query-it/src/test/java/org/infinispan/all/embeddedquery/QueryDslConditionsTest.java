@@ -3093,4 +3093,36 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(1L, list.get(2)[0]);
       assertNull(list.get(2)[1]);
    }
+
+   /**
+    * Test that 'like' accepts only % and _ as wildcards.
+    */
+   @Test
+   public void testLuceneWildcardsAreEscaped() {
+      QueryFactory qf = getQueryFactory();
+
+      // use a true wildcard
+      Query q1 = qf.from(getModelFactory().getUserImplClass())
+            .having("name").like("J%n").toBuilder()
+            .build();
+      assertEquals(1, q1.list().size());
+
+      // use an improper wildcard
+      Query q2 = qf.from(getModelFactory().getUserImplClass())
+            .having("name").like("J*n").toBuilder()
+            .build();
+      assertEquals(0, q2.list().size());
+
+      // use a true wildcard
+      Query q3 = qf.from(getModelFactory().getUserImplClass())
+            .having("name").like("Jo_n").toBuilder()
+            .build();
+      assertEquals(1, q3.list().size());
+
+      // use an improper wildcard
+      Query q4 = qf.from(getModelFactory().getUserImplClass())
+            .having("name").like("Jo?n").toBuilder()
+            .build();
+      assertEquals(0, q4.list().size());
+   }
 }
