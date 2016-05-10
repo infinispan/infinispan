@@ -2,9 +2,9 @@ package org.infinispan.scripting.impl;
 
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
-
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
@@ -70,7 +70,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    Cache<String, String> getScriptCache() {
       if (scriptCache == null) {
-         scriptCache = SecurityActions.getUnwrappedCache(cacheManager.getCache(SCRIPT_CACHE));
+         scriptCache = cacheManager.getCache(SCRIPT_CACHE);
       }
       return scriptCache;
    }
@@ -128,14 +128,19 @@ public class ScriptingManagerImpl implements ScriptingManager {
    @Override
    public String getScript(String name) {
       if (containsScript(name)) {
-         return getScriptCache().get(name);
+         return SecurityActions.getUnwrappedCache(getScriptCache()).get(name);
       } else {
          throw log.noNamedScript(name);
       }
    }
 
+   @Override
+   public Set<String> getScriptNames() {
+      return SecurityActions.getUnwrappedCache(getScriptCache()).keySet();
+   }
+
    public boolean containsScript(String taskName) {
-      return getScriptCache().containsKey(taskName);
+      return SecurityActions.getUnwrappedCache(getScriptCache()).containsKey(taskName);
    }
 
    @Override
