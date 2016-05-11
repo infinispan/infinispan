@@ -5,18 +5,12 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
-import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -25,10 +19,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "client.hotrod.AuthenticationTest", groups = "functional")
 @CleanupAfterMethod
-public class AuthenticationTest extends SingleCacheManagerTest {
-   private static final Log log = LogFactory.getLog(AuthenticationTest.class);
-   private RemoteCacheManager remoteCacheManager;
-
+public class AuthenticationTest extends AbstractAuthenticationTest {
    protected HotRodServer hotrodServer;
 
 
@@ -40,34 +31,11 @@ public class AuthenticationTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   protected ConfigurationBuilder initServerAndClient() {
-      hotrodServer = new HotRodServer();
-      HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
+   @Override
+   protected SimpleServerAuthenticationProvider createAuthenticationProvider() {
       SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
       sap.addUser("user", "realm", "password".toCharArray(), null);
-      serverBuilder.authentication()
-         .enable()
-         .serverName("localhost")
-         .addAllowedMech("CRAM-MD5")
-         .serverAuthenticationProvider(sap);
-      hotrodServer.start(serverBuilder.build(), cacheManager);
-      log.info("Started server on port: " + hotrodServer.getPort());
-
-      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
-      clientBuilder
-         .addServer()
-            .host("127.0.0.1")
-            .port(hotrodServer.getPort())
-            .socketTimeout(3000)
-         .connectionPool()
-            .maxActive(1)
-         .security()
-            .authentication()
-               .enable()
-               .saslMechanism("CRAM-MD5")
-          .connectionPool()
-             .timeBetweenEvictionRuns(2000);
-      return clientBuilder;
+      return sap;
    }
 
    @Test
@@ -87,13 +55,5 @@ public class AuthenticationTest extends SingleCacheManagerTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCacheManager.getCache();
    }
-
-   @Override
-   protected void teardown() {
-      HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
-      HotRodClientTestingUtil.killServers(hotrodServer);
-      super.teardown();
-   }
-
 
 }
