@@ -1,6 +1,8 @@
 package org.infinispan.client.hotrod.test;
 
 import io.netty.channel.ChannelException;
+import io.netty.channel.unix.Errors;
+import io.netty.channel.unix.Errors.NativeIoException;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -48,6 +50,16 @@ public class HotRodClientTestingUtil {
       return startHotRodServer(cacheManager, uniquePort.incrementAndGet(), builder);
    }
 
+   private static boolean isBindException(Throwable e) {
+      if (e instanceof BindException)
+         return true;
+      if (e instanceof NativeIoException) {
+         NativeIoException nativeIoException = (NativeIoException) e;
+         return nativeIoException.getMessage().contains("bind");
+      }
+      return false;
+   }
+
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, int startPort, HotRodServerConfigurationBuilder builder) {
       // TODO: This is very rudimentary!! HotRodTestingUtil needs a more robust solution where ports are generated randomly and retries if already bound
       HotRodServer server = null;
@@ -59,7 +71,7 @@ public class HotRodClientTestingUtil {
          try {
             server = HotRodTestingUtil.startHotRodServer(cacheManager, port++, builder);
          } catch (ChannelException e) {
-            if (!(e.getCause() instanceof BindException)) {
+            if (!isBindException(e.getCause())) {
                throw e;
             } else {
                log.debug("Address already in use: [" + e.getMessage() + "], so let's try next port");
@@ -67,7 +79,7 @@ public class HotRodClientTestingUtil {
                lastError = e;
             }
          } catch (Throwable t) {
-            if (!(t instanceof BindException)) {
+            if (!isBindException(t)) {
                throw t;
             } else {
                log.debug("Address already in use: [" + t.getMessage() + "], so let's try next port");
