@@ -14,7 +14,6 @@ import javax.security.auth.Subject;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.equivalence.AnyServerEquivalence;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -23,6 +22,7 @@ import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.impl.IdentityRoleMapper;
+import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -36,37 +36,44 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "client.hotrod.SecureExecTest", groups = "functional")
 @CleanupAfterMethod
-public class SecureExecTest extends AuthenticationTest {
-   static final Subject ADMIN = TestingUtil.makeSubject("user", ScriptingManager.SCRIPT_MANAGER_ROLE);
+public class SecureExecTest extends AbstractAuthenticationTest {
+   static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
    static final String CACHE_NAME = "secured-exec";
-    
-   private RemoteCacheManager remoteCacheManager;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper());
       globalRoles
-         .role("user")
-         .permission(AuthorizationPermission.ALL)
-         .permission(AuthorizationPermission.EXEC);
+         .role("admin")
+            .permission(AuthorizationPermission.ALL)
+         .role("RWEuser")
+            .permission(AuthorizationPermission.READ)
+            .permission(AuthorizationPermission.WRITE)
+            .permission(AuthorizationPermission.EXEC)
+         .role("RWuser")
+            .permission(AuthorizationPermission.READ)
+            .permission(AuthorizationPermission.WRITE);
 
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      config.dataContainer().keyEquivalence(new AnyServerEquivalence())
-         .valueEquivalence(new AnyServerEquivalence()).compatibility().enable()
-         .marshaller(new GenericJBossMarshaller())
-         .security().authorization().enable().role("user");
+      config
+         .dataContainer()
+            .keyEquivalence(new AnyServerEquivalence())
+            .valueEquivalence(new AnyServerEquivalence())
+         .security().authorization().enable().role("admin").role("RWEuser").role("RWuser");
       cacheManager = TestCacheManagerFactory.createCacheManager(global, config);
-      ConfigurationBuilder config2 = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      config2
-            .dataContainer()
-                .keyEquivalence(new AnyServerEquivalence())
-                .valueEquivalence(new AnyServerEquivalence())
-            .security().authorization().enable().role("user");
-      cacheManager.defineConfiguration(CACHE_NAME, config2.build());
+      cacheManager.defineConfiguration(CACHE_NAME, config.build());
       cacheManager.getCache();
 
       return cacheManager;
+   }
+
+   @Override
+   protected SimpleServerAuthenticationProvider createAuthenticationProvider() {
+      SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
+      sap.addUser("RWEuser", "realm", "password".toCharArray(), null);
+      sap.addUser("RWuser", "realm", "password".toCharArray(), null);
+      return sap;
    }
 
    @Override
@@ -107,17 +114,43 @@ public class SecureExecTest extends AuthenticationTest {
 
    public void testSimpleScriptExecutionWithValidAuth() throws IOException, PrivilegedActionException {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = initServerAndClient();
-      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "password".toCharArray()));
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
 
       runTestWithGivenScript(clientBuilder.build(), "/testRole_hotrod.js");
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
-   public void testSimpleScriptExecutionWithInValidAuth() throws IOException, PrivilegedActionException {
+   public void testSimpleScriptExecutionWithInvalidAuth() throws IOException, PrivilegedActionException {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = initServerAndClient();
-      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "password".toCharArray()));
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
 
       runTestWithGivenScript(clientBuilder.build(), "/testRole.js");
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
+   public void testSimpleScriptExecutionWithoutExecPerm() throws IOException, PrivilegedActionException {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = initServerAndClient();
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWuser", "realm", "password".toCharArray()));
+
+      runTestWithGivenScript(clientBuilder.build(), "/testWithoutRole.js");
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
+   public void testUploadWithoutScriptManagerRole() throws IOException, PrivilegedActionException {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = initServerAndClient();
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
+
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      remoteCacheManager.getCache(ScriptingManager.SCRIPT_CACHE).put("shouldFail", "1+1");
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*Unauthorized access.*")
+   public void testClearWithoutScriptManagerRole() throws IOException, PrivilegedActionException {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = initServerAndClient();
+      clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("RWEuser", "realm", "password".toCharArray()));
+
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      remoteCacheManager.getCache(ScriptingManager.SCRIPT_CACHE).clear();
    }
 
    private void runTestWithGivenScript(Configuration config, String scriptPath) throws IOException, PrivilegedActionException {
@@ -125,18 +158,27 @@ public class SecureExecTest extends AuthenticationTest {
       Map<String, String> params = new HashMap<>();
       params.put("a", "guinness");
 
-      ScriptingManager scriptingManager = hotrodServer.getCacheManager().getGlobalComponentRegistry().getComponent(ScriptingManager.class);
       String scriptName = null;
       try (InputStream is = this.getClass().getResourceAsStream(scriptPath)) {
          String script = TestingUtil.loadFileAsString(is);
 
          scriptName = scriptPath.substring(1);
-         scriptingManager.addScript(scriptName, script);
+         uploadScript(scriptName, script);
       }
 
       String result = remoteCacheManager.getCache(CACHE_NAME).execute(scriptName, params);
       assertEquals("guinness", result);
       assertEquals("guinness", remoteCacheManager.getCache(CACHE_NAME).get("a"));
+   }
+
+   protected void uploadScript(String scriptName, String script) throws PrivilegedActionException {
+      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
+         @Override
+         public Void run() throws Exception {
+            cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).put(scriptName, script);
+            return null;
+         }
+      });
    }
 
 }
