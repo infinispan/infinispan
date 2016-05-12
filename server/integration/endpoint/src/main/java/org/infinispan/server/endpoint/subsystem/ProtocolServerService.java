@@ -126,7 +126,10 @@ class ProtocolServerService implements Service<ProtocolServer> {
                String sniDomain = sniConfiguration.getKey();
                SSLContext sniSslContext = Optional.ofNullable(sniConfiguration.getValue().getOptionalValue())
                        .flatMap(s -> ofNullable(s.getSSLContext()))
-                       .orElseThrow(() -> ROOT_LOGGER.noSSLContextForSni(serverName, sniDomain));
+                       .orElseGet(() -> {
+                          ROOT_LOGGER.noSSLContextForSni(serverName);
+                          return sslContext;
+                       });
                configurationBuilder.ssl().sniHostName(sniDomain).sslContext(sniSslContext);
             }
 
@@ -166,7 +169,7 @@ class ProtocolServerService implements Service<ProtocolServer> {
    }
 
    private boolean isSniEnabled() {
-      return sniDomains.keySet().size() > 0;
+      return !sniDomains.isEmpty();
    }
 
    private void addToExtensionManagerIfHotRod() {

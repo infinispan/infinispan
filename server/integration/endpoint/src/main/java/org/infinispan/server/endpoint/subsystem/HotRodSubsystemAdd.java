@@ -135,9 +135,12 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
          config = config.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME);
          if(config.get(ModelKeys.SNI).isDefined()) {
             for(ModelNode sniConfiguration : config.get(ModelKeys.SNI).asList()) {
-               String sniHostName = sniConfiguration.get(0).get(ModelKeys.HOST_NAME).asString();
-               String securityRealm = sniConfiguration.get(0).get(ModelKeys.SECURITY_REALM).asString();
-               EndpointUtils.addSecurityRealmDependency(builder, securityRealm, service.getSniSecurityRealm(sniHostName));
+               // if the security realm is missing, a default one will be used
+               if(sniConfiguration.get(0).hasDefined(ModelKeys.SECURITY_REALM)) {
+                  String sniHostName = sniConfiguration.get(0).get(ModelKeys.HOST_NAME).asString();
+                  String securityRealm = sniConfiguration.get(0).get(ModelKeys.SECURITY_REALM).asString();
+                  EndpointUtils.addSecurityRealmDependency(builder, securityRealm, service.getSniSecurityRealm(sniHostName));
+               }
             }
          }
       }

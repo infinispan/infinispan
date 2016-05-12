@@ -22,6 +22,7 @@
         <encryption security-realm="other">
             <sni host-name="sni" security-realm="other" />
             <sni host-name="sni2" security-realm="other2" />
+            <sni host-name="sni3" />
         </encryption>
     </hotrod-connector>
    <memcached-connector cache="memcachedCache" socket-binding="memcached" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000" />
