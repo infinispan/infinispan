@@ -16,7 +16,7 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 

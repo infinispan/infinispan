@@ -14,7 +14,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
