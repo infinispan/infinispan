@@ -24,7 +24,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.testng.annotations.Test;
 
 import java.io.IOException;

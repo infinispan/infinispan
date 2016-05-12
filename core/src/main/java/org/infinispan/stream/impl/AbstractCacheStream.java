@@ -18,7 +18,7 @@ import org.infinispan.stream.impl.termop.SingleRunOperation;
 import org.infinispan.stream.impl.termop.object.FlatMapIteratorOperation;
 import org.infinispan.stream.impl.termop.object.MapIteratorOperation;
 import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
