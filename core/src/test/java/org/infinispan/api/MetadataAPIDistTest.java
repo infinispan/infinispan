@@ -24,6 +24,7 @@ public class MetadataAPIDistTest extends MultipleCacheManagersTest {
       builder.dataContainer().keyEquivalence(eq).valueEquivalence(eq)
              .clustering().hash().numOwners(1);
       createCluster(builder, 2);
+      waitForClusterToForm();
    }
 
    public void testGetCacheEntryNonOwner() {
