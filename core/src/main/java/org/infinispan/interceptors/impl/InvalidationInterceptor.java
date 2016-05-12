@@ -28,6 +28,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -101,7 +103,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       if (!isLocalModeForced(command)) {
          // just broadcast the clear command - this is simplest!
          if (ctx.isOriginLocal())
-            rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(defaultSynchronous));
+            rpcManager.invokeRemotely(null, command, getBroadcastRpcOptions(defaultSynchronous));
       }
       return ctx.shortCircuit(retval);
    }
@@ -154,7 +156,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
-         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(sync));
+         rpcManager.invokeRemotely(null, command, getBroadcastRpcOptions(sync));
       }
       return ctx.shortCircuit(retVal);
    }
@@ -250,7 +252,12 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          // but this does not impact consistency and the speed benefit is worth it.
          command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(), Collections.<WriteCommand>singletonList(invalidateCommand), true);
       }
-      rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(synchronous));
+      rpcManager.invokeRemotely(null, command, getBroadcastRpcOptions(synchronous));
+   }
+
+   private RpcOptions getBroadcastRpcOptions(boolean synchronous) {
+      return rpcManager.getRpcOptionsBuilder(
+            synchronous ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS).build();
    }
 
    private void incrementInvalidations() {

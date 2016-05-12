@@ -274,7 +274,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
       @Override
       public boolean isAcceptable(Response response, Address sender) {
-         if (response.isSuccessful() && response.isValid()) {
+         if (response.isSuccessful()) {
             ManagerStatusResponse value = (ManagerStatusResponse) ((SuccessfulResponse)response).getResponseValue();
             for (Entry<String, CacheStatusResponse> entry : value.getCaches().entrySet()) {
                CacheStatusResponse csr = entry.getValue();
@@ -448,9 +448,18 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                         new CacheTopologyFilterReuser());
             break;
          } catch (ExecutionException e) {
-            if (i == 0 || !(e.getCause() instanceof TimeoutException))
-               throw e;
-            log.debug("Timed out waiting for cluster status responses, trying again");
+            if (i != 0) {
+               if (e.getCause() instanceof TimeoutException) {
+                  log.debug("Timed out waiting for cluster status responses, trying again");
+               } else if (e.getCause() instanceof SuspectException) {
+                  if (transport.getMembers().containsAll(clusterMembers)) {
+                     log.debug("Received a CacheNotFoundResponse from one of the members, trying again");
+                     Thread.sleep(getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS / 2);
+                  }
+               }
+               continue;
+            }
+            throw e;
          }
       }
 
