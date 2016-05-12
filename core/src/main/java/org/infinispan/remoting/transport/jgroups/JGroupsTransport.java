@@ -792,8 +792,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             log.tracef(rsp.getException(), "Unexpected exception from %s", sender);
             throw log.remoteException(sender, rsp.getException());
          } else {
-            // TODO We should handle CacheNotFoundResponse exactly the same way as wasSuspected
-            response = checkResponse(rsp.getValue(), sender, true);
+            response = checkResponse(rsp.getValue(), sender, ignoreLeavers);
          }
       } else if (rsp.wasSuspected()) {
          response = checkResponse(CacheNotFoundResponse.INSTANCE, sender, ignoreLeavers);

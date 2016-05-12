@@ -117,6 +117,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.transport().nodeName(channel.getName());
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
+      gcb.transport().distributedSyncTimeout(30, TimeUnit.SECONDS);
 
       FORK fork = new FORK();
       fork.setUnknownForkHandler(new UnknownForkHandler() {

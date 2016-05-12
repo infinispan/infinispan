@@ -2,7 +2,6 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -218,7 +217,7 @@ public class InboundTransferTask {
             StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId,
             cancelledSegments);
       try {
-         rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
+         rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
       } catch (Exception e) {
          // Ignore exceptions here, the worst that can happen is that the provider will send some extra state
          log.debugf("Caught an exception while cancelling state transfer for segments %s from %s",

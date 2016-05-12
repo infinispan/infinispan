@@ -126,7 +126,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (ctx.isOriginLocal() && !isLocalModeForced(command)) {
-         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
+         RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(
+               isSynchronous(command) ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS)
+               .build();
+         rpcManager.invokeRemotely(null, command, rpcOptions);
       }
       return invokeNextInterceptor(ctx, command);
    }

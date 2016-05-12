@@ -35,6 +35,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -99,7 +101,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       Object retval = invokeNextInterceptor(ctx, command);
       if (!isLocalModeForced(command)) {
          // just broadcast the clear command - this is simplest!
-         if (ctx.isOriginLocal()) rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(defaultSynchronous));
+         if (ctx.isOriginLocal())
+            rpcManager.invokeRemotely(null, command, getBroadcastRpcOptions(defaultSynchronous));
       }
       return retval;
    }
@@ -151,7 +154,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
-         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(sync));
+         rpcManager.invokeRemotely(null, command, getBroadcastRpcOptions(sync));
       }
       return retVal;
    }
@@ -234,8 +237,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand(Collections.<Flag>emptySet(), keys);
       if (log.isDebugEnabled())
          log.debug("Cache [" + rpcManager.getAddress() + "] replicating " + invalidateCommand);
-      
-      ReplicableCommand command = invalidateCommand; 
+
+      ReplicableCommand command = invalidateCommand;
       if (ctx.isInTxScope()) {
          TxInvocationContext txCtx = (TxInvocationContext) ctx;
          // A Prepare command containing the invalidation command in its 'modifications' list is sent to the remote nodes
@@ -243,9 +246,14 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          // This is 1PC on purpose, as an optimisation, even if the current TX is 2PC.
          // If the cache uses 2PC it's possible that the remotes will commit the invalidation and the originator rolls back,
          // but this does not impact consistency and the speed benefit is worth it.
-         command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(), Collections.<WriteCommand>singletonList(invalidateCommand), true);         
+         command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(), Collections.<WriteCommand>singletonList(invalidateCommand), true);
       }
-      rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(synchronous));
+      rpcManager.invokeRemotely(null, command, getBroadcastRpcOptions(synchronous));
+   }
+
+   private RpcOptions getBroadcastRpcOptions(boolean synchronous) {
+      return rpcManager.getRpcOptionsBuilder(
+            synchronous ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS).build();
    }
 
    private void incrementInvalidations() {
