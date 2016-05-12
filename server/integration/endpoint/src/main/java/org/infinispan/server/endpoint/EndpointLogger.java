@@ -181,7 +181,8 @@ public interface EndpointLogger extends BasicLogger {
    @Message(id = 10031, value = "The topology cache-suffix attribute is ignored")
    void topologyCacheSuffixIgnored();
 
-   @Message(id = 10032, value = "Endpoint '%s' requires SSL for SNI, but no SSL context is available in realm '%s'")
-   StartException noSSLContextForSni(String endpoint, String realm);
+   @LogMessage(level = INFO)
+   @Message(id = 10032, value = "No Security realm declared for endpoint '%s'. Using default encryption realm.")
+   void noSSLContextForSni(String endpoint);
 }
 

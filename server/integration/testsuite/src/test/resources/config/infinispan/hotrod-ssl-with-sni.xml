@@ -1,4 +1,6 @@
                 <!-- SSLRealm1 has wrong keystore, so the clients should only be able to connect to SSLRealm2 -->
+                <!-- There is an additional tests which connects to sni2 and expects cert from SSLRealm1-->
                 <encryption security-realm="SSLRealm1" require-ssl-client-auth="false" >
                     <sni host-name="sni" security-realm="SSLRealm2" />
+                    <sni host-name="sni2" />
                 </encryption>

@@ -381,9 +381,9 @@
                 <xs:documentation>TLS SNI host name</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="security-realm" type="xs:string" use="required">
+        <xs:attribute name="security-realm" type="xs:string" use="optional">
             <xs:annotation>
-                <xs:documentation>A corresponding security realm</xs:documentation>
+                <xs:documentation>A corresponding security realm. If none is specified, the default will be used.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
