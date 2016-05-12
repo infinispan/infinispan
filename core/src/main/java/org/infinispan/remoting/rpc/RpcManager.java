@@ -117,5 +117,4 @@ public interface RpcManager {
     * @return the default Synchronous/Asynchronous RpcOptions with the deliver order set by the parameter.
     */
    RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder);
-
 }

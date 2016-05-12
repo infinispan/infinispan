@@ -5,9 +5,12 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
+
+import java.util.Collections;
 
 /**
 * Represents a write operation to test.
@@ -23,6 +26,7 @@ public enum TestWriteOperation {
    REPLACE_EXACT(ReplaceCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
    REMOVE(RemoveCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
    REMOVE_EXACT(RemoveCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   PUT_MAP_CREATE(PutMapCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, false, false),
 
    // Functional put create must return null even on retry (as opposed to non-functional)
    PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, null),
@@ -96,6 +100,9 @@ public enum TestWriteOperation {
          case REMOVE_EXACT:
          case REMOVE_EXACT_FUNCTIONAL:
             return cache.remove(key, previousValue);
+         case PUT_MAP_CREATE:
+            cache.putAll(Collections.singletonMap(key, value));
+            return null;
          default:
             throw new IllegalArgumentException("Unsupported operation: " + this);
       }
