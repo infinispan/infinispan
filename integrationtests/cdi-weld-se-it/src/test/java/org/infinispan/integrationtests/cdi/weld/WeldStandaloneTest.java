@@ -25,6 +25,9 @@ public class WeldStandaloneTest {
 
       //then
       assertEquals(retrievedValue, "abcd");
+
+      //cleanup
+      weld.shutdown();
    }
 
 }
