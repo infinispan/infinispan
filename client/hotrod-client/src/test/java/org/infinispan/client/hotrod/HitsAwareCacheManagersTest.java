@@ -15,6 +15,7 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 
 import java.net.InetSocketAddress;
@@ -182,6 +183,12 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    private void addHitCountInterceptor(Cache<?, ?> cache) {
       HitCountInterceptor interceptor = new HitCountInterceptor();
       cache.getAdvancedCache().addInterceptor(interceptor, 1);
+   }
+
+   @AfterClass(alwaysRun = true)
+   protected void destroy() {
+      addr2hrServer.values().forEach(HotRodClientTestingUtil::killServers);
+      super.destroy();
    }
 
    /**

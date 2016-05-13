@@ -39,7 +39,6 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.Date;
@@ -126,10 +125,11 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       return builder;
    }
 
-   @AfterTest
-   public void release() {
+   @Override
+   protected void teardown() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer);
+      super.teardown();
    }
 
    public void testPutAndGet() throws Exception {
