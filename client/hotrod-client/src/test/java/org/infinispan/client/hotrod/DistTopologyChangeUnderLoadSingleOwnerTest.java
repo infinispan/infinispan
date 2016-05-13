@@ -54,11 +54,7 @@ public class DistTopologyChangeUnderLoadSingleOwnerTest extends MultiHotRodServe
       TestingUtil.waitForRehashToComplete(cache(0));
 
       // Start server
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
-      registerCacheManager(cm);
-      HotRodClientTestingUtil.startHotRodServer(cm);
-      waitForClusterToForm();
-      TestingUtil.waitForRehashToComplete(cm.getCache(), cache(0));
+      addHotRodServer(getCacheConfiguration());
 
       putHammer.stop = true;
       putHammerFuture.get();

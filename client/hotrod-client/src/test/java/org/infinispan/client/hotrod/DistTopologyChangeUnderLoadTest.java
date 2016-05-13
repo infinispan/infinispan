@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -45,16 +46,13 @@ public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
       PutHammer putHammer = new PutHammer();
       Future<Void> putHammerFuture = fork(putHammer);
 
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
-      registerCacheManager(cm);
-      HotRodClientTestingUtil.startHotRodServer(cm);
-      waitForClusterToForm();
-      TestingUtil.waitForRehashToComplete(cm.getCache(), cache(0));
+      HotRodServer newServer = addHotRodServer(getCacheConfiguration());
 
       // Wait for 2 seconds
       TestingUtil.sleepThread(2000);
 
-      TestingUtil.killCacheManagers(cm);
+      HotRodClientTestingUtil.killServers(newServer);
+      TestingUtil.killCacheManagers(newServer.getCacheManager());
       TestingUtil.waitForRehashToComplete(cache(0));
 
       // Execute one more operation to guarantee topology update on the client
