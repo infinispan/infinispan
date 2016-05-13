@@ -21,7 +21,6 @@ import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.server.test.category.HotRodSingleNode;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.OverProtocol;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
