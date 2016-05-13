@@ -1,9 +1,8 @@
 package org.infinispan.server.hotrod.transport
 
-import java.util.concurrent.Executors
+import java.util.concurrent.ExecutorService
 
 import io.netty.channel.{Channel, ChannelOutboundHandler}
-import io.netty.util.concurrent.DefaultThreadFactory
 import org.infinispan.commons.logging.LogFactory
 import org.infinispan.server.core.transport.{NettyChannelInitializer, NettyTransport}
 import org.infinispan.server.hotrod._
@@ -16,11 +15,8 @@ import org.infinispan.server.hotrod.logging.{HotRodAccessLoggingHandler, JavaLog
   * @since 9.0
   */
 class HotRodChannelInitializer(val server: HotRodServer, transport: => NettyTransport,
-                               val encoder: ChannelOutboundHandler, threadNamePrefix: String)
+                               val encoder: ChannelOutboundHandler, executor: ExecutorService)
       extends NettyChannelInitializer(server, transport, encoder) {
-
-   val executor = Executors.newFixedThreadPool(server.getConfiguration.workerThreads(),
-      new DefaultThreadFactory(threadNamePrefix + "ServerHandler"))
 
    override def initChannel(ch: Channel): Unit = {
       super.initChannel(ch)
