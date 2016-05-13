@@ -35,6 +35,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
@@ -125,10 +127,10 @@ public class InvocationContextInterceptor extends DDSequentialInterceptor {
                      log.outdatedTopology(th);
                   } else if (th instanceof RetryPrepareException) {
                      log.debugf("Retrying total order prepare command for transaction %s, affected keys %s",
-                           ctx.getLockOwner(), extractWrittenKeys(ctx, command));
+                           ctx.getLockOwner(), toStr(extractWrittenKeys(ctx, command)));
                   } else {
                      Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
-                     log.executionError(command.getClass().getSimpleName(), affectedKeys, th);
+                     log.executionError(command.getClass().getSimpleName(), toStr(affectedKeys), th);
                   }
                   if (ctx.isInTxScope() && ctx.isOriginLocal()) {
                      if (trace) log.trace("Transaction marked for rollback as exception was received.");

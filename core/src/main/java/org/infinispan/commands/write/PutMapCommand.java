@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -180,7 +182,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
          int i = 0;
          for (;;) {
             Entry<Object, Object> e = it.next();
-            sb.append(e.getKey()).append('=').append(e.getValue());
+            sb.append(toStr(e.getKey())).append('=').append(toStr(e.getValue()));
             if (!it.hasNext()) {
                break;
             }

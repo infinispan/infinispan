@@ -85,20 +85,20 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
          CacheEntry entry = ctx.lookupEntry(key);
          if (entry == null) {
             if (trace) {
-               log.tracef("Entry for key %s not found", key);
+               log.tracef("Entry for key %s not found", toStr(key));
             }
             continue;
          }
          if (entry.isNull()) {
             if (trace) {
-               log.tracef("Entry for key %s is null in current context", key);
+               log.tracef("Entry for key %s is null in current context", toStr(key));
             }
             map.put(key, null);
             continue;
          }
          if (entry.isRemoved()) {
             if (trace) {
-               log.tracef("Entry for key %s has been deleted and is of type %s", key, entry.getClass().getSimpleName());
+               log.tracef("Entry for key %s has been deleted and is of type %s", toStr(key), entry.getClass().getSimpleName());
             }
             map.put(key, null);
             continue;
@@ -113,14 +113,14 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
                copy = entry;
             }
             if (trace) {
-               log.tracef("Found entry %s -> %s", key, entry);
+               log.tracef("Found entry %s -> %s", toStr(key), entry);
                log.tracef("Returning copied entry %s", copy);
             }
             map.put(key, copy);
          } else {
             Object value = entry.getValue();
             if (trace) {
-               log.tracef("Found %s -> %s", key, toStr(value));
+               log.tracef("Found %s -> %s", toStr(key), toStr(value));
             }
             map.put(key, value);
          }
@@ -198,7 +198,7 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
    @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder("GetAllCommand{");
-      sb.append("keys=").append(keys);
+      sb.append("keys=").append(toStr(keys));
       sb.append(", returnEntries=").append(returnEntries);
       sb.append(", flags=").append(printFlags());
       sb.append('}');

@@ -23,6 +23,8 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * Locking interceptor to be used by optimistic transactional caches.
  *
@@ -146,12 +148,12 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       CacheEntry ce = ctx.lookupEntry(key);
       if (ce instanceof RepeatableReadEntry && ctx.getCacheTransaction().keyRead(key)) {
          if (trace) {
-            log.tracef("Performing local write skew check for key %s", key);
+            log.tracef("Performing local write skew check for key %s", toStr(key));
          }
          ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer, true);
       } else {
          if (trace) {
-            log.tracef("*Not* performing local write skew check for key %s", key);
+            log.tracef("*Not* performing local write skew check for key %s", toStr(key));
          }
       }
    }

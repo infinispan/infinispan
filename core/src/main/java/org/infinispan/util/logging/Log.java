@@ -540,7 +540,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error executing command %s, writing keys %s", id = 136)
-   void executionError(String commandType, Collection<?> affectedKeys, @Cause Throwable t);
+   void executionError(String commandType, String affectedKeys, @Cause Throwable t);
 
    @LogMessage(level = INFO)
    @Message(value = "Failed invalidating remote cache", id = 137)
