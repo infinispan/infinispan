@@ -8,13 +8,13 @@ import org.testng.annotations.Test;
  * @author gustavonalle
  * @since 9.0
  */
-@Test(testName = "persistence.remote.GetWithMetadataReadCommitted", groups = "functional")
-public class GetWithMetadataReadCommitted extends GetWithMetadataTest {
+@Test(testName = "persistence.remote.GetWithMetadataRepeatableReadTest", groups = "functional")
+public class GetWithMetadataRepeatableReadTest extends GetWithMetadataTest {
 
    @Override
    protected ConfigurationBuilder getTargetCacheConfiguration(int sourcePort) {
       ConfigurationBuilder targetCacheConfiguration = super.getTargetCacheConfiguration(sourcePort);
-      targetCacheConfiguration.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
+      targetCacheConfiguration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       return targetCacheConfiguration;
    }
 }
