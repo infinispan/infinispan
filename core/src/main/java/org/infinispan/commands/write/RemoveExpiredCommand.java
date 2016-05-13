@@ -27,6 +27,8 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 
 /**
  * Removes an entry that is expired from memory
@@ -124,8 +126,8 @@ public class RemoveExpiredCommand extends RemoveCommand {
    @Override
    public String toString() {
       return "RemoveExpiredCommand{" +
-              "key=" + key +
-              ", value=" + value +
+              "key=" + toStr(key) +
+              ", value=" + toStr(value) +
               ", lifespan=" + lifespan +
               '}';
    }

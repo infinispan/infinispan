@@ -18,6 +18,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 
+import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
@@ -143,7 +144,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             // The command will be forwarded back to the originator, and the value will be stored then
             // (while holding the lock on the primary owner).
             log.tracef("Skipping cache store on the originator because it is not the primary owner " +
-                             "of key %s", key);
+                             "of key %s", toStr(key));
             return false;
          }
       }
