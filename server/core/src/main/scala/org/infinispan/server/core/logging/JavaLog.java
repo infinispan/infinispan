@@ -117,4 +117,7 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Using Netty EventLoop %s for %s", id = 5026)
    void createdNettyEventLoop(String eventLoopClassName, String configuration);
 
+   @LogMessage(level = WARN)
+   @Message(value = "EPoll based Eventloop not available, using NIO instead", id = 5027)
+   void epollNotAvailable(@Cause Throwable error);
 }
