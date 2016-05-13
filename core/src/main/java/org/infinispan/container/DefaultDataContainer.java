@@ -38,6 +38,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
+import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 
 /**
@@ -208,7 +209,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       InternalCacheEntry<K, V> e = entries.get(k);
 
       if (trace) {
-         log.tracef("Creating new ICE for writing. Existing=%s, metadata=%s, new value=%s", e, metadata, v);
+         log.tracef("Creating new ICE for writing. Existing=%s, metadata=%s, new value=%s", e, metadata, toStr(v));
       }
       final InternalCacheEntry<K, V> copy;
       if (l1Entry) {

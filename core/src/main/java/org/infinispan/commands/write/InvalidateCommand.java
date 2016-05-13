@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 
 /**
  * Removes an entry from memory.
@@ -63,7 +65,7 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (trace) {
-         log.tracef("Invalidating keys %s", Arrays.toString(keys));
+         log.tracef("Invalidating keys %s", toStr(Arrays.asList(keys)));
       }
       for (Object k : keys) {
          invalidate(ctx, k);
@@ -90,7 +92,7 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public String toString() {
       return "InvalidateCommand{keys=" +
-            Arrays.toString(keys) +
+            toStr(Arrays.asList(keys)) +
             '}';
    }
 

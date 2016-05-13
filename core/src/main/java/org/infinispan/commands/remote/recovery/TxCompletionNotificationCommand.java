@@ -19,6 +19,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * Command for removing recovery related information from the cluster.
  *
@@ -117,7 +119,7 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
     */
    private void forwardCommandRemotely(RemoteTransaction remoteTx) {
       Set<Object> affectedKeys = remoteTx.getAffectedKeys();
-      log.tracef("Invoking forward of TxCompletionNotification for transaction %s. Affected keys: %s", gtx, affectedKeys);
+      log.tracef("Invoking forward of TxCompletionNotification for transaction %s. Affected keys: %s", gtx, toStr(affectedKeys));
       stateTransferManager.forwardCommandIfNeeded(this, affectedKeys, remoteTx.getGlobalTransaction().getAddress());
    }
 

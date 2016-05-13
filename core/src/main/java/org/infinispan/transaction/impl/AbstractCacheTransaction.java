@@ -237,7 +237,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    @Override
    public void clearLockedKeys() {
-      if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys));
+      if (trace) log.tracef("Clearing locked keys: %s", toStr(lockedKeys.get()));
       lockedKeys.set(null);
    }
 

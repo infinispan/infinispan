@@ -22,6 +22,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 
@@ -79,7 +80,7 @@ public class PassivationManagerImpl implements PassivationManager {
          // notify listeners that this entry is about to be passivated
          notifier.notifyCacheEntryPassivated(key, entry.getValue(), true,
                ImmutableContext.INSTANCE, null);
-         if (trace) log.tracef("Passivating entry %s", key);
+         if (trace) log.tracef("Passivating entry %s", toStr(key));
          try {
             MarshalledEntry marshalledEntry = marshalledEntryFactory.newMarshalledEntry(entry.getKey(), entry.getValue(),
                                                                                         internalMetadata(entry));
