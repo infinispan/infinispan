@@ -119,4 +119,8 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
 
    @Message(value = "SSL Enabled but no SNI domain configured", id = 5027)
    CacheConfigurationException noSniDomainConfigured();
+
+   @LogMessage(level = WARN)
+   @Message(value = "EPoll based Eventloop not available, using NIO instead", id = 5028)
+   void epollNotAvailable(@Cause Throwable error);
 }
