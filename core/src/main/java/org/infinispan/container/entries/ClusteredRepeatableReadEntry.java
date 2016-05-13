@@ -15,6 +15,8 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * A version of RepeatableReadEntry that can perform write-skew checks during prepare.
  *
@@ -36,7 +38,7 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
                                         VersionGenerator versionGenerator, TimeService timeService) {
       if (versionSeen == null) {
          if (trace) {
-            log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", key);
+            log.tracef("Perform write skew check for key %s but the key was not read. Skipping check!", toStr(key));
          }
          //version seen is null when the entry was not read. In this case, the write skew is not needed.
          return true;
@@ -46,12 +48,12 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
                                                                            ctx, timeService, ignored);
       if (ice == null) {
          if (trace) {
-            log.tracef("No entry for key %s found in data container" , key);
+            log.tracef("No entry for key %s found in data container" , toStr(key));
          }
          prevVersion = ctx.getCacheTransaction().getLookedUpRemoteVersion(key);
          if (prevVersion == null) {
             if (trace) {
-               log.tracef("No looked up remote version for key %s found in context" , key);
+               log.tracef("No looked up remote version for key %s found in context" , toStr(key));
             }
             //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
             return versionGenerator.nonExistingVersion().compareTo(versionSeen) == InequalVersionComparisonResult.EQUAL;
@@ -62,7 +64,7 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
             throw new IllegalStateException("Entries cannot have null versions!");
       }
       if (trace) {
-         log.tracef("Is going to compare versions %s and %s for key %s.", prevVersion, versionSeen, key);
+         log.tracef("Is going to compare versions %s and %s for key %s.", prevVersion, versionSeen, toStr(key));
       }
 
       //in this case, the transaction read some value and the data container has a value stored.

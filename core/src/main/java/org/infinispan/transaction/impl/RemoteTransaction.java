@@ -17,6 +17,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * Defines the state of a remotely originated transaction.
  *
@@ -68,7 +70,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
    public void putLookedUpEntry(Object key, CacheEntry e) {
       checkIfRolledBack();
       if (trace) {
-         log.tracef("Adding key %s to tx %s", key, getGlobalTransaction());
+         log.tracef("Adding key %s to tx %s", toStr(key), getGlobalTransaction());
       }
       lookedUpEntries.put(key, e);
    }
@@ -113,8 +115,8 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
       return "RemoteTransaction{" +
             "modifications=" + modifications +
             ", lookedUpEntries=" + lookedUpEntries +
-            ", lockedKeys=" + getLockedKeys() +
-            ", backupKeyLocks=" + getBackupLockedKeys() +
+            ", lockedKeys=" + toStr(getLockedKeys()) +
+            ", backupKeyLocks=" + toStr(getBackupLockedKeys()) +
             ", lookedUpEntriesTopology=" + lookedUpEntriesTopology +
             ", isMarkedForRollback=" + isMarkedForRollback() +
             ", tx=" + tx +

@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * Base class for transaction based locking interceptors.
  *
@@ -109,7 +111,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       switch (LockUtil.getLockOwnership(key, cdl)) {
          case PRIMARY:
             if (trace) {
-               getLog().tracef("Acquiring locks on %s.", key);
+               getLog().tracef("Acquiring locks on %s.", toStr(key));
             }
             checkPendingAndLockKey(ctx, key, lockTimeout);
             return true;
@@ -136,21 +138,19 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
 
       final Log log = getLog();
-      final boolean trace = log.isTraceEnabled();
-
       Collection<Object> keysToLock = new ArrayList<>(keys.size());
 
       for (Object key : keys) {
          switch (LockUtil.getLockOwnership(key, cdl)) {
             case PRIMARY:
                if (trace) {
-                  log.tracef("Acquiring locks on %s.", key);
+                  log.tracef("Acquiring locks on %s.", toStr(key));
                }
                keysToLock.add(key);
                break;
             case BACKUP:
                if (trace) {
-                  log.tracef("Acquiring backup locks on %s.", key);
+                  log.tracef("Acquiring backup locks on %s.", toStr(key));
                }
                ctx.getCacheTransaction().addBackupLockForKey(key);
                break;

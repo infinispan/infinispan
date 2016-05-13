@@ -465,9 +465,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             if (!commitEntryIfNeeded(ctx, command, entry, stateTransferFlag, metadata)) {
                if (trace) {
                   if (entry == null)
-                     log.tracef("Entry for key %s is null : not calling commitUpdate", e.getKey());
+                     log.tracef("Entry for key %s is null : not calling commitUpdate", toStr(e.getKey()));
                   else
-                     log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", e.getKey(), entry);
+                     log.tracef("Entry for key %s is not changed(%s): not calling commitUpdate", toStr(e.getKey()), entry);
                }
             }
          }
@@ -533,7 +533,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          }
       }
 
-      if (trace) log.tracef("The return value is %s", result);
+      if (trace) log.tracef("The return value is %s", toStr(result));
       return result;
    }
 

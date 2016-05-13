@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * Base class for various locking interceptors in this package.
  *
@@ -182,7 +184,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    protected final boolean shouldLockKey(Object key) {
       //only the primary owner acquires the lock.
       boolean shouldLock = LockUtil.getLockOwnership(key, cdl) == LockUtil.LockOwnership.PRIMARY;
-      if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), key, shouldLock);
+      if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), toStr(key), shouldLock);
       return shouldLock;
    }
 
