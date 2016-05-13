@@ -14,6 +14,8 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Iterator;
 import java.util.Map;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * Keeps track of the keys updated by normal operation and state transfer. Since the command processing happens
  * concurrently with the state transfer, it needs to keep track of the keys updated by normal command in order to reject
@@ -85,15 +87,15 @@ public class CommitManager {
    public final void commit(final CacheEntry entry, final Metadata metadata, final Flag operation,
                             boolean l1Invalidation) {
       if (trace) {
-         log.tracef("Trying to commit. Key=%s. Operation Flag=%s, L1 invalidation=%s", entry.getKey(), operation,
-                    l1Invalidation);
+         log.tracef("Trying to commit. Key=%s. Operation Flag=%s, L1 invalidation=%s", toStr(entry.getKey()),
+               operation, l1Invalidation);
       }
       if (l1Invalidation || (operation == null && !trackStateTransfer && !trackXSiteStateTransfer)) {
          //track == null means that it is a normal put and the tracking is not enabled!
          //if it is a L1 invalidation, commit without track it.
          if (trace) {
             log.tracef("Committing key=%s. It is a L1 invalidation or a normal put and no tracking is enabled!",
-                       entry.getKey());
+                  toStr(entry.getKey()));
          }
          entry.commit(dataContainer, metadata);
          return;
@@ -102,22 +104,23 @@ public class CommitManager {
          //this a put for state transfer but we are not tracking it. This means that the state transfer has ended
          //or canceled due to a clear command.
          if (trace) {
-            log.tracef("Not committing key=%s. It is a state transfer key but no track is enabled!", entry.getKey());
+            log.tracef("Not committing key=%s. It is a state transfer key but no track is enabled!",
+                  toStr(entry.getKey()));
          }
          return;
       }
       tracker.compute(entry.getKey(), (o, discardPolicy) -> {
          if (discardPolicy != null && discardPolicy.ignore(operation)) {
             if (trace) {
-               log.tracef("Not committing key=%s. It was already overwritten! Discard policy=%s", entry.getKey(),
-                          discardPolicy);
+               log.tracef("Not committing key=%s. It was already overwritten! Discard policy=%s",
+                     toStr(entry.getKey()), discardPolicy);
             }
             return discardPolicy;
          }
          entry.commit(dataContainer, metadata);
          DiscardPolicy newDiscardPolicy = calculateDiscardPolicy();
          if (trace) {
-            log.tracef("Committed key=%s. Old discard policy=%s. New discard policy=%s", entry.getKey(),
+            log.tracef("Committed key=%s. Old discard policy=%s. New discard policy=%s", toStr(entry.getKey()),
                        discardPolicy, newDiscardPolicy);
          }
          return newDiscardPolicy;

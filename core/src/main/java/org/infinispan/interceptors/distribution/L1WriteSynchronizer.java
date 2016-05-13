@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
 * A write synchronizer that allows for a single thread to run the L1 update while others can block until it is
 * completed.  Also allows for someone to attempt to cancel the write to the L1.  If they are unable to, they should
@@ -176,7 +178,7 @@ public class L1WriteSynchronizer {
                   // Now we can update the L1 if there isn't a value already there and we haven't now become a write
                   // owner
                   if (!dc.containsKey(key) && !cdl.localNodeIsOwner(key)) {
-                     log.tracef("Caching remotely retrieved entry for key %s in L1", key);
+                     log.tracef("Caching remotely retrieved entry for key %s in L1", toStr(key));
                      long lifespan = ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(), l1Lifespan);
                      // Make a copy of the metadata stored internally, adjust
                      // lifespan/maxIdle settings and send them a modification

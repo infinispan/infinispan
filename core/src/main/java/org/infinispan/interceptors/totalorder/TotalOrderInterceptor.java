@@ -24,6 +24,10 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * Created to control the total order validation. It disable the possibility of acquiring locks during execution through
  * the cache API
@@ -57,7 +61,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
       if (log.isDebugEnabled()) {
          log.debugf("Prepare received. Transaction=%s, Affected keys=%s, Local=%s",
                     command.getGlobalTransaction().globalId(),
-                    command.getAffectedKeys(),
+                    toStr(command.getAffectedKeys()),
                     ctx.isOriginLocal());
       }
       if (!(command instanceof TotalOrderPrepareCommand)) {
