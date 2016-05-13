@@ -23,6 +23,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * {@link EntryFactory} implementation to be used for optimistic locking scheme.
  *
@@ -74,7 +76,7 @@ public class EntryFactoryImpl implements EntryFactory {
       }
 
       if (trace) {
-         log.tracef("Wrap %s for read. Entry=%s", key, cacheEntry);
+         log.tracef("Wrap %s for read. Entry=%s", toStr(key), cacheEntry);
       }
       return cacheEntry;
    }
@@ -299,7 +301,7 @@ public class EntryFactoryImpl implements EntryFactory {
          metadata = cacheEntry.getMetadata();
       }
 
-      if (trace) log.tracef("Creating new entry for key %s", key);
+      if (trace) log.tracef("Creating new entry for key %s", toStr(key));
       MVCCEntry mvccEntry = useRepeatableRead ? new RepeatableReadEntry(key, value, metadata) :
             new ReadCommittedEntry(key, value, metadata);
 

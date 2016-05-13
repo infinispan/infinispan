@@ -25,6 +25,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 /**
  * Allows for cluster based expirations to occur.  This provides guarantees that when an entry is expired that it will
  * expire that entry across the entire cluster at once.  This requires obtaining the lock for said entry before
@@ -95,7 +97,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       if (expiring.putIfAbsent(key, key) == null) {
          long lifespan = entry.getLifespan();
          if (trace) {
-            log.tracef("Submitting expiration removal for key %s which had lifespan of %s", key, lifespan);
+            log.tracef("Submitting expiration removal for key %s which had lifespan of %s", toStr(key), lifespan);
          }
          asyncExecutor.submit(() -> {
             try {

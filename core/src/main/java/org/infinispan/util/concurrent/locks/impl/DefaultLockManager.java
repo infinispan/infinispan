@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * The default {@link LockManager} implementation for transactional and non-transactional caches.
@@ -71,7 +72,7 @@ public class DefaultLockManager implements LockManager {
       Objects.requireNonNull(unit, "Time unit must be non null");
 
       if (trace) {
-         log.tracef("Lock key=%s for owner=%s. timeout=%s (%s)", key, lockOwner, time, unit);
+         log.tracef("Lock key=%s for owner=%s. timeout=%s (%s)", toStr(key), lockOwner, time, unit);
       }
 
       ExtendedLockPromise promise = lockContainer.acquire(key, lockOwner, time, unit);
@@ -102,7 +103,8 @@ public class DefaultLockManager implements LockManager {
       }
 
       if (trace) {
-         log.tracef("Lock all keys=%s for owner=%s. timeout=%s (%s)", uniqueKeys, lockOwner, time, unit);
+         log.tracef("Lock all keys=%s for owner=%s. timeout=%s (%s)", toStr(uniqueKeys), lockOwner, time,
+               unit);
       }
 
       final CompositeLockPromise compositeLockPromise = new CompositeLockPromise(uniqueKeys.size());
@@ -137,7 +139,7 @@ public class DefaultLockManager implements LockManager {
    @Override
    public void unlockAll(Collection<?> keys, Object lockOwner) {
       if (trace) {
-         log.tracef("Release locks for keys=%s. owner=%s", keys, lockOwner);
+         log.tracef("Release locks for keys=%s. owner=%s", toStr(keys), lockOwner);
       }
       if (keys.isEmpty()) {
          return;
@@ -233,7 +235,8 @@ public class DefaultLockManager implements LockManager {
          try {
             lockPromise.lock();
          } catch (TimeoutException e) {
-            throw log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), key, lockPromise.getRequestor(), lockPromise.getOwner());
+            throw log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), toStr(key),
+                  lockPromise.getRequestor(), lockPromise.getOwner());
          }
       }
 

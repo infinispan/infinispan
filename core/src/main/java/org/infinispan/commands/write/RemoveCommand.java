@@ -16,6 +16,10 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import static org.infinispan.commons.util.Util.toStr;
+
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -130,8 +134,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public String toString() {
       return new StringBuilder()
          .append("RemoveCommand{key=")
-         .append(key)
-         .append(", value=").append(value)
+         .append(toStr(key))
+         .append(", value=").append(toStr(value))
          .append(", flags=").append(flags)
          .append(", valueMatcher=").append(valueMatcher)
          .append("}")
