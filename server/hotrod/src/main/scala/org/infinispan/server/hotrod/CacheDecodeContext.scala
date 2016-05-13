@@ -133,11 +133,11 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
          val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
          new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
             header.clientIntel, OperationResponse.GetWithMetadataResponse, Success, header.topologyId,
-            Some(v), entryVersion.getVersion, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
+            v, entryVersion.getVersion, ice.getCreated, lifespan, ice.getLastUsed, maxIdle)
       } else {
          new GetWithMetadataResponse(header.version, header.messageId, header.cacheName,
             header.clientIntel, OperationResponse.GetWithMetadataResponse, KeyDoesNotExist, header.topologyId,
-            None, 0, -1, -1, -1, -1)
+            null, 0, -1, -1, -1, -1)
       }
    }
 

@@ -71,7 +71,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
          case g: GetWithVersionResponse => {
             if (g.status == Success) {
                buf.writeLong(g.dataVersion)
-               writeRangedBytes(g.data.get, buf)
+               writeRangedBytes(g.data, buf)
             }
          }
          case g: GetWithMetadataResponse => {
@@ -87,7 +87,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
                   writeUnsignedInt(g.maxIdle, buf)
                }
                buf.writeLong(g.dataVersion)
-               writeRangedBytes(g.data.get, buf)
+               writeRangedBytes(g.data, buf)
             }
          }
          case g: BulkGetResponse => {
@@ -118,7 +118,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
             }
          }
          case g: GetResponse =>
-            if (g.status == Success) writeRangedBytes(g.data.get, buf)
+            if (g.status == Success) writeRangedBytes(g.data, buf)
          case q: QueryResponse =>
             writeRangedBytes(q.result, buf)
          case e: ErrorResponse => writeString(e.msg, buf)
