@@ -25,7 +25,7 @@ import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.transport.{SingleByteFrameDecoderChannelInitializer, HotRodChannelInitializer}
 import org.infinispan.statetransfer.StateTransferManager
 import org.infinispan.test.TestingUtil
-import org.testng.Assert.{assertNull, assertTrue, _}
+import org.testng.Assert.{assertNull, assertTrue}
 import org.testng.AssertJUnit.assertEquals
 
 import scala.collection.JavaConversions._
@@ -107,17 +107,17 @@ object HotRodTestingUtil extends Log {
             }
             if (perf) {
                if (configuration.idleTimeout > 0)
-                  new HotRodChannelInitializer(this, getTransport(), getEncoder, "test")
+                  new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
                     with TimeoutEnabledChannelInitializer with SingleByteFrameDecoderChannelInitializer
                else // Idle timeout logic is disabled with -1 or 0 values
-                  new HotRodChannelInitializer(this, getTransport(), getEncoder, "test")
+                  new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
                     with SingleByteFrameDecoderChannelInitializer
             } else {
                if (configuration.idleTimeout > 0)
-                  new HotRodChannelInitializer(this, getTransport(), getEncoder, "test")
+                  new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
                     with TimeoutEnabledChannelInitializer
                else // Idle timeout logic is disabled with -1 or 0 values
-                  new HotRodChannelInitializer(this, getTransport(), getEncoder, "test")
+                  new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
             }
          }
       }

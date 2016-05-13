@@ -5,14 +5,14 @@ import java.util.function.Predicate
 import io.netty.channel.{Channel, ChannelInitializer}
 import logging.Log
 import org.infinispan
-import org.infinispan.AdvancedCache
+import org.infinispan.{AdvancedCache, IllegalLifecycleStateException}
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.distexec._
-import org.infinispan.filter.{ParamKeyValueFilterConverterFactory, KeyValueFilterConverterFactory}
+import org.infinispan.filter.{KeyValueFilterConverterFactory, ParamKeyValueFilterConverterFactory}
 import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent
-import org.infinispan.notifications.cachelistener.filter.{CacheEventFilterConverterFactory, CacheEventConverterFactory, CacheEventFilterFactory}
+import org.infinispan.notifications.cachelistener.filter.{CacheEventConverterFactory, CacheEventFilterConverterFactory, CacheEventFilterFactory}
 import org.infinispan.server.core.transport.TimeoutEnabledChannelInitializer
 import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
 import org.infinispan.manager.EmbeddedCacheManager
@@ -35,7 +35,10 @@ import org.infinispan.server.core.security.SaslUtils
 import org.infinispan.factories.ComponentRegistry
 import org.infinispan.registry.InternalCacheRegistry
 import java.util.EnumSet
+import java.util.concurrent.{ExecutorService, LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
+import java.util.concurrent.ThreadPoolExecutor.AbortPolicy
 
+import io.netty.util.concurrent.DefaultThreadFactory
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory
 
 import scala.collection.JavaConversions._
@@ -68,8 +71,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var distributedExecutorService: DefaultExecutorService = _
    private var viewChangeListener: CrashedMemberDetectorListener = _
    private var topologyChangeListener: ReAddMyAddressListener = _
-
-
+   protected var executor: ExecutorService = _
    lazy val iterationManager: IterationManager = new DefaultIterationManager(getCacheManager)
 
    def getAddress: ServerAddress = address
@@ -120,16 +122,39 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       loadFilterConverterFactories(classOf[KeyValueFilterConverterFactory[Any,Any,Any]])(addKeyValueFilterConverterFactory)
    }
 
+   val abortPolicy = new AbortPolicy {
+      override def rejectedExecution(r: Runnable, e: ThreadPoolExecutor) = {
+         if (executor.isShutdown)
+            throw new IllegalLifecycleStateException("Server has been stopped")
+         else
+            super.rejectedExecution(r, e)
+      }
+   }
+
+   def getExecutor(threadPrefix: String) = {
+      if (this.executor == null || this.executor.isShutdown) {
+         val factory = new DefaultThreadFactory(threadPrefix + "ServerHandler")
+         this.executor = new ThreadPoolExecutor(
+            getConfiguration.workerThreads(),
+            getConfiguration.workerThreads(),
+            0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue[Runnable],
+            factory,
+            abortPolicy)
+      }
+      executor
+   }
+
    override def getInitializer: ChannelInitializer[Channel] = {
       // Pass by name since we have circular dependency
       def getTransport() = {
          transport
       }
       if (configuration.idleTimeout > 0)
-         new HotRodChannelInitializer(this, getTransport(), getEncoder, getQualifiedName)
+         new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor(getQualifiedName()))
            with TimeoutEnabledChannelInitializer
       else // Idle timeout logic is disabled with -1 or 0 values
-         new HotRodChannelInitializer(this, getTransport(), getEncoder, getQualifiedName)
+         new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor(getQualifiedName()))
    }
 
    private def loadFilterConverterFactories[T](c: Class[T])(action: (String, T) => Any) = ServiceFinder.load(c).foreach { factory =>
@@ -339,6 +364,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       }
 
       if (clientListenerRegistry != null) clientListenerRegistry.stop()
+      if (executor != null) executor.shutdownNow()
       super.stop
    }
 
