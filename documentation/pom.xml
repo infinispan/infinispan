@@ -16,10 +16,9 @@
     <description>The Infinispan Documentation</description>
 
     <properties>
-        <infinispan.version>8.0</infinispan.version>
-        
+        <infinispan.version>9.0</infinispan.version>
         <maven.deploy.skip>true</maven.deploy.skip>
-		<skipTests>true</skipTests>
+        <skipTests>true</skipTests>
     </properties>
 
     <build>
@@ -27,21 +26,25 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>0.1.3.1</version> 
+                <version>1.5.3</version> 
                 <executions>
                     <execution>
-                        <id>create-html</id>
-                        <phase>process-resources</phase>
+                        <id>asciidoc</id>
+                        <phase>generate-resources</phase>
                         <goals>
                             <goal>process-asciidoc</goal>
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
-                    <toc>true</toc>
+                    <!--backend>docbook</backend-->
                     <backend>html5</backend>
                     <doctype>book</doctype>
-                    <goalPrefix>asciidoctor</goalPrefix>
+                    <preserveDirectories>true</preserveDirectories>
+                    <relativeBaseDir>true</relativeBaseDir>
+                    <sourceDocumentExtensions>
+                       <sourceDocumentExtension>adoc</sourceDocumentExtension>
+                    </sourceDocumentExtensions>
                     <sourceHighlighter>coderay</sourceHighlighter>
                     <attributes>
                         <idprefix />
