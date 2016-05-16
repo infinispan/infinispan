@@ -61,9 +61,9 @@ Here's a brief summary of the available server endpoints.
  - Since websockets work on the same HTTP port, any HTTP load balancer would do to load balance and failover.
  - This module is [red]**EXPERIMENTAL**!  Beware!
 
-include::chapter-48-Using_Hot_Rod_Server.adoc[]
-include::chapter-59-Infinispan_REST_Server.adoc[]
-include::chapter-10-Using_Infinispan_Memcached_Server.adoc[]
-include::chapter-9-Infinispan_WebSocket_Server.adoc[]
+include::server_protocols_hotrod.adoc[]
+include::server_protocols_rest.adoc[]
+include::server_protocols_memcached.adoc[]
+include::server_protocols_websocket.adoc[]
 
 [[sid-68355061]]

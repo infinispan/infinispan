@@ -2,7 +2,7 @@
 The Infinispan Server distribution contains a server module that implements Infinispan's custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations.
 Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a HotRod server.
 
-include::chapter-64-Hot_Rod_Protocol.adoc[]
+include::server_protocols_hotrod_wire.adoc[]
 
 ====  Java Hot Rod client
 Hot Rod is a binary, language neutral protocol. This article explains how a Java client can interact with a server via the Hot Rod protocol. A reference implementation of the protocol written in Java can be found in all Infinispan distributions, and this article focuses on the capabilities of this java client.
@@ -1319,5 +1319,5 @@ embedded mode which is covered in link:#_infinispan_s_query_dsl[this] section.
 TODO
 
 
-include::chapter-78-Scripting.adoc[]
+include::scripting.adoc[]
 
