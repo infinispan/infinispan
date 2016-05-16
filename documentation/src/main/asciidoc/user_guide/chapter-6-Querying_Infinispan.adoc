@@ -592,7 +592,7 @@ Query query = queryFactory.from(Book.class)
 NOTE: A projection query in which all selected fields have an aggregation function applied and no fields are used for
 grouping is allowed. In this case the aggregations will be computed globally as if there was a single global group.
 
-===== Aggregations
+==== Aggregations
 
 The following aggregation functions may be applied to a field: avg, sum, count, max, min
 
