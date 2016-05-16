@@ -1,6 +1,7 @@
 <project name="as-modules" basedir="." default="clean">
 
     <property name="output.dir" value="${project.build.directory}/infinispan-as-modules" />
+    <property name="hibernate-search-modules.dir" value="${project.build.directory}/hibernate-search-modules" />
 
     <import file="../lib.xml" />
 
@@ -23,6 +24,27 @@
         </copy>
     </target>
 
+    <target name="prepare-hibernate-search-module">
+        <external-module-zip group="org.hibernate" artifact="hibernate-search-modules" classifier="wildfly-10-dist"
+                             dest="${hibernate-search-modules.dir}"
+                             source-slot="${version.hibernate.search}" target-slot="${infinispan.slot}" >
+            <exclusions>
+                <!-- Exclude lucene module since Infinispan also ship it -->
+                <exclude name="org/apache/lucene/**"/>
+                <!-- Exclude aliases -->
+                <exclude name="**/${hibernate.search.slot}/**"/>
+            </exclusions>
+        </external-module-zip>
+
+        <!-- replace optional directory provider link -->
+        <replaceregexp>
+            <fileset dir="${hibernate-search-modules.dir}" includes="**/module.xml"/>
+            <regexp pattern="${hibernate-search-directory-provider-ref}"/>
+            <substitution expression="${infinispan.slot}"/>
+        </replaceregexp>
+
+    </target>
+
     <!-- These modules are for JDG-specific functionality -->
     <target name="modules">
 
@@ -30,7 +52,6 @@
             <filter token="infinispan.slot" value="${infinispan.slot}" />
             <filter token="lucene.slot" value="${lucene.slot}" />
             <filter token="hibernate.search.slot" value="${hibernate.search.slot}" />
-            <filter token="hibernate-search-directory-provider-ref" value="${hibernate-search-directory-provider-ref}" />
             <filter token="hibernate-search-directory-wildfly-ref" value="${hibernate-search-directory-wildfly-ref}" />
 
         </filterset>
@@ -114,8 +135,6 @@
             <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
         </module-def>
 
-        <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${hibernate-search-directory-provider-ref}"  module.src="org.infinispan.for-hibernatesearch-alias"/>
-
         <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${hibernate-search-directory-wildfly-ref}" module.src="org.infinispan.for-hibernatesearch-wildfly">
             <maven-resource group="org.infinispan" artifact="infinispan-core"/>
             <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory"/>
@@ -171,5 +190,5 @@
         </module-def>
     </target>
 
-    <target name="all" depends="clean, copy-files, modules"/>
+    <target name="all" depends="clean, prepare-hibernate-search-module, copy-files, modules"/>
 </project>
