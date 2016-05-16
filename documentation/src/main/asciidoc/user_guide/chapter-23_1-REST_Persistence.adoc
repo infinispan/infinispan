@@ -1,12 +1,12 @@
-== REST Cache Store
+=== REST Cache Store
 The Infinispan Community
 
-=== Introduction
+==== Introduction
 *TODO* 
 
-=== Javadoc
+==== Javadoc
 *TODO* 
 
-=== Configuration
+==== Configuration
 *TODO*
 

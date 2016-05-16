@@ -1,13 +1,13 @@
-== LevelDB Cache Store
+=== LevelDB Cache Store
 The Infinispan Community
 
-=== Introduction
+==== Introduction
 link:$$http://code.google.com/p/leveldb/$$[LevelDB] is a fast key-value filesystem-based storage from Google.
 LevelDB cache store currently uses a link:$$https://github.com/dain/leveldb$$[Java implementation].
 
 TIP: It may be possible to use a link:$$https://github.com/fusesource/leveldbjni$$[JNI implementation] in the future. 
 
-==== Sample Usage
+===== Sample Usage
 LevelDB cache store requires 2 filesystem directories to be configured - each directory for a LevelDB database.
 One location is used to store non-expired data, while the second location is used to store expired keys pending purge.
 
@@ -23,8 +23,8 @@ usersCache.put("raytsang", new User(...));
 
 ----
 
-=== Configuration
-==== Sample Programatic Configuration
+==== Configuration
+===== Sample Programatic Configuration
 
 [source,java]
 ----
@@ -51,7 +51,7 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 |===============
 
 
-==== Sample XML Configuration
+===== Sample XML Configuration
 
 .infinispan.xml
 [source,xml]
@@ -67,7 +67,7 @@ Configuration cacheConfig = new ConfigurationBuilder().persistence()
 
 ----
 
-=== Additional References
+==== Additional References
 
 Refer to the link:$$https://github.com/infinispan/infinispan/blob/master/persistence/leveldb/src/test/java/org/infinispan/persistence/leveldb/config/ConfigurationTest.java$$[test case] for code samples in action. 
 
