@@ -10,7 +10,7 @@
     <dependencies>
         <module name="org.infinispan.core" slot="${slot}"/>
         <module name="org.infinispan.commons" slot="${slot}"/>
-        <module name="org.hibernate.search.engine" slot="${hibernate.search.slot}"/>
+        <module name="org.hibernate.search.engine" slot="${slot}"/>
         <module name="org.infinispan.lucene-directory" slot="${slot}"/>
         <module name="org.jboss.logging"/>
         <module name="javax.api"/>

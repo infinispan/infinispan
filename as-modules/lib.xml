@@ -123,6 +123,32 @@
         ]]>
     </scriptdef>
 
+    <macrodef name="external-module-zip">
+        <attribute name="group"/>
+        <attribute name="artifact"/>
+        <attribute name="classifier"/>
+        <attribute name="dest"/>
+        <attribute name="source-slot"/>
+        <attribute name="target-slot"/>
+        <element name="exclusions"/>
+        <sequential>
+            <copy todir="${project.build.directory}" failonerror="true">
+                <fileset file="${@{group}:@{artifact}:zip:@{classifier}}"/>
+            </copy>
+            <unzip src="${@{group}:@{artifact}:zip:@{classifier}}" dest="@{dest}">
+                <patternset>
+                    <exclusions/>
+                </patternset>
+                <regexpmapper from="(.*)/@{source-slot}(/(.*))?" to="\1/@{target-slot}/\2"/>
+            </unzip>
+            <replaceregexp flags="g">
+                <fileset dir="@{dest}" includes="**/*"/>
+                <regexp pattern="slot=&quot;@{source-slot}&quot;"/>
+                <substitution expression="slot=&quot;@{target-slot}&quot;"/>
+            </replaceregexp>
+        </sequential>
+    </macrodef>
+
     <macrodef name="maven-resource" >
         <attribute name="group"/>
         <attribute name="artifact"/>
