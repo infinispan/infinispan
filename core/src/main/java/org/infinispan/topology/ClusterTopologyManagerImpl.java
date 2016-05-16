@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -287,17 +288,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                   replaceCacheTopology = cacheTopology;
                }
 
-               CacheTopology replaceStableTopology = null;
+               CacheTopology replaceStableTopology;
                // If the don't equal check if we replace - note stableTopology can be null
-               if (!cacheTopology.equals(stableTopology)) {
+               if (!Objects.equals(cacheTopology, stableTopology)) {
                   replaceStableTopology = seenTopologies.get(stableTopology);
                   if (replaceStableTopology == null) {
                      seenTopologies.put(stableTopology, stableTopology);
+                     replaceStableTopology = stableTopology;
                   }
-
                } else {
                   // Since they were equal replace it with the cache topology we are going to use
-                  replaceStableTopology = replaceCacheTopology != null ? replaceCacheTopology : cacheTopology;
+                  replaceStableTopology = replaceCacheTopology;
                }
 
                CacheJoinInfo info = csr.getCacheJoinInfo();
@@ -308,8 +309,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
                if (replaceCacheTopology != null || replaceStableTopology != null || replaceInfo != null) {
                   entry.setValue(new CacheStatusResponse(replaceInfo != null ? replaceInfo : info,
-                        replaceCacheTopology != null ? replaceCacheTopology : cacheTopology,
-                        replaceStableTopology != null ? replaceStableTopology : stableTopology, csr.getAvailabilityMode()));
+                        replaceCacheTopology, replaceStableTopology, csr.getAvailabilityMode()));
                }
             }
          }

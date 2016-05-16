@@ -146,10 +146,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
                      CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
                CacheStatusResponse initialStatus = (CacheStatusResponse) executeOnCoordinator(command, timeout);
-               // Ignore null responses, that's what the current coordinator returns if is shutting down
-               if (initialStatus != null) {
-                  doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(), initialStatus.getAvailabilityMode(),
-                        viewId, transport.getCoordinator(), cacheStatus);
+               if (initialStatus == null) {
+                  log.debug("Ignoring null join response, coordinator is probably shutting down");
+                  continue;
+               }
+
+               if (doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(),
+                     initialStatus.getAvailabilityMode(), viewId, transport.getCoordinator(), cacheStatus)) {
                   doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
                         transport.getCoordinator(), cacheStatus);
                   return initialStatus.getCacheTopology();
@@ -217,7 +220,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          latestStatusResponseViewId = viewId;
 
          for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
-         String cacheName = e.getKey();
+            String cacheName = e.getKey();
             LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
             caches.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
                     cacheStatus.getCurrentTopology(), cacheStatus.getStableTopology(),
@@ -281,19 +284,25 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
    }
 
-   protected void doHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
+   /**
+    * Update the cache topology in the LocalCacheStatus and pass it to the CacheTopologyHandler.
+    *
+    * @return {@code true} if the topology was applied, {@code false} if it was ignored.
+    */
+   protected boolean doHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
          AvailabilityMode availabilityMode, int viewId, Address sender, LocalCacheStatus cacheStatus) {
       try {
          waitForView(viewId);
       } catch (InterruptedException e) {
          // Shutting down, ignore the exception and the rebalance
-         return;
+         return false;
       }
 
       synchronized (cacheStatus) {
          if (cacheTopology == null) {
-            // No topology yet: happens when a cache is being restarted from state
-            return;
+            // No topology yet: happens when a cache is being restarted from state.
+            // Still, return true because we don't want to re-send the join request.
+            return true;
          }
          // Register all persistent UUIDs locally
          registerPersistentUUID(cacheTopology);
@@ -301,14 +310,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
             log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s: %s",
                   cacheName, existingTopology.getTopologyId(), cacheTopology);
-            return;
+            return false;
          }
 
          CacheTopologyHandler handler = cacheStatus.getHandler();
          resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
 
          if (!updateCacheTopology(cacheName, cacheTopology, viewId, sender, cacheStatus))
-            return;
+            return false;
 
          ConsistentHash unionCH = null;
          if (cacheTopology.getPendingCH() != null) {
@@ -337,6 +346,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          if (!updateAvailabilityModeFirst) {
             cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
          }
+         return true;
       }
    }
 
