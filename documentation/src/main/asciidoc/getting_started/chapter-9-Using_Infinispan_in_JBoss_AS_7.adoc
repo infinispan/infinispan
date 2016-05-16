@@ -1,3 +1,0 @@
-==  Using Infinispan in JBoss AS 7
-*TODO*
-

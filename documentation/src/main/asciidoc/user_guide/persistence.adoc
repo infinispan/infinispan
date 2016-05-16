@@ -705,6 +705,9 @@ b.persistence()
 
 ----
 
+include::persistence_leveldb.adoc[]
+include::persistence_rest.adoc[]
+include::persistence_jpa.adoc[]
 
 === More implementations
 Many more cache loader and cache store implementations exist.

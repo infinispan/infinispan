@@ -353,6 +353,8 @@ TIP: All JMX operations described above can be executed on any node, regardless 
 ===== Force commit/rollback based on XID
 XID-based JMX operations for forcing in-doubt transactions' commit/rollback are available as well: these methods receive byte[] arrays describing the XID instead of the number associated with the transactions (as previously described at step 2). These can be useful e.g. if one wants to set up an automatic completion job for certain in-doubt transactions. This process is plugged into transaction manager's recovery and has access to the transaction manager's XID objects.
 
+include::transactions_total_order.adoc[]
+
 ==== Want to know more?
 The link:https://community.jboss.org/wiki/TransactionRecoveryDesign[recovery design document] describes in more detail the insides of transaction recovery implementation.
 

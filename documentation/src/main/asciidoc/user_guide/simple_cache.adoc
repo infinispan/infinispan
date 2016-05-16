@@ -1,8 +1,8 @@
-== Simple Cache
+==== Simple Cache
 
-Traditional local caches use the same architecture as clustered caches - interceptor stack.
+Traditional local caches use the same architecture as clustered caches, i.e. they use the interceptor stack.
 That way a lot of the implementation can be reused. However, if the advanced features
-are not needed and the performance is more important, the interceptor stack can be stripped
+are not needed and performance is more important, the interceptor stack can be stripped
 away and simple cache can be used.
 
 So, which features are stripped away? From the configuration perspective, simple cache does not support:
@@ -29,7 +29,7 @@ So, what's left?
 * JMX access
 * statistics (though for max performance it is recommended to switch this off using statistics-available=false)
 
-=== Declarative configuration
+===== Declarative configuration
 
 [source,xml]
 ----
@@ -38,7 +38,7 @@ So, what's left?
    </local-cache>
 ----
 
-=== Programmatic configuration
+===== Programmatic configuration
 
 [source,java]
 ----

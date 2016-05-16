@@ -1,4 +1,0 @@
-==  Infinispan in action - GUIDemo
-
-See link:getting_started.html#_infinispan_gui_demo[GUI Demo]
-

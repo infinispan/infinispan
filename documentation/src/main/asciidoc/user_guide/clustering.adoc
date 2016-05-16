@@ -25,6 +25,17 @@ making it ideal for high-throughput, multi-CPU/multi-core environments.
 Further, Infinispan's Cache API extends the JDK's ConcurrentMap - making migration from a
 map to Infinispan trivial.
 
+Creating a local-only cache-manager is trivial: just use the _no-argument_ DefaultCacheManager 
+constructor, or supply the following XML configuration file
+
+[source,xml]
+----
+<infinispan/>
+
+----
+You can also create local caches in a clustering-capable CacheManager.
+
+include::simple_cache.adoc[]
 
 === Replicated Mode
 Replication is a simple clustered mode where cache instances automatically discover
