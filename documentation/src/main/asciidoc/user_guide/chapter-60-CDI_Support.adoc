@@ -265,30 +265,6 @@ With the above code the GreetingCache or the RemoteGreetingCache will be associa
 .Producer method scope
 NOTE: To work properly the producers must have the scope @ApplicationScoped . Otherwise each injection of cache will be associated to a new instance of cache manager. 
 
-=== Use a JBoss AS 7 configured cache
-With JBoss AS 7, you can setup an Infinispan cache manager in the server configuration file.
-This allows you to externalize your Infinispan configuration and also to lookup the cache manager from JNDI, normally with the @Resource annotation. 
-
-As we mentioned earlier, you can override the default cache manager used by the Infinispan CDI extension.
-To use a JBoss AS 7 configured cache, you need to use the cache manager defined in JBoss AS 7.
-You only need to annotate the default cache manager producer with @Resource.
-The following example shows how use an embedded cache manager configured in JBoss AS 7.
-
-[source,java]
-----
-
-...
-import javax.annotation.Resource;
-
-public class Config {
-    @Produces
-    @ApplicationScoped
-    @Resource(lookup="java:jboss/infinispan/my-container-name")
-    private EmbeddedCacheManager defaultCacheManager;
-}
-
-----
-
 === Use JCache caching annotations
 
 TIP: There is now a separate module for JSR 107 (JCACHE) integration, including API.  See <<_using_infinispan_as_a_jsr107_jcache_provider, this chapter>> for details.
