@@ -158,7 +158,9 @@ public class StackAddHandler extends AbstractAddStepHandler {
     static <C extends ProtocolConfiguration, B extends AbstractProtocolConfigurationBuilder<C>> B addProtocolProperties(OperationContext context, ModelNode protocol, B builder) throws OperationFailedException {
         if (protocol.hasDefined(ProtocolResourceDefinition.PROPERTIES.getName())) {
             for (Property property : ProtocolResourceDefinition.PROPERTIES.resolveModelAttribute(context, protocol).asPropertyList()) {
-                builder.addProperty(property.getName(), property.getValue().asString());
+                if(!property.getValue().asString().isEmpty()) {
+                    builder.addProperty(property.getName(), property.getValue().asString());
+                }
             }
         }
         return builder;
