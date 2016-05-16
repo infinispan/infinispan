@@ -1282,17 +1282,17 @@ and you may rest assured that no stray books be left in your application once yo
 ==== Conclusion
 Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html$$[reference documentation]. Also see link:$$http://spring.io/blog/2011/02/23/spring-3-1-m1-cache-abstraction$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
 
-===  Infinispan modules for JBoss AS 7.x
-Since Infinispan 5.2, the distribution includes a set of modules for JBoss AS 7.x. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size. In order not to conflict with the Infinispan modules which are already present within an AS installation, the modules provided by the Infinispan distribution are located within their own slot identified by the _major.minor_ versions (e.g. slot="5.2"). 
+===  Infinispan modules for WildFly
+The distribution includes a set of modules for WildFly. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size. In order not to conflict with the Infinispan modules which are already present within an WildFly installation, the modules provided by the Infinispan distribution are located within their own slot identified by the _major.minor_ versions (e.g. slot="{infinispanversion}"). 
 
-In order to tell the AS deployer that we want to use the Infinispan APIs within our application, we need to add explicit dependencies to the deployment's MANIFEST:
+In order to tell the WildFly deployer that we want to use the Infinispan APIs within our application, we need to add explicit dependencies to the deployment's MANIFEST:
 
 .MANIFEST.MF
 [source,JSON]
 ----
 
 Manifest-Version: 1.0
-Dependencies: org.infinispan:5.2 services
+Dependencies: org.infinispan:{infinispanversion} services
 
 ----
 
