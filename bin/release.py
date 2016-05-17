@@ -296,8 +296,8 @@ def release():
   version_next = update_versions(base_dir, version)
   prettyprint("Step 3: Complete", Levels.INFO)
   
-  # Step 3: Build and test in Maven2
-  prettyprint("Step 4: Build and test in Maven2", Levels.INFO)
+  # Step 3: Build and test
+  prettyprint("Step 4: Build and test", Levels.INFO)
   maven_build_distribution(version)
   prettyprint("Step 4: Complete", Levels.INFO)
 

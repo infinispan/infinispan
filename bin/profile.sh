@@ -29,7 +29,7 @@ if [ "x$SKIP_MAKE" = "x" ] ; then
   mkdir .tmp_profile_script
 
   if ! [ -d target/distribution ] ; then
-     mvn clean install -Dmaven.test.skip.exec=true -Pdistribution
+     mvn clean install -DskipTests -Pdistribution
   fi
 
   unzip -q target/distribution/*-bin.zip -d .tmp_profile_script
