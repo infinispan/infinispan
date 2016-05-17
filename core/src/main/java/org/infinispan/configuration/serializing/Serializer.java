@@ -1,5 +1,6 @@
 package org.infinispan.configuration.serializing;
 
+import org.infinispan.Version;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
@@ -209,7 +210,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       if (attributes.isModified()) {
          writer.writeStartElement(Element.SERIALIZATION);
          attributes.write(writer, SerializationConfiguration.MARSHALLER, Attribute.MARSHALLER_CLASS);
-         attributes.write(writer, SerializationConfiguration.VERSION, Attribute.VERSION);
+         if (attributes.attribute(SerializationConfiguration.VERSION).isModified()) {
+            writer.writeAttribute(Attribute.VERSION, Version.decodeVersion(serialization.version()));
+         }
          writeAdvancedSerializers(writer, globalConfiguration);
          writer.writeEndElement();
       }
