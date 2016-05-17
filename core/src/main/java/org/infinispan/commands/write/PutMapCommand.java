@@ -141,7 +141,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       output.writeObject(metadata);
       output.writeBoolean(isForwarded);
       output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeObject(commandInvocationId);
+      CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
@@ -150,7 +150,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       metadata = (Metadata) input.readObject();
       isForwarded = input.readBoolean();
       setFlagsBitSet(input.readLong());
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override

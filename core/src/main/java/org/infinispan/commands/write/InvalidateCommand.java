@@ -98,13 +98,13 @@ public class InvalidateCommand extends RemoveCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(commandInvocationId);
+      CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallArray(keys, output);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
       keys = MarshallUtil.unmarshallArray(input, Object[]::new);
    }
 

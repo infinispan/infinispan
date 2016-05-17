@@ -127,7 +127,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(commandInvocationId);
+      CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeObject(key);
       output.writeObject(value);
       if (lifespan != null) {
@@ -140,7 +140,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
       key = input.readObject();
       value = input.readObject();
       boolean lifespanProvided = input.readBoolean();

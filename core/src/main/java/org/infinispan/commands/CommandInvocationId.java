@@ -17,10 +17,14 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * It is used to lock the key for a specific command.
  *
+ * This class is final to prevent issues as it is usually not marshalled
+ * as polymorphic object but directly using {@link #writeTo(ObjectOutput, CommandInvocationId)}
+ * and {@link #readFrom(ObjectInput)}.
+ *
  * @author Pedro Ruivo
  * @since 8.0
  */
-public class CommandInvocationId {
+public final class CommandInvocationId {
 
    private static final AtomicLong nextId = new AtomicLong(0);
 
@@ -64,8 +68,18 @@ public class CommandInvocationId {
       return "CommandInvocation:" + Objects.toString(address, "local") + ":" + id;
    }
 
-   public static class Externalizer extends AbstractExternalizer<CommandInvocationId> {
+   public static void writeTo(ObjectOutput output, CommandInvocationId commandInvocationId) throws IOException {
+      output.writeObject(commandInvocationId.address);
+      output.writeLong(commandInvocationId.id);
+   }
 
+   public static CommandInvocationId readFrom(ObjectInput input) throws ClassNotFoundException, IOException {
+      Address address = (Address) input.readObject();
+      long id = input.readLong();
+      return new CommandInvocationId(address, id);
+   }
+
+   public static class Externalizer extends AbstractExternalizer<CommandInvocationId> {
       @Override
       public Set<Class<? extends CommandInvocationId>> getTypeClasses() {
          return Collections.singleton(CommandInvocationId.class);
@@ -73,15 +87,12 @@ public class CommandInvocationId {
 
       @Override
       public void writeObject(ObjectOutput output, CommandInvocationId object) throws IOException {
-         output.writeObject(object.address);
-         output.writeLong(object.id);
+         writeTo(output, object);
       }
 
       @Override
       public CommandInvocationId readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Address address = (Address) input.readObject();
-         long id = input.readLong();
-         return new CommandInvocationId(address, id);
+         return readFrom(input);
       }
 
       @Override
