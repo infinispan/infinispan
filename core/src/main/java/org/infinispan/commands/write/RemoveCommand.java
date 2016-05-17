@@ -163,7 +163,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       output.writeObject(value);
       output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeObject(commandInvocationId);
+      CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
@@ -172,7 +172,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       value = input.readObject();
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override

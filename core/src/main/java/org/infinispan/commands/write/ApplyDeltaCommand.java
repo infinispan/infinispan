@@ -79,7 +79,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       output.writeObject(delta);
       MarshallUtil.marshallCollection(keys, output);
       output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeObject(commandInvocationId);
+      CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
    @Override
@@ -88,7 +88,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       delta = (Delta) input.readObject();
       keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
       setFlagsBitSet(input.readLong());
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override

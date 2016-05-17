@@ -1,9 +1,11 @@
 package org.infinispan.remoting;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -48,9 +50,8 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
       try {
          RpcDispatcher.Marshaller mockMarshaller1 = mock(RpcDispatcher.Marshaller.class);
          RpcDispatcher.Marshaller mockMarshaller = mock(RpcDispatcher.Marshaller.class);
-         PutKeyValueCommand putCommand = new PutKeyValueCommand();
-         putCommand.setKey(key);
-         putCommand.setValue(value);
+         PutKeyValueCommand putCommand = new PutKeyValueCommand(key, value, false, null, null, 0,
+            AnyEquivalence.getInstance(), CommandInvocationId.generateId(transport1.getAddress()));
          SingleRpcCommand rpcCommand = new SingleRpcCommand(ByteString.fromString("replSync"), putCommand);
          when(mockMarshaller1.objectToBuffer(anyObject())).thenReturn(originalMarshaller1.objectToBuffer(rpcCommand));
          when(mockMarshaller.objectFromBuffer((byte[]) anyObject(), anyInt(), anyInt())).thenThrow(new EOFException());

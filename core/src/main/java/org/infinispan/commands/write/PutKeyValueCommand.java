@@ -119,7 +119,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       output.writeObject(value);
       output.writeObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeObject(commandInvocationId);
+      CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(putIfAbsent);
    }
@@ -130,7 +130,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       value = input.readObject();
       metadata = (Metadata) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      commandInvocationId = (CommandInvocationId) input.readObject();
+      commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
       putIfAbsent = input.readBoolean();
    }
