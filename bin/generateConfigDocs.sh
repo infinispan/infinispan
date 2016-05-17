@@ -1,3 +1,3 @@
 #!/bin/bash
-mvn install -Dmaven.test.skip.exec=true -Pconfigdoc
+mvn install -DskipTests -Pconfigdoc
 
