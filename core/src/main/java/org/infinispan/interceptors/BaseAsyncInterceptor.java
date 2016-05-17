@@ -1,7 +1,6 @@
 package org.infinispan.interceptors;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.util.Experimental;
@@ -13,6 +12,7 @@ import org.infinispan.interceptors.impl.AsyncInvocationStage;
 import org.infinispan.interceptors.impl.ComposedAsyncInvocationStage;
 import org.infinispan.interceptors.impl.ExceptionStage;
 import org.infinispan.interceptors.impl.ReturnValueStage;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Base class for an interceptor in the new asynchronous invocation chain.
@@ -75,7 +75,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          try {
             stage = ((AbstractInvocationStage) stageFuture.join());
          } catch (Throwable t) {
-            stage = new ExceptionStage(null, null, extractException(t));
+            stage = new ExceptionStage(null, null, CompletableFutures.extractException(t));
          }
          return stage;
       }
@@ -96,7 +96,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
             delay.join();
             stage = invokeNext(ctx, command);
          } catch (Throwable t) {
-            stage = new ExceptionStage(ctx, command, extractException(t));
+            stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
          }
          return stage;
       }
@@ -119,18 +119,11 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
             Object value = valueFuture.join();
             stage = new ReturnValueStage(null, null, value);
          } catch (Throwable t) {
-            stage = new ExceptionStage(null, null, extractException(t));
+            stage = new ExceptionStage(null, null, CompletableFutures.extractException(t));
          }
          return stage;
       }
 
       return new AsyncInvocationStage(null, null, valueFuture);
-   }
-
-   private Throwable extractException(Throwable t) {
-      if (t.getCause() != null && t instanceof CompletionException) {
-         t = t.getCause();
-      }
-      return t;
    }
 }

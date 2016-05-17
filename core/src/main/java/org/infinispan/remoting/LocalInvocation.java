@@ -5,7 +5,6 @@ import java.util.concurrent.Callable;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.responses.Response;
@@ -39,11 +38,10 @@ public class LocalInvocation implements Callable<Response> {
       try {
          commandsFactory.initializeReplicableCommand(command, false);
          command.setOrigin(self);
-         return responseGenerator.getResponse(command, command.perform(null));
-      } catch (Exception e) {
-         throw e;
+         Object returnValue = command.invoke();
+         return responseGenerator.getResponse(command, returnValue);
       } catch (Throwable throwable) {
-         throw new CacheException("Problems invoking command.", throwable);
+         throw new RemoteException("Problems invoking command locally.", throwable);
       }
    }
 

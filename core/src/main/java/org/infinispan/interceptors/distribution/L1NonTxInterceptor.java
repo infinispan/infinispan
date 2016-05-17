@@ -231,7 +231,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       //we also need to remove from L1 the keys that are not ours
       Iterator<VisitableCommand> subCommands = command.getAffectedKeys().stream().filter(
             k -> !cdl.localNodeIsOwner(k)).map(k -> removeFromL1Command(ctx, k)).iterator();
-      return invokeNext(ctx, command).thenCompose((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
          PutMapCommand putMapCommand = (PutMapCommand) rCommand;
          processInvalidationResult(putMapCommand, invalidationFuture);
          return MultiSubCommandInvoker.thenForEach(rCtx, subCommands, this, returnWith(rv));
@@ -295,7 +295,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          return invokeNext(ctx, command);
       }
       Future<?> l1InvalidationFuture = invalidateL1InCluster(ctx, command, assumeOriginKeptEntryInL1);
-      return invokeNext(ctx, command).thenCompose((rCtx, rCommand, rv) -> {
+      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          processInvalidationResult(dataWriteCommand, l1InvalidationFuture);
          return removeFromLocalL1(rCtx, dataWriteCommand, rv);

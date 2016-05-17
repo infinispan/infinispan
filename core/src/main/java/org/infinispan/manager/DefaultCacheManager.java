@@ -59,6 +59,7 @@ import org.infinispan.manager.impl.ClusterExecutorImpl;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -520,18 +521,19 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          RemoveCacheCommand cmd = new RemoveCacheCommand(ByteString.fromString(cacheName), this);
          Transport transport = getTransport();
          try {
-            CompletableFuture<?> future = null;
+            CompletableFuture<?> future;
             if (transport != null) {
                Configuration c = configurationManager.getConfigurationOrDefault(cacheName);
                // Use sync replication timeout
-               future = transport.invokeRemotelyAsync(null, cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-                     c.clustering().remoteTimeout(), null, DeliverOrder.NONE, false);
+               CompletableFuture<Map<Address, Response>> remoteFuture =
+                     transport.invokeRemotelyAsync(null, cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
+                           c.clustering().remoteTimeout(), null, DeliverOrder.NONE, false);
+               future = cmd.invokeAsync().thenCompose(o -> remoteFuture);
+            } else {
+               future = cmd.invokeAsync();
             }
-            cmd.perform(null);
 
-            if (future != null) {
-               future.get();
-            }
+            future.get();
          } catch (Throwable t) {
             throw new CacheException("Error removing cache", t);
          }

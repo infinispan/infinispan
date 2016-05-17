@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Command used for handling XSiteReplication administrative operations.
@@ -67,27 +68,27 @@ public class XSiteAdminCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       switch (adminOperation) {
          case SITE_STATUS: {
             if (backupSender.getOfflineStatus(siteName).isOffline()) {
-               return Status.OFFLINE;
+               return CompletableFuture.completedFuture(Status.OFFLINE);
             } else {
-               return Status.ONLINE;
+               return CompletableFuture.completedFuture(Status.ONLINE);
             }
          }
          case STATUS: {
-            return backupSender.status();
+            return CompletableFuture.completedFuture(backupSender.status());
          }
          case TAKE_OFFLINE: {
-            return backupSender.takeSiteOffline(siteName);
+            return CompletableFuture.completedFuture(backupSender.takeSiteOffline(siteName));
          }
          case BRING_ONLINE: {
-            return backupSender.bringSiteOnline(siteName);
+            return CompletableFuture.completedFuture(backupSender.bringSiteOnline(siteName));
          }
          case AMEND_TAKE_OFFLINE: {
             backupSender.getOfflineStatus(siteName).amend(afterFailures, minTimeToWait);
-            return null;
+            return CompletableFutures.completedNull();
          }
          default: {
             throw new IllegalStateException("Unhandled admin operation " + adminOperation);

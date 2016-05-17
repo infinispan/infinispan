@@ -14,6 +14,7 @@ import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.interceptors.InvocationReturnValueHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessHandler;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -120,10 +121,7 @@ public class ComposedAsyncInvocationStage extends AbstractInvocationStage
    public BasicInvocationStage apply(BasicInvocationStage stage, Throwable t) {
       Object rv;
       if (t != null) {
-         if (t.getCause() != null && t instanceof CompletionException) {
-            t = t.getCause();
-         }
-         stage = new ExceptionStage(ctx, command, t);
+         stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
          rv = null;
       } else {
          try {

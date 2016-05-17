@@ -3,11 +3,12 @@ package org.infinispan.commands.tx;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -31,7 +32,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    protected GlobalTransaction globalTx;
    protected final ByteString cacheName;
-   protected InterceptorChain invoker;
+   protected AsyncInterceptorChain invoker;
    protected InvocationContextFactory icf;
    protected TransactionTable txTable;
    private Address origin;
@@ -41,7 +42,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       this.cacheName = cacheName;
    }
 
-   public void init(InterceptorChain chain, InvocationContextFactory icf, TransactionTable txTable) {
+   public void init(AsyncInterceptorChain chain, InvocationContextFactory icf, TransactionTable txTable) {
       this.invoker = chain;
       this.icf = icf;
       this.txTable = txTable;
@@ -86,19 +87,22 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (ctx != null) throw new IllegalStateException("Expected null context!");
+      return null;
+   }
+
+   @Override
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       markGtxAsRemote();
       RemoteTransaction transaction = getRemoteTransaction();
       if (transaction == null) {
          if (trace) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
-         return invalidRemoteTxReturnValue();
+         return CompletableFuture.completedFuture(invalidRemoteTxReturnValue());
       }
       visitRemoteTransaction(transaction);
-      RemoteTxInvocationContext ctxt = icf.createRemoteTxInvocationContext(
-            transaction, getOrigin());
+      RemoteTxInvocationContext ctx = icf.createRemoteTxInvocationContext(transaction, getOrigin());
 
       if (trace) log.tracef("About to execute tx command %s", this);
-      return invoker.invoke(ctxt, this);
+      return invoker.invokeAsync(ctx, this);
    }
 
    protected void visitRemoteTransaction(RemoteTransaction tx) {

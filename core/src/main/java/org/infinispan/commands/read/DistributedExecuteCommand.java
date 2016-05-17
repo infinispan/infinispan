@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CancellableCommand;
@@ -86,15 +87,16 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
       return true;
    }
 
+   @Override
+   public Object perform(InvocationContext ctx) throws Throwable {
+      throw new UnsupportedOperationException();
+   }
+
    /**
     * Performs invocation of Callable and returns result
-    *
-    * @param context
-    *           invocation context
-    * @return result of Callable invocations
     */
    @Override
-   public V perform(InvocationContext context) throws Exception {
+   public CompletableFuture<Object> invokeAsync() throws Exception {
       // hook into lifecycle
       DistributedTaskLifecycleService taskLifecycleService = DistributedTaskLifecycleService.getInstance();
       Callable<V> callable = getCallable();
@@ -109,7 +111,7 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
       } finally {
          taskLifecycleService.onPostExecute(callable);
       }
-      return result;
+      return CompletableFuture.completedFuture(result);
    }
 
    public Callable<V> getCallable() {

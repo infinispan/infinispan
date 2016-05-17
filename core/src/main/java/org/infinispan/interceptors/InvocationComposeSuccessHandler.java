@@ -11,13 +11,13 @@ import org.infinispan.context.InvocationContext;
  */
 @FunctionalInterface
 public interface InvocationComposeSuccessHandler extends InvocationComposeHandler {
-   BasicInvocationStage apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable;
+   BasicInvocationStage apply(BasicInvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable;
 
    @Override
    default BasicInvocationStage apply(BasicInvocationStage stage, InvocationContext rCtx, VisitableCommand rCommand,
          Object rv, Throwable t) throws Throwable {
       if (t != null) return stage;
 
-      return apply(rCtx, rCommand, rv);
+      return apply(stage, rCtx, rCommand, rv);
    }
 }

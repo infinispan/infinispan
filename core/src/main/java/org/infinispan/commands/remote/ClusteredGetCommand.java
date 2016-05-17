@@ -3,6 +3,7 @@ package org.infinispan.commands.remote;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -11,12 +12,11 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -24,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Issues a remote get call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
- * {@link org.infinispan.interceptors.base.CommandInterceptor} chain.
+ * interceptor chain.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
@@ -40,7 +40,7 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
 
    private InvocationContextFactory icf;
    private CommandsFactory commandsFactory;
-   private InterceptorChain invoker;
+   private AsyncInterceptorChain invoker;
 
    private InternalEntryFactory entryFactory;
    private Equivalence keyEquivalence;
@@ -63,8 +63,7 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    }
 
    public void initialize(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
-                          InterceptorChain interceptorChain,
-                          Equivalence keyEquivalence) {
+                          AsyncInterceptorChain interceptorChain, Equivalence keyEquivalence) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
@@ -74,31 +73,31 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
 
    /**
     * Invokes a logical "get(key)" on a remote cache and returns results.
-    *
-    * @param context invocation context, ignored.
-    * @return returns an <code>CacheEntry</code> or null, if no entry is found.
     */
    @Override
-   public InternalCacheValue perform(InvocationContext context) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
-      CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
-      if (cacheEntry == null) {
-         if (trace) log.trace("Did not find anything, returning null");
-         return null;
-      }
-      //this might happen if the value was fetched from a cache loader
-      if (cacheEntry instanceof MVCCEntry) {
-         if (trace) log.trace("Handling an internal cache entry...");
-         MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
-         return entryFactory.createValue(mvccEntry);
-      } else {
-         InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
-         return internalCacheEntry.toInternalCacheValue();
-      }
+      CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
+      return future.thenApply(rv -> {
+         CacheEntry cacheEntry = (CacheEntry) rv;
+         if (cacheEntry == null) {
+            if (trace) log.trace("Did not find anything, returning null");
+            return null;
+         }
+         //this might happen if the value was fetched from a cache loader
+         if (cacheEntry instanceof MVCCEntry) {
+            if (trace) log.trace("Handling an internal cache entry...");
+            MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
+            return entryFactory.createValue(mvccEntry);
+         } else {
+            InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
+            return internalCacheEntry.toInternalCacheValue();
+         }
+      });
    }
 
    @Deprecated

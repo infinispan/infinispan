@@ -85,7 +85,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.functional.impl.Params;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.metadata.Metadata;
@@ -141,7 +141,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private ByteString cacheName;
    private boolean totalOrderProtocol;
 
-   private InterceptorChain interceptorChain;
+   private AsyncInterceptorChain interceptorChain;
    private DistributionManager distributionManager;
    private InvocationContextFactory icf;
    private TransactionTable txTable;
@@ -168,7 +168,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
-                                 InterceptorChain interceptorChain, DistributionManager distributionManager,
+                                 AsyncInterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextFactory icf, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,

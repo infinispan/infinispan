@@ -1,5 +1,7 @@
 package org.infinispan.commands.tx;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -30,10 +32,10 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       // Need to mark the transaction as completed even if the prepare command was not executed on this node
       txTable.markTransactionCompleted(globalTx, false);
-      return super.perform(ctx);
+      return super.invokeAsync();
    }
 
    @Override

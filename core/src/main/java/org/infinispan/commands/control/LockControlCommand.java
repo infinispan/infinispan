@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.Visitor;
@@ -22,6 +23,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -115,15 +117,12 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public Object perform(InvocationContext ignored) throws Throwable {
-      if (ignored != null)
-         throw new IllegalStateException("Expected null context!");
-
-      RemoteTxInvocationContext ctxt = createContext();
-      if (ctxt == null) {
-         return null;
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
+      RemoteTxInvocationContext ctx = createContext();
+      if (ctx == null) {
+         return CompletableFutures.completedNull();
       }
-      return invoker.invoke(ctxt, this);
+      return invoker.invokeAsync(ctx, this);
    }
 
    @Override
@@ -132,7 +131,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
       if (transaction == null) {
          if (unlock) {
-            log.tracef("Unlock for non-existant transaction %s.  Not doing anything.", globalTx);
+            log.tracef("Unlock for missing transaction %s.  Not doing anything.", globalTx);
             return null;
          }
          //create a remote tx without any modifications (we do not know modifications ahead of time)

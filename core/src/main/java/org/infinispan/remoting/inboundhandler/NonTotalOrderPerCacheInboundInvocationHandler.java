@@ -59,15 +59,18 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
       try {
          final int commandTopologyId = extractCommandTopologyId(command);
          final boolean onExecutorService = executeOnExecutorService(order, command);
+         final boolean sync = order.preserveOrder();
          final BlockingRunnable runnable;
 
          switch (command.getCommandId()) {
             case SingleRpcCommand.COMMAND_ID:
                runnable = createReadyActionRunnable(command, reply, commandTopologyId, true, onExecutorService,
-                                                    createReadyActionForSingleRpcCommand(commandTopologyId, (SingleRpcCommand) command));
+                     sync, createReadyActionForSingleRpcCommand(commandTopologyId, (SingleRpcCommand) command)
+               );
                break;
             default:
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService);
+               runnable = createDefaultRunnable(command, reply, commandTopologyId,
+                     command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService, sync);
                break;
          }
          handleRunnable(runnable, onExecutorService);
@@ -92,12 +95,12 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
    }
 
    private BlockingRunnable createReadyActionRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
-                                                              boolean waitTransactionalData, boolean onExecutorService,
-                                                              ReadyAction readyAction) {
+                                                      boolean waitTransactionalData, boolean onExecutorService,
+                                                      boolean sync, ReadyAction readyAction) {
       final TopologyMode topologyMode = TopologyMode.create(onExecutorService, waitTransactionalData);
       if (onExecutorService && readyAction != null) {
          readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
-         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId) {
+         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync) {
             @Override
             public boolean isReady() {
                return super.isReady() && readyAction.isReady();
@@ -110,7 +113,7 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
             }
          };
       } else {
-         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId);
+         return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync);
       }
    }
 

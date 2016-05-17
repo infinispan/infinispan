@@ -21,14 +21,11 @@ public interface CacheRpcCommand extends ReplicableCommand {
 
    /**
     * Set the origin of the command
-    * @param origin
     */
    void setOrigin(Address origin);
 
    /**
     * Get the origin of the command
-    * @return
     */
    Address getOrigin();
-
 }

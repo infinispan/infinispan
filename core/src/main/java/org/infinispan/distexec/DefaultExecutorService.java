@@ -1047,9 +1047,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             CancelCommand ccc = factory.buildCancelCommandCommand(distCommand.getUUID());
             ccc.init(cancellationService);
             try {
-               ccc.perform(null);
-            } catch (Throwable e) {
-               log.couldNotExecuteCancellationLocally(e.getLocalizedMessage());
+               ccc.invoke();
+            } catch (Throwable t) {
+               log.couldNotExecuteCancellationLocally(t);
             }
             return true;
          } else {
@@ -1067,30 +1067,33 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void execute() {
          log.debugf("Sending %s to self", this);
          try {
-            Callable<V> call = new Callable<V>() {
+            Runnable call = () -> {
+               getCommand().init(cache);
+               DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
+               try {
+                  // hook into lifecycle
+                  lifecycle.onPreExecute(getCommand().getCallable(), cache);
+                  cancellationService.register(Thread.currentThread(), getCommand().getUUID());
+                  getCommand().invokeAsync().whenComplete((rv, t) -> {
+                     if (t != null) {
+                        completeExceptionally(t);
+                     } else {
+                        complete((V) rv);
+                     }
 
-               @Override
-               public V call() throws Exception {
-                  getCommand().init(cache);
-                  DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
-                  try {
-                     // hook into lifecycle
-                     lifecycle.onPreExecute(getCommand().getCallable(), cache);
-                     cancellationService.register(Thread.currentThread(), getCommand().getUUID());
-                     V result = getCommand().perform(null);
-                     complete(result);
-                     return result;
-                  } catch (Exception e) {
-                     completeExceptionally(e);
-                     throw e;
-                  } finally {
                      // hook into lifecycle
                      lifecycle.onPostExecute(getCommand().getCallable());
                      cancellationService.unregister(getCommand().getUUID());
-                  }
+                  });
+               } catch (Throwable t) {
+                  completeExceptionally(t);
+
+                  // hook into lifecycle
+                  lifecycle.onPostExecute(getCommand().getCallable());
+                  cancellationService.unregister(getCommand().getUUID());
                }
             };
-            localExecutorService.submit(call);
+            localExecutorService.execute(call);
          } catch (Throwable e1) {
             log.localExecutionFailed(e1);
          }
