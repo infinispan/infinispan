@@ -25,7 +25,7 @@ making it ideal for high-throughput, multi-CPU/multi-core environments.
 Further, Infinispan's Cache API extends the JDK's ConcurrentMap - making migration from a
 map to Infinispan trivial.
 
-Creating a local-only cache-manager is trivial: just use the _no-argument_ DefaultCacheManager 
+Creating a local-only cache-manager is trivial: just use the _no-argument_ DefaultCacheManager
 constructor, or supply the following XML configuration file
 
 [source,xml]
@@ -50,7 +50,7 @@ Infinispan can be configured to use UDP multicast which mitigates this problem t
 degree.
 
 .Replication mode
-image::images/Figure1_6.png[]
+image::images/Figure1_6.png[align="center", title="Replication mode"]
 
 Replication can be synchronous or asynchronous. Use of either one of the options is
 application dependent.
@@ -86,7 +86,7 @@ receive a message informing them that their data is now stale and should be evic
 memory.
 
 .Invalidation mode
-image::images/Figure2_5.png[]
+image::images/Figure2_5.png[align="center", title="Invalidation mode"]
 
 Invalidation, when used with a shared cache loader would cause remote caches to refer to
 the shared cache loader to retrieve modified data. The benefit of this is twofold:
@@ -142,7 +142,7 @@ Note that this is _only_ if the transport is _asynchronous_.
 If using a _synchronous_ transport this behavior is not exhibited.
 
 .Distribution mode
-image::images/Figure3_3.png[]
+image::images/Figure3_3.png[align="center", title="Distribution mode"]
 
 
 ==== Hashing Algorithms
@@ -231,10 +231,10 @@ Configuration c = new ConfigurationBuilder()
 
 ==== Initial cluster size
 Infinispan's very dynamic nature in handling topology changes (i.e. nodes being added / removed
-at runtime) means that, normally, a node doesn't wait for the presence of other nodes before 
+at runtime) means that, normally, a node doesn't wait for the presence of other nodes before
 starting. While this is very flexible, it might not be suitable for applications which require
 a specific number of nodes to join the cluster before caches are started. For this reason,
-you can specify how many nodes should have joined the cluster before proceeding with cache 
+you can specify how many nodes should have joined the cluster before proceeding with cache
 initialization. To do this, use the _initialClusterSize_ and _initialClusterTimeout_ transport
 properties. The declarative XML configuration:
 
@@ -254,7 +254,7 @@ GlobalConfiguration global = new GlobalConfigurationBuilder()
 ----
 
 The above configuration will wait for _4_ nodes to join the cluster before initialization. If
-the initial nodes do not appear within the specified timeout, the cache manager will fail to 
+the initial nodes do not appear within the specified timeout, the cache manager will fail to
 start.
 
 ==== L1 Caching
@@ -265,7 +265,7 @@ In the above diagram, if L1 was enabled, a subsequent GET for the same key on Se
 would not result in any remote calls.
 
 .L1 caching
-image::images/Figure4_4.png[]
+image::images/Figure4_4.png[align="center", title="L1 caching"]
 
 L1 caching is not free though.
 Enabling it comes at a cost, and this cost is that every time a key is updated, an
@@ -796,7 +796,7 @@ administrator can force the availability mode back to AVAILABLE
 <<partition-handling-monitoring,via JMX>>.
 
 [[partition-handling-configuration]]
-==== Configuration for partition handling functionality
+==== Configuring partition handling
 
 At this stage the partition handling is disabled by default. We will revisit
 this decision in the future, based on user feedback.

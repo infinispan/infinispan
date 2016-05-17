@@ -1,12 +1,12 @@
-= Infinispan User Guide
-Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+= Infinispan {infinispanversion} User Guide
+The Infinispan community
 :toc2:
 :icons: font
 :toclevels: 3
 :numbered:
 
 Welcome to the official Infinispan user guide.
-This comprehensive document will guide you through every last detail of Infinispan, 
+This comprehensive document will guide you through every last detail of Infinispan,
 however can be a poor starting point if you are new to Infinispan.
 
 TIP: For newbies, starting with the link:../getting_started/getting_started.html[Getting Started Guide]
@@ -15,7 +15,7 @@ or one of the link:http://www.infinispan.org/documentation[Quickstarts] is proba
 The link:../faqs/faqs.html[Frequently Asked Questions] and link:../glossary/glossary.html[Glossary]
 are also useful documents to have alongside this user guide.
 
-// For some reason the chapter numbering got messed up when exporting from Confluence... 
+// For some reason the chapter numbering got messed up when exporting from Confluence...
 
 // The top-level chapter on config.  This will include other sub-chapters.
 include::configuration.adoc[]
@@ -23,27 +23,27 @@ include::cache_manager.adoc[]
 include::cache_api.adoc[]
 include::eviction.adoc[]
 include::persistence.adoc[]
-include::transactions.adoc[]
-include::locking.adoc[]
 include::clustering.adoc[]
 include::marshalling.adoc[]
-include::server_protocols.adoc[]
-include::query.adoc[]
-include::lucene_directory.adoc[]
+include::transactions.adoc[]
+include::locking.adoc[]
 include::streams.adoc[]
 include::distributed_executor.adoc[]
-include::management.adoc[]
+include::query.adoc[]
+include::lucene_directory.adoc[]
 include::cdi.adoc[]
+include::jcache.adoc[]
+include::management.adoc[]
 include::interceptors.adoc[]
 include::cloud_aws.adoc[]
 include::cli.adoc[]
+include::server_protocols.adoc[]
+include::compatibility_mode.adoc[]
+include::security.adoc[]
 include::integrations.adoc[]
 include::grid_file_system.adoc[]
 include::cross_site_replication.adoc[]
 include::rolling_upgrades.adoc[]
-include::jcache.adoc[]
 include::equivalence.adoc[]
-include::compatibility_mode.adoc[]
-include::security.adoc[]
 include::functional_api.adoc[]
 

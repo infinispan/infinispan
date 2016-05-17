@@ -1,9 +1,12 @@
 = Videos
-Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+The Infinispan community
 :icons: font
 
 TIP: This section contains various recorded demos, presentations and
 screencasts on Infinispan which we hope you'd find useful.
+
+.Server management
+* link:$$https://www.youtube.com/watch?v=m_j3dz4k4xA$$[A walkthrough of the new Infinispan 8.1 Admin console]
 
 .Monitoring
 * link:$$http://www.youtube.com/watch?v=f2os8tvYFBU$$[Monitoring Infinispan with Jopr console (screencast)]

@@ -949,11 +949,11 @@ However, when it comes to link:http://community.jboss.org/wiki/HotRodProtocol[Ho
 ===== Data Consistency Problem
 Imagine you have two ATMs that connect using Hot Rod to a bank where an account's balance is stored.  Two closely followed operations to retrieve the latest balance could return 500 CHF (swiss francs) as shown below:
 
-image::images/server_modules_6.png[]
+image::images/server_modules_6.png[align="center", title="Concurrent readers"]
 
 Next a customer connects to the first ATM and requests 400 CHF to be retrieved.  Based on the last value read, the ATM could calculate what the new balance is, which is 100 CHF, and request a put with this new value. Let's imagine now that around the same time another customer connects to the ATM and requests 200 CHF to be retrieved.  Let's assume that the ATM thinks it has the latest balance and based on its calculations it sets the new balance to 300 CHF:
 
-image::images/server_modules_7.png[]
+image::images/server_modules_7.png[Concurrent updates]
 
 Obviously, this would be wrong.  Two concurrent updates have resulted in an incorrect account balance.  The second update should not have been allowed since the balance the second ATM had was incorrect. Even if the ATM would have retrieved the balance before calculating the new balance, someone could have updated between the new balance being retrieved and the update. Before finding out how to solve this issue in a client-server scenario with Hot Rod, let's look at how this is solved when Infinispan clients run in peer-to-peer mode where clients and Infinispan live within the same JVM.
 
@@ -961,18 +961,18 @@ Obviously, this would be wrong.  Two concurrent updates have resulted in an inco
 
 If the ATM and the Infinispan instance storing the bank account lived in the same JVM, the ATM could use the link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#replace(K, V, V)[conditional replace API] referred at the beginning of this article.  So, it could send the previous known value to verify whether it has changed since it was last read.  By doing so, the first operation could double check that the balance is still 500 CHF when it was to update to 100 CHF.  Now, when the second operation comes, the current balance would not be 500 CHF any more and hence the conditional replace call would fail, hence avoiding data consistency issues:
 
-image::images/server_modules_8.png[]
+image::images/server_modules_8.png[align="center", title="P2P solution"]
 
 ====== Client-Server Solution
 In theory, Hot Rod could use the same p2p solution but sending the previous value would be not practical.  In this example, the previous value is just an integer but the value could be a lot bigger and hence forcing clients to send it to the server would be rather wasteful.  Instead, Hot Rod offers versioned operations to deal with this situation.
 
 Basically, together with each key/value pair, Hot Rod stores a version number which uniquely identifies each modification. So, using an operation called link:http://community.jboss.org/wiki/HotRodProtocol#getWithVersion_response[getVersioned or getWithVersion] , clients can retrieve not only the value associated with a key, but also the current version. So, if we look at the previous example once again, the ATMs could call getVersioned and get the balance's version:
 
-image::images/server_modules_9.png[]
+image::images/server_modules_9.png[align="center", title="Get versioned"]
 
 When the ATMs wanted to modify the balance, instead of just calling put, they could call link:http://community.jboss.org/wiki/HotRodProtocol#removeIfUnmodified_request[replaceIfUnmodified] operation passing the latest version number of which the clients are aware of.  The operation will only succeed if the version passed matches the version in the server.  So, the first modification by the ATM would be allowed since the client passes 1 as version and the server side version for the balance is also 1.  On the other hand, the second ATM would not be able to make the modification because after the first ATMs modification the version would have been incremented to 2, and now the passed version (1) and the server side version (2) would not match:
 
-image::images/server_modules_10.png[]
+image::images/server_modules_10.png[align="center", title="Replace if versions match"]
 
 [[sid-68355104]]
 
@@ -1112,7 +1112,7 @@ A combination of the Hot Rod protocol and link:http://community.jboss.org/docs/D
 
 ====== Sample architecture/near caching
 
-image::images/client_server.png[]
+image::images/client_server.png[align="center", title="Multiple caching tiers"]
 
 The diagram above shows an Infinispan server cluster running 3 hotrod servers. This cluster is accessed remotely, through HotRod, by another infinispan cluster:  client cluster (upper part of the image). All the nodes in the server cluster are configured to run HotRod servers, so requests from remote loader are being balanced between them. The client cluster is configured with invalidation as cluster mode and a RemoteCacheLoader to access data stored in the server cluster. Application data is held on the server cluster which runs in DIST mode for scalability.
 
@@ -1270,16 +1270,16 @@ is detailed in the link:#_configuration_7[Querying Infinispan] chapter.
 
 There is however an extra configuration step involved. While in embedded mode the indexing metadata is obtained via Java
 reflection by analyzing the presence of various Hibernate Search annotations on the entry's class, this is obviously not
-possible if the entry is protobuf encoded. 
-The server needs to extract the relevant metadata from the same descriptor (.proto file) as the client. 
+possible if the entry is protobuf encoded.
+The server needs to extract the relevant metadata from the same descriptor (.proto file) as the client.
 The descriptors are stored in a dedicated cache on the server _'___protobuf_metadata'_.
 Registering a new schema is therefore as simple as performing a _put_ operation on that cache using the schema's name as
-a key and the schema itself as the value. 
-Alternatively you can use the CLI (via the cache-container=*:register-proto-schemas() operation), the Console or the 
-_ProtobufMetadataManager_ MBean via JMX. 
+a key and the schema itself as the value.
+Alternatively you can use the CLI (via the cache-container=*:register-proto-schemas() operation), the Console or the
+_ProtobufMetadataManager_ MBean via JMX.
 Be aware that, when security is enabled, access to the schema cache via the remote protocols requires
 that the user belongs to the _'___schema_manager role'_
-NOTE: Once indexing is enabled for a cache all fields of Protobuf encoded entries are going to be indexed. 
+NOTE: Once indexing is enabled for a cache all fields of Protobuf encoded entries are going to be indexed.
 Future versions will allow you to select which fields to index (see link:https://issues.jboss.org/browse/ISPN-3718[ISPN-3718]).
 
 ===== A remote query example

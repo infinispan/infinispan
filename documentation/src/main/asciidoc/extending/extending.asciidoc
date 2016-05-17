@@ -1,5 +1,5 @@
 = Extending Infinispan
-Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+The Infinispan community
 :icons: font
 
 This guide is intended for anyone extending or customizing Infinispan.

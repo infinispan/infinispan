@@ -1,4 +1,4 @@
-== The Cache APIs
+== The Cache API
 
 === The Cache interface
 Infinispan exposes a simple, link:http://jcp.org/en/jsr/detail?id=107[JSR-107] compliant link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html[Cache] interface.

@@ -1,13 +1,13 @@
 [[CrossSiteReplication]]
 == Cross site replication
-Cross site (x-site) replication allows backing up the data from one cluster to other clusters, potentially situated in different geographical location. The cross-site replication is built on top of JGroups' link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2 protocol] . link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] describes the technical design of cross site replication in more detail. 
+Cross site (x-site) replication allows backing up the data from one cluster to other clusters, potentially situated in different geographical location. The cross-site replication is built on top of JGroups' link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2 protocol] . link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] describes the technical design of cross site replication in more detail.
 
 NOTE: Cross site replication needs the backup cache running in the site master node(s) (i.e. node which receives the backup and applies it). The backup cache starts automatically when it receives the first backup request.
 
 === Sample deployment
-The diagram below depicts a possible setup of replicated sites, followed by a description of individual elements present in the deployment. Options are then explained at large in future paragraphs. Comments on the diagram above: 
+The diagram below depicts a possible setup of replicated sites, followed by a description of individual elements present in the deployment. Options are then explained at large in future paragraphs. Comments on the diagram above:
 
-image::images/xdc.png[]
+image::images/xdc.png[Cross-site datacenters]
 
 
 * there are 3 sites: LON, NYC and SFO.
@@ -25,23 +25,23 @@ image::images/xdc.png[]
 * the "users" cache can have a different configuration from one site to the other. E.g. it might be configured as distributed with numOwners=2 in the LON site, REPL in the NYC site and distributed with numOwners=1 in the SFO site
 
 
-*  JGroups is used for both inter-site and intra-site communication. link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2] is used for inter-site communication 
+*  JGroups is used for both inter-site and intra-site communication. link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2] is used for inter-site communication
 
 
-*  "orders" is a site local to LON, i.e. updates to the data in "orders" don't get replicated to the remote sites The following sections discuss specific aspects of cross site replication into more detail. The foundation of the cross-site replication functionality is RELAY2 so it highly recommended to read JGroups' link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2] documentation before moving on into cross-site. Configuration 
+*  "orders" is a site local to LON, i.e. updates to the data in "orders" don't get replicated to the remote sites The following sections discuss specific aspects of cross site replication into more detail. The foundation of the cross-site replication functionality is RELAY2 so it highly recommended to read JGroups' link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2] documentation before moving on into cross-site. Configuration
 
 The cross-site replication configuration spreads over the following files:
 
-.  the backup policy for each individual cache is defined in infinispan's .xml configuration file (link:https://gist.github.com/maniksurtani/cdd5420af764c907e342[infinispan.xml]) 
+.  the backup policy for each individual cache is defined in infinispan's .xml configuration file (link:https://gist.github.com/maniksurtani/cdd5420af764c907e342[infinispan.xml])
 
 
-.  cluster's JGroups xml configuration file: link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2] protocol needs to be added to the JGroups protocol stack (link:https://gist.github.com/maniksurtani/409fe5ece5fe4bcf679f[jgroups.xml]) 
+.  cluster's JGroups xml configuration file: link:$$http://www.jgroups.org/manual-3.x/html/user-advanced.html#Relay2Advanced$$[RELAY2] protocol needs to be added to the JGroups protocol stack (link:https://gist.github.com/maniksurtani/409fe5ece5fe4bcf679f[jgroups.xml])
 
 
-.  RELAY2 configuration file: RELAY2 has an own configuration file ( link:https://gist.github.com/maniksurtani/8c7238dae7921d2c883e[relay2.xml] ) 
+.  RELAY2 configuration file: RELAY2 has an own configuration file ( link:https://gist.github.com/maniksurtani/8c7238dae7921d2c883e[relay2.xml] )
 
 
-.  the JGroups channel that is used by RELAY2 has its own configuration file (link:https://gist.github.com/maniksurtani/cbc1a297a367b1176feb[jgroups-relay2.xml]) Infinispan XML configuration file 
+.  the JGroups channel that is used by RELAY2 has its own configuration file (link:https://gist.github.com/maniksurtani/cbc1a297a367b1176feb[jgroups-relay2.xml]) Infinispan XML configuration file
 
 The local site is defined in the the global configuration section. The local is the site where the node using this configuration file resides (in the example above local site is "LON").
 
@@ -63,7 +63,7 @@ lonGc.site().localSite("LON");
 
 ----
 
-The names of the site (case sensitive) should match the name of a site as defined within JGroups' RELAY2 protocol configuration file. Besides the global configuration, each cache specifies its backup policy in the "site" element: 
+The names of the site (case sensitive) should match the name of a site as defined within JGroups' RELAY2 protocol configuration file. Besides the global configuration, each cache specifies its backup policy in the "site" element:
 
 .infinispan.xml
 [source,xml]
@@ -79,7 +79,7 @@ The names of the site (case sensitive) should match the name of a site as define
 
 ----
 
-The "users" cache backups its data to the "NYC" and "SFO" sites. Even though the "LON" appears as a backup site, it has the "enabled" attribute set to _false_ so it will be ignored . For each site backup, the following configuration attributes can be specified: 
+The "users" cache backups its data to the "NYC" and "SFO" sites. Even though the "LON" appears as a backup site, it has the "enabled" attribute set to _false_ so it will be ignored . For each site backup, the following configuration attributes can be specified:
 
 
 * _strategy_ - the strategy used for backing up data, either "SYNC" or "ASYNC". Defaults to "ASYNC"
@@ -162,7 +162,7 @@ In order to allow inter-site calls, the RELAY2 protocol needs to be added to the
 
 ==== RELAY2 configuration file
 
-The RELAY2 configuration file is linked from the jgroups.xml (see attached link:https://gist.github.com/maniksurtani/8c7238dae7921d2c883e[relay2.xml]). It defines the sites seen by this cluster and also the JGroups configuration file that is used by RELAY2 in order to communicate with the remote sites. 
+The RELAY2 configuration file is linked from the jgroups.xml (see attached link:https://gist.github.com/maniksurtani/8c7238dae7921d2c883e[relay2.xml]). It defines the sites seen by this cluster and also the JGroups configuration file that is used by RELAY2 in order to communicate with the remote sites.
 
 === Data replication
 For both transactional and non-transactional caches, the backup calls are performed in parallel with local cluster calls, e.g. if we write data to node N1 in LON then replication to the local nodes N2 and N3 and remote backup sites SFO and NYC happen in parallel.
@@ -171,7 +171,7 @@ For both transactional and non-transactional caches, the backup calls are perfor
 In the case of non-transactional caches the replication happens during each operation. Given that data is sent in parallel to backups and local caches, it is possible for the operations to succeed locally and fail remotely, or the other way, causing inconsistencies
 
 ==== Transactional caches
-For synchronous transactional caches, Infinispan internally uses a two phase commit protocol: lock acquisition during the 1st phase (prepare) and apply changes during the 2nd phase (commit). For asynchronous caches the two phases are merged, the "apply changes" message being sent asynchronously to the owners of data. This 2PC protocol maps to 2PC received from the JTA transaction manager. For transactional caches, both optimistic and pessimistic, the backup to remote sites happens during the prepare and commit phase only. 
+For synchronous transactional caches, Infinispan internally uses a two phase commit protocol: lock acquisition during the 1st phase (prepare) and apply changes during the 2nd phase (commit). For asynchronous caches the two phases are merged, the "apply changes" message being sent asynchronously to the owners of data. This 2PC protocol maps to 2PC received from the JTA transaction manager. For transactional caches, both optimistic and pessimistic, the backup to remote sites happens during the prepare and commit phase only.
 
 ===== Synchronous local cluster with async backup
 In this scenario the backup call happens during local commit phase(2nd phase). That means that if the local prepare fails, no remote data is being sent to the remote backup.
@@ -260,7 +260,7 @@ administrator should invoke this operation in the provider site (i.e. the site t
 set the name of the consumer site (i.e. the site that will receive the state). The figure below shows where to find
 the +pushState(String)+ operation using JConsole:
 
-image::images/xsite-state-transfer.png["JConsole pushState operation",height=495,width=720]
+image::images/xsite-state-transfer.png[align="center", title="Pushing state via JConsole"]
 
 NOTE: The +pushState(siteName)+ operation will automatically bring the new site online. The system administrator does
 not need to bring the site online first.
@@ -364,5 +364,5 @@ value. Default value is 2 seconds.
 
 [[x-site-reference]]
 === Reference
-link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] (Sept 2012) describes the technical design of cross site replication in more detail. 
+link:$$https://community.jboss.org/wiki/DesignForCrossSiteReplication$$[This document] describes the technical design of cross site replication in more detail.
 

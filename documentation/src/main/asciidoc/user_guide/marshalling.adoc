@@ -198,7 +198,7 @@ in object of type org.infinispan.marshall.VersionAwareMarshallerTest$1
 
 Finding the root cause of marshalling/unmarshalling exceptions can sometimes be really daunting but we hope that the above improvements would help get to the bottom of those in a more quicker and efficient manner.
 
-===  Plugging Infinispan With User Defined Externalizers
+===  User Defined Externalizers
 One of the key aspects of Infinispan is that it often needs to marshall/unmarshall objects in order to provide some of its functionality. For example, if it needs to store objects in a write-through or write-behind cache store, the stored objects need marshalling. If a cluster of Infinispan nodes is formed, objects shipped around need marshalling. Even if you enable lazy deserialization, objects need to be marshalled so that they can be lazily unmarshalled with the correct classloader.
 
 Using standard JDK serialization is slow and produces payloads that are too big and can affect bandwidth usage. On top of that, JDK serialization does not work well with objects that are supposed to be immutable. In order to avoid these issues, Infinispan uses link:http://jboss.org/jbossmarshalling[JBoss Marshalling] for marshalling/unmarshalling objects. JBoss Marshalling is fast, produces very space efficient payloads, and on top of that  during unmarshalling, it enables users to have full control over how to construct objects, hence allowing objects to carry on being immutable. 

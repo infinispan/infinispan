@@ -167,12 +167,12 @@ The autoCommit feature can be managed through configuration:
 
 
 ==== What do I need - pessimistic or optimistic transactions?
-From a use case perspective, optimistic transactions should be used when there is _not_ a lot of contention between multiple transactions running at the same time. That is because the optimistic transactions rollback if data has changed between the time it was read and the time it was committed (writeSkewCheck). 
+From a use case perspective, optimistic transactions should be used when there is _not_ a lot of contention between multiple transactions running at the same time. That is because the optimistic transactions rollback if data has changed between the time it was read and the time it was committed (writeSkewCheck).
 
 On the other hand, pessimistic transactions might be a better fit when there is high contention on the keys and transaction rollbacks are less desirable. Pessimistic transactions are more costly by their nature: each write operation potentially involves a RPC for lock acquisition.
 
 === Deadlock detection
-Deadlocks can significantly (up to one order of magnitude, see benchmarks) reduce the throughput of a system, especially when multiple transactions are operating agains the same key set. Deadlock detection is disabled by default, but can be enabled/configured per cache (i.e. under *-cache config element) by adding the following: 
+Deadlocks can significantly (up to one order of magnitude, see benchmarks) reduce the throughput of a system, especially when multiple transactions are operating agains the same key set. Deadlock detection is disabled by default, but can be enabled/configured per cache (i.e. under *-cache config element) by adding the following:
 
 [source,xml]
 ----
@@ -278,10 +278,10 @@ When `TransactionManager.commit()` is invoked, both resources prepare successful
 ==== How does it work
 Recovery is coordinated by the transaction manager. The transaction manager works with Infinispan to determine the list of in-doubt transactions that require manual intervention and informs the system administrator (via email, log alerts, etc). This process is transaction manager specific, but generally requires some configuration on the transaction manager.  
 
-Knowing the in-doubt transaction ids, the system administrator can now connect to the Infinispan cluster and replay the commit of transactions or force the rollback. Infinispan provides JMX tooling for this - this is explained extensively in the link:http://community.jboss.org/docs/DOC-16646?uniqueTitle=false#Reconciliate_state[Reconciliate state] section. 
+Knowing the in-doubt transaction ids, the system administrator can now connect to the Infinispan cluster and replay the commit of transactions or force the rollback. Infinispan provides JMX tooling for this - this is explained extensively in the link:http://community.jboss.org/docs/DOC-16646?uniqueTitle=false#Reconciliate_state[Reconciliate state] section.
 
 ==== Configuring recovery   
-Recovery is _not_ enabled by default in Infinispan. If disabled the TransactionManager won't be able to work with Infinispan to determine the in-doubt transactions. In order to enable recovery through xml configuration: 
+Recovery is _not_ enabled by default in Infinispan. If disabled the TransactionManager won't be able to work with Infinispan to determine the in-doubt transactions. In order to enable recovery through xml configuration:
 
 [source,xml]
 ----
@@ -311,7 +311,7 @@ Recovery can be enabled/disabled o a per cache level: e..g it is possible to hav
 NOTE: For recovery to work, `mode` must be set to `FULL_XA`, since full-blown XA transactions are needed.
 
 ===== Enable JMX support
-IMPORTANT: In order to be able to use JMX for managing recovery JMX support must be explicitly enabled. More about enabling JMX link:http://community.jboss.org/docs/DOC-14865#Enabling_JMX_Statistics[here] . 
+IMPORTANT: In order to be able to use JMX for managing recovery JMX support must be explicitly enabled. More about enabling JMX link:http://community.jboss.org/docs/DOC-14865#Enabling_JMX_Statistics[here] .
 
 ==== Recovery cache
 In order to track in-doubt transactions and be able to reply them Infinispan caches all transaction state for future use. This state is held only for in-doubt transaction, being removed for successfully completed transactions after the commit/rollback phase completed.
@@ -325,11 +325,11 @@ Even though this is transaction manager specific, generally a transaction manage
 
 [source,java]
 ----
-XAResource xar = cache.getAdvancedCache().getXAResource();  
+XAResource xar = cache.getAdvancedCache().getXAResource(); 
 
 ----
 
-It is a common practice to run the recovery in a different process from the one running the transaction. At the moment it is not possible to do this with infinispan: the recovery must be run from the same process where the infinispan instance exists. This limitation will be dropped once link:https://issues.jboss.org/browse/ISPN-375[transactions over HotRod] are available. 
+It is a common practice to run the recovery in a different process from the one running the transaction. At the moment it is not possible to do this with infinispan: the recovery must be run from the same process where the infinispan instance exists. This limitation will be dropped once link:https://issues.jboss.org/browse/ISPN-375[transactions over HotRod] are available.
 
 ==== Reconciliation
 The transaction manager informs the system administrator on in-doubt transaction in a proprietary way. At this stage it is assumed that the system administrator knows transaction's XID (a byte array).
@@ -338,17 +338,17 @@ A normal recovery flow is:
 
 * *STEP 1*: The system administrator connects to an Infinispan server through JMX, and lists the in doubt transactions.  The image below demonstrates JConsole connecting to an Infinispan node that has an in doubt transaction.
 
-image::images/showInDoubtTx.png[]
+image::images/showInDoubtTx.png[align="center", title="Show in-doubt transactions"]
 
-The status of each in-doubt transaction is displayed(in this example " _PREPARED_ "). There might be multiple elements in the status field, e.g. "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.   
+The status of each in-doubt transaction is displayed(in this example " _PREPARED_ "). There might be multiple elements in the status field, e.g. "PREPARED" and "COMMITTED" in the case the transaction committed on certain nodes but not on all of them.  
 
 * *STEP 2*: The system administrator visually maps the XID received from the transaction manager to an Infinispna internal id, represented as a number. This step is needed because the XID, a byte array, cannot conveniently be passed to the JMX tool (e.g. JConsole) and then re-assembled on infinispan's side.
 
 * *STEP 3*: The system administrator forces the transaction's commit/rollback through the corresponding jmx operation, based on the internal id.  The image below is obtained by forcing the commit of the transaction based on its internal id.
 
-image::images/forceCommit.png[]
+image::images/forceCommit.png[align="center", title="Force commit"]
 
-TIP: All JMX operations described above can be executed on any node, regardless of where the transaction originated. 
+TIP: All JMX operations described above can be executed on any node, regardless of where the transaction originated.
 
 ===== Force commit/rollback based on XID
 XID-based JMX operations for forcing in-doubt transactions' commit/rollback are available as well: these methods receive byte[] arrays describing the XID instead of the number associated with the transactions (as previously described at step 2). These can be useful e.g. if one wants to set up an automatic completion job for certain in-doubt transactions. This process is plugged into transaction manager's recovery and has access to the transaction manager's XID objects.

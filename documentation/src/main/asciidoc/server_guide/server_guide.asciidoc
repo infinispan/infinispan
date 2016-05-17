@@ -1,56 +1,56 @@
 = Infinispan Server Guide
-The Infinispan Community
+The Infinispan community
 :toc2:
 :icons: font
 :toclevels: 3
 :numbered:
 
 == About the Infinispan Server
-Infinispan Server is a standalone server which exposes any number of caches to clients over a variety of protocols, including HotRod, Memcached and REST. 
-The server itself is built on top of the robust foundation provided by WildFly, therefore delegating services such as management, configuration, datasources, transactions, logging, security to the respective subsystems. 
-Because Infinispan Server is closely tied to the latest releases of Infinispan and JGroups, the subsystems which control these components are different, in that they introduce new features and change some existing ones (e.g. cross-site replication, etc). 
-For this reason, the configuration of these subsystems should use the Infinispan Server-specific schema, although for most use-cases the configuration is interchangeable. 
+Infinispan Server is a standalone server which exposes any number of caches to clients over a variety of protocols, including HotRod, Memcached and REST.
+The server itself is built on top of the robust foundation provided by WildFly, therefore delegating services such as management, configuration, datasources, transactions, logging, security to the respective subsystems.
+Because Infinispan Server is closely tied to the latest releases of Infinispan and JGroups, the subsystems which control these components are different, in that they introduce new features and change some existing ones (e.g. cross-site replication, etc).
+For this reason, the configuration of these subsystems should use the Infinispan Server-specific schema, although for most use-cases the configuration is interchangeable.
 See the Configuration section for more information.
 
 == Getting Started
-To get started using the server, download the Infinispan Server distribution, unpack it to a local directory and launch it using the +bin/standalone.sh+ or +bin/standalone.bat+ scripts depending on your platform. 
-This will start a single-node server using the +standalone/configuration/standalone.xml+ configuration file, with four endpoints, one for each of the supported protocols. 
+To get started using the server, download the Infinispan Server distribution, unpack it to a local directory and launch it using the +bin/standalone.sh+ or +bin/standalone.bat+ scripts depending on your platform.
+This will start a single-node server using the +standalone/configuration/standalone.xml+ configuration file, with four endpoints, one for each of the supported protocols.
 These endpoints allow access to all of the caches configured in the Infinispan subsystem (apart from the Memcached endpoint which, because of the protocol's design, only allows access to a single cache).
 
 == Operating modes
 Infinispan Server, like WildFly, can be booted in two different modes: standalone and domain.
 
 === Standalone mode
-For simple configurations, standalone mode is the easiest to start with. 
-It allows both local and clustered configurations, although we only really recommend it for running single nodes, since the configuration, management and coordination of multiple nodes is up to the user's responsibility. 
+For simple configurations, standalone mode is the easiest to start with.
+It allows both local and clustered configurations, although we only really recommend it for running single nodes, since the configuration, management and coordination of multiple nodes is up to the user's responsibility.
 For example, adding a cache to a cluster of standalone server, the user would need to configure individually to all nodes.
-Note that the default +standalone.xml+ configuration does not provide a JGroups subsystem and therefore cannot work in clustered mode. 
+Note that the default +standalone.xml+ configuration does not provide a JGroups subsystem and therefore cannot work in clustered mode.
 To start standalone mode with an alternative configuration file, use the +-c+ command-line switch as follows:
 
  bin/standalone.sh -c clustered.xml
 
-If you start the server in clustered mode on multiple hosts, they should automatically discover each other using UDP multicast and form a cluster. If you want to start multiple nodes on a single host, start each one by specifying a port offset using the jboss.socket.binding.port-offset property together with a unique jboss.node.name as follows: 
+If you start the server in clustered mode on multiple hosts, they should automatically discover each other using UDP multicast and form a cluster. If you want to start multiple nodes on a single host, start each one by specifying a port offset using the jboss.socket.binding.port-offset property together with a unique jboss.node.name as follows:
 
- bin/standalone.sh -Djboss.socket.binding.port-offset=100 -Djboss.node.name=nodeA 
+ bin/standalone.sh -Djboss.socket.binding.port-offset=100 -Djboss.node.name=nodeA
 
 If, for some reason, you cannot use UDP multicast, you can use TCP discovery. Read the *JGroups Subsystem Configuration* section below for details on how to configure TCP discovery.
 
 === Domain mode
-Domain mode is the recommended way to run a cluster of servers, since they can all be managed centrally from a single control point. 
+Domain mode is the recommended way to run a cluster of servers, since they can all be managed centrally from a single control point.
 The following diagram explains the topology of an example domain configuration, with 4 server nodes (A1, A2, B1, B2) running on two physical hosts (A, B):
 
-image::images/domain.svg[]
+image::images/domain.svg[align="center", title="Domain-mode"]
 
 ==== Host
 Each "Host" box in the above diagram represents a physical or virtual host. A physical host can contain zero, one or more server instances.
 
 ===== Host Controller
-When the +domain.sh+ or +domain.bat+ script is run on a host, a process known as a Host Controller is launched. 
-The Host Controller is solely concerned with server management; it does not itself handle Infinispan server workloads. 
+When the +domain.sh+ or +domain.bat+ script is run on a host, a process known as a Host Controller is launched.
+The Host Controller is solely concerned with server management; it does not itself handle Infinispan server workloads.
 The Host Controller is responsible for starting and stopping the individual Infinispan server processes that run on its host, and interacts with the Domain Controller to help manage them.
 
-Each Host Controller by default reads its configuration from the domain/configuration/host.xml file located in the Infinispan Server installation on its host's filesystem. 
-The host.xml file contains configuration information that is specific to the particular host. 
+Each Host Controller by default reads its configuration from the domain/configuration/host.xml file located in the Infinispan Server installation on its host's filesystem.
+The host.xml file contains configuration information that is specific to the particular host.
 Primarily:
 
 * the listing of the names of the actual Infinispan Server instances that are meant to run off of this installation.
@@ -58,28 +58,28 @@ Primarily:
 * configuration of items that are specific to the local physical installation. For example, named interface definitions declared in domain.xml (see below) can be mapped to an actual machine-specific IP address in host.xml. Abstract path names in domain.xml can be mapped to actual filesystem paths in host.xml.
 
 ==== Domain Controller
-One Host Controller instance is configured to act as the central management point for the entire domain, i.e. to be the Domain Controller. 
-The primary responsibility of the Domain Controller is to maintain the domain's central management policy, to ensure all Host Controllers are aware of its current contents, and to assist the Host Controllers in ensuring any running Infinispan server instances are configured in accordance with this policy. 
+One Host Controller instance is configured to act as the central management point for the entire domain, i.e. to be the Domain Controller.
+The primary responsibility of the Domain Controller is to maintain the domain's central management policy, to ensure all Host Controllers are aware of its current contents, and to assist the Host Controllers in ensuring any running Infinispan server instances are configured in accordance with this policy.
 This central management policy is stored by default in the domain/configuration/domain.xml file in the Infinispan Server installation on Domain Controller's host's filesystem.
 
-A +domain.xml+ file must be located in the +domain/configuration+ directory of an installation that's meant to run the Domain Controller. 
-It does not need to be present in installations that are not meant to run a Domain Controller; i.e. those whose Host Controller is configured to contact a remote Domain Controller. 
+A +domain.xml+ file must be located in the +domain/configuration+ directory of an installation that's meant to run the Domain Controller.
+It does not need to be present in installations that are not meant to run a Domain Controller; i.e. those whose Host Controller is configured to contact a remote Domain Controller.
 The presence of a +domain.xml+ file on such a server does no harm.
 
-The +domain.xml+ file includes, among other things, the configuration of the various "profiles" that Infinispan Server instances in the domain can be configured to run. 
-A profile configuration includes the detailed configuration of the various subsystems that comprise that profile (e.g. Cache Containers and Caches, Endpoints, Security Realms, DataSources, etc). 
+The +domain.xml+ file includes, among other things, the configuration of the various "profiles" that Infinispan Server instances in the domain can be configured to run.
+A profile configuration includes the detailed configuration of the various subsystems that comprise that profile (e.g. Cache Containers and Caches, Endpoints, Security Realms, DataSources, etc).
 The domain configuration also includes the definition of groups of sockets that those subsystems may open. The domain configuration also includes the definition of "server groups".
 
 ==== Server Group
-A server group is set of server instances that will be managed and configured as one. 
+A server group is set of server instances that will be managed and configured as one.
 In a managed domain each application server instance is a member of a server group.
 Even if the group only has a single server, the server is still a member of a group.
-It is the responsibility of the Domain Controller and the Host Controllers to ensure that all servers in a server group have a consistent configuration. 
-They should all be configured with the same profile and they should have the same deployment content deployed. 
+It is the responsibility of the Domain Controller and the Host Controllers to ensure that all servers in a server group have a consistent configuration.
+They should all be configured with the same profile and they should have the same deployment content deployed.
 To keep things simple, ensure that all the nodes that you want to belong to an Infinispan cluster are configured as servers of one server group.
 
-The domain can have multiple server groups, i.e. multiple Infinispan clusters. 
-Different server groups can be configured with different profiles and deployments; for example in a domain with different Infinispan Server clusters ﻿providing different services. 
+The domain can have multiple server groups, i.e. multiple Infinispan clusters.
+Different server groups can be configured with different profiles and deployments; for example in a domain with different Infinispan Server clusters ﻿providing different services.
 Different server groups can also run the same profile and have the same deployments.
 
 An example server group definition is as follows:
@@ -106,8 +106,8 @@ In addition, the following optional elements are available:
 * jvm -- default jvm settings for all servers in the group. The Host Controller will merge these settings with any provided in host.xml to derive the settings to use to launch the server's JVM. See JVM settings for further details.
 
 ==== Server
-Each "Server" in the above diagram represents an actual Infinispan Server node. 
-The server runs in a separate JVM process from the Host Controller. 
+Each "Server" in the above diagram represents an actual Infinispan Server node.
+The server runs in a separate JVM process from the Host Controller.
 The Host Controller is responsible for launching that process.
 In a managed domain the end user cannot directly launch a server process from the command line.
 
@@ -156,13 +156,13 @@ have to connect directly to the server. To do that, you have to perform followin
 Now, you should be able to connect remotely to the Infinispan server (e.g. via JConsole) using the URL
 +service:jmx:remote://localhost:4447+.
 
-== Example configurations 
-The server distribution also provides a set of example configuration files in the docs/examples/configs (mostly using standalone mode) which illustrate a variety of possible configurations and use-cases. 
-To use them, just copy them to the standalone/configuration directory and start the server using the following syntax: 
+== Example configurations
+The server distribution also provides a set of example configuration files in the docs/examples/configs (mostly using standalone mode) which illustrate a variety of possible configurations and use-cases.
+To use them, just copy them to the standalone/configuration directory and start the server using the following syntax:
 
- bin/standalone.sh -c configuration_file_name.xml 
+ bin/standalone.sh -c configuration_file_name.xml
 
-For more information regarding the parameters supported by the startup scripts, refer to the WildFly documentation on 
+For more information regarding the parameters supported by the startup scripts, refer to the WildFly documentation on
 link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117092$$[Command line parameters].
 
 == CLI
@@ -201,17 +201,17 @@ The subsystem declaration is enclosed in the following XML element:
 
 ----
 
-Within the subsystem, you need to declare the stacks that you wish to use and name them. 
-The default-stack attribute in the subsystem declaration must point to one of the declared stacks. 
-You can switch stacks from the command-line using the jboss.default.jgroups.stack property: 
+Within the subsystem, you need to declare the stacks that you wish to use and name them.
+The default-stack attribute in the subsystem declaration must point to one of the declared stacks.
+You can switch stacks from the command-line using the jboss.default.jgroups.stack property:
 
- bin/standalone.sh -c clustered.xml -Djboss.default.jgroups.stack=tcp 
+ bin/standalone.sh -c clustered.xml -Djboss.default.jgroups.stack=tcp
 
-A stack declaration is composed of a transport (UDP or TCP) followed by a list of protocols. 
-For each of these elements you can tune specific properties adding child <property name="prop_name">prop_value</property> elements. 
-Since the amount of protocols and their configuration options in JGroups is huge, please refer to the appropriate 
-link:$$http://www.jgroups.org/manual/html/protlist.html$$[JGroups Protocol documentation] . 
-The following are the default stacks: 
+A stack declaration is composed of a transport (UDP or TCP) followed by a list of protocols.
+For each of these elements you can tune specific properties adding child <property name="prop_name">prop_value</property> elements.
+Since the amount of protocols and their configuration options in JGroups is huge, please refer to the appropriate
+link:$$http://www.jgroups.org/manual/html/protlist.html$$[JGroups Protocol documentation] .
+The following are the default stacks:
 
 [source,xml]
 ----
@@ -250,10 +250,10 @@ The following are the default stacks:
 
 ----
 
-The default TCP stack uses the MPING protocol for discovery, which uses UDP multicast. 
-If you need to use a different protocol, look at the 
-link:$$http://www.jgroups.org/manual/html/protlist.html#DiscoveryProtocols$$[JGroups Discovery Protocols] . 
-The following example stack configures the TCPPING discovery protocol with two initial hosts: 
+The default TCP stack uses the MPING protocol for discovery, which uses UDP multicast.
+If you need to use a different protocol, look at the
+link:$$http://www.jgroups.org/manual/html/protlist.html#DiscoveryProtocols$$[JGroups Discovery Protocols] .
+The following example stack configures the TCPPING discovery protocol with two initial hosts:
 
 [source,xml]
 ----
@@ -279,7 +279,7 @@ The following example stack configures the TCPPING discovery protocol with two i
 
 ----
 
-The default configurations come with a variety of pre-configured stacks for different enviroments. 
+The default configurations come with a variety of pre-configured stacks for different enviroments.
 For example, the +tcpgossip+ stack uses Gossip discover:y
 [source,xml]
 ----
@@ -303,7 +303,7 @@ Use the +s3+ stack when running in Amazon AWS:
     <property name="pre_signed_put_url">${jgroups.s3.pre_signed_put_url:}</property>
     <property name="prefix">${jgroups.s3.prefix:}</property>
 </protocol>
-                
+
 ----
 
 Similarly, when using Google's Cloud Platform, use the +google+ stack:
@@ -315,13 +315,13 @@ Similarly, when using Google's Cloud Platform, use the +google+ stack:
     <property name="location">${jgroups.google.bucket:}</property>
     <property name="access_key">${jgroups.google.access_key:}</property>
     <property name="secret_access_key">${jgroups.google.secret_access_key:}</property>
-</protocol>    
+</protocol>
 
 ----
 
 ==== Cluster authentication and authorization
 
-The JGroups subsystem can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and integrates with the security realms. 
+The JGroups subsystem can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and integrates with the security realms.
 
 [source,xml]
 ----
@@ -400,7 +400,7 @@ The Infinispan subsystem can declare multiple containers. A container is declare
 
 Note that in server mode is the lack of an implicit default cache, but the ability to specify a named cache as the default.
 
-If you need to declare clustered caches (distributed, replicated, invalidation), you also need to specify the `<transport/>` element which references an existing JGroups transport. This is not needed if you only intend to have local caches only. 
+If you need to declare clustered caches (distributed, replicated, invalidation), you also need to specify the `<transport/>` element which references an existing JGroups transport. This is not needed if you only intend to have local caches only.
 
 [source,xml]
 ----
@@ -433,7 +433,7 @@ Now you can declare your caches. Please be aware that only the caches declared i
 ----
 
 ==== Expiration
-To define a default expiration for entries in a cache, add the `<expiration/>` element as follows: 
+To define a default expiration for entries in a cache, add the `<expiration/>` element as follows:
 
 [source,xml]
 ----
@@ -445,16 +445,16 @@ To define a default expiration for entries in a cache, add the `<expiration/>` e
 The possible attributes for the expiration element are:
 
 
-*  _lifespan_ maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the entries never expire. 
+*  _lifespan_ maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the entries never expire.
 
 
-*  _max-idle_ maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire. 
+*  _max-idle_ maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
 
 
-*  _interval_ interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1. 
+*  _interval_ interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.
 
 ==== Eviction
-To define an eviction strategy for a cache, add the `<eviction/>` element as follows: 
+To define an eviction strategy for a cache, add the `<eviction/>` element as follows:
 
 [source,xml]
 ----
@@ -466,13 +466,13 @@ To define an eviction strategy for a cache, add the `<eviction/>` element as fol
 The possible attributes for the eviction element are:
 
 
-*  _strategy_ sets the cache eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction). 
+*  _strategy_ sets the cache eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction).
 
 
-*  _max-entries_ maximum number of entries in a cache instance. If selected value is not a power of two the actual value will default to the least power of two larger than selected value. -1 means no limit. 
+*  _max-entries_ maximum number of entries in a cache instance. If selected value is not a power of two the actual value will default to the least power of two larger than selected value. -1 means no limit.
 
 ==== Locking
-To define the locking configuration for a cache, add the `<locking/>` element as follows: 
+To define the locking configuration for a cache, add the `<locking/>` element as follows:
 
 [source,xml]
 ----
@@ -484,19 +484,19 @@ To define the locking configuration for a cache, add the `<locking/>` element as
 The possible attributes for the locking element are:
 
 
-*  _isolation_ sets the cache locking isolation level. Can be NONE, READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE. Defaults to REPEATABLE_READ 
+*  _isolation_ sets the cache locking isolation level. Can be NONE, READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE. Defaults to REPEATABLE_READ
 
 
-*  _striping_ if true, a pool of shared locks is maintained for all entries that need to be locked. Otherwise, a lock is created per entry in the cache. Lock striping helps control memory footprint but may reduce concurrency in the system. 
+*  _striping_ if true, a pool of shared locks is maintained for all entries that need to be locked. Otherwise, a lock is created per entry in the cache. Lock striping helps control memory footprint but may reduce concurrency in the system.
 
 
-*  _acquire-timeout_ maximum time to attempt a particular lock acquisition. 
+*  _acquire-timeout_ maximum time to attempt a particular lock acquisition.
 
 
-*  _concurrency-level_ concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with Infinispan. 
+*  _concurrency-level_ concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with Infinispan.
 
 
-*  _concurrent-updates_ for non-transactional caches only: if set to true(default value) the cache keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your application to write data concurrently, disabling this flag increases performance. 
+*  _concurrent-updates_ for non-transactional caches only: if set to true(default value) the cache keeps data consistent in the case of concurrent updates. For clustered caches this comes at the cost of an additional RPC, so if you don't expect your application to write data concurrently, disabling this flag increases performance.
 
 ==== Transactions
 
@@ -545,7 +545,7 @@ The subsystem declaration is enclosed in the following XML element:
 ----
 
 ==== Hot Rod
-The following connector declaration enables a HotRod server using the _hotrod_ socket binding (declared within a `<socket-binding-group />` element) and exposing the caches declared in the _local_ container, using defaults for all other settings. 
+The following connector declaration enables a HotRod server using the _hotrod_ socket binding (declared within a `<socket-binding-group />` element) and exposing the caches declared in the _local_ container, using defaults for all other settings.
 
 [source,xml]
 ----
@@ -579,7 +579,7 @@ Furthermore the HotRod connector can be secured using SSL. First you need to dec
 ----
 
 ==== Memcached
-The following connector declaration enables a Memcached server using the _memcached_ socket binding (declared within a `<socket-binding-group />` element) and exposing the _memcachedCache_ cache declared in the _local_ container, using defaults for all other settings. Because of limitations in the Memcached protocol, only one cache can be exposed by a connector. If you wish to expose more than one cache, declare additional memcached-connectors on different socket-bindings. 
+The following connector declaration enables a Memcached server using the _memcached_ socket binding (declared within a `<socket-binding-group />` element) and exposing the _memcachedCache_ cache declared in the _local_ container, using defaults for all other settings. Because of limitations in the Memcached protocol, only one cache can be exposed by a connector. If you wish to expose more than one cache, declare additional memcached-connectors on different socket-bindings.
 
 [source,xml]
 ----
@@ -598,7 +598,7 @@ The following connector declaration enables a Memcached server using the _memcac
 ----
 
 ==== REST
-The REST connector differs from the above connectors because it piggybacks on the web subsystem. Therefore configurations such as socket binding, worker threads, timeouts, etc must be performed on the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117098$$[web subsystem] . 
+The REST connector differs from the above connectors because it piggybacks on the web subsystem. Therefore configurations such as socket binding, worker threads, timeouts, etc must be performed on the link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=53117098$$[web subsystem] .
 
 [source,xml]
 ----
@@ -611,20 +611,15 @@ The REST connector differs from the above connectors because it piggybacks on th
 
 The HotRod, Memcached and WebSocket protocol connectors support a number of tuning attributes in their declaration:
 
-
 *  _worker-threads_ Sets the number of worker threads. Defaults to 160.
 
+*  _idle-timeout_ Specifies the maximum time in seconds that connections from client will be kept open without activity. Defaults to -1 (connections will never timeout)
 
-*  _idle-timeout_ Specifies the maximum time in seconds that connections from client will be kept open without activity. Defaults to -1 (connections will never timeout) 
+*  _tcp-nodelay_ Affects TCP NODELAY on the TCP stack. Defaults to enabled.
 
+*  _send-buffer-size_ Sets the size of the send buffer.
 
-*  _tcp-nodelay_ Affects TCP NODELAY on the TCP stack. Defaults to enabled. 
-
-
-*  _send-buffer-size_ Sets the size of the send buffer. Defaults to 
-
-
-*  _receive-buffer-size_ Sets the size of the receive buffer. Defaults to 
+*  _receive-buffer-size_ Sets the size of the receive buffer.
 
 ==== Protocol Interoperability
 
@@ -761,7 +756,7 @@ The Hot Rod protocol supports authentication since version 2.0 (Infinispan 7.0) 
 * GSSAPI - This mech uses Kerberos tickets, and therefore requires the presence of a properly configured Kerberos Domain Controller (such as Microsoft Active Directory)
 * EXTERNAL - This mech obtains credentials from the underlying transport (i.e. from a X.509 client certificate) and therefore requires encryption using client-certificates to be enabled.
 
-The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism: 
+The following configuration enables authentication against ApplicationRealm, using the DIGEST-MD5 SASL mechanism:
 
 .Hot Rod connector configuration
 [source,xml]
@@ -774,7 +769,7 @@ The following configuration enables authentication against ApplicationRealm, usi
 ----
 Notice the server-name attribute: it is the name that the server declares to incoming clients and therefore the client configuration must match.
 
-Once you have configured a secured Hot Rod connector, you can connect to it using the Hot Rod client:  
+Once you have configured a secured Hot Rod connector, you can connect to it using the Hot Rod client:
 
 .Hot Rod client configuration
 [source,java]
@@ -887,7 +882,7 @@ Also you will need to set the following system properties:
 +java.security.krb5.conf=/etc/krb5.conf+
 
 The +krb5.conf+ file is dependent on your environment and needs to point to your KDC.
- 
+
 .Hot Rod client configuration
 [source,java]
 ----
@@ -895,7 +890,7 @@ public class MyCallbackHandler implements CallbackHandler {
    final private String username;
    final private char[] password;
    final private String realm;
-   
+
    public MyCallbackHandler() { }
 
    public MyCallbackHandler (String username, String realm, char[] password) {

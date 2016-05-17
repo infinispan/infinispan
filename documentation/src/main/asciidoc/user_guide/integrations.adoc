@@ -1,4 +1,4 @@
-==  Integration with other frameworks
+==  Integrations
 Infinispan can be integrated with a number of other frameworks, as detailed below.
 
 ===  Using Infinispan as JPA-Hibernate Second Level Cache Provider

@@ -1,5 +1,5 @@
 = Upgrading Infinispan
-Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
+The Infinispan community
 :toc2:
 :icons: font
 :toclevels: 1
