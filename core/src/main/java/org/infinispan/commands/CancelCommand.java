@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -44,12 +45,11 @@ public class CancelCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // grab CancellaltionService and cancel command
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       log.trace("Cancelling " + commandToCancel);
       service.cancel(commandToCancel);
       log.trace("Cancelled " + commandToCancel);
-      return true;
+      return CompletableFutures.completedNull();
    }
 
    @Override

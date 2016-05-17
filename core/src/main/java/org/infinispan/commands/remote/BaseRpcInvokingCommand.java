@@ -4,20 +4,25 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Base class for RPC commands.
  *
  * @author Mircea.Markus@jboss.com
+ * @deprecated Since 9.0, it will be removed soon
  */
+@Deprecated
 public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
 
-   protected InterceptorChain interceptorChain;
+   protected AsyncInterceptorChain interceptorChain;
    protected InvocationContextFactory icf;
 
    private static final Log log = LogFactory.getLog(BaseRpcInvokingCommand.class);
@@ -27,7 +32,7 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public void init(InterceptorChain interceptorChain, InvocationContextFactory icf) {
+   public void init(AsyncInterceptorChain interceptorChain, InvocationContextFactory icf) {
       this.interceptorChain = interceptorChain;
       this.icf = icf;
    }
@@ -49,6 +54,32 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
          // we only need to return values for a set of remote calls; not every call.
       } else {
          throw new RuntimeException("Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() + ")");
+      }
+   }
+
+   protected final CompletableFuture<Object> processVisitableCommandAsync(ReplicableCommand cacheCommand) throws Throwable {
+      if (cacheCommand instanceof VisitableCommand) {
+         VisitableCommand vc = (VisitableCommand) cacheCommand;
+         final InvocationContext ctx = icf.createRemoteInvocationContextForCommand(vc, getOrigin());
+         if (cacheCommand instanceof RemoteLockCommand) {
+            ctx.setLockOwner(((RemoteLockCommand) cacheCommand).getKeyLockOwner());
+         }
+         if (vc.shouldInvoke(ctx)) {
+            if (trace)
+               log.tracef("Invoking command %s, with originLocal flag set to %b", cacheCommand, ctx
+                     .isOriginLocal());
+            return interceptorChain.invokeAsync(ctx, vc);
+         } else {
+            if (trace)
+               log.tracef("Not invoking command %s since shouldInvoke() returned false with context %s",
+                     cacheCommand, ctx);
+            return CompletableFutures.completedNull();
+         }
+         // we only need to return values for a set of remote calls; not every call.
+      } else {
+         throw new RuntimeException(
+               "Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() +
+                     ")");
       }
    }
 }

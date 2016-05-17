@@ -3,10 +3,10 @@ package org.infinispan.commands.remote.recovery;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
 
 import javax.transaction.xa.Xid;
 
-import org.infinispan.context.InvocationContext;
 import org.infinispan.util.ByteString;
 
 /**
@@ -44,8 +44,8 @@ public class CompleteTransactionCommand extends RecoveryCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      return recoveryManager.forceTransactionCompletion(xid, commit);
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
+      return CompletableFuture.completedFuture(recoveryManager.forceTransactionCompletion(xid, commit));
    }
 
    @Override

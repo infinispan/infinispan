@@ -229,7 +229,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    @Override
    public <R1> CacheStream<R1> flatMap(Function<? super R, ? extends Stream<? extends R1>> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
-      addIntermediateOperationMap(new FlatMapOperation<>(mapper));
+      addIntermediateOperationMap(new FlatMapOperation<R, R1>(mapper));
       return (CacheStream<R1>) this;
    }
 
@@ -938,7 +938,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
-         performRehashKeyTrackingOperation(s -> new ForEachOperation<>(intermediateOperations, s, distributedBatchSize,
+         performRehashKeyTrackingOperation(s -> new ForEachOperation<Object, R>(intermediateOperations, s, distributedBatchSize,
                  action));
       }
    }

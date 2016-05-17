@@ -3,10 +3,11 @@ package org.infinispan.xsite.statetransfer;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
@@ -56,9 +57,9 @@ public class XSiteStatePushCommand extends XSiteReplicateCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       consumer.applyState(chunk);
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override

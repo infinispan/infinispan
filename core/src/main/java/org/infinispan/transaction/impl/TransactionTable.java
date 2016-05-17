@@ -40,7 +40,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -94,7 +93,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private volatile int minTxTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private volatile int currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    protected Configuration configuration;
-   protected InvocationContextFactory icf;
    protected TransactionCoordinator txCoordinator;
    private TransactionFactory txFactory;
    protected RpcManager rpcManager;
@@ -121,17 +119,15 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    protected volatile boolean running = false;
 
    @Inject
-   public void initialize(RpcManager rpcManager, Configuration configuration, InvocationContextFactory icf,
-         CacheNotifier notifier, TransactionFactory gtf,
-         TransactionCoordinator txCoordinator,
-         TransactionSynchronizationRegistry transactionSynchronizationRegistry,
-         CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache,
-         TimeService timeService, CacheManagerNotifier cacheManagerNotifier,
-         PartitionHandlingManager partitionHandlingManager,
-         @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
+   public void initialize(RpcManager rpcManager, Configuration configuration, CacheNotifier notifier,
+                          TransactionFactory gtf, TransactionCoordinator txCoordinator,
+                          TransactionSynchronizationRegistry transactionSynchronizationRegistry,
+                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic,
+                          Cache cache, TimeService timeService, CacheManagerNotifier cacheManagerNotifier,
+                          PartitionHandlingManager partitionHandlingManager,
+                          @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
-      this.icf = icf;
       this.notifier = notifier;
       this.txFactory = gtf;
       this.txCoordinator = txCoordinator;
@@ -340,7 +336,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       RollbackCommand rc = new RollbackCommand(ByteString.fromString(cacheName), gtx);
       commandsFactory.initializeReplicableCommand(rc, false);
       try {
-         rc.perform(null);
+         rc.invoke();
          if (trace) log.tracef("Rollback of transaction %s complete.", gtx);
       } catch (Throwable e) {
          log.unableToRollbackGlobalTx(gtx, e);

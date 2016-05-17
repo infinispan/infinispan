@@ -14,6 +14,7 @@ import org.infinispan.interceptors.InvocationFinallyHandler;
 import org.infinispan.interceptors.InvocationReturnValueHandler;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessHandler;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,10 +58,7 @@ public class AsyncInvocationStage extends AbstractInvocationStage
          if (t == null) {
             stage = new ReturnValueStage(ctx, command, rv);
          } else {
-            if (t instanceof CompletionException) {
-               t = t.getCause();
-            }
-            stage = new ExceptionStage(ctx, command, t);
+            stage = new ExceptionStage(ctx, command, CompletableFutures.extractException(t));
          }
          return stage.compose(composeHandler);
       }));
@@ -117,6 +115,7 @@ public class AsyncInvocationStage extends AbstractInvocationStage
       try {
          // apply() is only called if we have a handler
          if (trace) log.tracef("Executing invocation handler %s with command %s", Stages.className(handler), command);
+
          if (t == null) {
             if (handler instanceof InvocationFinallyHandler) {
                ((InvocationFinallyHandler) handler).accept(ctx, command, rv, null);
@@ -131,6 +130,7 @@ public class AsyncInvocationStage extends AbstractInvocationStage
                return rv;
             }
          } else {
+            t = CompletableFutures.extractException(t);
             if (handler instanceof InvocationFinallyHandler) {
                ((InvocationFinallyHandler) handler).accept(ctx, command, null, t);
                throw t;
@@ -142,12 +142,8 @@ public class AsyncInvocationStage extends AbstractInvocationStage
             }
          }
       } catch (Throwable t1) {
-         if (trace) log.trace("Exception in invocation handler", t);
-         if (t1 instanceof CompletionException) {
-            throw ((CompletionException) t1);
-         } else {
-            throw new CompletionException(t1);
-         }
+         if (trace) log.trace("Exception from invocation handler", t1);
+         throw CompletableFutures.asCompletionException(t1);
       }
    }
 }

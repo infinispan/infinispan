@@ -769,8 +769,8 @@ public interface Log extends BasicLogger {
    void tryingToBringOnlineNonexistentSite(String siteName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Could not execute cancelation command locally %s", id=206)
-   void couldNotExecuteCancellationLocally(String message);
+   @Message(value = "Could not execute cancellation command locally", id=206)
+   void couldNotExecuteCancellationLocally(@Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not interrupt as no thread found for command uuid %s", id=207)

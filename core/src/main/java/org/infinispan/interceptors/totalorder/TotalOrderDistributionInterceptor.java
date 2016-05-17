@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.totalorder;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -10,6 +11,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -44,24 +46,20 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
    }
 
    @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
+   protected CompletableFuture<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
       if (trace) {
          log.tracef("Total Order Anycast transaction %s with Total Order", command.getGlobalTransaction().globalId());
       }
 
       if (!ctx.hasModifications()) {
-         return;
+         return CompletableFutures.completedNull();
       }
 
       if (!ctx.isOriginLocal()) {
          throw new IllegalStateException("Expected a local context while TO-Anycast prepare command");
       }
 
-      try {
-         totalOrderPrepare(recipients, command, isSyncCommitPhase() ? null : getSelfDeliverFilter());
-      } finally {
-         transactionRemotelyPrepared(ctx);
-      }
+      return totalOrderPrepare(ctx, command, recipients, isSyncCommitPhase() ? null : getSelfDeliverFilter());
    }
 
    @Override

@@ -48,6 +48,7 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
          }
 
          final boolean onExecutorService;
+         final boolean sync = order.preserveOrder();
          final BlockingRunnable runnable;
          switch (command.getCommandId()) {
             case TotalOrderVersionedPrepareCommand.COMMAND_ID:
@@ -59,19 +60,19 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
                }
                TotalOrderRemoteTransactionState state = ((TotalOrderPrepareCommand) command).getOrCreateState();
                totalOrderManager.ensureOrder(state, ((PrepareCommand) command).getKeysToLock());
-               runnable = createRunnableForPrepare(state, (PrepareCommand) command, reply);
+               runnable = createRunnableForPrepare(state, (PrepareCommand) command, reply, sync);
                onExecutorService = true;
                break;
             case TotalOrderCommitCommand.COMMAND_ID:
             case TotalOrderVersionedCommitCommand.COMMAND_ID:
             case RollbackCommand.COMMAND_ID:
                onExecutorService = true;
-               runnable = createRunnableForCommitOrRollback(command, reply);
+               runnable = createRunnableForCommitOrRollback(command, reply, sync);
                break;
             default:
                onExecutorService = executeOnExecutorService(order, command);
                runnable = createDefaultRunnable(command, reply, commandTopologyId,
-                                                command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService);
+                     command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService, sync);
                break;
          }
          handleRunnable(runnable, onExecutorService);
@@ -92,8 +93,8 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
 
    private BlockingRunnable createRunnableForPrepare(final TotalOrderRemoteTransactionState state,
                                                      final PrepareCommand command,
-                                                     final Reply reply) {
-      return new BaseBlockingRunnable(this, command, reply) {
+                                                     final Reply reply, boolean sync) {
+      return new BaseBlockingRunnable(this, command, reply, sync) {
          @Override
          public boolean isReady() {
             for (TotalOrderLatch block : state.getConflictingTransactionBlocks()) {
@@ -135,8 +136,9 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
       };
    }
 
-   private BlockingRunnable createRunnableForCommitOrRollback(final CacheRpcCommand command, final Reply reply) {
-      return new BaseBlockingRunnable(this, command, reply) {
+   private BlockingRunnable createRunnableForCommitOrRollback(final CacheRpcCommand command, final Reply reply,
+                                                              boolean sync) {
+      return new BaseBlockingRunnable(this, command, reply, sync) {
 
          @Override
          public boolean isReady() {

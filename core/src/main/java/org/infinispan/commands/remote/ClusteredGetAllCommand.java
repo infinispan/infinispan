@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
@@ -21,7 +22,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -30,7 +31,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Issues a remote getAll call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
- * {@link org.infinispan.interceptors.base.CommandInterceptor} chain.
+ * interceptor chain.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
@@ -44,7 +45,7 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
 
    private InvocationContextFactory icf;
    private CommandsFactory commandsFactory;
-   private InterceptorChain invoker;
+   private AsyncInterceptorChain invoker;
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
    private Equivalence<? super K> keyEquivalence;
@@ -66,8 +67,8 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
    }
 
    public void init(InvocationContextFactory icf, CommandsFactory commandsFactory,
-         InternalEntryFactory entryFactory, InterceptorChain interceptorChain,
-         TransactionTable txTable, Equivalence<? super K> keyEquivalence) {
+         InternalEntryFactory entryFactory, AsyncInterceptorChain interceptorChain,
+         TransactionTable txTable, Equivalence keyEquivalence) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
@@ -76,47 +77,54 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
       this.keyEquivalence = keyEquivalence;
    }
 
-   @SuppressWarnings("unchecked")
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      acquireLocksIfNeeded();
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
+      if (!hasFlag(Flag.FORCE_WRITE_LOCK)) {
+         return invokeGetAll();
+      } else {
+         return acquireLocks().thenCompose(o -> invokeGetAll());
+      }
+   }
+
+   private CompletableFuture<Object> invokeGetAll() {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       GetAllCommand command = commandsFactory.buildGetAllCommand(keys, getFlagsBitSet(), true);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
-      Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) invoker.invoke(invocationContext, command);
-      if (trace) log.trace("Found: " + map);
+      CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
+      return future.thenApply(rv -> {
+         Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) rv;
+         if (trace) log.trace("Found: " + map);
 
-      if (map == null) {
-         return null;
-      }
-
-      List<InternalCacheValue<V>> values = new ArrayList<>(keys.size());
-      for (Object key : keys) {
-         if (map.containsKey(key)) {
-            CacheEntry<K, V> entry = map.get(key);
-            InternalCacheValue<V> value;
-            if (entry instanceof InternalCacheEntry) {
-               value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
-            } else if (entry != null) {
-               value = entryFactory.createValue(entry);
-            } else {
-               value = new ImmortalCacheValue(null);
-            }
-            values.add(value);
-         } else {
-            values.add(null);
+         if (map == null) {
+            return null;
          }
-      }
-      return values;
+
+         List<InternalCacheValue<V>> values = new ArrayList<>(keys.size());
+         for (Object key : keys) {
+            if (map.containsKey(key)) {
+               CacheEntry<K, V> entry = map.get(key);
+               InternalCacheValue<V> value;
+               if (entry instanceof InternalCacheEntry) {
+                  value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
+               } else if (entry != null) {
+                  value = entryFactory.createValue(entry);
+               } else {
+                  value = new ImmortalCacheValue(null);
+               }
+               values.add(value);
+            } else {
+               values.add(null);
+            }
+         }
+         return values;
+      });
    }
 
-   private void acquireLocksIfNeeded() throws Throwable {
-      if (hasFlag(Flag.FORCE_WRITE_LOCK)) {
-         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(keys, getFlagsBitSet(), gtx);
-         lockControlCommand.init(invoker, icf, txTable);
-         lockControlCommand.perform(null);
-      }
+   private CompletableFuture<Object> acquireLocks() throws Throwable {
+      LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(keys, getFlagsBitSet(), gtx);
+      lockControlCommand.init(invoker, icf, txTable);
+      return lockControlCommand.invokeAsync();
    }
 
    public List<?> getKeys() {

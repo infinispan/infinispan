@@ -3,9 +3,10 @@ package org.infinispan.manager.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.context.InvocationContext;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Replicable Command that runs the given Runnable
@@ -28,9 +29,9 @@ public class ReplicableCommandRunnable implements ReplicableCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       runnable.run();
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override

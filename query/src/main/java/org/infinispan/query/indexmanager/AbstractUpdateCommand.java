@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.spi.SearchIntegrator;
@@ -45,7 +46,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    }
 
    @Override
-   public abstract Object perform(InvocationContext ctx) throws Throwable;
+   public abstract CompletableFuture<Object> invokeAsync() throws Throwable;
 
    @Override
    public abstract byte getCommandId();

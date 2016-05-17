@@ -3,11 +3,11 @@ package org.infinispan.query.affinity;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.lucene.document.Document;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.indexes.spi.IndexManager;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.query.indexmanager.AbstractUpdateCommand;
 import org.infinispan.query.logging.Log;
@@ -38,7 +38,7 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       if (queryInterceptor.isStopping()) {
          throw log.cacheIsStoppingNoCommandAllowed(cacheName.toString());
       }
@@ -52,11 +52,11 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
                log.debugf("Performing remote affinity work %s command on index %s", workToApply, im.getIndexName());
             im.performOperations(Collections.singletonList(luceneWork), null);
          } catch (Exception e) {
-            return new ExceptionResponse(e);
+            return CompletableFuture.completedFuture(new ExceptionResponse(e));
          }
       }
 
-      return SuccessfulResponse.create(Boolean.TRUE);
+      return CompletableFuture.completedFuture(SuccessfulResponse.create(Boolean.TRUE));
    }
 
    private IndexManager getIndexManagerForWrites(LuceneWork luceneWork) {

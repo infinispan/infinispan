@@ -20,8 +20,8 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
    private final int commandTopologyId;
 
    public DefaultTopologyRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply,
-                                  TopologyMode topologyMode, int commandTopologyId) {
-      super(handler, command, reply);
+                                  TopologyMode topologyMode, int commandTopologyId, boolean sync) {
+      super(handler, command, reply, sync);
       this.topologyMode = topologyMode;
       this.commandTopologyId = commandTopologyId;
    }

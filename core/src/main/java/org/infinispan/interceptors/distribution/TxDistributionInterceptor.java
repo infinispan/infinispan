@@ -50,6 +50,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -144,10 +145,15 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          localTxCtx.getCacheTransaction()
                .locksAcquired(affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
-         RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
-         Map<Address, Response> responseMap = rpcManager.invokeRemotely(affectedNodes, command, rpcOptions);
-         checkTxCommandResponses(responseMap, command, localTxCtx,
-               localTxCtx.getCacheTransaction().getRemoteLocksAcquired());
+         RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
+               DeliverOrder.NONE).build();
+         CompletableFuture<Map<Address, Response>>
+               remoteInvocation = rpcManager.invokeRemotelyAsync(affectedNodes, command, rpcOptions);
+         return returnWithAsync(remoteInvocation.thenApply(responses -> {
+            checkTxCommandResponses(responses, command, localTxCtx,
+                  localTxCtx.getCacheTransaction().getRemoteLocksAcquired());
+            return null;
+         }));
       }
       return invokeNext(ctx, command);
    }
@@ -157,9 +163,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> recipients = getCommitNodes(ctx);
-         Map<Address, Response> responseMap =
-               rpcManager.invokeRemotely(recipients, command, createCommitRpcOptions());
-         checkTxCommandResponses(responseMap, command, ctx, recipients);
+         CompletableFuture<Map<Address, Response>>
+               remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createCommitRpcOptions());
+         return returnWithAsync(remoteInvocation.thenApply(responses -> {
+            checkTxCommandResponses(responses, command, ctx, recipients);
+            return null;
+         }));
       }
       return invokeNext(ctx, command);
    }
@@ -169,24 +178,39 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
-      return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
-         if (shouldInvokeRemoteTxCommand(ctx)) {
-            TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) rCtx;
-            Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(localTxCtx));
-            prepareOnAffectedNodes(localTxCtx, (PrepareCommand) rCommand, recipients);
+      return invokeNext(ctx, command).thenCompose((stage, rCtx, rCommand, rv) -> {
+         if (!shouldInvokeRemoteTxCommand(ctx)) {
+            return returnWith(null);
+         }
+
+         TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) rCtx;
+         Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(localTxCtx));
+         CompletableFuture<Object> remotePrepare =
+               prepareOnAffectedNodes(localTxCtx, (PrepareCommand) rCommand, recipients);
+         return returnWithAsync(remotePrepare.thenApply(o -> {
             localTxCtx.getCacheTransaction().locksAcquired(
                   recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
-         }
+            return o;
+         }));
       });
    }
 
-   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
+   protected CompletableFuture<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command,
+                                                              Collection<Address> recipients) {
       try {
          // this method will return immediately if we're the only member (because exclude_self=true)
-         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createPrepareRpcOptions());
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
-      } finally {
+         CompletableFuture<Map<Address, Response>>
+               remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createPrepareRpcOptions());
+         return remoteInvocation.handle((responses, t) -> {
+            transactionRemotelyPrepared(ctx);
+            CompletableFutures.rethrowException(t);
+
+            checkTxCommandResponses(responses, command, (LocalTxInvocationContext) ctx, recipients);
+            return null;
+         });
+      } catch (Throwable t) {
          transactionRemotelyPrepared(ctx);
+         throw t;
       }
    }
 
@@ -194,8 +218,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public BasicInvocationStage visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> recipients = getCommitNodes(ctx);
-         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createRollbackRpcOptions());
-         checkTxCommandResponses(responseMap, command, ctx, recipients);
+         CompletableFuture<Map<Address, Response>>
+               remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createRollbackRpcOptions());
+         return returnWithAsync(remoteInvocation.thenApply(responses -> {
+            checkTxCommandResponses(responses, command, ctx, recipients);
+            return null;
+         }));
       }
 
       return invokeNext(ctx, command);

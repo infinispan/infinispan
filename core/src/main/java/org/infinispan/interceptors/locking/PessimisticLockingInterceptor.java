@@ -82,7 +82,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          TxInvocationContext txContext = (TxInvocationContext) ctx;
          LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
                txContext.getGlobalTransaction());
-         return invokeNext(ctx, lcc).thenCompose((rCtx, rCommand, rv) -> invokeNext(rCtx, command)).handle(
+         return invokeNext(ctx, lcc).thenCompose((stage, rCtx, rCommand, rv) -> invokeNext(rCtx, command)).handle(
                (rCtx, rCommand, rv, t) -> {
                   if (t != null) {
                      rethrowAndReleaseLocksIfNeeded(rCtx, t);
@@ -130,7 +130,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
                LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
-               stage = invokeNext(ctx, lcc).thenCompose((rCtx, rCommand, rv) -> {
+               stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
                   acquireLocalLocks(rCtx, (LocalFlagAffectedCommand) rCommand, keys);
                   return invokeNext(rCtx, command);
                });
@@ -179,7 +179,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
                LockControlCommand lcc = cf.buildLockControlCommand(affectedKeys, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
-               stage = invokeNext(ctx, lcc).thenCompose((rCtx, rCommand, rv) -> {
+               stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
                   acquireLocalLocks(rCtx, (LocalFlagAffectedCommand) rCommand, affectedKeys);
                   return invokeNext(rCtx, command);
                });
@@ -249,7 +249,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
                LockControlCommand lcc = cf.buildLockControlCommand(keysToLock, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
-               stage = invokeNext(ctx, lcc).thenCompose((rCtx, rCommand, rv) -> {
+               stage = invokeNext(ctx, lcc).thenCompose((stage1, rCtx, rCommand, rv) -> {
                   ((TxInvocationContext<?>) rCtx).addAllAffectedKeys(keysToLock);
                   acquireLocalCompositeLocks(command, keysToLock, rCtx);
                   return invokeNext(rCtx, command);

@@ -84,16 +84,12 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
    @Override
    public BasicInvocationStage visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       VersionedCommitCommand versionedCommitCommand = (VersionedCommitCommand) command;
-      try {
-         if (ctx.isOriginLocal()) {
-            versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
-         }
-
-         return invokeNext(ctx, command).handle(
-               (rCtx, rCommand, rv, t) -> doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
-      } finally {
-         doCommit(ctx, versionedCommitCommand);
+      if (ctx.isOriginLocal()) {
+         versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
       }
+
+      return invokeNext(ctx, command).handle(
+            (rCtx, rCommand, rv, t) -> doCommit(rCtx, ((VersionedCommitCommand) rCommand)));
    }
 
    private void doCommit(InvocationContext rCtx, VersionedCommitCommand versionedCommitCommand) {

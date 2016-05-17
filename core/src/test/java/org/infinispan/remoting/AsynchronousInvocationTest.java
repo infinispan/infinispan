@@ -24,7 +24,6 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -43,7 +42,6 @@ import org.jgroups.Message;
 import org.jgroups.blocks.Response;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.util.Buffer;
-import org.mockito.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -75,7 +73,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private static ReplicableCommand mockReplicableCommand(boolean blocking) throws Throwable {
       ReplicableCommand mock = mock(ReplicableCommand.class);
       when(mock.canBlock()).thenReturn(blocking);
-      doReturn(null).when(mock).perform(Matchers.any(InvocationContext.class));
+      doReturn(null).when(mock).invokeAsync();
       return mock;
    }
 

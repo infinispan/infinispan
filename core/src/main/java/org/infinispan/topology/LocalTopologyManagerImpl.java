@@ -236,7 +236,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             transport.getViewId());
       try {
          gcr.wireDependencies(command);
-         rebalancingEnabled = (Boolean) ((SuccessfulResponse) command.perform(null)).getResponseValue();
+         SuccessfulResponse response = (SuccessfulResponse) command.invoke();
+         rebalancingEnabled = (Boolean) response.getResponseValue();
       } catch (Throwable t) {
          log.warn("Failed to obtain the rebalancing status", t);
       }
@@ -435,7 +436,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    protected void doHandleStableTopologyUpdate(String cacheName, CacheTopology newStableTopology, int viewId,
-         Address sender, LocalCacheStatus cacheStatus) {
+                                             Address sender, LocalCacheStatus cacheStatus) {
       synchronized (runningCaches) {
          if (!validateCommandViewId(newStableTopology, viewId, sender, cacheName))
             return;
@@ -651,7 +652,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          try {
             if (trace) log.tracef("Attempting to execute command on self: %s", command);
             gcr.wireDependencies(command);
-            response = (Response) command.perform(null);
+            response = (Response) command.invoke();
          } catch (Throwable t) {
             throw new CacheException("Error handling join request", t);
          }
@@ -679,7 +680,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                if (trace) log.tracef("Attempting to execute command on self: %s", command);
                gcr.wireDependencies(command);
                try {
-                  command.perform(null);
+                  command.invoke();
                } catch (Throwable t) {
                   log.errorf(t, "Failed to execute ReplicableCommand %s on coordinator async: %s", command, t.getMessage());
                }
@@ -702,17 +703,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          Map<Address, Response> responseMap = transport.invokeRemotely(null, command,
                ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
                timeout, null, DeliverOrder.TOTAL, distributed);
-         Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
-         for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
-            Address address = entry.getKey();
-            Response response = entry.getValue();
-            if (!response.isSuccessful()) {
-               Throwable cause = response instanceof ExceptionResponse ? ((ExceptionResponse) response).getException() : null;
-               throw new CacheException("Unsuccessful response received from node " + address + ": " + response, cause);
-            }
-            responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
-         }
-         return responseValues;
+         return parseResponses(responseMap);
       }
 
       Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
@@ -728,7 +719,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       Response localResponse;
       try {
          if (trace) log.tracef("Attempting to execute command on self: %s", command);
-         localResponse = (Response) command.perform(null);
+         localResponse = (Response) command.invoke();
       } catch (Throwable throwable) {
          throw new Exception(throwable);
       }
@@ -740,6 +731,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       Map<Address, Response> responseMap = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
 
       // parse the responses
+      Map<Address, Object> responseValues = parseResponses(responseMap);
+
+      responseValues.put(transport.getAddress(), ((SuccessfulResponse) localResponse).getResponseValue());
+
+      return responseValues;
+   }
+
+   private Map<Address, Object> parseResponses(Map<Address, Response> responseMap) {
       Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
       for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
          Address address = entry.getKey();
@@ -750,9 +749,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          }
          responseValues.put(address, ((SuccessfulResponse) response).getResponseValue());
       }
-
-      responseValues.put(transport.getAddress(), ((SuccessfulResponse) localResponse).getResponseValue());
-
       return responseValues;
    }
 
@@ -785,8 +781,8 @@ class LocalCacheStatus {
    private volatile CacheTopology stableTopology;
    private final SemaphoreCompletionService<Void> topologyUpdatesCompletionService;
 
-   public LocalCacheStatus(CacheJoinInfo joinInfo, CacheTopologyHandler handler, PartitionHandlingManager phm,
-         ExecutorService executor) {
+   LocalCacheStatus(CacheJoinInfo joinInfo, CacheTopologyHandler handler, PartitionHandlingManager phm,
+                    ExecutorService executor) {
       this.joinInfo = joinInfo;
       this.handler = handler;
       this.partitionHandlingManager = phm;
@@ -806,24 +802,24 @@ class LocalCacheStatus {
       return partitionHandlingManager;
    }
 
-   public CacheTopology getCurrentTopology() {
+   CacheTopology getCurrentTopology() {
       return currentTopology;
    }
 
-   public void setCurrentTopology(CacheTopology currentTopology) {
+   void setCurrentTopology(CacheTopology currentTopology) {
       this.currentTopology = currentTopology;
    }
 
-   public CacheTopology getStableTopology() {
+   CacheTopology getStableTopology() {
       return stableTopology;
    }
 
-   public void setStableTopology(CacheTopology stableTopology) {
+   void setStableTopology(CacheTopology stableTopology) {
       this.stableTopology = stableTopology;
       partitionHandlingManager.onTopologyUpdate(currentTopology);
    }
 
-   public SemaphoreCompletionService<Void> getTopologyUpdatesCompletionService() {
+   SemaphoreCompletionService<Void> getTopologyUpdatesCompletionService() {
       return topologyUpdatesCompletionService;
    }
 }

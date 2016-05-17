@@ -3,6 +3,7 @@ package org.infinispan.commands.remote;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
@@ -48,7 +49,12 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      return processVisitableCommand(command);
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
+      return processVisitableCommandAsync(command);
    }
 
    @Override

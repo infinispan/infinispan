@@ -2,7 +2,6 @@ package org.infinispan.interceptors.impl;
 
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -26,12 +25,6 @@ public class CallInterceptor extends BaseAsyncInterceptor {
    @Override
    public BasicInvocationStage visitCommand(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
-      if (command instanceof AbstractTransactionBoundaryCommand) {
-         if (trace)
-            log.tracef("Suppressing invocation for %s", command.getClass().getSimpleName());
-         return returnWith(null);
-      }
-
       if (trace)
          log.tracef("Invoking: %s", command.getClass().getSimpleName());
       return returnWith(command.perform(ctx));

@@ -278,6 +278,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(
             ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE);
       RpcOptions options = rpcOptionsBuilder.build();
+      // TODO Use multiple async invocations
       Map<Address, Response> responses = rpcManager.invokeRemotely(commands, options);
 
       Map<Object, InternalCacheEntry> entries = new HashMap<>();
@@ -328,8 +329,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private BasicInvocationStage handleLocalResult(InvocationContext ctx, VisitableCommand command,
-                                                  Object localResult) throws Throwable {
+   private BasicInvocationStage handleLocalResult(BasicInvocationStage stage, InvocationContext ctx,
+                                                  VisitableCommand command, Object localResult) throws Throwable {
       // if this is local mode then skip distributing
       DataWriteCommand dataCommand = (DataWriteCommand) command;
       if (isLocalModeForced(dataCommand)) {
@@ -362,23 +363,15 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       ValueMatcher valueMatcher = command.getValueMatcher();
       if (!ctx.isOriginLocal()) {
-         if (primaryOwner.equals(rpcManager.getAddress())) {
-            if (!command.isSuccessful()) {
-               if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
-               return returnWith(localResult);
-            }
-            List<Address> recipients = cdl.getOwners(command.getKey());
-            // Ignore the previous value on the backup owners
-            command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
-            try {
-               rpcManager.invokeRemotely(recipients, command, determineRpcOptionsForBackupReplication(rpcManager,
-                  isSync, recipients));
-            } finally {
-               // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
-               command.setValueMatcher(valueMatcher.matcherForRetry());
-            }
+         if (!primaryOwner.equals(rpcManager.getAddress())) {
+            return returnWith(localResult);
          }
-         return returnWith(localResult);
+         if (!command.isSuccessful()) {
+            if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
+            return returnWith(localResult);
+         }
+         List<Address> recipients = cdl.getOwners(command.getKey());
+         return invokeOnBackups(recipients, command, localResult, isSync, valueMatcher);
       } else {
          if (primaryOwner.equals(rpcManager.getAddress())) {
             if (!command.isSuccessful()) {
@@ -390,36 +383,51 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                   recipients);
             // check if a single owner has been configured and the target for the key is the local address
             boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
-            if (!isSingleOwnerAndLocal) {
-               // Ignore the previous value on the backup owners
-               command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
-               try {
-                  rpcManager.invokeRemotely(recipients, command, determineRpcOptionsForBackupReplication(rpcManager,
-                                                                                                         isSync, recipients));
-               } finally {
-                  // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
-                  command.setValueMatcher(valueMatcher.matcherForRetry());
-               }
+            if (isSingleOwnerAndLocal) {
+               return returnWith(localResult);
             }
-            return returnWith(localResult);
+            return invokeOnBackups(recipients, command, localResult, isSync, valueMatcher);
          } else {
             if (trace) log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
             boolean isSyncForwarding = isSync || command.isReturnValueExpected();
 
-            Map<Address, Response> addressResponseMap;
+            CompletableFuture<Map<Address, Response>> remoteInvocation;
             try {
-               addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command,
-                           rpcManager.getDefaultRpcOptions(isSyncForwarding));
-            } finally {
+               remoteInvocation = rpcManager.invokeRemotelyAsync(Collections.singletonList(primaryOwner), command,
+                     rpcManager.getDefaultRpcOptions(isSyncForwarding));
+            } catch (Throwable t) {
                command.setValueMatcher(valueMatcher.matcherForRetry());
+               throw t;
             }
-            if (!isSyncForwarding) return returnWith(localResult);
+            return returnWithAsync(remoteInvocation.handle((responses, t) -> {
+               command.setValueMatcher(valueMatcher.matcherForRetry());
+               CompletableFutures.rethrowException(t);
 
-            Object primaryResult = getResponseFromPrimaryOwner(primaryOwner, addressResponseMap);
-            command.updateStatusFromRemoteResponse(primaryResult);
-            return returnWith(primaryResult);
+               if (!isSyncForwarding) return localResult;
+
+               Object primaryResult = getResponseFromPrimaryOwner(primaryOwner, responses);
+               command.updateStatusFromRemoteResponse(primaryResult);
+               return primaryResult;
+            }));
          }
       }
+   }
+
+   private BasicInvocationStage invokeOnBackups(List<Address> recipients, DataWriteCommand command, Object localResult,
+                                                boolean isSync,
+                                                ValueMatcher valueMatcher) {
+      // Ignore the previous value on the backup owners
+      command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
+      RpcOptions rpcOptions = determineRpcOptionsForBackupReplication(rpcManager, isSync, recipients);
+      CompletableFuture<Map<Address, Response>> remoteInvocation =
+            rpcManager.invokeRemotelyAsync(recipients, command, rpcOptions);
+      return returnWithAsync(remoteInvocation.handle((responses, t) -> {
+         // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
+         command.setValueMatcher(valueMatcher.matcherForRetry());
+         CompletableFutures.rethrowException(t);
+
+         return localResult;
+      }));
    }
 
    private RpcOptions determineRpcOptionsForBackupReplication(RpcManager rpc, boolean isSync, List<Address> recipients) {

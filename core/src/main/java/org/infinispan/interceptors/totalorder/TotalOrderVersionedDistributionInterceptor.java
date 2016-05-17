@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.totalorder;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -13,6 +14,7 @@ import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.responses.KeysValidateFilter;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -48,13 +50,13 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
    }
 
    @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
+   protected CompletableFuture<Object> prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
       if (trace) {
          log.tracef("Total Order Anycast transaction %s with Total Order", command.getGlobalTransaction().globalId());
       }
 
       if (!ctx.hasModifications()) {
-         return;
+         return CompletableFutures.completedNull();
       }
 
       if (!ctx.isOriginLocal()) {
@@ -65,14 +67,9 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
          throw new IllegalStateException("Expected a Versioned Prepare Command in version aware component");
       }
 
-      try {
-         KeysValidateFilter responseFilter = ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ?
-               null : new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
-
-         totalOrderPrepare(recipients, command, responseFilter);
-      } finally {
-         transactionRemotelyPrepared(ctx);
-      }
+      KeysValidateFilter responseFilter = ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ?
+            null : new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
+      return totalOrderPrepare(ctx, command, recipients, responseFilter);
    }
 
    @Override

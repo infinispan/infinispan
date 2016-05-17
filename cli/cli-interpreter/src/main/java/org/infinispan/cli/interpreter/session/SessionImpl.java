@@ -108,7 +108,7 @@ public class SessionImpl implements Session {
          try {
             rpc.invokeRemotely(null, ccc, rpc.getDefaultRpcOptions(true));
             ccc.init(cacheManager);
-            ccc.perform(null);
+            ccc.invoke();
          } catch (Throwable e) {
             throw log.cannotCreateClusteredCaches(e, cacheName);
          }

@@ -5,11 +5,11 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAP
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.configuration.ConfigurationManager;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -18,6 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.DependencyGraph;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Command to stop a cache and remove all its contents from both
@@ -42,7 +43,7 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    }
 
    @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
+   public CompletableFuture<Object> invokeAsync() throws Throwable {
       GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
       ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
       String name = cacheName.toString();
@@ -61,7 +62,7 @@ public class RemoveCacheCommand extends BaseRpcCommand {
       // Remove cache from dependency graph
       //noinspection unchecked
       globalComponentRegistry.getComponent(DependencyGraph.class, CACHE_DEPENDENCY_GRAPH).remove(cacheName);
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    @Override
