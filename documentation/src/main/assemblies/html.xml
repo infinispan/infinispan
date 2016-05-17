@@ -15,7 +15,10 @@
             </includes>
             <excludes>
                 <exclude>Guardfile</exclude>
-                <exclude>*-docinfo.htmlc</exclude>
+                <exclude>**/*-docinfo.html</exclude>
+                <exclude>*-docinfo.html</exclude>
+                <exclude>*-docinfo-footer.html</exclude>
+                <exclude>**/*-docinfo-footer.html</exclude>
             </excludes>
         </fileSet>
     </fileSets>

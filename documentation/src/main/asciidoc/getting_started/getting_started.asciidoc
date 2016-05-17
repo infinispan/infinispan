@@ -1,4 +1,4 @@
-= Getting Started with Infinispan
+= Getting Started with Infinispan {infinispanversion}
 The Infinispan community
 :toc2:
 :icons: font

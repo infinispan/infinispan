@@ -50,7 +50,7 @@ def help_and_exit():
             
             $ bin/release.py 6.1.1.Beta1 6.1.x %s<-- this will use the appropriate branch.%s
 
-            $ bin/release.py 6.1.1.Beta1 6.1.x --mvn-only %s<-- this will only tag and release to maven (no dstribution).%s
+            $ bin/release.py 6.1.1.Beta1 6.1.x --mvn-only %s<-- this will only tag and release to maven (no distribution).%s
 
     ''' % (Colors.yellow(), Colors.end_color(), Colors.yellow(), Colors.end_color(), Colors.green(), Colors.end_color(), Colors.green(), Colors.end_color(), Colors.green(), Colors.end_color()), Levels.INFO)
     sys.exit(0)
@@ -187,17 +187,20 @@ def unzip_archive(version):
   else:
     subprocess.check_call(["unzip", "-q", "infinispan-%s-all.zip" % version])
 
-def update_javadoc_tracker(base_dir, version):
+def prepare_docs(base_dir, version):
   os.chdir("%s/distribution/target/distribution/infinispan-%s-all/docs" % (base_dir, version))
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
+  os.mkdir("pdf")
+  subprocess.check_call(["mvn", "org.apache.maven.plugins:maven-dependency-plugin:2.10:unpack", "-DoutputDirectory=pdf", "-DrepoUrl=https://repository.jboss.org/nexus/content/groups/public-jboss/", "-Dartifact=org.infinispan:infinispan-docs:%s:zip:pdf" % (version))
 
-def upload_javadocs(base_dir, version):
-  """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
+def upload_docs(base_dir, version):
+  """Javadocs and PDFs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
   version_short = get_version_major_minor(version)
   
   os.mkdir(version_short)
   os.rename("api", "%s/apidocs" % version_short)
+  os.rename("pdf", "%s/pdf" % version_short)
   
   ## rsync this stuff to filemgmt.jboss.org
   uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
@@ -309,13 +312,13 @@ def release():
       unzip_archive(version)
 
       # Step 4: Update javadoc Google Analytics tracker
-      prettyprint("Step 5: Update Google Analytics tracker", Levels.INFO)
-      update_javadoc_tracker(base_dir, version)
+      prettyprint("Step 5: Prepare docs", Levels.INFO)
+      prepare_docs(base_dir, version)
       prettyprint("Step 5: Complete", Levels.INFO)
 
-      # Step 5: Upload javadocs to FTP
-      prettyprint("Step 6: Uploading Javadocs", Levels.INFO)
-      do_task(upload_javadocs, [base_dir, version], async_processes)
+      # Step 5: Upload docs to FTP
+      prettyprint("Step 6: Uploading docs", Levels.INFO)
+      do_task(upload_docs, [base_dir, version], async_processes)
       prettyprint("Step 6: Complete", Levels.INFO)
 
       prettyprint("Step 7: Uploading Artifacts", Levels.INFO)

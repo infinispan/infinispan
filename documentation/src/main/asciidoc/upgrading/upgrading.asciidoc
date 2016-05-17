@@ -1,4 +1,4 @@
-= Upgrading Infinispan
+= Upgrading to Infinispan {infinispanversion}
 The Infinispan community
 :toc2:
 :icons: font

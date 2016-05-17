@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" exclude-result-prefixes="xs html">
    <xsl:output method="xml" encoding="ISO-8859-1" standalone="yes" version="1.0" doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd" indent="yes" />
-   
+
    <xsl:key name="simpleTypes" match="/xs:schema/xs:simpleType" use="@name"/>
    <xsl:key name="complexTypes" match="/xs:schema/xs:complexType" use="@name"/>
    <xsl:key name="imports" match="/xs:schema/xs:import" use="@namespace"/>
 
-   
+
    <!-- Root -->
    <xsl:template match="/xs:schema">
-      
+
       <html>
          <head>
             <title>
                <xsl:value-of select="@targetNamespace"/>
             </title>
+            <meta charset="UTF-8" />
             <style>
                body { font-family: 'sans-serif'; }
                div.element, div.complexType { margin: 0 0 1em 1em; border-left: 5px solid #4477aa; border-bottom: 2px groove #4477aa;}
@@ -40,14 +41,16 @@
                   padding: 0.5em;
                }
             </style>
-            <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">//</script>
+            <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js">
+               //
+            </script>
             <script type="text/javascript">
-               jQuery(document).ready(function() {
-                 jQuery(".heading").click(function() {
-                   jQuery(this).next(".content").slideToggle(500);
+               $(document).ready(function() {
+                 $(".heading").click(function() {
+                   $(this).next(".content").slideToggle(500);
                  });
-                 jQuery("#global a").click(function() {
-                   jQuery(".content").toggle();
+                 $("#global a").click(function() {
+                   $(".content").toggle();
                  });
                });
             </script>
@@ -56,9 +59,9 @@
             <h1>
                <xsl:value-of select="@targetNamespace"/>
             </h1>
-            
+
             <xsl:apply-templates select="xs:element" />
-            
+
             <div id="global">
                <a href="#">Expand/Collapse All</a>
             </div>
@@ -105,7 +108,7 @@
          <xsl:apply-templates select="xs:all | xs:sequence | xs:complexContent" />
       </xsl:if>
    </xsl:template>
-   
+
    <xsl:template match="xs:complexContent">
       <xsl:apply-templates select="xs:extension"/>
    </xsl:template>
@@ -135,7 +138,7 @@
          </xsl:apply-templates>
       </div>
    </xsl:template>
-   
+
    <xsl:template match="xs:schema" mode="lookup-type">
       <xsl:param name="type" />
       <xsl:variable name="ns" select="substring-before(string($type), ':')" />
@@ -152,10 +155,10 @@
             </xsl:for-each>
          </xsl:otherwise>
       </xsl:choose>
-      
-      
+
+
    </xsl:template>
-   
+
    <xsl:template match="xs:complexType" mode="top-level">
       <div class="complexType">
          <a>
@@ -230,7 +233,7 @@
          </xsl:otherwise>
       </xsl:choose>
    </xsl:template>
-   
+
    <xsl:template match="xs:simpleType" mode="embedded">
       <xsl:apply-templates select="xs:restriction | xs:list" />
    </xsl:template>
@@ -254,12 +257,12 @@
          </table>
       </xsl:if>
    </xsl:template>
-   
+
    <xsl:template match="xs:list">
       <xsl:variable name="ref" select="substring-after(string(@itemType), ':')" />
       <xsl:apply-templates select="key('simpleTypes', $ref)" mode="embedded"/>
    </xsl:template>
-   
+
    <xsl:template match="xs:enumeration">
       <tr>
          <td>
@@ -352,10 +355,10 @@
          </xsl:otherwise>
       </xsl:choose>
    </xsl:template>
-   
+
    <xsl:template name="linkify">
       <xsl:param name="url" />
-      
+
       <a>
          <xsl:attribute name="href">
             <xsl:value-of select="$url" />

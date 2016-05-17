@@ -1,4 +1,4 @@
-= Glossary
+= Infinispan {infinispanversion} Glossary
 The Infinispan community
 :toc2:
 :icons: font
