@@ -92,13 +92,6 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="ping-on-start" type="xs:boolean" default="true">
-          <xs:annotation>
-            <xs:documentation>
-              If true, a ping request is sent to a back end server in order to fetch cluster's topology.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="protocol-version" type="xs:string" default="1.1">
           <xs:annotation>
             <xs:documentation>
@@ -157,40 +150,40 @@
     <xs:attribute name="max-total" type="xs:int" default="-1">
       <xs:annotation>
         <xs:documentation>
-          Sets a global limit on the number persistent connections that can be in circulation within the combined set of servers. When non-positive, there is no limit to the total number of persistent connections in circulation. When maxTotal is exceeded, all connections pools are exhausted. The default setting for this parameter is -1 (no limit). 
+          Sets a global limit on the number persistent connections that can be in circulation within the combined set of servers. When non-positive, there is no limit to the total number of persistent connections in circulation. When maxTotal is exceeded, all connections pools are exhausted. The default setting for this parameter is -1 (no limit).
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="min-idle-time" type="xs:int" default="1">
       <xs:annotation>
         <xs:documentation>
-          Sets a target value for the minimum number of idle connections (per server) that should always be available. If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances available for each server. The default setting for this parameter is 1. 
+          Sets a target value for the minimum number of idle connections (per server) that should always be available. If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances available for each server. The default setting for this parameter is 1.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="eviction-interval" type="xs:long" default="120000">
       <xs:annotation>
         <xs:documentation>
-          Indicates how long the eviction thread should sleep before "runs" of examining idle connections. When non-positive, no eviction thread will be launched. The default setting for this parameter is 2 minutes. 
+          Indicates how long the eviction thread should sleep before "runs" of examining idle connections. When non-positive, no eviction thread will be launched. The default setting for this parameter is 2 minutes.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="min-evictable-idle-time" type="xs:long" default="1800000">
       <xs:annotation>
         <xs:documentation>
-          Specifies the minimum amount of time that an connection may sit idle in the pool before it is eligible for eviction due to idle time. When non-positive, no connection will be dropped from the pool due to idle time alone. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is 1800000(30 minutes).  
+          Specifies the minimum amount of time that an connection may sit idle in the pool before it is eligible for eviction due to idle time. When non-positive, no connection will be dropped from the pool due to idle time alone. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is 1800000(30 minutes).
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="test-idle" type="xs:boolean" default="true">
       <xs:annotation>
         <xs:documentation>
-          Indicates whether or not idle connections should be validated by sending an TCP packet to the server, during idle connection eviction runs. Connections that fail to validate will be dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is true.  
+          Indicates whether or not idle connections should be validated by sending an TCP packet to the server, during idle connection eviction runs. Connections that fail to validate will be dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is true.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
-  
+
   <xs:simpleType name="exhaustedAction">
     <xs:restriction base="xs:string">
       <xs:enumeration value="EXCEPTION">
@@ -203,14 +196,14 @@
       <xs:enumeration value="WAIT">
         <xs:annotation>
           <xs:documentation>
-            The caller will block (invoke waits until a new or idle connections is available. 
+            The caller will block (invoke waits until a new or idle connections is available.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="CREATE_NEW">
         <xs:annotation>
           <xs:documentation>
-            A new persistent connection will be created and returned (essentially making maxActive meaningless.) 
+            A new persistent connection will be created and returned (essentially making maxActive meaningless.)
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
