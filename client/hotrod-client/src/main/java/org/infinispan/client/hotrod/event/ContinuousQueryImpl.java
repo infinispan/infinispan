@@ -87,13 +87,13 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
    @ClientListener(filterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          converterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
-   private static final class ClientEntryListener<K, V> {
+   private static final class ClientEntryListener {
 
       private final SerializationContext serializationContext;
 
       private final ContinuousQueryListener listener;
 
-      public ClientEntryListener(SerializationContext serializationContext, ContinuousQueryListener listener) {
+      ClientEntryListener(SerializationContext serializationContext, ContinuousQueryListener listener) {
          this.serializationContext = serializationContext;
          this.listener = listener;
       }
