@@ -5,7 +5,7 @@ var Collectors = Java.type("java.util.stream.Collectors")
 var Arrays = Java.type("org.infinispan.scripting.utils.JSArrays")
 var CacheCollectors = Java.type("org.infinispan.stream.CacheCollectors");
 var SerializableFunction = Java.extend(Function, Serializable);
-var SerializableSupplier = Java.extend(Java.type("org.infinispan.stream.SerializableSupplier"))
+var SerializableSupplier = Java.extend(Java.type("org.infinispan.util.function.SerializableSupplier"))
 
 var e = new SerializableFunction( {
    apply: function(object) {

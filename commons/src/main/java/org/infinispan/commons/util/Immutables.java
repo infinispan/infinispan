@@ -456,6 +456,30 @@ public class Immutables {
       }
    }
 
+   public static class ImmutableEntryExternalizer extends AbstractExternalizer<ImmutableEntry> {
+      @Override
+      public Set<Class<? extends ImmutableEntry>> getTypeClasses() {
+         return Util.<Class<? extends ImmutableEntry>>asSet(ImmutableEntry.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ImmutableEntry object) throws IOException {
+         output.writeObject(object.key);
+         output.writeObject(object.value);
+      }
+
+      @Override
+      public ImmutableEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object key = input.readObject();
+         Object value = input.readObject();
+         return new ImmutableEntry(key, value);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.IMMUTABLE_ENTRY;
+      }
+   }
 
    private static class ImmutableSetWrapper<E> extends ImmutableCollectionWrapper<E> implements Set<E>, Serializable, Immutable {
       private static final long serialVersionUID = 7991492805176142615L;
