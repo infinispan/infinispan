@@ -99,7 +99,9 @@
 
     <namedCache name="transactional2">
         <transaction transactionManagerLookupClass="org.infinispan.test.tx.TestLookup" cacheStopTimeout="10000" lockingMode="PESSIMISTIC"
-            autoCommit="false" />
+            autoCommit="false">
+            <recovery enabled="true" recoveryInfoCacheName="test"/>
+        </transaction>
     </namedCache>
 
     <namedCache name="transactional3">

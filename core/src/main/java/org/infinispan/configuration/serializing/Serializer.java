@@ -26,6 +26,7 @@ import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
+import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -201,6 +202,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeLocalCache(XMLExtendedStreamWriter writer, String name, Configuration configuration) throws XMLStreamException {
       writer.writeStartElement(Element.LOCAL_CACHE);
+      if (configuration.simpleCache()) {
+         configuration.attributes().write(writer, Configuration.SIMPLE_CACHE, Attribute.SIMPLE_CACHE);
+      }
       writeCommonCacheAttributesElements(writer, name, configuration);
       writer.writeEndElement();
    }
@@ -263,12 +267,12 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          TransactionMode mode = TransactionMode.fromConfiguration(transaction.transactionMode(), !transaction.useSynchronization(), transaction.recovery().enabled(), configuration
                .invocationBatching().enabled());
          writer.writeAttribute(Attribute.MODE, mode.toString());
-         attributes.write(writer, TransactionConfiguration.AUTO_COMMIT, Attribute.AUTO_COMMIT);
-         attributes.write(writer, TransactionConfiguration.CACHE_STOP_TIMEOUT, Attribute.STOP_TIMEOUT);
-         attributes.write(writer, TransactionConfiguration.COMPLETED_TX_TIMEOUT, Attribute.COMPLETED_TX_TIMEOUT);
-         attributes.write(writer, TransactionConfiguration.LOCKING_MODE, Attribute.LOCKING);
-         attributes.write(writer, TransactionConfiguration.REAPER_WAKE_UP_INTERVAL, Attribute.REAPER_WAKE_UP_INTERVAL);
-         attributes.write(writer, TransactionConfiguration.TRANSACTION_PROTOCOL, Attribute.TRANSACTION_PROTOCOL);
+         attributes.write(writer);
+         if (mode != TransactionMode.NONE) {
+            attributes.write(writer, TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP);
+         }
+         if (transaction.recovery().enabled())
+            transaction.recovery().attributes().write(writer, RecoveryConfiguration.RECOVERY_INFO_CACHE_NAME, Attribute.RECOVERY_INFO_CACHE_NAME);
          writer.writeEndElement();
       }
    }

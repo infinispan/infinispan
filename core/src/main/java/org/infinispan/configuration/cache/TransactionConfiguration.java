@@ -23,19 +23,19 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 public class TransactionConfiguration {
    public static final AttributeDefinition<Boolean> AUTO_COMMIT = AttributeDefinition.builder("auto-commit", true).immutable().build();
    public static final AttributeDefinition<Long> CACHE_STOP_TIMEOUT = AttributeDefinition.builder("stop-timeout", TimeUnit.SECONDS.toMillis(30)).build();
-   public static final AttributeDefinition<Boolean> EAGER_LOCKING_SINGLE_NODE = AttributeDefinition.builder("eager-locking-single-node", false).immutable().build();
+   public static final AttributeDefinition<Boolean> EAGER_LOCKING_SINGLE_NODE = AttributeDefinition.builder("eager-locking-single-node", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder("locking", LockingMode.OPTIMISTIC).build();
-   public static final AttributeDefinition<Boolean> SYNC_COMMIT_PHASE = AttributeDefinition.builder("sync-commit-phase", true).immutable().build();
-   public static final AttributeDefinition<Boolean> SYNC_ROLLBACK_PHASE = AttributeDefinition.builder("sync-rollback-phase", true).immutable().build();
-   public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder("transaction-manager-lookup", GenericTransactionManagerLookup.INSTANCE).copier(IdentityAttributeCopier.INSTANCE).build();
-   public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transaction-synchronization-registry-lookup", null, TransactionSynchronizationRegistryLookup.class).copier(IdentityAttributeCopier.INSTANCE).build();
-   public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("mode", TransactionMode.NON_TRANSACTIONAL).immutable().build();
-   public static final AttributeDefinition<Boolean> USE_EAGER_LOCKING = AttributeDefinition.builder("eager-locking", false).build();
-   public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("synchronization", false).immutable().build();
+   public static final AttributeDefinition<Boolean> SYNC_COMMIT_PHASE = AttributeDefinition.builder("sync-commit-phase", true).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Boolean> SYNC_ROLLBACK_PHASE = AttributeDefinition.builder("sync-rollback-phase", true).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder("transaction-manager-lookup", GenericTransactionManagerLookup.INSTANCE).copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).build();
+   public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transaction-synchronization-registry-lookup", null, TransactionSynchronizationRegistryLookup.class).copier(IdentityAttributeCopier.INSTANCE).autoPersist(false).build();
+   public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("mode", TransactionMode.NON_TRANSACTIONAL).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Boolean> USE_EAGER_LOCKING = AttributeDefinition.builder("eager-locking", false).autoPersist(false).build();
+   public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("synchronization", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS = AttributeDefinition.builder("single-phase-auto-commit", false).build();
-   public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder("reaper-wake-up-interval", 30000l).immutable().build();
+   public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder("reaper-wake-up-interval", 30000l).immutable().xmlName("reaper-interval").build();
    public static final AttributeDefinition<Long> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder("complete-timeout", 60000l).immutable().build();
-   public static final AttributeDefinition<TransactionProtocol> TRANSACTION_PROTOCOL = AttributeDefinition.builder("transaction-protocol", TransactionProtocol.DEFAULT).immutable().build();
+   public static final AttributeDefinition<TransactionProtocol> TRANSACTION_PROTOCOL = AttributeDefinition.builder("transaction-protocol", TransactionProtocol.DEFAULT).immutable().xmlName("protocol").build();
    public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder("notifications", true).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TransactionConfiguration.class, AUTO_COMMIT, CACHE_STOP_TIMEOUT, EAGER_LOCKING_SINGLE_NODE, LOCKING_MODE, SYNC_COMMIT_PHASE, SYNC_ROLLBACK_PHASE,
