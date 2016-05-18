@@ -234,7 +234,7 @@
         <!-- Eviction configuration. -->
         <eviction maxEntries="5000" threadPolicy="PIGGYBACK" strategy="LRU" />
         <!-- Expiration wakeUpInterval defines the interval between successive runs to purge expired entries from memory and any cache stores. -->
-        <expiration wakeUpInterval="500" lifespan="60000" maxIdle="1000" />
+        <expiration wakeUpInterval="500" lifespan="60000" maxIdle="1000" reaperEnabled="true"/>
     </namedCache>
 
     <namedCache name="withouthJmxEnabled">
