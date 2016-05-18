@@ -189,8 +189,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("%G %i", threadFactory.threadNamePattern());
       assertEquals(5, threadFactory.initialPriority());
 
-      assertTrue(cm.getCacheManagerConfiguration().evictionThreadPool().threadPoolFactory() instanceof ScheduledThreadPoolExecutorFactory);
-      threadFactory = cm.getCacheManagerConfiguration().evictionThreadPool().threadFactory();
+      assertTrue(cm.getCacheManagerConfiguration().expirationThreadPool().threadPoolFactory() instanceof ScheduledThreadPoolExecutorFactory);
+      threadFactory = cm.getCacheManagerConfiguration().expirationThreadPool().threadFactory();
       assertEquals("infinispan", threadFactory.threadGroup().getName());
       assertEquals("%G %i", threadFactory.threadNamePattern());
       assertEquals(5, threadFactory.initialPriority());
