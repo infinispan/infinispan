@@ -282,6 +282,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    private void writeCommonCacheAttributesElements(XMLExtendedStreamWriter writer, String name, Configuration configuration) throws XMLStreamException {
       writer.writeAttribute(Attribute.NAME, name);
       configuration.jmxStatistics().attributes().write(writer, JMXStatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+      if (configuration.deadlockDetection().enabled()) {
+         writer.writeAttribute(Attribute.SPIN_DURATION, Long.toString(configuration.deadlockDetection().spinDuration()));
+      }
       writeBackup(writer, configuration);
       configuration.sites().backupFor().attributes().write(writer, Element.BACKUP_FOR.getLocalName());
       configuration.locking().attributes().write(writer, Element.LOCKING.getLocalName());
