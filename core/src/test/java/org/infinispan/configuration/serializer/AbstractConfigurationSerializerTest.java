@@ -59,7 +59,7 @@ public abstract class AbstractConfigurationSerializerTest {
 
             compareExtraConfiguration(name, configurationBefore, configurationAfter);
          }
-      } catch (Exception e) {
+      } catch (Throwable e) {
          System.out.println(new String(baos.toByteArray()));
          throw e;
       }
