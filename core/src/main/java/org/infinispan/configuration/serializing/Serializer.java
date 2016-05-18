@@ -35,6 +35,7 @@ import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.configuration.global.SerializationConfiguration;
+import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
@@ -159,6 +160,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writer.writeStartElement(Element.CACHE_CONTAINER);
       GlobalConfiguration globalConfiguration = holder.getGlobalConfiguration();
       writer.writeAttribute(Attribute.NAME, globalConfiguration.globalJmxStatistics().cacheManagerName());
+      if (globalConfiguration.shutdown().hookBehavior() != ShutdownHookBehavior.DEFAULT) {
+         writer.writeAttribute(Attribute.SHUTDOWN_HOOK, globalConfiguration.shutdown().hookBehavior().name());
+      }
       globalConfiguration.globalJmxStatistics().attributes().write(writer, GlobalJmxStatisticsConfiguration.ENABLED, Attribute.STATISTICS);
       if (globalConfiguration.asyncThreadPool().threadPoolFactory() != null) {
          writer.writeAttribute(Attribute.ASYNC_EXECUTOR, "async-pool");
