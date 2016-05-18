@@ -32,6 +32,7 @@ import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -1489,7 +1490,14 @@ public class Parser60 implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case PROPERTIES: {
-               builder.transport().withProperties(parseProperties(reader));
+               Properties properties = parseProperties(reader);
+               if (properties.containsKey(JGroupsTransport.CONFIGURATION_FILE)) {
+                  String stackFile = (String) properties.remove(JGroupsTransport.CONFIGURATION_FILE);
+                  properties.put("stack", "jgroups");
+                  properties.put("stack-jgroups", "jgroups");
+                  properties.put("stackFilePath-jgroups", stackFile);
+               }
+               builder.transport().withProperties(properties);
                break;
             }
             default: {
