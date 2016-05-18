@@ -239,7 +239,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          builder.read(c);
       }
 
-      expirationThreadPool.read(template.evictionThreadPool());
+      expirationThreadPool.read(template.expirationThreadPool());
       listenerThreadPool.read(template.listenerThreadPool());
       replicationQueueThreadPool.read(template.replicationQueueThreadPool());
       persistenceThreadPool.read(template.persistenceThreadPool());

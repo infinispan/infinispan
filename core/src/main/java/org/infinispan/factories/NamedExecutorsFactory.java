@@ -92,7 +92,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             synchronized (this) {
                if (expirationExecutor == null) {
                   expirationExecutor = createExecutorService(
-                        globalConfiguration.evictionThreadPool(),
+                        globalConfiguration.expirationThreadPool(),
                         EXPIRATION_SCHEDULED_EXECUTOR,
                         ExecutorServiceType.SCHEDULED);
                }

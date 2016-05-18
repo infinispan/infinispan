@@ -46,14 +46,14 @@ public class GlobalConfiguration {
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;
    private final WeakReference<ClassLoader> cl;
-   private final ThreadPoolConfiguration evictionThreadPool;
+   private final ThreadPoolConfiguration expirationThreadPool;
    private final ThreadPoolConfiguration listenerThreadPool;
    private final ThreadPoolConfiguration replicationQueueThreadPool;
    private final ThreadPoolConfiguration persistenceThreadPool;
    private final ThreadPoolConfiguration stateTransferThreadPool;
    private final ThreadPoolConfiguration asyncThreadPool;
 
-   GlobalConfiguration(ThreadPoolConfiguration evictionThreadPool,
+   GlobalConfiguration(ThreadPoolConfiguration expirationThreadPool,
          ThreadPoolConfiguration listenerThreadPool,
          ThreadPoolConfiguration replicationQueueThreadPool,
          ThreadPoolConfiguration persistenceThreadPool,
@@ -64,7 +64,7 @@ public class GlobalConfiguration {
          SerializationConfiguration serialization, ShutdownConfiguration shutdown,
          GlobalStateConfiguration globalState,
          List<?> modules, SiteConfiguration site,ClassLoader cl) {
-      this.evictionThreadPool = evictionThreadPool;
+      this.expirationThreadPool = expirationThreadPool;
       this.listenerThreadPool = listenerThreadPool;
       this.replicationQueueThreadPool = replicationQueueThreadPool;
       this.persistenceThreadPool = persistenceThreadPool;
@@ -125,15 +125,23 @@ public class GlobalConfiguration {
 
    /**
     * @deprecated This method always returns null now.
-    * Look for a thread pool named as {@link #evictionThreadPool()} instead.
+    * Look for a thread pool named as {@link #expirationThreadPool()} instead.
     */
    @Deprecated
    public ScheduledExecutorFactoryConfiguration evictionScheduledExecutor() {
       return null;
    }
 
+   public ThreadPoolConfiguration expirationThreadPool() {
+      return expirationThreadPool;
+   }
+
+   /**
+    * @deprecated Use {@link #expirationThreadPool} instead
+    */
+   @Deprecated
    public ThreadPoolConfiguration evictionThreadPool() {
-      return evictionThreadPool;
+      return expirationThreadPool;
    }
 
    public ThreadPoolConfiguration listenerThreadPool() {
@@ -208,7 +216,7 @@ public class GlobalConfiguration {
    public String toString() {
       return "GlobalConfiguration{" +
             "listenerThreadPool=" + listenerThreadPool +
-            ", evictionThreadPool=" + evictionThreadPool +
+            ", expirationThreadPool=" + expirationThreadPool +
             ", persistenceThreadPool=" + persistenceThreadPool +
             ", stateTransferThreadPool=" + stateTransferThreadPool +
             ", replicationQueueThreadPool=" + replicationQueueThreadPool +
