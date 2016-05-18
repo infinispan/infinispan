@@ -50,13 +50,13 @@
             <distributed-cache-configuration name="persistent-file-store-passivation" mode="SYNC" start="EAGER">
                <eviction strategy="LRU" size="10000" type="COUNT"/>
                <file-store shared="false" fetch-state="true" passivation="true">
-                  <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
+                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </file-store>
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="persistent-file-store-write-behind" mode="SYNC" start="EAGER">
                <file-store shared="false" fetch-state="true" passivation="false">
-                  <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
+                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </file-store>
             </distributed-cache-configuration>
 
@@ -71,7 +71,7 @@
                      <data-column name="datum" type="BINARY" />
                      <timestamp-column name="version" type="BIGINT" />
                   </string-keyed-table>
-                  <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
+                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </string-keyed-jdbc-store>
             </distributed-cache-configuration>
 
@@ -116,7 +116,7 @@
             <local-cache name="namedCache" start="EAGER">
                <expiration lifespan="2000" max-idle="1000" />
                <file-store passivation="false" path="nc" purge="true" shared="false">
-                  <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
+                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </file-store>
             </local-cache>
          </cache-container>
@@ -195,7 +195,7 @@
                      <data-column name="datum" type="BINARY" />
                      <timestamp-column name="version" type="BIGINT" />
                   </string-keyed-table>
-                  <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1" />
+                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </string-keyed-jdbc-store>
             </distributed-cache>
 

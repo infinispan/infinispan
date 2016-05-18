@@ -86,7 +86,7 @@
                     <eviction strategy="LRU" max-entries="1000"/>
                     <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" fetch-state="false" passivation="true" preload="true" purge="false">
                         <remote-server outbound-socket-binding="remote-store-hotrod-server"/>
-                        <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
+                        <write-behind modification-queue-size="1024" thread-pool-size="1"/>
                     </remote-store>
                 </local-cache>
             </cache-container>

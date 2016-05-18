@@ -45,7 +45,7 @@
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
             <file-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" relative-to="jboss.server.temp.dir" shared="true" singleton="false" max-entries="1000000" name="file-store">
-                <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
+                <write-behind modification-queue-size="2048" thread-pool-size="1" />
             </file-store>
             <indexing index="LOCAL" auto-config="true"/>
         </local-cache>
@@ -65,7 +65,7 @@
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
             <rest-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" shared="true" singleton="false" append-cache-name-to-path="false" name="rest-store">
-                <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
+                <write-behind modification-queue-size="2048" thread-pool-size="1" />
                 <remote-server outbound-socket-binding="rest-server-1" />
                 <connection-pool connection-timeout="10000" max-connections-per-host="6" max-total-connections="10" buffer-size="30000" socket-timeout="10000" tcp-no-delay="true" />
             </rest-store>
@@ -86,7 +86,7 @@
             <eviction size="20000" strategy="LRU" type="MEMORY"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" fetch-state="false" passivation="false" preload="true" purge="false" shared="true" singleton="false" hotrod-wrapping="true" raw-values="true" protocol-version="2.4" name="remote-store">
-                <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
+                <write-behind modification-queue-size="2048" thread-pool-size="1" />
                 <remote-server outbound-socket-binding="hotrod-server-1" />
                 <remote-server outbound-socket-binding="hotrod-server-2" />
             </remote-store>
@@ -102,7 +102,7 @@
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="false"/>
             <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheWriter" fetch-state="true" passivation="true" preload="false" purge="true" shared="false" singleton="false" name="custom-cache-writer">
-                <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
+                <write-behind modification-queue-size="2048" thread-pool-size="1" />
                 <property name="location">${java.io.tmpdir}</property>
             </store>
             <indexing index="LOCAL" auto-config="true"/>
@@ -130,7 +130,7 @@
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <!-- note all jdbc stores have the same name -->
             <string-keyed-jdbc-store name="jdbc-store" fetch-state="false" datasource="java:jboss/datasources/JdbcDS" dialect="MYSQL" passivation="true" preload="false" purge="false" shared="false">
-                <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
+                <write-behind modification-queue-size="1024" thread-pool-size="1"/>
                 <string-keyed-table prefix="ISPN_MC_SK" create-on-start="true" drop-on-exit="true">
                     <id-column name="id" type="VARCHAR"/>
                     <data-column name="datum" type="BINARY"/>
@@ -145,7 +145,7 @@
                 </binary-keyed-table>
             </binary-keyed-jdbc-store>
             <mixed-keyed-jdbc-store name="jdbc-store" fetch-state="false" datasource="java:jboss/jdbc/store" dialect="MYSQL" passivation="false" preload="true" purge="false" shared="true" singleton="false">
-                <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
+                <write-behind modification-queue-size="2048" thread-pool-size="1" />
                 <binary-keyed-table prefix="ispn_entry" batch-size="100" fetch-size="100">
                     <id-column name="id" type="VARCHAR"/>
                     <data-column name="datum" type="BINARY"/>

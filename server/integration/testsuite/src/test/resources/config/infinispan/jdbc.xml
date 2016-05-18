@@ -27,7 +27,7 @@
                 <local-cache name="memcachedCache" start="EAGER" >
                     <string-keyed-jdbc-store datasource="${jndi.name}" passivation="false" preload="false" purge="false" name="STRING_ASYNC">
                         <property name="databaseType">${database.type}</property>
-                        <!--<write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="15" />-->
+                        <!--<write-behind modification-queue-size="2048" thread-pool-size="15" />-->
                         <string-keyed-table prefix="STRING_ASYNC">
                             <id-column name="id" type="${id.column.type}"/>
                             <data-column name="datum" type="${data.column.type}"/>

@@ -37,7 +37,7 @@
                   <data-column name="DATA_COLUMN" type="BINARY" />
                   <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
                </string-keyed-table>
-               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
+               <write-behind modification-queue-size="1024" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
          <indexing index="NONE" />
@@ -81,7 +81,7 @@
                   <data-column name="DATA_COLUMN" type="BINARY" />
                   <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
                </string-keyed-table>
-               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
+               <write-behind modification-queue-size="1024" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
       </replicated-cache>

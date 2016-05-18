@@ -151,4 +151,20 @@ public interface InfinispanLogger extends BasicLogger {
     @LogMessage(level = DEBUG)
     @Message(id = 13, value = "Unregistering task '%s'")
     void unregisteringDeployedTask(String className);
+
+    /**
+     * Logs a warning message indicating that the flush-lock-timeout attribute of the write-behind element
+     * is no longer valid
+     */
+    @LogMessage(level = WARN)
+    @Message(id = 14, value = "The 'flush-lock-timeout' attribute specified on the 'write-behind' element of a cache is no longer valid")
+    void flushLockTimeoutDeprecated();
+
+    /**
+     * Logs a warning message indicating that the flush-lock-timeout attribute of the write-behind element
+     * is no longer valid
+     */
+    @LogMessage(level = WARN)
+    @Message(id = 15, value = "The 'shutdown-timeout' attribute specified on the 'write-behind' element of a cache is no longer valid")
+    void shutdownTimeoutDeprecated();
 }

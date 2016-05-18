@@ -265,7 +265,7 @@
    <local-cache name="writeThroughToFile">
       <persistence passivation="false">
          <file-store path="${java.io.tmpdir}" shared="false" preload="true" purge="true">
-            <write-behind flush-lock-timeout="12321" modification-queue-size="123" shutdown-timeout="321" thread-pool-size="22" />
+            <write-behind modification-queue-size="123" thread-pool-size="22" />
          </file-store>
       </persistence>
    </local-cache>
