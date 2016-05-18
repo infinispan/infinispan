@@ -247,6 +247,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       AttributeSet attributes = globalJmxStatistics.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.JMX);
+         attributes.write(writer, GlobalJmxStatisticsConfiguration.JMX_DOMAIN, Attribute.JMX_DOMAIN);
          attributes.write(writer, GlobalJmxStatisticsConfiguration.ALLOW_DUPLICATE_DOMAINS, Attribute.ALLOW_DUPLICATE_DOMAINS);
          attributes.write(writer, GlobalJmxStatisticsConfiguration.MBEAN_SERVER_LOOKUP, Attribute.MBEAN_SERVER_LOOKUP);
          writeTypedProperties(writer, attributes.attribute(GlobalJmxStatisticsConfiguration.PROPERTIES).get());
