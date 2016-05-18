@@ -30,7 +30,7 @@
          <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
+               <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
          <indexing index="NONE"/>
@@ -42,7 +42,7 @@
          <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
+               <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
          <indexing index="NONE" />
@@ -54,7 +54,7 @@
          <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
-               <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
+               <write-behind thread-pool-size="5" />
             </file-store>
          </persistence>
          <indexing index="NONE" />

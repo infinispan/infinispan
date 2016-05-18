@@ -2191,7 +2191,11 @@ public class Parser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case FLUSH_LOCK_TIMEOUT: {
-               storeBuilder.flushLockTimeout(Long.parseLong(value));
+               if (reader.getSchema().since(9, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  storeBuilder.flushLockTimeout(Long.parseLong(value));
+               }
                break;
             }
             case MODIFICATION_QUEUE_SIZE: {
@@ -2199,7 +2203,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case SHUTDOWN_TIMEOUT: {
-               storeBuilder.shutdownTimeout(Long.parseLong(value));
+               if (reader.getSchema().since(9, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  storeBuilder.shutdownTimeout(Long.parseLong(value));
+               }
                break;
             }
             case THREAD_POOL_SIZE: {

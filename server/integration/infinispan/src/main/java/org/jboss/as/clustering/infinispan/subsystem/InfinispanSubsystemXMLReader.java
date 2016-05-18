@@ -1947,7 +1947,11 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case FLUSH_LOCK_TIMEOUT: {
-                    StoreWriteBehindResource.FLUSH_LOCK_TIMEOUT.parseAndSetParameter(value, writeBehind, reader);
+                    if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    } else {
+                        ROOT_LOGGER.flushLockTimeoutDeprecated();
+                    }
                     break;
                 }
                 case MODIFICATION_QUEUE_SIZE: {
@@ -1955,7 +1959,11 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case SHUTDOWN_TIMEOUT: {
-                    StoreWriteBehindResource.SHUTDOWN_TIMEOUT.parseAndSetParameter(value, writeBehind, reader);
+                    if (namespace.since(Namespace.INFINISPAN_SERVER_9_0)) {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    } else {
+                        ROOT_LOGGER.shutdownTimeoutDeprecated();
+                    }
                     break;
                 }
                 case THREAD_POOL_SIZE: {
