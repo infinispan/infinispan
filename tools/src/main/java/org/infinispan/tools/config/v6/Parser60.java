@@ -2,12 +2,28 @@ package org.infinispan.tools.config.v6;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.BackupForBuilder;
+import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.RecoveryConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ScheduledExecutorFactoryConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -42,8 +58,6 @@ import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
@@ -61,7 +75,7 @@ import static org.infinispan.factories.KnownComponentNames.shortened;
       @Namespace(uri = "urn:infinispan:config:6.0", root = "infinispan"),
 })
 public class Parser60 implements ConfigurationParser {
-   private final Map<String, ThreadPoolConfigurationBuilder> threadPools = new HashMap<String, ThreadPoolConfigurationBuilder>();
+   public static final String INFINISPAN_FACTORY = "infinispan-factory";
 
    public Parser60() {
    }
@@ -1354,32 +1368,34 @@ public class Parser60 implements ConfigurationParser {
       GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
       ParseUtils.requireNoAttributes(reader);
       boolean transportParsed = false;
+      DefaultThreadFactory threadFactory = new DefaultThreadFactory(INFINISPAN_FACTORY, new ThreadGroup("infinispan"), 1, "%G %i", null, null);
+
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case ASYNC_LISTENER_EXECUTOR: {
-               parseExecutor(reader, holder.getGlobalConfigurationBuilder().asyncThreadPool(),
-                     holder.getClassLoader());
+               ThreadPoolExecutorFactory executorFactory = createBlockingThreadPoolExecutorFactory(parseExecutor(reader));
+                              holder.getGlobalConfigurationBuilder().listenerThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
                break;
             }
             case PERSISTENCE_EXECUTOR: {
-               parseExecutor(reader, holder.getGlobalConfigurationBuilder().persistenceThreadPool(),
-                     holder.getClassLoader());
+               ThreadPoolExecutorFactory executorFactory = createBlockingThreadPoolExecutorFactory(parseExecutor(reader));
+               holder.getGlobalConfigurationBuilder().persistenceThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
                break;
             }
             case ASYNC_TRANSPORT_EXECUTOR: {
-               warnRemovedElement(element.getLocalName());
-               parseExecutor(reader, null, holder.getClassLoader());
+               ThreadPoolExecutorFactory executorFactory = createBlockingThreadPoolExecutorFactory(parseExecutor(reader));
+               holder.getGlobalConfigurationBuilder().transport().transportThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
                break;
             }
             case REMOTE_COMMAND_EXECUTOR: {
-               warnRemovedElement(element.getLocalName());
-               parseExecutor(reader, null, holder.getClassLoader());
+               ThreadPoolExecutorFactory executorFactory = createBlockingThreadPoolExecutorFactory(parseExecutor(reader));
+               holder.getGlobalConfigurationBuilder().transport().remoteCommandThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
                break;
             }
             case EVICTION_SCHEDULED_EXECUTOR: {
-               parseExecutor(reader, holder.getGlobalConfigurationBuilder().evictionThreadPool(),
-                     holder.getClassLoader());
+               ThreadPoolExecutorFactory executorFactory = createScheduledThreadPoolExecutorFactory(parseExecutor(reader));
+               holder.getGlobalConfigurationBuilder().expirationThreadPool().threadFactory(threadFactory).threadPoolFactory(executorFactory);
                break;
             }
             case GLOBAL_JMX_STATISTICS: {
@@ -1391,8 +1407,8 @@ public class Parser60 implements ConfigurationParser {
                break;
             }
             case REPLICATION_QUEUE_SCHEDULED_EXECUTOR: {
-               parseExecutor(reader, holder.getGlobalConfigurationBuilder().replicationQueueThreadPool(),
-                     holder.getClassLoader());
+               warnRemovedElement(element.getLocalName());
+               parseExecutor(reader);
                break;
             }
             case SERIALIZATION: {
@@ -1414,7 +1430,7 @@ public class Parser60 implements ConfigurationParser {
             }
             case TOTAL_ORDER_EXECUTOR:
                warnRemovedElement(element.getLocalName());
-               parseExecutor(reader, null, holder.getClassLoader());
+               parseExecutor(reader);
                break;
             default: {
                throw ParseUtils.unexpectedElement(reader);
@@ -1433,12 +1449,20 @@ public class Parser60 implements ConfigurationParser {
       }
    }
 
-   private ThreadPoolConfiguration createThreadPoolConfiguration(String threadPoolName, String componentName) {
-      ThreadPoolConfigurationBuilder threadPool = threadPools.get(threadPoolName);
-      ThreadPoolConfiguration threadPoolConfiguration = threadPool.create();
-      DefaultThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
-      threadFactory.setComponent(shortened(componentName));
-      return threadPoolConfiguration;
+   private ThreadPoolExecutorFactory createBlockingThreadPoolExecutorFactory(TypedProperties tp) {
+      int maxThreads = tp.getIntProperty("maxThreads", 1);
+      int queueSize = tp.getIntProperty("queueSize", 100000);
+      int coreThreads = queueSize == 0 ? 1 : tp.getIntProperty("coreThreads", maxThreads);
+      long keepAliveTime = tp.getLongProperty("keepAliveTime", 60000);
+      return new BlockingThreadPoolExecutorFactory(maxThreads, coreThreads, queueSize, keepAliveTime);
+   }
+
+   private ThreadPoolExecutorFactory createCachedThreadPoolExecutorFactory(TypedProperties tp) {
+      return CachedThreadPoolExecutorFactory.create();
+   }
+
+   private ThreadPoolExecutorFactory createScheduledThreadPoolExecutorFactory(TypedProperties tp) {
+      return ScheduledThreadPoolExecutorFactory.create();
    }
 
    private void parseTransport(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -1667,15 +1691,12 @@ public class Parser60 implements ConfigurationParser {
       }
    }
 
-   private void parseScheduledExecutor(final XMLExtendedStreamReader reader, final ScheduledExecutorFactoryConfigurationBuilder factoryBuilder,
-                                       final ClassLoader classLoader) throws XMLStreamException {
+   private TypedProperties parseExecutor(final XMLExtendedStreamReader reader) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case FACTORY: {
-               //factoryBuilder.factory(Util.<ScheduledExecutorFactory> getInstance(value, classLoader));
                break;
             }
             default: {
@@ -1684,13 +1705,13 @@ public class Parser60 implements ConfigurationParser {
          }
       }
 
+      Properties properties = new Properties();
+
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case PROPERTIES: {
-               //factoryBuilder.withProperties(
-               parseProperties(reader);
-               //);
+               properties = parseProperties(reader);
                break;
             }
             default: {
@@ -1698,39 +1719,7 @@ public class Parser60 implements ConfigurationParser {
             }
          }
       }
-   }
-
-   private void parseExecutor(final XMLExtendedStreamReader reader, final ThreadPoolConfigurationBuilder factoryBuilder,
-                              final ClassLoader classLoader) throws XMLStreamException {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         switch (attribute) {
-            case FACTORY: {
-               //factoryBuilder.factory(Util.<ExecutorFactory>getInstance(value, classLoader));
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case PROPERTIES: {
-               //factoryBuilder.withProperties(
-               parseProperties(reader);
-               //);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-      }
+      return TypedProperties.toTypedProperties(properties);
    }
 
    public static Properties parseProperties(final XMLExtendedStreamReader reader) throws XMLStreamException {

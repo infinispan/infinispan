@@ -19,7 +19,6 @@ import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
-import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.DataContainerConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
@@ -103,8 +102,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    private void writeThreads(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration) throws XMLStreamException {
       writer.writeStartElement(Element.THREADS);
       ConcurrentMap<String, DefaultThreadFactory> threadFactories = CollectionFactory.makeConcurrentMap();
-      for (ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.evictionThreadPool(), globalConfiguration.listenerThreadPool(),
-            globalConfiguration.persistenceThreadPool(), globalConfiguration.replicationQueueThreadPool(), globalConfiguration.stateTransferThreadPool())) {
+      for (ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.expirationThreadPool(), globalConfiguration.listenerThreadPool(),
+            globalConfiguration.persistenceThreadPool(), globalConfiguration.replicationQueueThreadPool(), globalConfiguration.stateTransferThreadPool(),
+            globalConfiguration.transport().remoteCommandThreadPool(), globalConfiguration.transport().transportThreadPool())) {
          ThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
          if (threadFactory instanceof DefaultThreadFactory) {
             DefaultThreadFactory tf = (DefaultThreadFactory) threadFactory;
@@ -114,15 +114,14 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       for (DefaultThreadFactory threadFactory : threadFactories.values()) {
          writeThreadFactory(writer, threadFactory);
       }
-      for (ThreadPoolConfiguration threadPoolConfiguration : Arrays.asList(globalConfiguration.evictionThreadPool(), globalConfiguration.listenerThreadPool(),
-            globalConfiguration.persistenceThreadPool(), globalConfiguration.replicationQueueThreadPool(), globalConfiguration.stateTransferThreadPool())) {
-         ThreadPoolExecutorFactory<?> threadPoolFactory = threadPoolConfiguration.threadPoolFactory();
-         if (threadPoolFactory != null) {
-            writer.writeStartElement(THREAD_POOL_FACTORIES.get(threadPoolFactory.getClass().getName()));
-
-            writer.writeEndElement();
-         }
-      }
+      writeThreadPool(writer, "async-pool", globalConfiguration.asyncThreadPool());
+      writeThreadPool(writer, "expiration-pool", globalConfiguration.expirationThreadPool());
+      writeThreadPool(writer, "listener-pool", globalConfiguration.listenerThreadPool());
+      writeThreadPool(writer, "persistence-pool", globalConfiguration.persistenceThreadPool());
+      writeThreadPool(writer, "replication-queue-pool", globalConfiguration.replicationQueueThreadPool());
+      writeThreadPool(writer, "state-transfer-pool", globalConfiguration.stateTransferThreadPool());
+      writeThreadPool(writer, "remote-command-pool", globalConfiguration.transport().remoteCommandThreadPool());
+      writeThreadPool(writer, "transport-pool", globalConfiguration.transport().transportThreadPool());
       writer.writeEndElement();
    }
 
@@ -135,11 +134,47 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writer.writeEndElement();
    }
 
+   private void writeThreadPool(XMLExtendedStreamWriter writer, String name, ThreadPoolConfiguration threadPoolConfiguration) throws XMLStreamException {
+      ThreadPoolExecutorFactory<?> threadPoolFactory = threadPoolConfiguration.threadPoolFactory();
+      if (threadPoolFactory != null) {
+         writer.writeStartElement(THREAD_POOL_FACTORIES.get(threadPoolFactory.getClass().getName()));
+         writer.writeAttribute(Attribute.NAME, name);
+         ThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
+         if (threadFactory instanceof DefaultThreadFactory) {
+            DefaultThreadFactory tf = (DefaultThreadFactory) threadFactory;
+            writer.writeAttribute(Attribute.THREAD_FACTORY, tf.getName());
+         }
+         if (threadPoolFactory instanceof BlockingThreadPoolExecutorFactory) {
+            BlockingThreadPoolExecutorFactory pool = (BlockingThreadPoolExecutorFactory) threadPoolFactory;
+            writer.writeAttribute(Attribute.MAX_THREADS, Integer.toString(pool.maxThreads()));
+            writer.writeAttribute(Attribute.CORE_THREADS, Integer.toString(pool.coreThreads()));
+            writer.writeAttribute(Attribute.QUEUE_LENGTH, Integer.toString(pool.queueLength()));
+            writer.writeAttribute(Attribute.KEEP_ALIVE_TIME, Long.toString(pool.keepAlive()));
+         }
+         writer.writeEndElement();
+      }
+   }
+
    private void writeCacheContainer(XMLExtendedStreamWriter writer, ConfigurationHolder holder) throws XMLStreamException {
       writer.writeStartElement(Element.CACHE_CONTAINER);
       GlobalConfiguration globalConfiguration = holder.getGlobalConfiguration();
       writer.writeAttribute(Attribute.NAME, globalConfiguration.globalJmxStatistics().cacheManagerName());
       globalConfiguration.globalJmxStatistics().attributes().write(writer, GlobalJmxStatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+      if (globalConfiguration.asyncThreadPool().threadPoolFactory() != null) {
+         writer.writeAttribute(Attribute.ASYNC_EXECUTOR, "async-pool");
+      }
+      if (globalConfiguration.expirationThreadPool().threadPoolFactory() != null) {
+         writer.writeAttribute(Attribute.EXPIRATION_EXECUTOR, "expiration-pool");
+      }
+      if (globalConfiguration.listenerThreadPool().threadPoolFactory() != null) {
+         writer.writeAttribute(Attribute.LISTENER_EXECUTOR, "listener-pool");
+      }
+      if (globalConfiguration.persistenceThreadPool().threadPoolFactory() != null) {
+         writer.writeAttribute(Attribute.PERSISTENCE_EXECUTOR, "persistence-pool");
+      }
+      if (globalConfiguration.stateTransferThreadPool().threadPoolFactory() != null) {
+         writer.writeAttribute(Attribute.STATE_TRANSFER_EXECUTOR, "state-transfer-pool");
+      }
       writeTransport(writer, globalConfiguration);
       writeSerialization(writer, globalConfiguration);
       writeJMX(writer, globalConfiguration);
@@ -222,6 +257,12 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          TypedProperties properties = globalConfiguration.transport().properties();
          if (properties.containsKey("stack")) {
             writer.writeAttribute(Attribute.STACK, properties.getProperty("stack"));
+         }
+         if (transport.remoteCommandThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.REMOTE_COMMAND_EXECUTOR, "remote-command-pool");
+         }
+         if (transport.transportThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.EXECUTOR, "transport-pool");
          }
          writer.writeEndElement();
       }
