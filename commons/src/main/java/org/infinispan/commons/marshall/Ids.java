@@ -24,4 +24,5 @@ public interface Ids {
    int LAMBDA_SET_VALUE_IF_EQUALS_RETURN_BOOLEAN = 159;
    int LAMBDA_WITH_METAS = 160;
 
+   int IMMUTABLE_ENTRY = 167;
 }
