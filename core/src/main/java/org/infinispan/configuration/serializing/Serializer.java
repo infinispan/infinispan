@@ -218,6 +218,11 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          attributes.write(writer, TransportConfiguration.MACHINE_ID, Attribute.MACHINE_ID);
          attributes.write(writer, TransportConfiguration.RACK_ID, Attribute.RACK_ID);
          attributes.write(writer, TransportConfiguration.SITE_ID, Attribute.SITE);
+         attributes.write(writer, TransportConfiguration.NODE_NAME, Attribute.NODE_NAME);
+         TypedProperties properties = globalConfiguration.transport().properties();
+         if (properties.containsKey("stack")) {
+            writer.writeAttribute(Attribute.STACK, properties.getProperty("stack"));
+         }
          writer.writeEndElement();
       }
    }
