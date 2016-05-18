@@ -17,8 +17,8 @@ import org.infinispan.distribution.group.Grouper;
  *
  */
 public class GroupsConfiguration {
-   final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder("groupers", null, (Class<List<Grouper<?>>>)(Class<?>)List.class).initializer(new AttributeInitializer<List<Grouper<?>>>() {
+   public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder("groupers", null, (Class<List<Grouper<?>>>)(Class<?>)List.class).initializer(new AttributeInitializer<List<Grouper<?>>>() {
       @Override
       public List<Grouper<?>> initialize() {
          return new LinkedList<Grouper<?>>();
