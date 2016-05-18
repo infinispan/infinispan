@@ -21,6 +21,7 @@ import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.DataContainerConfiguration;
+import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
@@ -39,6 +40,7 @@ import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.configuration.parsing.Parser.TransactionMode;
+import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -173,8 +175,20 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    private void writeDistributedCache(XMLExtendedStreamWriter writer, String name, Configuration configuration) throws XMLStreamException {
       writer.writeStartElement(Element.DISTRIBUTED_CACHE);
+      configuration.clustering().hash().attributes().write(writer);
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
+      GroupsConfiguration groups = configuration.clustering().hash().groups();
+      if (groups.attributes().isModified()) {
+         writer.writeStartElement(Element.GROUPS);
+         groups.attributes().write(writer, GroupsConfiguration.ENABLED);
+         for (Grouper<?> grouper : groups.groupers()) {
+            writer.writeStartElement(Element.GROUPER);
+            writer.writeAttribute(Attribute.CLASS, grouper.getClass().getName());
+            writer.writeEndElement();
+         }
+         writer.writeEndElement();
+      }
       writer.writeEndElement();
    }
 
