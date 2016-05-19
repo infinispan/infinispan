@@ -83,7 +83,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
       });
    }
 
-   @Test(enabled = false, dataProvider = "cacheModeProvider", description = "Enable as soon as ISPN-6300 is fixed.")
+   @Test(dataProvider = "cacheModeProvider")
    public void testDistExecScriptWithCacheManagerAndParams(final CacheMode cacheMode) throws IOException, InterruptedException, ExecutionException {
       withCacheManagers(new MultiCacheManagerCallable(TestCacheManagerFactory.createCacheManager(cacheMode, false),
               TestCacheManagerFactory.createCacheManager(cacheMode, false)) {
