@@ -55,7 +55,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       output.writeObject(entries);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
-      Params.Externalizer.INSTANCE.writeObject(output, params);
+      Params.writeObject(output, params);
    }
 
    @Override
@@ -63,7 +63,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       entries = (Map<? extends K, ? extends V>) input.readObject();
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
-      params = Params.Externalizer.INSTANCE.readObject(input);
+      params = Params.readObject(input);
    }
 
    @Override
