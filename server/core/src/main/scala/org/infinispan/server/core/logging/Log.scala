@@ -95,6 +95,6 @@ trait Log {
 
    def logCreatedNettyEventLoop(eventLoopClassName: String, configuration: String) = log.createdNettyEventLoop(eventLoopClassName, configuration)
 
-   def logEpollNotAvailable(t: Throwable) = log.epollNotAvailable(t)
+   def logEpollNotAvailable(t: Throwable) = log.epollNotAvailable(t.getMessage)
 
 }
