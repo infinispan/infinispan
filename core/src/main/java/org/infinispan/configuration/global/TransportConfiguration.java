@@ -55,14 +55,12 @@ public class TransportConfiguration {
    private final AttributeSet attributes;
    private final ThreadPoolConfiguration transportThreadPool;
    private final ThreadPoolConfiguration remoteCommandThreadPool;
-   private final ThreadPoolConfiguration totalOrderThreadPool;
 
    TransportConfiguration(AttributeSet attributes, ThreadPoolConfiguration transportThreadPool,
-         ThreadPoolConfiguration remoteCommandThreadPool, ThreadPoolConfiguration totalOrderThreadPool) {
+                          ThreadPoolConfiguration remoteCommandThreadPool) {
       this.attributes = attributes.checkProtection();
       this.transportThreadPool = transportThreadPool;
       this.remoteCommandThreadPool = remoteCommandThreadPool;
-      this.totalOrderThreadPool = totalOrderThreadPool;
       clusterName = attributes.attribute(CLUSTER_NAME);
       machineId = attributes.attribute(MACHINE_ID);
       rackId = attributes.attribute(RACK_ID);
@@ -135,10 +133,6 @@ public class TransportConfiguration {
       return remoteCommandThreadPool;
    }
 
-   public ThreadPoolConfiguration totalOrderThreadPool() {
-      return totalOrderThreadPool;
-   }
-
    public AttributeSet attributes() {
       return attributes;
    }
@@ -146,8 +140,7 @@ public class TransportConfiguration {
    @Override
    public String toString() {
       return "TransportConfiguration [attributes=" + attributes + ", transportThreadPool=" + transportThreadPool
-            + ", remoteCommandThreadPool=" + remoteCommandThreadPool + ", totalOrderThreadPool=" + totalOrderThreadPool
-            + "]";
+            + ", remoteCommandThreadPool=" + remoteCommandThreadPool + "]";
    }
 
    @Override
@@ -156,7 +149,6 @@ public class TransportConfiguration {
       int result = 1;
       result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
       result = prime * result + ((remoteCommandThreadPool == null) ? 0 : remoteCommandThreadPool.hashCode());
-      result = prime * result + ((totalOrderThreadPool == null) ? 0 : totalOrderThreadPool.hashCode());
       result = prime * result + ((transportThreadPool == null) ? 0 : transportThreadPool.hashCode());
       return result;
    }
@@ -179,11 +171,6 @@ public class TransportConfiguration {
          if (other.remoteCommandThreadPool != null)
             return false;
       } else if (!remoteCommandThreadPool.equals(other.remoteCommandThreadPool))
-         return false;
-      if (totalOrderThreadPool == null) {
-         if (other.totalOrderThreadPool != null)
-            return false;
-      } else if (!totalOrderThreadPool.equals(other.totalOrderThreadPool))
          return false;
       if (transportThreadPool == null) {
          if (other.transportThreadPool != null)

@@ -35,9 +35,7 @@ The figure above shows the scenario described in the first figure but now commit
 <<_transaction_recovery, Transaction recovery>> is currently not available for Total Order based commit protocol 
 
 ===== Total order executor service
-As previous said, only one thread is delivering the transactions, which makes this thread a possible bottleneck of the system. Although, only conflicting transactions (i.e. which the write set intercepts) needs to be validated in order. For example, if a node delivers _tx1(write(A))_ , _tx2(write(A))_ and _tx3(write(B))_ , _tx2_ must wait until the _tx1_ is completed, but _tx3_ can be validated concurrently with _tx1_ and _tx2_ . After analyzing the transaction dependencies, is possible to enqueue the transactions that conflicts to non-completed transactions and move to a executor service the transaction that can be concurrently validated. 
-
-WARNING: The total order executor service needs an _ExecutorService_ (see the Configuration section). Please make sure that the _ExecutorService_ _does not reject tasks_ otherwise your data becomes _inconsistent_. 
+Since 9.0, total order protocol uses the _remote-command-executor_.
 
 ===== State Transfer
 For simplicity reasons, the total order based commit protocol uses a blocking version of the current state transfer. The main differences are:

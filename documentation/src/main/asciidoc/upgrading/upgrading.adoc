@@ -52,6 +52,9 @@ All Infinispan dependencies from Spring modules (both embedded and remote) are n
 ----
 Additionally there is no Logger implementation specified (since this may vary depending on use case).
 
+=== Total order executor is not removed
+The total order protocol now uses the `remote-command-executor`. The attribute `total-order-executor` in `<container>` tag is removed.
+
 == Upgrading from 8.1 to 8.2
 === Entry Retriever is deprecated
 Entry Retriever is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
