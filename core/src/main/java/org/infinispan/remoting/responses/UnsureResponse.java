@@ -23,6 +23,11 @@ public class UnsureResponse extends ValidResponse {
       return false;
    }
 
+   @Override
+   public Object getResponseValue() {
+      throw new UnsupportedOperationException();
+   }
+
    public static class Externalizer extends AbstractExternalizer<UnsureResponse> {
       @Override
       public void writeObject(ObjectOutput output, UnsureResponse subject) throws IOException {
