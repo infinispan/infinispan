@@ -111,6 +111,7 @@ public interface Param<P> {
       PERSIST, SKIP;
 
       public static final int ID = ParamIds.PERSISTENCE_MODE_ID;
+      private static final PersistenceMode[] CACHED_VALUES = values();
 
       @Override
       public int id() {
@@ -127,6 +128,10 @@ public interface Param<P> {
        */
       public static PersistenceMode defaultValue() {
          return PERSIST;
+      }
+
+      public static PersistenceMode valueOf(int ordinal) {
+         return CACHED_VALUES[ordinal];
       }
    }
 

@@ -46,7 +46,7 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       output.writeObject(value);
       output.writeObject(f);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      Params.Externalizer.INSTANCE.writeObject(output, params);
+      Params.writeObject(output, params);
       output.writeObject(Flag.copyWithoutRemotableFlags(flags));
       output.writeObject(commandInvocationId);
    }
@@ -57,7 +57,7 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       value = (V) input.readObject();
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      params = Params.Externalizer.INSTANCE.readObject(input);
+      params = Params.readObject(input);
       flags = (Set<Flag>) input.readObject();
       commandInvocationId = (CommandInvocationId) input.readObject();
    }

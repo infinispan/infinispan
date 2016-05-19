@@ -64,7 +64,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
-      Params.Externalizer.INSTANCE.writeObject(output, params);
+      Params.writeObject(output, params);
    }
 
    @Override
@@ -72,7 +72,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       keys = MarshallUtil.unmarshallCollection(input, size -> new HashSet<>());
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
-      params = Params.Externalizer.INSTANCE.readObject(input);
+      params = Params.readObject(input);
    }
 
    public boolean isForwarded() {

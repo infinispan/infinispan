@@ -173,5 +173,4 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
 
    int AFFINITY_FUNCTION_PARTITIONER = 165;
 
-   int PARAMS = 167;
 }

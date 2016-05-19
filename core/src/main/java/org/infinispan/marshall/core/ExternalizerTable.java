@@ -390,8 +390,6 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MarshallableFunctionExternalizers.ConstantLambdaExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer());
-
-      addInternalExternalizer(Params.Externalizer.INSTANCE);
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {
