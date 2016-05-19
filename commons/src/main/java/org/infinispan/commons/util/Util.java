@@ -15,6 +15,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
@@ -475,6 +476,13 @@ public final class Util {
          return printArray((byte[]) o, false);
       } else if (o == null) {
          return "null";
+      } else if (o.getClass().isArray()) {
+         int length = Array.getLength(o);
+         if (length == 0) return "[]";
+
+         StringBuilder sb = new StringBuilder("[").append(Array.get(o, 0));
+         for (int i = 1; i < length; ++i) sb.append(", ").append(Array.get(o, i));
+         return sb.append("]").toString();
       } else {
          return o.toString();
       }
