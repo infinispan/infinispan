@@ -58,7 +58,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
-      Params.Externalizer.INSTANCE.writeObject(output, params);
+      Params.writeObject(output, params);
    }
 
    @Override
@@ -66,7 +66,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
       f = (Consumer<WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
-      params = Params.Externalizer.INSTANCE.readObject(input);
+      params = Params.readObject(input);
    }
 
    @Override

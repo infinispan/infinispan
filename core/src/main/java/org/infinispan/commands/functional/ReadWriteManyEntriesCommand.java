@@ -63,7 +63,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
       output.writeObject(entries);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
-      Params.Externalizer.INSTANCE.writeObject(output, params);
+      Params.writeObject(output, params);
    }
 
    @Override
@@ -71,7 +71,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
       entries = (Map<? extends K, ? extends V>) input.readObject();
       f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
-      params = Params.Externalizer.INSTANCE.readObject(input);
+      params = Params.readObject(input);
    }
 
    public boolean isForwarded() {
