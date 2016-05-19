@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
  * @author Adrian Nistor
  * @author Martin Gencur
  */
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 public class RemoteQueryIT extends RemoteQueryBaseIT {
 
