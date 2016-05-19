@@ -842,9 +842,11 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case TOTAL_ORDER_EXECUTOR: {
-               globalBuilder.transport().totalOrderThreadPool().read(
-                     createThreadPoolConfiguration(value, TOTAL_ORDER_EXECUTOR));
-               break;
+               if (reader.getSchema().since(9, 0)) {
+                  throw ParseUtils.unexpectedAttribute(reader, attribute.getLocalName());
+               } else {
+                  log.ignoredAttribute("total order executor", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
+               }
             }
             case REMOTE_COMMAND_EXECUTOR: {
                globalBuilder.transport().remoteCommandThreadPool().read(

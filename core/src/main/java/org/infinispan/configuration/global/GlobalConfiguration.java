@@ -232,16 +232,6 @@ public class GlobalConfiguration {
             '}';
    }
 
-   /**
-    * @deprecated This method always returns null now.
-    * Look for a thread pool named as
-    * {@link TransportConfiguration#totalOrderThreadPool()} instead.
-    */
-   @Deprecated
-   public ExecutorFactoryConfiguration totalOrderExecutor() {
-      return null;
-   }
-
    public boolean isClustered() {
       return transport().transport() != null;
    }

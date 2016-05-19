@@ -323,11 +323,6 @@
         <xs:documentation>Defines the executor used for asynchronous transport communication.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="total-order-executor" type="xs:string" >
-      <xs:annotation>
-        <xs:documentation>Configuration for the total order executor service used to concurrent validate non conflicting transactions.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="remote-command-executor" type="xs:string" >
       <xs:annotation>
         <xs:documentation>Configuration for the executor service used to execute remote commands. Use org.infinispan.executors.WithinThreadExecutorFactory to disable.</xs:documentation>

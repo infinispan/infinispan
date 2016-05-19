@@ -27,7 +27,6 @@ import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.TOTAL_ORDER_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.getDefaultThreadPrio;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 
@@ -47,7 +46,6 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ExecutorService persistenceExecutor;
    private BlockingTaskAwareExecutorService remoteCommandsExecutor;
    private ScheduledExecutorService expirationExecutor;
-   private BlockingTaskAwareExecutorService totalOrderExecutor;
    private ExecutorService stateTransferExecutor;
    private ExecutorService asyncOperationsExecutor;
    private ScheduledExecutorService timeoutExecutor;
@@ -108,16 +106,6 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) remoteCommandsExecutor;
-         } else if (componentName.equals(TOTAL_ORDER_EXECUTOR)) {
-            synchronized (this) {
-               if (totalOrderExecutor == null) {
-                  totalOrderExecutor = createExecutorService(
-                        globalConfiguration.transport().totalOrderThreadPool(),
-                        TOTAL_ORDER_EXECUTOR,
-                        ExecutorServiceType.BLOCKING);
-               }
-            }
-            return (T) totalOrderExecutor;
          } else if (componentName.equals(STATE_TRANSFER_EXECUTOR)) {
             synchronized (this) {
                if (stateTransferExecutor == null) {
@@ -161,7 +149,6 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (persistenceExecutor != null) persistenceExecutor.shutdownNow();
       if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();
       if (expirationExecutor != null) expirationExecutor.shutdownNow();
-      if (totalOrderExecutor != null) totalOrderExecutor.shutdownNow();
       if (stateTransferExecutor != null) stateTransferExecutor.shutdownNow();
       if (timeoutExecutor != null) timeoutExecutor.shutdownNow();
       if (asyncOperationsExecutor != null) asyncOperationsExecutor.shutdownNow();

@@ -4,7 +4,6 @@ import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -202,12 +201,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(1, threadPool.maxThreads());
       assertEquals(0, threadPool.queueLength());
       assertEquals(0, threadPool.keepAlive());
-
-      assertTrue(cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadPoolFactory() instanceof CachedThreadPoolExecutorFactory);
-      threadFactory = cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadFactory();
-      assertEquals("infinispan", threadFactory.threadGroup().getName());
-      assertEquals("%G %i", threadFactory.threadNamePattern());
-      assertEquals(5, threadFactory.initialPriority());
 
       assertTrue(cm.getCacheManagerConfiguration().expirationThreadPool().threadPoolFactory() instanceof ScheduledThreadPoolExecutorFactory);
       threadFactory = cm.getCacheManagerConfiguration().expirationThreadPool().threadFactory();

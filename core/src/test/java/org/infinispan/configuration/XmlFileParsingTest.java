@@ -344,16 +344,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_QUEUE_SIZE, stateTransferThreadPool.queueLength());
       assertEquals(TestCacheManagerFactory.KEEP_ALIVE, stateTransferThreadPool.keepAlive());
 
-      BlockingThreadPoolExecutorFactory totalOrderThreadPool =
-            cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadPoolFactory();
-      assertEquals(16, totalOrderThreadPool.maxThreads());
-      assertEquals(1, totalOrderThreadPool.coreThreads());
-      assertEquals(1000, totalOrderThreadPool.keepAlive());
-      assertEquals(0, totalOrderThreadPool.queueLength());
-      DefaultThreadFactory totalOrderThreadFactory =
-            cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadFactory();
-      assertEquals("TotalOrderValidatorThread", totalOrderThreadFactory.threadNamePattern());
-
       DefaultThreadFactory evictionThreadFactory =
             cm.getCacheManagerConfiguration().expirationThreadPool().threadFactory();
       assertEquals("ExpirationThread", evictionThreadFactory.threadNamePattern());

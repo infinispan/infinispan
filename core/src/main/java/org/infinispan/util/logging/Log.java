@@ -1423,4 +1423,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Global security authorization should be enabled if cache authorization enabled.", id = 414)
    CacheConfigurationException globalSecurityAuthShouldBeEnabled();
 
+   @LogMessage(level = WARN)
+   @Message(value = "The %s is no longer supported since version %s. Attribute %s on line %d will be ignored.", id = 415)
+   void ignoredAttribute(String componentName, String version, String attributeName, int line);
 }
