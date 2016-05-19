@@ -51,8 +51,16 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
    /**
     * Used for conditional commands, to update the status of the command on the originator
     * based on the result of its execution on the primary owner.
+    *
+    * @deprecated since 9.1
     */
-   void updateStatusFromRemoteResponse(Object remoteResponse);
+   @Deprecated
+   default void updateStatusFromRemoteResponse(Object remoteResponse) {}
+
+   /**
+    * Make subsequent invocations of {@link #isSuccessful()} return <code>false</code>.
+    */
+   void fail();
 
    /**
     * Indicates whether the command is write-only, meaning that it makes no

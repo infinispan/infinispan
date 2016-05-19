@@ -422,7 +422,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             collector.primaryException(CompletableFutures.extractException(throwable));
          } else {
             WriteResponse response = (WriteResponse) responses.values().iterator().next();
-            command.updateStatusFromRemoteResponse(response.getReturnValue());
+            if (!response.isCommandSuccessful()) {
+               command.fail();
+            }
             collector.primaryResult(response.getReturnValue(), response.isCommandSuccessful());
          }
          return null;

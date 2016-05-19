@@ -46,6 +46,11 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    }
 
    @Override
+   public void fail() {
+      successful = false;
+   }
+
+   @Override
    public String toString() {
       return getClass().getSimpleName() +
             " {key=" + toStr(key) +

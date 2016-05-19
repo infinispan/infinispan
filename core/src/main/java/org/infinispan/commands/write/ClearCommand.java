@@ -99,8 +99,8 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // Do nothing
+   public void fail() {
+      throw new UnsupportedOperationException();
    }
 
    @Override

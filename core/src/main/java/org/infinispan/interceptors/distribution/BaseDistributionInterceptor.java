@@ -57,6 +57,7 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -280,9 +281,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             command.setValueMatcher(command.getValueMatcher().matcherForRetry());
             CompletableFutures.rethrowException(t);
 
-            Object primaryResult = getResponseFromPrimaryOwner(primaryOwner, responses);
-            command.updateStatusFromRemoteResponse(primaryResult);
-            return primaryResult;
+            ValidResponse primaryResponse = getResponseFromPrimaryOwner(primaryOwner, responses);
+            if (!primaryResponse.isSuccessful()) {
+               command.fail();
+            }
+            // We expect only successful/unsuccessful responses, not unsure
+            return primaryResponse.getResponseValue();
          }));
       } else {
          return null;
@@ -330,25 +334,22 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
+   private ValidResponse getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
       Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
       if (fromPrimaryOwner == null) {
-         if (trace) log.tracef("Primary owner %s returned null", primaryOwner);
-         return null;
+         throw new IllegalStateException("Missing response from primary owner!");
       }
-      if (fromPrimaryOwner.isSuccessful()) {
-         return ((SuccessfulResponse) fromPrimaryOwner).getResponseValue();
+      if (fromPrimaryOwner.isValid()) {
+         return (ValidResponse) fromPrimaryOwner;
       }
-
-      if (addressResponseMap.get(primaryOwner) instanceof CacheNotFoundResponse) {
+      if (fromPrimaryOwner instanceof CacheNotFoundResponse) {
          // This means the cache wasn't running on the primary owner, so the command wasn't executed.
          // We throw an OutdatedTopologyException, StateTransferInterceptor will catch the exception and
          // it will then retry the command.
          throw new OutdatedTopologyException("Cache is no longer running on primary owner " + primaryOwner);
       }
-
       Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
-      throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
+      throw new CacheException("Got unexpected response from primary owner: " + fromPrimaryOwner, cause);
    }
 
    @Override
@@ -688,7 +689,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       int currentTopologyId = cacheTopology.getTopologyId();
       int cmdTopology = command.getTopologyId();
       if (cmdTopology < currentTopologyId) {
-         return UnsuccessfulResponse.INSTANCE;
+         return UnsuccessfulResponse.EMPTY;
       } else {
          // If cmdTopology > currentTopologyId: the topology of this node is outdated
          // TODO: This situation won't happen as soon as we'll implement 4-phase topology change in ISPN-5021
