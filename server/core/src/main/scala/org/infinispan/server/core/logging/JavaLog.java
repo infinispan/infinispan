@@ -121,6 +121,6 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    CacheConfigurationException noSniDomainConfigured();
 
    @LogMessage(level = WARN)
-   @Message(value = "EPoll based Eventloop not available, using NIO instead", id = 5028)
-   void epollNotAvailable(@Cause Throwable error);
+   @Message(value = "Native Epoll transport not available, using NIO instead: %s", id = 5028)
+   void epollNotAvailable(String message);
 }
