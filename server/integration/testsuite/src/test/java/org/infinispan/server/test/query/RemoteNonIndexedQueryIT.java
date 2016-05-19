@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
  * @author Martin Gencur
  * @since 7.0
  */
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 public class RemoteNonIndexedQueryIT extends RemoteQueryIT {
 

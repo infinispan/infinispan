@@ -66,7 +66,7 @@ public class DefaultEmbeddedCacheManagerTest {
         @SuppressWarnings("unchecked")
         AdvancedCache<Object, Object> cache = mock(AdvancedCache.class);
 
-        when(this.manager.<Object, Object>getCache("default", true)).thenReturn(cache);
+        when(this.manager.getCache("default", true)).thenReturn(cache);
         when(cache.getAdvancedCache()).thenReturn(cache);
 
         Cache<Object, Object> result = this.subject.getCache();
@@ -83,8 +83,8 @@ public class DefaultEmbeddedCacheManagerTest {
         @SuppressWarnings("unchecked")
         AdvancedCache<Object, Object> otherCache = mock(AdvancedCache.class);
 
-        when(this.manager.<Object, Object>getCache("default", true)).thenReturn(defaultCache);
-        when(this.manager.<Object, Object>getCache("other", true)).thenReturn(otherCache);
+        when(this.manager.getCache("default", true)).thenReturn(defaultCache);
+        when(this.manager.getCache("other", true)).thenReturn(otherCache);
         when(defaultCache.getAdvancedCache()).thenReturn(defaultCache);
         when(otherCache.getAdvancedCache()).thenReturn(otherCache);
 

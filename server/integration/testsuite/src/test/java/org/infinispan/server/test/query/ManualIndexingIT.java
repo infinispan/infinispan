@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
  * @author vchepeli@redhat.com
  *
  */
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 public class ManualIndexingIT extends RemoteQueryBaseIT {
 

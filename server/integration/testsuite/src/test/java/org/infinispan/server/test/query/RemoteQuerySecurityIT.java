@@ -51,7 +51,7 @@ import org.junit.runner.RunWith;
  * @author Adrian Nistor
  * @since 7.2
  */
-@Category({Queries.class})
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 @WithRunningServer({@RunningServer(name = "remote-query-security")})
 public class RemoteQuerySecurityIT {
@@ -60,7 +60,7 @@ public class RemoteQuerySecurityIT {
    protected RemoteInfinispanServer server;
 
    private RemoteCacheManagerFactory rcmFactory;
-   private Map<String, RemoteCacheManager> remoteCacheManagers = new HashMap<String, RemoteCacheManager>();
+   private Map<String, RemoteCacheManager> remoteCacheManagers = new HashMap<>();
 
    private static final String TEST_CACHE_INDEXED = "test_cache_indexed";
    private static final String TEST_CACHE_NOT_INDEXED = "test_cache_not_indexed";
