@@ -220,6 +220,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       }
    }
 
+   @Override
+   public void fail() {
+      successful = false;
+   }
+
    private Object performPut(MVCCEntry e, InvocationContext ctx) {
       Object entryValue = e.getValue();
       Object o;

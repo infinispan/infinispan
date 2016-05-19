@@ -151,6 +151,11 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    }
 
    @Override
+   public void fail() {
+      // TODO: Customise this generated block
+   }
+
+   @Override
    public boolean canBlock() {
       return false;  // TODO: Customise this generated block
    }

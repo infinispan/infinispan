@@ -194,6 +194,11 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    @Override
+   public void fail() {
+      successful = false;
+   }
+
+   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }

@@ -108,5 +108,13 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Pa
       this.params = params;
    }
 
+   @Override
+   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+      // TODO: Customise this generated block
+   }
 
+   @Override
+   public void fail() {
+      // TODO: Customise this generated block
+   }
 }

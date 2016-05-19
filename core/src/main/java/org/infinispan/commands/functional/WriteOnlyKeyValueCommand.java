@@ -78,11 +78,6 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitWriteOnlyKeyValueCommand(ctx, this);
    }

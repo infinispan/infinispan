@@ -112,6 +112,11 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
    }
 
    @Override
+   public void fail() {
+      // Do nothing
+   }
+
+   @Override
    public boolean isReturnValueExpected() {
       return false;
    }

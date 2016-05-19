@@ -111,11 +111,6 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;  // TODO: Customise this generated block
    }

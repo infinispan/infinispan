@@ -177,4 +177,9 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    public void updateStatusFromRemoteResponse(Object remoteResponse) {
       // Do nothing
    }
+
+   @Override
+   public void fail() {
+      // Do nothing
+   }
 }

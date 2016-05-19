@@ -42,4 +42,14 @@ public abstract class AbstractWriteKeyCommand<K> extends AbstractDataWriteComman
    public Params getParams() {
       return params;
    }
+
+   @Override
+   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+      // TODO: Customise this generated block
+   }
+
+   @Override
+   public void fail() {
+      successful = false;
+   }
 }

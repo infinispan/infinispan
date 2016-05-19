@@ -214,6 +214,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
+   public void fail() {
+      successful = false;
+   }
+
+   @Override
    public final boolean isReturnValueExpected() {
      return true;
    }
