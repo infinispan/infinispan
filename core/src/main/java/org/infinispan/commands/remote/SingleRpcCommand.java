@@ -98,6 +98,11 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
    }
 
    @Override
+   public boolean isSuccessful() {
+      return command.isSuccessful();
+   }
+
+   @Override
    public boolean canBlock() {
       return command.canBlock();
    }

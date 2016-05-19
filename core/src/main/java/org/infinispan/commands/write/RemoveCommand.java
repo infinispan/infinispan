@@ -185,11 +185,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // Remove without an expected value can't fail
-      if (value != null) {
-         successful = (Boolean) remoteResponse;
-      }
+   public void fail() {
+      successful = false;
    }
 
    @Override

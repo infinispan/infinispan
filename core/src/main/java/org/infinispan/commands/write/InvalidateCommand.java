@@ -153,7 +153,8 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
+   public void fail() {
+      throw new UnsupportedOperationException();
    }
 
    @Override

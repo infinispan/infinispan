@@ -89,11 +89,6 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadWriteKeyCommand(ctx, this);
    }

@@ -83,11 +83,6 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public boolean isWriteOnly() {
       return true;
    }
