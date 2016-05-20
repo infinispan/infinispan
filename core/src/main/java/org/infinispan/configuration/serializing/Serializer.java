@@ -354,6 +354,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       if (configuration.deadlockDetection().enabled()) {
          writer.writeAttribute(Attribute.SPIN_DURATION, Long.toString(configuration.deadlockDetection().spinDuration()));
       }
+      configuration.unsafe().attributes().write(writer);
       writeBackup(writer, configuration);
       configuration.sites().backupFor().attributes().write(writer, Element.BACKUP_FOR.getLocalName());
       configuration.locking().attributes().write(writer, Element.LOCKING.getLocalName());

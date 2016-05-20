@@ -401,4 +401,8 @@
          <backupFor remoteCache="test" remoteSite="test1"/>
       </sites>
    </namedCache>
+
+   <namedCache name="withUnsafe">
+      <unsafe unreliableReturnValues="true" />
+   </namedCache>
 </infinispan>
