@@ -7,7 +7,7 @@ package org.infinispan.configuration.cache;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public interface LoaderConfigurationChildBuilder<S> extends ConfigurationChildBuilder {
+public interface LoaderConfigurationChildBuilder<S> extends PersistenceConfigurationChildBuilder {
 
 
 }
