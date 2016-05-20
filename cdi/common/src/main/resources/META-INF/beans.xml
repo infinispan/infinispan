@@ -12,5 +12,7 @@
               <weld:exclude name="org.infinispan.jcache.**">
                      <weld:if-class-available name="!javax.cache.Cache"/>
               </weld:exclude>
+              <weld:exclude name="org.apache.logging.log4j.**" />
+              <weld:exclude name="infinispan.**" />
        </weld:scan>
 </beans>
