@@ -2,17 +2,15 @@
 <beans xmlns="http://java.sun.com/xml/ns/javaee"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:weld="http://jboss.org/schema/weld/beans"
-       xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_1.xsd
+       xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/beans_1_0.xsd
                            http://jboss.org/schema/weld/beans http://jboss.org/schema/weld/beans_1_1.xsd">
        <weld:scan>
-              <!-- Turn on CDI only if CDI API is available -->
-              <weld:exclude name="**" />
-              <weld:include name="org.infinispan.cdi.**">
-                     <weld:if-class-available name="javax.cache.Cache"/>
-              </weld:include>
+              <weld:exclude name="org.infinispan.cdi.**">
+                     <weld:if-class-available name="!javax.cache.Cache"/>
+              </weld:exclude>
 
-              <weld:include name="org.infinispan.jcache.**">
-                     <weld:if-class-available name="javax.cache.Cache"/>
-              </weld:include>
+              <weld:exclude name="org.infinispan.jcache.**">
+                     <weld:if-class-available name="!javax.cache.Cache"/>
+              </weld:exclude>
        </weld:scan>
 </beans>
