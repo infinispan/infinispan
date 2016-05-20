@@ -15,12 +15,22 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.stream.impl.intops.object.*;
-import org.infinispan.stream.impl.termop.SingleRunOperation;
+import org.infinispan.stream.impl.intops.object.DistinctOperation;
+import org.infinispan.stream.impl.intops.object.FilterOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToDoubleOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToIntOperation;
+import org.infinispan.stream.impl.intops.object.FlatMapToLongOperation;
+import org.infinispan.stream.impl.intops.object.LimitOperation;
+import org.infinispan.stream.impl.intops.object.MapOperation;
+import org.infinispan.stream.impl.intops.object.MapToDoubleOperation;
+import org.infinispan.stream.impl.intops.object.MapToIntOperation;
+import org.infinispan.stream.impl.intops.object.MapToLongOperation;
+import org.infinispan.stream.impl.intops.object.PeekOperation;
 import org.infinispan.stream.impl.termop.object.ForEachBiOperation;
 import org.infinispan.stream.impl.termop.object.ForEachOperation;
 import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
-import org.infinispan.util.*;
+import org.infinispan.util.CloseableSuppliedIterator;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.CloseableSupplier;
 import org.infinispan.util.function.SerializableBiConsumer;
@@ -39,7 +49,20 @@ import org.infinispan.util.function.SerializableToLongFunction;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
@@ -48,14 +71,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Implementation of {@link CacheStream} that provides support for lazily distributing stream methods to appropriate
@@ -244,21 +276,19 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public CacheStream<R> distinct() {
-      DistinctOperation op = DistinctOperation.getInstance();
-      markDistinct(op, IntermediateType.OBJ);
-      return addIntermediateOperation(op);
+      // Distinct is applied remotely as well
+      addIntermediateOperation(DistinctOperation.getInstance());
+      return new IntermediateCacheStream<>(this).distinct();
    }
 
    @Override
    public CacheStream<R> sorted() {
-      markSorted(IntermediateType.OBJ);
-      return addIntermediateOperation(SortedOperation.getInstance());
+      return new IntermediateCacheStream<>(this).sorted();
    }
 
    @Override
    public CacheStream<R> sorted(Comparator<? super R> comparator) {
-      markSorted(IntermediateType.OBJ);
-      return addIntermediateOperation(new SortedComparatorOperation<>(comparator));
+      return new IntermediateCacheStream<>(this).sorted(comparator);
    }
 
    @Override
@@ -278,16 +308,14 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public CacheStream<R> limit(long maxSize) {
-      LimitOperation op = new LimitOperation<>(maxSize);
-      markDistinct(op, IntermediateType.OBJ);
-      return addIntermediateOperation(op);
+      // Limit is applied remotely as well
+      addIntermediateOperation(new LimitOperation<>(maxSize));
+      return new IntermediateCacheStream<>(this).limit(maxSize);
    }
 
    @Override
    public CacheStream<R> skip(long n) {
-      SkipOperation op = new SkipOperation<>(n);
-      markSkip(IntermediateType.OBJ);
-      return addIntermediateOperation(op);
+      return new IntermediateCacheStream<>(this).skip(n);
    }
 
    // Now we have terminal operators
@@ -414,20 +442,15 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public <R1, A> R1 collect(Collector<? super R, A, R1> collector) {
-      if (sorted) {
-         // If we have a sorted map then we only have to worry about it being sorted if the collector is not
-         // unordered
-         sorted = !collector.characteristics().contains(Collector.Characteristics.UNORDERED);
-      }
       // If it is not an identify finish we have to prevent the remote finisher, and apply locally only after
       // everything is combined.
       if (collector.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)) {
          return performOperation(TerminalFunctions.collectorFunction(collector), true,
-                 (BinaryOperator<R1>) collector.combiner(), null, false);
+                 (BinaryOperator<R1>) collector.combiner(), null);
       } else {
          // Need to wrap collector to force identity finish
          A intermediateResult = performOperation(TerminalFunctions.collectorFunction(
-                 new IdentifyFinishCollector<>(collector)), true, collector.combiner(), null, false);
+                 new IdentifyFinishCollector<>(collector)), true, collector.combiner(), null);
          return collector.finisher().apply(intermediateResult);
       }
    }
@@ -506,16 +529,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public Optional<R> findFirst() {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         Iterator<R> iterator = iterator();
-         SingleRunOperation<Optional<R>, R, Stream<R>, Stream<R>> op = new SingleRunOperation<>(localIntermediateOperations,
-                 () -> StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                         iterator, Spliterator.CONCURRENT | Spliterator.NONNULL), parallel),
-                 (Stream<R> r) -> r.findFirst());
-         return op.performOperation();
-      } else {
-         return findAny();
-      }
+      // We aren't sorted, so just do findAny
+      return findAny();
    }
 
    @Override
@@ -535,11 +550,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public Iterator<R> iterator() {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation((Stream<R> s) -> s.iterator());
-      } else {
-         return remoteIterator();
-      }
+      return remoteIterator();
    }
 
    Iterator<R> remoteIterator() {
@@ -954,18 +965,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public void forEachOrdered(Consumer<? super R> action) {
-      if (sorted) {
-         Iterator<R> iterator = iterator();
-         SingleRunOperation<Void, R,Stream<R>, Stream<R>> op = new SingleRunOperation<>(localIntermediateOperations,
-                 () -> StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                         iterator, Spliterator.CONCURRENT | Spliterator.NONNULL), parallel), (Stream<R> s) -> {
-            s.forEachOrdered(action);
-            return null;
-         });
-         op.performOperation();
-      } else {
-         forEach(action);
-      }
+      // We aren't sorted, so just do forEach
+      forEach(action);
    }
 
    @Override
@@ -975,7 +976,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                  Object[] array = Arrays.copyOf(v1, v1.length + v2.length);
                  System.arraycopy(v2, 0, array, v1.length, v2.length);
                  return array;
-              }, null, false);
+              }, null);
    }
 
    @Override
@@ -986,7 +987,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                  System.arraycopy(v1, 0, array, 0, v1.length);
                  System.arraycopy(v2, 0, array, v1.length, v2.length);
                  return array;
-              }, null, false);
+              }, null);
    }
 
    @Override
@@ -1063,32 +1064,5 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    protected DistributedLongCacheStream longCacheStream() {
       return new DistributedLongCacheStream(this);
-   }
-
-   /**
-    * Given two SegmentCompletionListener, return a SegmentCompletionListener that
-    * executes both in sequence, even if the first throws an exception, and if both
-    * throw exceptions, add any exceptions thrown by the second as suppressed
-    * exceptions of the first.
-    */
-   protected static CacheStream.SegmentCompletionListener composeWithExceptions(CacheStream.SegmentCompletionListener a,
-                                                                                CacheStream.SegmentCompletionListener b) {
-      return (segments) -> {
-         try {
-            a.segmentCompleted(segments);
-         }
-         catch (Throwable e1) {
-            try {
-               b.segmentCompleted(segments);
-            }
-            catch (Throwable e2) {
-               try {
-                  e1.addSuppressed(e2);
-               } catch (Throwable ignore) {}
-            }
-            throw e1;
-         }
-         b.segmentCompleted(segments);
-      };
    }
 }

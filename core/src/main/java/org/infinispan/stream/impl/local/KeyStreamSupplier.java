@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * Stream supplier that is to be used when the underlying stream is composed by key instances.  This supplier will do
  * the proper filtering by assuming each element is the key itself.
  */
-public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<K> {
+public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<K, Stream<K>> {
    private static final Log log = LogFactory.getLog(KeyStreamSupplier.class);
    private static final boolean trace = log.isTraceEnabled();
 

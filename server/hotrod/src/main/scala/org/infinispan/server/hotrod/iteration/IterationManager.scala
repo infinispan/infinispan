@@ -1,9 +1,9 @@
 package org.infinispan.server.hotrod.iteration
 
 import java.util.stream.{Collectors, Stream}
-import java.util.{BitSet => JavaBitSet, Collections, Set => JavaSet, UUID}
+import java.util.{Collections, UUID, BitSet => JavaBitSet, Set => JavaSet}
 
-import org.infinispan.CacheStream
+import org.infinispan.{BaseCacheStream, CacheStream}
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration
@@ -33,7 +33,7 @@ trait IterationManager {
    def activeIterations: Int
 }
 
-class IterationSegmentsListener extends CacheStream.SegmentCompletionListener {
+class IterationSegmentsListener extends BaseCacheStream.SegmentCompletionListener {
    private val finished = mutable.Set[Integer]()
    private var justFinished = mutable.Set[Integer]()
 

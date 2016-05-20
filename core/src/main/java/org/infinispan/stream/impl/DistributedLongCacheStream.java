@@ -17,12 +17,11 @@ import org.infinispan.stream.impl.intops.primitive.l.MapToDoubleLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.MapToIntLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.MapToObjLongOperation;
 import org.infinispan.stream.impl.intops.primitive.l.PeekLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.SkipLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.SortedLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjLongOperation;
+import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableLongBinaryOperator;
 import org.infinispan.util.function.SerializableLongConsumer;
 import org.infinispan.util.function.SerializableLongFunction;
@@ -31,7 +30,6 @@ import org.infinispan.util.function.SerializableLongToDoubleFunction;
 import org.infinispan.util.function.SerializableLongToIntFunction;
 import org.infinispan.util.function.SerializableLongUnaryOperator;
 import org.infinispan.util.function.SerializableObjLongConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableSupplier;
 
 import java.util.Arrays;
@@ -40,10 +38,11 @@ import java.util.LongSummaryStatistics;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.PrimitiveIterator;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.LongBinaryOperator;
 import java.util.function.LongConsumer;
 import java.util.function.LongFunction;
@@ -148,15 +147,14 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public LongCacheStream distinct() {
-      DistinctLongOperation op = DistinctLongOperation.getInstance();
-      markDistinct(op, IntermediateType.LONG);
-      return addIntermediateOperation(op);
+      // Distinct is applied remotely as well
+      addIntermediateOperation(DistinctLongOperation.getInstance());
+      return new IntermediateLongCacheStream(this).distinct();
    }
 
    @Override
    public LongCacheStream sorted() {
-      markSorted(IntermediateType.LONG);
-      return addIntermediateOperation(SortedLongOperation.getInstance());
+      return new IntermediateLongCacheStream(this).sorted();
    }
 
    @Override
@@ -183,16 +181,14 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public LongCacheStream limit(long maxSize) {
-      LimitLongOperation op = new LimitLongOperation(maxSize);
-      markDistinct(op, IntermediateType.LONG);
-      return addIntermediateOperation(op);
+      // Limit is applied remotely as well
+      addIntermediateOperation(new LimitLongOperation(maxSize));
+      return new IntermediateLongCacheStream(this).limit(maxSize);
    }
 
    @Override
    public LongCacheStream skip(long n) {
-      SkipLongOperation op = new SkipLongOperation(n);
-      markSkip(IntermediateType.LONG);
-      return addIntermediateOperation(op);
+      return new IntermediateLongCacheStream(this).skip(n);
    }
 
    // Reset are terminal operators
@@ -245,14 +241,8 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public void forEachOrdered(LongConsumer action) {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         performIntermediateRemoteOperation((LongStream s) -> {
-            s.forEachOrdered(action);
-            return null;
-         });
-      } else {
-         forEach(action);
-      }
+      // Our stream is not sorted so just call forEach
+      forEach(action);
    }
 
    @Override
@@ -262,7 +252,7 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
                  long[] array = Arrays.copyOf(v1, v1.length + v2.length);
                  System.arraycopy(v2, 0, array, v1.length, v2.length);
                  return array;
-              }, null, false);
+              }, null);
    }
 
    @Override
@@ -412,11 +402,8 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public OptionalLong findFirst() {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation((LongStream s) -> s.findFirst());
-      } else {
-         return findAny();
-      }
+      // Our stream is not sorted so just call findAny
+      return findAny();
    }
 
    @Override
@@ -438,12 +425,7 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
 
    @Override
    public PrimitiveIterator.OfLong iterator() {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         LongStream stream = performIntermediateRemoteOperation(Function.identity());
-         return stream.iterator();
-      } else {
-         return remoteIterator();
-      }
+      return remoteIterator();
    }
 
    PrimitiveIterator.OfLong remoteIterator() {
@@ -481,6 +463,65 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
    @Override
    public long count() {
       return performOperation(TerminalFunctions.countLongFunction(), true, (i1, i2) -> i1 + i2, null);
+   }
+
+   // These are the custom added methods for cache streams
+
+   @Override
+   public LongCacheStream sequentialDistribution() {
+      parallelDistribution = false;
+      return this;
+   }
+
+   @Override
+   public LongCacheStream parallelDistribution() {
+      parallelDistribution = true;
+      return this;
+   }
+
+   @Override
+   public LongCacheStream
+   filterKeySegments(Set<Integer> segments) {
+      segmentsToFilter = segments;
+      return this;
+   }
+
+   @Override
+   public LongCacheStream filterKeys(Set<?> keys) {
+      keysToFilter = keys;
+      return this;
+   }
+
+   @Override
+   public LongCacheStream distributedBatchSize(int batchSize) {
+      distributedBatchSize = batchSize;
+      return this;
+   }
+
+   @Override
+   public LongCacheStream segmentCompletionListener(SegmentCompletionListener listener) {
+      if (segmentCompletionListener == null) {
+         segmentCompletionListener = listener;
+      } else {
+         segmentCompletionListener = composeWithExceptions(segmentCompletionListener, listener);
+      }
+      return this;
+   }
+
+   @Override
+   public LongCacheStream disableRehashAware() {
+      rehashAware = false;
+      return this;
+   }
+
+   @Override
+   public LongCacheStream timeout(long timeout, TimeUnit unit) {
+      if (timeout <= 0) {
+         throw new IllegalArgumentException("Timeout must be greater than 0");
+      }
+      this.timeout = timeout;
+      this.timeoutUnit = unit;
+      return this;
    }
 
    protected <R> DistributedCacheStream<R> cacheStream() {

@@ -19,7 +19,7 @@ import java.util.stream.Stream;
  * Stream supplier that is to be used when the underlying stream is composed by {@link CacheEntry} instances.  This
  * supplier will do the proper filtering by key based on the CacheEntry key.
  */
-public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>> {
+public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamSupplier<CacheEntry<K, V>, Stream<CacheEntry<K, V>>> {
    private static final Log log = LogFactory.getLog(EntryStreamSupplier.class);
    private static final boolean trace = log.isTraceEnabled();
 

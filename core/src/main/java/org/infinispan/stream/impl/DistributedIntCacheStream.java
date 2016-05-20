@@ -18,21 +18,19 @@ import org.infinispan.stream.impl.intops.primitive.i.MapToDoubleIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.MapToLongIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.MapToObjIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.PeekIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.SkipIntOperation;
-import org.infinispan.stream.impl.intops.primitive.i.SortedIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjIntOperation;
+import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableIntBinaryOperator;
 import org.infinispan.util.function.SerializableIntConsumer;
+import org.infinispan.util.function.SerializableIntFunction;
 import org.infinispan.util.function.SerializableIntPredicate;
 import org.infinispan.util.function.SerializableIntToDoubleFunction;
 import org.infinispan.util.function.SerializableIntToLongFunction;
 import org.infinispan.util.function.SerializableIntUnaryOperator;
 import org.infinispan.util.function.SerializableObjIntConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableIntFunction;
 import org.infinispan.util.function.SerializableSupplier;
 
 import java.util.Arrays;
@@ -41,10 +39,11 @@ import java.util.Iterator;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.PrimitiveIterator;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
@@ -149,15 +148,14 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
 
    @Override
    public IntCacheStream distinct() {
-      DistinctIntOperation op = DistinctIntOperation.getInstance();
-      markDistinct(op, IntermediateType.INT);
-      return addIntermediateOperation(op);
+      // Distinct is applied remotely as well
+      addIntermediateOperation(DistinctIntOperation.getInstance());
+      return new IntermediateIntCacheStream(this).distinct();
    }
 
    @Override
    public IntCacheStream sorted() {
-      markSorted(IntermediateType.INT);
-      return addIntermediateOperation(SortedIntOperation.getInstance());
+      return new IntermediateIntCacheStream(this).sorted();
    }
 
    @Override
@@ -172,16 +170,14 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
 
    @Override
    public IntCacheStream limit(long maxSize) {
-      LimitIntOperation op = new LimitIntOperation(maxSize);
-      markDistinct(op, IntermediateType.INT);
-      return addIntermediateOperation(op);
+      // Limit is applied remotely as well
+      addIntermediateOperation(new LimitIntOperation(maxSize));
+      return new IntermediateIntCacheStream(this).limit(maxSize);
    }
 
    @Override
    public IntCacheStream skip(long n) {
-      SkipIntOperation op = new SkipIntOperation(n);
-      markSkip(IntermediateType.INT);
-      return addIntermediateOperation(op);
+      return new IntermediateIntCacheStream(this).skip(n);
    }
 
    @Override
@@ -253,14 +249,8 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
 
    @Override
    public void forEachOrdered(IntConsumer action) {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         performIntermediateRemoteOperation((IntStream s) -> {
-            s.forEachOrdered(action);
-            return null;
-         });
-      } else {
-         forEach(action);
-      }
+      // We aren't sorted, so just do forEach
+      forEach(action);
    }
 
    @Override
@@ -270,7 +260,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
                  int[] array = Arrays.copyOf(v1, v1.length + v2.length);
                  System.arraycopy(v2, 0, array, v1.length, v2.length);
                  return array;
-              }, null, false);
+              }, null);
    }
 
    @Override
@@ -420,11 +410,8 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
 
    @Override
    public OptionalInt findFirst() {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         return performIntermediateRemoteOperation((IntStream s) -> s.findFirst());
-      } else {
-         return findAny();
-      }
+      // We aren't sorted, so just do findAny
+      return findAny();
    }
 
    @Override
@@ -446,12 +433,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
 
    @Override
    public PrimitiveIterator.OfInt iterator() {
-      if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         IntStream stream = performIntermediateRemoteOperation(Function.identity());
-         return stream.iterator();
-      } else {
-         return remoteIterator();
-      }
+      return remoteIterator();
    }
 
    PrimitiveIterator.OfInt remoteIterator() {
@@ -489,6 +471,65 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    @Override
    public long count() {
       return performOperation(TerminalFunctions.countIntFunction(), true, (i1, i2) -> i1 + i2, null);
+   }
+
+   // These are the custom added methods for cache streams
+
+   @Override
+   public IntCacheStream sequentialDistribution() {
+      parallelDistribution = false;
+      return this;
+   }
+
+   @Override
+   public IntCacheStream parallelDistribution() {
+      parallelDistribution = true;
+      return this;
+   }
+
+   @Override
+   public IntCacheStream
+   filterKeySegments(Set<Integer> segments) {
+      segmentsToFilter = segments;
+      return this;
+   }
+
+   @Override
+   public IntCacheStream filterKeys(Set<?> keys) {
+      keysToFilter = keys;
+      return this;
+   }
+
+   @Override
+   public IntCacheStream distributedBatchSize(int batchSize) {
+      distributedBatchSize = batchSize;
+      return this;
+   }
+
+   @Override
+   public IntCacheStream segmentCompletionListener(SegmentCompletionListener listener) {
+      if (segmentCompletionListener == null) {
+         segmentCompletionListener = listener;
+      } else {
+         segmentCompletionListener = composeWithExceptions(segmentCompletionListener, listener);
+      }
+      return this;
+   }
+
+   @Override
+   public IntCacheStream disableRehashAware() {
+      rehashAware = false;
+      return this;
+   }
+
+   @Override
+   public IntCacheStream timeout(long timeout, TimeUnit unit) {
+      if (timeout <= 0) {
+         throw new IllegalArgumentException("Timeout must be greater than 0");
+      }
+      this.timeout = timeout;
+      this.timeoutUnit = unit;
+      return this;
    }
 
    protected <R> DistributedCacheStream<R> cacheStream() {
