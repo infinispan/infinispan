@@ -465,13 +465,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writer.writeStartElement(Element.BACKUPS);
          for (BackupConfiguration backup : sites.allBackups()) {
             writer.writeStartElement(Element.BACKUP);
-            AttributeSet attributes = backup.attributes();
-            attributes.write(writer, BackupConfiguration.ENABLED, Attribute.ENABLED);
-            attributes.write(writer, BackupConfiguration.SITE, Attribute.SITE);
-            attributes.write(writer, BackupConfiguration.STRATEGY, Attribute.STRATEGY);
-            attributes.write(writer, BackupConfiguration.REPLICATION_TIMEOUT, Attribute.TIMEOUT);
-            attributes.write(writer, BackupConfiguration.USE_TWO_PHASE_COMMIT, Attribute.USE_TWO_PHASE_COMMIT);
-            attributes.write(writer, BackupConfiguration.FAILURE_POLICY_CLASS, Attribute.FAILURE_POLICY_CLASS);
+            backup.attributes().write(writer);
             AttributeSet stateTransfer = backup.stateTransfer().attributes();
             if (stateTransfer.isModified()) {
                writer.writeStartElement(Element.STATE_TRANSFER);

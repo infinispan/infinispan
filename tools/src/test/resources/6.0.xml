@@ -387,5 +387,18 @@
       </persistence>
    </namedCache>
 
-
+   <namedCache name="withSitesEnabled">
+      <sites>
+         <backups>
+            <backup site="backupTest" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="17000" useTwoPhaseCommit="true">
+               <takeOffline afterFailures="15" minTimeToWait="12000"/>
+            </backup>
+            <backup site="backupTest1" strategy="ASYNC" backupFailurePolicy="CUSTOM" timeout="18000"
+                    useTwoPhaseCommit="false" enabled="false" failurePolicyClass="org.infinispan.xsite.CountingCustomFailurePolicy">
+               <takeOffline afterFailures="17" minTimeToWait="13000"/>
+            </backup>
+         </backups>
+         <backupFor remoteCache="test" remoteSite="test1"/>
+      </sites>
+   </namedCache>
 </infinispan>
