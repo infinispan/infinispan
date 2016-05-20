@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import org.infinispan.configuration.cache.LoaderConfigurationChildBuilder;
+import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 
 /**
  * JdbcStoreConfigurationChildBuilder.
@@ -25,4 +26,15 @@ public interface JdbcStoreConfigurationChildBuilder<S extends AbstractJdbcStoreC
     * Configures this JDBC Cache Store to use a single connection to the database
     */
    SimpleConnectionFactoryConfigurationBuilder<S> simpleConnection();
+
+   /**
+    * Use the specified {@link ConnectionFactory} to handle connection to the database
+    */
+   <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(Class<C> klass);
+
+   /**
+    * Use the specified {@link ConnectionFactoryConfigurationBuilder} to configure connections to
+    * the database
+    */
+   <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(C builder);
 }
