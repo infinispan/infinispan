@@ -48,7 +48,6 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
    protected final Log log = LogFactory.getLog(getClass());
 
    protected final Queue<IntermediateOperation> intermediateOperations;
-   protected Queue<IntermediateOperation> localIntermediateOperations;
    protected final Address localAddress;
    protected final DistributionManager dm;
    protected final Supplier<CacheStream<CacheEntry>> supplier;
@@ -62,10 +61,6 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
    protected Runnable closeRunnable = null;
 
    protected boolean parallel;
-   protected boolean sorted = false;
-   protected boolean distinct = false;
-
-   protected IntermediateType intermediateType = IntermediateType.NONE;
 
    protected Boolean parallelDistribution;
    protected boolean rehashAware = true;
@@ -101,7 +96,6 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
    protected AbstractCacheStream(AbstractCacheStream<T, S, S2> other) {
       this.intermediateOperations = other.intermediateOperations;
-      this.localIntermediateOperations = other.localIntermediateOperations;
       this.localAddress = other.localAddress;
       this.dm = other.dm;
       this.supplier = other.supplier;
@@ -115,10 +109,6 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       this.closeRunnable = other.closeRunnable;
 
       this.parallel = other.parallel;
-      this.sorted = other.sorted;
-      this.distinct = other.distinct;
-
-      this.intermediateType = other.intermediateType;
 
       this.parallelDistribution = other.parallelDistribution;
       this.rehashAware = other.rehashAware;
@@ -136,55 +126,20 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       this.timeoutUnit = other.timeoutUnit;
    }
 
-   protected void markSorted(IntermediateType type) {
-      if (intermediateType == IntermediateType.NONE) {
-         intermediateType = type;
-         if (localIntermediateOperations == null) {
-            localIntermediateOperations = new ArrayDeque<>();
-         }
-      }
-      sorted = true;
-   }
-
-   protected void markDistinct(IntermediateOperation<T, S, T, S> intermediateOperation, IntermediateType type) {
-      intermediateOperation.handleInjection(registry);
-      if (intermediateType == IntermediateType.NONE) {
-         intermediateType = type;
-         if (localIntermediateOperations == null) {
-            localIntermediateOperations = new ArrayDeque<>();
-            intermediateOperations.add(intermediateOperation);
-         }
-      }
-      distinct = true;
-   }
-
-   protected void markSkip(IntermediateType type) {
-      if (intermediateType == IntermediateType.NONE) {
-         intermediateType = type;
-         if (localIntermediateOperations == null) {
-            localIntermediateOperations = new ArrayDeque<>();
-         }
-      }
-      distinct = true;
-   }
-
    protected S2 addIntermediateOperation(IntermediateOperation<T, S, T, S> intermediateOperation) {
       intermediateOperation.handleInjection(registry);
-      if (localIntermediateOperations == null) {
-         intermediateOperations.add(intermediateOperation);
-      } else {
-         localIntermediateOperations.add(intermediateOperation);
-      }
+      addIntermediateOperation(intermediateOperations, intermediateOperation);
       return unwrap();
    }
 
    protected void addIntermediateOperationMap(IntermediateOperation<T, S, ?, ?> intermediateOperation) {
       intermediateOperation.handleInjection(registry);
-      if (localIntermediateOperations == null) {
-         intermediateOperations.add(intermediateOperation);
-      } else {
-         localIntermediateOperations.add(intermediateOperation);
-      }
+      addIntermediateOperation(intermediateOperations, intermediateOperation);
+   }
+
+   protected void addIntermediateOperation(Queue<IntermediateOperation> intermediateOperations,
+           IntermediateOperation<T, S, ?, ?> intermediateOperation) {
+      intermediateOperations.add(intermediateOperation);
    }
 
    protected abstract S2 unwrap();
@@ -212,7 +167,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
    @Override
    public S2 unordered() {
-      sorted = false;
+      // This by default is always unordered
       return unwrap();
    }
 
@@ -235,21 +190,11 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
    <R> R performOperation(Function<? super S2, ? extends R> function, boolean retryOnRehash, BinaryOperator<R> accumulator,
                           Predicate<? super R> earlyTerminatePredicate) {
-      return performOperation(function, retryOnRehash, accumulator, earlyTerminatePredicate, true);
-   }
-
-   <R> R performOperation(Function<? super S2, ? extends R> function, boolean retryOnRehash, BinaryOperator<R> accumulator,
-           Predicate<? super R> earlyTerminatePredicate, boolean ignoreSorting) {
-      // These operations are not affected by sorting, only by distinct
-      if (intermediateType.shouldUseIntermediate(!ignoreSorting && sorted, distinct)) {
-         return performIntermediateRemoteOperation(function);
+      ResultsAccumulator<R> remoteResults = new ResultsAccumulator<>(accumulator);
+      if (rehashAware) {
+         return performOperationRehashAware(function, retryOnRehash, remoteResults, earlyTerminatePredicate);
       } else {
-         ResultsAccumulator<R> remoteResults = new ResultsAccumulator<>(accumulator);
-         if (rehashAware) {
-            return performOperationRehashAware(function, retryOnRehash, remoteResults, earlyTerminatePredicate);
-         } else {
-            return performOperation(function, remoteResults, earlyTerminatePredicate);
-         }
+         return performOperation(function, remoteResults, earlyTerminatePredicate);
       }
    }
 
@@ -762,73 +707,30 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       }
    }
 
-   enum IntermediateType {
-      OBJ,
-      INT,
-      DOUBLE,
-      LONG,
-      NONE {
-         @Override
-         public boolean shouldUseIntermediate(boolean sorted, boolean distinct) {
-            return false;
+   /**
+    * Given two SegmentCompletionListener, return a SegmentCompletionListener that
+    * executes both in sequence, even if the first throws an exception, and if both
+    * throw exceptions, add any exceptions thrown by the second as suppressed
+    * exceptions of the first.
+    */
+   protected static CacheStream.SegmentCompletionListener composeWithExceptions(CacheStream.SegmentCompletionListener a,
+           CacheStream.SegmentCompletionListener b) {
+      return (segments) -> {
+         try {
+            a.segmentCompleted(segments);
          }
+         catch (Throwable e1) {
+            try {
+               b.segmentCompleted(segments);
+            }
+            catch (Throwable e2) {
+               try {
+                  e1.addSuppressed(e2);
+               } catch (Throwable ignore) {}
+            }
+            throw e1;
+         }
+         b.segmentCompleted(segments);
       };
-
-      public boolean shouldUseIntermediate(boolean sorted, boolean distinct) {
-         return sorted || distinct;
-      }
-   }
-
-   <R> R performIntermediateRemoteOperation(Function<? super S2, ? extends R> function) {
-      switch (intermediateType) {
-         case OBJ:
-            return performObjIntermediateRemoteOperation(function);
-         case INT:
-            return performIntegerIntermediateRemoteOperation(function);
-         case DOUBLE:
-            return performDoubleIntermediateRemoteOperation(function);
-         case LONG:
-            return performLongIntermediateRemoteOperation(function);
-         default:
-            throw new IllegalStateException("No intermediate state set");
-      }
-   }
-
-   <R> R performIntegerIntermediateRemoteOperation(Function<? super S2, ? extends R> function) {
-      // TODO: once we don't have to box for primitive iterators we can remove this copy
-      Queue<IntermediateOperation> copyOperations = new ArrayDeque<>(localIntermediateOperations);
-      PrimitiveIterator.OfInt iterator = new DistributedIntCacheStream(this).remoteIterator();
-      SingleRunOperation<R, T, S, S2> op = new SingleRunOperation<>(copyOperations,
-              () -> StreamSupport.intStream(Spliterators.spliteratorUnknownSize(
-                      iterator, Spliterator.CONCURRENT), parallel), function);
-      return op.performOperation();
-   }
-
-   <R> R performDoubleIntermediateRemoteOperation(Function<? super S2, ? extends R> function) {
-      // TODO: once we don't have to box for primitive iterators we can remove this copy
-      Queue<IntermediateOperation> copyOperations = new ArrayDeque<>(localIntermediateOperations);
-      PrimitiveIterator.OfDouble iterator = new DistributedDoubleCacheStream(this).remoteIterator();
-      SingleRunOperation<R, T, S, S2> op = new SingleRunOperation<>(copyOperations,
-              () -> StreamSupport.doubleStream(Spliterators.spliteratorUnknownSize(
-                      iterator, Spliterator.CONCURRENT), parallel), function);
-      return op.performOperation();
-   }
-
-   <R> R performLongIntermediateRemoteOperation(Function<? super S2, ? extends R> function) {
-      // TODO: once we don't have to box for primitive iterators we can remove this copy
-      Queue<IntermediateOperation> copyOperations = new ArrayDeque<>(localIntermediateOperations);
-      PrimitiveIterator.OfLong iterator = new DistributedLongCacheStream(this).remoteIterator();
-      SingleRunOperation<R, T, S, S2> op = new SingleRunOperation<>(copyOperations,
-              () -> StreamSupport.longStream(Spliterators.spliteratorUnknownSize(
-                      iterator, Spliterator.CONCURRENT), parallel), function);
-      return op.performOperation();
-   }
-
-   <R> R performObjIntermediateRemoteOperation(Function<? super S2, ? extends R> function) {
-      Iterator<Object> iterator = new DistributedCacheStream<>(this).remoteIterator();
-      SingleRunOperation<R, T, S, S2> op = new SingleRunOperation<>(localIntermediateOperations,
-              () -> StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                      iterator, Spliterator.CONCURRENT), parallel), function);
-      return op.performOperation();
    }
 }

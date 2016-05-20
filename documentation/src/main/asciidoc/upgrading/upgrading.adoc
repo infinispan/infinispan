@@ -31,6 +31,10 @@ The classes `TriConsumer`, `CloseableSupplier`, `SerializableRunnable`,
 `SerializableFunction` & `SerializableCallable` have all been moved from
 the `org.infinispan.util` package to the `org.infinispan.util.function` package.
 
+=== SegmentCompletionListener interface has moved
+The interface `SegmentCompletionListener` has moved from the interface
+`org.infinispan.CacheStream` to the new `org.infinispan.BaseCacheStream`.
+
 === Spring module dependency changes
 All Infinispan dependencies from Spring modules (both embedded and remote) are now in provided scope. One can decide whether use small jars or uber jars but they need to be added to the classpath on client side. Here is an example:
 [source,xml]

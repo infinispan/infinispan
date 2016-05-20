@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2 extends S> implements BaseStream<T, S> {
    protected final Log log = LogFactory.getLog(getClass());
 
-   protected final StreamSupplier<T> streamSupplier;
+   protected final StreamSupplier<T, S> streamSupplier;
    protected final ComponentRegistry registry;
 
    protected final Collection<Runnable> onCloseRunnables;
@@ -32,10 +32,10 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
    protected Set<?> keysToFilter;
    protected boolean parallel;
 
-   public interface StreamSupplier<R> {
-      Stream<R> buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter);
+   public interface StreamSupplier<T, S extends BaseStream<T, S>> {
+      S buildStream(Set<Integer> segmentsToFilter, Set<?> keysToFilter);
 
-      CloseableIterator<R> removableIterator(CloseableIterator<R> realIterator);
+      CloseableIterator<T> removableIterator(CloseableIterator<T> realIterator);
    }
 
    /**
@@ -43,7 +43,7 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
     * @param parallel
     * @param registry
     */
-   public AbstractLocalCacheStream(StreamSupplier<T> streamSupplier, boolean parallel, ComponentRegistry registry) {
+   public AbstractLocalCacheStream(StreamSupplier<T, S> streamSupplier, boolean parallel, ComponentRegistry registry) {
       this.streamSupplier = streamSupplier;
       this.registry = registry;
 
@@ -54,7 +54,7 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
    }
 
    AbstractLocalCacheStream(AbstractLocalCacheStream<?, ?, ?> original) {
-      this.streamSupplier = (StreamSupplier<T>) original.streamSupplier;
+      this.streamSupplier = (StreamSupplier<T, S>) original.streamSupplier;
       this.registry = original.registry;
 
       this.onCloseRunnables = original.onCloseRunnables;
@@ -79,7 +79,7 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
 
    @Override
    public boolean isParallel() {
-      return createStream().isParallel();
+      return parallel;
    }
 
    @Override
