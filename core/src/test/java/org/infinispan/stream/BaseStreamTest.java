@@ -661,6 +661,22 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       }
    }
 
+   public void testObjPointlessSortMap() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      assertEquals(range, cache.size());
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      IntSummaryStatistics stats = createStream(entrySet).sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()))
+              .mapToInt(Map.Entry::getKey).summaryStatistics();
+      assertEquals(range, stats.getCount());
+      assertEquals(0, stats.getMin());
+      assertEquals(9, stats.getMax());
+   }
+
    // IntStream tests
 
    static final SerializableToIntFunction<Map.Entry<Integer, String>> toInt = Map.Entry::getKey;
