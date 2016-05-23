@@ -47,9 +47,9 @@ public class KnownComponentNames {
 
    public static final Collection<String> PER_CACHE_COMPONENT_NAMES = Collections.singletonList(CACHE_MARSHALLER);
 
-   private static final Map<String, Integer> DEFAULT_THREAD_COUNT = new HashMap<>(4);
-   private static final Map<String, Integer> DEFAULT_QUEUE_SIZE = new HashMap<>(4);
-   private static final Map<String, Integer> DEFAULT_THREAD_PRIORITY = new HashMap<>(6);
+   private static final Map<String, Integer> DEFAULT_THREAD_COUNT = new HashMap<>(8);
+   private static final Map<String, Integer> DEFAULT_QUEUE_SIZE = new HashMap<>(8);
+   private static final Map<String, Integer> DEFAULT_THREAD_PRIORITY = new HashMap<>(9);
 
    static {
       DEFAULT_THREAD_COUNT.put(ASYNC_NOTIFICATION_EXECUTOR, 1);
