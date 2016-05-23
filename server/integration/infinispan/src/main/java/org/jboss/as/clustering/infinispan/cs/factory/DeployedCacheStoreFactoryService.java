@@ -2,7 +2,11 @@ package org.jboss.as.clustering.infinispan.cs.factory;
 
 import org.infinispan.persistence.factory.CacheStoreFactory;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
-import org.jboss.msc.service.*;
+import org.jboss.msc.service.Service;
+import org.jboss.msc.service.ServiceName;
+import org.jboss.msc.service.StartContext;
+import org.jboss.msc.service.StartException;
+import org.jboss.msc.service.StopContext;
 
 /**
  * Service wrapper for {@link org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactory}.
