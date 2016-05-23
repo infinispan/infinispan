@@ -24,6 +24,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
+/**
+ * Tests for remote iteration in compat mode with primitive values and default (JBoss) marshalling.
+ */
 @RunWith(Arquillian.class)
 @Category({HotRodSingleNode.class, HotRodClustered.class})
 public class HotRodRemoteCacheCompatIT {
@@ -32,7 +35,7 @@ public class HotRodRemoteCacheCompatIT {
    private static final int CACHE_SIZE = 1000;
    private static RemoteCacheManager remoteCacheManager;
 
-   private RemoteCache<Integer, String> remoteCache;
+   private RemoteCache<Object, Object> remoteCache;
 
    @InfinispanResource("container1")
    RemoteInfinispanServer server1;
@@ -57,7 +60,7 @@ public class HotRodRemoteCacheCompatIT {
    }
 
    @Test
-   public void testIteration() {
+   public void testIterationWithPrimitiveValues() {
       remoteCache.clear();
       IntStream.range(0, CACHE_SIZE).forEach(k -> remoteCache.put(k, "value" + k));
       Set<Object> keys = new HashSet<>();
@@ -66,6 +69,4 @@ public class HotRodRemoteCacheCompatIT {
       }
       assertEquals(CACHE_SIZE, keys.size());
    }
-
-
 }
