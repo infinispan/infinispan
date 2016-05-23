@@ -1,6 +1,6 @@
 package org.infinispan.jcache.remote;
 
-import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.jcache.remote.logging.Log;
@@ -24,12 +24,12 @@ interface RemoteCacheAccess {
 
    String MANAGED_ACCESS = "infinispan.jcache.remote.managed_access";
 
-   static RemoteCacheAccess createCacheAccess(Configuration clientCfg, Properties p) {
+   static RemoteCacheAccess createCacheAccess(RemoteCacheContainer rm, Properties p) {
       TypedProperties tp = new TypedProperties(p);
       boolean managedAccess = tp.getBooleanProperty(MANAGED_ACCESS, true);
       return managedAccess
-            ? new ManagedAccess(clientCfg.servers().get(0).host(), 9990)
-            : UnmanagedAccess.INSTANCE;
+            ? new ManagedAccess(rm.getConfiguration().servers().get(0).host(), 9990)
+            : new UnmanagedAccess(rm);
    }
 
    final class ManagedAccess implements RemoteCacheAccess {
@@ -253,15 +253,18 @@ interface RemoteCacheAccess {
    }
 
    final class UnmanagedAccess implements RemoteCacheAccess {
-      private static final Log log = LogFactory.getLog(UnmanagedAccess.class, Log.class);
-      static final UnmanagedAccess INSTANCE = new UnmanagedAccess();
+      static final Log log = LogFactory.getLog(UnmanagedAccess.class, Log.class);
+      private final RemoteCacheContainer rm;
 
-      private UnmanagedAccess() {
-         // No-op
+      UnmanagedAccess(RemoteCacheContainer rm) {
+         this.rm = rm;
       }
 
       @Override
       public void addCacheIfAbsent(String cacheName) {
+         if (rm.getCache(cacheName) != null)
+            throw log.cacheNamePredefined(cacheName);
+
          throw log.createCacheNotAllowedWithoutManagement();
       }
 

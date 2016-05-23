@@ -41,7 +41,7 @@ public class JCacheManager extends AbstractJCacheManager {
       builder.forceReturnValues(true);
       cmForceReturnValue = new RemoteCacheManager(builder.build(), true);
 
-      cacheAccess = RemoteCacheAccess.createCacheAccess(configuration, properties);
+      cacheAccess = RemoteCacheAccess.createCacheAccess(cm, properties);
    }
 
    private ConfigurationBuilder getConfigurationBuilder(Properties userProperties) {
