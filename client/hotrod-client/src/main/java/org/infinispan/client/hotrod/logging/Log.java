@@ -226,8 +226,8 @@ public interface Log extends BasicLogger {
    IllegalStateException queryParameterNotSet(String filterConverterFactoryName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Server not reachable whilst closing iteration '%s'", id = 4061)
-   void ignoringServerUnreachable(String iterationId);
+   @Message(value = "Ignoring error when closing whilst closing iteration '%s'", id = 4061)
+   void ignoringErrorDuringIterationClose(String iterationId, @Cause Exception e);
 
    @LogMessage(level = DEBUG)
    @Message(value = "Started iteration '%s'", id = 4062)
