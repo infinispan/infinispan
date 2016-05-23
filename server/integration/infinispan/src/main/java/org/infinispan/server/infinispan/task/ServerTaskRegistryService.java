@@ -3,7 +3,11 @@ package org.infinispan.server.infinispan.task;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
-import org.jboss.msc.service.*;
+import org.jboss.msc.service.Service;
+import org.jboss.msc.service.ServiceName;
+import org.jboss.msc.service.StartContext;
+import org.jboss.msc.service.StartException;
+import org.jboss.msc.service.StopContext;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com

@@ -29,7 +29,7 @@ public interface TaskEngine {
    /**
     * Executes the named task on the specified cache, passing a map of named parameters.
     *
-    * @param name the name of the task
+    * @param taskName the name of the task
     * @param context a task context
     * @return
     */
