@@ -17,7 +17,8 @@ import org.jboss.msc.service.StopContext;
 @Scope(Scopes.GLOBAL)
 public class ServerTaskRegistryService implements Service<ServerTaskRegistry> {
    public static final ServiceName SERVICE_NAME = ServiceName.JBOSS.append("DeployedTaskRegistry");
-   private static final ServerTaskRegistry registry = new ServerTaskRegistryImpl();
+
+   private final ServerTaskRegistry registry = new ServerTaskRegistryImpl();
 
    @Override
    public ServerTaskRegistry getValue() throws IllegalStateException, IllegalArgumentException {
