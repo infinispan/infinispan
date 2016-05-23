@@ -41,6 +41,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLogger;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,7 +50,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentMap;
@@ -417,9 +417,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager);
          }
          Optional<GlobalStateManager> globalStateManager = cacheManager.getGlobalComponentRegistry().getOptionalComponent(GlobalStateManager.class);
-         Optional<ScopedPersistentState> persistedState = globalStateManager.flatMap(gsm -> {
-            return gsm.readScopedState(cacheName);
-         });
+         Optional<ScopedPersistentState> persistedState = globalStateManager.flatMap(gsm -> gsm.readScopedState(cacheName));
          return new ClusterCacheStatus(cacheName, availabilityStrategy, this, transport, persistedState, persistentUUIDManager);
       });
    }
@@ -585,7 +583,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private void executeOnClusterAsync(final ReplicableCommand command, final int timeout, boolean totalOrder, boolean distributed) {
       if (!totalOrder) {
          // invoke the command on the local node
-         asyncTransportExecutor.submit((Runnable) () -> {
+         asyncTransportExecutor.submit(() -> {
             try {
                if (trace) log.tracef("Attempting to execute command on self: %s", command);
                gcr.wireDependencies(command);
@@ -716,6 +714,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             handleClusterView(e.isMergeView(), e.getViewId());
             return null;
          });
+         EventLogger eventLogger = eventLogManager.getEventLogger().scope(e.getLocalAddress());
+         logNodeJoined(eventLogger, e.getNewMembers(), e.getOldMembers());
+         logNodeLeft(eventLogger, e.getNewMembers(), e.getOldMembers());
       }
    }
 
@@ -742,4 +743,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       values.put(origin, ((SuccessfulResponse) response).getResponseValue());
    }
 
+   private static void logNodeJoined(EventLogger logger, List<Address> newMembers, List<Address> oldMembers) {
+      newMembers.stream()
+            .filter(address -> !oldMembers.contains(address))
+            .forEach(address -> logger.info(EventLogCategory.CLUSTER, MESSAGES.nodeJoined(address)));
+   }
+
+   private static void logNodeLeft(EventLogger logger, List<Address> newMembers, List<Address> oldMembers) {
+      oldMembers.stream()
+            .filter(address -> !newMembers.contains(address))
+            .forEach(address -> logger.info(EventLogCategory.CLUSTER, MESSAGES.nodeLeft(address)));
+   }
 }
