@@ -5,7 +5,7 @@ import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.stream.impl.AbstractDelegatingCacheStream;
+import org.infinispan.util.AbstractDelegatingCacheStream;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 
 import java.util.Iterator;

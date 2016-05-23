@@ -1,4 +1,4 @@
-package org.infinispan.stream.impl;
+package org.infinispan.util;
 
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheStream;
