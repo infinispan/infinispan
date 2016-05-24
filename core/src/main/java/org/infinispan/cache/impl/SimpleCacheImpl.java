@@ -64,6 +64,7 @@ import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -739,25 +740,25 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       putAll(data);
-      return CompletableFuture.completedFuture(null);
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       putAll(data, lifespan, unit);
-      return CompletableFuture.completedFuture(null);
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-      return CompletableFuture.completedFuture(null);
+      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletableFuture<Void> clearAsync() {
       clear();
-      return CompletableFuture.completedFuture(null);
+      return CompletableFutures.completedNull();
    }
 
    @Override

@@ -282,7 +282,7 @@ public class ClusterExecutorImpl implements ClusterExecutor {
       } else if (localFuture != null) {
          return localFuture.handle((r, t) -> null);
       } else {
-         return CompletableFuture.completedFuture(null);
+         return CompletableFutures.completedNull();
       }
    }
 

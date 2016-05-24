@@ -45,6 +45,7 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -182,14 +183,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             if (trace) {
                log.tracef("No valid values found for key '%s' (topologyId=%s).", key, currentTopologyId);
             }
-            return CompletableFuture.completedFuture(null);
+            return CompletableFutures.completedNull();
          }
          } else { // lastTopologyId > currentTopologyId || cacheTopology.getPendingCH() == null
             // We have not received a valid value from the pending CH owners either, and the topology id hasn't changed
          if (trace) {
             log.tracef("No valid values found for key '%s' (topologyId=%s).", key, currentTopologyId);
          }
-         return CompletableFuture.completedFuture(null);
+         return CompletableFutures.completedNull();
       }
 
       return invokeClusterGetCommandRemotely(targets, rpcOptionsBuilder, getCommand, key).thenCompose(

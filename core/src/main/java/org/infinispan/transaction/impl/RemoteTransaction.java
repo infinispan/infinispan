@@ -8,6 +8,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.InvalidTransactionException;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -31,7 +32,7 @@ public class RemoteTransaction extends AbstractCacheTransaction implements Clone
 
    private static final Log log = LogFactory.getLog(RemoteTransaction.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final CompletableFuture<Void> INITIAL_FUTURE = CompletableFuture.completedFuture(null);
+   private static final CompletableFuture<Void> INITIAL_FUTURE = CompletableFutures.completedNull();
 
    /**
     * This int should be set to the highest topology id for transactions received via state transfer. During state
