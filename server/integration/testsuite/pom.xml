@@ -926,6 +926,16 @@
             </properties>
         </profile>
         <profile>
+            <id>suite.queries</id>
+            <properties>
+                <suite.manual.phase>none</suite.manual.phase>
+                <suite.queries.phase>integration-test</suite.queries.phase>
+                <suite.client.local.phase>none</suite.client.local.phase>
+                <suite.client.dist.phase>none</suite.client.dist.phase>
+                <suite.client.repl.phase>none</suite.client.repl.phase>
+            </properties>
+        </profile>
+        <profile>
             <id>suite.rolling.upgrades</id>
             <properties>
                 <suite.manual.phase>none</suite.manual.phase>
