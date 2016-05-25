@@ -121,13 +121,8 @@ public class EagerIteratorTest {
       }
 
       @Override
-      public List<Integer> getIndexesOfThis() {
+      public Object getEntityInstance() {
          return null;
-      }
-
-      @Override
-      public boolean isProjectThis() {
-         return false;
       }
 
       @Override

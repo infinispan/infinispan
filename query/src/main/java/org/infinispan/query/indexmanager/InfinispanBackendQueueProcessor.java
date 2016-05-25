@@ -8,6 +8,7 @@ import javax.transaction.TransactionManager;
 
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
+import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
 import org.hibernate.search.backend.spi.BackendQueueProcessor;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
@@ -29,7 +30,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
  * @since 7.0
  */
-final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
+final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
 
    private static final Log log = LogFactory.getLog(InfinispanBackendQueueProcessor.class, Log.class);
 
@@ -102,11 +103,6 @@ final class InfinispanBackendQueueProcessor implements BackendQueueProcessor {
    @Override
    public void indexMappingChanged() {
       //FIXME implement me? Not sure it's needed.
-   }
-
-   @Override
-   public void flushAndReleaseResources() {
-      //Placeholder to implement Index Affinity: No-Op is ok until that's implemented.
    }
 
    boolean isMasterLocal() {
