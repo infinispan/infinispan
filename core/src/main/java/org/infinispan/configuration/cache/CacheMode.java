@@ -37,7 +37,12 @@ public enum CacheMode {
    /**
     * Async DIST
     */
-   DIST_ASYNC;
+   DIST_ASYNC,
+
+   /**
+    * Synchronous scattered cache
+    */
+   SCATTERED_SYNC;
 
    /**
     * Returns true if the mode is invalidation, either sync or async.
@@ -47,7 +52,7 @@ public enum CacheMode {
    }
 
    public boolean isSynchronous() {
-      return this == REPL_SYNC || this == DIST_SYNC || this == INVALIDATION_SYNC || this == LOCAL;
+      return this == REPL_SYNC || this == DIST_SYNC || this == INVALIDATION_SYNC || this == SCATTERED_SYNC || this == LOCAL;
    }
 
    public boolean isClustered() {
@@ -62,8 +67,10 @@ public enum CacheMode {
       return this == REPL_SYNC || this == REPL_ASYNC;
    }
 
+   public boolean isScattered() { return this == SCATTERED_SYNC; }
+
    public boolean needsStateTransfer() {
-      return this == REPL_ASYNC || this == REPL_SYNC || this == DIST_ASYNC || this == DIST_SYNC;
+      return isReplicated() || isDistributed() || isScattered();
    }
 
    public CacheMode toSync() {
@@ -87,6 +94,8 @@ public enum CacheMode {
             return INVALIDATION_ASYNC;
          case DIST_SYNC:
             return DIST_ASYNC;
+         case SCATTERED_SYNC:
+            throw new IllegalArgumentException("Scattered mode does not have asynchronous mode.");
          default:
             return this;
       }
@@ -103,6 +112,8 @@ public enum CacheMode {
          case DIST_SYNC:
          case DIST_ASYNC:
             return "DISTRIBUTED";
+         case SCATTERED_SYNC:
+            return "SCATTERED";
          case LOCAL:
             return "LOCAL";
       }

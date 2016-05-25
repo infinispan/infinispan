@@ -30,10 +30,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -537,7 +534,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
             return forwardedAnswer.answer(invocation);
          }
-      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyCollection());
+      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyBoolean(), anyCollection());
       TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
 }

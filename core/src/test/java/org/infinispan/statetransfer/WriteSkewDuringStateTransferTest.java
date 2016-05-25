@@ -30,10 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
 import static org.testng.AssertJUnit.*;
@@ -328,7 +326,7 @@ rebalance_start
 
    }
 
-   public static class ConsistentHashFactoryImpl extends BaseControlledConsistentHashFactory {
+   public static class ConsistentHashFactoryImpl extends BaseControlledConsistentHashFactory.Default {
 
       public ConsistentHashFactoryImpl() {
          super(1);

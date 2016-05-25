@@ -33,7 +33,7 @@ import java.util.concurrent.Future;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "api.NonTxCacheTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC })
 public class NonTxCacheTest extends MultipleCacheManagersTest {
 
    /**

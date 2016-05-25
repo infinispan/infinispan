@@ -345,10 +345,15 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return A list with size numMembersInCluster containing a list of cacheNames.length caches
     */
    protected <K, V> List<List<Cache<K, V>>> createClusteredCaches(int numMembersInCluster,
-         ConfigurationBuilder defaultConfigBuilder, String[] cacheNames) {
+         ConfigurationBuilder defaultConfigBuilder, String... cacheNames) {
+      return createClusteredCaches(numMembersInCluster, defaultConfigBuilder, new TransportFlags(), cacheNames);
+   }
+
+   protected <K, V> List<List<Cache<K, V>>> createClusteredCaches(int numMembersInCluster,
+         ConfigurationBuilder defaultConfigBuilder, TransportFlags transportFlags, String... cacheNames) {
       List<List<Cache<K, V>>> allCaches = new ArrayList<>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfigBuilder);
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfigBuilder, transportFlags);
          List<Cache<K, V>> currentCacheManagerCaches = new ArrayList<>(cacheNames.length);
 
          for (String cacheName : cacheNames) {
@@ -700,7 +705,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected MagicKey getKeyForCache(Cache<?, ?> primary, Cache<?, ?>... backup) {
-      return new MagicKey(primary, backup);
+      if (cacheMode == null || !cacheMode.isScattered()) {
+         return new MagicKey(primary, backup);
+      } else {
+         return new MagicKey(primary);
+      }
    }
 
    protected void assertNotLocked(final String cacheName, final Object key) {

@@ -56,7 +56,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      cchf = new ControlledConsistentHashFactory(new int[]{0, 1}, new int[]{1, 2},
+      cchf = new ControlledConsistentHashFactory.Default(new int[]{0, 1}, new int[]{1, 2},
                                             new int[]{2, 3}, new int[]{3, 0});
       configBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configBuilder.clustering().partitionHandling().enabled(true);

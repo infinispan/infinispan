@@ -1,7 +1,9 @@
 package org.infinispan.partitionhandling;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "partitionhandling.PartitionHappeningTest")
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
    public PartitionHappeningTest() {

@@ -34,4 +34,8 @@ public class CacheException extends RuntimeException {
    public CacheException(String msg, Throwable cause) {
       super(msg, cause);
    }
+
+   public CacheException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+      super(message, cause, enableSuppression, writableStackTrace);
+   }
 }

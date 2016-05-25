@@ -50,10 +50,10 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
       defaultBuilder = defaultCacheConfigurationBuilder();
       distOneBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
       distOneBuilder.clustering().hash().numOwners(1).numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory(0));
+            .consistentHashFactory(new ControlledConsistentHashFactory.Default(0));
       distTwoBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
       distTwoBuilder.clustering().hash().numOwners(1).numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory(1));
+            .consistentHashFactory(new ControlledConsistentHashFactory.Default(1));
 
       server1 = addHotRodServer();
       server2 = addHotRodServer();

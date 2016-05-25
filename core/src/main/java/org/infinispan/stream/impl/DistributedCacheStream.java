@@ -632,7 +632,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    private void rehashAwareIteration(AtomicBoolean complete, Consumer<R> consumer, IteratorSupplier<R> supplier, boolean iteratorParallelDistribute) {
-      ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
       SegmentListenerNotifier<R> listenerNotifier;
       if (segmentCompletionListener != null) {
          listenerNotifier = new SegmentListenerNotifier<>(
@@ -641,17 +640,23 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       } else {
          listenerNotifier = null;
       }
-      KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(segmentInfoCH,
-              iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
-              listenerNotifier, keyEquivalence);
+      KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(dm.getReadConsistentHash(),
+         iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
+         listenerNotifier, keyEquivalence);
+      Function<DistributionManager, ConsistentHash> hashProvider;
+      if (cacheMode.isScattered()) {
+         hashProvider = dm -> dm.getWriteConsistentHash();
+      } else {
+         hashProvider = dm -> dm.getReadConsistentHash();
+      }
       Thread thread = Thread.currentThread();
       executor.execute(() -> {
          try {
             log.tracef("Thread %s submitted iterator request for stream", thread);
             Set<Integer> segmentsToProcess = segmentsToFilter == null ?
-                    new ReplicatedConsistentHash.RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
+                    new ReplicatedConsistentHash.RangeSet(hashProvider.apply(dm).getNumSegments()) : segmentsToFilter;
             do {
-               ConsistentHash ch = dm.getReadConsistentHash();
+               ConsistentHash ch = hashProvider.apply(dm);
                boolean runLocal = ch.getMembers().contains(localAddress);
                Set<Integer> segments;
                Set<Object> excludedKeys;

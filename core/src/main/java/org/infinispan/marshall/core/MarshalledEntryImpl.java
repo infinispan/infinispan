@@ -50,6 +50,9 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
    @Override
    public K getKey() {
       if (key == null) {
+         if (keyBytes == null) {
+            return null;
+         }
          key = unmarshall(keyBytes);
       }
       return key;
@@ -58,6 +61,9 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
    @Override
    public V getValue() {
       if (value == null) {
+         if (valueBytes == null) {
+            return null;
+         }
          value = unmarshall(valueBytes);
       }
       return value;
@@ -77,6 +83,9 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
    @Override
    public ByteBuffer getKeyBytes() {
       if (keyBytes == null) {
+         if (key == null) {
+            return null;
+         }
          keyBytes = marshall(key);
       }
       return keyBytes;
@@ -85,6 +94,9 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
    @Override
    public ByteBuffer getValueBytes() {
       if (valueBytes == null) {
+         if (value == null) {
+            return null;
+         }
          valueBytes = marshall(value);
       }
       return valueBytes;

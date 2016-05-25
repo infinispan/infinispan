@@ -29,7 +29,7 @@ public class ExpirationManagerFactory extends AbstractNamedCacheComponentFactory
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
       CacheMode cacheMode = configuration.clustering().cacheMode();
-      if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
+      if (cacheMode.isDistributed() || cacheMode.isReplicated() || cacheMode.isScattered()) {
          return componentType.cast(new ClusterExpirationManager<>());
       } else {
          return componentType.cast(new ExpirationManagerImpl<>());

@@ -71,7 +71,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    protected PersistenceManager persistenceManager;
    private InternalEntryFactory entryFactory;
    private TransactionManager transactionManager;
-   private StreamingMarshaller marshaller;
+   protected StreamingMarshaller marshaller;
    protected volatile boolean enabled = true;
 
    private static final Log log = LogFactory.getLog(CacheWriterInterceptor.class);

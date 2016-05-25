@@ -199,7 +199,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       assertFalse(cache2.getAdvancedCache().getLockManager().isLocked(key));
    }
 
-   private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory {
+   private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
       private CustomConsistentHashFactory() {
          super(1);
       }

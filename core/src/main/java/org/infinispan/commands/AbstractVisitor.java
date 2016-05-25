@@ -15,15 +15,7 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 
@@ -130,6 +122,11 @@ public abstract class AbstractVisitor implements Visitor {
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command) throws Throwable {
       return visitInvalidateCommand(ctx, invalidateL1Command);
+   }
+
+   @Override
+   public Object visitInvalidateVersionsCommand(InvocationContext ctx, InvalidateVersionsCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    /**

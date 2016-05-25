@@ -58,7 +58,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    private final String startValue = "starting-value";
    private final String newValue = "new-value";
 
-   protected final ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory(0, 1);
+   protected final ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory.Default(0, 1);
 
    @AfterMethod
    public void resetFactory() {

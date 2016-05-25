@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.scattered.ScatteredStateProvider;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -29,6 +30,8 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
    public enum Type {
       GET_TRANSACTIONS,
       GET_CACHE_LISTENERS,
+      GET_MAX_VERSIONS,
+      START_KEYS_TRANSFER,
       START_STATE_TRANSFER,
       CANCEL_STATE_TRANSFER;
 
@@ -73,6 +76,13 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
          switch (type) {
             case GET_TRANSACTIONS:
                return stateProvider.getTransactionsForSegments(getOrigin(), topologyId, segments);
+
+            case GET_MAX_VERSIONS:
+               return ((ScatteredStateProvider) stateProvider).getMaxVersions(segments, topologyId, getOrigin());
+
+            case START_KEYS_TRANSFER:
+               ((ScatteredStateProvider) stateProvider).startKeysTransfer(segments, getOrigin());
+               return null;
 
             case START_STATE_TRANSFER:
                stateProvider.startOutboundTransfer(getOrigin(), topologyId, segments);
@@ -132,6 +142,8 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       MarshallUtil.marshallEnum(type, output);
       switch (type) {
          case GET_TRANSACTIONS:
+         case GET_MAX_VERSIONS:
+         case START_KEYS_TRANSFER:
          case START_STATE_TRANSFER:
          case CANCEL_STATE_TRANSFER:
             output.writeObject(getOrigin());
@@ -149,7 +161,9 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       type = MarshallUtil.unmarshallEnum(input, ordinal -> Type.CACHED_VALUES[ordinal]);
       switch (type) {
          case GET_TRANSACTIONS:
+         case GET_MAX_VERSIONS:
          case CANCEL_STATE_TRANSFER:
+         case START_KEYS_TRANSFER:
          case START_STATE_TRANSFER:
             setOrigin((Address) input.readObject());
             segments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);

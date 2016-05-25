@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -26,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -253,6 +255,12 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
          Object key = entry.getKey();
          assertEquals(values.get(key), entry.getValue());
          it.remove();
+      }
+
+      for (Iterator<Map.Entry<Object, Object>> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(
+         Flag.SKIP_CACHE_STORE).entrySet().iterator(); it.hasNext();) {
+         Map.Entry<Object, Object> entry = it.next();
+         log.tracef("%s", entry);
       }
 
       assertEquals(0, cache.size());

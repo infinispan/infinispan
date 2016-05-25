@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -11,6 +12,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -35,7 +37,23 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
    protected ConfigurationBuilder builderUsed;
 
-   protected final ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory(1, 2);
+   protected final ControlledConsistentHashFactory factory;
+
+   public RehashClusterListenerTest() {
+      this.factory = null;
+   }
+
+   public RehashClusterListenerTest(ControlledConsistentHashFactory factory) {
+      this.factory = factory;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+         new RehashClusterListenerTest(new ControlledConsistentHashFactory.Default(1, 2)).cacheMode(CacheMode.DIST_SYNC),
+         new RehashClusterListenerTest(new ControlledConsistentHashFactory.Scattered(1)).cacheMode(CacheMode.SCATTERED_SYNC),
+      };
+   }
 
    @BeforeMethod
    protected void beforeMethod() {
@@ -45,7 +63,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
-      builderUsed.clustering().cacheMode(CacheMode.DIST_SYNC).hash().consistentHashFactory(factory).numOwners(2).numSegments(1);
+      builderUsed.clustering().cacheMode(cacheMode).hash().consistentHashFactory(factory).numSegments(1);
       createClusteredCaches(3, CACHE_NAME, builderUsed);
    }
 
@@ -75,6 +93,8 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
       assertEquals(listener.events.size(), 0);
    }
 
+   // In scattered mode, the node cannot become backup owner
+   @InCacheMode(CacheMode.DIST_SYNC)
    public void testClusterListenerNodeBecomingBackupFromNotAnOwner() throws Exception {
       final Cache<Object, String> cache0 = cache(0, CACHE_NAME);
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
@@ -118,7 +138,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).containsKey(KEY);
+            return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK).containsKey(KEY);
          }
       });
 

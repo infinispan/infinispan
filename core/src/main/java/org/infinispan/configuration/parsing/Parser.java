@@ -590,6 +590,22 @@ public class Parser implements ConfigurationParser {
                parseDistributedCache(reader, holder, true);
                break;
             }
+            case SCATTERED_CACHE: {
+               if (reader.getSchema().since(9, 0)) {
+                  parseScatteredCache(reader, holder, false);
+               } else {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               break;
+            }
+            case SCATTERED_CACHE_CONFIGURATION: {
+               if (reader.getSchema().since(9, 0)) {
+                  parseScatteredCache(reader, holder, true);
+               } else {
+                  throw ParseUtils.unexpectedElement(reader);
+               }
+               break;
+            }
             case SERIALIZATION: {
                parseSerialization(reader, holder);
                break;
@@ -1813,6 +1829,32 @@ public class Parser implements ConfigurationParser {
       }
    }
 
+   private void parseSegmentedCacheAttribute(XMLExtendedStreamReader reader,
+                                             int index, Attribute attribute, String value, ConfigurationBuilder builder, ClassLoader classLoader, CacheMode baseCacheMode)
+      throws XMLStreamException {
+      switch (attribute) {
+         case SEGMENTS: {
+            builder.clustering().hash().numSegments(Integer.parseInt(value));
+            break;
+         }
+         case CONSISTENT_HASH_FACTORY: {
+            builder.clustering().hash().consistentHashFactory(Util.getInstance(value, classLoader));
+            break;
+         }
+         case KEY_PARTITIONER: {
+            if (reader.getSchema().since(8, 2)) {
+               builder.clustering().hash().keyPartitioner(Util.getInstance(value, classLoader));
+            } else {
+               throw ParseUtils.unexpectedAttribute(reader, index);
+            }
+            break;
+         }
+         default: {
+            this.parseClusteredCacheAttribute(reader, index, attribute, value, builder, baseCacheMode);
+         }
+      }
+   }
+
    private void parseClusteredCacheAttribute(XMLExtendedStreamReader reader,
          int index, Attribute attribute, String value, ConfigurationBuilder builder, CacheMode baseCacheMode)
          throws XMLStreamException {
@@ -1857,27 +1899,7 @@ public class Parser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         switch (attribute) {
-            case SEGMENTS: {
-               builder.clustering().hash().numSegments(Integer.parseInt(value));
-               break;
-            }
-            case CONSISTENT_HASH_FACTORY: {
-               builder.clustering().hash().consistentHashFactory(Util.getInstance(value, holder.getClassLoader()));
-               break;
-            }
-            case KEY_PARTITIONER: {
-               if (reader.getSchema().since(8, 2)) {
-                  builder.clustering().hash().keyPartitioner(Util.getInstance(value, holder.getClassLoader()));
-               } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               }
-               break;
-            }
-            default: {
-               this.parseClusteredCacheAttribute(reader, i, attribute, value, builder, baseCacheMode);
-            }
-         }
+         parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), baseCacheMode);
       }
 
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
@@ -1933,10 +1955,6 @@ public class Parser implements ConfigurationParser {
                builder.clustering().hash().numOwners(Integer.parseInt(value));
                break;
             }
-            case SEGMENTS: {
-               builder.clustering().hash().numSegments(Integer.parseInt(value));
-               break;
-            }
             case L1_LIFESPAN: {
                long lifespan = Long.parseLong(value);
                if (lifespan > 0)
@@ -1953,21 +1971,8 @@ public class Parser implements ConfigurationParser {
                builder.clustering().hash().capacityFactor(Float.parseFloat(value));
                break;
             }
-            case CONSISTENT_HASH_FACTORY: {
-               builder.clustering().hash().consistentHashFactory(
-                     Util.getInstance(value, holder.getClassLoader()));
-               break;
-            }
-            case KEY_PARTITIONER: {
-               if (reader.getSchema().since(8, 2)) {
-                  builder.clustering().hash().keyPartitioner(Util.getInstance(value, holder.getClassLoader()));
-               } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               }
-               break;
-            }
             default: {
-               this.parseClusteredCacheAttribute(reader, i, attribute, value, builder, baseCacheMode);
+               this.parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), baseCacheMode);
             }
          }
       }
@@ -2018,6 +2023,36 @@ public class Parser implements ConfigurationParser {
          }
       }
 
+   }
+
+   private void parseScatteredCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
+      String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+      String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
+      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
+      CacheMode baseCacheMode = configuration == null ? CacheMode.SCATTERED_SYNC : builder.clustering().cacheMode();
+      builder.clustering().cacheMode(baseCacheMode);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case INVALIDATION_BATCH_SIZE: {
+               builder.clustering().invalidationBatchSize(Integer.parseInt(value));
+               break;
+            }
+            default: {
+               this.parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), baseCacheMode);
+            }
+         }
+      }
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            default: {
+               this.parseSharedStateCacheElement(reader, element, holder);
+            }
+         }
+      }
    }
 
    private ConfigurationBuilder getConfigurationBuilder(ConfigurationBuilderHolder holder, String name, boolean template, String baseConfigurationName) {

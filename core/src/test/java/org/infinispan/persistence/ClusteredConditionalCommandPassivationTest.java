@@ -1,5 +1,7 @@
 package org.infinispan.persistence;
 
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -12,6 +14,7 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(groups = "functional", testName = "persistence.ClusteredConditionalCommandPassivationTest")
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class ClusteredConditionalCommandPassivationTest extends ClusteredConditionalCommandTest {
 
    public ClusteredConditionalCommandPassivationTest() {

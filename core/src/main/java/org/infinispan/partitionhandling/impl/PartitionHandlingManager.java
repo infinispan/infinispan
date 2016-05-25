@@ -9,6 +9,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Dan Berindei
@@ -18,6 +19,15 @@ public interface PartitionHandlingManager {
    AvailabilityMode getAvailabilityMode();
 
    void setAvailabilityMode(AvailabilityMode availabilityMode);
+
+   /**
+    * This future is meant as read-only: you must not call {@link CompletableFuture#complete(Object)}
+    * or {@link CompletableFuture#completeExceptionally(Throwable)} on it.
+    *
+    * @return Incomplete future when the node is available, completed future returning
+    * {@link AvailabilityMode#DEGRADED_MODE} when degraded.
+    */
+   CompletableFuture<AvailabilityMode> degradedFuture();
 
    void checkWrite(Object key);
 

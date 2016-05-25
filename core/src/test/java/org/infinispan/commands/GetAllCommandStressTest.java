@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.util.Util;
@@ -17,6 +18,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
@@ -26,23 +28,27 @@ import org.testng.annotations.Test;
  * Stress test designed to test to verify that get many works properly under constant
  * topology changes
  *
+ * Note: scattered mode fails with timeout exceptions when we run out of OOB threads;
+ * while the code is written using async-invocations only, until the interceptor stack
+ * is fully asynchronous, the GetAllCommands can block in PrefetchInvalidationInterceptor
+ *
  * @author wburns
  * @since 7.2
  */
 @Test(groups = "stress", testName = "commands.GetAllCommandStressTest")
-@InCacheMode({ CacheMode.DIST_SYNC })
+@InCacheMode({ /*CacheMode.DIST_SYNC,*/ CacheMode.SCATTERED_SYNC })
 public class GetAllCommandStressTest extends StressTest {
    protected final String CACHE_NAME = getClass().getName();
    protected final static int CACHE_COUNT = 6;
    protected final static int THREAD_MULTIPLIER = 4;
-   protected final static int CACHE_ENTRY_COUNT = 50000;
+   protected final static int CACHE_ENTRY_COUNT = 5000;
    protected ConfigurationBuilder builderUsed;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
-      builderUsed.clustering().stateTransfer().chunkSize(25000);
+      builderUsed.clustering().stateTransfer().chunkSize(200);
       // Uncomment this line to make it transactional
 //      builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       // This is increased just for the put all command when doing full tracing
@@ -64,6 +70,19 @@ public class GetAllCommandStressTest extends StressTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(true, gcb,
             new ConfigurationBuilder(), false);
       cacheManagers.add(cm);
+      ThreadPoolExecutor oobThreadPool = (ThreadPoolExecutor) ((JGroupsTransport) cm.getTransport()).getChannel().getProtocolStack().getTransport().getOOBThreadPool();
+      oobThreadPool.setMaximumPoolSize(100);
+      AtomicLong lastThreadDump = new AtomicLong(Long.MIN_VALUE);
+      oobThreadPool.setRejectedExecutionHandler((r, e) -> {
+         log.warn("Discarding " + e);
+         long now = System.currentTimeMillis();
+         long last;
+         while (now >= (last = lastThreadDump.get()) + 1000) {
+            if (lastThreadDump.compareAndSet(last, now)) {
+               log.info(Util.threadDump());
+            }
+         }
+      });
       return cm;
    }
 

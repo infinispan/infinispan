@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
@@ -26,6 +27,7 @@ import static org.testng.AssertJUnit.assertEquals;
  */
 @Test(groups = "functional", testName = "distribution.rehash.NonTxPutIfAbsentDuringLeaveStressTest")
 @CleanupAfterMethod
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_WRITERS = 4;
@@ -34,7 +36,7 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder c = getConfigurationBuilder();
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, false);
 
       addClusterEnabledCacheManager(c);
       addClusterEnabledCacheManager(c);
@@ -42,13 +44,6 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
       addClusterEnabledCacheManager(c);
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
-   }
-
-   private ConfigurationBuilder getConfigurationBuilder() {
-      ConfigurationBuilder c = new ConfigurationBuilder();
-      c.clustering().cacheMode(CacheMode.DIST_SYNC);
-      c.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-      return c;
    }
 
    public void testNodeLeavingDuringPutIfAbsent() throws Exception {

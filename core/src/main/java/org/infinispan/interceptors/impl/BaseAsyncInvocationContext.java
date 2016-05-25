@@ -228,7 +228,11 @@ public abstract class BaseAsyncInvocationContext implements InvocationContext {
                      // The future is already completed.
                      // Update the return value and continue with the next return handler.
                      // If the future was a ForkInfo, we will continue with an interceptor instead.
-                     returnValue = handlerFuture.getNow(returnValue);
+                     try {
+                        returnValue = handlerFuture.getNow(returnValue);
+                     } catch (CompletionException ce) {
+                        throw ce.getCause();
+                     }
                      throwable = null;
                      // In case a fork return handler changed it
                      interceptorNode = nextInterceptor;
@@ -492,7 +496,11 @@ public abstract class BaseAsyncInvocationContext implements InvocationContext {
       CompletableFuture<Object> handlerFuture =
             returnHandler.handle(this, command, returnValue, throwable);
       if (handlerFuture != null) {
-         return CompletableFutures.await(handlerFuture);
+         try {
+            return CompletableFutures.await(handlerFuture);
+         } catch (ExecutionException ee) {
+            throw ee.getCause();
+         }
       }
 
       // A return value of null means we preserve the existing return value/exception

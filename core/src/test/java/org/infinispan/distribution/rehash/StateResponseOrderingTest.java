@@ -52,7 +52,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      consistentHashFactory = new ControlledConsistentHashFactory(new int[]{1, 2, 3}, new int[]{1, 2, 3});
+      consistentHashFactory = new ControlledConsistentHashFactory.Default(new int[]{1, 2, 3}, new int[]{1, 2, 3});
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(3);
       builder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
@@ -109,7 +109,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       StateChunk stateChunk0 = new StateChunk(0, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
       StateChunk stateChunk1 = new StateChunk(1, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
       StateResponseCommand stateResponseCommand = new StateResponseCommand(ByteString.fromString(CacheContainer.DEFAULT_CACHE_NAME),
-            address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1));
+            address(1), initialTopologyId, false, Arrays.asList(stateChunk0, stateChunk1));
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));
       stateResponseCommand.init(TestingUtil.extractComponent(cache(0), StateConsumer.class));

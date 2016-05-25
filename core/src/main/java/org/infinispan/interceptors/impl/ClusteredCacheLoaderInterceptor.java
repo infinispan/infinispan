@@ -3,10 +3,12 @@ package org.infinispan.interceptors.impl;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -28,6 +30,7 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    private ClusteringDependentLogic cdl;
    private StateTransferManager stateTransferManager;
    private boolean distributed;
+   private boolean scattered;
 
    @Inject
    private void injectDependencies(ClusteringDependentLogic cdl, StateTransferManager stateTransferManager) {
@@ -39,6 +42,7 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    private void startClusteredCacheLoaderInterceptor() {
       transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
       distributed = cacheConfiguration.clustering().cacheMode().isDistributed();
+      scattered = cacheConfiguration.clustering().cacheMode().isScattered();
    }
 
    @Override
@@ -74,6 +78,12 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    @Override
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
       if (!cmd.alwaysReadsExistingValues()) {
+         // During preload, cache topology is not installed yet and we would normally skip loading
+         // from #canLoad(). However as the SKIP_OWNERSHIP_CHECK is set, this is ignored.
+         if (!stateTransferManager.isJoinComplete()) {
+            log.tracef("Skip load for command %s. Cache topology not installed.", cmd);
+            return true;
+         }
          if (transactional) {
             if (!ctx.isOriginLocal()) {
                if (trace) log.tracef("Skip load for remote tx write command %s.", cmd);
@@ -95,10 +105,18 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    @Override
    protected boolean canLoad(Object key) {
       // Don't load the value if we are using distributed mode and aren't in the read CH
-      return stateTransferManager.isJoinComplete() && (!distributed || isKeyLocal(key));
+      return stateTransferManager.isJoinComplete() && (!distributed || isKeyLocal(key)) && (!scattered || isPrimaryOwner(key));
+   }
+
+   private boolean isPrimaryOwner(Object key) {
+      ConsistentHash consistentHash = scattered ? stateTransferManager.getCacheTopology().getWriteConsistentHash()
+         : stateTransferManager.getCacheTopology().getReadConsistentHash();
+      return consistentHash.locatePrimaryOwner(key).equals(cdl.getAddress());
    }
 
    private boolean isKeyLocal(Object key) {
-      return stateTransferManager.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(cdl.getAddress(), key);
+      ConsistentHash consistentHash = scattered ? stateTransferManager.getCacheTopology().getWriteConsistentHash()
+         : stateTransferManager.getCacheTopology().getReadConsistentHash();
+      return consistentHash.isKeyLocalToNode(cdl.getAddress(), key);
    }
 }

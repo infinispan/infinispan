@@ -57,6 +57,7 @@ public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
       EmbeddedCacheManager cm2 = cacheManagers.get(1);
       cm2.defineConfiguration(cacheName, buildConfiguration().build());
       c2 = cache(1, cacheName);
+      caches.add(c2);
       waitForClusterToForm();
 
       DataContainer dc2 = c2.getAdvancedCache().getDataContainer();

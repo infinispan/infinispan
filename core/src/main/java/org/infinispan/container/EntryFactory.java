@@ -1,10 +1,7 @@
 package org.infinispan.container;
 
 import org.infinispan.atomic.Delta;
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 
@@ -37,9 +34,10 @@ public interface EntryFactory {
     * @param ctx current invocation context
     * @param key key to look up and wrap
     * @param existing
+    * @param ignoreOwnership
     * @throws InterruptedException when things go wrong, usually trying to acquire a lock
     */
-   CacheEntry wrapEntryForReading(InvocationContext ctx, Object key, CacheEntry existing);
+   CacheEntry wrapEntryForReading(InvocationContext ctx, Object key, CacheEntry existing, boolean ignoreOwnership);
 
    /**
     * Used for wrapping Delta entry to be applied to DeltaAware object stored in cache. The wrapped

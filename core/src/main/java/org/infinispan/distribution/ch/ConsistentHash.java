@@ -7,6 +7,7 @@ import org.infinispan.remoting.transport.Address;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
@@ -194,5 +195,13 @@ public interface ConsistentHash {
     */
    default ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
       throw new UnsupportedOperationException();
+   }
+
+   /**
+    * The capacity factor of each member. Determines the relative capacity of each node compared to the others.
+    * If {@code null}, all the members are assumed to have a capacity factor of 1.
+    */
+   default Map<Address, Float> getCapacityFactors() {
+      return null;
    }
 }

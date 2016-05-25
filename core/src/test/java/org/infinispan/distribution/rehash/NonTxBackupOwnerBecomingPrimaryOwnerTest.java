@@ -211,7 +211,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       return op.perform(cache0, key);
    }
 
-   private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory {
+   private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
       private CustomConsistentHashFactory() {
          super(1);
       }

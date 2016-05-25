@@ -55,11 +55,11 @@ import static org.testng.AssertJUnit.*;
 @Test(groups = {"functional", "smoke"}, testName = "iteration.DistributedStreamIteratorTest")
 public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTest {
    public DistributedStreamIteratorTest() {
-      this(false);
+      this(false, CacheMode.DIST_SYNC);
    }
 
-   public DistributedStreamIteratorTest(boolean tx) {
-      super(tx, CacheMode.DIST_SYNC);
+   public DistributedStreamIteratorTest(boolean tx, CacheMode cacheMode) {
+      super(tx, cacheMode);
       // This is needed since we kill nodes
       cleanup = CleanupPhase.AFTER_METHOD;
    }
@@ -195,7 +195,18 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       Map<Integer, Set<Map.Entry<Object, String>>> answer = generateEntriesPerSegment(hash, returnQueue);
 
       for (Map.Entry<Integer, Set<Map.Entry<Object, String>>> entry : expected.entrySet()) {
-         assertEquals("Segment " + entry.getKey() + " had a mismatch", answer.get(entry.getKey()), entry.getValue());
+         Integer segment = entry.getKey();
+         for (Map.Entry<Object, String> exp : entry.getValue()) {
+            if (!answer.get(segment).contains(exp)) {
+               log.errorf("Segment %d, missing %s", segment, exp);
+            }
+         }
+         for (Map.Entry<Object, String> ans : answer.get(segment)) {
+            if (!entry.getValue().contains(ans)) {
+               log.errorf("Segment %d, extra %s", segment, ans);
+            }
+         }
+         assertEquals("Segment " + segment + " had a mismatch", answer.get(segment), entry.getValue());
       }
    }
 
@@ -269,13 +280,15 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
                break;
             case 1:
                // Force it so only cache0 has it's primary owned keys
-               key = new MagicKey(cache1, cache2);
-               cache1.put(key, key.toString());
+               key = magicKey(cache1, cache2);
+               // write from backup so that the test works on scattered cache, too
+               cache2.put(key, key.toString());
                break;
             case 2:
                // Force it so only cache0 has it's primary owned keys
-               key = new MagicKey(cache2, cache1);
-               cache2.put(key, key.toString());
+               key = magicKey(cache2, cache1);
+               // write from backup so that the test works on scattered cache, too
+               cache1.put(key, key.toString());
                break;
             default:
                fail("Unexpected switch case!");
@@ -294,6 +307,14 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       }
 
       assertEquals(values.size(), count);
+   }
+
+   protected MagicKey magicKey(Cache<Object, String> cache1, Cache<Object, String> cache2) {
+      if (cache1.getCacheConfiguration().clustering().hash().numOwners() < 2) {
+         return new MagicKey(cache1);
+      } else {
+         return new MagicKey(cache1, cache2);
+      }
    }
 
    @Test

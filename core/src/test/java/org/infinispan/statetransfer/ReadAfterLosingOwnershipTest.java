@@ -154,7 +154,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       }
    }
 
-   public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory {
+   public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
 
       public SingleKeyConsistentHashFactory() {
          super(1);

@@ -35,6 +35,16 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
+   public boolean canWriteEntry(Object key) {
+      return clusteringDependentLogic.canWriteEntry(key);
+   }
+
+   @Override
+   public boolean canReadEntry(Object key) {
+      return clusteringDependentLogic.canReadEntry(key);
+   }
+
+   @Override
    public boolean localNodeIsPrimaryOwner(Object key) {
       return clusteringDependentLogic.localNodeIsPrimaryOwner(key);
    }
@@ -67,5 +77,10 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    @Override
    public Address getAddress() {
       return clusteringDependentLogic.getAddress();
+   }
+
+   @Override
+   public void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      clusteringDependentLogic.notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
    }
 }

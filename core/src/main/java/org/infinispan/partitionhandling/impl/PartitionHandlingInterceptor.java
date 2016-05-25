@@ -17,20 +17,26 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.distribution.MissingOwnerException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -44,12 +50,18 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private PartitionHandlingManager partitionHandlingManager;
    private Transport transport;
    private DistributionManager distributionManager;
+   private CacheMode cacheMode;
+   private StateTransferLock stateTransferLock;
 
    @Inject
-   void init(PartitionHandlingManager partitionHandlingManager, Transport transport, DistributionManager distributionManager) {
+   void init(PartitionHandlingManager partitionHandlingManager, Transport transport,
+             DistributionManager distributionManager, Configuration configuration,
+             StateTransferLock stateTransferLock) {
       this.partitionHandlingManager = partitionHandlingManager;
       this.transport = transport;
       this.distributionManager = distributionManager;
+      this.cacheMode = configuration.clustering().cacheMode();
+      this.stateTransferLock = stateTransferLock;
    }
 
    private boolean performPartitionCheck(InvocationContext ctx, LocalFlagAffectedCommand command) {
@@ -140,6 +152,8 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                // There is no way to verify the cause here, but there isn't any other way to get an invalid
                // get response.
                throw log.degradedModeKeyUnavailable(dataCommand.getKey());
+            } else if (throwable instanceof MissingOwnerException) {
+               return handleMissingOwner(Collections.singleton(dataCommand.getKey()), (MissingOwnerException) throwable);
             } else {
                // If all owners left and we still haven't received the availability update yet,
                // we get TimeoutException from JGroupsTransport.checkRsps
@@ -158,6 +172,36 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
          postOperationPartitionCheck(rCtx, dataCommand, dataCommand.getKey());
          return null;
+      });
+   }
+
+   private CompletableFuture<Object> handleMissingOwner(Collection keys, MissingOwnerException moe) throws InterruptedException {
+      // In scattered cache mode it is possible that the CH does not contain owner of the key
+      // and therefore throws MOE.
+      // At this point we may be still available, so we have to wait until happens one of
+      // a) we become degraded
+      // b) topology change
+
+      // do an early check for degraded mode
+      if (partitionHandlingManager.getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE) {
+         throw log.degradedModeKeyUnavailable(keys);
+      }
+      int topologyId = moe.getTopologyId();
+      log.tracef("Missing owner for %s in topology %d, will wait for new topology or becoming degraded",
+         keys, topologyId);
+      CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(topologyId + 1);
+      if (topologyFuture == null) {
+         // newer topology is already installed, retry with this one
+         throw moe; // should be handled in the same way as OutdatedTopologyException
+      }
+      CompletableFuture<AvailabilityMode> degraded = partitionHandlingManager.degradedFuture();
+      return CompletableFuture.anyOf(degraded, topologyFuture).thenApply(result -> {
+         // upon topology change the result is null (void)
+         if (result == AvailabilityMode.DEGRADED_MODE) {
+            throw log.degradedModeKeysUnavailable(keys);
+         } else {
+            throw moe;
+         }
       });
    }
 
@@ -214,6 +258,8 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                // There is no way to verify the cause here, but there isn't any other way to get an invalid
                // get response.
                throw log.degradedModeKeysUnavailable(((GetAllCommand) rCommand).getKeys());
+            } else if (throwable instanceof MissingOwnerException) {
+               return handleMissingOwner(getAllCommand.getKeys(), (MissingOwnerException) throwable);
             } else {
                throw throwable;
             }

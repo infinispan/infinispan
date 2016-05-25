@@ -32,16 +32,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
@@ -326,7 +317,7 @@ public interface CommandsFactory {
    /**
     * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
     */
-   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks);
+   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, boolean pushTransfer, Collection<StateChunk> stateChunks);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.
@@ -483,4 +474,5 @@ public interface CommandsFactory {
 
    <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params);
 
+   InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, long[] versions, boolean removed);
 }

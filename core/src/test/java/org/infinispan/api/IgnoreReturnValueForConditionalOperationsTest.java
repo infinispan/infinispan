@@ -21,6 +21,7 @@ public class IgnoreReturnValueForConditionalOperationsTest extends MultipleCache
       return new Object[] {
          new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
          new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+         new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false)
       };
    }
 

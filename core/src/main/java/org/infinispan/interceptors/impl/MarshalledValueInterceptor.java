@@ -118,7 +118,11 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
    @Override
    public CompletableFuture<Void> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Set<MarshalledValue> marshalledValues = new HashSet<MarshalledValue>(command.getMap().size());
-      Map<Object, Object> map = wrapMap(command.getMap(), marshalledValues, ctx);
+      Map<Object, Object> map = command.getMap();
+      // Do not wrap the values in forwarded commands since these have been already wrapped
+      if (!command.isForwarded()) {
+         map = wrapMap(map, marshalledValues, ctx);
+      }
       command.setMap(map);
       return ctx.onReturn(processRetValReturnHandler);
    }

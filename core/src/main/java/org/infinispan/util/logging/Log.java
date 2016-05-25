@@ -1440,4 +1440,17 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Eviction of an entry invoked without an explicit eviction strategy for cache %s", id = 419)
    void evictionDisabled(String cacheName);
+
+   @Message(value = "Scattered cache supports only single owner.", id = 420)
+   CacheConfigurationException scatteredCacheNeedsSingleOwner();
+
+   @Message(value = "Invalidation batch size configuration options applies only to scattered caches.", id = 421)
+   CacheConfigurationException invalidationBatchSizeAppliesOnNonScattered();
+
+   @Message(value = "Scattered cache does not support transactional mode.", id = 422)
+   CacheConfigurationException scatteredCacheIsNonTransactional();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed retrieving max versions for segments. State transfer cannot continue.", id = 423)
+   void failedRetrievingMaxVersions(@Cause Throwable t);
 }

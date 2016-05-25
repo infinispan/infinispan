@@ -37,6 +37,7 @@ public class ClearTest extends MultipleCacheManagersTest {
          new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
          new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+         new ClearTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 

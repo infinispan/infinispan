@@ -39,18 +39,7 @@ import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareComman
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
@@ -498,6 +487,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
             removeExpiredCommand.init(notifier, configuration);
             break;
+         case InvalidateVersionsCommand.COMMAND_ID:
+            InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
+            invalidateVersionsCommand.init(dataContainer);
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -529,8 +521,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
-      return new StateResponseCommand(cacheName, sender, topologyId, stateChunks);
+   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
+      return new StateResponseCommand(cacheName, sender, topologyId, pushTransfer, stateChunks);
    }
 
    @Override
@@ -679,6 +671,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
       return new ReadWriteManyEntriesCommand<>(entries, f, params);
+   }
+
+   @Override
+   public InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, long[] versions, boolean removed) {
+      return new InvalidateVersionsCommand(keys, versions, removed);
    }
 
    @Override

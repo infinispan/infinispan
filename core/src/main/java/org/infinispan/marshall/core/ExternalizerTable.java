@@ -25,6 +25,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
@@ -40,16 +41,7 @@ import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheVal
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.ch.impl.AffinityPartitioner;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.*;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -287,6 +279,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MortalCacheValue.Externalizer());
       addInternalExternalizer(new TransientCacheValue.Externalizer());
       addInternalExternalizer(new TransientMortalCacheValue.Externalizer());
+      addInternalExternalizer(new RemoteMetadata.Externalizer());
 
       addInternalExternalizer(new SimpleClusteredVersion.Externalizer());
       addInternalExternalizer(new MetadataImmortalCacheEntry.Externalizer());
@@ -315,8 +308,10 @@ public class ExternalizerTable implements ObjectTable {
 
       addInternalExternalizer(new DefaultConsistentHash.Externalizer());
       addInternalExternalizer(new ReplicatedConsistentHash.Externalizer());
+      addInternalExternalizer(new ScatteredConsistentHash.Externalizer());
       addInternalExternalizer(new DefaultConsistentHashFactory.Externalizer());
       addInternalExternalizer(new ReplicatedConsistentHashFactory.Externalizer());
+      addInternalExternalizer(new ScatteredConsistentHashFactory.Externalizer());
       addInternalExternalizer(new SyncConsistentHashFactory.Externalizer());
       addInternalExternalizer(new SyncReplicatedConsistentHashFactory.Externalizer());
       addInternalExternalizer(new TopologyAwareConsistentHashFactory.Externalizer());

@@ -55,6 +55,15 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       @Override
       public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
             Throwable throwable) throws Throwable {
+         // When the cache has started stopping after the command was invoked, the command can provide
+         // incorrect results - we must not let the reply to be sent back.
+         ComponentStatus status = componentRegistry.getStatus();
+         if (status.isTerminated()) {
+            throw log.cacheIsTerminated(getCacheNamePrefix());
+         } else if (stoppingAndNotAllowed(status, rCtx)) {
+            throw log.cacheIsStopping(getCacheNamePrefix());
+         }
+
          if (throwable == null)
             return null;
 

@@ -261,7 +261,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       for (Integer segment : newSegments) {
          stateChunks.add(new StateChunk(segment, Collections.<InternalCacheEntry>emptyList(), true));
       }
-      stateConsumer.applyState(addresses[1], 2, stateChunks);
+      stateConsumer.applyState(addresses[1], 2, false, stateChunks);
 
       stateConsumer.stop();
       assertFalse(stateConsumer.hasActiveTransfers());
