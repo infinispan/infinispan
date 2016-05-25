@@ -43,7 +43,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
 
    private static BufferPoolMXBean DIRECT_POOL = getDirectMemoryPool();
 
-   private RemoteCache remoteCache;
+   private RemoteCache<Integer, byte[]> remoteCache;
 
    // There is only one Godzilla in heap, but we can use Netty's off-heap pools to multiply them and destroy the world
    private static final byte[] GODZILLA = makeGodzilla();
@@ -90,7 +90,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
          log.debugf("ADDED LISTENER");
          logDirectMemory(log);
 
-         latch.await();
+         latch.await(1, TimeUnit.MINUTES);
 
          remoteCache.removeClientListener(listener);
          assertEquals(NUM_ENTRIES, listener.eventCount);
@@ -128,7 +128,7 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
       }
    }
 
-   public static String humanReadableByteCount(long bytes, boolean si) {
+   private static String humanReadableByteCount(long bytes, boolean si) {
       int unit = si ? 1000 : 1024;
       if (bytes < unit) return bytes + " B";
       int exp = (int) (Math.log(bytes) / Math.log(unit));
@@ -137,12 +137,12 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    }
 
    @ClientListener(converterFactoryName = "godzilla-growing-converter-factory", useRawData = true, includeCurrentState = true)
-   static class ClientEntryListener {
+   private static class ClientEntryListener {
       private static final Log log = LogFactory.getLog(ClientEntryListener.class);
       private final CountDownLatch latch;
       int eventCount = 0;
 
-      public ClientEntryListener(CountDownLatch latch) {
+      ClientEntryListener(CountDownLatch latch) {
          this.latch = latch;
       }
 
@@ -163,17 +163,17 @@ public class ClientEventsOOMTest extends MultiHotRodServersTest {
    }
 
    @NamedFactory(name = "godzilla-growing-converter-factory")
-   static class CustomConverterFactory implements CacheEventConverterFactory {
+   private static class CustomConverterFactory implements CacheEventConverterFactory {
       @Override
-      public CacheEventConverter<Object, Object, Object> getConverter(Object[] params) {
-         return new CustomConverter();
+      public <K, V, C> CacheEventConverter<K, V, C> getConverter(Object[] params) {
+         return new CustomConverter<K, V, C>();
       }
 
-      static class CustomConverter implements CacheEventConverter<Object, Object, Object>, Serializable {
+      static class CustomConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable {
          @Override
-         public Object convert(Object key, Object previousValue, Metadata previousMetadata, Object value, Metadata metadata, EventType eventType) {
+         public C convert(Object key, Object previousValue, Metadata previousMetadata, Object value, Metadata metadata, EventType eventType) {
             // all baby godzillas get converted to full grown godzillas
-            return GODZILLA;
+            return (C) GODZILLA;
          }
       }
    }
