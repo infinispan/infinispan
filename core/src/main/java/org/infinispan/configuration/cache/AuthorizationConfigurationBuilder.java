@@ -3,11 +3,14 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.AuthorizationConfiguration.ENABLED;
 import static org.infinispan.configuration.cache.AuthorizationConfiguration.ROLES;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * AuthorizationConfigurationBuilder.
@@ -16,6 +19,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 7.0
  */
 public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthorizationConfiguration> {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AttributeSet attributes;
 
    public AuthorizationConfigurationBuilder(SecurityConfigurationBuilder securityBuilder) {
@@ -52,6 +56,8 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      if (attributes.attribute(ENABLED).get() && !globalConfig.security().authorization().enabled())
+         throw log.globalSecurityAuthShouldBeEnabled();
    }
 
    @Override

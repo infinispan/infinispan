@@ -7,6 +7,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -83,6 +84,9 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -1299,6 +1303,25 @@ public class TestingUtil {
          throw new RuntimeException(e);
       } finally {
          TestingUtil.killCacheManagers(c.clearBeforeKill(), c.cm);
+      }
+   }
+
+   /**
+    * Invoke a task using a cache manager created by given supplier function.
+    * This method guarantees that the cache manager created in the task will
+    * be cleaned up after the task has completed, regardless of the task outcome.
+    *
+    * @param s cache manager supplier function
+    * @param c consumer function to execute with cache manager
+    */
+   public static void withCacheManager(Supplier<EmbeddedCacheManager> s,
+         Consumer<EmbeddedCacheManager> c) {
+      EmbeddedCacheManager cm = null;
+      try {
+         cm = s.get();
+         c.accept(cm);
+      } finally {
+         if (cm != null) TestingUtil.killCacheManagers(false, cm);
       }
    }
 

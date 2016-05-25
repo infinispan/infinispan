@@ -23,6 +23,7 @@ public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      authorizationBuilder.validate(globalConfig);
    }
 
    @Override
