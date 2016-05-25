@@ -44,9 +44,9 @@
       <version.org.wildfly.core>2.0.10.Final</version.org.wildfly.core>
       <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
-      
+
       <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.0.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
-      
+
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
@@ -59,7 +59,7 @@
       <version.pax.exam>4.1.0</version.pax.exam>
       <version.h2.database>1.3.173</version.h2.database>
       <version.resteasy>3.0.11.Final</version.resteasy>
-      <version.lucene>5.5.0</version.lucene>
+      <version.lucene>5.5.1</version.lucene>
    </properties>
 
    <dependencyManagement>
@@ -72,7 +72,7 @@
             <scope>import</scope>
          </dependency>
 
-         
+
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-parent</artifactId>

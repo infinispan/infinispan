@@ -1,11 +1,10 @@
 package org.infinispan.query.indexmanager;
 
-import java.util.Properties;
-
-import org.hibernate.search.backend.BackendFactory;
-import org.hibernate.search.backend.spi.BackendQueueProcessor;
+import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.WorkerBuildContext;
+
+import java.util.Properties;
 
 /**
  * Factory of local backends to simplify lazy initialization.
@@ -13,7 +12,7 @@ import org.hibernate.search.spi.WorkerBuildContext;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
  * @since 7.0
  */
-public class SimpleLocalBackendFactory implements LocalBackendFactory {
+class SimpleLocalBackendFactory implements LocalBackendFactory {
 
    private final IndexManager indexManager;
    private Properties cfg;
@@ -28,10 +27,9 @@ public class SimpleLocalBackendFactory implements LocalBackendFactory {
 
    @Override
    public IndexingBackend createLocalIndexingBackend() {
-      //Force to use the "lucene" backend?
-      BackendQueueProcessor localBackend = BackendFactory.createBackend(indexManager, buildContext, cfg);
-      IndexingBackend backend = new LocalIndexingBackend(localBackend);
-      return backend;
+      WorkspaceHolder workspaceHolder = new WorkspaceHolder();
+      workspaceHolder.initialize(cfg,buildContext,indexManager);
+      return new LocalIndexingBackend(workspaceHolder);
    }
 
 }

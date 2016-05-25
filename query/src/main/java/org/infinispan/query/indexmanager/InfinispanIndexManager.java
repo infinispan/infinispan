@@ -1,14 +1,14 @@
 package org.infinispan.query.indexmanager;
 
-import java.util.Properties;
-
-import org.hibernate.search.backend.spi.BackendQueueProcessor;
+import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
-import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
 import org.hibernate.search.spi.WorkerBuildContext;
 import org.hibernate.search.store.DirectoryProvider;
+import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Properties;
 
 /**
  * A custom IndexManager to store indexes in the grid itself.
@@ -21,7 +21,7 @@ public class InfinispanIndexManager extends DirectoryBasedIndexManager {
    private InfinispanBackendQueueProcessor remoteMaster;
 
    @Override
-   protected BackendQueueProcessor createBackend(String indexName, Properties cfg, WorkerBuildContext buildContext) {
+   protected WorkspaceHolder createWorkspaceHolder(String indexName, Properties cfg, WorkerBuildContext buildContext) {
       //Don't use the BackendFactory here as we want to override it;
       //the standard BackendFactory will be created on-demand on the node if/when it's elected as master.
       remoteMaster = new InfinispanBackendQueueProcessor();
