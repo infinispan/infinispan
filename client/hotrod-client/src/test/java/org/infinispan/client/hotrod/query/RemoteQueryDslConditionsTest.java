@@ -194,8 +194,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals("Checking account", list.get(0).getDescription());
    }
 
-   //todo [anistor] null numbers do not seem to work in remote mode
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-6713")
    @Override
    public void testIsNullNumericWithProjection1() throws Exception {
       super.testIsNullNumericWithProjection1();
