@@ -1,41 +1,40 @@
 package org.infinispan.query.indexmanager;
 
-import java.util.List;
-
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.backend.spi.BackendQueueProcessor;
+import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
 import org.hibernate.search.indexes.spi.IndexManager;
-
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.List;
+
 /**
- * The IndexingBackend which directly couples to the Hibernate Search backend.
+ * The IndexingBackend which directly couples to the Hibernate Search WorkspaceHolder.
  * Normally this will be the "lucene" backend, writing to the index.
  *
- * @see org.hibernate.search.backend.impl.lucene.LuceneBackendQueueProcessor
+ * @see org.hibernate.search.backend.impl.lucene.WorkspaceHolder
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
  * @since 7.0
  */
 final class LocalIndexingBackend implements IndexingBackend {
 
    private static final Log log = LogFactory.getLog(LocalIndexingBackend.class, Log.class);
-   private final BackendQueueProcessor localBackend;
+   private final WorkspaceHolder workspaceHolder;
 
-   public LocalIndexingBackend(BackendQueueProcessor localBackend) {
-      this.localBackend = localBackend;
+   public LocalIndexingBackend(WorkspaceHolder workspaceHolder) {
+      this.workspaceHolder = workspaceHolder;
    }
 
    @Override
    public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor, IndexManager indexManager) {
       log.applyingChangeListLocally(workList);
-      localBackend.applyWork(workList, monitor);
+      workspaceHolder.applyWork(workList, monitor);
    }
 
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, IndexManager indexManager) {
-      localBackend.applyStreamWork(singleOperation, monitor);
+      workspaceHolder.applyStreamWork(singleOperation, monitor);
    }
 
    @Override
@@ -45,7 +44,7 @@ final class LocalIndexingBackend implements IndexingBackend {
 
    @Override
    public void flushAndClose(IndexingBackend replacement) {
-      localBackend.close();
+      workspaceHolder.close();
       log.debug("Downgraded from Master role: Index lock released.");
    }
 

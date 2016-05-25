@@ -1,9 +1,11 @@
 package org.infinispan.query.impl;
 
+import org.hibernate.search.query.engine.spi.EntityInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.search.query.engine.spi.EntityInfo;
+import static java.util.Arrays.stream;
 
 /**
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>
@@ -20,7 +22,7 @@ public class ProjectionLoader implements QueryResultLoader {
 
    @Override
    public List<Object> load(List<EntityInfo> entityInfos) {
-      List<Object> list = new ArrayList<Object>(entityInfos.size());
+      List<Object> list = new ArrayList<>(entityInfos.size());
       for (EntityInfo entityInfo : entityInfos) {
          list.add(load(entityInfo));
       }
@@ -29,7 +31,7 @@ public class ProjectionLoader implements QueryResultLoader {
 
    public Object[] load(EntityInfo entityInfo) {
       Object[] projection = entityInfo.getProjection();
-      if (entityInfo.isProjectThis()) {
+      if (stream(projection).anyMatch(o -> o == EntityInfo.ENTITY_PLACEHOLDER)) {
          entityInfo.populateWithEntityInstance(entityLoader.load(entityInfo));
       }
       return projectionConverter.convert(projection);

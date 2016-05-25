@@ -59,7 +59,7 @@
       <version.pax.exam>4.1.0</version.pax.exam>
       <version.h2.database>1.3.173</version.h2.database>
       <version.resteasy>3.0.11.Final</version.resteasy>
-      <version.lucene>5.5.0</version.lucene>
+      <version.lucene>5.5.1</version.lucene>
       <checkstyle.config.location>${session.executionRootDirectory}/checkstyle/src/main/resources/checkstyle.xml</checkstyle.config.location>
       <version.jboss.aesh>0.62</version.jboss.aesh>
    </properties>
