@@ -405,4 +405,12 @@
    <namedCache name="withUnsafe">
       <unsafe unreliableReturnValues="true" />
    </namedCache>
+
+   <namedCache name="withoutCompatibility">
+       <compatibility enabled="false"/>
+   </namedCache>
+
+   <namedCache name="withoutStoreAsBinary">
+      <storeAsBinary enabled="false" />
+   </namedCache>
 </infinispan>

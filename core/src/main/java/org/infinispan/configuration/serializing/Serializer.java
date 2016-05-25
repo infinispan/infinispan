@@ -361,8 +361,8 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       writeTransaction(writer, configuration);
       configuration.eviction().attributes().write(writer, Element.EVICTION.getLocalName());
       configuration.expiration().attributes().write(writer, Element.EXPIRATION.getLocalName());
-      configuration.compatibility().attributes().write(writer, Element.COMPATIBILITY.getLocalName());
-      configuration.storeAsBinary().attributes().write(writer, Element.STORE_AS_BINARY.getLocalName());
+      if (configuration.compatibility().enabled()) configuration.compatibility().attributes().write(writer, Element.COMPATIBILITY.getLocalName());
+      if (configuration.storeAsBinary().enabled()) configuration.storeAsBinary().attributes().write(writer, Element.STORE_AS_BINARY.getLocalName());
       writePersistence(writer, configuration);
       configuration.versioning().attributes().write(writer, Element.VERSIONING.getLocalName());
       writeDataContainer(writer, configuration);
