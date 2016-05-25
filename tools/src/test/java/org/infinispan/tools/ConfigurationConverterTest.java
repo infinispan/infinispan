@@ -14,6 +14,7 @@ public class ConfigurationConverterTest {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       ConfigurationConverter.convert(ConfigurationConverterTest.class.getResourceAsStream("/6.0.xml"), baos);
       ParserRegistry pr = new ParserRegistry();
+      System.out.println(baos.toString("UTF-8"));
       pr.parse(new ByteArrayInputStream(baos.toByteArray()));
    }
 }
