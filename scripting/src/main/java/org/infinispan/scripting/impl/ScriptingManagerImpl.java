@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
@@ -220,10 +221,10 @@ public class ScriptingManagerImpl implements ScriptingManager {
       ScriptEngine engine;
       if (metadata.language().isPresent()) {
          engine = scriptEnginesByLanguage.computeIfAbsent(metadata.language().get(),
-               scriptEngineManager::getEngineByName);
+               this::getEngineByName);
       } else {
          engine = scriptEnginesByExtension.computeIfAbsent(metadata.extension(),
-               scriptEngineManager::getEngineByExtension);
+               this::getEngineByExtension);
       }
       if (engine == null) {
          throw log.noEngineForScript(metadata.name());
@@ -231,4 +232,29 @@ public class ScriptingManagerImpl implements ScriptingManager {
          return engine;
       }
    }
+
+   private ScriptEngine getEngineByName(String shortName) {
+      return withClassLoader(ScriptingManagerImpl.class.getClassLoader(),
+            scriptEngineManager, shortName,
+            ScriptEngineManager::getEngineByName);
+   }
+
+   private ScriptEngine getEngineByExtension(String extension) {
+      return withClassLoader(ScriptingManagerImpl.class.getClassLoader(),
+            scriptEngineManager, extension,
+            ScriptEngineManager::getEngineByExtension);
+   }
+
+   private static ScriptEngine withClassLoader(ClassLoader cl,
+         ScriptEngineManager manager, String name,
+         BiFunction<ScriptEngineManager, String, ScriptEngine> f) {
+      ClassLoader curr = Thread.currentThread().getContextClassLoader();
+      try {
+         Thread.currentThread().setContextClassLoader(cl);
+         return f.apply(manager, name);
+      } finally {
+         Thread.currentThread().setContextClassLoader(curr);
+      }
+   }
+
 }
