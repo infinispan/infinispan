@@ -143,7 +143,7 @@ public abstract class AbstractDistributedServerTaskIT {
     }
 
     @Test
-    @Ignore(value="Is disabled until the issue ISPN-6303 and ISPN-6173 are fixed.")
+    @Ignore(value="Is disabled until ISPN-6173 is fixed.")
     public void shouldExecuteMapReduceViaJavaScriptInTask() throws Exception {
         RemoteCache remoteCache = managers.get(1).getCache(DistributedJSExecutingServerTask.CACHE_NAME);
         remoteCache.put(1, "word1 word2 word3");
