@@ -23,15 +23,21 @@ Infinispan logs fully support internationalization. The following is a list of m
     11001 - 12000    server memcached
     12001 - 13000    server rest
     13001 - 14000    server websocket
-    14001 - 15000    query
+    14001 - 14800    query
+    14801 - 15000    query-dsl
     15001 - 16000    lucene directory
-    16001 - 17000    rhq plugin
+    16001 - 17000    <no longer used>
     17001 - 18000    cdi integration
-    18001 - 19000    hbase
+    18001 - 19000    hbase cache store
+    19001 - 20000    cli interpreter
+    20001 - 21000    cli client
     21001 - 22000    mongodb cachestore
-    22001 - 23000    jpa cache store
+    22001 - 23000    rest cache store
     23001 - 24000    leveldb cache store
     24001 - 25000    couchbase cache store
     25001 - 26000    extended statistics
     26001 - 27000    infinispan directory provider
-
+    26001 - 27000    scripting
+    27001 - 28000    tasks
+    28001 - 28500    remote query server
+    28501 - 29000    object filter

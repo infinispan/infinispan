@@ -104,7 +104,7 @@ public abstract class AbstractMatcherTest {
    @Test
    public void shouldRaiseExceptionDueToUnknownAlias() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000404");
+      expectedException.expectMessage("ISPN028502");
 
       String queryString = "from org.infinispan.objectfilter.test.model.Person person where x.name = 'John'";
       assertTrue(match(queryString, createPerson1()));
@@ -177,7 +177,7 @@ public abstract class AbstractMatcherTest {
    @Test
    public void testMissingProperty1() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000402");
+      expectedException.expectMessage("ISPN028501");
 
       String queryString = "from org.infinispan.objectfilter.test.model.Person where missingProp is null";
       assertFalse(match(queryString, createPerson1()));
@@ -186,7 +186,7 @@ public abstract class AbstractMatcherTest {
    @Test
    public void testMissingProperty2() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000402");
+      expectedException.expectMessage("ISPN028501");
 
       String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.missingProp is null";
       assertFalse(match(queryString, createPerson1()));
@@ -728,7 +728,7 @@ public abstract class AbstractMatcherTest {
    @Test
    public void testProjectionOnEmbeddedEntity() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000405");
+      expectedException.expectMessage("ISPN028503");
 
       String queryString = "select p.phoneNumbers from org.infinispan.objectfilter.test.model.Person p";
 

@@ -91,7 +91,7 @@ public class RowMatcherTest {
    @Test
    public void shouldRaiseExceptionDueToUnknownAlias() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000404");
+      expectedException.expectMessage("ISPN028502");
 
       String queryString = "from Row p where x.name = 'John'";
       assertTrue(match(queryString, createPerson1()));
@@ -142,7 +142,7 @@ public class RowMatcherTest {
    @Test
    public void testMissingProperty1() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000402");
+      expectedException.expectMessage("ISPN028501");
 
       String queryString = "from Row where missingProp is null";
       assertFalse(match(queryString, createPerson1()));
@@ -151,7 +151,7 @@ public class RowMatcherTest {
    @Test
    public void testMissingProperty2() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000402");
+      expectedException.expectMessage("ISPN028501");
 
       String queryString = "from Row p where p.missingProp is null";
       assertFalse(match(queryString, createPerson1()));
