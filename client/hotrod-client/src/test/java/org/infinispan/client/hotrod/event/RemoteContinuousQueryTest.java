@@ -90,7 +90,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
    /**
     * Using grouping and aggregation with continuous query is not allowed.
     */
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(remoteCache).from(UserPB.class)
             .select(max("age"))

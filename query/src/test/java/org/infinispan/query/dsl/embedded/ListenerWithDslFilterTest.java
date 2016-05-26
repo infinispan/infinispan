@@ -209,7 +209,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    /**
     * Using grouping and aggregation with event filters is not allowed.
     */
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN000411:.*")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
       Query query = Search.getQueryFactory(cache()).from(Person.class)
             .having("age").gte(20)
