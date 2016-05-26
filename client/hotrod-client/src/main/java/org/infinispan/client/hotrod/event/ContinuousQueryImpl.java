@@ -34,7 +34,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
 
    private final SerializationContext serializationContext;
 
-   private final List<ClientEntryListener> listeners = new ArrayList<>();
+   private final List<ClientEntryListener<K, ?>> listeners = new ArrayList<>();
 
    public ContinuousQueryImpl(RemoteCache<K, V> cache) {
       if (cache == null) {
@@ -52,14 +52,14 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
     * @param query    the query to be used for determining the matching set
     */
    public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
-      ClientEntryListener eventListener = new ClientEntryListener(serializationContext, listener);
+      ClientEntryListener<K, ?> eventListener = new ClientEntryListener<K, C>(serializationContext, listener);
       Object[] factoryParams = Filters.makeFactoryParams(query);
       cache.addClientListener(eventListener, factoryParams, null);
       listeners.add(eventListener);
    }
 
    public void removeContinuousQueryListener(ContinuousQueryListener<K, ?> listener) {
-      for (Iterator<ClientEntryListener> it = listeners.iterator(); it.hasNext(); ) {
+      for (Iterator<ClientEntryListener<K, ?>> it = listeners.iterator(); it.hasNext(); ) {
          ClientEntryListener l = it.next();
          if (l.listener == listener) {
             cache.removeClientListener(l);
@@ -71,7 +71,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
 
    public List<ContinuousQueryListener<K, ?>> getListeners() {
       List<ContinuousQueryListener<K, ?>> queryListeners = new ArrayList<>(listeners.size());
-      for (ClientEntryListener l : listeners) {
+      for (ClientEntryListener<K, ?> l : listeners) {
          queryListeners.add(l.listener);
       }
       return queryListeners;
@@ -87,13 +87,13 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
    @ClientListener(filterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          converterFactoryName = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
-   private static final class ClientEntryListener<K, V> {
+   private static final class ClientEntryListener<K, C> {
 
       private final SerializationContext serializationContext;
 
-      private final ContinuousQueryListener listener;
+      private final ContinuousQueryListener<K, C> listener;
 
-      public ClientEntryListener(SerializationContext serializationContext, ContinuousQueryListener listener) {
+      ClientEntryListener(SerializationContext serializationContext, ContinuousQueryListener<K, C> listener) {
          this.serializationContext = serializationContext;
          this.listener = listener;
       }
@@ -108,9 +108,9 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
          Object key = ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getKey());
          Object value = cqr.getValue() != null ? ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getValue()) : cqr.getProjection();
          if (cqr.isJoining()) {
-            listener.resultJoining(key, value);
+            listener.resultJoining((K) key, (C) value);
          } else {
-            listener.resultLeaving(key);
+            listener.resultLeaving((K) key);
          }
       }
    }
