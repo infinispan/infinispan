@@ -1816,39 +1816,11 @@ public class Parser80 implements ConfigurationParser {
 
    /**
     * This method is public static so that it can be reused by custom cache store/loader configuration parsers
+    * @deprecated Use {@link Parser#parseStoreAttribute(XMLExtendedStreamReader, int, AbstractStoreConfigurationBuilder)} instead
     */
+   @Deprecated
    public static void parseStoreAttribute(XMLExtendedStreamReader reader, int index, AbstractStoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
-      String value = replaceProperties(reader.getAttributeValue(index));
-      Attribute attribute = Attribute.forName(reader.getAttributeLocalName(index));
-      switch (attribute) {
-         case SHARED: {
-            storeBuilder.shared(Boolean.parseBoolean(value));
-            break;
-         }
-         case READ_ONLY: {
-            storeBuilder.ignoreModifications(Boolean.valueOf(value));
-            break;
-         }
-         case PRELOAD: {
-            storeBuilder.preload(Boolean.parseBoolean(value));
-            break;
-         }
-         case FETCH_STATE: {
-            storeBuilder.fetchPersistentState(Boolean.parseBoolean(value));
-            break;
-         }
-         case PURGE: {
-            storeBuilder.purgeOnStartup(Boolean.parseBoolean(value));
-            break;
-         }
-         case SINGLETON: {
-            storeBuilder.singleton().enabled(Boolean.parseBoolean(value));
-            break;
-         }
-         default: {
-            throw ParseUtils.unexpectedAttribute(reader, index);
-         }
-      }
+      Parser.parseStoreAttribute(reader, index, storeBuilder);
    }
 
    private void parseStoreElements(XMLExtendedStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
@@ -1857,55 +1829,28 @@ public class Parser80 implements ConfigurationParser {
       }
    }
 
+   /**
+    * This method is public static so that it can be reused by custom cache store/loader configuration parsers
+    * @deprecated Use {@link Parser#parseStoreElement(XMLExtendedStreamReader, StoreConfigurationBuilder)} instead
+    */
    public static void parseStoreElement(XMLExtendedStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
-      Element element = Element.forName(reader.getLocalName());
-      switch (element) {
-         case WRITE_BEHIND: {
-            parseStoreWriteBehind(reader, storeBuilder.async().enable());
-            break;
-         }
-         case PROPERTY: {
-            parseStoreProperty(reader, storeBuilder);
-            break;
-         }
-         default: {
-            throw ParseUtils.unexpectedElement(reader);
-         }
-      }
+      Parser.parseStoreElement(reader, storeBuilder);
    }
 
+   /**
+    * This method is public static so that it can be reused by custom cache store/loader configuration parsers
+    * @deprecated Use {@link Parser#parseStoreWriteBehind(XMLExtendedStreamReader, AsyncStoreConfigurationBuilder)} instead
+    */
    public static void parseStoreWriteBehind(XMLExtendedStreamReader reader, AsyncStoreConfigurationBuilder<?> storeBuilder) throws XMLStreamException {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = replaceProperties(reader.getAttributeValue(i));
-         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-         switch (attribute) {
-            case FLUSH_LOCK_TIMEOUT: {
-               storeBuilder.flushLockTimeout(Long.parseLong(value));
-               break;
-            }
-            case MODIFICATION_QUEUE_SIZE: {
-               storeBuilder.modificationQueueSize(Integer.parseInt(value));
-               break;
-            }
-            case SHUTDOWN_TIMEOUT: {
-               storeBuilder.shutdownTimeout(Long.parseLong(value));
-               break;
-            }
-            case THREAD_POOL_SIZE: {
-               storeBuilder.threadPoolSize(Integer.parseInt(value));
-               break;
-            }
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-      ParseUtils.requireNoContent(reader);
+      Parser.parseStoreWriteBehind(reader, storeBuilder);
    }
 
+   /**
+    * This method is public static so that it can be reused by custom cache store/loader configuration parsers
+    * @deprecated Use {@link Parser#parseStoreProperty(XMLExtendedStreamReader, StoreConfigurationBuilder)} instead
+    */
    public static void parseStoreProperty(XMLExtendedStreamReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) throws XMLStreamException {
-      String property = ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
-      String value = reader.getElementText();
-      storeBuilder.addProperty(property, value);
+      Parser.parseStoreProperty(reader, storeBuilder);
    }
 
    private void parseCustomStore(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -2026,39 +1971,12 @@ public class Parser80 implements ConfigurationParser {
       builder.indexing().withProperties(indexingProperties);
    }
 
+   /**
+    * This method is public static so that it can be reused by custom cache store/loader configuration parsers
+    * @deprecated Use {@link Parser#parseProperties(XMLExtendedStreamReader)} instead
+    */
    public static Properties parseProperties(final XMLExtendedStreamReader reader) throws XMLStreamException {
-      Properties p = new Properties();
-      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case PROPERTY: {
-               int attributes = reader.getAttributeCount();
-               ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
-               String key = null;
-               String propertyValue;
-               for (int i = 0; i < attributes; i++) {
-                  String value = replaceProperties(reader.getAttributeValue(i));
-                  Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-                  switch (attribute) {
-                     case NAME: {
-                        key = value;
-                        break;
-                     }
-                     default: {
-                        throw ParseUtils.unexpectedAttribute(reader, i);
-                     }
-                  }
-               }
-               propertyValue = replaceProperties(reader.getElementText());
-               p.setProperty(key, propertyValue);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-      }
-      return p;
+      return Parser.parseProperties(reader);
    }
 
    public enum TransactionMode {
