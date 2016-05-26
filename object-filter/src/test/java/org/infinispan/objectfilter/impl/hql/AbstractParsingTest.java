@@ -22,7 +22,7 @@ public abstract class AbstractParsingTest {
    @Test
    public void testInvalidNumericLiteral() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000407");
+      expectedException.expectMessage("ISPN028505");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where age = 'xyz'";
       queryParser.parseQuery(queryString, createFilterProcessingChain());
    }
@@ -30,7 +30,7 @@ public abstract class AbstractParsingTest {
    @Test
    public void testInvalidDateLiteral() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000408");
+      expectedException.expectMessage("ISPN028506");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where lastUpdate = '20140101zzzzzzzz'";
       queryParser.parseQuery(queryString, createFilterProcessingChain());
    }
@@ -38,7 +38,7 @@ public abstract class AbstractParsingTest {
    @Test
    public void testInvalidEnumLiteral() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000410");
+      expectedException.expectMessage("ISPN028508");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where gender = 'SomeUndefinedValue'";
       queryParser.parseQuery(queryString, createFilterProcessingChain());
    }
@@ -46,7 +46,7 @@ public abstract class AbstractParsingTest {
    @Test
    public void testInvalidBooleanLiteral() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000409");
+      expectedException.expectMessage("ISPN028507");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where deleted = 'maybe'";
       queryParser.parseQuery(queryString, createFilterProcessingChain());
    }
@@ -54,7 +54,7 @@ public abstract class AbstractParsingTest {
    @Test
    public void testInvalidPredicateOnEmbeddedEntity() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000406");
+      expectedException.expectMessage("ISPN028504");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where address = 5";
       queryParser.parseQuery(queryString, createFilterProcessingChain());
    }
@@ -62,7 +62,7 @@ public abstract class AbstractParsingTest {
    @Test
    public void testInvalidPredicateOnCollectionOfEmbeddedEntity() throws Exception {
       expectedException.expect(ParsingException.class);
-      expectedException.expectMessage("ISPN000406");
+      expectedException.expectMessage("ISPN028504");
       String queryString = "from org.infinispan.objectfilter.test.model.Person where phoneNumbers = 5";
       queryParser.parseQuery(queryString, createFilterProcessingChain());
    }

@@ -247,16 +247,20 @@ The last thing to figure out is which id to give to the message. Each module tha
 |lucene directory|15001 - 16000
 |rhq plugin|16001 - 17000
 |cdi integration|17001 - 18000
-|hbase cache store | 18001 - 19000 
-|cli interpreter | 19001 - 20000 
-|cli client | 20001 - 21000 
+|hbase cache store|18001 - 19000
+|cli interpreter|19001 - 20000
+|cli client|20001 - 21000
 |mongodb cache store|21001 - 22000
 |rest cache store|22001 - 23000
 |leveldb cache store|23001 - 24000
 |couchbase cache store|24001 - 25000
 |redis cache store|25001 - 26000
-|scripting|26001-27000
-|tasks|27001-28000
+|extended statistics|25001 - 26000
+|infinispan directory provider|26001 - 27000
+|scripting|26001 - 27000
+|tasks|27001 - 28000
+|remote query server|28001 - 28500
+|object filter|28501 - 29000
 |===============
 
 NOTE: When editing the above table, remember to update the README-i18n.txt file in the project sources!

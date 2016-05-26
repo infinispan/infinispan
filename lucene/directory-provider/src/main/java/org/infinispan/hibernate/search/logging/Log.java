@@ -12,7 +12,8 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 /**
- * Hibernate Search Infinispan's log abstraction layer on top of JBoss Logging.
+ * Hibernate Search Infinispan's log abstraction layer on top of JBoss Logging. For this module, message ids ranging
+ * from 26001 to 27000 inclusively have been reserved.
  *
  * @author Davide D'Alto
  * @since 4.0

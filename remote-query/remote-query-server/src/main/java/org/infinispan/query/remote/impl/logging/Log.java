@@ -7,7 +7,7 @@ import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * Log abstraction for the remote query module. For this module, message ids
- * ranging from 18001 to 19000 inclusively have been reserved.
+ * ranging from 28001 to 28500 inclusively have been reserved.
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -15,15 +15,15 @@ import org.jboss.logging.annotations.MessageLogger;
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends org.infinispan.util.logging.Log {
 
-   @Message(value = "Unknown field %s in type %s", id = 18001)
+   @Message(value = "Unknown field %s in type %s", id = 28001)
    IllegalArgumentException unknownField(String fieldName, String fullyQualifiedTypeName);
 
-   @Message(value = "Field %s from type %s is not indexed", id = 18002)
+   @Message(value = "Field %s from type %s is not indexed", id = 28002)
    IllegalArgumentException fieldIsNotIndexed(String fieldName, String fullyQualifiedTypeName);
 
-   @Message(value = "An exception has occurred during query execution", id = 18003)
+   @Message(value = "An exception has occurred during query execution", id = 28003)
    CacheException errorExecutingQuery(@Cause Throwable cause);
 
-   @Message(value = "Querying is not enabled on cache %s", id = 18004)
+   @Message(value = "Querying is not enabled on cache %s", id = 28004)
    CacheException queryingNotEnabled(String cacheName);
 }

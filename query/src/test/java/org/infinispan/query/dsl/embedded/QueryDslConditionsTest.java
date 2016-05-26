@@ -830,7 +830,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertTrue(list.isEmpty());
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN000405:.*")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028503:.*")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = getQueryFactory();
 
