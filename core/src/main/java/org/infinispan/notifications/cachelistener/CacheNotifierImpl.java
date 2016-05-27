@@ -226,9 +226,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
    @Override
    public void setTypeConverter(TypeConverter typeConverter) {
-      if (this.typeConverter != null) {
-         throw new IllegalStateException("The type converter can be set only once");
-      }
       this.typeConverter = typeConverter;
    }
 
@@ -729,7 +726,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
     * @param <C>
     * @return
     */
-
    @Override
    public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
                                            CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader) {

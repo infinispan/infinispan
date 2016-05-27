@@ -180,7 +180,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
          boolean before = filterEvalContext1 != null && filterEvalContext1.isMatching();
          boolean after = filterEvalContext2 != null && filterEvalContext2.isMatching();
          if (!before && after) {
-            s.getCallback().onFilterResult(true, userContext, joiningEvent, instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
+            s.getCallback().onFilterResult(true, userContext, joiningEvent, other.instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
          } else if (before && !after) {
             s.getCallback().onFilterResult(true, userContext, leavingEvent, instance, filterEvalContext1.getProjection(), filterEvalContext1.getSortProjection());
          }
