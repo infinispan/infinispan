@@ -15,16 +15,24 @@ import static org.testng.Assert.assertEquals;
 public class WeldStandaloneTest {
 
    public void testWeldStandaloneInitialisation() throws Exception {
-      //given
-      WeldContainer weld = new Weld().initialize();
-      CDITestingBean testedBean = weld.instance().select(CDITestingBean.class).get();
+      WeldContainer weld = null;
+      try {
+         //given
+         weld = new Weld().initialize();
+         CDITestingBean testedBean = weld.instance().select(CDITestingBean.class).get();
 
-      //when
-      testedBean.putValueInCache("test", "abcd");
-      String retrievedValue = testedBean.getValueFromCache("test");
+         //when
+         testedBean.putValueInCache("test", "abcd");
+         String retrievedValue = testedBean.getValueFromCache("test");
 
-      //then
-      assertEquals(retrievedValue, "abcd");
+         //then
+         assertEquals(retrievedValue, "abcd");
+      } finally {
+         if(weld != null) {
+            //cleanup
+            weld.shutdown();
+         }
+      }
    }
 
 }
