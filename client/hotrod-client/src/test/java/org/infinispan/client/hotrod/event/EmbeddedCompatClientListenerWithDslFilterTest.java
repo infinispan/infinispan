@@ -72,7 +72,9 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
       // Register the filter/converter factory. This should normally be discovered by the server via class path instead
       // of being added manually here, but this is ok in a test.
       JPACacheEventFilterConverterFactory factory = new JPACacheEventFilterConverterFactory();
-      server(0).addCacheEventFilterConverterFactory(JPACacheEventFilterConverterFactory.FACTORY_NAME, factory);
+      for (int i = 0; i < NUM_NODES; i++) {
+         server(i).addCacheEventFilterConverterFactory(JPACacheEventFilterConverterFactory.FACTORY_NAME, factory);
+      }
 
       remoteCache = client(0).getCache();
 
@@ -132,6 +134,7 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(31);
 
+      remoteCache.clear();
       remoteCache.put("user_" + user1.getId(), user1);
       remoteCache.put("user_" + user2.getId(), user2);
       remoteCache.put("user_" + user3.getId(), user3);
@@ -186,6 +189,7 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
       user3.setGender(User.Gender.FEMALE);
       user3.setAge(31);
 
+      remoteCache.clear();
       remoteCache.put("user_" + user1.getId(), user1);
       remoteCache.put("user_" + user2.getId(), user2);
       remoteCache.put("user_" + user3.getId(), user3);

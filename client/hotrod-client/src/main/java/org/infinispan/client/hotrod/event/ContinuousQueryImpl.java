@@ -52,7 +52,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
     * @param query    the query to be used for determining the matching set
     */
    public <C> void addContinuousQueryListener(Query query, ContinuousQueryListener<K, C> listener) {
-      ClientEntryListener<K, ?> eventListener = new ClientEntryListener<K, C>(serializationContext, listener);
+      ClientEntryListener<K, ?> eventListener = new ClientEntryListener<>(serializationContext, listener);
       Object[] factoryParams = Filters.makeFactoryParams(query);
       cache.addClientListener(eventListener, factoryParams, null);
       listeners.add(eventListener);
@@ -102,7 +102,7 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
       @ClientCacheEntryModified
       @ClientCacheEntryRemoved
       @ClientCacheEntryExpired
-      public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent<byte[]> event) throws IOException {
+      public void handleEvent(ClientCacheEntryCustomEvent<byte[]> event) throws IOException {
          byte[] eventData = event.getEventData();
          ContinuousQueryResult cqr = (ContinuousQueryResult) ProtobufUtil.fromWrappedByteArray(serializationContext, eventData);
          Object key = ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getKey());
