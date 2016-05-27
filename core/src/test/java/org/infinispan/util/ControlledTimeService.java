@@ -28,6 +28,9 @@ public class ControlledTimeService extends DefaultTimeService {
    }
 
    public void advance(long time) {
+      if (time <= 0) {
+         throw new IllegalArgumentException("Argument must be greater than 0");
+      }
       currentMillis += time;
    }
 }
