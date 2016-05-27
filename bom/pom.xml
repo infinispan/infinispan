@@ -310,8 +310,8 @@
          </dependency>
 
          <dependency>
-            <groupId>gnu-getopt</groupId>
-            <artifactId>getopt</artifactId>
+            <groupId>gnu.getopt</groupId>
+            <artifactId>java-getopt</artifactId>
             <version>${version.gnu.getopt}</version>
          </dependency>
          <dependency>
