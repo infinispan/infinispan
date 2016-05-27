@@ -135,7 +135,7 @@ object HotRodTestingUtil extends Log {
    }
 
    def findNetworkInterfaces(loopback: Boolean): Iterator[NetworkInterface] = {
-      NetworkInterface.getNetworkInterfaces.asScala.filter(ni => ni.isUp && ni.isLoopback==loopback)
+      NetworkInterface.getNetworkInterfaces.asScala.filter(ni => ni.isUp && ni.isLoopback==loopback && ni.getInetAddresses.hasMoreElements)
    }
 
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {

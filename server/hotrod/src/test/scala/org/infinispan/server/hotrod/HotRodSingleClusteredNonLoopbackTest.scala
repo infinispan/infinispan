@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import java.lang.reflect.Method
+import java.net.NetworkInterface
 import java.util.EnumSet
 
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
