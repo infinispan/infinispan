@@ -96,7 +96,7 @@ Eviction is disabled by default.  If enabled (using an empty `<eviction />` elem
 
 
 * strategy: EvictionStrategy.NONE is assumed, if a strategy is not specified..
-* wakeupInterval: 5000 is used if not specified.
+* wakeupInterval: 60000 is used if not specified.
 * If you wish to disable the eviction thread, set wakeupInterval to -1.
 * maxEntries: -1 is used if not specified, which means unlimited entries.
 * 0 means no entries, and the eviction thread will strive to keep the cache empty.
