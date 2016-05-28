@@ -7,6 +7,7 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionalEvent;
@@ -28,7 +29,7 @@ import java.util.Set;
  * @since 7.0
  */
 public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEntryRemovedEvent<K, V>,
-                                           CacheEntryModifiedEvent<K, V> {
+                                           CacheEntryModifiedEvent<K, V>, CacheEntryExpiredEvent<K, V> {
    transient Cache<K, V> cache;
 
    private final K key;
