@@ -1,5 +1,7 @@
 package org.infinispan.query.continuous.impl;
 
+import java.util.Map;
+
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -10,8 +12,6 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.query.dsl.embedded.impl.BaseJPAFilterIndexingServiceProvider;
 import org.kohsuke.MetaInfServices;
 
-import java.util.Map;
-
 /**
  * @author anistor@redhat.com
  * @since 8.1
@@ -19,6 +19,20 @@ import java.util.Map;
 @MetaInfServices(FilterIndexingServiceProvider.class)
 @SuppressWarnings("unused")
 public class JPAContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilterIndexingServiceProvider {
+
+   private final Object joiningEvent;
+   private final Object updatedEvent;
+   private final Object leavingEvent;
+
+   public JPAContinuousQueryFilterIndexingServiceProvider() {
+      this(ContinuousQueryResult.ResultType.JOINING, ContinuousQueryResult.ResultType.UPDATED, ContinuousQueryResult.ResultType.LEAVING);
+   }
+
+   protected JPAContinuousQueryFilterIndexingServiceProvider(Object joiningEvent, Object updatedEvent, Object leavingEvent) {
+      this.joiningEvent = joiningEvent;
+      this.updatedEvent = updatedEvent;
+      this.leavingEvent = leavingEvent;
+   }
 
    @Override
    public boolean supportsFilter(IndexedFilter<?, ?, ?> indexedFilter) {
@@ -59,13 +73,12 @@ public class JPAContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilt
       }
 
       if (oldValue != null || newValue != null) {
-         matcher.matchDelta(event, event.getType(), oldValue, newValue, true, false);
+         matcher.matchDelta(event, event.getType(), oldValue, newValue, joiningEvent, updatedEvent, leavingEvent);
       }
    }
 
    @Override
    protected Object makeFilterResult(Object userContext, Object eventType, Object key, Object instance, Object[] projection, Comparable[] sortProjection) {
-      boolean isJoining = Boolean.TRUE.equals(eventType);
-      return new ContinuousQueryResult(isJoining, instance, projection);
+      return new ContinuousQueryResult<>((ContinuousQueryResult.ResultType) eventType, instance, projection);
    }
 }

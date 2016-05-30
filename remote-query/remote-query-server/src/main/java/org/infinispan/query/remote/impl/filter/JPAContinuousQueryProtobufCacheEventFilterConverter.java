@@ -1,5 +1,13 @@
 package org.infinispan.query.remote.impl.filter;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -17,14 +25,6 @@ import org.infinispan.query.remote.impl.CompatibilityReflectionMatcher;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -71,16 +71,16 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
       ObjectFilter.FilterResult f2 = newValue == null ? null : objectFilter.filter(newValue);
       if (f1 == null && f2 != null) {
          // result joining
-         return makeFilterResult(true, key, f2.getProjection() == null ? newValue : null, f2.getProjection());
+         return makeFilterResult(ContinuousQueryResult.ResultType.JOINING, key, f2.getProjection() == null ? newValue : null, f2.getProjection());
       } else if (f1 != null && f2 == null) {
          // result leaving
-         return makeFilterResult(false, key, null, null);
+         return makeFilterResult(ContinuousQueryResult.ResultType.LEAVING, key, null, null);
       } else {
          return null;
       }
    }
 
-   protected Object makeFilterResult(boolean isJoining, Object key, Object value, Object[] projection) {
+   protected Object makeFilterResult(ContinuousQueryResult.ResultType resultType, Object key, Object value, Object[] projection) {
       try {
          if (isCompatMode) {
             key = ProtobufUtil.toWrappedByteArray(serCtx, key);
@@ -89,7 +89,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
             }
          }
 
-         Object result = new ContinuousQueryResult(isJoining, (byte[]) key, (byte[]) value, projection);
+         Object result = new ContinuousQueryResult(resultType, (byte[]) key, (byte[]) value, projection);
 
          if (!isCompatMode) {
             result = ProtobufUtil.toWrappedByteArray(serCtx, result);

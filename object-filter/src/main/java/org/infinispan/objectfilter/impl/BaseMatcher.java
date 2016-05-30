@@ -1,5 +1,11 @@
 package org.infinispan.objectfilter.impl;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.Matcher;
@@ -14,12 +20,6 @@ import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.jboss.logging.Logger;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author anistor@redhat.com
@@ -86,7 +86,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    @Override
-   public void matchDelta(Object userContext, Object eventType, Object instanceOld, Object instanceNew, Object joiningEvent, Object leavingEvent) {
+   public void matchDelta(Object userContext, Object eventType, Object instanceOld, Object instanceNew, Object joiningEvent, Object updatedEvent, Object leavingEvent) {
       if (instanceOld == null && instanceNew == null) {
          throw new IllegalArgumentException("instances cannot be both null");
       }
@@ -114,10 +114,10 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
          if (ctx1 != null) {
             // notify
-            ctx1.notifyDeltaSubscribers(ctx2, joiningEvent, leavingEvent);
+            ctx1.notifyDeltaSubscribers(ctx2, joiningEvent, updatedEvent, leavingEvent);
          } else if (ctx2 != null) {
             // notify
-            ctx2.notifyDeltaSubscribers(null, leavingEvent, joiningEvent);
+            ctx2.notifyDeltaSubscribers(null, leavingEvent, updatedEvent, joiningEvent);
          }
       } finally {
          read.unlock();

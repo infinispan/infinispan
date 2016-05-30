@@ -20,6 +20,7 @@ public interface FilterCallback {
    /**
     * Receives notification that an instance matches the filter.
     *
+    * @param isDelta        indicates if the match is a delta match
     * @param userContext    the optional user context object passed to {@link Matcher#match}
     * @param eventType      the optional event type discriminator object passed to {@link Matcher#match}
     * @param instance       the object being matched

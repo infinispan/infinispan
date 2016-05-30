@@ -1,14 +1,14 @@
 package org.infinispan.query.remote.impl.filter;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.query.remote.client.ContinuousQueryResult;
-import org.infinispan.query.remote.impl.ExternalizerIds;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.query.remote.client.ContinuousQueryResult;
+import org.infinispan.query.remote.impl.ExternalizerIds;
 
 /**
  * A 'remote' ContinuousQueryResult needs jboss-marshalling serializability between nodes when running in compat mode.
@@ -21,10 +21,10 @@ public final class ContinuousQueryResultExternalizer extends AbstractExternalize
 
    @Override
    public void writeObject(ObjectOutput output, ContinuousQueryResult continuousQueryResult) throws IOException {
-      output.writeBoolean(continuousQueryResult.isJoining());
+      output.writeInt(continuousQueryResult.getResultType().ordinal());
       output.writeInt(continuousQueryResult.getKey().length);
       output.write(continuousQueryResult.getKey());
-      if (continuousQueryResult.isJoining()) {
+      if (continuousQueryResult.getResultType() != ContinuousQueryResult.ResultType.LEAVING) {
          Object[] projection = continuousQueryResult.getProjection();
          if (projection == null) {
             output.writeInt(continuousQueryResult.getValue().length);
@@ -43,13 +43,13 @@ public final class ContinuousQueryResultExternalizer extends AbstractExternalize
 
    @Override
    public ContinuousQueryResult readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      boolean isJoining = input.readBoolean();
+      ContinuousQueryResult.ResultType resultType = ContinuousQueryResult.ResultType.values()[input.readInt()];
       int keyLen = input.readInt();
       byte[] key = new byte[keyLen];
       input.readFully(key);
       byte[] value = null;
       Object[] projection = null;
-      if (isJoining) {
+      if (resultType != ContinuousQueryResult.ResultType.LEAVING) {
          int valueLen = input.readInt();
          if (valueLen == -1) {
             int projLen = input.readInt();
@@ -62,7 +62,7 @@ public final class ContinuousQueryResultExternalizer extends AbstractExternalize
             input.readFully(value);
          }
       }
-      return new ContinuousQueryResult(isJoining, key, value, projection);
+      return new ContinuousQueryResult(resultType, key, value, projection);
    }
 
    @Override

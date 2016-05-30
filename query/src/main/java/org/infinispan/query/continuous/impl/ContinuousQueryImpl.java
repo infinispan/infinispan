@@ -1,5 +1,9 @@
 package org.infinispan.query.continuous.impl;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -8,14 +12,10 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * A container of continuous query listeners for a cache.
@@ -93,11 +93,23 @@ public class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
       @CacheEntryExpired
       public void handleEvent(CacheEntryEvent<K, ContinuousQueryResult<V>> event) {
          ContinuousQueryResult<V> cqr = event.getValue();
-         if (cqr.isJoining()) {
-            C value = cqr.getValue() != null ? (C) cqr.getValue() : (C) cqr.getProjection();
-            listener.resultJoining(event.getKey(), value);
-         } else {
-            listener.resultLeaving(event.getKey());
+         switch (cqr.getResultType()) {
+            case JOINING: {
+               C value = cqr.getValue() != null ? (C) cqr.getValue() : (C) cqr.getProjection();
+               listener.resultJoining(event.getKey(), value);
+               break;
+            }
+            case UPDATED: {
+               C value = cqr.getValue() != null ? (C) cqr.getValue() : (C) cqr.getProjection();
+               listener.resultUpdated(event.getKey(), value);
+               break;
+            }
+            case LEAVING: {
+               listener.resultLeaving(event.getKey());
+               break;
+            }
+            default:
+               throw new IllegalStateException("Unexpected result type : " + cqr.getResultType());
          }
       }
    }

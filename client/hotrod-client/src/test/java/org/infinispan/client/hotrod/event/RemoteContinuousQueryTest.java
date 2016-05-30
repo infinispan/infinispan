@@ -1,6 +1,25 @@
 package org.infinispan.client.hotrod.event;
 
 
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -24,25 +43,6 @@ import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.param;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -114,13 +114,6 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
 
       ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
-         @Override
-         public void resultJoining(String key, Object[] value) {
-         }
-
-         @Override
-         public void resultLeaving(String key) {
-         }
       };
       continuousQuery.addContinuousQueryListener(query, listener);
    }
@@ -164,6 +157,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
             .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, User>> joined = new LinkedBlockingQueue<>();
+      final BlockingQueue<KeyValuePair<String, User>> updated = new LinkedBlockingQueue<>();
       final BlockingQueue<String> left = new LinkedBlockingQueue<>();
 
       ContinuousQueryListener<String, User> listener = new ContinuousQueryListener<String, User>() {
@@ -171,6 +165,11 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
          @Override
          public void resultJoining(String key, User value) {
             joined.add(new KeyValuePair<>(key, value));
+         }
+
+         @Override
+         public void resultUpdated(String key, User value) {
+            updated.add(new KeyValuePair<>(key, value));
          }
 
          @Override
@@ -183,12 +182,21 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       continuousQuery.addContinuousQueryListener(query, listener);
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue().getAge(), 32, 22);
+      expectElementsInQueue(updated, 0);
       expectElementsInQueue(left, 0);
 
       user3.setAge(30);
       remoteCache.put("user" + user3.getId(), user3);
 
       expectElementsInQueue(joined, 1, (kv) -> kv.getValue().getAge(), 30);
+      expectElementsInQueue(updated, 0);
+      expectElementsInQueue(left, 0);
+
+      user1.setAge(23);
+      remoteCache.put("user" + user1.getId(), user1);
+
+      expectElementsInQueue(joined, 0);
+      expectElementsInQueue(updated, 1, (kv) -> kv.getValue().getAge(), 23);
       expectElementsInQueue(left, 0);
 
       user1.setAge(40);
@@ -199,6 +207,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       remoteCache.put("user" + user3.getId(), user3);
 
       expectElementsInQueue(joined, 0);
+      expectElementsInQueue(updated, 0);
       expectElementsInQueue(left, 3);
 
       remoteCache.clear();
@@ -266,6 +275,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
             .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
+      final BlockingQueue<KeyValuePair<String, Object[]>> updated = new LinkedBlockingQueue<>();
       final BlockingQueue<String> left = new LinkedBlockingQueue<>();
 
       ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
@@ -273,6 +283,11 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
          @Override
          public void resultJoining(String key, Object[] value) {
             joined.add(new KeyValuePair<>(key, value));
+         }
+
+         @Override
+         public void resultUpdated(String key, Object[] value) {
+            updated.add(new KeyValuePair<>(key, value));
          }
 
          @Override
@@ -285,12 +300,21 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       continuousQuery.addContinuousQueryListener(query, listener);
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue()[0], 32, 22);
+      expectElementsInQueue(updated, 0);
       expectElementsInQueue(left, 0);
 
       user3.setAge(30);
       remoteCache.put("user" + user3.getId(), user3);
 
       expectElementsInQueue(joined, 1, (kv) -> kv.getValue()[0], 30);
+      expectElementsInQueue(updated, 0);
+      expectElementsInQueue(left, 0);
+
+      user1.setAge(23);
+      remoteCache.put("user" + user1.getId(), user1);
+
+      expectElementsInQueue(joined, 0);
+      expectElementsInQueue(updated, 1, (kv) -> kv.getValue()[0], 23);
       expectElementsInQueue(left, 0);
 
       user1.setAge(40);
@@ -301,6 +325,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       remoteCache.put("user" + user3.getId(), user3);
 
       expectElementsInQueue(joined, 0);
+      expectElementsInQueue(updated, 0);
       expectElementsInQueue(left, 3);
 
       remoteCache.clear();
@@ -368,6 +393,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
             .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
+      final BlockingQueue<KeyValuePair<String, Object[]>> updated = new LinkedBlockingQueue<>();
       final BlockingQueue<String> left = new LinkedBlockingQueue<>();
 
       ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
@@ -378,21 +404,24 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
          }
 
          @Override
+         public void resultUpdated(String key, Object[] value) {
+            updated.add(new KeyValuePair<>(key, value));
+         }
+
+         @Override
          public void resultLeaving(String key) {
             left.add(key);
          }
       };
 
-      ContinuousQuery<String, User> cq = Search.getContinuousQuery(remoteCache);
-      cq.addContinuousQueryListener(query, listener);
+      ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
+      continuousQuery.addContinuousQueryListener(query, listener);
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue()[0], 32, 22);
+      expectElementsInQueue(updated, 0);
       expectElementsInQueue(left, 0);
 
-      joined.clear();
-      left.clear();
-
-      cq.removeContinuousQueryListener(listener);
+      continuousQuery.removeContinuousQueryListener(listener);
 
       query.setParameter("ageParam", 40);
 
@@ -404,14 +433,20 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
          }
 
          @Override
+         public void resultUpdated(String key, Object[] value) {
+            updated.add(new KeyValuePair<>(key, value));
+         }
+
+         @Override
          public void resultLeaving(String key) {
             left.add(key);
          }
       };
 
-      cq.addContinuousQueryListener(query, listener);
+      continuousQuery.addContinuousQueryListener(query, listener);
 
       expectElementsInQueue(joined, 3);
+      expectElementsInQueue(updated, 0);
       expectElementsInQueue(left, 0);
    }
 

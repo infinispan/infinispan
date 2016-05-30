@@ -1,10 +1,10 @@
 package org.infinispan.objectfilter;
 
-import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.query.dsl.Query;
-
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
+import org.infinispan.query.dsl.Query;
 
 /**
  * An object matcher able to test a given object against multiple registered filters specified either as JPA queries or
@@ -38,7 +38,7 @@ public interface Matcher {
     */
    void match(Object userContext, Object eventType, Object instance);
 
-   void matchDelta(Object userContext, Object eventType, Object instanceOld, Object instanceNew, Object joiningEvent, Object leavingEvent);
+   void matchDelta(Object userContext, Object eventType, Object instanceOld, Object instanceNew, Object joiningEvent, Object updateEvent, Object leavingEvent);
 
    /**
     * Obtains an ObjectFilter instance that is capable of testing a single filter condition.

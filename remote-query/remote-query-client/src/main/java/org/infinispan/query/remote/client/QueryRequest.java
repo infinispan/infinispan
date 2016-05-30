@@ -1,11 +1,11 @@
 package org.infinispan.query.remote.client;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.WrappedMessage;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.WrappedMessage;
 
 /**
  * @author anistor@redhat.com
@@ -53,7 +53,7 @@ public final class QueryRequest {
       this.namedParameters = namedParameters;
    }
 
-   public static final class Marshaller implements MessageMarshaller<QueryRequest> {
+   static final class Marshaller implements MessageMarshaller<QueryRequest> {
 
       @Override
       public QueryRequest readFrom(ProtoStreamReader reader) throws IOException {
@@ -61,7 +61,7 @@ public final class QueryRequest {
          queryRequest.setJpqlString(reader.readString("jpqlString"));
          queryRequest.setStartOffset(reader.readLong("startOffset"));
          queryRequest.setMaxResults(reader.readInt("maxResults"));
-         queryRequest.setNamedParameters(reader.readCollection("namedParameters", new ArrayList<NamedParameter>(), NamedParameter.class));
+         queryRequest.setNamedParameters(reader.readCollection("namedParameters", new ArrayList<>(), NamedParameter.class));
          return queryRequest;
       }
 
@@ -109,7 +109,7 @@ public final class QueryRequest {
          return value;
       }
 
-      public static final class Marshaller implements MessageMarshaller<NamedParameter> {
+      static final class Marshaller implements MessageMarshaller<NamedParameter> {
 
          @Override
          public NamedParameter readFrom(ProtoStreamReader reader) throws IOException {

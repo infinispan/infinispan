@@ -1,12 +1,12 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
-import org.infinispan.objectfilter.impl.FilterRegistry;
-import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
-import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.objectfilter.impl.FilterRegistry;
+import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
+import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 
 /**
  * Stores processing state during the matching process of all filters registered with a Matcher.
@@ -152,7 +152,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       }
    }
 
-   public void notifyDeltaSubscribers(MatcherEvalContext other, Object joiningEvent, Object leavingEvent) {
+   public void notifyDeltaSubscribers(MatcherEvalContext other, Object joiningEvent, Object updateEvent, Object leavingEvent) {
       if (isSingleFilter()) {
          return;
       }
@@ -179,10 +179,13 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
          boolean before = filterEvalContext1 != null && filterEvalContext1.isMatching();
          boolean after = filterEvalContext2 != null && filterEvalContext2.isMatching();
+
          if (!before && after) {
             s.getCallback().onFilterResult(true, userContext, joiningEvent, other.instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
          } else if (before && !after) {
             s.getCallback().onFilterResult(true, userContext, leavingEvent, instance, filterEvalContext1.getProjection(), filterEvalContext1.getSortProjection());
+         } else if (before && after) {
+            s.getCallback().onFilterResult(true, userContext, updateEvent, other.instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
          }
       }
    }

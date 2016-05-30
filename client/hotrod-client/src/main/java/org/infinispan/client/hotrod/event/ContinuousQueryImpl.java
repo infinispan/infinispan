@@ -1,5 +1,10 @@
 package org.infinispan.client.hotrod.event;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
@@ -10,15 +15,10 @@ import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * A container of continuous query listeners for a cache.
@@ -107,10 +107,19 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
          ContinuousQueryResult cqr = (ContinuousQueryResult) ProtobufUtil.fromWrappedByteArray(serializationContext, eventData);
          Object key = ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getKey());
          Object value = cqr.getValue() != null ? ProtobufUtil.fromWrappedByteArray(serializationContext, cqr.getValue()) : cqr.getProjection();
-         if (cqr.isJoining()) {
-            listener.resultJoining((K) key, (C) value);
-         } else {
-            listener.resultLeaving((K) key);
+
+         switch (cqr.getResultType()) {
+            case JOINING:
+               listener.resultJoining((K) key, (C) value);
+               break;
+            case UPDATED:
+               listener.resultUpdated((K) key, (C) value);
+               break;
+            case LEAVING:
+               listener.resultLeaving((K) key);
+               break;
+            default:
+               throw new IllegalStateException("Unexpected result type : " + cqr.getResultType());
          }
       }
    }
