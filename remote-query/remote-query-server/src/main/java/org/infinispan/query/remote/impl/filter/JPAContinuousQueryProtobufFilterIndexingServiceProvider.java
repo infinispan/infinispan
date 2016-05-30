@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl.filter;
 
+import java.io.IOException;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
@@ -11,8 +13,6 @@ import org.infinispan.query.continuous.impl.JPAContinuousQueryFilterIndexingServ
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.kohsuke.MetaInfServices;
-
-import java.io.IOException;
 
 
 /**
@@ -26,6 +26,10 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
    private SerializationContext serCtx;
 
    private boolean isCompatMode;
+
+   public JPAContinuousQueryProtobufFilterIndexingServiceProvider() {
+      super(ContinuousQueryResult.ResultType.JOINING, ContinuousQueryResult.ResultType.UPDATED, ContinuousQueryResult.ResultType.LEAVING);
+   }
 
    @Inject
    protected void injectDependencies(Cache cache) {
@@ -48,8 +52,7 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
             }
          }
 
-         boolean isJoining = Boolean.TRUE.equals(eventType);
-         Object result = new ContinuousQueryResult(isJoining, (byte[]) key, (byte[]) instance, projection);
+         Object result = new ContinuousQueryResult((ContinuousQueryResult.ResultType) eventType, (byte[]) key, (byte[]) instance, projection);
 
          if (!isCompatMode) {
             result = ProtobufUtil.toWrappedByteArray(serCtx, result);

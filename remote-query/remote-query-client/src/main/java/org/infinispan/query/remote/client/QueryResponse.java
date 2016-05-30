@@ -1,11 +1,11 @@
 package org.infinispan.query.remote.client;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.WrappedMessage;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.WrappedMessage;
 
 /**
  * @author anistor@redhat.com
@@ -53,14 +53,14 @@ public final class QueryResponse {
       this.totalResults = totalResults;
    }
 
-   public static final class Marshaller implements MessageMarshaller<QueryResponse> {
+   static final class Marshaller implements MessageMarshaller<QueryResponse> {
 
       @Override
       public QueryResponse readFrom(ProtoStreamReader reader) throws IOException {
          QueryResponse queryResponse = new QueryResponse();
          queryResponse.setNumResults(reader.readInt("numResults"));
          queryResponse.setProjectionSize(reader.readInt("projectionSize"));
-         queryResponse.setResults(reader.readCollection("results", new ArrayList<WrappedMessage>(), WrappedMessage.class));
+         queryResponse.setResults(reader.readCollection("results", new ArrayList<>(), WrappedMessage.class));
          queryResponse.setTotalResults(reader.readLong("totalResults"));
          return queryResponse;
       }

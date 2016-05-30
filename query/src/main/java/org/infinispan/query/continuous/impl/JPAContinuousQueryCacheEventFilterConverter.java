@@ -1,5 +1,13 @@
 package org.infinispan.query.continuous.impl;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -15,14 +23,6 @@ import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.util.KeyValuePair;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -122,12 +122,15 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
       if (f1 == null) {
          if (f2 != null) {
             // result joining
-            return (C) new ContinuousQueryResult<>(true, f2.getProjection() == null ? newValue : null, f2.getProjection());
+            return (C) new ContinuousQueryResult<>(ContinuousQueryResult.ResultType.JOINING, f2.getProjection() == null ? newValue : null, f2.getProjection());
          }
       } else {
-         if (f2 == null) {
+         if (f2 != null) {
+            // result updated
+            return (C) new ContinuousQueryResult<>(ContinuousQueryResult.ResultType.UPDATED, f2.getProjection() == null ? newValue : null, f2.getProjection());
+         } else {
             // result leaving
-            return (C) new ContinuousQueryResult<V>(false, null, null);
+            return (C) new ContinuousQueryResult<V>(ContinuousQueryResult.ResultType.LEAVING, null, null);
          }
       }
 

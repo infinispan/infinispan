@@ -4,10 +4,10 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -50,7 +50,8 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
       if (doRegisterListener) {
          Query query = makeQuery(cache(0));
          for (int i = 0; i < numListeners; i++) {
-            cq.addContinuousQueryListener(query, new NoOpCQListener());
+            cq.addContinuousQueryListener(query, new ContinuousQueryListener<Object, Object>() {
+            });
          }
       }
 
@@ -85,16 +86,5 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
       return qf.from(Person.class)
             .having("age").gte(18)
             .toBuilder().build();
-   }
-
-   private static class NoOpCQListener<K, V> implements ContinuousQueryListener<K, V> {
-
-      @Override
-      public void resultJoining(K key, V value) {
-      }
-
-      @Override
-      public void resultLeaving(K key) {
-      }
    }
 }

@@ -1,13 +1,13 @@
 package org.infinispan.query.remote.client;
 
-import org.infinispan.protostream.MessageMarshaller;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.WrappedMessage;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.WrappedMessage;
 
 /**
  * @author anistor@redhat.com
@@ -51,7 +51,7 @@ public final class FilterResult {
             '}';
    }
 
-   public static final class Marshaller implements MessageMarshaller<FilterResult> {
+   static final class Marshaller implements MessageMarshaller<FilterResult> {
 
       @Override
       public FilterResult readFrom(ProtoStreamReader reader) throws IOException {
