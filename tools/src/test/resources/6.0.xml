@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan xmlns="urn:infinispan:config:6.0" xmlns:jdbc="urn:infinispan:config:jdbc:6.0" xmlns:remote="urn:infinispan:config:remote:6.0"
-    xmlns:leveldb="urn:infinispan:config:leveldb:6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd
+            xmlns:leveldb="urn:infinispan:config:leveldb:6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd
+                        urn:infinispan:config:jpa:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-jpa-config-6.0.xsd
                         urn:infinispan:config:jdbc:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-jdbc-config-6.0.xsd
                         urn:infinispan:config:remote:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-remote-config-6.0.xsd
                         urn:infinispan:config:store:rest:6.0 http://www.infinispan.org/schemas/infinispan-cachestore-rest-config-6.0.xsd
@@ -13,7 +14,8 @@
         <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
             <properties>
                 <property name="maxThreads" value="5" />
-                <property name="queueSize" value="10000" />
+                <property name="coreThreads" value="2" />
+                <property name="queueSize" value="12000" />
                 <property name="threadNamePrefix" value="AsyncListenerThread" />
             </properties>
         </asyncListenerExecutor>
@@ -65,7 +67,10 @@
             </properties>
         </totalOrderExecutor>
 
-        <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1" rackId="r1" siteId="s1">
+        <site local="testGlobalSite"/>
+
+        <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno" machineId="m1" rackId="r1" siteId="s1" strictPeerToPeer="true"
+                   transportClass="org.infinispan.tools.customs.CustomTransport">
             <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
             <properties>
                 <property name="configurationFile" value="jgroups-udp.xml" />
@@ -82,7 +87,11 @@
         </serialization>
 
         <globalJmxStatistics enabled="true" jmxDomain="funky_domain" mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
-            allowDuplicateDomains="true" />
+                             allowDuplicateDomains="true" cacheManagerName="TestCacheManager">
+            <properties>
+                <property name="testKey" value="testValue" />
+            </properties>
+        </globalJmxStatistics>
 
         <shutdown hookBehavior="REGISTER" />
     </global>
@@ -94,14 +103,14 @@
     </default>
 
     <namedCache name="transactional">
-        <transaction useEagerLocking="true" eagerLockSingleNode="true" transactionMode="TRANSACTIONAL" autoCommit="true" />
+        <transaction useEagerLocking="true" eagerLockSingleNode="true" transactionMode="TRANSACTIONAL" autoCommit="true">
+            <recovery enabled="true" recoveryInfoCacheName="transactional2"/>
+        </transaction>
     </namedCache>
 
     <namedCache name="transactional2">
         <transaction transactionManagerLookupClass="org.infinispan.test.tx.TestLookup" cacheStopTimeout="10000" lockingMode="PESSIMISTIC"
-            autoCommit="false">
-            <recovery enabled="true" recoveryInfoCacheName="test"/>
-        </transaction>
+                     autoCommit="false" syncCommitPhase="false" syncRollbackPhase="true"/>
     </namedCache>
 
     <namedCache name="transactional3">
@@ -112,13 +121,13 @@
         <clustering mode="r" />
     </namedCache>
 
-    <namedCache name="syncInval">
+    <namedCache name="lockingSyncInval">
         <locking lockAcquisitionTimeout="20000" />
         <clustering mode="invalidation">
         </clustering>
     </namedCache>
 
-    <namedCache name="asyncInval">
+    <namedCache name="lockingAsyncInval">
         <locking lockAcquisitionTimeout="20000" />
         <clustering mode="invalidation">
             <stateTransfer fetchInMemoryState="false" awaitInitialTransfer="false" />
@@ -143,52 +152,86 @@
     <namedCache name="asyncReplQueue">
         <clustering mode="repl">
             <stateTransfer fetchInMemoryState="false" />
-            <async useReplQueue="true" replQueueInterval="1234" replQueueMaxElements="100" />
+            <async useReplQueue="true" replQueueInterval="1234" replQueueMaxElements="100" replQueueClass="test"/>
         </clustering>
     </namedCache>
 
     <namedCache name="txSyncRepl">
-        <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" transactionMode="TRANSACTIONAL" />
+        <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" />
         <clustering mode="repl">
             <stateTransfer fetchInMemoryState="false" />
             <sync replTimeout="15000" />
         </clustering>
     </namedCache>
 
-    <namedCache name="overriding">
-        <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000" />
+    <namedCache name="lockingOverriding">
+        <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000" useLockStriping="true" writeSkewCheck="true"/>
+        <versioning enabled="true" versioningScheme="SIMPLE" />
     </namedCache>
 
-    <namedCache name="storeAsBinary">
+    <namedCache name="lockingWithStoreAsBinary">
         <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000" />
         <storeAsBinary enabled="true" />
+    </namedCache>
+
+    <namedCache name="lockingWithStoreAsBinaryDisabled">
+        <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000" />
+        <storeAsBinary enabled="false" />
     </namedCache>
 
     <namedCache name="withFileStore">
         <persistence passivation="false">
 
             <!-- We can have multiple cache stores, which get chained -->
-            <singleFile preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location">
-                <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700" />
-                <singleton enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000" />
+            <singleFile preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location" maxEntries="5000">
+                <async enabled="true" flushLockTimeout="15000" threadPoolSize="5" modificationQueueSize="700" shutdownTimeout="1200"/>
+                <singleton enabled="false" pushStateWhenCoordinator="true" pushStateTimeout="20000" />
+            </singleFile>
+        </persistence>
+    </namedCache>
+
+    <namedCache name="withFileStoreDisabledAsync">
+        <persistence passivation="false">
+
+            <!-- We can have multiple cache stores, which get chained -->
+            <singleFile preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" location="/tmp/FileCacheStore-Location" maxEntries="5000">
+                <async enabled="false" />
+                <singleton enabled="false" pushStateWhenCoordinator="true" pushStateTimeout="20000" />
             </singleFile>
         </persistence>
     </namedCache>
 
     <namedCache name="withClusterLoader">
         <persistence passivation="false">
-            <cluster remoteCallTimeout="15000" />
+            <cluster remoteCallTimeout="15000" preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" shared="true"/>
+        </persistence>
+    </namedCache>
+
+    <namedCache name="withClusterLoader1">
+        <persistence>
+            <store class="org.infinispan.persistence.cluster.ClusterLoader" preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" shared="true">
+                <properties>
+                    <property name="remoteCallTimeout" value="15000" />
+                </properties>
+            </store>
         </persistence>
     </namedCache>
 
     <namedCache name="withLoaderDefaults">
         <persistence>
-            <store class="org.infinispan.persistence.file.SingleFileStore">
+            <store class="org.infinispan.persistence.file.SingleFileStore" preload="true" fetchPersistentState="true" ignoreModifications="true" purgeOnStartup="true" shared="true">
                 <properties>
                     <property name="location" value="/tmp/Another-FileCacheStore-Location" />
                 </properties>
             </store>
         </persistence>
+    </namedCache>
+
+    <namedCache name="localCache">
+        <clustering mode="local">
+            <stateTransfer timeout="120000" />
+            <sync />
+        </clustering>
     </namedCache>
 
     <namedCache name="dist">
@@ -200,12 +243,21 @@
         </clustering>
     </namedCache>
 
+    <namedCache name="distAsync">
+        <clustering mode="distribution">
+            <stateTransfer timeout="120000" />
+            <async useReplQueue="true" />
+            <hash numOwners="3" />
+            <l1 enabled="true" lifespan="600000" cleanupTaskFrequency="1200" />
+        </clustering>
+    </namedCache>
+
     <namedCache name="dist_with_capacity_factors">
         <clustering mode="distribution">
             <stateTransfer timeout="120000" />
             <sync />
-            <hash numOwners="3" numSegments="1000" capacityFactor="0" />
-            <l1 enabled="true" lifespan="600000" />
+            <hash numOwners="3" numSegments="1000" capacityFactor="0" /> <!--hashFunctionClass="org.infinispan.commons.hash.MurmurHash3" add when ISPN-6735 is fixed -->
+            <l1 enabled="true" lifespan="610000" />
         </clustering>
     </namedCache>
 
@@ -219,11 +271,28 @@
         </clustering>
     </namedCache>
 
-    <namedCache name="chunkSize">
+    <namedCache name="groupsDisabled">
         <clustering mode="distribution">
-            <sync />
+            <hash>
+                <groups enabled="false">
+                    <grouper class="org.infinispan.distribution.groups.KXGrouper" />
+                </groups>
+            </hash>
+        </clustering>
+    </namedCache>
+
+    <namedCache name="hashWithFactory">
+        <clustering mode="distribution">
+            <hash factory="org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory"/>
+            <l1 enabled="false" />
+        </clustering>
+    </namedCache>
+
+    <namedCache name="chunkSize">
+        <clustering>
+            <async />
             <hash numOwners="3" />
-            <l1 enabled="true" lifespan="600000" />
+            <l1 enabled="true" lifespan="600000" invalidationThreshold="-1" onRehash="false"/>
             <stateTransfer fetchInMemoryState="true" timeout="120000" chunkSize="1000" />
         </clustering>
     </namedCache>
@@ -233,6 +302,11 @@
 
         <!-- Eviction configuration. -->
         <eviction maxEntries="5000" threadPolicy="PIGGYBACK" strategy="LRU" />
+        <!-- Expiration wakeUpInterval defines the interval between successive runs to purge expired entries from memory and any cache stores. -->
+        <expiration wakeUpInterval="500" lifespan="60000" maxIdle="1000" reaperEnabled="false"/>
+    </namedCache>
+
+    <namedCache name="expirationCacheWithEnabledReaper">
         <!-- Expiration wakeUpInterval defines the interval between successive runs to purge expired entries from memory and any cache stores. -->
         <expiration wakeUpInterval="500" lifespan="60000" maxIdle="1000" reaperEnabled="true"/>
     </namedCache>
@@ -252,7 +326,15 @@
         <deadlockDetection enabled="true" spinDuration="1221" />
     </namedCache>
 
-    <namedCache name="withJDBCLoader">
+    <namedCache name="withDeadlockDetectionDisabled">
+        <clustering>
+            <sync replTimeout="20000" />
+        </clustering>
+        <jmxStatistics enabled="false" />
+        <deadlockDetection enabled="false" />
+    </namedCache>
+
+    <namedCache name="lockingWithJDBCLoader">
         <clustering>
             <sync replTimeout="20000" />
         </clustering>
@@ -261,15 +343,15 @@
         <eviction maxEntries="1000" strategy="LIRS" />
         <persistence passivation="true">
             <store class="org.infinispan.persistence.file.SingleFileStore" shared="false" preload="true" fetchPersistentState="true" ignoreModifications="true"
-                purgeOnStartup="true">
-                <async enabled="true" threadPoolSize="10" flushLockTimeout="10000" />
+                   purgeOnStartup="true">
+                <async enabled="false"/>
                 <singleton enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000" />
                 <properties>
                     <property name="location" value="${java.io.tmpdir}" />
                 </properties>
             </store>
         </persistence>
-        <locking supportsConcurrentUpdates="true" />
+        <locking supportsConcurrentUpdates="false" />
     </namedCache>
 
     <namedCache name="withReplicationQueue">
@@ -297,14 +379,18 @@
     </namedCache>
 
     <namedCache name="storeKeyValueBinary">
-        <storeAsBinary storeKeysAsBinary="true" storeValuesAsBinary="false" enabled="true" />
+        <storeAsBinary storeKeysAsBinary="true" storeValuesAsBinary="false" enabled="true" defensive="false"/>
     </namedCache>
 
-    <namedCache name="jdbcStringBased">
+    <namedCache name="lazyDeserializationCache">
+        <lazyDeserialization enabled="true" />
+    </namedCache>
+
+    <namedCache name="jdbcStringBasedWithConnectionPool">
         <persistence>
             <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" fetchPersistentState="false" ignoreModifications="false"
-                purgeOnStartup="false">
-                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver" />
+                                  purgeOnStartup="false" key2StringMapper="org.infinispan.persistence.jdbc.configuration.DummyKey2StringMapper">
+                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver" password="sa"/>
                 <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
                     <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
                     <dataColumn name="DATA_COLUMN" type="BINARY" />
@@ -314,10 +400,43 @@
         </persistence>
     </namedCache>
 
+    <namedCache name="jdbcStringBasedWithDataSource">
+        <persistence>
+            <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" fetchPersistentState="false" ignoreModifications="true"
+                                  purgeOnStartup="true" key2StringMapper="org.infinispan.persistence.jdbc.configuration.DummyKey2StringMapper">
+                <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE" batchSize="50" fetchSize="70">
+                    <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
+                    <dataColumn name="DATA_COLUMN" type="BINARY" />
+                    <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
+                </stringKeyedTable>
+                <dataSource jndiUrl="url" />
+                <!--<async enabled="true" flush-lock-timeout="10" modification-queue-size="10" shutdown-timeout="5000" thread-pool-size="10"/>-->
+            </stringKeyedJdbcStore>
+        </persistence>
+    </namedCache>
+
+    <namedCache name="jdbcStringBasedWithSimpleConnection">
+        <persistence>
+            <stringKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" fetchPersistentState="true" ignoreModifications="true"
+                                  purgeOnStartup="false" key2StringMapper="org.infinispan.persistence.jdbc.configuration.DummyKey2StringMapper">
+                <stringKeyedTable dropOnExit="false" createOnStart="false" prefix="ISPN_STRING_TABLE">
+                    <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
+                    <dataColumn name="DATA_COLUMN" type="BINARY" />
+                    <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
+                </stringKeyedTable>
+                <simpleConnection connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" driverClass="org.h2.Driver" password="sa" username="sa"/>
+                <singleton enabled="true" pushStateTimeout="105" pushStateWhenCoordinator="false"/>
+                <properties>
+                    <property name="testName" value="testValue"/>
+                </properties>
+            </stringKeyedJdbcStore>
+        </persistence>
+    </namedCache>
+
     <namedCache name="jdbcBinary">
         <persistence>
             <binaryKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" fetchPersistentState="false" ignoreModifications="false"
-                purgeOnStartup="false">
+                                  purgeOnStartup="false">
                 <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver" />
                 <binaryKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_BINARY_TABLE">
                     <idColumn name="ID_COLUMN" type="BINARY" />
@@ -331,14 +450,14 @@
     <namedCache name="jdbcMixed">
         <persistence>
             <mixedKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" fetchPersistentState="false" ignoreModifications="false"
-                purgeOnStartup="false">
-                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver" />
-                <binaryKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_BINARY_TABLE">
+                                 purgeOnStartup="false" key2StringMapper="org.infinispan.persistence.jdbc.configuration.DummyKey2StringMapper">
+                <connectionPool connectionUrl="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driverClass="org.h2.Driver" password="sa"/>
+                <binaryKeyedTable dropOnExit="true" createOnStart="false" prefix="ISPN_BINARY_TABLE">
                     <idColumn name="ID_COLUMN" type="BINARY" />
                     <dataColumn name="DATA_COLUMN" type="BINARY" />
                     <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
                 </binaryKeyedTable>
-                <stringKeyedTable dropOnExit="true" createOnStart="true" prefix="ISPN_STRING_TABLE">
+                <stringKeyedTable dropOnExit="false" createOnStart="true" prefix="ISPN_STRING_TABLE">
                     <idColumn name="ID_COLUMN" type="VARCHAR(255)" />
                     <dataColumn name="DATA_COLUMN" type="BINARY" />
                     <timestampColumn name="TIMESTAMP_COLUMN" type="BIGINT" />
@@ -352,13 +471,14 @@
         <deadlockDetection enabled="true" spinDuration="1221" />
         <persistence passivation="false">
             <remoteStore xmlns="urn:infinispan:config:remote:6.0" fetchPersistentState="false" shared="true" preload="false" ignoreModifications="false"
-                purgeOnStartup="false" tcpNoDelay="true" pingOnStartup="true" balancingStrategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
-                transportFactory="org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory" keySizeEstimate="62" valueSizeEstimate="512"
-                forceReturnValues="false">
+                         purgeOnStartup="false" tcpNoDelay="true" pingOnStartup="true" balancingStrategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
+                         transportFactory="org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory" keySizeEstimate="32" valueSizeEstimate="512"
+                         forceReturnValues="false" connectTimeout="5000" hotRodWrapping="false" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller"
+                         protocolVersion="1.0" rawValues="true" remoteCacheName="test" socketTimeout="12500">
                 <servers>
                     <server host="127.0.0.1" port="19711" />
                 </servers>
-                <connectionPool maxActive="99" maxIdle="97" maxTotal="98" />
+                <connectionPool maxActive="99" maxIdle="97" minIdle="27" maxTotal="98" exhaustedAction="CREATE_NEW" minEvictableIdleTime="50" timeBetweenEvictionRuns="60000" testWhileIdle="false" />
                 <asyncTransportExecutor factory="org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory">
                     <properties xmlns="urn:infinispan:config:6.0">
                         <property name="pool_size" value="1" />
@@ -370,47 +490,119 @@
     </namedCache>
 
     <namedCache name="withLevelDBStore">
-        <persistence passivation="false">
+        <persistence passivation="true">
             <leveldbStore xmlns="urn:infinispan:config:store:leveldb:6.0" location="/tmp/leveldb/data" expiredLocation="/tmp/leveldb/expired"
-                implementationType="JAVA" shared="true" preload="true" />
+                          implementationType="JAVA" shared="true" preload="true" clearThreshold="20" expiryQueueSize="30" blockSize="10" cacheSize="50" compressionType="SNAPPY"/>
         </persistence>
     </namedCache>
 
+    <!--
+    Uncomment when ISPN-6736 is fixed
+    <namedCache name="withJpaStore">
+        <persistence passivation="true">
+            <jpaStoreType xmlns="urn:infinispan:config:jpa:6.0" persistenceUnitName="TestPersistentName" entityClassName="org.infinispan.tools.customs.CustomDataContainer"
+                          batchSize="80" storeMetadata="false"/>
+        </persistence>
+    </namedCache>-->
+
     <namedCache name="withRestStore">
-      <jmxStatistics enabled="false"/>
-      <persistence passivation="false">
-         <restStore xmlns="urn:infinispan:config:store:rest:6.0"
-            fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="false" shared="true" preload="false"
-            key2StringMapper="org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper" path="/rest/___defaultcache" host="localhost" port="18212" appendCacheNameToPath="false">
-            <connectionPool connectionTimeout="10000" maxConnectionsPerHost="10" maxTotalConnections="10" bufferSize="20000" socketTimeout="10000" tcpNoDelay="true"/>
-         </restStore>
-      </persistence>
-   </namedCache>
+        <jmxStatistics enabled="false"/>
+        <persistence passivation="false">
+            <restStore xmlns="urn:infinispan:config:store:rest:6.0"
+                       fetchPersistentState="false" ignoreModifications="false" purgeOnStartup="true" shared="true" preload="false"
+                       key2StringMapper="org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper" path="/rest/___defaultcache" host="localhost" port="18212" appendCacheNameToPath="true">
+                <connectionPool connectionTimeout="10000" maxConnectionsPerHost="10" maxTotalConnections="10" bufferSize="20000" socketTimeout="10000" tcpNoDelay="true"/>
+            </restStore>
+        </persistence>
+    </namedCache>
 
-   <namedCache name="withSitesEnabled">
-      <sites>
-         <backups>
-            <backup site="backupTest" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="17000" useTwoPhaseCommit="true">
-               <takeOffline afterFailures="15" minTimeToWait="12000"/>
-            </backup>
-            <backup site="backupTest1" strategy="ASYNC" backupFailurePolicy="CUSTOM" timeout="18000"
-                    useTwoPhaseCommit="false" enabled="false" failurePolicyClass="org.infinispan.xsite.CountingCustomFailurePolicy">
-               <takeOffline afterFailures="17" minTimeToWait="13000"/>
-            </backup>
-         </backups>
-         <backupFor remoteCache="test" remoteSite="test1"/>
-      </sites>
-   </namedCache>
+    <namedCache name="withSitesEnabled">
+        <sites>
+            <backups>
+                <backup site="backupTest" strategy="SYNC" backupFailurePolicy="IGNORE" timeout="17000" useTwoPhaseCommit="true">
+                    <takeOffline afterFailures="15" minTimeToWait="12000"/>
+                </backup>
+                <backup site="backupTest1" strategy="ASYNC" backupFailurePolicy="CUSTOM" timeout="18000"
+                        useTwoPhaseCommit="false" enabled="false" failurePolicyClass="org.infinispan.xsite.CountingCustomFailurePolicy">
+                    <takeOffline afterFailures="17" minTimeToWait="13000"/>
+                </backup>
+            </backups>
+            <backupFor remoteCache="test" remoteSite="test1"/>
+        </sites>
+    </namedCache>
 
-   <namedCache name="withUnsafe">
-      <unsafe unreliableReturnValues="true" />
-   </namedCache>
+    <namedCache name="withUnsafe">
+        <unsafe unreliableReturnValues="true" />
+    </namedCache>
 
-   <namedCache name="withoutCompatibility">
-       <compatibility enabled="false"/>
-   </namedCache>
+    <namedCache name="withCompatibilityEnabled">
+        <compatibility enabled="true" marshallerClass="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller"/>
+    </namedCache>
 
-   <namedCache name="withoutStoreAsBinary">
-      <storeAsBinary enabled="false" />
-   </namedCache>
+    <namedCache name="withoutCompatibility">
+        <compatibility enabled="false"/>
+    </namedCache>
+
+    <namedCache name="withoutStoreAsBinary">
+        <storeAsBinary enabled="false" />
+    </namedCache>
+
+    <namedCache name="withUnsafeDisabled">
+        <unsafe unreliableReturnValues="false" />
+    </namedCache>
+
+    <namedCache name="withEmptyBackups">
+        <sites>
+            <backups />
+            <backupFor remoteCache="test" remoteSite="test1"/>
+        </sites>
+    </namedCache>
+
+    <namedCache name="jmxEnabled">
+        <jmxStatistics enabled="true"/>
+    </namedCache>
+
+    <namedCache name="withDataContainer">
+        <dataContainer keyEquivalence="org.infinispan.commons.equivalence.ByteArrayEquivalence" valueEquivalence="org.infinispan.commons.equivalence.AnyEquivalence"
+                       class="org.infinispan.tools.customs.CustomDataContainer">
+            <properties>
+                <property name="test" value="test1"/>
+            </properties>
+        </dataContainer>
+    </namedCache>
+
+    <namedCache name="withIndexingNotLocal">
+        <indexing enabled="true" indexLocalOnly="false">
+            <properties>
+                <property name="test" value="test1"/>
+            </properties>
+        </indexing>
+    </namedCache>
+
+    <namedCache name="withIndexingLocalOnly">
+        <indexing enabled="true" indexLocalOnly="true">
+            <properties>
+                <property name="test" value="test1"/>
+            </properties>
+        </indexing>
+    </namedCache>
+
+    <namedCache name="withDisabledIndexing">
+        <indexing enabled="false" />
+    </namedCache>
+
+    <namedCache name="transactionalWithInvocationBatching">
+        <transaction autoCommit="true" transactionMode="TRANSACTIONAL" useSynchronization="true">
+            <recovery enabled="false"/>
+        </transaction>
+        <invocationBatching enabled="true"/>
+    </namedCache>
+
+    <namedCache name="transactionalWithDisabledInvocationBatching">
+        <transaction autoCommit="true" transactionMode="TRANSACTIONAL" useSynchronization="true">
+            <recovery enabled="false"/>
+        </transaction>
+        <invocationBatching enabled="false"/>
+    </namedCache>
+
 </infinispan>
