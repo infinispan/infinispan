@@ -33,6 +33,10 @@ import static org.infinispan.util.logging.LogFactory.CLUSTER;
 * @since 5.2
 */
 public class ClusterCacheStatus implements AvailabilityStrategyContext {
+   // The HotRod client starts with topology 0, so we start with 1 to force an update
+   private static final int INITIAL_TOPOLOGY_ID = 1;
+   private static final int INITIAL_REBALANCE_ID = 1;
+
    private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
    private static boolean trace = log.isTraceEnabled();
 
@@ -82,7 +86,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          availabilityMode = AvailabilityMode.DEGRADED_MODE;
       });
       status = ComponentStatus.INSTANTIATED;
-      if (trace) log.tracef("Cache %s initialized", cacheName);
+      if (trace) {
+         log.tracef("Cache %s initialized. Persisted state? %s", cacheName, persistentState.isPresent());
+      }
    }
 
    public CacheJoinInfo getJoinInfo() {
@@ -650,7 +656,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          extraneousMembers.removeAll(persistedCH.getMembers());
          throw log.extraneousMembersJoinRestoredCache(extraneousMembers, cacheName);
       }
-      CacheTopology initialTopology = new CacheTopology(0, 0, persistedCH, null, persistedCH.getMembers(), persistentUUIDManager.mapAddresses(persistedCH.getMembers()));
+      CacheTopology initialTopology = new CacheTopology(INITIAL_TOPOLOGY_ID, INITIAL_REBALANCE_ID, persistedCH, null, persistedCH.getMembers(), persistentUUIDManager.mapAddresses(persistedCH.getMembers()));
       setCurrentTopology(initialTopology);
       setStableTopology(initialTopology);
       rebalancingEnabled = true;
@@ -664,7 +670,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(
             joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
             initialMembers, getCapacityFactors());
-      CacheTopology initialTopology = new CacheTopology(0, 0, initialCH, null, initialMembers, persistentUUIDManager.mapAddresses(initialMembers));
+      CacheTopology initialTopology = new CacheTopology(INITIAL_TOPOLOGY_ID, INITIAL_REBALANCE_ID, initialCH, null, initialMembers, persistentUUIDManager.mapAddresses(initialMembers));
       setCurrentTopology(initialTopology);
       setStableTopology(initialTopology);
       return initialTopology;
