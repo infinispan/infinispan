@@ -78,6 +78,7 @@ public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
       doXSiteStateTransferDuringTopologyChange(TopologyEvent.LEAVE);
    }
 
+   @Test(groups = "unstable_xsite", description = "See ISPN-6749")
    public void testXSiteSTDuringSiteMasterLeave() throws Exception {
       doXSiteStateTransferDuringTopologyChange(TopologyEvent.SITE_MASTER_LEAVE);
    }
@@ -100,32 +101,21 @@ public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
       if (testCaches.removeIndex >= 0) {
          log.debugf("Discard x-site state transfer start command in cache %s to remove", addressOf(cache(LON, testCaches.removeIndex)));
          wrapComponent(cache(LON, testCaches.removeIndex), XSiteStateProvider.class,
-                       new WrapFactory<XSiteStateProvider, XSiteStateProvider, Cache<?, ?>>() {
+                       (WrapFactory<XSiteStateProvider, XSiteStateProvider, Cache<?, ?>>) (wrapOn, current) -> new XSiteProviderDelegator(current) {
                           @Override
-                          public XSiteStateProvider wrap(Cache<?, ?> wrapOn, XSiteStateProvider current) {
-                             return new XSiteProviderDelegator(current) {
-                                @Override
-                                public void startStateTransfer(String siteName, Address requestor, int minTopologyId) {
-                                   log.debugf("Discard state transfer request to %s from %s", siteName, requestor);
-                                   //no-op, i.e. discard it!
-                                }
-                             };
+                          public void startStateTransfer(String siteName, Address requestor, int minTopologyId) {
+                             log.debugf("Discard state transfer request to %s from %s", siteName, requestor);
+                             //no-op, i.e. discard it!
                           }
                        }, true);
       } else {
          log.debugf("Block x-site state transfer start command in cache %s", addressOf(cache(LON, 1)));
          wrapComponent(cache(LON, 1), XSiteStateProvider.class,
-                       new WrapFactory<XSiteStateProvider, XSiteStateProvider, Cache<?, ?>>() {
-
+                       (WrapFactory<XSiteStateProvider, XSiteStateProvider, Cache<?, ?>>) (wrapOn, current) -> new XSiteProviderDelegator(current) {
                           @Override
-                          public XSiteStateProvider wrap(Cache<?, ?> wrapOn, XSiteStateProvider current) {
-                             return new XSiteProviderDelegator(current) {
-                                @Override
-                                public void startStateTransfer(String siteName, Address requestor, int minTopologyId) {
-                                   log.debugf("Blocking state transfer request to %s from %s", siteName, requestor);
-                                   pendingRequest.set(new StateTransferRequest(siteName, requestor, minTopologyId, xSiteStateProvider));
-                                }
-                             };
+                          public void startStateTransfer(String siteName, Address requestor, int minTopologyId) {
+                             log.debugf("Blocking state transfer request to %s from %s", siteName, requestor);
+                             pendingRequest.set(new StateTransferRequest(siteName, requestor, minTopologyId, xSiteStateProvider));
                           }
                        }, true);
       }
@@ -136,12 +126,8 @@ public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
 
       //the controller cache will finish the state transfer before the cache topology command
       log.debug("Await until X-Site state transfer is finished!");
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return extractComponent(testCaches.controllerCache, XSiteStateProvider.class).getCurrentStateSending().isEmpty();
-         }
-      }, TimeUnit.SECONDS.toMillis(30));
+      eventually(() -> extractComponent(testCaches.controllerCache, XSiteStateProvider.class).getCurrentStateSending().isEmpty(),
+                 TimeUnit.SECONDS.toMillis(30));
 
       Future<Void> topologyEventFuture = triggerTopologyChange(LON, testCaches.removeIndex);
 
