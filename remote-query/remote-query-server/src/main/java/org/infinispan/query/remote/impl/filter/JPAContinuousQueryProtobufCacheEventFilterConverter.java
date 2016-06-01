@@ -70,8 +70,10 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
       ObjectFilter.FilterResult f1 = oldValue == null ? null : objectFilter.filter(oldValue);
       ObjectFilter.FilterResult f2 = newValue == null ? null : objectFilter.filter(newValue);
       if (f1 == null && f2 != null) {
+         // result joining
          return makeFilterResult(true, key, f2.getProjection() == null ? newValue : null, f2.getProjection());
       } else if (f1 != null && f2 == null) {
+         // result leaving
          return makeFilterResult(false, key, null, null);
       } else {
          return null;

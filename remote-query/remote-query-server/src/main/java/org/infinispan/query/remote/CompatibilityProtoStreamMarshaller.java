@@ -8,15 +8,15 @@ import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 
 /**
  * A per {@link EmbeddedCacheManager} marshaller that should be used as compatibility mode marshaller (see {@link
- * org.infinispan.interceptors.compat.TypeConverterInterceptor}) in embedded mode. An instance cannot be shared between
+ * org.infinispan.interceptors.compat.TypeConverterInterceptor}) in server. An instance cannot be shared between
  * multiple cache managers.
  *
  * @author anistor@redhat.com
  * @since 6.0
  */
-public final class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshaller {
+public class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshaller {
 
-   private EmbeddedCacheManager cacheManager;
+   protected EmbeddedCacheManager cacheManager;
 
    public CompatibilityProtoStreamMarshaller() {
    }

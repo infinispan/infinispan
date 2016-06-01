@@ -119,17 +119,16 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
       ObjectFilter objectFilter = getObjectFilter();
       ObjectFilter.FilterResult f1 = oldValue == null ? null : objectFilter.filter(oldValue);
       ObjectFilter.FilterResult f2 = newValue == null ? null : objectFilter.filter(newValue);
-
-      if (f2 != null && eventType.isExpired()) {  // expired events return expired value as newValue
-         return (C) new ContinuousQueryResult<V>(false, null, null);
-      }
-
-      if (f1 == null && f2 != null) {
-         return (C) new ContinuousQueryResult<V>(true, f2.getProjection() == null ? newValue : null, f2.getProjection());
-      }
-
-      if (f1 != null && f2 == null) {
-         return (C) new ContinuousQueryResult<V>(false, null, null);
+      if (f1 == null) {
+         if (f2 != null) {
+            // result joining
+            return (C) new ContinuousQueryResult<>(true, f2.getProjection() == null ? newValue : null, f2.getProjection());
+         }
+      } else {
+         if (f2 == null) {
+            // result leaving
+            return (C) new ContinuousQueryResult<V>(false, null, null);
+         }
       }
 
       return null;

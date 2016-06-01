@@ -67,7 +67,6 @@ import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.filter.NullValueConverter;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.MetaParams;
-import org.infinispan.functional.impl.Params;
 import org.infinispan.marshall.exts.*;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
