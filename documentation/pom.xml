@@ -1,13 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-       <groupId>org.infinispan</groupId>
-       <artifactId>infinispan-parent</artifactId>
-       <version>9.0.0-SNAPSHOT</version>
-       <relativePath>../parent/pom.xml</relativePath>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-parent</artifactId>
+        <version>9.0.0-SNAPSHOT</version>
+        <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
     <artifactId>infinispan-docs</artifactId>
@@ -26,37 +27,119 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>1.5.3</version> 
+                <version>1.5.3</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctorj-pdf</artifactId>
+                        <version>1.5.0-alpha.11</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
-                        <id>asciidoc</id>
+                        <id>html</id>
                         <phase>generate-resources</phase>
                         <goals>
                             <goal>process-asciidoc</goal>
                         </goals>
+                        <configuration>
+                            <backend>html5</backend>
+                            <doctype>book</doctype>
+                            <outputDirectory>${project.build.directory}/generated-html</outputDirectory>
+                            <imagesDir>.</imagesDir>
+                            <preserveDirectories>true</preserveDirectories>
+                            <relativeBaseDir>true</relativeBaseDir>
+                            <sourceDocumentExtensions>
+                                <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
+                            </sourceDocumentExtensions>
+                            <sourceHighlighter>coderay</sourceHighlighter>
+                            <attributes>
+                                <idprefix/>
+                                <sectanchors>true</sectanchors>
+                                <toclevels>3</toclevels>
+                                <numbered>true</numbered>
+                                <icons>font</icons>
+                                <docinfo>true</docinfo>
+                                <experimental>true</experimental>
+                                <infinispanversion>${infinispan.version}</infinispanversion>
+                            </attributes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>pdf</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>process-asciidoc</goal>
+                        </goals>
+                        <configuration>
+                            <backend>pdf</backend>
+                            <doctype>book</doctype>
+                            <outputDirectory>${project.build.directory}/generated-pdf</outputDirectory>
+                            <imagesDir>.</imagesDir>
+                            <preserveDirectories>false</preserveDirectories>
+                            <relativeBaseDir>true</relativeBaseDir>
+                            <sourceDocumentExtensions>
+                                <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
+                            </sourceDocumentExtensions>
+                            <sourceHighlighter>coderay</sourceHighlighter>
+                            <attributes>
+                                <idprefix/>
+                                <sectanchors>true</sectanchors>
+                                <toclevels>3</toclevels>
+                                <numbered>true</numbered>
+                                <icons>font</icons>
+                                <docinfo>true</docinfo>
+                                <experimental>true</experimental>
+                                <infinispanversion>${infinispan.version}</infinispanversion>
+                            </attributes>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <!--backend>docbook</backend-->
-                    <backend>html5</backend>
-                    <doctype>book</doctype>
-                    <preserveDirectories>true</preserveDirectories>
-                    <relativeBaseDir>true</relativeBaseDir>
-                    <sourceDocumentExtensions>
-                       <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
-                    </sourceDocumentExtensions>
-                    <sourceHighlighter>coderay</sourceHighlighter>
-                    <attributes>
-                        <idprefix />
-                        <sectanchors>true</sectanchors>
-                        <toclevels>3</toclevels>
-                        <numbered>true</numbered>
-                        <icons>font</icons>
-                        <docinfo>true</docinfo>
-                        <experimental>true</experimental>
-                        <infinispanversion>${infinispan.version}</infinispanversion>
-                    </attributes>
-                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>optimize-pdf</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <ant antfile="optimize-pdf.xml" inheritRefs="true">
+                                    <target name="optimize-pdf" />
+                                </ant>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>assemble-html</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/assemblies/html.xml</descriptor>
+                                <descriptor>src/main/assemblies/pdf.xml</descriptor>
+                            </descriptors>
+                            <attach>true</attach>
+                            <recompressZippedFiles>true</recompressZippedFiles>
+                            <finalName>${project.artifactId}-${project.version}</finalName>
+                            <appendAssemblyId>true</appendAssemblyId>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
