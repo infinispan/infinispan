@@ -1,11 +1,15 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
+import org.infinispan.commons.hash.Hash
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner
+import org.infinispan.distribution.group.PartitionerConsistentHash
+import org.infinispan.distribution.group.impl.GroupingPartitioner
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import collection.JavaConversions._
 import org.infinispan.configuration.cache.Configuration
-import org.infinispan.distribution.ch.ConsistentHash
+import org.infinispan.distribution.ch.{KeyPartitioner, ConsistentHash}
 import io.netty.buffer.ByteBuf
 
 /**
@@ -20,8 +24,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
                                                   serverEndpointsMap: Map[Address, ServerAddress],
                                                   cfg: Configuration): AbstractHashDistAwareResponse = {
       HashDistAware11Response(lastViewId, serverEndpointsMap, cfg.clustering().hash().numOwners(),
-            DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE,
-            cfg.clustering().hash().numVirtualNodes())
+            DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE, 1)
    }
 
 
@@ -122,7 +125,8 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
 
       var i = 0
       while (segmentsLeft != 0) {
-         val normalizedHash = ch.getHashFunction.hash(i) & Integer.MAX_VALUE
+         val keyPartitioner = ch.asInstanceOf[PartitionerConsistentHash].getKeyPartitioner
+         val normalizedHash = extractHash(keyPartitioner).get.hash(i) & Integer.MAX_VALUE
          if (normalizedHash % segmentSize < leeway) {
             val nextSegmentIdx = normalizedHash / segmentSize
             val segmentIdx = (nextSegmentIdx - 1 + numSegments) % numSegments
@@ -142,5 +146,13 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
       // Sort each list of hashes by the normalized hash and then return a list with only the denormalized hash
       val denormalizedHashes = ownerHashes.map(segmentHashes => segmentHashes.toSeq.sortBy(_._1).map(_._2))
       return denormalizedHashes
+   }
+
+   def extractHash(keyPartitioner: KeyPartitioner) : Option[Hash] = {
+      keyPartitioner match {
+         case hashPartitioner: HashFunctionPartitioner => Some(hashPartitioner.getHash)
+         case groupPartitioner: GroupingPartitioner => extractHash(groupPartitioner.unwrap())
+         case _ => None
+      }
    }
 }

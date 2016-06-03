@@ -92,15 +92,6 @@ public class HashConfiguration {
    }
 
    /**
-    * @deprecated No longer used since 5.2, replaced by {@link #numSegments()} (which works like a
-    *    {@code numVirtualNodes} value for the entire cluster).
-    */
-   @Deprecated
-   public int numVirtualNodes() {
-      return 1;
-   }
-
-   /**
     * Controls the total number of hash space segments (per cluster).
     *
     * <p>A hash space segment is the granularity for key distribution in the cluster: a node can own

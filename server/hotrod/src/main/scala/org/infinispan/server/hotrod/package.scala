@@ -6,6 +6,8 @@ import java.util.function.{BiConsumer => J8BiConsumer}
 
 import org.infinispan.remoting.transport.Address
 
+import scala.language.implicitConversions
+
 /**
  * @author Galder Zamarreño
  */
