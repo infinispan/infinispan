@@ -17,6 +17,7 @@ import org.infinispan.server.hotrod.logging.Log
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
+import scala.language.existentials
 
 /**
  * @author gustavonalle
