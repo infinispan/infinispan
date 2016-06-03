@@ -3,8 +3,12 @@ package org.infinispan.functional.impl;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Experimental;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -31,6 +35,10 @@ public final class Params {
       FutureMode.defaultValue(),
       PersistenceMode.defaultValue(),
    };
+   // TODO: as Params are immutable and there's only limited number of them,
+   // there could be a table with all the possible combinations and we
+   // wouldn't have to allocate at all
+   private static final Params DEFAULT_INSTANCE = new Params(DEFAULTS);
 
    final Param<?>[] params;
 
@@ -77,7 +85,7 @@ public final class Params {
    }
 
    public static Params create() {
-      return new Params(DEFAULTS);
+      return DEFAULT_INSTANCE;
    }
 
    public static Params from(Param<?>... ps) {
@@ -108,4 +116,19 @@ public final class Params {
       }
    }
 
+   public static void writeObject(ObjectOutput output, Params params) throws IOException {
+      // There's no point in sending FutureMode over wire
+      MarshallUtil.marshallEnum((PersistenceMode) params.get(PersistenceMode.ID).get(), output);
+   }
+
+   public static Params readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      PersistenceMode persistenceMode = MarshallUtil.unmarshallEnum(input, PersistenceMode::valueOf);
+      if (persistenceMode == PersistenceMode.defaultValue()) {
+         return DEFAULT_INSTANCE;
+      } else {
+         Param[] params = Arrays.copyOf(DEFAULTS, DEFAULTS.length);
+         params[PersistenceMode.ID] = persistenceMode;
+         return new Params(params);
+      }
+   }
 }

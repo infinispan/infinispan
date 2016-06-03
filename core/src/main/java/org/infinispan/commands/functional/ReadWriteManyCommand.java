@@ -1,16 +1,13 @@
 package org.infinispan.commands.functional;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.Metadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -23,7 +20,7 @@ import java.util.function.Function;
 
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
-public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
+public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyCommand {
 
    public static final byte COMMAND_ID = 52;
 
@@ -34,14 +31,16 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    boolean isForwarded = false;
    private List<R> remoteReturns = new ArrayList<>();
 
-   public ReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
+   public ReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
       this.keys = keys;
       this.f = f;
+      this.params = params;
    }
 
    public ReadWriteManyCommand(ReadWriteManyCommand command) {
       this.keys = command.keys;
       this.f = command.f;
+      this.params = command.params;
    }
 
    public ReadWriteManyCommand() {
@@ -65,6 +64,7 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
+      Params.writeObject(output, params);
    }
 
    @Override
@@ -72,6 +72,7 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
       keys = MarshallUtil.unmarshallCollection(input, size -> new HashSet<>());
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
+      params = Params.readObject(input);
    }
 
    public boolean isForwarded() {
@@ -104,16 +105,6 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    @Override
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // No-op
    }
 
    @Override
@@ -179,35 +170,4 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    public boolean alwaysReadsExistingValues() {
       return false;
    }
-
-   @Override
-   public Set<Flag> getFlags() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setFlags(Set<Flag> flags) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean hasFlag(Flag flag) {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public Metadata getMetadata() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setMetadata(Metadata metadata) {
-      // TODO: Customise this generated block
-   }
-
 }

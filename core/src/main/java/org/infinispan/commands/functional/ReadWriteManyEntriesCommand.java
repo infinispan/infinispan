@@ -1,15 +1,12 @@
 package org.infinispan.commands.functional;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.Metadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,7 +19,7 @@ import java.util.function.BiFunction;
 
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
-public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand {
+public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteManyCommand {
 
    public static final byte COMMAND_ID = 53;
 
@@ -33,9 +30,10 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
    boolean isForwarded = false;
    private List<R> remoteReturns = new ArrayList<>();
 
-   public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
+   public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
       this.entries = entries;
       this.f = f;
+      this.params = params;
    }
 
    public ReadWriteManyEntriesCommand() {
@@ -44,6 +42,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
    public ReadWriteManyEntriesCommand(ReadWriteManyEntriesCommand command) {
       this.entries = command.entries;
       this.f = command.f;
+      this.params = command.params;
    }
 
    public Map<? extends K, ? extends V> getEntries() {
@@ -64,6 +63,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
       output.writeObject(entries);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
+      Params.writeObject(output, params);
    }
 
    @Override
@@ -71,6 +71,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
       entries = (Map<? extends K, ? extends V>) input.readObject();
       f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
+      params = Params.readObject(input);
    }
 
    public boolean isForwarded() {
@@ -140,16 +141,6 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // No-op
-   }
-
-   @Override
    public Set<Object> getAffectedKeys() {
       return null;  // TODO: Customise this generated block
    }
@@ -169,7 +160,6 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
       return false;  // TODO: Customise this generated block
    }
 
-   @Override
    public boolean readsExistingValues() {
       return true;
    }
@@ -179,34 +169,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
       return false;
    }
 
-   @Override
-   public Set<Flag> getFlags() {
-      return null;  // TODO: Customise this generated block
+   public Set<? extends K> getKeys() {
+      return entries.keySet();
    }
-
-   @Override
-   public void setFlags(Set<Flag> flags) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean hasFlag(Flag flag) {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public Metadata getMetadata() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setMetadata(Metadata metadata) {
-      // TODO: Customise this generated block
-   }
-
 }

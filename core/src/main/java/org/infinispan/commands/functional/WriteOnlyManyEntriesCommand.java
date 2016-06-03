@@ -5,6 +5,7 @@ import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.lifecycle.ComponentStatus;
 
 import java.io.IOException;
@@ -21,14 +22,16 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    private Map<? extends K, ? extends V> entries;
    private BiConsumer<V, WriteEntryView<V>> f;
 
-   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
+   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params) {
       this.entries = entries;
       this.f = f;
+      this.params = params;
    }
 
    public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V> command) {
       this.entries = command.entries;
       this.f = command.f;
+      this.params = command.params;
    }
 
    public WriteOnlyManyEntriesCommand() {
@@ -52,6 +55,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       output.writeObject(entries);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
+      Params.writeObject(output, params);
    }
 
    @Override
@@ -59,6 +63,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       entries = (Map<? extends K, ? extends V>) input.readObject();
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
+      params = Params.readObject(input);
    }
 
    @Override
@@ -119,4 +124,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       return true;
    }
 
+   public Set<? extends K> getKeys() {
+      return entries.keySet();
+   }
 }
