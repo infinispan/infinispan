@@ -143,15 +143,15 @@ public final class MetaParams {
     * @param metas Meta parameters to create the collection with
     * @return a collection of meta parameters without type duplicates
     */
-   static MetaParams of(MetaParam... metas) {
+   public static MetaParams of(MetaParam... metas) {
       return new MetaParams(filterDuplicates(metas));
    }
 
-   static MetaParams of(MetaParam meta) {
+   public static MetaParams of(MetaParam meta) {
       return new MetaParams(new MetaParam[]{meta});
    }
 
-   static MetaParams empty() {
+   public static MetaParams empty() {
       return new MetaParams(new MetaParam[]{});
    }
 
