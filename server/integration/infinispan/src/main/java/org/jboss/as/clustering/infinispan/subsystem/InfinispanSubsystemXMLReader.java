@@ -1607,24 +1607,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
        String name = ModelKeys.STRING_KEYED_JDBC_STORE_NAME;
 
         Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
-
-        for (int i = 0; i < reader.getAttributeCount(); i++) {
-            String value = reader.getAttributeValue(i);
-            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-            switch (attribute) {
-                case DATASOURCE: {
-                    BaseJDBCStoreConfigurationResource.DATA_SOURCE.parseAndSetParameter(value, store, reader);
-                    break;
-                }
-                case DIALECT: {
-                    BaseJDBCStoreConfigurationResource.DIALECT.parseAndSetParameter(value, store, reader);
-                    break;
-                }
-                default: {
-                    name = this.parseStoreAttribute(name, reader, i, attribute, value, store);
-                }
-            }
-        }
+        name = parseCommonJDBCAttributes(name, store, reader);
 
         if (!store.hasDefined(ModelKeys.DATASOURCE)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.DATASOURCE));
@@ -1659,24 +1642,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         String name = ModelKeys.BINARY_KEYED_JDBC_STORE_NAME;
 
         Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
-
-        for (int i = 0; i < reader.getAttributeCount(); i++) {
-            String value = reader.getAttributeValue(i);
-            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-            switch (attribute) {
-                case DATASOURCE: {
-                    BaseJDBCStoreConfigurationResource.DATA_SOURCE.parseAndSetParameter(value, store, reader);
-                    break;
-                }
-                case DIALECT: {
-                    BaseJDBCStoreConfigurationResource.DIALECT.parseAndSetParameter(value, store, reader);
-                    break;
-                }
-                default: {
-                    name = this.parseStoreAttribute(name, reader, i, attribute, value, store);
-                }
-            }
-        }
+        name = parseCommonJDBCAttributes(name, store, reader);
 
         if (!store.hasDefined(ModelKeys.DATASOURCE)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.DATASOURCE));
@@ -1710,24 +1676,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         String name = ModelKeys.MIXED_KEYED_JDBC_STORE_NAME;
 
         Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
-
-        for (int i = 0; i < reader.getAttributeCount(); i++) {
-            String value = reader.getAttributeValue(i);
-            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
-            switch (attribute) {
-                case DATASOURCE: {
-                    BaseJDBCStoreConfigurationResource.DATA_SOURCE.parseAndSetParameter(value, store, reader);
-                    break;
-                }
-                case DIALECT: {
-                    BaseJDBCStoreConfigurationResource.DIALECT.parseAndSetParameter(value, store, reader);
-                    break;
-                }
-                default: {
-                    name = this.parseStoreAttribute(name, reader, i, attribute, value, store);
-                }
-            }
-        }
+        name = parseCommonJDBCAttributes(name, store, reader);
 
         if (!store.hasDefined(ModelKeys.DATASOURCE)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.DATASOURCE));
@@ -1761,6 +1710,35 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
 
         operations.put(storeAddress, store);
         operations.putAll(additionalConfigurationOperations);
+    }
+
+    private String parseCommonJDBCAttributes(String name, ModelNode store, XMLExtendedStreamReader reader) throws XMLStreamException {
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case DATASOURCE: {
+                    BaseJDBCStoreConfigurationResource.DATA_SOURCE.parseAndSetParameter(value, store, reader);
+                    break;
+                }
+                case DIALECT: {
+                    BaseJDBCStoreConfigurationResource.DIALECT.parseAndSetParameter(value, store, reader);
+                    break;
+                }
+                case DB_MAJOR_VERSION: {
+                    BaseJDBCStoreConfigurationResource.DB_MAJOR_VERSION.parseAndSetParameter(value, store, reader);
+                    break;
+                }
+                case DB_MINOR_VERSION: {
+                    BaseJDBCStoreConfigurationResource.DB_MINOR_VERSION.parseAndSetParameter(value, store, reader);
+                    break;
+                }
+                default: {
+                    name = this.parseStoreAttribute(name, reader, i, attribute, value, store);
+                }
+            }
+        }
+        return name;
     }
 
     private void parseJDBCStoreTable(XMLExtendedStreamReader reader, ModelNode table) throws XMLStreamException {
