@@ -865,6 +865,16 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         }
     }
 
+   private void buildDbVersions(AbstractJdbcStoreConfigurationBuilder builder, OperationContext context, ModelNode store) throws OperationFailedException {
+      ModelNode dbMajorVersion = BaseJDBCStoreConfigurationResource.DB_MAJOR_VERSION.resolveModelAttribute(context, store);
+      if (dbMajorVersion.isDefined())
+         builder.dbMajorVersion(dbMajorVersion.asInt());
+
+      ModelNode dbMinorVersion = BaseJDBCStoreConfigurationResource.DB_MINOR_VERSION.resolveModelAttribute(context, store);
+      if (dbMinorVersion.isDefined())
+         builder.dbMinorVersion(dbMinorVersion.asInt());
+   }
+
    private Object newInstance(String className) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
       return CacheLoader.class.getClassLoader().loadClass(className).newInstance();
    }
@@ -937,17 +947,20 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         if (useStringKeyedTable && !useBinaryKeyedTable) {
             JdbcStringBasedStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcStringBasedStoreConfigurationBuilder.class);
             builder.dialect(databaseType);
+            buildDbVersions(builder, context, store);
             this.buildStringKeyedTable(builder.table(), context, store.get(ModelKeys.STRING_KEYED_TABLE));
             return builder;
         } else if (useBinaryKeyedTable && !useStringKeyedTable) {
             JdbcBinaryStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcBinaryStoreConfigurationBuilder.class);
             builder.dialect(databaseType);
+            buildDbVersions(builder, context, store);
             this.buildBinaryKeyedTable(builder.table(), context, store.get(ModelKeys.BINARY_KEYED_TABLE));
             return builder;
         }
         // Else, use mixed mode
         JdbcMixedStoreConfigurationBuilder builder = loadersBuilder.addStore(JdbcMixedStoreConfigurationBuilder.class);
         builder.dialect(databaseType);
+        buildDbVersions(builder, context, store);
         this.buildStringKeyedTable(builder.stringTable(), context, store.get(ModelKeys.STRING_KEYED_TABLE));
         this.buildBinaryKeyedTable(builder.binaryTable(), context, store.get(ModelKeys.BINARY_KEYED_TABLE));
         return builder;

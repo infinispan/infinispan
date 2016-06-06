@@ -55,7 +55,20 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    static final AttributeDefinition[] COMMON_JDBC_STORE_ATTRIBUTES = { DATA_SOURCE, DIALECT };
+    static final SimpleAttributeDefinition DB_MAJOR_VERSION =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.DB_MAJOR_VERSION, ModelType.INT, true)
+                    .setXmlName(Attribute.DB_MAJOR_VERSION.getLocalName())
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                    .build();
+
+    static final SimpleAttributeDefinition DB_MINOR_VERSION =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.DB_MINOR_VERSION, ModelType.INT, true)
+                    .setXmlName(Attribute.DB_MINOR_VERSION.getLocalName())
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                    .build();
+
+    static final AttributeDefinition[] COMMON_JDBC_STORE_ATTRIBUTES = { DATA_SOURCE, DIALECT, DB_MAJOR_VERSION,
+                                                                        DB_MINOR_VERSION };
 
     static final SimpleAttributeDefinition BATCH_SIZE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.BATCH_SIZE, ModelType.INT, true)
