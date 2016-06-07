@@ -11,6 +11,11 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
+/**
+ * @deprecated Singleton writers will be removed in 10.0. If it is desirable that all nodes don't write to the underlying store
+ * then a shared store should be used instead, as this only performs store writes at a key's primary owner.
+ */
+@Deprecated
 public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements Builder<SingletonStoreConfiguration> {
    private final AttributeSet attributes;
 

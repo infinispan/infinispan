@@ -210,6 +210,8 @@ public class ModelKeys {
     static final String SHARED = "shared";
     static final String SHUTDOWN_TIMEOUT = "shutdown-timeout";
     static final String SIMPLE_CACHE = "simple-cache";
+
+    @Deprecated
     static final String SINGLETON = "singleton";
     static final String SITE = "site";
     static final String SIZE = "size";

@@ -114,6 +114,7 @@ public enum Attribute {
     @Deprecated
     SHUTDOWN_TIMEOUT("shutdown-timeout"),
     SIMPLE_CACHE("simple-cache"),
+    @Deprecated
     SINGLETON("singleton"),
     SITE("site"),
     SIZE("size"),
