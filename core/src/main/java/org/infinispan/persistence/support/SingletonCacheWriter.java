@@ -47,7 +47,10 @@ import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
  *
  * @author Mircea Markus
  * @since 6.0
+ * @deprecated this writer will be removed in 10.0. If it is desirable that all nodes don't write to the underlying store
+ * then a shared store should be used instead, as this only performs store writes at a key's primary owner.
  */
+@Deprecated
 public class SingletonCacheWriter extends DelegatingCacheWriter {
 
    private static final Log log = LogFactory.getLog(SingletonCacheWriter.class);

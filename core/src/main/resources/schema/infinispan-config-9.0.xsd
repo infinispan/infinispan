@@ -1316,7 +1316,7 @@
     </xs:attribute>
     <xs:attribute name="singleton" type="xs:boolean" default="false">
       <xs:annotation>
-        <xs:documentation>If true, the singleton store cache store is enabled. SingletonStore is a delegating cache store used for situations when only one instance in a cluster should interact with the underlying store.</xs:documentation>
+        <xs:documentation>If true, the singleton store cache store is enabled. SingletonStore is a delegating cache store used for situations when only one instance in a cluster should interact with the underlying store. Deprecated: A shared store should be used instead, as this limits store writes to the primary owner of a key</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="read-only" type="xs:boolean" default="false">

@@ -13,8 +13,10 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * implementation. It always delegates reads to the real CacheStore.
  *
  * @author pmuir
- *
+ * @deprecated Singleton writers will be removed in 10.0. If it is desirable that all nodes don't write to the underlying store
+ * then a shared store should be used instead, as this only performs store writes at a key's primary owner.
  */
+@Deprecated
 public class SingletonStoreConfiguration {
    public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public final static AttributeDefinition<Long> PUSH_STATE_TIMEOUT = AttributeDefinition.builder("push-state-timeout", TimeUnit.SECONDS.toMillis(10)).immutable().build();

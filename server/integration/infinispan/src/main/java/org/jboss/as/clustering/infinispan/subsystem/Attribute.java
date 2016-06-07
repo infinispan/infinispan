@@ -143,6 +143,7 @@ public enum Attribute {
     SHARED(ModelKeys.SHARED),
     SHUTDOWN_TIMEOUT(ModelKeys.SHUTDOWN_TIMEOUT),
     SIMPLE_CACHE(ModelKeys.SIMPLE_CACHE),
+    @Deprecated
     SINGLETON(ModelKeys.SINGLETON),
     SITE(ModelKeys.SITE),
     SIZE(ModelKeys.SIZE),

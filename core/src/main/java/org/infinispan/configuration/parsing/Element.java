@@ -72,6 +72,7 @@ public enum Element {
     SECURITY("security"),
     SERIALIZATION("serialization"),
     SHUTDOWN("shutdown"),
+    @Deprecated
     SINGLETON_STORE("singleton"),
     SITE("site"),
     SITES("sites"),
