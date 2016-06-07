@@ -3,7 +3,7 @@ package org.infinispan.container.entries.metadata;
 import org.infinispan.metadata.Metadata;
 
 /**
- * Metdata aware cache entry.
+ * Marker interface for metadata aware cache entry.
  *
  * @author Galder Zamarreño
  * @since 5.3
