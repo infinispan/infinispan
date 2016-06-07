@@ -181,6 +181,9 @@ public class QueryEngine {
          }
          if (c == null) {
             Class<?> propertyType = parsingResult.getProjectedTypes()[i];
+            if (p.getAggregationType() != null) {
+               propertyType = FieldAccumulator.getOutputType(p.getAggregationType(), propertyType);
+            }
             int idx = columns.size();
             columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
          }
@@ -385,6 +388,7 @@ public class QueryEngine {
                int idx = columns.size();
                c = new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType);
                columns.put(p, c);
+               return new PropertyValueExpr(c.getColumnName(), aggregationExpr.isRepeated(), propertyType);
             }
             return new PropertyValueExpr(c.getColumnName(), aggregationExpr.isRepeated(), aggregationExpr.getPrimitiveType());
          }
