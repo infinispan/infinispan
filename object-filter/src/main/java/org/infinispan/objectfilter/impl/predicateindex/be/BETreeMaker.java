@@ -96,9 +96,9 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
                   // the special case of non-equality is transformed into two intervals, excluding the compared value, + an IS NULL predicate
                   addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(Interval.getMinusInf(), false, right.getConstantValue(), false)));
                   addPredicateNode(parent, nodes, treeCounters, isNegated, path, new IntervalPredicate(isRepeated, new Interval(right.getConstantValue(), false, Interval.getPlusInf(), false)));
-                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<Object>(isRepeated, IsNullCondition.INSTANCE));
+                  addPredicateNode(parent, nodes, treeCounters, isNegated, path, new Predicate<>(isRepeated, IsNullCondition.INSTANCE));
                } else {
-                  addPredicateNode(parent, nodes, treeCounters, !isNegated, path, new Predicate<Object>(isRepeated, new EqualsCondition(right.getConstantValue())));
+                  addPredicateNode(parent, nodes, treeCounters, !isNegated, path, new Predicate<>(isRepeated, new EqualsCondition(right.getConstantValue())));
                }
                break;
             case EQUAL:

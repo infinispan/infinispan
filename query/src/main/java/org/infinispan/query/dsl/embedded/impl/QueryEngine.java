@@ -185,6 +185,9 @@ public class QueryEngine {
          }
          if (c == null) {
             Class<?> propertyType = parsingResult.getProjectedTypes()[i];
+            if (p.getAggregationType() != null) {
+               propertyType = FieldAccumulator.getOutputType(p.getAggregationType(), propertyType);
+            }
             int idx = columns.size();
             columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
          }

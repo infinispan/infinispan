@@ -2028,7 +2028,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(456, list.get(0)[0]);
+      assertEquals(456L, list.get(0)[0]);
    }
 
    public void testCount() {
@@ -2900,5 +2900,31 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(300L, list.get(1)[1]);
       assertEquals(1L, list.get(2)[0]);
       assertNull(list.get(2)[1]);
+   }
+
+   public void testCompareLongWithInt() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(sum("age"))
+            .groupBy("name")
+            .having(sum("age")).gt(50000).toBuilder()
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(0, list.size());
+   }
+
+   public void testCompareDoubleWithInt() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(sum("amount"))
+            .groupBy("accountId")
+            .having(sum("amount")).gt(50000).toBuilder()
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(0, list.size());
    }
 }
