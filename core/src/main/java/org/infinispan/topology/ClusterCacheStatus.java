@@ -34,8 +34,8 @@ import static org.infinispan.util.logging.LogFactory.CLUSTER;
 */
 public class ClusterCacheStatus implements AvailabilityStrategyContext {
    // The HotRod client starts with topology 0, so we start with 1 to force an update
-   private static final int INITIAL_TOPOLOGY_ID = 1;
-   private static final int INITIAL_REBALANCE_ID = 1;
+   public static final int INITIAL_TOPOLOGY_ID = 1;
+   public static final int INITIAL_REBALANCE_ID = 1;
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatus.class);
    private static boolean trace = log.isTraceEnabled();
