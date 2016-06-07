@@ -136,13 +136,11 @@ public class TransactionHS implements Transaction, Serializable {
 
    @Override
    public int hashCode() {
-      int result;
-      long temp;
-      result = id;
+      int result = id;
       result = 31 * result + (description != null ? description.hashCode() : 0);
       result = 31 * result + accountId;
       result = 31 * result + (date != null ? date.hashCode() : 0);
-      temp = Double.doubleToLongBits(amount);
+      long temp = Double.doubleToLongBits(amount);
       result = 31 * result + (int) (temp ^ (temp >>> 32));
       result = 31 * result + (isDebit ? 1 : 0);
       result = 31 * result + (isValid ? 1 : 0);

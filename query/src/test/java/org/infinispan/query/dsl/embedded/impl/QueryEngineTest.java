@@ -363,7 +363,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(66, list.get(0)[0]);
+      assertEquals(66L, list.get(0)[0]);
    }
 
    public void testGlobalMin() {
