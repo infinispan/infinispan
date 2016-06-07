@@ -78,7 +78,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       user1.setSurname("Doe");
       user1.setGender(User.Gender.MALE);
       user1.setAge(22);
-      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
       Address address1 = new AddressHS();
@@ -107,7 +107,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       user3.setName("Spider");
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
-      user3.setAccountIds(Collections.<Integer>emptySet());
+      user3.setAccountIds(Collections.emptySet());
 
       Account account1 = new AccountHS();
       account1.setId(1);
@@ -355,7 +355,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(66, list.get(0)[0]);
+      assertEquals(66L, list.get(0)[0]);
    }
 
    public void testGlobalMin() {
