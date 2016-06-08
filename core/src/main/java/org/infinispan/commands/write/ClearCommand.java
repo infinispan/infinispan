@@ -10,8 +10,8 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
@@ -59,7 +59,7 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override

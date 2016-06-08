@@ -384,12 +384,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public int size() {
-      return cacheImplementation.size(getFlags());
+      return cacheImplementation.size(flags);
    }
 
    @Override
    public boolean isEmpty() {
-      return cacheImplementation.isEmpty(getFlags());
+      return cacheImplementation.isEmpty(flags);
    }
 
    @Override
@@ -440,7 +440,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CacheSet<K> keySet() {
-      return cacheImplementation.keySet(getFlags());
+      return cacheImplementation.keySet(flags);
    }
 
    @Override
@@ -460,12 +460,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CacheSet<Entry<K, V>> entrySet() {
-      return cacheImplementation.entrySet(getFlags());
+      return cacheImplementation.entrySet(flags);
    }
 
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
-      return cacheImplementation.cacheEntrySet(getFlags());
+      return cacheImplementation.cacheEntrySet(flags);
    }
 
    @Override
@@ -489,8 +489,8 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    //Not exposed on interface
-   public EnumSet<Flag> getFlags() {
-      return EnumUtil.enumSetOf(flags, Flag.class);
+   public long getFlagsBitSet() {
+      return flags;
    }
 
    @Override

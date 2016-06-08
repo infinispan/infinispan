@@ -16,8 +16,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -152,7 +152,8 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
             // are performed first and create opportunity for inconsistencies
-            if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+            if (cmd instanceof PutKeyValueCommand &&
+                  ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
                // signal we encounter a state transfer PUT
                applyStateStartedLatch1.countDown();
                // wait until it is ok to apply state
@@ -170,7 +171,8 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             // if this 'put' command is caused by state transfer we delay it to ensure other cache operations
             // are performed first and create opportunity for inconsistencies
-            if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+            if (cmd instanceof PutKeyValueCommand &&
+                  ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
                // signal we encounter a state transfer PUT
                applyStateStartedLatch2.countDown();
                // wait until it is ok to apply state

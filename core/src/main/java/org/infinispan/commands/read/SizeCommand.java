@@ -5,6 +5,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 
@@ -19,10 +20,10 @@ import org.infinispan.context.InvocationContext;
 public class SizeCommand extends AbstractLocalCommand implements VisitableCommand {
    private final Cache<Object, ?> cache;
 
-   public SizeCommand(Cache<Object, ?> cache, Set<Flag> flags) {
-      setFlags(flags);
-      if (flags != null) {
-         this.cache = cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+   public SizeCommand(Cache<Object, ?> cache, long flags) {
+      setFlagsBitSet(flags);
+      if (flags != EnumUtil.EMPTY_BIT_SET) {
+         this.cache = cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flags, Flag.class));
       } else {
          this.cache = cache;
       }

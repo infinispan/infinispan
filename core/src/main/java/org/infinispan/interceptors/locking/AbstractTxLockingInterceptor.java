@@ -12,8 +12,8 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -59,7 +59,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
 
    @Override
    public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+      if (command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          // Cache.putForExternalRead() is non-transactional
          return visitNonTxDataWriteCommand(ctx, command);
       }

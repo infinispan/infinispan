@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -75,16 +76,16 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    }
 
    protected final boolean isSynchronous(FlagAffectedCommand command) {
-      if (command.hasFlag(Flag.FORCE_SYNCHRONOUS))
+      if (command.hasAnyFlag(FlagBitSets.FORCE_SYNCHRONOUS))
          return true;
-      else if (command.hasFlag(Flag.FORCE_ASYNCHRONOUS))
+      else if (command.hasAnyFlag(FlagBitSets.FORCE_ASYNCHRONOUS))
          return false;
 
       return defaultSynchronous;
    }
 
    protected final boolean isLocalModeForced(FlagAffectedCommand command) {
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          if (trace) getLog().trace("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return true;
       }

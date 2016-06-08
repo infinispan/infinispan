@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 
 /**
  * Flags modify behavior of command such as whether or not to invoke certain commands remotely, check cache store etc.
@@ -23,35 +24,33 @@ public interface FlagAffectedCommand extends VisitableCommand {
       return EnumUtil.enumSetOf(getFlagsBitSet(), Flag.class);
    }
 
+   /**
+    * @return The command flags. Flags can be modified with {@link #setFlagsBitSet(long)}, {@link #addFlags(long)}
+    * and {@link #addFlags(Set)} methods.
+    */
    long getFlagsBitSet();
 
    /**
     * Set the flags, replacing any existing flags.
     *
     * @param flags The new flags.
+    * @deprecated Since 9.0, please use {@link #setFlagsBitSet(long)} instead.
     */
    default void setFlags(Set<Flag> flags) {
       setFlagsBitSet(EnumUtil.bitSetOf(flags));
    }
 
-   void setFlagsBitSet(long bitSet);
-
    /**
-    * Add some flags to the command.
-    *
-    * @deprecated Use either {@link #addFlag(Flag)} or {@link #addFlags(Set)} instead.
-    *
-    * @param newFlags The flags to add.
+    * Set the flags, replacing any existing flags.
     */
-   @Deprecated
-   default void setFlags(Flag... newFlags) {
-      setFlagsBitSet(EnumUtil.setEnums(getFlagsBitSet(), Arrays.asList(newFlags)));
-   }
+   void setFlagsBitSet(long bitSet);
 
    /**
     * Add a single flag to the command.
     *
     * @param flag The flag to add.
+    *
+    * @deprecated Since 9.0, please use {@link #addFlags(long)} with a {@link FlagBitSets} constant instead.
     */
    default void addFlag(Flag flag) {
       setFlagsBitSet(EnumUtil.setEnum(getFlagsBitSet(), flag));
@@ -61,18 +60,40 @@ public interface FlagAffectedCommand extends VisitableCommand {
     * Add a set of flags to the command.
     *
     * @param flags The flags to add.
+    *
+    * @deprecated Since 9.0, please use {@link #addFlags(long)} with a {@link FlagBitSets} constant instead.
     */
    default void addFlags(Set<Flag> flags) {
       setFlagsBitSet(EnumUtil.setEnums(getFlagsBitSet(), flags));
    }
 
    /**
-    * Check whether a particular flag is present in the command
+    * Add a set of flags to the command.
+    *
+    * @param flagsBitSet The flags to add, usually a {@link FlagBitSets} constant (or combination thereof).
+    */
+   default void addFlags(long flagsBitSet) {
+      setFlagsBitSet(EnumUtil.mergeBitSets(getFlagsBitSet(), flagsBitSet));
+   }
+
+   /**
+    * Check whether a particular flag is present in the command.
     *
     * @param flag to lookup in the command
     * @return true if the flag is present
+    *
+    * @deprecated Since 9.0, please use {@link #hasAnyFlag(long)} with a {@link FlagBitSets} constant instead.
     */
    default boolean hasFlag(Flag flag) {
       return EnumUtil.hasEnum(getFlagsBitSet(), flag);
+   }
+
+   /**
+    * Check whether any of the flags in the {@code flagsBitSet} parameter is present in the command.
+    *
+    * Should be used with the constants in {@link FlagBitSets}.
+    */
+   default boolean hasAnyFlag(long flagsBitSet) {
+      return EnumUtil.containsAny(getFlagsBitSet(), flagsBitSet);
    }
 }

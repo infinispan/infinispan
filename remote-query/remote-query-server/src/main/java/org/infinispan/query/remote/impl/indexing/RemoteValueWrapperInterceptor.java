@@ -1,12 +1,10 @@
 package org.infinispan.query.remote.impl.indexing;
 
-import java.util.Set;
-
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.compat.PassThroughTypeConverter;
 import org.infinispan.compat.TypeConverter;
-import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.compat.BaseTypeConverterInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -33,8 +31,7 @@ public final class RemoteValueWrapperInterceptor<K, V> extends BaseTypeConverter
    }
 
    protected TypeConverter<Object, Object, Object, Object> determineTypeConverter(FlagAffectedCommand command) {
-      Set<Flag> flags = command.getFlags();
-      return flags != null && flags.contains(Flag.OPERATION_HOTROD) ? protobufTypeConverter : passThroughTypeConverter;
+      return command.hasAnyFlag(FlagBitSets.OPERATION_HOTROD) ? protobufTypeConverter : passThroughTypeConverter;
    }
 
    /**

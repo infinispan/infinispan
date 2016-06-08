@@ -1,13 +1,10 @@
 package org.infinispan.commands.functional;
 
-import java.util.Set;
-
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
@@ -87,26 +84,6 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    }
 
    @Override
-   public Set<Flag> getFlags() {
-      return EnumUtil.enumSetOf(flags, Flag.class);
-   }
-
-   @Override
-   public void setFlags(Set<Flag> flags) {
-      this.flags = EnumUtil.bitSetOf(flags);
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      this.flags = EnumUtil.bitSetOf(flags);
-   }
-
-   @Override
-   public boolean hasFlag(Flag flag) {
-      return EnumUtil.hasEnum(flags, flag);
-   }
-
-   @Override
    public long getFlagsBitSet() {
       return flags;
    }
@@ -132,11 +109,11 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
 
    @Override
    public boolean hasZeroLockAcquisition() {
-      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      return hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT);
    }
 
    @Override
    public boolean hasSkipLocking() {
-      return hasFlag(Flag.SKIP_LOCKING);
+      return hasAnyFlag(FlagBitSets.SKIP_LOCKING);
    }
 }

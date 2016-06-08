@@ -25,8 +25,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -255,13 +255,13 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       }
 
       private void processCommand(FlagAffectedCommand command) {
-         containsLocalModeFlag = containsLocalModeFlag || (command.getFlags() != null && command.getFlags().contains(Flag.CACHE_MODE_LOCAL));
+         containsLocalModeFlag = containsLocalModeFlag || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          processCommand(command);
-         containsPutForExternalRead = containsPutForExternalRead || (command.getFlags() != null && command.getFlags().contains(Flag.PUT_FOR_EXTERNAL_READ));
+         containsPutForExternalRead = containsPutForExternalRead || command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ);
          result.add(command.getKey());
          return null;
       }
@@ -312,7 +312,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    private boolean isPutForExternalRead(FlagAffectedCommand command) {
-      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+      if (command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          log.trace("Put for external read called.  Suppressing clustered invalidation.");
          return true;
       }

@@ -47,8 +47,8 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -118,7 +118,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+      if (command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          return handleNonTxWriteCommand(ctx, command);
       }
 
@@ -347,7 +347,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
          CacheEntry entry = ctx.lookupEntry(command.getKey());
          if (entry == null) {
-            if (isLocalModeForced(command) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
+            if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
                // in transactional mode, we always need the entry wrapped
                entryFactory.wrapExternalEntry(ctx, key, null, true);
             } else {
@@ -375,7 +375,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          K key = e.getKey();
          if (ctx.isOriginLocal() || cdl.localNodeIsOwner(key)) {
             if (ctx.lookupEntry(key) == null) {
-               if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
+               if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command.hasAnyFlag(
+                     FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
                   entryFactory.wrapExternalEntry(ctx, key, null, true);
                } else {
                   if (remoteGets == null) {
@@ -414,7 +415,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (ctx.isOriginLocal()) {
          CacheEntry entry = ctx.lookupEntry(key);
          if (entry == null) {
-            if (isLocalModeForced(command) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)
                   || command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
                entryFactory.wrapExternalEntry(ctx, key, null, true);
                return invokeNext(ctx, command);

@@ -11,8 +11,8 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -118,7 +118,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       output.writeObject(newValue);
       output.writeObject(metadata);
       MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
    }
 

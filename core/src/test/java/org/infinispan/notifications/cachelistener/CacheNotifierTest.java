@@ -24,8 +24,8 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -86,7 +86,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
          @Override
          public boolean matches(Object o) {
             boolean expected = o instanceof FlagAffectedCommand;
-            boolean isSkipListener = ((FlagAffectedCommand) o).hasFlag(Flag.SKIP_LISTENER_NOTIFICATION);
+            boolean isSkipListener = ((FlagAffectedCommand) o).hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION);
             return expected && !isSkipListener;
          }
 

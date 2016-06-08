@@ -10,9 +10,11 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -140,20 +142,20 @@ public abstract class CommandInterceptor extends AbstractVisitor implements Asyn
 
    protected final long getLockAcquisitionTimeout(FlagAffectedCommand command, boolean skipLocking) {
       if (!skipLocking)
-         return command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
-               0 : cacheConfiguration.locking().lockAcquisitionTimeout();
+         return command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
+                0 : cacheConfiguration.locking().lockAcquisitionTimeout();
 
       return -1;
    }
 
    protected final boolean hasSkipLocking(FlagAffectedCommand command) {
-      return command.hasFlag(Flag.SKIP_LOCKING);
+      return command.hasAnyFlag(FlagBitSets.SKIP_LOCKING);
    }
 
    protected <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, FlagAffectedCommand command) {
-      Set<Flag> flags = command.getFlags();
-      if (flags != null && !flags.isEmpty()) {
-         return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+      long flags = command.getFlagsBitSet();
+      if (flags != EnumUtil.EMPTY_BIT_SET) {
+         return cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flags, Flag.class));
       } else {
          return cache;
       }

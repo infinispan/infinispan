@@ -15,8 +15,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
 import org.infinispan.factories.annotations.Inject;
@@ -114,7 +114,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    }
 
    private boolean shouldUpdateOnWriteCommand(WriteCommand command) {
-      return nonTransactional && !command.hasFlag(Flag.CACHE_MODE_LOCAL);
+      return nonTransactional && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
    }
 
    @Override

@@ -24,6 +24,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
@@ -128,7 +129,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          PutMapCommand copy = new PutMapCommand(command, false);
          copy.setMap(entry.getValue());
          copy.setForwarded(true);
-         copy.addFlag(Flag.SKIP_LOCKING);
+         copy.addFlags(FlagBitSets.SKIP_LOCKING);
          rpcManager.sendTo(entry.getKey(), copy, DeliverOrder.PER_SENDER);
       }
    }
@@ -184,7 +185,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    // TODO: this should just override handleNonTxWriteCommand when functional commands will be triangelized
    private BasicInvocationStage handleDataWriteCommand(InvocationContext context, AbstractDataWriteCommand command) {
       assert !context.isInTxScope();
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          //don't go through the triangle
          return invokeNext(context, command);
       }
@@ -220,7 +221,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private BasicInvocationStage primaryOwnerWrite(InvocationContext context, DataWriteCommand command,
          final DistributionInfo distributionInfo) {
       //we are the primary owner. we need to execute the command, check if successful, send to backups and reply to originator is needed.
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
 
@@ -256,10 +257,10 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
       if ((isSynchronous(command) || command.isReturnValueExpected()) &&
-            !command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+            !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          commandAckCollector.create(invocationId, distributionInfo.owners(), command.getTopologyId());
       }
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
       rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);

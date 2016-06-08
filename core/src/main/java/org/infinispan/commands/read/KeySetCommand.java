@@ -13,6 +13,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -33,10 +34,10 @@ import org.infinispan.util.DataContainerRemoveIterator;
 public class KeySetCommand<K, V> extends AbstractLocalCommand implements VisitableCommand {
    private final Cache<K, V> cache;
 
-   public KeySetCommand(Cache<K, V> cache, Set<Flag> flags) {
-      setFlags(flags);
-      if (flags != null) {
-         this.cache = cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+   public KeySetCommand(Cache<K, V> cache, long flagsBitSet) {
+      setFlagsBitSet(flagsBitSet);
+      if (flagsBitSet != EnumUtil.EMPTY_BIT_SET) {
+         this.cache = cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flagsBitSet, Flag.class));
       } else {
          this.cache = cache;
       }

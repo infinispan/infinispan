@@ -27,8 +27,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -336,7 +336,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
 
       @Override
       public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-         if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
             retried.incrementAndGet();
          }
          return invokeNext(ctx, command).exceptionally((rCtx, rCommand, t) -> {

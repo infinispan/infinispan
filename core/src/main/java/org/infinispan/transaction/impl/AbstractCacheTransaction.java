@@ -24,6 +24,7 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.KeyValuePair;
@@ -111,7 +112,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public final List<WriteCommand> getModifications() {
       if (hasLocalOnlyModifications) {
-         return modifications.stream().filter(cmd -> !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)).collect(Collectors.toList());
+         return modifications.stream().filter(cmd -> !cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)).collect(Collectors.toList());
       } else {
          return getAllModifications();
       }
@@ -133,7 +134,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       }
       List<WriteCommand> mods = new ArrayList<>(modifications.size());
       for (WriteCommand cmd : modifications) {
-         if (cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
             hasLocalOnlyModifications = true;
          }
          mods.add(cmd);

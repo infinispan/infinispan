@@ -11,8 +11,8 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -159,7 +159,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(value);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
    }
@@ -198,7 +198,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    @Override
    public LoadType loadType() {
-      return isConditional() || !hasFlag(Flag.IGNORE_RETURN_VALUES) ? LoadType.PRIMARY : LoadType.DONT_LOAD;
+      return isConditional() || !hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) ? LoadType.PRIMARY : LoadType.DONT_LOAD;
    }
 
    public Object getValue() {

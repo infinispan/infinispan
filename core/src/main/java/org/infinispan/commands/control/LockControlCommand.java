@@ -18,6 +18,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -150,7 +151,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super.writeTo(output);
       output.writeBoolean(unlock);
       MarshallUtil.marshallCollection(keys, output);
-      output.writeLong(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
    }
 
    @Override
@@ -228,11 +229,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    @Override
    public boolean hasZeroLockAcquisition() {
-      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      return hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT);
    }
 
    @Override
    public boolean hasSkipLocking() {
-      return hasFlag(Flag.SKIP_LOCKING); //is it possible??
+      return hasAnyFlag(FlagBitSets.SKIP_LOCKING); //is it possible??
    }
 }

@@ -26,6 +26,7 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
@@ -169,16 +170,16 @@ public interface ClusteringDependentLogic {
       @Override
       public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
          // ignore locality for removals, even if skipOwnershipCheck is not true
-         if (command != null && command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
+         if (command != null && command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK)) {
             return Commit.COMMIT_LOCAL;
          }
-         boolean transactional = ctx.isInTxScope() && (command == null || !command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ));
+         boolean transactional = ctx.isInTxScope() && (command == null || !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ));
          // When a command is local-mode, it does not get written by replicating origin -> primary -> backup but
          // when origin == backup it's written right from the original context
          // ClearCommand is also broadcast to all nodes from originator, and on originator it should remove entries
          // for which this node is backup owner even though it did not get the removal from primary owner.
          if (transactional || !ctx.isOriginLocal() || (command != null &&
-               (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command instanceof ClearCommand))) {
+               (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command instanceof ClearCommand))) {
             // During ST, entries whose ownership is lost are invalidated by InvalidateCommand
             // and at that point we're no longer owners - the only information is that the origin
             // is local and the entry is removed.

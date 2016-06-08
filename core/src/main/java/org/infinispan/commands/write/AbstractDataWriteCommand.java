@@ -5,7 +5,7 @@ import java.util.Collections;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -33,7 +33,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
 
    @Override
    public boolean isReturnValueExpected() {
-      return !hasFlag(Flag.SKIP_REMOTE_LOOKUP) && !hasFlag(Flag.IGNORE_RETURN_VALUES);
+      return !hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.IGNORE_RETURN_VALUES);
    }
 
    @Override
@@ -53,12 +53,12 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
 
    @Override
    public final boolean hasZeroLockAcquisition() {
-      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      return hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT);
    }
 
    @Override
    public final boolean hasSkipLocking() {
-      return hasFlag(Flag.SKIP_LOCKING);
+      return hasAnyFlag(FlagBitSets.SKIP_LOCKING);
    }
 
    @Override

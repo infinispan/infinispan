@@ -14,8 +14,8 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -98,7 +98,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private boolean readNeedsLock(InvocationContext ctx, FlagAffectedCommand command) {
-      return ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command);
+      return ctx.isInTxScope() && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK) && !hasSkipLocking(command);
    }
 
    private void acquireLocalLock(InvocationContext ctx, DataCommand command) throws InterruptedException {
@@ -292,7 +292,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          final boolean isSingleKeyAndLocal =
                !command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey());
          boolean needBackupLocks = !isSingleKeyAndLocal || isStateTransferInProgress();
-         if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         if (needBackupLocks && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
             LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
             if (localTx.getAffectedKeys().containsAll(command.getKeys())) {
                if (trace)
@@ -350,7 +350,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          FlagAffectedCommand command) throws Throwable {
       boolean needBackupLocks = ctx.isOriginLocal() && (!isLockOwner(keys) || isStateTransferInProgress());
       boolean needRemoteLock = false;
-      if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (needBackupLocks && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
          needRemoteLock = !localTransaction.getAffectedKeys().containsAll(keys);
@@ -365,7 +365,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          throws Throwable {
       boolean needBackupLocks = ctx.isOriginLocal() && (!isLockOwner(key) || isStateTransferInProgress());
       boolean needRemoteLock = false;
-      if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (needBackupLocks && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
          needRemoteLock = !localTransaction.getAffectedKeys().contains(key);

@@ -15,8 +15,8 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
@@ -174,12 +174,12 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
 
    @Override
    public boolean hasZeroLockAcquisition() {
-      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+      return hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT);
    }
 
    @Override
    public boolean hasSkipLocking() {
-      return hasFlag(Flag.SKIP_LOCKING);
+      return hasAnyFlag(FlagBitSets.SKIP_LOCKING);
    }
 
    @Override

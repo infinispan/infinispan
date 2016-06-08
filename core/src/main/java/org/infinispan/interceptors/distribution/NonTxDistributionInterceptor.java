@@ -30,8 +30,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
@@ -286,7 +286,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       if (ctx.isOriginLocal()) {
          Map<Address, Set<Integer>> segmentMap = primaryOwnersOfSegments(ch);
          Object[] results = null;
-         if (!command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+         if (!command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES)) {
             results = new Object[helper.getItems(command).size()];
          }
          MergingCompletableFuture<Object> allFuture
@@ -399,7 +399,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       CacheEntry cacheEntry = ctx.lookupEntry(key);
       if (cacheEntry == null) {
          // this should be a rare situation, so we don't mind being a bit ineffective with the remote gets
-         if (command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         if (command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
             entryFactory.wrapExternalEntry(ctx, key, null, true);
          } else {
             if (retrievals == null) {

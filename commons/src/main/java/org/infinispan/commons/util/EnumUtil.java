@@ -1,5 +1,6 @@
 package org.infinispan.commons.util;
 
+import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.EnumSet;
 
@@ -94,8 +95,33 @@ public class EnumUtil {
       return bitSet1 | bitSet2;
    }
 
-   public static boolean containsAll(long bitSet, long testBitSet) {
-      return bitSet == testBitSet || (bitSet & testBitSet) == testBitSet;
+   public static long diffBitSets(long bitSet1, long bitSet2) {
+      return bitSet1 & ~bitSet2;
    }
 
+   public static boolean containsAll(long bitSet, long testBitSet) {
+      return (bitSet & testBitSet) == testBitSet;
+   }
+
+   public static boolean containsAny(long bitSet, long testBitSet) {
+      return (bitSet & testBitSet) != 0;
+   }
+
+   public static int bitSetSize(long bitSet) {
+      return Long.bitCount(bitSet);
+   }
+   public static <E extends Enum<E>> E[] enumArrayOf(long bitSet, Class<E> eClass) {
+      if (bitSet == EMPTY_BIT_SET) {
+         return null;
+      }
+
+      E[] array = (E[]) Array.newInstance(eClass, bitSetSize(bitSet));
+      int i = 0;
+      for (E f : eClass.getEnumConstants()) {
+         if (hasEnum(bitSet, f)) {
+            array[i++] = f;
+         }
+      }
+      return array;
+   }
 }

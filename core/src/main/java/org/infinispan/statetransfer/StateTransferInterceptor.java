@@ -32,6 +32,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -222,7 +223,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
       int newTopologyId = getNewTopologyId(ce, currentTopologyId, cmd);
       cmd.setTopologyId(newTopologyId);
-      cmd.addFlag(Flag.COMMAND_RETRY);
+      cmd.addFlags(FlagBitSets.COMMAND_RETRY);
       CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(newTopologyId);
       return retryWhenDone(topologyFuture, newTopologyId, rCtx, cmd)
             .compose(this::handleReadCommandReturn);
@@ -423,7 +424,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       int commandTopologyId = writeCommand.getTopologyId();
       int newTopologyId = getNewTopologyId(ce, currentTopologyId, writeCommand);
       writeCommand.setTopologyId(newTopologyId);
-      writeCommand.addFlag(Flag.COMMAND_RETRY);
+      writeCommand.addFlags(FlagBitSets.COMMAND_RETRY);
       // In non-tx context, waiting for transaction data is equal to waiting for topology
       CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
       return retryWhenDone(transactionDataFuture, newTopologyId, rCtx, writeCommand).compose(this::handleNonTxWriteReturn);
@@ -465,7 +466,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private boolean isLocalOnly(VisitableCommand command) {
       boolean cacheModeLocal = false;
       if (command instanceof FlagAffectedCommand) {
-         cacheModeLocal = ((FlagAffectedCommand) command).hasFlag(Flag.CACHE_MODE_LOCAL);
+         cacheModeLocal = ((FlagAffectedCommand)command).hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
       }
       return cacheModeLocal;
    }

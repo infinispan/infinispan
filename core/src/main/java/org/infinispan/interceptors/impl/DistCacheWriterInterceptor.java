@@ -11,8 +11,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -153,15 +153,15 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
    @Override
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {
-      return !cdl.localNodeIsPrimaryOwner(key) || command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE);
+      return !cdl.localNodeIsPrimaryOwner(key) || command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE);
    }
 
    @Override
    protected boolean isProperWriter(InvocationContext ctx, FlagAffectedCommand command, Object key) {
-      if (command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK))
+      if (command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK))
          return true;
 
-      if (isUsingLockDelegation && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (isUsingLockDelegation && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          if (ctx.isOriginLocal() && !dm.getPrimaryLocation(key).equals(address)) {
             // The command will be forwarded back to the originator, and the value will be stored then
             // (while holding the lock on the primary owner).

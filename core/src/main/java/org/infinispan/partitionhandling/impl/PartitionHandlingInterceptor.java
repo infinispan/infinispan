@@ -23,8 +23,8 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -59,7 +59,7 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       if (!ctx.isOriginLocal()) {
          return true;
       }
-      return !command.hasFlag(Flag.CACHE_MODE_LOCAL);
+      return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
    }
 
    @Override

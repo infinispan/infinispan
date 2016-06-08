@@ -8,8 +8,8 @@ import java.io.ObjectOutput;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -64,7 +64,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override

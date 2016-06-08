@@ -17,6 +17,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -59,7 +60,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
          // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
          modifications = Collections.synchronizedList(new LinkedList<WriteCommand>());
       }
-      if (mod.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (mod.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
          hasLocalOnlyModifications = true;
       }
       modifications.add(mod);

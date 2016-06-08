@@ -9,8 +9,8 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -75,7 +75,7 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean isUsingAsyncStore(InvocationContext ctx, FlagAffectedCommand command) {
-      return usingAsyncStore && ctx.isOriginLocal() && !command.hasFlag(Flag.SKIP_CACHE_STORE);
+      return usingAsyncStore && ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE);
    }
 
    private void checkMarshallable(Object o) throws NotSerializableException {

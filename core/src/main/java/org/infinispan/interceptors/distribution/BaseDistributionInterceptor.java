@@ -37,8 +37,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.NullCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
@@ -249,7 +249,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    private boolean shouldLoad(InvocationContext ctx, AbstractDataWriteCommand command, DistributionInfo info) {
-      if (!command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
+      if (!command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)) {
          VisitableCommand.LoadType loadType = command.loadType();
          switch (loadType) {
             case DONT_LOAD:
@@ -368,7 +368,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    @Override
    public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP)) {
          return invokeNext(ctx, command);
       }
 
@@ -435,7 +435,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          InvocationContext ctx, C command, ReadManyCommandHelper<C> helper) {
       // We cannot merge this method with visitGetAllCommand because this can't wrap entries into context
       // TODO: repeatable-reads are not implemented - see visitReadOnlyKeyCommand
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
+      if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP)) {
          return handleLocalOnlyReadManyCommand(ctx, command, helper.keys(command));
       }
 
@@ -803,8 +803,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     * fetch it from a remote node. Does not check if the value is already in the context.
     */
    protected boolean readNeedsRemoteValue(InvocationContext ctx, AbstractDataCommand command) {
-      return ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL) &&
-            !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP);
+      return ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) &&
+            !command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP);
    }
 
    @FunctionalInterface

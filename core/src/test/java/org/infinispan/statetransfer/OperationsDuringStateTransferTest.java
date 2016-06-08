@@ -22,6 +22,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -180,7 +181,8 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       cacheConfigBuilder.customInterceptors().addInterceptor().after(isVersioningEnabled ? VersionedEntryWrappingInterceptor.class : EntryWrappingInterceptor.class).interceptor(new CommandInterceptor() {
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-            if (cmd instanceof PutKeyValueCommand && !((PutKeyValueCommand) cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+            if (cmd instanceof PutKeyValueCommand &&
+                  !((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
                // signal we encounter a (non-state-transfer) PUT
                putStartedLatch.countDown();
                // wait until it is ok to continue with PUT
@@ -344,7 +346,8 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             // if this 'put' command is caused by state transfer we block until GET begins
-            if (cmd instanceof PutKeyValueCommand && ((PutKeyValueCommand) cmd).hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+            if (cmd instanceof PutKeyValueCommand &&
+                  ((PutKeyValueCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
                // signal we encounter a state transfer PUT
                applyStateStartedLatch.countDown();
                // wait until it is ok to apply state
