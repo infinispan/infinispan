@@ -35,6 +35,7 @@ import org.jgroups.util.NotifyingFuture;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -84,6 +85,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
       channel.addChannelListener(this);
       asyncDispatching(true);
+   }
+
+   @Override
+   public void close() {
+      // Ensure dispatcher is stopped
+      this.stop();
+      // We must unregister our listener, otherwise the channel will retain a reference to this dispatcher
+      this.channel.removeChannelListener(this);
    }
 
    @Override
