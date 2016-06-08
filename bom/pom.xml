@@ -81,7 +81,6 @@
       <version.scala.xml>1.0.2</version.scala.xml>
       <version.xstream>1.4.9</version.xstream>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
-      <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
@@ -399,11 +398,6 @@
             <artifactId>hibernate-search-serialization-avro</artifactId>
             <version>${version.hibernate.search}</version>
          </dependency>
-          <dependency>
-              <groupId>org.hibernate</groupId>
-              <artifactId>hibernate-entitymanager</artifactId>
-              <version>${version.hibernate.core}</version>
-          </dependency>
 
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
