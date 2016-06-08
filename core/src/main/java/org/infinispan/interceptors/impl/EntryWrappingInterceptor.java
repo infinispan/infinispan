@@ -3,13 +3,11 @@ package org.infinispan.interceptors.impl;
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -53,6 +51,7 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
@@ -109,8 +108,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final EnumSet<Flag> EVICT_FLAGS =
-         EnumSet.of(Flag.SKIP_OWNERSHIP_CHECK, Flag.CACHE_MODE_LOCAL);
+   private static final long EVICT_FLAGS_BITSET =
+         FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL;
    private boolean transactional;
    private boolean totalOrder;
 
@@ -174,7 +173,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean ignoreOwnership(FlagAffectedCommand command) {
-      return command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK);
+      return command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
    }
 
    private boolean canRead(Object key) {
@@ -230,11 +229,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // Entry visit notifications used to happen in the CallInterceptor
          // instanceof check excludes the case when the command returns UnsuccessfulResponse
          if (t == null && rv instanceof Map) {
-            log.tracef("Notifying getAll? %s; result %s", !command.hasFlag(Flag.SKIP_LISTENER_NOTIFICATION), rv);
+            log.tracef("Notifying getAll? %s; result %s", !command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION), rv);
             Map<Object, Object> map = (Map<Object, Object>) rv;
             // TODO: it would be nice to know if a listener was registered for this and
             // not do the full iteration if there was no visitor listener registered
-            if (!command.hasFlag(Flag.SKIP_LISTENER_NOTIFICATION)) {
+            if (!command.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION)) {
                for (Map.Entry<Object, Object> entry : map.entrySet()) {
                   Object value = entry.getValue();
                   if (value != null) {
@@ -306,7 +305,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private void wrapEntryIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getKey());
       }
       entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
@@ -355,7 +354,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getKey());
       }
       entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta(), ignoreOwnership(command) || canRead(command.getKey()));
@@ -371,7 +370,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public final BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
          throws Throwable {
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getKey());
       }
       // When retrying, we might still need to perform the command even if the previous value was removed
@@ -382,7 +381,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       boolean ignoreOwnership = ignoreOwnership(command);
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       for (Object key : command.getMap().keySet()) {
@@ -394,7 +393,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public BasicInvocationStage visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      command.addFlags(EVICT_FLAGS); //to force the wrapping
+      command.setFlagsBitSet(EVICT_FLAGS_BITSET); //to force the wrapping
       return visitRemoveCommand(ctx, command);
    }
 
@@ -488,7 +487,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
          WriteOnlyManyEntriesCommand command) throws Throwable {
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
@@ -502,7 +501,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command)
          throws Throwable {
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
@@ -522,7 +521,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command)
          throws Throwable {
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
@@ -535,7 +534,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx,
          ReadWriteManyEntriesCommand command) throws Throwable {
-      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
@@ -552,9 +551,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                ((TxInvocationContext) ctx).getCacheTransaction().getStateTransferFlag() :
                null;
       } else {
-         if (command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+         if (command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
             return Flag.PUT_FOR_STATE_TRANSFER;
-         } else if (command.hasFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER)) {
+         } else if (command.hasAnyFlag(FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
             return Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
          }
       }
@@ -598,8 +597,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // We only retry non-tx write commands
          if (!isInvalidation) {
             // Can't perform the check during preload or if the cache isn't clustered
-            boolean syncRpc = isSync && !command.hasFlag(Flag.FORCE_ASYNCHRONOUS) ||
-                  command.hasFlag(Flag.FORCE_SYNCHRONOUS);
+            boolean syncRpc = isSync && !command.hasAnyFlag(FlagBitSets.FORCE_ASYNCHRONOUS) ||
+                  command.hasAnyFlag(FlagBitSets.FORCE_SYNCHRONOUS);
             if (command.isSuccessful() && stateConsumer != null && stateConsumer.getCacheTopology() != null) {
                int commandTopologyId = command.getTopologyId();
                int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
@@ -830,7 +829,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                visitorStage.get();
             }
 
-            if (c.hasFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER)) {
+            if (c.hasAnyFlag(FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
                ctx.getCacheTransaction().setStateTransferFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
             }
          }

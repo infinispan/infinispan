@@ -79,6 +79,7 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
    private void assertExpiredEvents(int count) {
       eventuallyEquals(count, () -> listener.getInvocationCount());
       listener.getEvents().forEach(event -> {
+         log.tracef("Checking event %s", event);
          assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
          assertEquals(cache, event.getCache());
          assertFalse(event.isPre());

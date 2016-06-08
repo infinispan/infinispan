@@ -29,8 +29,8 @@ public abstract class BaseClusteredReadCommand extends BaseRpcCommand implements
       return EnumUtil.prettyPrintBitSet(flags, Flag.class);
    }
 
-   public boolean hasFlag(Flag flag) {
-      return EnumUtil.hasEnum(getFlagsBitSet(), flag);
+   public boolean hasAnyFlag(long flagBitSet) {
+      return EnumUtil.containsAny(getFlagsBitSet(), flagBitSet);
    }
 
    @Override

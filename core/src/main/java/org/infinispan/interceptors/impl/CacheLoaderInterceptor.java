@@ -47,8 +47,8 @@ import org.infinispan.container.EntryFactory;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -309,7 +309,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    protected final boolean hasSkipLoadFlag(FlagAffectedCommand cmd) {
-      return cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
+      return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
    }
 
    protected boolean canLoad(Object key) {

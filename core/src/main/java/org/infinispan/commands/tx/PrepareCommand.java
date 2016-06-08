@@ -23,8 +23,8 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -126,7 +126,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       }
       final Set<Object> set = new HashSet<>(modifications.length);
       forEach(modifications, writeCommand -> {
-         if (writeCommand.hasFlag(Flag.SKIP_LOCKING)) {
+         if (writeCommand.hasAnyFlag(FlagBitSets.SKIP_LOCKING)) {
             return;
          }
          switch (writeCommand.getCommandId()) {

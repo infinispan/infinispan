@@ -5,10 +5,10 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.context.impl.FlagBitSets;
 
 /**
  * Defines for which events the Query Interceptor will generate indexing events.
@@ -39,7 +39,7 @@ public enum IndexModificationStrategy {
       @Override
       public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
                                          DistributionManager distributionManager, RpcManager rpcManager, Object key) {
-         return !command.hasFlag(Flag.SKIP_INDEXING);
+         return !command.hasAnyFlag(FlagBitSets.SKIP_INDEXING);
       }
    },
 
@@ -53,7 +53,7 @@ public enum IndexModificationStrategy {
                                          DistributionManager distributionManager, RpcManager rpcManager, Object key) {
          // will index only local updates that were not flagged with SKIP_INDEXING,
          // are not caused internally by state transfer and indexing strategy is not configured to 'manual'
-         return ctx.isOriginLocal() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER) && !command.hasFlag(Flag.SKIP_INDEXING);
+         return ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_INDEXING);
       }
    },
 
@@ -65,7 +65,7 @@ public enum IndexModificationStrategy {
       public boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx,
                                          DistributionManager distributionManager, RpcManager rpcManager, Object key) {
          return command instanceof ClearCommand ||
-               !(command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER) || command.hasFlag(Flag.SKIP_INDEXING)) &&
+               !(command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER) || command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) &&
                      (distributionManager == null || distributionManager.getPrimaryLocation(key).equals(rpcManager.getAddress()));
 
       }

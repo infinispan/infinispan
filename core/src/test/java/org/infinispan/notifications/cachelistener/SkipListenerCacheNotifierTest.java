@@ -6,6 +6,7 @@ import org.hamcrest.Matcher;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +25,7 @@ public class SkipListenerCacheNotifierTest extends CacheNotifierTest {
          @Override
          public boolean matches(Object o) {
             boolean expected = o instanceof FlagAffectedCommand;
-            boolean isSkipListener = ((FlagAffectedCommand) o).hasFlag(Flag.SKIP_LISTENER_NOTIFICATION);
+            boolean isSkipListener = ((FlagAffectedCommand) o).hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION);
             return expected && isSkipListener;
          }
 

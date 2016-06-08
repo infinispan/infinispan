@@ -16,8 +16,8 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -53,7 +53,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private void markKeyAsRead(InvocationContext ctx, DataCommand command, boolean forceRead) {
       if (needToMarkReads && ctx.isInTxScope() &&
-            (forceRead || !command.hasFlag(Flag.IGNORE_RETURN_VALUES))) {
+            (forceRead || !command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES))) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
          tctx.getCacheTransaction().addReadKey(command.getKey());
       }

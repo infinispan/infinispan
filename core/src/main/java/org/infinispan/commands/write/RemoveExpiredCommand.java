@@ -5,15 +5,13 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.EnumSet;
 import java.util.Objects;
-import java.util.Set;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -169,18 +167,13 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    @Override
-   public Set<Flag> getFlags() {
-      return EnumSet.of(Flag.SKIP_CACHE_LOAD);
-   }
-
-   @Override
-   public boolean hasFlag(Flag flag) {
-      // We skip cache load, since if the entry is not in memory then it wasn't updated since it last expired
-      return flag == Flag.SKIP_CACHE_LOAD;
+   public long getFlagsBitSet() {
+      // Override the flags
+      return FlagBitSets.SKIP_CACHE_LOAD;
    }
 
    @Override
    public void initBackupWriteRcpCommand(BackupWriteRcpCommand command) {
-      command.setRemoveExpired(commandInvocationId, key, value, EnumUtil.bitSetOf(Flag.SKIP_CACHE_LOAD), getTopologyId());
+      command.setRemoveExpired(commandInvocationId, key, value, FlagBitSets.SKIP_CACHE_LOAD, getTopologyId());
    }
 }

@@ -68,7 +68,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.context.Flag;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.impl.Params;
@@ -162,10 +161,10 @@ public interface CommandsFactory {
 
    /**
     * Builds a SizeCommand
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a SizeCommand
     */
-   SizeCommand buildSizeCommand(Set<Flag> flags);
+   SizeCommand buildSizeCommand(long flagsBitSet);
 
    /**
     * Builds a GetKeyValueCommand
@@ -195,17 +194,17 @@ public interface CommandsFactory {
 
    /**
     * Builds a KeySetCommand
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a KeySetCommand
     */
-   KeySetCommand buildKeySetCommand(Set<Flag> flags);
+   KeySetCommand buildKeySetCommand(long flagsBitSet);
 
    /**
     * Builds a EntrySetCommand
-    * @param flags Command flags provided by cache
+    * @param flagsBitSet Command flags provided by cache
     * @return a EntrySetCommand
     */
-   EntrySetCommand buildEntrySetCommand(Set<Flag> flags);
+   EntrySetCommand buildEntrySetCommand(long flagsBitSet);
 
    /**
     * Builds a PutMapCommand

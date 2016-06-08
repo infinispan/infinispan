@@ -21,6 +21,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
@@ -128,7 +129,7 @@ public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
             throws Throwable {
          Object result = super.visitPutKeyValueCommand(ctx, command);
-         if (!ctx.isInTxScope() && !command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) {
+         if (!ctx.isInTxScope() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
             doBlock(ctx, command);
          }
          return result;

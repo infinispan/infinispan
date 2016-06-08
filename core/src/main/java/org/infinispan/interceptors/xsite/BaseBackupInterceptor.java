@@ -5,8 +5,8 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -84,7 +84,7 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
    }
 
    protected final boolean skipXSiteBackup(FlagAffectedCommand command) {
-      return command.hasFlag(Flag.SKIP_XSITE_BACKUP);
+      return command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP);
    }
 
    protected Log getLog() {

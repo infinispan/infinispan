@@ -12,8 +12,8 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -70,7 +70,7 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeUTF(groupName);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override

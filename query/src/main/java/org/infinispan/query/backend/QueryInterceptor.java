@@ -30,8 +30,8 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
@@ -175,7 +175,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    @Override
    public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      command.setFlagsBitSet(EnumUtil.unsetEnum(command.getFlagsBitSet(), Flag.IGNORE_RETURN_VALUES));
+      command.setFlagsBitSet(EnumUtil.diffBitSets(command.getFlagsBitSet(), FlagBitSets.IGNORE_RETURN_VALUES));
       return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          Map<Object, Object> previousValues = (Map<Object, Object>) rv;
          processPutMapCommand(((PutMapCommand) rCommand), rCtx, previousValues, null);
@@ -498,7 +498,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean usingSkipIndexCleanup(final FlagAffectedCommand command) {
-      return command != null && command.hasFlag(Flag.SKIP_INDEX_CLEANUP);
+      return command != null && command.hasAnyFlag(FlagBitSets.SKIP_INDEX_CLEANUP);
    }
 
    public IndexModificationStrategy getIndexModificationMode() {

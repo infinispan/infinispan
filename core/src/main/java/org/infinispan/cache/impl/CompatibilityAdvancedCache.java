@@ -3,17 +3,18 @@ package org.infinispan.cache.impl;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.util.Collection;
-import java.util.EnumSet;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.compat.DoubleTypeConverter;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -56,10 +57,10 @@ public class CompatibilityAdvancedCache<K, V> extends TypeConverterDelegatingAdv
          cache = ((AbstractDelegatingCache<K, V>) cache).getDelegate();
       }
       if (cache instanceof DecoratedCache) {
-         EnumSet<Flag> flags = ((DecoratedCache<K, V>) cache).getFlags();
-         if (flags.contains(Flag.OPERATION_HOTROD)) {
+         long flags = ((DecoratedCache<K, V>) cache).getFlagsBitSet();
+         if (EnumUtil.containsAny(flags, FlagBitSets.OPERATION_HOTROD)) {
             return hotRodConverter;
-         } else if (flags.contains(Flag.OPERATION_MEMCACHED)) {
+         } else if (EnumUtil.containsAny(flags, FlagBitSets.OPERATION_MEMCACHED)) {
             return memcachedConverter;
          }
       }

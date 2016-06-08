@@ -31,9 +31,9 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.Ownership;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -224,7 +224,8 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    protected final long getLockTimeoutMillis(FlagAffectedCommand command) {
-      return command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ? 0 : cacheConfiguration.locking().lockAcquisitionTimeout();
+      return command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT) ? 0 :
+            cacheConfiguration.locking().lockAcquisitionTimeout();
    }
 
    protected final boolean shouldLockKey(Object key) {
@@ -249,6 +250,6 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    protected final boolean hasSkipLocking(FlagAffectedCommand command) {
-      return command.hasFlag(Flag.SKIP_LOCKING);
+      return command.hasAnyFlag(FlagBitSets.SKIP_LOCKING);
    }
 }

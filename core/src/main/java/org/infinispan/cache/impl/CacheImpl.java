@@ -71,6 +71,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
@@ -362,20 +363,20 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final int size() {
-      return size(null);
+      return size(EnumUtil.EMPTY_BIT_SET);
    }
 
-   final int size(EnumSet<Flag> explicitFlags) {
+   final int size(long explicitFlags) {
       SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
       return (Integer) invoker.invoke(invocationContextFactory.createInvocationContext(false, UNBOUNDED), command);
    }
 
    @Override
    public final boolean isEmpty() {
-      return isEmpty(null);
+      return isEmpty(EnumUtil.EMPTY_BIT_SET);
    }
 
-   final boolean isEmpty(EnumSet<Flag> explicitFlags) {
+   final boolean isEmpty(long explicitFlags) {
       return !entrySet(explicitFlags).stream().anyMatch(StreamMarshalling.alwaysTruePredicate());
    }
 
@@ -579,11 +580,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public CacheSet<K> keySet() {
-      return keySet(null);
+      return keySet(EnumUtil.EMPTY_BIT_SET);
    }
 
    @SuppressWarnings("unchecked")
-   CacheSet<K> keySet(EnumSet<Flag> explicitFlags) {
+   CacheSet<K> keySet(long explicitFlags) {
       InvocationContext ctx = invocationContextFactory.createInvocationContext(false, UNBOUNDED);
       KeySetCommand command = commandsFactory.buildKeySetCommand(explicitFlags);
       return (CacheSet<K>) invoker.invoke(ctx, command);
@@ -591,20 +592,20 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public CacheCollection<V> values() {
-      return values(null);
+      return values(EnumUtil.EMPTY_BIT_SET);
    }
 
-   CacheCollection<V> values(EnumSet<Flag> explicitFlags) {
+   CacheCollection<V> values(long explicitFlags) {
       return new ValueCacheCollection<>(this, cacheEntrySet(explicitFlags));
    }
 
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
-      return cacheEntrySet(null);
+      return cacheEntrySet(EnumUtil.EMPTY_BIT_SET);
    }
 
    @SuppressWarnings("unchecked")
-   CacheSet<CacheEntry<K, V>> cacheEntrySet(EnumSet<Flag> explicitFlags) {
+   CacheSet<CacheEntry<K, V>> cacheEntrySet(long explicitFlags) {
       InvocationContext ctx = invocationContextFactory.createInvocationContext(false, UNBOUNDED);
       EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
       return (CacheSet<CacheEntry<K, V>>) invoker.invoke(ctx, command);
@@ -612,11 +613,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public CacheSet<Entry<K, V>> entrySet() {
-      return entrySet(null);
+      return entrySet(EnumUtil.EMPTY_BIT_SET);
    }
 
    @SuppressWarnings("unchecked")
-   CacheSet<Map.Entry<K, V>> entrySet(EnumSet<Flag> explicitFlags) {
+   CacheSet<Map.Entry<K, V>> entrySet(long explicitFlags) {
       InvocationContext ctx = invocationContextFactory.createInvocationContext(false, UNBOUNDED);
       EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
       return (CacheSet<Map.Entry<K, V>>) invoker.invoke(ctx, command);
@@ -1120,7 +1121,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private long addIgnoreReturnValuesFlag(long flagBitSet) {
-      return EnumUtil.setEnum(flagBitSet, IGNORE_RETURN_VALUES);
+      return EnumUtil.mergeBitSets(flagBitSet, FlagBitSets.IGNORE_RETURN_VALUES);
    }
 
    private long addUnsafeFlags(long flagBitSet) {
@@ -1140,7 +1141,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final V putIfAbsent(K key, V value, Metadata metadata, long explicitFlags) {
       assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(
-            EnumUtil.hasEnum(explicitFlags, PUT_FOR_EXTERNAL_READ), 1);
+            EnumUtil.containsAny(explicitFlags, FlagBitSets.PUT_FOR_EXTERNAL_READ), 1);
       return putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
    }
 
@@ -1175,7 +1176,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       // Vanilla PutMapCommand returns previous values; add IGNORE_RETURN_VALUES as the API will drop the return value
       // interceptors are free to clear this flag if appropriate (since interceptors are the only consumers of the
       // return value)
-      explicitFlags = EnumUtil.setEnum(explicitFlags, IGNORE_RETURN_VALUES);
+      explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
       PutMapCommand command = commandsFactory.buildPutMapCommand(map, merged, explicitFlags);
       ctx.setLockOwner(command.getKeyLockOwner());
       executeCommandAndCommitIfNeeded(ctx, command);
@@ -1456,7 +1457,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       if (!config.clustering().cacheMode().isDistributed()) {
          //in these cluster modes we won't RPC for a get, so no need to fork a thread.
          return true;
-      } else if (EnumUtil.hasEnum(flags, Flag.SKIP_REMOTE_LOOKUP) || EnumUtil.hasEnum(flags, Flag.CACHE_MODE_LOCAL)) {
+      } else if (EnumUtil.containsAny(flags, FlagBitSets.SKIP_REMOTE_LOOKUP | FlagBitSets.CACHE_MODE_LOCAL)) {
          //with these flags we won't RPC either
          return true;
       }
@@ -1473,7 +1474,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private boolean isSkipLoader(long flags) {
       boolean hasCacheLoaderConfig = !config.persistence().stores().isEmpty();
       return !hasCacheLoaderConfig
-            || (EnumUtil.hasEnum(flags, Flag.SKIP_CACHE_LOAD) || EnumUtil.hasEnum(flags, Flag.SKIP_CACHE_STORE));
+            || (EnumUtil.containsAny(flags, FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_CACHE_STORE));
    }
 
    @Override

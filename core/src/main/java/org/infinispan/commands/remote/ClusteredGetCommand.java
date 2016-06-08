@@ -15,6 +15,7 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -108,7 +109,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override

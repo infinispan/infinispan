@@ -16,6 +16,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.lifecycle.ComponentStatus;
 
 
@@ -80,7 +81,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       output.writeObject(key);
       output.writeObject(delta);
       MarshallUtil.marshallCollection(keys, output);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
    }
 

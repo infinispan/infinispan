@@ -50,8 +50,8 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutionCompletionService;
@@ -463,8 +463,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       e.setOldValue(previousValue);
       e.setOldMetadata(previousMetadata);
       e.setMetadata(metadata);
-      Set<Flag> flags;
-      if (command != null && (flags = command.getFlags()) != null && flags.contains(Flag.COMMAND_RETRY)) {
+      if (command != null && command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          e.setCommandRetried(true);
       }
       e.setKey(key);
@@ -784,7 +783,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    public boolean isNotificationAllowed(FlagAffectedCommand cmd, List<CacheEntryListenerInvocation<K, V>> listeners) {
-      return (cmd == null || !cmd.hasFlag(Flag.SKIP_LISTENER_NOTIFICATION)) && !listeners.isEmpty();
+      return (cmd == null || !cmd.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION)) && !listeners.isEmpty();
    }
 
    @Override

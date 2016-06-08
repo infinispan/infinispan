@@ -85,8 +85,8 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
@@ -232,7 +232,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, long flagsBitSet) {
-      boolean reallyTransactional = transactional && !EnumUtil.hasEnum(flagsBitSet, Flag.PUT_FOR_EXTERNAL_READ);
+      boolean reallyTransactional = transactional && !EnumUtil.containsAny(flagsBitSet, FlagBitSets.PUT_FOR_EXTERNAL_READ);
       return new PutKeyValueCommand(key, value, false, notifier, metadata, flagsBitSet,
                                     generateUUID(reallyTransactional));
    }
@@ -276,18 +276,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public SizeCommand buildSizeCommand(Set<Flag> flags) {
-      return new SizeCommand(cache, flags);
+   public SizeCommand buildSizeCommand(long flagsBitSet) {
+      return new SizeCommand(cache, flagsBitSet);
    }
 
    @Override
-   public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
-      return new KeySetCommand(cache, flags);
+   public KeySetCommand buildKeySetCommand(long flagsBitSet) {
+      return new KeySetCommand(cache, flagsBitSet);
    }
 
    @Override
-   public EntrySetCommand buildEntrySetCommand(Set<Flag> flags) {
-      return new EntrySetCommand(cache, flags);
+   public EntrySetCommand buildEntrySetCommand(long flagsBitSet) {
+      return new EntrySetCommand(cache, flagsBitSet);
    }
 
    @Override

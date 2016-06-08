@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -59,8 +59,8 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
             case DONT_LOAD:
                return true;
             case PRIMARY:
-               if (cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-                  return cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
+               if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+                  return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
                }
                if (!cdl.localNodeIsPrimaryOwner(key)) {
                   if (trace) {
@@ -70,8 +70,8 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
                }
                break;
             case OWNER:
-               if (cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-                  return cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
+               if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+                  return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
                }
                List<Address> owners = cdl.getOwners(key);
                int index = owners == null ? 0 : owners.indexOf(cdl.getAddress());

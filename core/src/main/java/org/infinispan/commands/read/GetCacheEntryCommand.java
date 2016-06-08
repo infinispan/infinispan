@@ -9,8 +9,8 @@ import java.io.ObjectOutput;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 
 /**
  * Used to fetch a full CacheEntry rather than just the value.
@@ -61,7 +61,7 @@ public final class GetCacheEntryCommand extends AbstractDataCommand {
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
-      output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override

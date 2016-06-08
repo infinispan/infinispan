@@ -15,8 +15,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -256,7 +256,7 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       PrimaryMultiKeyAckCommand ack = commandsFactory.buildPrimaryMultiKeyAckCommand(
             command.getCommandInvocationId(),
             command.getTopologyId());
-      if (command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+      if (command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES)) {
          ack.initWithoutReturnValue();
       } else {
          ack.initWithReturnValue(returnValue);

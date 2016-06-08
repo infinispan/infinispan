@@ -13,6 +13,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -112,7 +113,7 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
          default:
             throw new IllegalStateException();
       }
-      command.addFlag(Flag.SKIP_LOCKING);
+      command.addFlags(FlagBitSets.SKIP_LOCKING);
       command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
       command.setTopologyId(topologyId);
       InvocationContext invocationContext = invocationContextFactory
@@ -156,7 +157,7 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
             break;
          default:
       }
-      output.writeLong(Flag.copyWithoutRemotableFlags(flags));
+      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
    }
 
    @Override

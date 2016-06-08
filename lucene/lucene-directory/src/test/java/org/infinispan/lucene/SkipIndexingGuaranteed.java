@@ -7,8 +7,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
@@ -52,7 +52,7 @@ public class SkipIndexingGuaranteed extends CommandInterceptor {
    }
 
    protected Object handleDefaultCheckingAssertion(InvocationContext ctx, FlagAffectedCommand command) throws Throwable {
-      if (! command.hasFlag(Flag.SKIP_INDEXING)) {
+      if (! command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) {
          throw new AssertionError("A write operation was detected which is not using SKIP_INDEXING flag");
       }
       return super.invokeNextInterceptor(ctx, command);
