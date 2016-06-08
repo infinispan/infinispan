@@ -30,8 +30,8 @@
          <eviction strategy="NONE"/>
          <expiration interval="-1"/>
          <store-as-binary keys="false" values="false"/>
-         <data-container key-equivalence="org.jboss.as.clustering.infinispan.equivalence.AnyServerEquivalence"
-                         value-equivalence="org.jboss.as.clustering.infinispan.equivalence.AnyServerEquivalence" />
+         <data-container key-equivalence="org.infinispan.commons.equivalence.AnyServerEquivalence"
+                         value-equivalence="org.infinispan.commons.equivalence.AnyServerEquivalence" />
       </local-cache>
       <replicated-cache name="REPL_SYNC" mode="SYNC" remote-timeout="17500">
          <state-transfer timeout="60000" enabled="true"/>
