@@ -1,9 +1,6 @@
 package org.infinispan.server.eventlogger;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;

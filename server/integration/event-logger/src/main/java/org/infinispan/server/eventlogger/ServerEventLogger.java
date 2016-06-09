@@ -95,7 +95,7 @@ public class ServerEventLogger implements EventLogger {
 
    @Override
    public List<EventLog> getEvents(Instant start, int count, Optional<EventLogCategory> category, Optional<EventLogLevel> level) {
-      List<EventLog> events = new ArrayList<>();
+      List<EventLog> events = Collections.synchronizedList(new ArrayList<>());
       AtomicReference<Throwable> throwable = new AtomicReference<>();
       try {
          cacheManager.executor().submitConsumer(m -> {
@@ -118,6 +118,9 @@ public class ServerEventLogger implements EventLogger {
          if (th != null) {
             throw new CacheException(th);
          }
+      } catch (CacheException e) {
+         log.debug("Could not retrieve events", e);
+         throw e;
       } catch (Exception e) {
          log.debug("Could not retrieve events", e);
          throw new CacheException(e);
