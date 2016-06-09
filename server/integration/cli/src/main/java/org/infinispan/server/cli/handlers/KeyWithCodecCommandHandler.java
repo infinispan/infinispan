@@ -41,6 +41,25 @@ public class KeyWithCodecCommandHandler extends KeyCommandHandler {
 
    }
 
+   public static class LocateProvider implements CommandHandlerProvider {
+
+      @Override
+      public CommandHandler createCommandHandler(CommandContext ctx) {
+         return new KeyWithCodecCommandHandler(CacheCommand.LOCATE, CliCommandBuffer.INSTANCE);
+      }
+
+      @Override
+      public boolean isTabComplete() {
+         return true;
+      }
+
+      @Override
+      public String[] getNames() {
+         return new String[] { CacheCommand.LOCATE.getName() };
+      }
+
+   }
+
    public static class RemoveProvider implements CommandHandlerProvider {
 
       @Override

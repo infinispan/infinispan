@@ -6,6 +6,8 @@ org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$BeginProvider
 org.infinispan.server.cli.handlers.CacheCommandHandler$Provider
 # clear
 org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$ClearProvider
+# commit
+org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$CommitProvider
 # container
 org.infinispan.server.cli.handlers.ContainerCommandHandler$Provider
 # create
@@ -26,6 +28,8 @@ org.infinispan.server.cli.handlers.KeyWithCodecCommandHandler$GetProvider
 org.infinispan.server.cli.handlers.GrantCommandHandler$Provider
 # info
 org.infinispan.server.cli.handlers.CacheNameArgumentCommandHandler$InfoProvider
+# locate
+org.infinispan.server.cli.handlers.KeyWithCodecCommandHandler$LocateProvider
 # put
 org.infinispan.server.cli.handlers.PutCommandHandler$Provider
 # remove
