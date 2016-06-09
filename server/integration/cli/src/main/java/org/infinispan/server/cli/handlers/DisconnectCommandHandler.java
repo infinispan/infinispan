@@ -20,7 +20,7 @@ public class DisconnectCommandHandler extends NoArgumentsCliCommandHandler {
    }
 
    @Override
-   public void handle(CommandContext ctx) throws CommandLineException {
+   public void cliHandle(CommandContext ctx) throws CommandLineException {
       ctx.disconnectController();
    }
 

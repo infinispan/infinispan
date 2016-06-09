@@ -59,6 +59,24 @@ public class CacheNameArgumentCommandHandler extends NoArgumentsCliCommandHandle
 
    }
 
+   public static class CommitProvider implements CommandHandlerProvider {
+
+      @Override
+      public CommandHandler createCommandHandler(CommandContext ctx) {
+         return new CacheNameArgumentCommandHandler(CacheCommand.COMMIT, CliCommandBuffer.INSTANCE);
+      }
+
+      @Override
+      public boolean isTabComplete() {
+         return true;
+      }
+
+      @Override
+      public String[] getNames() {
+         return new String[] { CacheCommand.COMMIT.getName() };
+      }
+   }
+
    public static class InfoProvider implements CommandHandlerProvider {
 
       @Override

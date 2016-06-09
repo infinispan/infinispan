@@ -8,7 +8,6 @@ import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHandlerProvider;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.handlers.CommandHandlerWithArguments;
 import org.jboss.as.cli.impl.ArgumentWithValue;
 import org.jboss.as.cli.impl.DefaultCompleter;
 import org.jboss.as.cli.operation.OperationFormatException;
@@ -22,12 +21,12 @@ import org.jboss.as.cli.operation.OperationFormatException;
  * @author Pedro Ruivo
  * @since 6.1
  */
-public class ContainerCommandHandler extends CommandHandlerWithArguments {
+public class ContainerCommandHandler extends CliCommandHandler {
 
    private final ArgumentWithValue containerName;
 
    public ContainerCommandHandler() {
-      super();
+      super(CacheCommand.CONTAINER);
       containerName = new ArgumentWithValue(this, new DefaultCompleter(new DefaultCompleter.CandidatesProvider() {
          @Override
          public Collection<String> getAllCandidates(CommandContext ctx) {
@@ -51,8 +50,7 @@ public class ContainerCommandHandler extends CommandHandlerWithArguments {
    }
 
    @Override
-   public void handle(CommandContext ctx) throws CommandLineException {
-      recognizeArguments(ctx);
+   public void cliHandle(CommandContext ctx) throws CommandLineException {
       String containerName = this.containerName.getValue(ctx.getParsedCommandLine());
       if (containerName == null) {
          ctx.printColumns(InfinispanUtil.getContainerNames(ctx));
