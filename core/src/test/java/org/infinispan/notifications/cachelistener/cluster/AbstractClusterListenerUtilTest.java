@@ -14,7 +14,11 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
@@ -83,6 +87,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       }
       // Due to ISPN-5507 we can end up waiting 30 seconds for the test to complete with expiration tests
       builderUsed.transaction().cacheStopTimeout(100, TimeUnit.MILLISECONDS);
+      builderUsed.expiration().disableReaper();
       createClusteredCaches(3, CACHE_NAME, builderUsed);
       injectTimeServices();
    }
@@ -108,10 +113,26 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       List<CacheEntryEvent> events = Collections.synchronizedList(new ArrayList<CacheEntryEvent>());
 
       @CacheEntryCreated
+      public void onCreatedEvent(CacheEntryCreatedEvent event) {
+         onCacheEvent(event);
+      }
+
       @CacheEntryModified
+      public void onModifiedEvent(CacheEntryModifiedEvent event) {
+         onCacheEvent(event);
+      }
+
       @CacheEntryRemoved
+      public void onRemoveEvent(CacheEntryRemovedEvent event) {
+         onCacheEvent(event);
+      }
+
       @CacheEntryExpired
-      public void onCacheEvent(CacheEntryEvent event) {
+      public void onExpireEvent(CacheEntryExpiredEvent event) {
+         onCacheEvent(event);
+      }
+
+      void onCacheEvent(CacheEntryEvent event) {
          log.debugf("Adding new cluster event %s", event);
          events.add(event);
       }
@@ -278,7 +299,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    }
 
    protected void verifySimpleExpirationEvents(ClusterListener listener, int expectedNumEvents, Object key, Object expectedValue) {
-      eventually(() -> listener.events.size() >= expectedNumEvents);
+      eventuallyEquals(expectedNumEvents, () -> listener.events.size());
 
       CacheEntryEvent event = listener.events.get(expectedNumEvents - 1); //the index starts from 0
 
