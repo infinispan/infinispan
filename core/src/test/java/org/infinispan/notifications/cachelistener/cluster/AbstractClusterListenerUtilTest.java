@@ -299,7 +299,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    }
 
    protected void verifySimpleExpirationEvents(ClusterListener listener, int expectedNumEvents, Object key, Object expectedValue) {
-      eventuallyEquals(expectedNumEvents, () -> listener.events.size());
+      eventually(() -> listener.events.size() >= expectedNumEvents);
 
       CacheEntryEvent event = listener.events.get(expectedNumEvents - 1); //the index starts from 0
 
