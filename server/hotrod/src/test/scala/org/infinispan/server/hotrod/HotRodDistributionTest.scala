@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod
 
 import org.testng.annotations.Test
 import java.lang.reflect.Method
+
 import org.infinispan.server.hotrod.OperationStatus._
 import test.HotRodTestingUtil._
 import org.testng.Assert._
@@ -10,6 +11,7 @@ import test.HotRodClient
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
 import org.infinispan.test.TestingUtil
+import org.infinispan.topology.ClusterCacheStatus
 
 /**
  * Tests Hot Rod logic when interacting with distributed caches, particularly logic to do with
@@ -51,7 +53,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
-      resp = client1.put(k(m) , 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE, 10)
+      resp = client1.put(k(m) , 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(client2.get(k(m), 0), v(m, "v3-"))
@@ -92,7 +94,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
          log.trace("New server stopped")
       }
 
-      resp = client2.put(k(m) , 0, 0, v(m, "v8-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 2)
+      resp = client2.put(k(m) , 0, 0, v(m, "v8-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount)
       assertStatus(resp, Success)
       assertHashTopology20Received(resp.topologyResponse.get, servers, cacheName, currentServerTopologyId)
 

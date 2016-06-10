@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import java.lang.reflect.Method
+
 import test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.annotations.Test
@@ -8,6 +9,7 @@ import org.infinispan.test.AbstractCacheTest._
 import org.testng.Assert._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.test.TestingUtil
+import org.infinispan.topology.ClusterCacheStatus
 import test.AbstractTestTopologyAwareResponse
 
 /**
@@ -74,7 +76,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
-      resp = clients.tail.head.ping(2, 10)
+      resp = clients.tail.head.ping(2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
    }
@@ -93,14 +95,14 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
-      resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, 10)
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))
 
       val newServer = startClusteredServer(servers.tail.head.getPort + 25)
       try {
-         val resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, 1)
+         val resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount)
          assertStatus(resp, Success)
          assertEquals(resp.topologyResponse.get.topologyId, currentServerTopologyId)
          val topoResp = resp.asTopologyAwareResponse
@@ -113,7 +115,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName))
       }
 
-      resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), 2, 2)
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount + 1)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse.get.topologyId, currentServerTopologyId)
       var topoResp = resp.asTopologyAwareResponse
@@ -125,7 +127,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       val crashingServer = startClusteredServer(
             servers.tail.head.getPort + 25, doCrash = true)
       try {
-         val resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, 3)
+         val resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount + 2)
          assertStatus(resp, Success)
          assertEquals(resp.topologyResponse.get.topologyId, currentServerTopologyId)
          val topoResp = resp.asTopologyAwareResponse
@@ -138,7 +140,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
          TestingUtil.waitForRehashToComplete(cache(0, cacheName), cache(1, cacheName))
       }
 
-      resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), 2, 4)
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), 2, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount + 3)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse.get.topologyId, currentServerTopologyId)
       topoResp = resp.asTopologyAwareResponse
