@@ -84,8 +84,8 @@ public abstract class AbstractJpaStoreTest extends AbstractInfinispanTest {
    @AfterMethod(alwaysRun = true)
    public void stopMarshaller() {
       //marshaller.stop();
-      cs.stop();
-      cm.stop();
+      if (cs != null) cs.stop();
+      if (cm != null) cm.stop();
    }
 
    /**
