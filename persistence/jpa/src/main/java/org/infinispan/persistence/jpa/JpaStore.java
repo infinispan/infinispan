@@ -76,11 +76,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
 
    @Override
    public void start() {
-      try {
-         this.emf = emfRegistry.getEntityManagerFactory(configuration.persistenceUnitName());
-      } catch (PersistenceException e) {
-         throw new JpaStoreException("Persistence Unit [" + this.configuration.persistenceUnitName() + "] not found", e);
-      }
+      this.emf = emfRegistry.getEntityManagerFactory(configuration.persistenceUnitName());
 
       ManagedType<?> mt;
       try {
