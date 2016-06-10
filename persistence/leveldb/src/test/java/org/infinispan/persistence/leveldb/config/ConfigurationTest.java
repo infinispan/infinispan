@@ -65,16 +65,18 @@ public class ConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testXmlConfig() throws IOException {
-      EmbeddedCacheManager cacheManager = new DefaultCacheManager("config/leveldb-config-" +
-            LevelDBStoreConfiguration.ImplementationType.AUTO.toString().toLowerCase() + ".xml");
+      try {
+         EmbeddedCacheManager cacheManager = new DefaultCacheManager("config/leveldb-config-" +
+                 LevelDBStoreConfiguration.ImplementationType.AUTO.toString().toLowerCase() + ".xml");
 
-      Cache<String, String> cache = cacheManager.getCache("testCache");
+         Cache<String, String> cache = cacheManager.getCache("testCache");
 
-      cache.put("hello", "there 60 xml");
-      cache.stop();
-      cacheManager.stop();
-
-      Util.recursiveFileRemove("/tmp/leveldb/60");
+         cache.put("hello", "there 52 xml");
+         cache.stop();
+         cacheManager.stop();
+      } finally {
+         Util.recursiveFileRemove("/tmp/leveldb/52");
+      }
    }
 
 }
