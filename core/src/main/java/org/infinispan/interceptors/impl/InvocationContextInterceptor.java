@@ -61,7 +61,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          if (throwable == null)
             return null;
 
-         if (throwable instanceof InvalidCacheUsageException) {
+         if (throwable instanceof InvalidCacheUsageException || throwable instanceof InterruptedException) {
             throw throwable;
          } else {
             rethrowException(rCtx, rCommand, throwable);
