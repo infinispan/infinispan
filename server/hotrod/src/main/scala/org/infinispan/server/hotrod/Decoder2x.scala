@@ -397,8 +397,10 @@ object Decoder2x extends AbstractVersionedDecoder with Log with Constants {
             // JGroups and remote exceptions (inside RemoteException) can come wrapped up
             case _ : org.jgroups.SuspectedException => createNodeSuspectedErrorResponse(h, t)
             case _ : IllegalLifecycleStateException => createIllegalLifecycleStateErrorResponse(h, t)
+            case _: InterruptedException => createIllegalLifecycleStateErrorResponse(h, t)
             case _ => createServerErrorResponse(h, t)
          }
+         case _: InterruptedException => createIllegalLifecycleStateErrorResponse(h, t)
          case p: PrivilegedActionException => createErrorResponse(h, p.getCause)
          case t: Throwable => createServerErrorResponse(h, t)
       }

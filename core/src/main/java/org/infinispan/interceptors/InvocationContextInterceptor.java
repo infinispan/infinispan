@@ -112,7 +112,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
 
             try {
                return invokeNextInterceptor(ctx, command);
-            } catch (InvalidCacheUsageException ex) {
+            } catch (InvalidCacheUsageException | InterruptedException ex) {
                throw ex; // Propagate back client usage errors regardless of flag
             } catch (Throwable th) {
                // Only check for fail silently if there's a failure :)
