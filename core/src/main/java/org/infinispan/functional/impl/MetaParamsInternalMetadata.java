@@ -9,7 +9,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.metadata.Metadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -27,7 +26,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    final MetaParams params;
 
-   public static Metadata from(MetaParams params) {
+   public static InternalMetadata from(MetaParams params) {
       return new MetaParamsInternalMetadata(params);
    }
 
