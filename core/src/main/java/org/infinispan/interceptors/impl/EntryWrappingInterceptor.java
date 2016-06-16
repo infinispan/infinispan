@@ -313,7 +313,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          result = true;
       } else {
          if (isUsingLockDelegation || isTransactional) {
-            result = cdl.localNodeIsPrimaryOwner(key) || (cdl.localNodeIsOwner(key) && !ctx.isOriginLocal());
+            result = ctx.isOriginLocal() ? cdl.localNodeIsPrimaryOwner(key) : cdl.localNodeIsOwner(key);
          } else {
             result = cdl.localNodeIsOwner(key);
          }
