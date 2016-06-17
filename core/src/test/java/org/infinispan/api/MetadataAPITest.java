@@ -2,16 +2,20 @@ package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.DecoratedCache;
+import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -112,6 +116,41 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       CacheEntry entry = advCache.getCacheEntry(key);
       assertEquals("v1", entry.getValue());
       assertEquals(lifespan, entry.getMetadata().lifespan());
+   }
+
+   public void testPutFunctionalWithLifespan() throws Exception {
+      final Integer key = 4;
+      long lifespan = 1_000_000;
+      CompletableFuture<Void> f = WriteOnlyMapImpl.create(FunctionalMapImpl.create(advCache))
+            .eval(key, view -> view.set("v1", new MetaParam.MetaLifespan(lifespan)));
+      assertNotNull(f);
+      assertFalse(f.isCancelled());
+      assertNull(f.get());
+      assertTrue(f.isDone());
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals("v1", entry.getValue());
+      assertEquals(lifespan, entry.getMetadata().lifespan());
+   }
+
+   public void testReplaceFunctionalWithLifespan() throws Exception {
+      final Integer key = 4;
+      long lifespan = 1_000_000;
+      CompletableFuture<Void> f = WriteOnlyMapImpl.create(FunctionalMapImpl.create(advCache))
+            .eval(key, view -> view.set("v1", new MetaParam.MetaLifespan(lifespan)));
+      assertNotNull(f);
+      assertFalse(f.isCancelled());
+      assertNull(f.get());
+      assertTrue(f.isDone());
+      long newLifespan = 2_000_000;
+      f = WriteOnlyMapImpl.create(FunctionalMapImpl.create(advCache))
+            .eval(key, view -> view.set("v2", new MetaParam.MetaLifespan(newLifespan)));
+      assertNotNull(f);
+      assertFalse(f.isCancelled());
+      assertNull(f.get());
+      assertTrue(f.isDone());
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals("v2", entry.getValue());
+      assertEquals(newLifespan, entry.getMetadata().lifespan());
    }
 
    public void testGetCustomMetadataForMortalEntries() throws Exception {
