@@ -153,6 +153,25 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertEquals(newLifespan, entry.getMetadata().lifespan());
    }
 
+   /**
+    * See ISPN-6773.
+    */
+   public void testReplaceEmbeddedFunctionalWithLifespan() throws Exception {
+      final Integer key = 4;
+      long lifespan = 1_000_000;
+      advCache.put(key, "v1", withLifespan(lifespan));
+      long newLifespan = 2_000_000;
+      CompletableFuture<Void> f = WriteOnlyMapImpl.create(FunctionalMapImpl.create(advCache))
+            .eval(key, view -> view.set("v2", new MetaParam.MetaLifespan(newLifespan)));
+      assertNotNull(f);
+      assertFalse(f.isCancelled());
+      assertNull(f.get());
+      assertTrue(f.isDone());
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals("v2", entry.getValue());
+      assertEquals(newLifespan, entry.getMetadata().lifespan());
+   }
+
    public void testGetCustomMetadataForMortalEntries() throws Exception {
       final Integer key = 5;
       Metadata meta = new CustomMetadata(3000, -1);
