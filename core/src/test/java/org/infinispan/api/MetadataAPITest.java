@@ -75,6 +75,45 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertEquals(EQUAL, version.compareTo(entry.getMetadata().version()));
    }
 
+   public void testPutWithLifespan() {
+      final Integer key = 1;
+      int lifespan = 1_000_000;
+      advCache.put(key, "v1", withLifespan(lifespan));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertEquals(lifespan, cacheEntry.getMetadata().lifespan());
+   }
+
+   public void testConditionalReplaceWithLifespan() {
+      final Integer key = 2;
+      long lifespan = 1_000_000;
+      advCache.put(key, "v1", withLifespan(lifespan));
+      long newLifespan = 2_000_000;
+      advCache.replace(key, "v1", "v2", withLifespan(newLifespan));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertEquals(newLifespan, cacheEntry.getMetadata().lifespan());
+   }
+
+   public void testPutIfAbsentWithLifespan() {
+      final Integer key = 3;
+      long lifespan = 1_000_000;
+      assertEquals(null, advCache.putIfAbsent(key, "v1", withLifespan(lifespan)));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertEquals(lifespan, cacheEntry.getMetadata().lifespan());
+   }
+
+   public void testPutAsyncWithLifespan() throws Exception {
+      final Integer key = 4;
+      long lifespan = 1_000_000;
+      Future<String> f = advCache.putAsync(key, "v1", withLifespan(lifespan));
+      assertNotNull(f);
+      assertFalse(f.isCancelled());
+      assertNull(f.get());
+      assertTrue(f.isDone());
+      CacheEntry entry = advCache.getCacheEntry(key);
+      assertEquals("v1", entry.getValue());
+      assertEquals(lifespan, entry.getMetadata().lifespan());
+   }
+
    public void testGetCustomMetadataForMortalEntries() throws Exception {
       final Integer key = 5;
       Metadata meta = new CustomMetadata(3000, -1);
@@ -153,7 +192,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertEquals(newMeta, advCache.getCacheEntry(key).getMetadata());
    }
 
-   public void testPutForExternalRead() {
+   public void testPutForExternalReadWithVersion() {
       final Integer key = 11;
       NumericVersion version = new NumericVersion(1);
       advCache.putForExternalRead(key, "v1", withVersion(version));
@@ -161,7 +200,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertEquals(version, cacheEntry.getMetadata().version());
    }
 
-   public void testPutForExternalReadInDecaratedCache() {
+   public void testPutForExternalReadInDecaratedCacheWithVersion() {
       final Integer key = 12;
       NumericVersion version = new NumericVersion(1);
       DecoratedCache decoratedCache = new DecoratedCache(advCache, this.getClass().getClassLoader());
@@ -170,8 +209,29 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       assertEquals(version, cacheEntry.getMetadata().version());
    }
 
+   public void testPutForExternalReadWithLifespan() {
+      final Integer key = 11;
+      long lifespan = 1_000_000;
+      advCache.putForExternalRead(key, "v1", withLifespan(lifespan));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertEquals(lifespan, cacheEntry.getMetadata().lifespan());
+   }
+
+   public void testPutForExternalReadInDecaratedCacheWithLifespan() {
+      final Integer key = 12;
+      long lifespan = 1_000_000;
+      DecoratedCache decoratedCache = new DecoratedCache(advCache, this.getClass().getClassLoader());
+      decoratedCache.putForExternalRead(key, "v1", withLifespan(lifespan));
+      CacheEntry cacheEntry = decoratedCache.getCacheEntry(key);
+      assertEquals(lifespan, cacheEntry.getMetadata().lifespan());
+   }
+
    private Metadata withVersion(EntryVersion version) {
       return new EmbeddedMetadata.Builder().version(version).build();
+   }
+
+   private Metadata withLifespan(long lifespan) {
+      return new EmbeddedMetadata.Builder().lifespan(lifespan).build();
    }
 
    private class CustomMetadata implements Metadata, Metadata.Builder {
