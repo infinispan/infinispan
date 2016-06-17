@@ -14,9 +14,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tests data loss during state transfer when the originator of a put operation becomes the primary owner of the
@@ -31,8 +31,6 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
    private static final int NUM_WRITERS = 4;
    private static final int NUM_ORIGINATORS = 2;
    private static final int NUM_KEYS = 100;
-   private final ConcurrentMap<String, String> insertedValues = CollectionFactory.makeConcurrentMap();
-   private volatile boolean stop = false;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -54,13 +52,16 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
    }
 
    public void testNodeLeavingDuringPutIfAbsent() throws Exception {
+      ConcurrentMap<String, String> insertedValues = CollectionFactory.makeConcurrentMap();
+      AtomicBoolean stop = new AtomicBoolean(false);
+
       Future[] futures = new Future[NUM_WRITERS];
       for (int i = 0; i < NUM_WRITERS; i++) {
          final int writerIndex = i;
          futures[i] = fork(new Callable() {
             @Override
             public Object call() throws Exception {
-               while (!stop) {
+               while (!stop.get()) {
                   for (int j = 0; j < NUM_KEYS; j++) {
                      Cache<Object, Object> cache = cache(writerIndex % NUM_ORIGINATORS);
                      doPut(cache, "key_" + j, "value_" + j + "_" + writerIndex);
@@ -76,10 +77,19 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
                   // succeeded
                   log.tracef("Successfully inserted value %s for key %s", value, key);
                   assertEquals(value, newValue);
-                  assertNull(insertedValues.putIfAbsent(key, value));
+                  String duplicateInsertedValue = insertedValues.putIfAbsent(key, value);
+                  if (duplicateInsertedValue != null) {
+                     // ISPN-4286: two concurrent putIfAbsent operations can both return null
+                     assertEquals(value, duplicateInsertedValue);
+                  }
                } else {
                   // failed
-                  assertEquals(oldValue, newValue);
+                  if (newValue == null) {
+                     // ISPN-3918: cache.get(key) == null if another command succeeded but didn't finish
+                     eventuallyEquals(oldValue, () -> cache.get(key));
+                  } else {
+                     assertEquals(oldValue, newValue);
+                  }
                }
             }
          });
@@ -91,7 +101,7 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
       killMember(3);
       TestingUtil.waitForRehashToComplete(caches());
 
-      stop = true;
+      stop.set(true);
 
       for (int i = 0; i < NUM_WRITERS; i++) {
          futures[i].get(10, TimeUnit.SECONDS);
