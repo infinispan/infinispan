@@ -36,7 +36,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -50,7 +49,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -366,28 +364,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             Map<Address, Response> addressResponseMap;
             try {
                addressResponseMap = rpcManager.invokeRemotely(Collections.singletonList(primaryOwner), command,
-                     rpcManager.getDefaultRpcOptions(isSyncForwarding));
-            } catch (RemoteException e) {
-               Throwable ce = e;
-               while (ce instanceof RemoteException) {
-                  ce = ce.getCause();
-               }
-               if (ce instanceof OutdatedTopologyException) {
-                  // If the primary owner throws an OutdatedTopologyException, it must be because the command succeeded there
-                  if (trace) log.tracef("Changing the value matching policy from %s to %s (original value was %s)",
-                        command.getValueMatcher(), valueMatcher.matcherForRetry(), valueMatcher);
-                  command.setValueMatcher(valueMatcher.matcherForRetry());
-               }
-               throw e;
-            } catch (SuspectException e) {
-               // If the primary owner became suspected, we don't know if it was able to replicate it's data properly
-               // to all backup owners and notify all listeners, thus we need to retry with new matcher in case if
-               // it had updated the backup owners
-               if (trace) log.tracef("Primary owner suspected - Changing the value matching policy from %s to %s " +
-                                           "(original value was %s)", command.getValueMatcher(),
-                                     valueMatcher.matcherForRetry(), valueMatcher);
+                           rpcManager.getDefaultRpcOptions(isSyncForwarding));
+            } finally {
                command.setValueMatcher(valueMatcher.matcherForRetry());
-               throw e;
             }
             if (!isSyncForwarding) return localResult;
 
