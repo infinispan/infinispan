@@ -93,19 +93,16 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       Object key = command.getKey();
       CacheEntry entry = ctx.lookupEntry(key);
       if (valueIsMissing(entry)) {
-         // First try to fetch from remote owners
          if (readNeedsRemoteValue(ctx, command)) {
             if (trace)
                log.tracef("Doing a remote get for key %s", key);
             CompletableFuture<InternalCacheEntry> remoteFuture =
-                  retrieveFromRemoteSource(key, ctx, false, command, false);
-               return remoteFuture.thenCompose(remoteEntry -> {
+                  retrieveFromProperSource(key, ctx, false, command, false);
+            return remoteFuture.thenCompose(remoteEntry -> {
                command.setRemotelyFetchedValue(remoteEntry);
                handleRemoteEntry(ctx, key, remoteEntry);
                return ctx.continueInvocation();
             });
-         } else {
-            handleRemoteEntry(ctx, key, null);
          }
       }
       return ctx.continueInvocation();
@@ -114,14 +111,6 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private void handleRemoteEntry(InvocationContext ctx, Object key, InternalCacheEntry remoteEntry) {
       if (remoteEntry != null) {
          entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.STORE, false);
-      } else {
-         // Then search for the entry in the local data container, in case we became an owner after
-         // EntryWrappingInterceptor and the local node is now the only owner.
-         // TODO Check fails if the entry was passivated
-         InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
-         if (localEntry != null) {
-            entryFactory.wrapExternalEntry(ctx, key, localEntry, EntryFactory.Wrap.STORE, false);
-         }
       }
    }
 
@@ -261,10 +250,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (valueIsMissing(entry)) {
             // First try to fetch from remote owners
             CompletableFuture<InternalCacheEntry> remoteFuture;
+            boolean isLocal = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
             if (readNeedsRemoteValue(ctx, command)) {
                if (trace)
                   log.tracef("Doing a remote get for key %s", key);
-               remoteFuture = retrieveFromRemoteSource(key, ctx, false, command, false);
+               remoteFuture = retrieveFromProperSource(key, ctx, false, command, false);
             } else {
                remoteFuture = CompletableFutures.completedNull();
             }
@@ -278,8 +268,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                   // Then search for the entry in the local data container, in case we became an owner after
                   // EntryWrappingInterceptor and the local node is now the only owner.
                   // TODO Check fails if the entry was passivated
-                  InternalCacheEntry localEntry =
-                        fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+                  InternalCacheEntry localEntry = isLocal ? dataContainer.get(key) : null;
                   if (localEntry != null) {
                      entryFactory.wrapExternalEntry(ctx, key, localEntry, EntryFactory.Wrap.STORE, false);
                   }
@@ -727,16 +716,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
       CompletableFuture<InternalCacheEntry> remoteFuture;
       if (writeNeedsRemoteValue(ctx, command, key)) {
-         // First try to fetch from remote owners
-         if (!isValueAvailableLocally(dm.getReadConsistentHash(), key)) {
-            if (trace)
-               log.tracef("Doing a remote get for key %s", key);
-            remoteFuture = retrieveFromRemoteSource(key, ctx, false, command, false);
-            return remoteFuture.thenCompose(remoteEntry -> {
-               handleRemoteEntry(ctx, key, remoteEntry);
-               return ctx.continueInvocation();
-            });
-         }
+         remoteFuture = retrieveFromProperSource(key, ctx, false, command, false);
+         return remoteFuture.thenCompose(remoteEntry -> {
+            handleRemoteEntry(ctx, key, remoteEntry);
+            return ctx.continueInvocation();
+         });
       }
       return ctx.continueInvocation();
    }

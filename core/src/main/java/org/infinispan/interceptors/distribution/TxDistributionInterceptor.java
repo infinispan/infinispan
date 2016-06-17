@@ -36,7 +36,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -65,7 +64,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private PartitionHandlingManager partitionHandlingManager;
 
-   private boolean isPessimisticCache;
    private boolean useClusteredWriteSkewCheck;
 
    @Inject
@@ -75,7 +73,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Start
    public void start() {
-      isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       useClusteredWriteSkewCheck = Configurations.isVersioningEnabled(cacheConfiguration);
    }
 
@@ -152,12 +149,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       CacheEntry entry = ctx.lookupEntry(key);
       // If the cache entry has the value lock flag set, skip the remote get.
       if (ctx.isOriginLocal() && valueIsMissing(entry)) {
-         InternalCacheEntry remoteEntry = null;
          if (readNeedsRemoteValue(ctx, command)) {
-            remoteEntry = remoteGet(ctx, key, false, command);
-         }
-         if (remoteEntry == null) {
-            localGet(ctx, key, false);
+            remoteGet(ctx, key, false, command);
          }
       }
 
@@ -324,16 +317,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   private void localGet(InvocationContext ctx, Object key, boolean isWrite)
-         throws Throwable {
-      // TODO Check fails if the entry was passivated
-      InternalCacheEntry ice = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
-      if (ice != null) {
-         EntryFactory.Wrap wrap = isWrite ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
-         entryFactory.wrapExternalEntry(ctx, key, ice, wrap, false);
-      }
-   }
-
    @Override
    protected CompletableFuture<Void> remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command,
          Object key) throws Throwable {
@@ -342,28 +325,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          // The entry already exists in the context, and it shouldn't be re-fetched
          return ctx.continueInvocation();
       }
-      InternalCacheEntry remoteEntry = null;
       if (writeNeedsRemoteValue(ctx, command, key)) {
-         // Normally looking the value up in the local data container doesn't help, because we already
-         // tried to read it in the EntryWrappingInterceptor.
-         // But if we became an owner in the read CH after EntryWrappingInterceptor, we may not find the value
-         // on the remote nodes (e.g. because the local node is now the only owner).
-         if (!isValueAvailableLocally(dm.getReadConsistentHash(), key)) {
-            remoteEntry = remoteGet(ctx, key, true, command);
-         }
-         if (remoteEntry == null) {
-            localGet(ctx, key, true);
-         }
+         remoteGet(ctx, key, true, command);
       }
       return ctx.continueInvocation();
    }
 
    protected InternalCacheEntry remoteGet(InvocationContext ctx, Object key, boolean isWrite,
                                           FlagAffectedCommand command) throws Throwable {
-      if (trace) log.tracef("Doing a remote get for key %s", key);
-
       // attempt a remote lookup
-      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command, isWrite).get();
+      InternalCacheEntry ice = retrieveFromProperSource(key, ctx, false, command, isWrite).get();
 
       if (ice != null) {
          if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {

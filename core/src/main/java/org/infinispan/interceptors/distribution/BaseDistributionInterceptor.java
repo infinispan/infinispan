@@ -142,20 +142,15 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return ctx.continueInvocation();
    }
 
-   protected final CompletableFuture<InternalCacheEntry> retrieveFromRemoteSource(Object key,
+   protected final CompletableFuture<InternalCacheEntry> retrieveFromProperSource(Object key,
          InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command, boolean isWrite)
          throws Exception {
-      GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
-      ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlagsBitSet(), acquireRemoteLock, gtx);
-      get.setWrite(isWrite);
-
-      RpcOptionsBuilder rpcOptionsBuilder =
-            rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
-      return handleRemoteValue(key, null, get, rpcOptionsBuilder, -1);
+      return doRetrieveFromProperSource(key, null, -1, ctx, command, acquireRemoteLock, isWrite);
    }
 
-   private CompletableFuture<InternalCacheEntry> handleRemoteValue(Object key, InternalCacheEntry value,
-         ClusteredGetCommand getCommand, RpcOptionsBuilder rpcOptionsBuilder, int lastTopologyId) {
+   private CompletableFuture<InternalCacheEntry> doRetrieveFromProperSource(Object key, InternalCacheEntry value,
+         int lastTopologyId, InvocationContext ctx, FlagAffectedCommand command, boolean acquireRemoteLock,
+         boolean isWrite) {
       if (value != null)
          return CompletableFuture.completedFuture(value);
 
@@ -172,6 +167,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          // Cache topology has changed or it is the first time.
          newTopologyId = currentTopologyId;
          targets = new ArrayList<>(cacheTopology.getReadConsistentHash().locateOwners(key));
+         if (targets.contains(rpcManager.getAddress())) {
+            // Normally looking the value up in the local data container doesn't help, because we already
+            // tried to read it in the EntryWrappingInterceptor.
+            // But if we became an owner in the read CH after EntryWrappingInterceptor, we may not find the
+            // value on the remote nodes (e.g. because the local node is now the only owner).
+            return CompletableFuture.completedFuture(dataContainer.get(key));
+         }
       } else if (lastTopologyId == currentTopologyId && cacheTopology.getPendingCH() != null) {
          // Same topologyId, but the owners could have already installed the next topology
          // Lets try with pending consistent owners (the read owners in the next topology)
@@ -192,9 +194,17 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          return CompletableFutures.completedNull();
       }
+      
+      GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
+      ClusteredGetCommand getCommand =
+            cf.buildClusteredGetCommand(key, command.getFlagsBitSet(), acquireRemoteLock, gtx);
+      getCommand.setWrite(isWrite);
 
+      RpcOptionsBuilder rpcOptionsBuilder =
+            rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
       return invokeClusterGetCommandRemotely(targets, rpcOptionsBuilder, getCommand, key).thenCompose(
-            newValue -> handleRemoteValue(key, newValue, getCommand, rpcOptionsBuilder, newTopologyId));
+            newValue -> doRetrieveFromProperSource(key, newValue, newTopologyId, ctx, command, acquireRemoteLock,
+                  isWrite));
    }
 
    private CompletableFuture<InternalCacheEntry> invokeClusterGetCommandRemotely(List<Address> targets,
@@ -480,7 +490,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          for (Object key : command.getKeys()) {
             CacheEntry entry = ctx.lookupEntry(key);
             if (entry == null) {
-               if (!isValueAvailableLocally(ch, key)) {
+               if (!ch.isKeyLocalToNode(rpcManager.getAddress(), key)) {
                   requestedKeys.add(key);
                } else {
                   if (trace) {
@@ -532,7 +542,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          for (Object key : command.getKeys()) {
             CacheEntry entry = ctx.lookupEntry(key);
             if (entry == null || entry.isNull()) {
-               if (isValueAvailableLocally(ch, key) && !topologyChanged) {
+               if (ch.isKeyLocalToNode(rpcManager.getAddress(), key) &&
+                     !topologyChanged) {
                   if (trace) {
                      log.tracef("Not doing a remote get for missing key %s since entry is "
                                  + "mapped to current node (%s). Owners are %s",
@@ -574,7 +585,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          for (Object key : command.getKeys()) {
             CacheEntry entry = ctx.lookupEntry(key);
             if (entry == null) {
-               if (!isValueAvailableLocally(ch, key)) {
+               if (!ch.isKeyLocalToNode(rpcManager.getAddress(), key)) {
                   requestedKeys.add(key);
                } else {
                   if (trace) {
@@ -626,7 +637,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          for (Object key : command.getKeys()) {
             CacheEntry entry = ctx.lookupEntry(key);
             if (entry == null || entry.isNull()) {
-               if (isValueAvailableLocally(ch, key) && !topologyChanged) {
+               if (ch.isKeyLocalToNode(rpcManager.getAddress(), key) &&
+                     !topologyChanged) {
                   if (trace) {
                      log.tracef("Not doing a remote get for missing key %s since entry is "
                            + "mapped to current node (%s). Owners are %s",
@@ -658,36 +670,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     * fetch it from a remote node. Does not check if the value is already in the context.
     */
    protected boolean readNeedsRemoteValue(InvocationContext ctx, AbstractDataCommand command) {
-      if (!ctx.isOriginLocal() || command.hasFlag(Flag.CACHE_MODE_LOCAL) ||
-            command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
-         return false;
-      }
-      Object key = command.getKey();
-      ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
-      boolean shouldFetchFromRemote = !isValueAvailableLocally(ch, key);
-      if (!shouldFetchFromRemote && trace) {
-         getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
-      }
-      return shouldFetchFromRemote;
-   }
-
-   protected boolean isValueAvailableLocally(ConsistentHash consistentHash, Object key) {
-      if (consistentHash.isKeyLocalToNode(rpcManager.getAddress(), key)) {
-         return true;
-      } else if (isL1Enabled) {
-         InternalCacheEntry entry = dataContainer.get(key);
-         return entry != null && entry.isL1Entry();
-      }
-      return false;
-   }
-
-   protected InternalCacheEntry fetchValueLocallyIfAvailable(ConsistentHash consistentHash, Object key) {
-      if (consistentHash.isKeyLocalToNode(rpcManager.getAddress(), key)) {
-         return dataContainer.get(key);
-      } else if (isL1Enabled) {
-         InternalCacheEntry entry = dataContainer.get(key);
-         return entry != null && entry.isL1Entry() ? entry : null;
-      }
-      return null;
+      return ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL) &&
+            !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP);
    }
 }
