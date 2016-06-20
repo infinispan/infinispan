@@ -166,13 +166,24 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (lastTopologyId < currentTopologyId) {
          // Cache topology has changed or it is the first time.
          newTopologyId = currentTopologyId;
-         targets = new ArrayList<>(cacheTopology.getReadConsistentHash().locateOwners(key));
-         if (targets.contains(rpcManager.getAddress())) {
+         ConsistentHash readCH = cacheTopology.getReadConsistentHash();
+         boolean isLocal;
+         List<Address> owners;
+         if (readCH.isReplicated()) {
+            isLocal = readCH.isSegmentLocalToNode(rpcManager.getAddress(), 0);
+            owners = readCH.getMembers();
+         } else {
+            owners = readCH.locateOwners(key);
+            isLocal = owners.contains(rpcManager.getAddress());
+         }
+         if (isLocal) {
             // Normally looking the value up in the local data container doesn't help, because we already
             // tried to read it in the EntryWrappingInterceptor.
-            // But if we became an owner in the read CH after EntryWrappingInterceptor, we may not find the
+            // But ifIf we became an owner in the read CH after EntryWrappingInterceptor, we may not find the
             // value on the remote nodes (e.g. because the local node is now the only owner).
             return CompletableFuture.completedFuture(dataContainer.get(key));
+         } else {
+            targets = new ArrayList<>(owners);
          }
       } else if (lastTopologyId == currentTopologyId && cacheTopology.getPendingCH() != null) {
          // Same topologyId, but the owners could have already installed the next topology
