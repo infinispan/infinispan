@@ -82,7 +82,7 @@ final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeP
             throw log.unknownField(name, messageDescriptor.getFullName());
          }
          IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
+         if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getName())) {
             throw log.fieldIsNotIndexed(name, messageDescriptor.getFullName());
          }
          if (i < propertyPath.length - 1) {

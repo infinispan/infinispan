@@ -35,7 +35,7 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
       return getMetadata(propertyPath, IndexingMetadata::isFieldStored);
    }
 
-   private boolean getMetadata(String[] propertyPath, BiFunction<IndexingMetadata, Integer, Boolean> metadataFun) {
+   private boolean getMetadata(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun) {
       Descriptor md = messageDescriptor;
       int i = 0;
       for (String p : propertyPath) {
@@ -45,7 +45,7 @@ final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.Indexe
             break;
          }
          IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         boolean res = indexingMetadata == null || metadataFun.apply(indexingMetadata, field.getNumber());
+         boolean res = indexingMetadata == null || metadataFun.apply(indexingMetadata, field.getName());
          if (!res) {
             break;
          }

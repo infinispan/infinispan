@@ -26,13 +26,12 @@ import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.descriptors.AnnotationElement;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
-import org.infinispan.query.remote.impl.indexing.IndexingMetadataCreator;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
 import org.infinispan.security.AuthorizationPermission;
@@ -58,21 +57,9 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    private EmbeddedCacheManager cacheManager;
 
    public ProtobufMetadataManagerImpl() {
-      org.infinispan.protostream.config.Configuration.Builder configBuilder = new org.infinispan.protostream.config.Configuration.Builder();
-      configBuilder
-            .messageAnnotation(IndexingMetadata.INDEXED_ANNOTATION)
-               .attribute(AnnotationElement.Annotation.DEFAULT_ATTRIBUTE)
-                  .booleanType()
-                  .defaultValue(true)
-               .annotationMetadataCreator(new IndexingMetadataCreator())
-            .fieldAnnotation(IndexingMetadata.INDEXED_FIELD_ANNOTATION)
-               .attribute("index")
-                  .booleanType()
-                  .defaultValue(true)
-               .attribute("store")
-                  .booleanType()
-                  .defaultValue(true);
-      serCtx = ProtobufUtil.newSerializationContext(configBuilder.build());
+      Configuration.Builder cfgBuilder = Configuration.builder();
+      IndexingMetadata.configure(cfgBuilder);
+      serCtx = ProtobufUtil.newSerializationContext(cfgBuilder.build());
       try {
          MarshallerRegistration.registerMarshallers(serCtx);
       } catch (IOException | DescriptorParserException e) {

@@ -40,11 +40,12 @@ final class IndexingTagHandler implements TagHandler {
 
    public IndexingTagHandler(Descriptor messageDescriptor, Document document) {
       this.document = document;
-      this.messageContext = new MessageContext<MessageContext>(null, null, messageDescriptor);
+      this.messageContext = new MessageContext<>(null, null, messageDescriptor);
    }
 
    @Override
    public void onStart() {
+      // add the type discriminator field
       NOT_STORED_NOT_ANALYZED.addFieldToDocument(QueryFacadeImpl.TYPE_FIELD_NAME, messageContext.getMessageDescriptor().getFullName(), document);
    }
 
@@ -52,25 +53,43 @@ final class IndexingTagHandler implements TagHandler {
    public void onTag(int fieldNumber, String fieldName, Type type, JavaType javaType, Object tagValue) {
       messageContext.markField(fieldNumber);
 
-      //todo [anistor] unknown fields are not indexed
+      // Unknown fields are not indexed.
       if (fieldName != null) {
          IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-         if (indexingMetadata == null || indexingMetadata.isFieldIndexed(fieldNumber)) {
-            boolean isStored = indexingMetadata == null || indexingMetadata.isFieldStored(fieldNumber);
-            addFieldToDocument(fieldName, type, tagValue, isStored);
+         FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fieldName) : null;
+         if (indexingMetadata == null || fieldMapping != null && fieldMapping.isIndex()) {
+            //TODO [anistor] should we still store if isStore==true but isIndexed==false?
+            addFieldToDocument(fieldName, type, tagValue, fieldMapping);
          }
       }
    }
 
-   private void addFieldToDocument(String fieldName, Type type, Object value, boolean isStored) {
-      LuceneOptions luceneOptions = isStored ? STORED_NOT_ANALYZED : NOT_STORED_NOT_ANALYZED;
-      if (value == null) {
-         value = QueryFacadeImpl.NULL_TOKEN;  //todo [anistor] do we need a specific null token for numeric fields?
-         type = Type.STRING;
-         luceneOptions = NOT_STORED_NOT_ANALYZED;
+   private void addFieldToDocument(String fieldName, Type type, Object value, FieldMapping fieldMapping) {
+      LuceneOptions luceneOptions;
+      if (fieldMapping == null) {
+         // This comes from a message definition that does not have any annotations and is treated as if
+         // everything is indexed, stored, and not analyzed, for compatibility reasons with first version of remote query.
+         // TODO [anistor] this behaviour is deprecated and will be removed in Infinispan 10.0
+         luceneOptions = STORED_NOT_ANALYZED;
+         if (value == null) {
+            value = QueryFacadeImpl.NULL_TOKEN;  //todo [anistor] do we need a specific null token for numeric fields? we also need a way to specify the null token in the schema instead of assuming it.
+            type = Type.STRING;
+            luceneOptions = NOT_STORED_NOT_ANALYZED;
+         }
+      } else {
+         luceneOptions = fieldMapping.getLuceneOptions();
+         if (value == null) {
+            if (fieldMapping.isAnalyze()) {
+               // a missing or null field will not get indexed as the 'null token' if it is analyzed
+               return;
+            }
+            value = QueryFacadeImpl.NULL_TOKEN;  //todo [anistor] do we need a specific null token for numeric fields? we also need a way to specify the null token in the schema instead of assuming it.
+            type = Type.STRING;
+            luceneOptions = NOT_STORED_NOT_ANALYZED;
+         }
       }
 
-      String fn = getFullFieldName(fieldName); //todo [anistor] should we index with fieldNumber instead of fieldName?
+      String fn = getFullFieldName(fieldName);
       //todo [anistor] string vs numeric. use a proper way to transform to string
       switch (type) {
          case DOUBLE:
@@ -120,7 +139,7 @@ final class IndexingTagHandler implements TagHandler {
    }
 
    private void pushContext(String fieldName, Descriptor messageDescriptor) {
-      messageContext = new MessageContext<MessageContext>(messageContext, fieldName, messageDescriptor);
+      messageContext = new MessageContext<>(messageContext, fieldName, messageDescriptor);
    }
 
    private void popContext() {
@@ -139,9 +158,9 @@ final class IndexingTagHandler implements TagHandler {
             Object defaultValue = fd.getJavaType() == JavaType.MESSAGE
                   || fd.hasDefaultValue() ? fd.getDefaultValue() : null;
             IndexingMetadata indexingMetadata = messageContext.getMessageDescriptor().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-            if (indexingMetadata == null || indexingMetadata.isFieldIndexed(fd.getNumber())) {
-               boolean isStored = indexingMetadata == null || indexingMetadata.isFieldStored(fd.getNumber());
-               addFieldToDocument(fd.getName(), fd.getType(), defaultValue, isStored);
+            FieldMapping fieldMapping = indexingMetadata != null ? indexingMetadata.getFieldMapping(fd.getName()) : null;
+            if (indexingMetadata == null || fieldMapping != null && fieldMapping.isIndex()) {
+               addFieldToDocument(fd.getName(), fd.getType(), defaultValue, fieldMapping);
             }
          }
       }
