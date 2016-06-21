@@ -33,7 +33,7 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
    public boolean isAcceptable(Response response, Address address) {
       if (targets.contains(address)) {
          missingResponses--;
-         if (response instanceof SuccessfulResponse) {
+         if (response instanceof SuccessfulResponse || response instanceof ExceptionResponse) {
             validResponses++;
             return true;
          }
