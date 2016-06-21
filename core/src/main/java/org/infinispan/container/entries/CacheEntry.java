@@ -2,6 +2,7 @@ package org.infinispan.container.entries;
 
 import org.infinispan.metadata.Metadata;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.metadata.MetadataAware;
 
 import java.util.Map;
 
@@ -12,7 +13,7 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V> {
+public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAware {
 
    /**
     * Tests whether the entry represents a null value, typically used for repeatable read.
@@ -154,17 +155,4 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V> {
 
    default void setLastUsed(long lastUsed) {}
 
-   /**
-    * Get metadata of this cache entry.
-    *
-    * @return a Metadata instance
-    */
-   Metadata getMetadata();
-
-   /**
-    * Set the metadata in the cache entry.
-    *
-    * @param metadata to apply to the cache entry
-    */
-   void setMetadata(Metadata metadata);
 }
