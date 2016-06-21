@@ -22,7 +22,7 @@ public class ProtobufPerfTest extends PerfTest {
 
    @Before
    public void setUp() throws Exception {
-      serCtx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());
       MarshallerRegistration.registerMarshallers(serCtx);
    }
 

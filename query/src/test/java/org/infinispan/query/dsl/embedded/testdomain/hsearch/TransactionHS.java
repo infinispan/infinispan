@@ -29,6 +29,10 @@ public class TransactionHS implements Transaction, Serializable {
    @SortableField
    private String description;
 
+   @Field
+   @SortableField
+   private String longDescription;
+
    @Field(store = Store.YES, analyze = Analyze.NO)
    private int accountId;
 
@@ -59,6 +63,16 @@ public class TransactionHS implements Transaction, Serializable {
    @Override
    public String getDescription() {
       return description;
+   }
+
+   @Override
+   public String getLongDescription() {
+      return longDescription;
+   }
+
+   @Override
+   public void setLongDescription(String longDescription) {
+      this.longDescription = longDescription;
    }
 
    @Override
@@ -130,6 +144,8 @@ public class TransactionHS implements Transaction, Serializable {
       if (isValid != other.isValid) return false;
       if (date != null ? !date.equals(other.date) : other.date != null) return false;
       if (description != null ? !description.equals(other.description) : other.description != null) return false;
+      if (longDescription != null ? !longDescription.equals(other.longDescription) : other.longDescription != null)
+         return false;
 
       return true;
    }
@@ -138,6 +154,7 @@ public class TransactionHS implements Transaction, Serializable {
    public int hashCode() {
       int result = id;
       result = 31 * result + (description != null ? description.hashCode() : 0);
+      result = 31 * result + (longDescription != null ? longDescription.hashCode() : 0);
       result = 31 * result + accountId;
       result = 31 * result + (date != null ? date.hashCode() : 0);
       long temp = Double.doubleToLongBits(amount);
@@ -152,6 +169,7 @@ public class TransactionHS implements Transaction, Serializable {
       return "TransactionHS{" +
             "id=" + id +
             ", description='" + description + '\'' +
+            ", longDescription='" + longDescription + '\'' +
             ", accountId=" + accountId +
             ", date=" + date +
             ", amount=" + amount +

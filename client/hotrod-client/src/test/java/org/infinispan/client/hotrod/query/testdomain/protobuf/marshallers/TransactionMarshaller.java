@@ -26,6 +26,7 @@ public class TransactionMarshaller implements MessageMarshaller<TransactionPB> {
    public TransactionPB readFrom(ProtoStreamReader reader) throws IOException {
       int id = reader.readInt("id");
       String description = reader.readString("description");
+      String longDescription = reader.readString("longDescription");
       int accountId = reader.readInt("accountId");
       long date = reader.readLong("date");
       double amount = reader.readDouble("amount");
@@ -35,6 +36,7 @@ public class TransactionMarshaller implements MessageMarshaller<TransactionPB> {
       TransactionPB transaction = new TransactionPB();
       transaction.setId(id);
       transaction.setDescription(description);
+      transaction.setLongDescription(longDescription);
       transaction.setAccountId(accountId);
       transaction.setDate(new Date(date));
       transaction.setAmount(amount);
@@ -47,6 +49,7 @@ public class TransactionMarshaller implements MessageMarshaller<TransactionPB> {
    public void writeTo(ProtoStreamWriter writer, TransactionPB transaction) throws IOException {
       writer.writeInt("id", transaction.getId());
       writer.writeString("description", transaction.getDescription());
+      writer.writeString("longDescription", transaction.getLongDescription());
       writer.writeInt("accountId", transaction.getAccountId());
       writer.writeLong("date", transaction.getDate().getTime());
       writer.writeDouble("amount", transaction.getAmount());

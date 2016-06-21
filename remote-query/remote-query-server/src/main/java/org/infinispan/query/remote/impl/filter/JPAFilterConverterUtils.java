@@ -17,7 +17,7 @@ class JPAFilterConverterUtils {
 
    private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
 
-      private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(Configuration.builder().build());
 
       @Override
       protected SerializationContext getSerializationContext() {

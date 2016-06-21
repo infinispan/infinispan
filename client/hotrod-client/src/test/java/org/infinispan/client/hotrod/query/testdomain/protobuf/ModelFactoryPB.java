@@ -14,6 +14,9 @@ public class ModelFactoryPB implements ModelFactory {
 
    public static final ModelFactory INSTANCE = new ModelFactoryPB();
 
+   private ModelFactoryPB() {
+   }
+
    @Override
    public Account makeAccount() {
       return new AccountPB();
@@ -22,6 +25,11 @@ public class ModelFactoryPB implements ModelFactory {
    @Override
    public Class<?> getAccountImplClass() {
       return AccountPB.class;
+   }
+
+   @Override
+   public String getAccountTypeName() {
+      return "sample_bank_account.Account";
    }
 
    @Override
@@ -35,6 +43,11 @@ public class ModelFactoryPB implements ModelFactory {
    }
 
    @Override
+   public String getUserTypeName() {
+      return "sample_bank_account.User";
+   }
+
+   @Override
    public Address makeAddress() {
       return new AddressPB();
    }
@@ -45,6 +58,11 @@ public class ModelFactoryPB implements ModelFactory {
    }
 
    @Override
+   public String getAddressTypeName() {
+      return "sample_bank_account.User.Address";
+   }
+
+   @Override
    public Transaction makeTransaction() {
       return new TransactionPB();
    }
@@ -52,5 +70,10 @@ public class ModelFactoryPB implements ModelFactory {
    @Override
    public Class<?> getTransactionImplClass() {
       return TransactionPB.class;
+   }
+
+   @Override
+   public String getTransactionTypeName() {
+      return "sample_bank_account.Transaction";
    }
 }

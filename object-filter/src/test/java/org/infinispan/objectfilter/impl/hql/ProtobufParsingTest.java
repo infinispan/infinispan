@@ -24,7 +24,7 @@ public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
    }
 
    private static ObjectPropertyHelper<Descriptor> createPropertyHelper() throws IOException {
-      SerializationContext serCtx = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
+      SerializationContext serCtx = ProtobufUtil.newSerializationContext(Configuration.builder().build());
       MarshallerRegistration.registerMarshallers(serCtx);
       return new ProtobufPropertyHelper(new ProtobufEntityNamesResolver(serCtx), serCtx);
    }
