@@ -328,9 +328,17 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
     */
    private boolean isStoreMetadata(Metadata metadata, InternalCacheEntry ice) {
       return metadata != null
-            && (ice == null || ice instanceof MetadataAware)
+            && (ice == null || isEntryMetadataAware(ice))
             && (metadata.version() != null
                       || !(metadata instanceof EmbeddedMetadata));
+   }
+
+
+   private boolean isEntryMetadataAware(InternalCacheEntry ice) {
+      return ice instanceof MetadataImmortalCacheEntry
+            || ice instanceof MetadataMortalCacheEntry
+            || ice instanceof MetadataTransientCacheEntry
+            || ice instanceof MetadataTransientMortalCacheEntry;
    }
 
 }
