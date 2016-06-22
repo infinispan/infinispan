@@ -201,7 +201,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
    <R> R performOperation(Function<? super S2, ? extends R> function, ResultsAccumulator<R> remoteResults,
                           Predicate<? super R> earlyTerminatePredicate) {
       ConsistentHash ch = dm.getConsistentHash();
-      TerminalOperation<R> op = new SingleRunOperation<>(intermediateOperations,
+      TerminalOperation<R> op = new SingleRunOperation(intermediateOperations,
               supplierForSegments(ch, segmentsToFilter, null), function);
       Object id = csm.remoteStreamOperation(getParallelDistribution(), parallel, ch, segmentsToFilter, keysToFilter,
               Collections.emptyMap(), includeLoader, op, remoteResults, earlyTerminatePredicate);
@@ -234,10 +234,10 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       do {
          ConsistentHash ch = dm.getReadConsistentHash();
          if (retryOnRehash) {
-            op = new SegmentRetryingOperation<>(intermediateOperations, supplierForSegments(ch, segmentsToProcess,
+            op = new SegmentRetryingOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess,
                     null), function);
          } else {
-            op = new SingleRunOperation<>(intermediateOperations, supplierForSegments(ch, segmentsToProcess, null),
+            op = new SingleRunOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess, null),
                     function);
          }
          Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,

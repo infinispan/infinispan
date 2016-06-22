@@ -3,7 +3,9 @@ package org.infinispan;
 import net.jcip.annotations.Immutable;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Properties;
 
 /**
  * Contains version information about this release of Infinispan.
@@ -24,6 +26,8 @@ public class Version {
 
    private static final Version INSTANCE = new Version();
 
+   private final String version;
+   private final String codename;
    private final byte[] versionId;
    private final String moduleSlot;
    private final short versionShort;
@@ -31,10 +35,18 @@ public class Version {
    private final String majorMinor;
    private final String major;
 
+
    private Version() {
-      String parts[] = getParts(Injected.getVersion());
+      Properties properties = new Properties();
+      try (InputStream is = Version.class.getResourceAsStream("/META-INF/infinispan-version.properties")) {
+         properties.load(is);
+      } catch (Exception e) {
+      }
+      version = properties.getProperty("infinispan.version", "0.0.0-SNAPSHOT");
+      codename = properties.getProperty("infinispan.codename", "N/A");
+      String parts[] = getParts(version);
       versionId = readVersionBytes(parts[0], parts[1], parts[2], parts[3]);
-      versionShort = getVersionShort(Injected.getVersion());
+      versionShort = getVersionShort(version);
       moduleSlot = String.format("%s-%s.%s", MODULE_PREFIX, parts[0], parts[1]);
       marshallVersion = Short.valueOf(parts[0] + parts[1]);
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
@@ -42,7 +54,11 @@ public class Version {
    }
 
    public static String getVersion() {
-      return Injected.getVersion();
+      return INSTANCE.version;
+   }
+
+   public static String getCodename() {
+      return INSTANCE.codename;
    }
 
    public static String getModuleSlot() {
@@ -119,8 +135,8 @@ public class Version {
    public static void printFullVersionInformation() {
       System.out.println(PROJECT_NAME);
       System.out.println();
-      System.out.printf("Version: \t%s%n", Injected.getVersion());
-      System.out.printf("Codename: \t%s%n", Injected.getCodename());
+      System.out.printf("Version: \t%s%n", INSTANCE.version);
+      System.out.printf("Codename: \t%s%n", INSTANCE.codename);
       System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)");
       System.out.println();
    }
@@ -129,7 +145,7 @@ public class Version {
     * Returns version information as a string.
     */
    public static String printVersion() {
-      return PROJECT_NAME + " '" + Injected.getCodename() + "' " + Injected.getVersion();
+      return PROJECT_NAME + " '" + INSTANCE.codename + "' " + INSTANCE.version;
    }
 
    private static byte[] readVersionBytes(String major, String minor, String micro, String modifier) {
@@ -150,16 +166,6 @@ public class Version {
 
    private static String[] getParts(String version) {
       return version.split("[\\.\\-]");
-   }
-
-   static class Injected {
-      static String getVersion() {
-         return "0.0.0-SNAPSHOT"; // Will be replaced by the Maven Injection plugin
-      }
-
-      static String getCodename() {
-         return ""; // Will be replaced by the Maven Injection plugin
-      }
    }
 }
 

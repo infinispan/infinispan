@@ -132,7 +132,7 @@
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jbossjta>5.0.4.Final</version.jbossjta>
-      <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
+      <version.jboss.logging.processor>1.2.1.Final</version.jboss.logging.processor>
       <version.jboss.logmanager>1.3.1.Final</version.jboss.logmanager>
       <version.jboss.negotiation>2.3.6.Final</version.jboss.negotiation>
       <version.jboss.remotingjmx>2.0.1.Final</version.jboss.remotingjmx>
@@ -180,7 +180,7 @@
       <version.javassist>3.18.1-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
-      <version.maven.source>2.3</version.maven.source>
+      <version.maven.source>3.0.0</version.maven.source>
       <version.maven.genjavadoc>0.9</version.maven.genjavadoc>
       <version.maven.scala>2.15.2</version.maven.scala>
       <version.maven.surefire>2.18.1</version.maven.surefire>
@@ -1165,11 +1165,6 @@
                <version>1.0-beta-1</version>
             </plugin>
             <plugin>
-               <groupId>org.jboss.maven.plugins</groupId>
-               <artifactId>maven-injection-plugin</artifactId>
-               <version>1.0.2</version>
-            </plugin>
-            <plugin>
                <groupId>org.mortbay.jetty</groupId>
                <artifactId>jetty-maven-plugin</artifactId>
                <version>8.0.0.M3</version>
@@ -1366,6 +1361,9 @@
                      <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                      <mainClass>org.infinispan.Version</mainClass>
                   </manifest>
+                  <manifestEntries>
+                     <Implementation-Codename>${infinispan.codename}</Implementation-Codename>
+                  </manifestEntries>
                </archive>
                <excludes>
                   <exclude>**/log4j.xml</exclude>
@@ -1601,6 +1599,30 @@
                   </executions>
                </plugin>
             </plugins>
+         </build>
+      </profile>
+      <profile>
+         <id>jigsaw</id>
+         <activation>
+            <jdk>[1.9,)</jdk>
+         </activation>
+         <build>
+            <pluginManagement>
+               <plugins>
+                  <plugin>
+                     <groupId>org.apache.maven.plugins</groupId>
+                     <artifactId>maven-compiler-plugin</artifactId>
+                     <configuration>
+                        <!-- fork is needed so compiler args can be used -->
+                        <fork>true</fork>
+                        <compilerArgs>
+                           <arg>-J-addmods</arg>
+                           <arg>-Jjava.annotations.common</arg>
+                        </compilerArgs>
+                     </configuration>
+                  </plugin>
+               </plugins>
+            </pluginManagement>
          </build>
       </profile>
 
