@@ -43,7 +43,10 @@ import static org.testng.AssertJUnit.assertNull;
  * @author Galder Zamarreño
  * @since 5.0
  */
-@Test(groups = "functional", testName = "marshall.multiversion.MultiPojoVersionMarshallTest")
+/*
+ * Disabled the test since Javassist fails with JDK 9Q
+ */
+@Test(groups = "functional", testName = "marshall.multiversion.MultiPojoVersionMarshallTest", enabled = false, description = "Re-enable when ISPN-6817 is fixed")
 public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
 
    private static final String BASE = "org.infinispan.marshall.multiversion.MultiPojoVersionMarshallTest$";

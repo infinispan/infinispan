@@ -403,9 +403,9 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    protected Date formatDate(String dateString) {
       Date date = null;
       try {
-         date = new SimpleDateFormat("MMMM d, yyyy", Locale.ROOT).parse(dateString);
+         date = new SimpleDateFormat("MMMM d, yyyy", Locale.US).parse(dateString);
       } catch (java.text.ParseException e) {
-         throw new IllegalArgumentException("Unable to parse date.", e);
+         throw new IllegalArgumentException("Unable to parse date " + dateString, e);
       }
       //Make sure it's timezone neutral:
       synchronized(neutralCalendar) {
