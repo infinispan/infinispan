@@ -9,7 +9,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.tm.DummyBaseTransactionManager;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -62,8 +61,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       InterceptorChain invoker = mock(InterceptorChain.class);
       txCoordinator = new TransactionCoordinator();
       txCoordinator.init(commandsFactory, icf, invoker, txTable, null, configuration);
-      xaAdapter = new TransactionXaAdapter(localTx, txTable, null, txCoordinator, null, null,
-                                           new ClusteringDependentLogic.InvalidationLogic(), configuration, "", null);
+      xaAdapter = new TransactionXaAdapter(localTx, txTable);
 
       xaAdapter.start(xid, 0);
    }

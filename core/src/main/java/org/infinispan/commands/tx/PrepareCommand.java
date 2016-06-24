@@ -45,7 +45,7 @@ import static org.infinispan.commons.util.InfinispanCollections.forEach;
 public class PrepareCommand extends AbstractTransactionBoundaryCommand implements TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);
-   private boolean trace = log.isTraceEnabled();
+   private static boolean trace = log.isTraceEnabled();
 
    public static final byte COMMAND_ID = 12;
 

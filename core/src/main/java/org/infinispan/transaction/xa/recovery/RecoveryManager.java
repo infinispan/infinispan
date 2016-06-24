@@ -119,6 +119,8 @@ public interface RecoveryManager {
     */
    RecoveryAwareTransaction removeRecoveryInformation(Xid xid);
 
+   void registerInDoubtTransaction(RecoveryAwareRemoteTransaction tx);
+
    /**
     * Stateful structure allowing prepared-tx retrieval in a batch-oriented manner, as required by {@link
     * javax.transaction.xa.XAResource#recover(int)}.

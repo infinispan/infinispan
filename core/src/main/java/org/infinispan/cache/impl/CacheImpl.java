@@ -77,6 +77,7 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
+import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -1183,7 +1184,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public XAResource getXAResource() {
-      return new TransactionXaAdapter(txTable, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config, name, partitionHandlingManager);
+      return new TransactionXaAdapter((XaTransactionTable) txTable);
    }
 
    @Override
