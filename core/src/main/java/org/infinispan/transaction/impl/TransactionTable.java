@@ -3,6 +3,7 @@ package org.infinispan.transaction.impl;
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
@@ -27,6 +28,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LockingMode;
@@ -40,8 +42,10 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
+import javax.transaction.xa.XAException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -62,6 +66,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
 
 /**
  * Repository for {@link RemoteTransaction} and {@link org.infinispan.transaction.xa.TransactionXaAdapter}s (locally
@@ -102,6 +107,10 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    protected PartitionHandlingManager partitionHandlingManager;
    private ScheduledExecutorService timeoutExecutor;
 
+   private boolean isSecondPhaseAsync;
+   private boolean isPessimisticLocking;
+   private boolean isTotalOrder;
+
    private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
    private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
    private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
@@ -138,6 +147,10 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    @Start(priority = 9) // Start before cache loader manager
    public void start() {
+      this.isSecondPhaseAsync = Configurations.isSecondPhaseAsync(configuration);
+      this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
+      this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       //use the IdentityEquivalence because some Transaction implementation does not have a stable hash code function
       //and it can cause some leaks in the concurrent map.
@@ -218,9 +231,8 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
    public void enlist(Transaction transaction, LocalTransaction localTransaction) {
       if (!localTransaction.isEnlisted()) {
-         SynchronizationAdapter sync = new SynchronizationAdapter(
-                localTransaction, txCoordinator, commandsFactory, rpcManager,
-                this, clusteringLogic, configuration, partitionHandlingManager);
+         SynchronizationAdapter sync =
+               new SynchronizationAdapter(localTransaction, this);
          if (transactionSynchronizationRegistry != null) {
             try {
                transactionSynchronizationRegistry.registerInterposedSynchronization(sync);
@@ -792,6 +804,86 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          });
       }
    }
+
+   public int beforeCompletion(LocalTransaction localTransaction) {
+      if (trace)
+         log.tracef("beforeCompletion called for %s", localTransaction);
+      try {
+         txCoordinator.prepare(localTransaction);
+      } catch (XAException e) {
+         throw new CacheException("Could not prepare. ", e);//todo shall we just swallow this exception?
+      }
+      return 0;
+   }
+
+   public void afterCompletion(LocalTransaction localTransaction, int status) {
+      if (trace) {
+         log.tracef("afterCompletion(%s) called for %s.", (Integer) status, localTransaction);
+      }
+      boolean isOnePhase;
+      if (status == Status.STATUS_COMMITTED) {
+         try {
+            isOnePhase = txCoordinator.commit(localTransaction, false);
+         } catch (XAException e) {
+            throw new CacheException("Could not commit.", e);
+         }
+         releaseLocksForCompletedTransaction(localTransaction, isOnePhase);
+      } else if (status == Status.STATUS_ROLLEDBACK) {
+         try {
+            txCoordinator.rollback(localTransaction);
+         } catch (XAException e) {
+            throw new CacheException("Could not commit.", e);
+         }
+      } else {
+         throw new IllegalArgumentException("Unknown status: " + status);
+      }
+   }
+
+   protected final void releaseLocksForCompletedTransaction(LocalTransaction localTransaction,
+         boolean committedInOnePhase) {
+      final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
+      removeLocalTransaction(localTransaction);
+      if (trace)
+         log.tracef("Committed in onePhase? %s isOptimistic? %s", committedInOnePhase, isOptimisticCache());
+      if (committedInOnePhase && isOptimisticCache())
+         return;
+      if (isClustered()) {
+         removeTransactionInfoRemotely(localTransaction, gtx);
+      }
+   }
+
+   private void removeTransactionInfoRemotely(LocalTransaction localTransaction, GlobalTransaction gtx) {
+      if (mayHaveRemoteLocks(localTransaction) && !isSecondPhaseAsync &&
+            !partitionHandlingManager.isTransactionPartiallyCommitted(gtx)) {
+         final TxCompletionNotificationCommand command =
+               commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
+         final Collection<Address> owners =
+               clusteringLogic.getOwners(filterDeltaCompositeKeys(localTransaction.getAffectedKeys()));
+         Collection<Address> commitNodes =
+               localTransaction.getCommitNodes(owners, rpcManager.getTopologyId(), rpcManager.getMembers());
+         if (trace)
+            log.tracef("About to invoke tx completion notification on commitNodes: %s", commitNodes);
+         rpcManager.invokeRemotely(commitNodes, command,
+               rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
+      }
+   }
+
+   private boolean mayHaveRemoteLocks(LocalTransaction lt) {
+      return !isTotalOrder &&
+            (lt.getRemoteLocksAcquired() != null && !lt.getRemoteLocksAcquired().isEmpty() ||
+                  !lt.getModifications().isEmpty() ||
+                  isPessimisticLocking && lt.getTopologyId() != rpcManager.getTopologyId());
+   }
+
+   private boolean isClustered() {
+      return rpcManager != null;
+   }
+
+   private boolean isOptimisticCache() {
+      //a transactional cache that is neither total order nor pessimistic must be optimistic.
+      return !isPessimisticLocking && !isTotalOrder;
+   }
+
    private static class CompletedTransactionInfo {
       public final long timestamp;
       public final boolean successful;

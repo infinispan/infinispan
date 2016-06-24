@@ -1,15 +1,7 @@
 package org.infinispan.transaction.xa;
 
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
-import org.infinispan.transaction.impl.TransactionCoordinator;
-import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -46,42 +38,18 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     * Reefer to section 3.4.4 from JTA spec v.1.1
     */
    private final LocalXaTransaction localTransaction;
-   private final RecoveryManager recoveryManager;
    private volatile RecoveryManager.RecoveryIterator recoveryIterator;
-   private boolean recoveryEnabled;
-   private String cacheName;
-   private boolean onePhaseTotalOrder;
 
-   public TransactionXaAdapter(LocalXaTransaction localTransaction, TransactionTable txTable,
-                               RecoveryManager rm, TransactionCoordinator txCoordinator,
-                               CommandsFactory commandsFactory, RpcManager rpcManager,
-                               ClusteringDependentLogic clusteringDependentLogic,
-                               Configuration configuration, String cacheName, PartitionHandlingManager partitionHandlingManager) {
-      super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration, txCoordinator, partitionHandlingManager);
+   public TransactionXaAdapter(LocalXaTransaction localTransaction, XaTransactionTable txTable) {
+      super(localTransaction);
+      this.txTable = txTable;
       this.localTransaction = localTransaction;
-      this.txTable = (XaTransactionTable) txTable;
-      this.recoveryManager = rm;
-      this.cacheName = cacheName;
-      recoveryEnabled = configuration.transaction().recovery().enabled();
-      //in distributed mode with write skew check, we only allow 2 phases!!
-      this.onePhaseTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder() &&
-            !(configuration.clustering().cacheMode().isDistributed() && configuration.locking().writeSkewCheck());
    }
 
-   public TransactionXaAdapter(TransactionTable txTable,
-                               RecoveryManager rm, TransactionCoordinator txCoordinator,
-                               CommandsFactory commandsFactory, RpcManager rpcManager,
-                               ClusteringDependentLogic clusteringDependentLogic,
-                               Configuration configuration, String cacheName, PartitionHandlingManager partitionHandlingManager) {
-      super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration, txCoordinator, partitionHandlingManager);
+   public TransactionXaAdapter(XaTransactionTable txTable) {
+      super();
+      this.txTable = txTable;
       localTransaction = null;
-      this.txTable = (XaTransactionTable) txTable;
-      this.recoveryManager = rm;
-      this.cacheName = cacheName;
-      recoveryEnabled = configuration.transaction().recovery().enabled();
-      //in distributed mode, we only allow 2 phases!!
-      this.onePhaseTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder() &&
-            !configuration.clustering().cacheMode().isDistributed();
    }
 
    /**
@@ -89,9 +57,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public int prepare(Xid externalXid) throws XAException {
-      Xid xid = convertXid(externalXid);
-      LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
-      return txCoordinator.prepare(localTransaction);
+      return txTable.prepare(externalXid);
    }
 
    /**
@@ -99,21 +65,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public void commit(Xid externalXid, boolean isOnePhase) throws XAException {
-      Xid xid = convertXid(externalXid);
-      LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
-      boolean committedInOnePhase;
-      if (isOnePhase && onePhaseTotalOrder) {
-         committedInOnePhase = txCoordinator.commit(localTransaction, true);
-      } else if (isOnePhase) {
-         //isOnePhase being true means that we're the only participant in the distributed transaction and TM does the
-         //1PC optimization. We run a 2PC though, as running only 1PC has a high chance of leaving the cluster in
-         //inconsistent state.
-         txCoordinator.prepare(localTransaction);
-         committedInOnePhase = txCoordinator.commit(localTransaction, false);
-      } else {
-         committedInOnePhase = txCoordinator.commit(localTransaction, false);
-      }
-      forgetSuccessfullyCompletedTransaction(recoveryManager, xid, localTransaction, committedInOnePhase);
+      txTable.commit(externalXid, isOnePhase);
    }
 
    /**
@@ -121,42 +73,22 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */   
    @Override
    public void rollback(Xid externalXid) throws XAException {
-      Xid xid = convertXid(externalXid);
-      LocalXaTransaction localTransaction1 = getLocalTransactionAndValidateImpl(xid, txTable);
-      localTransaction.markForRollback(true); //ISPN-879 : make sure that locks are no longer associated to this transactions
-      txCoordinator.rollback(localTransaction1);
+      txTable.rollback(externalXid);
    }
 
    @Override
    public void start(Xid externalXid, int i) throws XAException {
-      Xid xid = convertXid(externalXid);
-      //transform in our internal format in order to be able to serialize
-      localTransaction.setXid(xid);
-      txTable.addLocalTransactionMapping(localTransaction);
-      if (trace) log.tracef("start called on tx %s", this.localTransaction.getGlobalTransaction());
+      txTable.start(externalXid, localTransaction);
    }
 
    @Override
    public void end(Xid externalXid, int i) throws XAException {
-      if (trace) log.tracef("end called on tx %s(%s)", this.localTransaction.getGlobalTransaction(), cacheName);
+      txTable.end(this.localTransaction);
    }
 
    @Override
    public void forget(Xid externalXid) throws XAException {
-      Xid xid = convertXid(externalXid);
-      if (trace) log.tracef("forget called for xid %s", xid);
-      try {
-         if (recoveryEnabled) {
-            recoveryManager.removeRecoveryInformation(null, xid, true, null, false);
-         } else {
-            if (trace) log.trace("Recovery not enabled");
-         }
-      } catch (Exception e) {
-         log.warnExceptionRemovingRecovery(e);
-         XAException xe = new XAException(XAException.XAER_RMERR);
-         xe.initCause(e);
-         throw xe;
-      }
+      txTable.forget(externalXid);
    }
 
    @Override
@@ -171,40 +103,45 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
     */
    @Override
    public boolean isSameRM(XAResource xaResource) throws XAException {
+      return isIsSameRM(xaResource);
+   }
+
+   private boolean isIsSameRM(XAResource xaResource) {
       if (!(xaResource instanceof TransactionXaAdapter)) {
          return false;
       }
       TransactionXaAdapter other = (TransactionXaAdapter) xaResource;
-      //there is only one tx table per cache and this is more efficient that equals.
+      //there is only one enlistment manager per cache and this is more efficient that equals.
       return this.txTable == other.txTable;
    }
 
    @Override
    public Xid[] recover(int flag) throws XAException {
-      if (!recoveryEnabled) {
+      if (!txTable.isRecoveryEnabled()) {
          log.recoveryIgnored();
          return RecoveryManager.RecoveryIterator.NOTHING;
       }
-      if (trace) log.trace("recover called: " + flag);
+      if (trace)
+         log.trace("recover called: " + flag);
 
       if (isFlag(flag, TMSTARTRSCAN)) {
-         recoveryIterator = recoveryManager.getPreparedTransactionsFromCluster();
-         if (trace) log.tracef("Fetched a new recovery iterator: %s" , recoveryIterator);
+         recoveryIterator = txTable.recoveryManager.getPreparedTransactionsFromCluster();
+         if (trace)
+            log.tracef("Fetched a new recovery iterator: %s", recoveryIterator);
       }
       if (isFlag(flag, TMENDRSCAN)) {
-         if (trace) log.trace("Flushing the iterator");
+         if (trace)
+            log.trace("Flushing the iterator");
          return recoveryIterator.all();
       } else {
          //as per the spec: "TMNOFLAGS this flag must be used when no other flags are specified."
          if (!isFlag(flag, TMSTARTRSCAN) && !isFlag(flag, TMNOFLAGS))
-            throw new IllegalArgumentException("TMNOFLAGS this flag must be used when no other flags are specified." +
-                                                     " Received " + flag);
+            throw new IllegalArgumentException(
+                  "TMNOFLAGS this flag must be used when no other flags are specified." +
+                        " Received " + flag);
          return recoveryIterator.hasNext() ? recoveryIterator.next() : RecoveryManager.RecoveryIterator.NOTHING;
-      }
-   }
 
-   private boolean isFlag(int value, int flag) {
-      return (value & flag) != 0;
+      }
    }
 
    @Override
@@ -220,43 +157,8 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
             '}';
    }
 
-   private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction, boolean committedInOnePhase) {
-      final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
-      if (recoveryEnabled) {
-         recoveryManager.removeRecoveryInformation(localTransaction.getRemoteLocksAcquired(), xid, false, gtx,
-                                                   partitionHandlingManager.isTransactionPartiallyCommitted(gtx));
-         txTable.removeLocalTransaction(localTransaction);
-      } else {
-         releaseLocksForCompletedTransaction(localTransaction, committedInOnePhase);
-      }
-   }
-
-   private LocalXaTransaction getLocalTransactionAndValidate(Xid xid) throws XAException {
-      return getLocalTransactionAndValidateImpl(xid, txTable);
-   }
-
-   private static LocalXaTransaction getLocalTransactionAndValidateImpl(Xid xid, XaTransactionTable txTable) throws XAException {
-      LocalXaTransaction localTransaction = txTable.getLocalTransaction(xid);
-      if  (localTransaction == null) {
-         if (trace) log.tracef("no tx found for %s", xid);
-         throw new XAException(XAException.XAER_NOTA);
-      }
-      return localTransaction;
-   }
-
    public LocalXaTransaction getLocalTransaction() {
       return localTransaction;
-   }
-
-   /**
-    * Only does the conversion if recovery is enabled.
-    */
-   private Xid convertXid(Xid externalXid) {
-      if (recoveryEnabled && (!(externalXid instanceof SerializableXid))) {
-         return new SerializableXid(externalXid);
-      } else {
-         return externalXid;
-      }
    }
 
    @Override
@@ -268,8 +170,11 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
 
       if (localTransaction != null ? !localTransaction.equals(that.localTransaction) : that.localTransaction != null)
          return false;
-      //also include the name of the cache in comparison - needed when same tx spans multiple caches.
-      return cacheName != null ?
-            cacheName.equals(that.cacheName) : that.cacheName == null;
+      //also include the enlistment manager in comparison - needed when same tx spans multiple caches.
+      return txTable == that.txTable;
+   }
+
+   private boolean isFlag(int value, int flag) {
+      return (value & flag) != 0;
    }
 }

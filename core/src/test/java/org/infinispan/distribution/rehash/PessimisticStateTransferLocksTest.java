@@ -54,6 +54,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
    @AfterMethod(alwaysRun = true)
    public void printSequencerState() {
       log.debugf("Sequencer state: %s", sequencer);
+      sequencer.stop();
    }
 
    @Override

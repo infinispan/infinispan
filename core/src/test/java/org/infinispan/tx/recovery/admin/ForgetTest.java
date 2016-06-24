@@ -1,10 +1,12 @@
 package org.infinispan.tx.recovery.admin;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
+import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.tx.recovery.PostCommitRecoveryStateTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -32,8 +34,9 @@ public class ForgetTest extends AbstractRecoveryTest {
       waitForClusterToForm();
 
       XaTransactionTable txTable = tt(0);
-      recoveryManager = new PostCommitRecoveryStateTest.RecoveryManagerDelegate(txTable.getRecoveryManager());
-      txTable.setRecoveryManager(recoveryManager);
+      recoveryManager = new PostCommitRecoveryStateTest.RecoveryManagerDelegate(
+            TestingUtil.extractComponent(cache(0), RecoveryManager.class));
+      TestingUtil.replaceField(recoveryManager, "recoveryManager", txTable, XaTransactionTable.class);
    }
 
    @BeforeMethod
