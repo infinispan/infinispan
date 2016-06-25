@@ -71,6 +71,8 @@
             <configuration>
                <compilerArgument combine.children="append">-XDignore.symbol.file</compilerArgument>
                <fork combine.children="append">true</fork>
+               <source>1.8</source>
+               <target>1.8</target>
             </configuration>
          </plugin>
          <plugin>
