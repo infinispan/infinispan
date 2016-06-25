@@ -2,11 +2,13 @@ package org.infinispan.commons.hash;
 
 import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.commons.marshall.Ids;
+
 import org.infinispan.commons.marshall.exts.NoStateExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.Ids;
 
 import java.io.ObjectInput;
-import java.util.Collections;
+import java.nio.charset.Charset;
 import java.util.Set;
 
 /**
@@ -25,16 +27,17 @@ import java.util.Set;
  */
 @ThreadSafe
 @Immutable
-public class MurmurHash3 implements Hash {
-   private final static MurmurHash3 instance = new MurmurHash3();
-   public static final byte INVALID_CHAR = (byte) '?';
-
-   public static MurmurHash3 getInstance() {
+public class MurmurHash3Old implements Hash {
+   private final static MurmurHash3Old instance = new MurmurHash3Old();
+   
+   public static MurmurHash3Old getInstance() {
       return instance;
    }
-
-   private MurmurHash3() {
+   
+   private MurmurHash3Old() {
    }
+   
+   private static final Charset UTF8 = Charset.forName("UTF-8");
 
    static class State {
       long h1;
@@ -389,181 +392,9 @@ public class MurmurHash3 implements Hash {
       else if (o instanceof long[])
          return hash((long[]) o);
       else if (o instanceof String)
-         return hashString((String) o);
+         return hash(((String) o).getBytes(UTF8));
       else
          return hash(o.hashCode());
-   }
-
-   private int hashString(String s) {
-      return (int) (MurmurHash3_x64_64_String(s, 9001) >> 32);
-   }
-
-   private long MurmurHash3_x64_64_String(String s, long seed) {
-      // Exactly the same as MurmurHash3_x64_64, except it works directly on a String's chars
-      MurmurHash3.State state = new MurmurHash3.State();
-
-      state.h1 = 0x9368e53c2f6af274L ^ seed;
-      state.h2 = 0x586dcd208f7cd3fdL ^ seed;
-
-      state.c1 = 0x87c37b91114253d5L;
-      state.c2 = 0x4cf5ad432745937fL;
-
-      int byteLen = 0;
-      int stringLen = s.length();
-      for (int i = 0; i < stringLen; i++) {
-         char c1 = s.charAt(i);
-         int cp;
-         if (!Character.isSurrogate(c1)) {
-            cp = c1;
-         } else if (Character.isHighSurrogate(c1)){
-            if (i + 1 < stringLen) {
-               char c2 = s.charAt(i + 1);
-               if (Character.isLowSurrogate(c2)) {
-                  i++;
-                  cp = Character.toCodePoint(c1, c2);
-               } else {
-                  cp = INVALID_CHAR;
-               }
-            } else {
-               cp = INVALID_CHAR;
-            }
-         } else {
-            cp = INVALID_CHAR;
-         }
-
-         if (cp <= 0x7f) {
-            addByte(state, (byte) cp, ++byteLen);
-         } else if (cp <= 0x07ff) {
-            byte b1 = (byte) (0xc0 | (0x1f & (cp >> 6)));
-            byte b2 = (byte) (0x80 | (0x3f & cp));
-            addByte(state, b1, ++byteLen);
-            addByte(state, b2, ++byteLen);
-         } else if (cp <= 0xffff) {
-            byte b1 = (byte) (0xe0 | (0x0f & (cp >> 12)));
-            byte b2 = (byte) (0x80 | (0x3f & (cp >> 6)));
-            byte b3 = (byte) (0x80 | (0x3f & cp));
-            addByte(state, b1, ++byteLen);
-            addByte(state, b2, ++byteLen);
-            addByte(state, b3, ++byteLen);
-         } else {
-            byte b1 = (byte) (0xf0 | (0x07 & (cp >> 18)));
-            byte b2 = (byte) (0x80 | (0x3f & (cp >> 12)));
-            byte b3 = (byte) (0x80 | (0x3f & (cp >> 6)));
-            byte b4 = (byte) (0x80 | (0x3f & cp));
-            addByte(state, b1, ++byteLen);
-            addByte(state, b2, ++byteLen);
-            addByte(state, b3, ++byteLen);
-            addByte(state, b4, ++byteLen);
-         }
-      }
-
-      long savedK1 = state.k1;
-      long savedK2 = state.k2;
-      state.k1 = 0;
-      state.k2 = 0;
-      switch (byteLen & 15) {
-         case 15:
-            state.k2 ^= (long) ((byte)(savedK2 >> 48)) << 48;
-         case 14:
-            state.k2 ^= (long) ((byte) (savedK2 >> 40)) << 40;
-         case 13:
-            state.k2 ^= (long) ((byte) (savedK2 >> 32)) << 32;
-         case 12:
-            state.k2 ^= (long) ((byte) (savedK2 >> 24)) << 24;
-         case 11:
-            state.k2 ^= (long) ((byte) (savedK2 >> 16)) << 16;
-         case 10:
-            state.k2 ^= (long) ((byte) (savedK2 >> 8)) << 8;
-         case 9:
-            state.k2 ^= ((byte) savedK2);
-
-         case 8:
-            state.k1 ^= (long) ((byte) (savedK1 >> 56)) << 56;
-         case 7:
-            state.k1 ^= (long) ((byte) (savedK1 >> 48)) << 48;
-         case 6:
-            state.k1 ^= (long) ((byte) (savedK1 >> 40)) << 40;
-         case 5:
-            state.k1 ^= (long) ((byte) (savedK1 >> 32)) << 32;
-         case 4:
-            state.k1 ^= (long) ((byte) (savedK1 >> 24)) << 24;
-         case 3:
-            state.k1 ^= (long) ((byte) (savedK1 >> 16)) << 16;
-         case 2:
-            state.k1 ^= (long) ((byte) (savedK1 >> 8)) << 8;
-         case 1:
-            state.k1 ^= ((byte) savedK1);
-            bmix(state);
-      }
-
-      state.h2 ^= byteLen;
-
-      state.h1 += state.h2;
-      state.h2 += state.h1;
-
-      state.h1 = fmix(state.h1);
-      state.h2 = fmix(state.h2);
-
-      state.h1 += state.h2;
-      state.h2 += state.h1;
-
-      return state.h1;
-   }
-
-   private void addByte(State state, byte b, int len) {
-      switch (len & 15) {
-         case 0:
-            state.k2 |= (b & 0xffL) << 56;
-            bmix(state);
-            state.k1 = 0;
-            state.k2 = 0;
-            break;
-         case 15:
-            state.k2 |= (b & 0xffL) << 48;
-            break;
-         case 14:
-            state.k2 |= (b & 0xffL) << 40;
-            break;
-         case 13:
-            state.k2 |= (b & 0xffL) << 32;
-            break;
-         case 12:
-            state.k2 |= (b & 0xffL) << 24;
-            break;
-         case 11:
-            state.k2 |= (b & 0xffL) << 16;
-            break;
-         case 10:
-            state.k2 |= (b & 0xffL) << 8;
-            break;
-         case 9:
-            state.k2 |= (b & 0xffL);
-            break;
-
-         case 8:
-            state.k1 |= (b & 0xffL) << 56;
-            break;
-         case 7:
-            state.k1 |= (b & 0xffL) << 48;
-            break;
-         case 6:
-            state.k1 |= (b & 0xffL) << 40;
-            break;
-         case 5:
-            state.k1 |= (b & 0xffL) << 32;
-            break;
-         case 4:
-            state.k1 |= (b & 0xffL) << 24;
-            break;
-         case 3:
-            state.k1 |= (b & 0xffL) << 16;
-            break;
-         case 2:
-            state.k1 |= (b & 0xffL) << 8;
-            break;
-         case 1:
-            state.k1 |= (b & 0xffL);
-      }
    }
 
    @Override
@@ -581,14 +412,15 @@ public class MurmurHash3 implements Hash {
       return "MurmurHash3";
    }
 
-   public static class Externalizer extends NoStateExternalizer<MurmurHash3> {
+   public static class Externalizer extends NoStateExternalizer<MurmurHash3Old> {
       @Override
-      public Set<Class<? extends MurmurHash3>> getTypeClasses() {
-         return Collections.singleton(MurmurHash3.class);
+      @SuppressWarnings("unchecked")
+      public Set<Class<? extends MurmurHash3Old>> getTypeClasses() {
+         return Util.<Class<? extends MurmurHash3Old>>asSet(MurmurHash3Old.class);
       }
 
       @Override
-      public MurmurHash3 readObject(ObjectInput input) {
+      public MurmurHash3Old readObject(ObjectInput input) {
          return instance;
       }
 
