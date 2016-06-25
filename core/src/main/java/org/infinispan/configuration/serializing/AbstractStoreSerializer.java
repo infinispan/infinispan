@@ -24,7 +24,9 @@ public abstract class AbstractStoreSerializer {
    }
 
    protected void writeCommonStoreElements(XMLExtendedStreamWriter writer, StoreConfiguration configuration) throws XMLStreamException {
-      writeStoreWriteBehind(writer, configuration);
+      if (configuration.async().enabled()) {
+         writeStoreWriteBehind(writer, configuration);
+      }
       writeTypedProperties(writer, TypedProperties.toTypedProperties(configuration.properties()));
    }
 

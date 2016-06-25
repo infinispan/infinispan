@@ -216,6 +216,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    private void writeDistributedCache(XMLExtendedStreamWriter writer, String name, Configuration configuration) throws XMLStreamException {
       writer.writeStartElement(Element.DISTRIBUTED_CACHE);
       configuration.clustering().hash().attributes().write(writer);
+      configuration.clustering().l1().attributes().write(writer);
       writeCommonClusteredCacheAttributes(writer, configuration);
       writeCommonCacheAttributesElements(writer, name, configuration);
       GroupsConfiguration groups = configuration.clustering().hash().groups();
@@ -256,7 +257,11 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          attributes.write(writer, TransportConfiguration.CLUSTER_NAME, Attribute.CLUSTER);
          attributes.write(writer, TransportConfiguration.MACHINE_ID, Attribute.MACHINE_ID);
          attributes.write(writer, TransportConfiguration.RACK_ID, Attribute.RACK_ID);
-         attributes.write(writer, TransportConfiguration.SITE_ID, Attribute.SITE);
+         if (transport.siteId() != null) {
+            attributes.write(writer, TransportConfiguration.SITE_ID, Attribute.SITE);
+         } else if (globalConfiguration.sites().localSite() != null) {
+            writer.writeAttribute(Attribute.SITE, globalConfiguration.sites().localSite());
+         }
          attributes.write(writer, TransportConfiguration.NODE_NAME, Attribute.NODE_NAME);
          TypedProperties properties = globalConfiguration.transport().properties();
          if (properties.containsKey("stack")) {
