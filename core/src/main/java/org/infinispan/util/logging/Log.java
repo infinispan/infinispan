@@ -290,7 +290,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Exception while marshalling object: %s", id = 65)
-   void errorMarshallingObject(@Cause IOException ioe, Object obj);
+   void errorMarshallingObject(@Cause Throwable ioe, Object obj);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to read version id from first two bytes of stream, barfing.", id = 66)
