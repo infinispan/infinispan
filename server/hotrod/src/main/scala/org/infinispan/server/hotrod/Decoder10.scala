@@ -1,19 +1,22 @@
 package org.infinispan.server.hotrod
 
-import logging.Log
 import org.infinispan.configuration.cache.Configuration
 import OperationStatus._
 import org.infinispan.server.core._
+
 import collection.mutable
 import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
+
 import org.infinispan.context.Flag._
-import org.infinispan.server.core.transport.ExtendedByteBuf._
+import org.infinispan.server.hotrod.transport.ExtendedByteBuf._
 import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
+import org.infinispan.commons.logging.LogFactory
+import org.infinispan.server.hotrod.logging.JavaLog
 
 import scala.annotation.switch
 
@@ -23,11 +26,12 @@ import scala.annotation.switch
  * @author Galder Zamarreño
  * @since 4.1
  */
-object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log {
+object Decoder10 extends AbstractVersionedDecoder {
    import OperationResponse._
    import ProtocolFlag._
    type SuitableHeader = HotRodHeader
-   private val isTrace = isTraceEnabled
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
+   private val isTrace = log.isTraceEnabled
 
    override def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader): Boolean = {
       if (header.op == null) {
@@ -55,7 +59,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                case _ => throw new HotRodUnknownOperationException(
                   "Unknown operation: " + streamOp, version, messageId)
             }
-            if (isTrace) trace("Operation code: %d has been matched to %s", streamOp, header.op)
+            if (isTrace) log.tracef("Operation code: %d has been matched to %s", Array(streamOp, header.op).map(_.asInstanceOf[AnyRef]) : _*)
             header.cacheName = cacheName
 
             // Mark that we read up to here
@@ -118,9 +122,9 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       readMaybeVInt(buffer).map(stream => {
          if (stream <= 0) {
             if (useDefault)
-               EXPIRATION_DEFAULT
+               ServerConstants.EXPIRATION_DEFAULT
             else
-               EXPIRATION_NONE
+               ServerConstants.EXPIRATION_NONE
          } else stream
       })
    }

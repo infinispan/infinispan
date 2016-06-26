@@ -14,19 +14,19 @@ import org.infinispan.server.hotrod.logging.{HotRodAccessLoggingHandler, JavaLog
   * @author wburns
   * @since 9.0
   */
-class HotRodChannelInitializer(val server: HotRodServer, transport: => NettyTransport,
-                               val encoder: ChannelOutboundHandler, executor: ExecutorService)
-      extends NettyChannelInitializer(server, transport, encoder) {
+class HotRodChannelInitializer(val hotRodServer: HotRodServer, transport: => NettyTransport,
+                               encoder: ChannelOutboundHandler, executor: ExecutorService)
+      extends NettyChannelInitializer(hotRodServer, transport, encoder) {
 
    override def initChannel(ch: Channel): Unit = {
       super.initChannel(ch)
-      val authHandler = if (server.getConfiguration.authentication().enabled()) new AuthenticationHandler(server) else null
+      val authHandler = if (server.getConfiguration.authentication().enabled()) new AuthenticationHandler(hotRodServer) else null
       if (authHandler != null) {
          ch.pipeline().addLast("authentication-1", authHandler)
       }
       ch.pipeline.addLast("local-handler", new LocalContextHandler(transport))
 
-      ch.pipeline.addLast("handler", new ContextHandler(server, transport, executor))
+      ch.pipeline.addLast("handler", new ContextHandler(hotRodServer, transport, executor))
       ch.pipeline.addLast("exception", new HotRodExceptionHandler)
 
       // Logging handlers

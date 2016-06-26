@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod
 
-import logging.Log
 import org.infinispan.distribution.ch.KeyPartitioner
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner
 import org.infinispan.distribution.group.PartitionerConsistentHash
@@ -8,13 +7,16 @@ import org.infinispan.distribution.group.impl.GroupingPartitioner
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._
+
 import collection.JavaConversions._
 import OperationStatus._
 import org.infinispan.configuration.cache.Configuration
+
 import collection.mutable.ArrayBuffer
-import org.infinispan.server.hotrod.util.BulkUtil
 import io.netty.buffer.ByteBuf
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.server.hotrod.Events.Event
+import org.infinispan.server.hotrod.logging.JavaLog
 
 /**
  * Hot Rod encoder for protocol version 1.1
@@ -22,9 +24,11 @@ import org.infinispan.server.hotrod.Events.Event
  * @author Galder Zamarreño
  * @since 5.1
  */
-abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants with Log {
+abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants {
 
    import HotRodServer._
+
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    override def writeEvent(e: Event, buf: ByteBuf) {
       // Not implemented in this version of the protocol
@@ -95,7 +99,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
             if (g.status == Success) {
                var iterator = asScalaIterator(g.entries.iterator)
                if (g.count != 0) {
-                  trace("About to write (max) %d messages to the client", g.count)
+                  log.tracef("About to write (max) %d messages to the client", g.count)
                   iterator = iterator.take(g.count)
                }
                for (entry <- iterator) {
@@ -202,10 +206,10 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
 
       val topologyMap = h.serverEndpointsMap
       if (topologyMap.isEmpty) {
-         logNoMembersInHashTopology(ch, topologyMap.toString())
+         log.noMembersInHashTopology(ch, topologyMap.toString())
          buffer.writeByte(0) // Topology not changed
       } else {
-         trace("Write hash distribution change response header %s", h)
+         log.tracef("Write hash distribution change response header %s", h)
          // This is not quite correct, as the ownership of segments on the 1.0/1.1/1.2 clients is not exactly
          // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
          // of the keys (at the "segment borders"), so it's still much better than having no hash information.
@@ -247,10 +251,10 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
    }
 
    def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buffer: ByteBuf) {
-      trace("Return limited hash distribution aware header because the client %s doesn't ", t)
+      log.tracef("Return limited hash distribution aware header because the client %s doesn't ", t)
       val topologyMap = t.serverEndpointsMap
       if (topologyMap.isEmpty) {
-         logNoMembersInTopology()
+         log.noMembersInTopology()
          buffer.writeByte(0) // Topology not changed
       } else {
          writeCommonHashTopologyHeader(buffer, t.topologyId, 0, 0, 0, topologyMap.size)
@@ -265,10 +269,10 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
    def writeTopologyUpdate(t: TopologyAwareResponse, buffer: ByteBuf) {
       val topologyMap = t.serverEndpointsMap
       if (topologyMap.isEmpty) {
-         logNoMembersInTopology()
+         log.noMembersInTopology()
          buffer.writeByte(0) // Topology not changed
       } else {
-         trace("Write topology change response header %s", t)
+         log.tracef("Write topology change response header %s", t)
          buffer.writeByte(1) // Topology changed
          writeUnsignedInt(t.topologyId, buffer)
          writeUnsignedInt(topologyMap.size, buffer)
@@ -281,7 +285,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
 
 
    def writeNoTopologyUpdate(buffer: ByteBuf) {
-      trace("Write topology response header with no change")
+      log.trace("Write topology response header with no change")
       buffer.writeByte(0)
    }
 
@@ -293,7 +297,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       buffer.writeByte(hashFct) // Hash function
       writeUnsignedInt(hashSpace, buffer) // Hash space
       writeUnsignedInt(numServers, buffer)
-      trace("Topology will contain %d addresses", numServers)
+      log.tracef("Topology will contain %d addresses", numServers)
    }
 
 }

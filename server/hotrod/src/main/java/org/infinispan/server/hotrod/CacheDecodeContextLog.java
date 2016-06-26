@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod;
 
-import org.infinispan.server.core.logging.JavaLog;
+import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -8,5 +8,5 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class CacheDecodeContextLog {
-   static final JavaLog log = LogFactory.getLog(CacheDecodeContext.class, JavaLog.class);
+   static final Log log = LogFactory.getLog(CacheDecodeContext.class, Log.class);
 }

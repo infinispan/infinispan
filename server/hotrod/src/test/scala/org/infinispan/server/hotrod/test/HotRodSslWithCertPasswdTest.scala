@@ -1,5 +1,8 @@
 package org.infinispan.server.hotrod.test
 
+import java.util.function.Consumer
+
+import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.test.Stoppable
 import org.infinispan.server.hotrod.HotRodServer
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
@@ -23,14 +26,18 @@ class HotRodSslWithCertPasswdTest extends AbstractInfinispanTest {
 
    def testServerStartWithSslAndCertPasswd() {
       val builder = new HotRodServerConfigurationBuilder
-      builder.proxyHost(host).proxyPort(UniquePortThreadLocal.get.intValue).idleTimeout(0)
+      builder.host(host).port(UniquePortThreadLocal.get.intValue).idleTimeout(0)
       builder.ssl.enable().keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray).keyStoreCertificatePassword("secret2".toCharArray).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray)
-      Stoppable.useCacheManager(createCacheManager(hotRodCacheConfiguration())) { cm =>
-         Stoppable.useServer(new HotRodServer) { server =>
-            server.start(builder.build, cm)
-            assertNotNull(server.getConfiguration.ssl().keyStoreCertificatePassword())
+      Stoppable.useCacheManager(createCacheManager(hotRodCacheConfiguration()), new Consumer[EmbeddedCacheManager] {
+         override def accept(cm: EmbeddedCacheManager): Unit = {
+            Stoppable.useServer(new HotRodServer, new Consumer[HotRodServer] {
+               override def accept(server: HotRodServer): Unit = {
+                  server.start(builder.build, cm)
+                  assertNotNull(server.getConfiguration.ssl().keyStoreCertificatePassword())
+               }
+            })
          }
-      }
+      })
    }
 
 }

@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import io.netty.channel.Channel
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
 import org.infinispan.commons.util.CollectionFactory
@@ -15,24 +16,25 @@ import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.factories.threads.DefaultThreadFactory
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications._
-import org.infinispan.notifications.cachelistener.annotation.{CacheEntryExpired, CacheEntryCreated, CacheEntryModified, CacheEntryRemoved}
+import org.infinispan.notifications.cachelistener.annotation.{CacheEntryCreated, CacheEntryExpired, CacheEntryModified, CacheEntryRemoved}
 import org.infinispan.notifications.cachelistener.event._
 import org.infinispan.notifications.cachelistener.filter._
 import org.infinispan.notifications.cachelistener.event.Event.Type
-import org.infinispan.server.hotrod.Events.{CustomRawEvent, CustomEvent, KeyEvent, KeyWithVersionEvent}
+import org.infinispan.server.hotrod.Events.{CustomEvent, CustomRawEvent, KeyEvent, KeyWithVersionEvent}
 import org.infinispan.server.hotrod.OperationResponse._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
-import org.infinispan.server.hotrod.logging.Log
+import org.infinispan.server.hotrod.logging.JavaLog
 
 import scala.collection.JavaConversions._
 
 /**
  * @author Galder Zamarreño
  */
-class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends Log {
+class ClientListenerRegistry(configuration: HotRodServerConfiguration) {
    import ClientListenerRegistry._
 
-   val isTrace = isTraceEnabled
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
+   val isTrace = log.isTraceEnabled
 
    private val messageId = new AtomicLong()
    private val eventSenders = new EquivalentConcurrentHashMapV8[Bytes, AnyRef](
@@ -54,7 +56,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
    def addCacheEventFilterFactory(name: String, factory: CacheEventFilterFactory): Unit = {
       factory match {
-         case x: CacheEventConverterFactory => throw illegalFilterConverterEventFactory(name)
+         case x: CacheEventConverterFactory => throw log.illegalFilterConverterEventFactory(name)
          case _ => cacheEventFilterFactories.put(name, factory)
       }
    }
@@ -65,7 +67,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 
    def addCacheEventConverterFactory(name: String, factory: CacheEventConverterFactory): Unit = {
       factory match {
-         case x: CacheEventFilterFactory => throw illegalFilterConverterEventFactory(name)
+         case x: CacheEventFilterFactory => throw log.illegalFilterConverterEventFactory(name)
          case _ => cacheEventConverterFactories.put(name, factory)
       }
    }
@@ -155,7 +157,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    def findFactory[T](name: String, compatEnabled: Boolean,
          factories: ConcurrentMap[String, T], factoryType: String, useRawData: Boolean): (T, Marshaller) = {
       val factory = Option(factories.get(name))
-            .getOrElse(throw missingCacheEventFactory(factoryType, name))
+            .getOrElse(throw log.missingCacheEventFactory(factoryType, name))
 
       val m = marshaller.getOrElse(new GenericJBossMarshaller(factory.getClass.getClassLoader))
       if (useRawData || compatEnabled)
@@ -222,7 +224,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          var written = false
          while(!eventQueue.isEmpty && ch.isWritable) {
             val event = eventQueue.poll()
-            if (isTrace) tracef("Write event: %s to channel %s", event, ch)
+            if (isTrace) log.tracef("Write event: %s to channel %s", Array(event, ch).map(_.asInstanceOf[AnyRef]) : _*)
             ch.write(event)
             written = true
          }
@@ -263,7 +265,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                case Type.CACHE_ENTRY_EXPIRED =>
                   true;
                case _ =>
-                  throw unexpectedEvent(event)
+                  throw log.unexpectedEvent(event)
             }
          }
       }
@@ -299,7 +301,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                      val (op, isRetried) = getEventResponseType(event)
                      KeyEvent(version, messageId.get(), op, listenerId, isRetried, key)
                   case _ =>
-                     throw unexpectedEvent(event)
+                     throw log.unexpectedEvent(event)
                }
             case CustomPlain =>
                val (op, isRetried) = getEventResponseType(event)
@@ -320,7 +322,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                (CacheEntryRemovedEventResponse, event.asInstanceOf[CacheEntryRemovedEvent[_, _]].isCommandRetried)
             case Type.CACHE_ENTRY_EXPIRED =>
                (CacheEntryExpiredEventResponse, false)
-            case _ => throw unexpectedEvent(event)
+            case _ => throw log.unexpectedEvent(event)
          }
       }
 

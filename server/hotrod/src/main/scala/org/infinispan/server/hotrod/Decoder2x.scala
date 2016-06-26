@@ -2,28 +2,26 @@ package org.infinispan.server.hotrod
 
 import java.io.IOException
 import java.security.PrivilegedActionException
-import java.util.{BitSet => JavaBitSet, Optional, HashMap, HashSet, Map}
 
 import io.netty.buffer.ByteBuf
 import org.infinispan.IllegalLifecycleStateException
 import org.infinispan.commons.CacheException
-import org.infinispan.commons.util.ByRef
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.context.Flag.{IGNORE_RETURN_VALUES, SKIP_CACHE_LOAD, SKIP_INDEXING}
 import org.infinispan.remoting.transport.jgroups.SuspectException
-import org.infinispan.server.core._
-import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.server.hotrod.OperationStatus._
-import org.infinispan.server.hotrod.logging.Log
+import org.infinispan.server.hotrod.logging.JavaLog
+import org.infinispan.server.hotrod.transport.ExtendedByteBuf._
 import org.infinispan.stats.ClusterCacheStats
 import org.infinispan.util.concurrent.TimeoutException
 
-import scala.annotation.{switch, tailrec}
-import scala.collection.{immutable, mutable}
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
+import scala.collection.{immutable, mutable}
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -31,12 +29,14 @@ import scala.collection.mutable.ListBuffer
  * @author Galder Zamarreño
  * @since 7.0
  */
-object Decoder2x extends AbstractVersionedDecoder with Log with Constants {
+object Decoder2x extends AbstractVersionedDecoder with Constants {
 
    import OperationResponse._
    import ProtocolFlag._
 
    type SuitableHeader = HotRodHeader
+
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    override def readHeader(buffer: ByteBuf, version: Byte, messageId: Long, header: HotRodHeader): Boolean =
       Decoder2xJava.readHeader(buffer, version, messageId, header)
@@ -441,7 +441,7 @@ object Decoder2x extends AbstractVersionedDecoder with Log with Constants {
       var optCache = c
       h.op match {
          case op if h.op.isConditional && isClustered && !isTransactional =>
-            warnConditionalOperationNonTransactional(h.op.toString)
+            log.warnConditionalOperationNonTransactional(h.op.toString)
          case _ => // no-op
       }
 
@@ -468,7 +468,7 @@ object Decoder2x extends AbstractVersionedDecoder with Log with Constants {
       } else {
          h.op match {
             case op if h.op.canReturnPreviousValue && !isTransactional =>
-               warnForceReturnPreviousNonTransactional(h.op.toString)
+               log.warnForceReturnPreviousNonTransactional(h.op.toString)
             case _ => // no-op
          }
       }

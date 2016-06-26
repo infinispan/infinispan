@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import io.netty.channel.{Channel, ChannelFuture, ChannelInitializer}
 import org.infinispan.commons.api.BasicCacheContainer
 import org.infinispan.commons.equivalence.ByteArrayEquivalence
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.commons.util.Util
 import org.infinispan.configuration.cache.ConfigurationBuilder
 import org.infinispan.manager.EmbeddedCacheManager
@@ -17,12 +18,11 @@ import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import org.infinispan.remoting.transport.Address
-import org.infinispan.server.core.transport.TimeoutEnabledChannelInitializer
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod._
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.server.hotrod.logging.Log
-import org.infinispan.server.hotrod.transport.{HotRodChannelInitializer, SingleByteFrameDecoderChannelInitializer}
+import org.infinispan.server.hotrod.configuration.{HotRodServerConfiguration, HotRodServerConfigurationBuilder}
+import org.infinispan.server.hotrod.logging.JavaLog
+import org.infinispan.server.hotrod.transport.{HotRodChannelInitializer, SingleByteFrameDecoderChannelInitializer, TimeoutEnabledChannelInitializer}
 import org.infinispan.statetransfer.StateTransferManager
 import org.infinispan.test.TestingUtil
 import org.testng.Assert.{assertNull, assertTrue}
@@ -37,9 +37,10 @@ import scala.collection.JavaConverters._
  * @author Galder Zamarreño
  * @since 4.1
  */
-object HotRodTestingUtil extends Log {
+object HotRodTestingUtil {
 
    val EXPECTED_HASH_FUNCTION_VERSION: Byte = 2
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    def host = "127.0.0.1"
 
@@ -89,7 +90,7 @@ object HotRodTestingUtil extends Log {
       startHotRodServer(manager, host, port, delay, false, builder)
 
    def startHotRodServer(manager: EmbeddedCacheManager, host: String, port: Int, delay: Long, perf: Boolean, builder: HotRodServerConfigurationBuilder): HotRodServer = {
-      info("Start server in port %d", port)
+      log.infof("Start server in port %d", port)
       val server = new HotRodServer {
          override protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
             if (delay > 0)
@@ -108,14 +109,14 @@ object HotRodTestingUtil extends Log {
             if (perf) {
                if (configuration.idleTimeout > 0)
                   new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
-                    with TimeoutEnabledChannelInitializer with SingleByteFrameDecoderChannelInitializer
+                    with TimeoutEnabledChannelInitializer[HotRodServerConfiguration] with SingleByteFrameDecoderChannelInitializer
                else // Idle timeout logic is disabled with -1 or 0 values
                   new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
                     with SingleByteFrameDecoderChannelInitializer
             } else {
                if (configuration.idleTimeout > 0)
                   new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
-                    with TimeoutEnabledChannelInitializer
+                    with TimeoutEnabledChannelInitializer[HotRodServerConfiguration]
                else // Idle timeout logic is disabled with -1 or 0 values
                   new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
             }
@@ -152,7 +153,7 @@ object HotRodTestingUtil extends Log {
 
    def k(m: Method, prefix: String): Array[Byte] = {
       val bytes: Array[Byte] = (prefix + m.getName).getBytes
-      trace("String %s is converted to %s bytes", prefix + m.getName, Util.printArray(bytes, true))
+      log.tracef("String %s is converted to %s bytes", Array(prefix + m.getName, Util.printArray(bytes, true)).map(_.asInstanceOf[AnyRef]) : _*)
       bytes
    }
 
@@ -366,7 +367,7 @@ object HotRodTestingUtil extends Log {
       }
       catch {
          case t: Throwable => {
-            error("Error stopping client", t)
+            log.error("Error stopping client", t)
             null
          }
       }
@@ -462,9 +463,9 @@ object UniquePortThreadLocal extends ThreadLocal[Int] {
    private val uniqueAddr = new AtomicInteger(12311)
 
    override def initialValue: Int = {
-      HotRodTestingUtil.debug("Before incrementing, server port is: %d", uniqueAddr.get())
+      HotRodTestingUtil.log.debugf("Before incrementing, server port is: %d", uniqueAddr.get())
       val port = uniqueAddr.getAndAdd(110)
-      HotRodTestingUtil.debug("For next thread, server port will be: %d", uniqueAddr.get())
+      HotRodTestingUtil.log.debugf("For next thread, server port will be: %d", uniqueAddr.get())
       port
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.iteration
 import java.util.stream.{Collectors, Stream}
 import java.util.{Collections, UUID, BitSet => JavaBitSet, Set => JavaSet}
 
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.{BaseCacheStream, CacheStream}
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.commons.util.CollectionFactory
@@ -11,9 +12,10 @@ import org.infinispan.container.entries.CacheEntry
 import org.infinispan.filter.CacheFilters.filterAndConvert
 import org.infinispan.filter.{KeyValueFilterConverter, KeyValueFilterConverterFactory, ParamKeyValueFilterConverterFactory}
 import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.server.hotrod.Encoder2x._
 import org.infinispan.server.hotrod.OperationStatus.OperationStatus
 import org.infinispan.server.hotrod._
-import org.infinispan.server.hotrod.logging.Log
+import org.infinispan.server.hotrod.logging.JavaLog
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -84,8 +86,9 @@ object CompatInfo {
       new CompatInfo(config.enabled(), if (config.enabled()) Some(HotRodTypeConverter(config.marshaller())) else None)
 }
 
-class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends IterationManager with Log {
+class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends IterationManager {
    @volatile var marshaller: Option[_ <: Marshaller] = None
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    private val iterationStateMap = CollectionFactory.makeConcurrentMap[String, IterationState]()
    private val filterConverterFactoryMap = CollectionFactory.makeConcurrentMap[String, KeyValueFilterConverterFactory[_, _, _]]()

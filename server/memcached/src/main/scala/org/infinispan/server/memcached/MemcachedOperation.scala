@@ -1,13 +1,16 @@
 package org.infinispan.server.memcached
 
 /**
- * Memcached operations. The enumeration stats at a number other than 0 to make sure it does not clash with common operations.
+ * Memcached operations.
  *
  * @author Galder Zamarreño
  * @since 4.1
  */
-object MemcachedOperation extends Enumeration(10) {
+object MemcachedOperation extends Enumeration {
    type MemcachedOperation = Value
+   val PutRequest, PutIfAbsentRequest, ReplaceRequest, ReplaceIfUnmodifiedRequest = Value
+   val GetRequest, GetWithVersionRequest = Value
+   val RemoveRequest, StatsRequest = Value
    val AppendRequest, PrependRequest = Value
    val IncrementRequest, DecrementRequest = Value
    val FlushAllRequest, VersionRequest = Value

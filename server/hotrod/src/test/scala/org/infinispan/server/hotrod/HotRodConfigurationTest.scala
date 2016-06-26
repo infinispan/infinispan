@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod
 
+import java.util.function.Consumer
+
 import test.UniquePortThreadLocal
 import test.HotRodTestingUtil._
 import org.infinispan.test.fwk.TestCacheManagerFactory
@@ -13,6 +15,7 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.util.concurrent.IsolationLevel
 import org.infinispan.commons.CacheConfigurationException
 import org.infinispan.configuration.cache.VersioningScheme
+import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.test.AbstractInfinispanTest
 
 /**
@@ -63,12 +66,17 @@ class HotRodConfigurationTest extends AbstractInfinispanTest {
    }
 
    private def withClusteredServer(builder: HotRodServerConfigurationBuilder) (assert: (Configuration, Long) => Unit) {
-      Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())) { cm =>
-         Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, builder)) { server =>
-            val cfg = cm.getCache(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX).getCacheConfiguration
-            assert(cfg, cm.getCacheManagerConfiguration.transport().distributedSyncTimeout())
+
+      Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration()), new Consumer[EmbeddedCacheManager] {
+         override def accept(cm: EmbeddedCacheManager): Unit = {
+            Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, builder), new Consumer[HotRodServer] {
+               override def accept(server: HotRodServer): Unit = {
+                  val cfg = cm.getCache(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX).getCacheConfiguration
+                  assert(cfg, cm.getCacheManagerConfiguration.transport().distributedSyncTimeout())
+               }
+            })
          }
-      }
+      })
    }
 
    private def validateIsolationLevel(isolationLevel: IsolationLevel, writeSkew: Boolean) {
@@ -78,10 +86,15 @@ class HotRodConfigurationTest extends AbstractInfinispanTest {
       if (writeSkew) {
         builder.versioning().enable().scheme(VersioningScheme.SIMPLE)
       }
-      Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration(builder))) {
-         cm =>
-            Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, hotRodBuilder)) { server => {} }
-      }
+
+      Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration(builder)), new Consumer[EmbeddedCacheManager] {
+         override def accept(cm: EmbeddedCacheManager): Unit = {
+            Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, hotRodBuilder), new Consumer[HotRodServer] {
+               override def accept(server: HotRodServer): Unit = {
+               }
+            })
+         }
+      })
    }
 
 }

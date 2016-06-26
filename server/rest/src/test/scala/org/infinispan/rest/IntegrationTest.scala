@@ -3,31 +3,41 @@ package org.infinispan.rest
 import org.apache.commons.httpclient.methods._
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpServletResponse._
+
 import org.infinispan.remoting.MIMECacheEntry
 import java.io._
-import org.testng.annotations.{Test, BeforeClass, AfterClass}
+
+import org.testng.annotations.{AfterClass, BeforeClass, Test}
 import java.lang.reflect.Method
+
 import org.infinispan.commons.api.BasicCacheContainer
+
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.math._
 import org.infinispan.test.TestingUtil
 import java.text.SimpleDateFormat
-import org.apache.commons.httpclient.{HttpMethodBase, Header, HttpClient}
+
+import org.apache.commons.httpclient.{Header, HttpClient, HttpMethodBase}
 import org.apache.commons.httpclient.HttpMethod
 import java.util.{Calendar, Locale}
+
 import org.testng.AssertJUnit._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.manager.impl.AbstractDelegatingEmbeddedCacheManager
-import org.infinispan.{Cache, AdvancedCache}
+import org.infinispan.{AdvancedCache, Cache}
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
-import java.util.concurrent.{TimeUnit, CountDownLatch}
-import org.infinispan.server.core.logging.JavaLog
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+
 import org.infinispan.util.logging.LogFactory
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import java.util
+
 import org.infinispan.metadata.Metadata
 import javax.ws.rs.core.CacheControl
+
+import org.infinispan.server.core.logging.Log
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**

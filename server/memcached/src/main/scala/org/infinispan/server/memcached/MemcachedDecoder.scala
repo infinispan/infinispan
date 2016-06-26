@@ -14,6 +14,7 @@ import io.netty.channel._
 import io.netty.util.CharsetUtil
 import org.infinispan._
 import org.infinispan.commons.CacheException
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.{EntryVersion, NumericVersion, NumericVersionGenerator, VersionGenerator}
@@ -21,14 +22,12 @@ import org.infinispan.context.Flag
 import org.infinispan.factories.ComponentRegistry
 import org.infinispan.metadata.Metadata
 import org.infinispan.remoting.rpc.RpcManager
-import org.infinispan.server.core.Operation._
-import org.infinispan.server.core._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.server.memcached.MemcachedDecoderState._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.server.memcached.TextProtocolUtil._
-import org.infinispan.server.memcached.logging.Log
+import org.infinispan.server.memcached.logging.JavaLog
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.{immutable, mutable}
@@ -41,7 +40,9 @@ import scala.collection.{immutable, mutable}
  */
 class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService,
                        val transport: NettyTransport, val cacheIgnoreAware: String => Boolean = Function.const(false))
-extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConstants {
+extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) {
+
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    val SecondsInAMonth = 60 * 60 * 24 * 30
    val DefaultTimeUnit = TimeUnit.MILLISECONDS
@@ -68,7 +69,7 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
    private final val replaceIfUnmodifiedMisses = new AtomicLong(0)
    private final val replaceIfUnmodifiedHits = new AtomicLong(0)
    private final val replaceIfUnmodifiedBadval = new AtomicLong(0)
-   private val isTrace = isTraceEnabled
+   private val isTrace = log.isTraceEnabled
    private val byteBuffer = new ByteArrayOutputStream()
    protected var header: RequestHeader = _
 
@@ -117,7 +118,7 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
    private def decodeDispatch(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
       try {
          if (isTrace) // To aid debugging
-            trace("Decode using instance @%x", System.identityHashCode(this))
+            log.tracef("Decode using instance @%x", System.identityHashCode(this))
          state match {
             case DECODE_HEADER => decodeHeader(ctx, in, state, out)
             case DECODE_KEY => decodeKey(ctx, in, state)
@@ -270,7 +271,7 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
    override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
       val ch = ctx.channel
       // Log it just in case the channel is closed or similar
-      debug(cause, "Exception caught")
+      log.debug("Exception caught", cause)
       if (!cause.isInstanceOf[IOException]) {
          val errorResponse = createErrorResponse(cause)
          if (errorResponse != null) {
@@ -315,7 +316,7 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
       var endOfOp = false
       params =
       if (args.nonEmpty) {
-         if (isTrace) trace("Operation parameters: %s", args)
+         if (isTrace) log.tracef("Operation parameters: %s", args)
          try {
             header.op match {
                case PutRequest => readStorageParameters(args, b)
@@ -677,10 +678,10 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
          case m: MemcachedException =>
             m.getCause match {
                case u: UnknownOperationException =>
-                  logExceptionReported(u)
+                  log.exceptionReported(u)
                   ERROR
                case c: ClosedChannelException =>
-                  logExceptionReported(c)
+                  log.exceptionReported(c)
                   null // no-op, only log
                case i: IOException =>
                   logAndCreateErrorMessage(sb, m)
@@ -691,7 +692,7 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
                case _ => sb.append(m.getMessage).append(CRLF)
             }
          case c: ClosedChannelException =>
-            logExceptionReported(c)
+            log.exceptionReported(c)
             null // no-op, only log
          case _ => sb.append(SERVER_ERROR).append(t.getMessage).append(CRLF)
       }
@@ -708,7 +709,7 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
    }
 
    private def logAndCreateErrorMessage(sb: StringBuilder, m: MemcachedException): StringBuilder = {
-      logExceptionReported(m.getCause)
+      log.exceptionReported(m.getCause)
       sb.append(m.getMessage).append(CRLF)
    }
 
@@ -749,7 +750,7 @@ extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with ServerConsta
    protected def writeResponse(ch: Channel, response: AnyRef): AnyRef = {
       try {
          if (response != null) {
-            if (isTrace) trace("Write response %s", response)
+            if (isTrace) log.tracef("Write response %s", response)
             response match {
                // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
                case l: Array[ByteBuf] =>
@@ -920,11 +921,12 @@ private class DelayedFlushAll(cache: AdvancedCache[String, Array[Byte]],
    }
 }
 
-private object RequestResolver extends Log {
-   private val isTrace = isTraceEnabled
+private object RequestResolver {
+   private val log = LogFactory.getLog(getClass, classOf[JavaLog])
+   private val isTrace = log.isTraceEnabled
 
    def toRequest(commandName: String, endOfOp: Boolean, buffer: ByteBuf): Enumeration#Value = {
-      if (isTrace) trace("Operation: '%s'", commandName)
+      if (isTrace) log.tracef("Operation: '%s'", commandName)
       val op = commandName match {
          case "get" => GetRequest
          case "set" => PutRequest
@@ -945,8 +947,8 @@ private object RequestResolver extends Log {
          case _ =>
             if (!endOfOp) {
                val line = readDiscardedLine(buffer) // Read rest of line to clear the operation
-               debug("Unexpected operation '%s', rest of line contains: %s",
-                  commandName, line)
+               log.debugf("Unexpected operation '%s', rest of line contains: %s",
+                  Array(commandName, line).map(_.asInstanceOf[AnyRef]) : _*)
             }
 
             throw new UnknownOperationException("Unknown operation: " + commandName)

@@ -11,6 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.CacheIgnoreAware;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
+import org.infinispan.server.websocket.configuration.WebSocketServerConfiguration;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
 import org.infinispan.server.websocket.handlers.PutHandler;
@@ -32,7 +33,7 @@ import java.util.Map;
  *    Websocket specific code lifted from Netty WebSocket Server example.
  * </p>
  */
-public class WebSocketServer extends AbstractProtocolServer {
+public class WebSocketServer extends AbstractProtocolServer<WebSocketServerConfiguration> {
 
    private static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
@@ -52,13 +53,13 @@ public class WebSocketServer extends AbstractProtocolServer {
       return null;
    }
 
-   public void startInternal(ProtocolServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
+   public void startInternal(WebSocketServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       super.startInternal(configuration, cacheManager);
    }
 
    @Override
    public ChannelInitializer<Channel> getInitializer() {
-      return new WebSocketServerPipelineFactory(cacheManager(), this);
+      return new WebSocketServerPipelineFactory(cacheManager, this);
    }
 
    private static class WebSocketServerPipelineFactory extends ChannelInitializer<Channel> {

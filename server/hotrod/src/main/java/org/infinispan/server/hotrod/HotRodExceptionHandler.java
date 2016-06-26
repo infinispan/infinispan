@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.DecoderException;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.core.logging.JavaLog;
+import org.infinispan.server.core.logging.Log;
 
 /**
  * Handler that will transform various exceptions into responses to send back to the client.
@@ -14,7 +14,7 @@ import org.infinispan.server.core.logging.JavaLog;
  * @since 9.0
  */
 public class HotRodExceptionHandler extends ChannelInboundHandlerAdapter {
-   private final static JavaLog log = LogFactory.getLog(HotRodExceptionHandler.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(HotRodExceptionHandler.class, Log.class);
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) throws Exception {

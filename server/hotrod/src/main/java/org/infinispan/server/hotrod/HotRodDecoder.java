@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.logging.JavaLog;
+import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.ExtendedByteBufJava;
 import org.infinispan.server.core.transport.NettyTransport;
 
@@ -20,7 +20,7 @@ import java.util.function.Predicate;
  * @since 9.0
  */
 public class HotRodDecoder extends ByteToMessageDecoder {
-   private final static JavaLog log = LogFactory.getLog(HotRodDecoder.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(HotRodDecoder.class, Log.class);
 
    private final EmbeddedCacheManager cacheManager;
    private final NettyTransport transport;

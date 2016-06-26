@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.configuration.cache.CacheMode
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
@@ -8,7 +9,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.hotrod.Events._
 import org.infinispan.server.hotrod.OperationStatus._
-import org.infinispan.server.hotrod.logging.Log
+import org.infinispan.server.hotrod.logging.JavaLog
 import org.infinispan.topology.CacheTopology
 
 import scala.collection.JavaConversions._
@@ -16,8 +17,9 @@ import scala.collection.JavaConversions._
 /**
  * @author Galder Zamarreño
  */
-object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
-   val isTrace = isTraceEnabled
+object Encoder2x extends AbstractVersionedEncoder with Constants {
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
+   val isTrace = log.isTraceEnabled
 
    override def writeEvent(e: Event, buf: ByteBuf) {
       if (isTrace)
@@ -77,7 +79,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                writeHashTopologyUpdate(h, cacheTopology, buf)
          }
          case None =>
-            if (isTrace) trace("Write topology response header with no change")
+            if (isTrace) log.trace("Write topology response header with no change")
             buf.writeByte(0)
       }
    }
@@ -97,10 +99,10 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
    private def writeTopologyUpdate(t: TopologyAwareResponse, buffer: ByteBuf) {
       val topologyMap = t.serverEndpointsMap
       if (topologyMap.isEmpty) {
-         logNoMembersInTopology()
+         log.noMembersInTopology()
          buffer.writeByte(0) // Topology not changed
       } else {
-         if (isTrace) trace("Write topology change response header %s", t)
+         if (isTrace) log.tracef("Write topology change response header %s", t)
          buffer.writeByte(1) // Topology changed
          writeUnsignedInt(t.topologyId, buffer)
          writeUnsignedInt(topologyMap.size, buffer)
@@ -112,7 +114,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
    }
 
    private def writeEmptyHashInfo(t: AbstractTopologyResponse, buffer: ByteBuf) {
-      if (isTrace) trace("Return limited hash distribution aware header because the client %s doesn't ", t)
+      if (isTrace) log.tracef("Return limited hash distribution aware header because the client %s doesn't ", t)
       buffer.writeByte(0) // Hash Function Version
       writeUnsignedInt(t.numSegments, buffer)
    }
@@ -125,15 +127,15 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       }
 
       if (isTrace) {
-         trace(s"Topology cache contains: ${h.serverEndpointsMap}")
-         trace(s"After read consistent hash filter, members are: $members")
+         log.trace(s"Topology cache contains: ${h.serverEndpointsMap}")
+         log.trace(s"After read consistent hash filter, members are: $members")
       }
 
       if (members.isEmpty) {
-         logNoMembersInHashTopology(ch, h.serverEndpointsMap.toString())
+         log.noMembersInHashTopology(ch, h.serverEndpointsMap.toString())
          buf.writeByte(0) // Topology not changed
       } else {
-         if (isTrace) trace("Write hash distribution change response header %s", h)
+         if (isTrace) log.tracef("Write hash distribution change response header %s", h)
          buf.writeByte(1) // Topology changed
          writeUnsignedInt(h.topologyId, buf) // Topology ID
 
@@ -212,23 +214,23 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       val serverEndpoints = addressCache.toMap
 
       var topologyId = currentTopologyId
-      val isTrace = isTraceEnabled
+      val isTrace = log.isTraceEnabled
 
       if (isTrace) {
-         tracef("Check for partial topologies: members=%s, endpoints=%s, client-topology=%s, server-topology=%s",
-            cacheMembers, serverEndpoints, r.topologyId, topologyId)
+         log.tracef("Check for partial topologies: members=%s, endpoints=%s, client-topology=%s, server-topology=%s",
+            Array(cacheMembers, serverEndpoints, r.topologyId, topologyId).map(_.asInstanceOf[AnyRef]) : _*)
       }
 
       if (!serverEndpoints.keySet.containsAll(cacheMembers)) {
          // At least one cache member is missing from the topology cache
          val clientTopologyId = r.topologyId
          if (currentTopologyId - clientTopologyId < 2) {
-            if (isTrace) trace("Postpone topology update")
+            if (isTrace) log.trace("Postpone topology update")
             return None // Postpone topology update
          } else {
             // Send partial topology update
             topologyId -= 1
-            if (isTrace) trace("Send partial topology update with topology id %s", topologyId)
+            if (isTrace) log.tracef("Send partial topology update with topology id %s", topologyId)
          }
       }
 
@@ -282,7 +284,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             if (g.status == Success) {
                var iterator = asScalaIterator(g.entries.iterator)
                if (g.count != 0) {
-                  if (isTrace) trace("About to write (max) %d messages to the client", g.count)
+                  if (isTrace) log.tracef("About to write (max) %d messages to the client", g.count)
                   iterator = iterator.take(g.count)
                }
                for (entry <- iterator) {
