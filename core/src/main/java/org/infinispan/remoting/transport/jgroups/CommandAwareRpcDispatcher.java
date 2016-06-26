@@ -1,6 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
+import static org.jgroups.Message.Flag.NO_FC;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -55,6 +56,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final boolean FORCE_MCAST = SecurityActions.getBooleanProperty("infinispan.unsafe.force_multicast");
    private static long STAGGER_DELAY_NANOS = TimeUnit.MILLISECONDS.toNanos(
          SecurityActions.getIntProperty("infinispan.stagger.delay", 5));
+   private static final int REPLY_FLAGS_TO_CLEAR = Message.Flag.RSVP.value() | Message.Flag.SCOPED.value() |
+         Message.Flag.INTERNAL.value() | Message.Flag.NO_TOTAL_ORDER.value();
+   private static final int REPLY_FLAGS_TO_SET = NO_FC.value();
 
    private final InboundInvocationHandler handler;
    private final ScheduledExecutorService timeoutExecutor;
@@ -166,32 +170,33 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             }
          } catch (InterruptedException e) {
             log.shutdownHandlingCommand(cmd);
-            reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")), cmd);
+            reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")), cmd, req);
          } catch (IllegalLifecycleStateException e) {
             if (trace) log.trace("Ignoring command unmarshalling error during shutdown");
             // If this wasn't a CacheRpcCommand, it means the channel is already stopped, and the response won't matter
-            reply(response, CacheNotFoundResponse.INSTANCE, cmd);
+            reply(response, CacheNotFoundResponse.INSTANCE, cmd, req);
          } catch (Throwable x) {
             if (cmd == null)
                log.errorUnMarshallingCommand(x);
             else
                log.exceptionHandlingCommand(cmd, x);
-            reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", x)), cmd);
+            reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", x)), cmd,
+                  req);
          }
       } else {
-         reply(response, null, null);
+         reply(response, null, null, req);
       }
    }
 
    private void executeCommandFromRemoteSite(final ReplicableCommand cmd, final Message req, final org.jgroups.blocks.Response response) throws Throwable {
       SiteAddress siteAddress = (SiteAddress) req.getSrc();
       ((XSiteReplicateCommand) cmd).setOriginSite(siteAddress.getSite());
-      Reply reply = returnValue -> CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd);
+      Reply reply = returnValue -> CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd, req);
       handler.handleFromRemoteSite(siteAddress.getSite(), (XSiteReplicateCommand) cmd, reply, decodeDeliverMode(req));
    }
 
    private void executeCommandFromLocalCluster(final ReplicableCommand cmd, final Message req, final org.jgroups.blocks.Response response) throws Throwable {
-      Reply reply = returnValue -> CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd);
+      Reply reply = returnValue -> CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd, req);
       handler.handleFromCluster(fromJGroupsAddress(req.getSrc()), cmd, reply, decodeDeliverMode(req));
    }
 
@@ -230,11 +235,30 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return getClass().getSimpleName() + "[Outgoing marshaller: " + req_marshaller + "; incoming marshaller: " + rsp_marshaller + "]";
    }
 
-   private void reply(org.jgroups.blocks.Response response, Object retVal, ReplicableCommand command) {
+   private void reply(org.jgroups.blocks.Response response, Object retVal, ReplicableCommand command,
+         Message req) {
       if (response != null) {
          if (trace) log.tracef("About to send back response %s for command %s", retVal, command);
+         Buffer rsp_buf;
+         boolean is_exception = false;
+         try {
+            rsp_buf = rsp_marshaller.objectToBuffer(retVal);
+         } catch (Throwable t) {
+            try {  // this call should succeed (all exceptions are serializable)
+               rsp_buf = rsp_marshaller.objectToBuffer(t);
+               is_exception = true;
+            } catch (Throwable tt) {
+               log.errorMarshallingObject(tt, retVal);
+               return;
+            }
+         }
+
+         // Always set the NO_FC flag
+         short flags = (short) (req.getFlags() | REPLY_FLAGS_TO_SET & ~REPLY_FLAGS_TO_CLEAR);
+         Message rsp = req.makeReply().setFlag(flags).setBuffer(rsp_buf);
+
          //exceptionThrown is always false because the exceptions are wrapped in an ExceptionResponse
-         response.send(retVal, false);
+         response.send(rsp, is_exception);
       }
    }
 
