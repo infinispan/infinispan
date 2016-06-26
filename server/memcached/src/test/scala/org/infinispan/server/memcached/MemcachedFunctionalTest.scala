@@ -1,7 +1,7 @@
 package org.infinispan.server.memcached
 
 import java.lang.reflect.Method
-import logging.Log
+
 import org.testng.Assert._
 import org.testng.annotations.Test
 import net.spy.memcached.CASResponse
@@ -10,10 +10,13 @@ import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import java.util.concurrent.{CountDownLatch, TimeUnit}
+
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.Version
+import org.infinispan.commons.logging.LogFactory
 import test.MemcachedTestingUtil._
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
+import org.infinispan.server.memcached.logging.JavaLog
 
 import scala.util.Try
 
@@ -587,11 +590,13 @@ class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 }
 
 @Listener
-class NoReplyListener(latch: CountDownLatch) extends Log {
+class NoReplyListener(latch: CountDownLatch) {
+
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    @CacheEntryRemoved
    def removed(event: CacheEntryRemovedEvent[AnyRef, AnyRef]) {
-      debug("Entry removed, open latch")
+      log.debug("Entry removed, open latch")
       latch.countDown
    }
 

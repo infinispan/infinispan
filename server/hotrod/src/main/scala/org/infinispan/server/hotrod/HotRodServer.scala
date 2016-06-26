@@ -10,6 +10,7 @@ import io.netty.channel.{Channel, ChannelInitializer}
 import io.netty.util.concurrent.DefaultThreadFactory
 import org.infinispan
 import org.infinispan.commons.equivalence.AnyEquivalence
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.commons.util.{CollectionFactory, ServiceFinder}
 import org.infinispan.configuration.cache.{CacheMode, Configuration, ConfigurationBuilder}
@@ -26,13 +27,12 @@ import org.infinispan.notifications.cachelistener.filter.{CacheEventConverterFac
 import org.infinispan.registry.InternalCacheRegistry
 import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.security.SaslUtils
-import org.infinispan.server.core.transport.TimeoutEnabledChannelInitializer
 import org.infinispan.server.core.{AbstractProtocolServer, QueryFacade}
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory
 import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
-import org.infinispan.server.hotrod.logging.Log
-import org.infinispan.server.hotrod.transport.HotRodChannelInitializer
+import org.infinispan.server.hotrod.logging.JavaLog
+import org.infinispan.server.hotrod.transport.{HotRodChannelInitializer, TimeoutEnabledChannelInitializer}
 import org.infinispan.upgrade.RollingUpgradeManager
 import org.infinispan.util.concurrent.IsolationLevel
 import org.infinispan.{AdvancedCache, IllegalLifecycleStateException}
@@ -49,7 +49,8 @@ import scala.collection.JavaConversions._
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
+class HotRodServer extends AbstractProtocolServer[HotRodServerConfiguration]("HotRod") {
+   private val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    type SuitableConfiguration = HotRodServerConfiguration
 
@@ -115,8 +116,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       isClustered = globalConfig.transport().transport() != null
       if (isClustered) {
          defineTopologyCacheConfig(cacheManager)
-         if (isDebugEnabled)
-            debug("Externally facing address is %s:%d", configuration.proxyHost, configuration.proxyPort)
+         if (log.isDebugEnabled)
+            log.debugf("Externally facing address is %s:%d", configuration.proxyHost, configuration.proxyPort)
 
          addSelfToTopologyView(cacheManager)
       }
@@ -152,7 +153,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       }
       if (configuration.idleTimeout > 0)
          new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor(getQualifiedName()))
-           with TimeoutEnabledChannelInitializer
+           with TimeoutEnabledChannelInitializer[HotRodServerConfiguration]
       else // Idle timeout logic is disabled with -1 or 0 values
          new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor(getQualifiedName()))
    }
@@ -209,7 +210,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       addressCache.addListener(topologyChangeListener)
 
       // Map cluster address to server endpoint address
-      debug("Map %s cluster address with %s server endpoint in address cache", clusterAddress, address)
+      log.debugf("Map %s cluster address with %s server endpoint in address cache",
+         Array(clusterAddress, address).map(_.asInstanceOf[AnyRef]) : _*)
       // Guaranteed delivery required since if data is lost, there won't be
       // any further cache calls, so negative acknowledgment can cause issues.
       addressCache.getAdvancedCache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.GUARANTEED_DELIVERY)
@@ -402,7 +404,7 @@ object HotRodServer {
 }
 
 class CheckAddressTask(clusterAddress: Address, serverAddress: ServerAddress)
-      extends DistributedCallable[Address, ServerAddress, Boolean] with Serializable with Log {
+      extends DistributedCallable[Address, ServerAddress, Boolean] with Serializable {
    @transient
    private var cache: infinispan.Cache[Address, ServerAddress] = null
 

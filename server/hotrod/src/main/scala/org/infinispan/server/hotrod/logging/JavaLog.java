@@ -5,6 +5,7 @@ import java.util.Set;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.hotrod.MissingFactoryException;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jboss.logging.annotations.Cause;
@@ -22,7 +23,7 @@ import static org.jboss.logging.Logger.Level.*;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface JavaLog extends org.infinispan.util.logging.Log {
+public interface JavaLog extends Log {
 
    @LogMessage(level = WARN)
    @Message(value = "While trying to detect a crashed member, current view returned null", id = 6000)

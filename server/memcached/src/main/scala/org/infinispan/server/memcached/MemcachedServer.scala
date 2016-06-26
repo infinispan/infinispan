@@ -3,12 +3,14 @@ package org.infinispan.server.memcached
 import io.netty.channel.{Channel, ChannelInitializer}
 import org.infinispan.server.core.AbstractProtocolServer
 import java.util.concurrent.Executors
+
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.transport.NettyChannelInitializer
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration
 import org.infinispan.AdvancedCache
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.configuration.cache.ConfigurationBuilder
-import org.infinispan.server.memcached.logging.Log
+import org.infinispan.server.memcached.logging.JavaLog
 
 /**
  * Memcached server defining its decoder/encoder settings. In fact, Memcached does not use an encoder since there's
@@ -17,9 +19,10 @@ import org.infinispan.server.memcached.logging.Log
  * @author Galder Zamarreño
  * @since 4.1
  */
-class MemcachedServer extends AbstractProtocolServer("Memcached") with Log {
+class MemcachedServer extends AbstractProtocolServer[MemcachedServerConfiguration]("Memcached") {
    type SuitableConfiguration = MemcachedServerConfiguration
 
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
    protected lazy val scheduler = Executors.newScheduledThreadPool(1)
    private var memcachedCache: AdvancedCache[String, Array[Byte]] = _
 

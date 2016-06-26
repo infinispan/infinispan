@@ -4,17 +4,21 @@ import java.io.IOException
 import javax.ws.rs.container.{ContainerRequestFilter, ContainerResponseFilter}
 
 import org.infinispan.commons.api.Lifecycle
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import org.infinispan.rest.configuration.{RestServerConfiguration, RestServerConfigurationBuilder}
-import org.infinispan.rest.logging.{RestAccessLoggingHandler, Log}
-import org.infinispan.server.core.CacheIgnoreAware
+import org.infinispan.rest.logging.{JavaLog, RestAccessLoggingHandler}
+import org.infinispan.server.core.{AbstractCacheIgnoreAware, CacheIgnoreAware}
 import org.jboss.resteasy.plugins.server.netty.NettyJaxrsServer
 import org.jboss.resteasy.spi.ResteasyDeployment
+
 import scala.collection.JavaConversions._
 
 final class NettyRestServer (
       val cacheManager: EmbeddedCacheManager, val configuration: RestServerConfiguration,
-      netty: NettyJaxrsServer, onStop: EmbeddedCacheManager => Unit) extends Lifecycle with Log with CacheIgnoreAware {
+      netty: NettyJaxrsServer, onStop: EmbeddedCacheManager => Unit) extends AbstractCacheIgnoreAware with Lifecycle {
+
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    override def start(): Unit = {
       netty.start()
@@ -25,7 +29,7 @@ final class NettyRestServer (
       deployment.getRegistry.addSingletonResource(server)
       deployment.getProviderFactory.register(new RestAccessLoggingHandler, classOf[ContainerResponseFilter],
          classOf[ContainerRequestFilter])
-      logStartRestServer(configuration.host(), configuration.port())
+      log.startRestServer(configuration.host, configuration.port)
    }
 
    override def stop(): Unit = {
@@ -35,7 +39,9 @@ final class NettyRestServer (
 
 }
 
-object NettyRestServer extends Log {
+object NettyRestServer {
+
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    def apply(config: RestServerConfiguration): NettyRestServer = {
       NettyRestServer(config, new DefaultCacheManager(), cm => cm.stop())
@@ -69,7 +75,7 @@ object NettyRestServer extends Log {
          new DefaultCacheManager(cfgFile)
       } catch {
          case e: IOException =>
-            logErrorReadingConfigurationFile(e, cfgFile)
+            log.errorReadingConfigurationFile(e, cfgFile)
             new DefaultCacheManager()
       }
    }

@@ -1,16 +1,19 @@
 package org.infinispan.server.hotrod.test
 
 import java.net.InetSocketAddress
+
 import org.testng.Assert._
-import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.OperationResponse._
+
 import collection.mutable
 import collection.immutable
 import java.lang.reflect.Method
+
 import HotRodTestingUtil._
-import java.util.concurrent.{Future, ConcurrentHashMap}
+import java.util.concurrent.{ConcurrentHashMap, Future}
 import java.util.concurrent.atomic.AtomicLong
+
 import mutable.ListBuffer
 import org.infinispan.test.TestingUtil
 import org.infinispan.commons.util.Util
@@ -18,16 +21,20 @@ import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.hotrod._
 import java.lang.StringBuilder
 import javax.net.ssl.SSLEngine
+
 import io.netty.handler.ssl.SslHandler
 import io.netty.channel._
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.bootstrap.Bootstrap
-import io.netty.handler.codec.{ReplayingDecoder, MessageToByteEncoder}
+import io.netty.handler.codec.{MessageToByteEncoder, ReplayingDecoder}
 import io.netty.buffer.ByteBuf
 import io.netty.channel.socket.nio.NioSocketChannel
 import javax.security.sasl.SaslClient
+
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
-import org.infinispan.commons.equivalence.{ByteArrayEquivalence, AnyEquivalence}
+import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
+import org.infinispan.commons.logging.LogFactory
+import org.infinispan.server.hotrod.logging.JavaLog
 
 /**
  * A very simple Hot Rod client for testing purposes. It's a quick and dirty client implementation.
@@ -41,9 +48,10 @@ import org.infinispan.commons.equivalence.{ByteArrayEquivalence, AnyEquivalence}
  * @author Tristan Tarrant
  * @since 4.1
  */
-class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTimeoutSeconds: Int, val protocolVersion: Byte, sslEngine: SSLEngine = null) extends Log {
+class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTimeoutSeconds: Int, val protocolVersion: Byte, sslEngine: SSLEngine = null) {
    val idToOp = new ConcurrentHashMap[Long, Op]
    var saslClient: SaslClient = null
+   private val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    private lazy val ch: Channel = {
       val eventLoopGroup = new NioEventLoopGroup()
@@ -313,7 +321,7 @@ private class ClientChannelInitializer(client: HotRodClient, rspTimeoutSeconds: 
 private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object] {
 
    override def encode(ctx: ChannelHandlerContext, msg: AnyRef, buffer: ByteBuf): Unit = {
-      trace("Encode %s so that it's sent to the server", msg)
+      log.tracef("Encode %s so that it's sent to the server", msg)
       msg match {
          case partial: PartialOp => {
             buffer.writeByte(partial.magic.asInstanceOf[Byte]) // magic
@@ -414,10 +422,10 @@ object HotRodClient {
    val idCounter = new AtomicLong
 }
 
-private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with Log with Constants {
+private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with Constants {
 
    override def decode(ctx: ChannelHandlerContext, buf: ByteBuf, out: java.util.List[AnyRef]): Unit = {
-      trace("Decode response from server")
+      log.trace("Decode response from server")
       buf.readUnsignedByte // magic byte
       val id = readUnsignedLong(buf)
       val opCode = OperationResponse.apply(buf.readUnsignedByte)
@@ -608,13 +616,13 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
 
       }
       if (resp != null) {
-         trace("Got response from server: %s", resp)
+         log.tracef("Got response from server: %s", resp)
          out.add(resp)
       }
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-      logExceptionReported(cause)
+      log.exceptionReported(cause)
    }
 
    private def read2xHashDistAwareHeader(buf: ByteBuf, topologyId: Int, op: Op): Option[AbstractTestTopologyAwareResponse] = {
@@ -733,7 +741,7 @@ private class ClientHandler(rspTimeoutSeconds: Int) extends ChannelInboundHandle
          case e: TestCustomEvent =>
             clientListeners.get(e.listenerId).onCustom(e)
          case resp: TestResponse =>
-            trace("Put %s in responses", resp)
+            log.tracef("Put %s in responses", resp)
             responses.put(resp.messageId, resp)
       }
    }

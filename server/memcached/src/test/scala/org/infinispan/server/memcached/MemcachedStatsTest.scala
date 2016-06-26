@@ -11,7 +11,7 @@ import test.MemcachedTestingUtil._
 import org.infinispan.manager.EmbeddedCacheManager
 import net.spy.memcached.MemcachedClient
 import annotation.tailrec
-import org.infinispan.server.core.ConnectionStatsTest._
+import ConnectionStatsTest._
 
 /**
  * Tests stats command for Infinispan Memcached server.

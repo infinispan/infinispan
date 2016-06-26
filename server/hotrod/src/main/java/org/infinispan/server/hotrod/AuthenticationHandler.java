@@ -54,8 +54,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
    public AuthenticationHandler(HotRodServer server) {
       this.server = server;
 
-      serverConfig = (HotRodServerConfiguration) server.configuration();
-      authenticationConfig = ((HotRodServerConfiguration) server.getConfiguration()).authentication();
+      serverConfig = server.getConfiguration();
+      authenticationConfig = server.getConfiguration().authentication();
       requireAuthentication = authenticationConfig.mechProperties().containsKey(Sasl.POLICY_NOANONYMOUS)
               && authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS).equals("true");
    }

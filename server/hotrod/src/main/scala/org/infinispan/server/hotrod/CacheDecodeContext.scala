@@ -19,7 +19,7 @@ import org.infinispan.server.hotrod.OperationStatus._
  * Invokes operations against the cache based on the state kept during decoding process
  *
  */
-class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
+class CacheDecodeContext(server: HotRodServer) {
 
    type BytesResponse = Bytes => Response
 
@@ -117,11 +117,11 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants {
       val metadata = new EmbeddedMetadata.Builder
       metadata.version(generateVersion(server.getCacheRegistry(header.cacheName), cache))
       (params.lifespan, params.maxIdle) match {
-         case (ExpirationParam(EXPIRATION_DEFAULT,_), ExpirationParam(EXPIRATION_DEFAULT,_)) =>
+         case (ExpirationParam(ServerConstants.EXPIRATION_DEFAULT,_), ExpirationParam(ServerConstants.EXPIRATION_DEFAULT,_)) =>
             // Do nothing - default is merged in via embedded
-         case (_, ExpirationParam(EXPIRATION_DEFAULT,_)) =>
+         case (_, ExpirationParam(ServerConstants.EXPIRATION_DEFAULT,_)) =>
             metadata.lifespan(decoder.toMillis(params.lifespan, header))
-         case (ExpirationParam(EXPIRATION_DEFAULT, _), _) =>
+         case (ExpirationParam(ServerConstants.EXPIRATION_DEFAULT, _), _) =>
             metadata.maxIdle(decoder.toMillis(params.maxIdle, header))
          case (_, _) =>
             metadata.lifespan(decoder.toMillis(params.lifespan, header))

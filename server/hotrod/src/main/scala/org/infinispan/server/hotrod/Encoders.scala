@@ -1,7 +1,5 @@
 package org.infinispan.server.hotrod
 
-import logging.Log
-
 /**
  * Version specific encoders are included here.
  *
@@ -18,15 +16,15 @@ object Encoders {
    /**
     * Encoder for version 1.1 of the Hot Rod protocol.
     */
-   object Encoder11 extends AbstractTopologyAwareEncoder1x with Log
+   object Encoder11 extends AbstractTopologyAwareEncoder1x
 
    /**
     * Encoder for version 1.2 of the Hot Rod protocol.
     */
-   object Encoder12 extends AbstractTopologyAwareEncoder1x with Log
+   object Encoder12 extends AbstractTopologyAwareEncoder1x
 
    /**
     * Encoder for version 1.3 of the Hot Rod protocol.
     */
-   object Encoder13 extends AbstractTopologyAwareEncoder1x with Log
+   object Encoder13 extends AbstractTopologyAwareEncoder1x
 }

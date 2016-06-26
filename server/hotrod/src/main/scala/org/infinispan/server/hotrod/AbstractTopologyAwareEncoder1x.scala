@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod
 
-import logging.Log
 import org.infinispan.commons.hash.Hash
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner
 import org.infinispan.distribution.group.PartitionerConsistentHash
@@ -18,7 +17,7 @@ import io.netty.buffer.ByteBuf
  * @author Galder Zamarreño
  * @since 5.2
  */
-abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Constants with Log {
+abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Constants {
 
    override protected def createHashDistAwareResp(lastViewId: Int,
                                                   serverEndpointsMap: Map[Address, ServerAddress],
@@ -41,7 +40,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
 
    def writeHashTopologyUpdate11(h: HashDistAware11Response,
                                server: HotRodServer, r: Response, buf: ByteBuf) {
-      trace("Write hash distribution change response header %s", h)
+      log.tracef("Write hash distribution change response header %s", h)
       if (h.hashFunction == 0) {
          writeLimitedHashTopologyUpdate(h, buf)
          return
@@ -93,7 +92,7 @@ abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x with Con
 
 
    override def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buf: ByteBuf) {
-      trace("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
+      log.tracef("Return limited hash distribution aware header in spite of having a hash aware client %s", t)
       writeCommonHashTopologyHeader(buf, t.topologyId, 0, 0, 0, t.serverEndpointsMap.size)
       writeUnsignedInt(1, buf) // Num virtual nodes
       for (address <- t.serverEndpointsMap.values) {

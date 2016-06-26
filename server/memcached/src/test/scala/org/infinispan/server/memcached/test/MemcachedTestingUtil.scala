@@ -3,11 +3,14 @@ package org.infinispan.server.memcached.test
 import net.spy.memcached.{DefaultConnectionFactory, MemcachedClient}
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
+
 import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedServer}
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util
+
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder
-import org.infinispan.server.memcached.logging.Log
+import org.infinispan.server.memcached.logging.JavaLog
 
 /**
  * Utils for Memcached tests.
@@ -15,7 +18,8 @@ import org.infinispan.server.memcached.logging.Log
  * @author Galder Zamarreño
  * @since 4.1
  */
-object MemcachedTestingUtil extends Log {
+object MemcachedTestingUtil {
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
 
    def host = "127.0.0.1"
 
@@ -57,7 +61,7 @@ object MemcachedTestingUtil extends Log {
       }
       catch {
          case t: Throwable => {
-            error("Error stopping client", t)
+            log.error("Error stopping client", t)
          }
       }
    }

@@ -2,14 +2,15 @@ package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
 import io.netty.util.internal.PlatformDependent
-import logging.Log
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.commons.util.Util
 import io.netty.handler.codec.MessageToByteEncoder
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelHandler.Sharable
+import org.infinispan.commons.logging.LogFactory
 import org.infinispan.server.hotrod.Events.Event
 import org.infinispan.server.hotrod.OperationStatus._
+import org.infinispan.server.hotrod.logging.JavaLog
 
 /**
  * Hot Rod specific encoder.
@@ -19,16 +20,18 @@ import org.infinispan.server.hotrod.OperationStatus._
  */
 @Sharable
 class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
-        extends MessageToByteEncoder[Any](PlatformDependent.directBufferPreferred()) with Constants with Log {
+        extends MessageToByteEncoder[Any](PlatformDependent.directBufferPreferred()) with Constants {
 
    private lazy val isClustered: Boolean = cacheManager.getCacheManagerConfiguration.transport.transport != null
    private lazy val addressCache: AddressCache =
       if (isClustered) cacheManager.getCache(server.getConfiguration.topologyCacheName) else null
-   private val isTrace = isTraceEnabled
+
+   val log = LogFactory.getLog(getClass, classOf[JavaLog])
+   private val isTrace = log.isTraceEnabled
 
    def encode(ctx: ChannelHandlerContext, msg: Any, buf: ByteBuf): Unit = {
       try {
-         trace("Encode msg %s", msg)
+         log.tracef("Encode msg %s", msg)
 
          msg match {
             case r: Response =>
@@ -46,7 +49,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
                }
                catch {
                   case t: Throwable =>
-                     logErrorWritingResponse(r.messageId, t)
+                     log.errorWritingResponse(r.messageId, t)
                      buf.clear() // reset buffer
                   val error = new ErrorResponse(r.version, r.messageId, r.cacheName, r.clientIntel, ServerError, r.topologyId, t.toString)
                      encoder.writeHeader(error, buf, addressCache, server)
@@ -58,16 +61,16 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
             case None =>
                // Do nothing
             case _ =>
-               logErrorUnexpectedMessage(msg)
+               log.errorUnexpectedMessage(msg)
          }
 
          if (isTrace)
-            trace("Write buffer contents %s to channel %s",
-               Util.hexDump(buf.nioBuffer), ctx.channel)
+            log.tracef("Write buffer contents %s to channel %s",
+               Array(Util.hexDump(buf.nioBuffer), ctx.channel).map(_.asInstanceOf[AnyRef]) : _*)
       }
       catch {
          case t: Throwable =>
-            logErrorEncodingMessage(msg, t)
+            log.errorEncodingMessage(msg, t)
             throw t
       }
    }
