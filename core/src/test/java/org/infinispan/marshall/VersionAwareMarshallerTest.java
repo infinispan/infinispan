@@ -10,7 +10,6 @@ import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -264,9 +263,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       RollbackCommand c13 = new RollbackCommand(cacheName, gtx);
       marshallAndAssertEquality(c13);
 
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5, c6, c8, c10, c12, c13), cacheName);
-      marshallAndAssertEquality(c99);
-
       TotalOrderNonVersionedPrepareCommand c14 = new TotalOrderNonVersionedPrepareCommand(cacheName, gtx, c5, c6, c8, c10);
       marshallAndAssertEquality(c14);
 
@@ -313,16 +309,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       bytes = marshaller.objectToByteBuffer(c14);
       marshaller.objectFromByteBuffer(bytes);
-   }
-
-   public void testMultiRpcCommand() throws Exception {
-      ByteString cacheName = ByteString.fromString(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
-      ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName,
-            EnumUtil.EMPTY_BIT_SET, false, null, AnyEquivalence.getInstance());
-      PutKeyValueCommand c5 = new PutKeyValueCommand(
-            "k", "v", false, null, new EmbeddedMetadata.Builder().build(), EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance(), CommandInvocationId.generateId(null));
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(c2, c5), cacheName);
-      marshallAndAssertEquality(c99);
    }
 
    public void testInternalCacheEntryMarshalling() throws Exception {

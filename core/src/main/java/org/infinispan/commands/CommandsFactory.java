@@ -22,7 +22,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -276,13 +275,6 @@ public interface CommandsFactory {
     * @param isRemote
     */
    void initializeReplicableCommand(ReplicableCommand command, boolean isRemote);
-
-   /**
-    * Builds an RpcCommand "envelope" containing multiple ReplicableCommands
-    * @param toReplicate ReplicableCommands to include in the envelope
-    * @return a MultipleRpcCommand
-    */
-   MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate);
 
    /**
     * Builds a SingleRpcCommand "envelope" containing a single ReplicableCommand

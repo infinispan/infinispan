@@ -2,14 +2,12 @@ package org.infinispan.remoting.inboundhandler;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
-import org.infinispan.remoting.inboundhandler.action.CompositeAction;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.LockAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
@@ -22,11 +20,7 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-
-import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
 /**
  * A {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler} implementation for non-total order
@@ -71,10 +65,6 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
             case SingleRpcCommand.COMMAND_ID:
                runnable = createReadyActionRunnable(command, reply, commandTopologyId, true, onExecutorService,
                                                     createReadyActionForSingleRpcCommand(commandTopologyId, (SingleRpcCommand) command));
-               break;
-            case MultipleRpcCommand.COMMAND_ID:
-               runnable = createReadyActionRunnable(command, reply, commandTopologyId, true, onExecutorService,
-                                                  createReadyActionForMultipleRpcCommand(commandTopologyId, (MultipleRpcCommand) command));
                break;
             default:
                runnable = createDefaultRunnable(command, reply, commandTopologyId, command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService);
@@ -145,28 +135,4 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
       ReplicableCommand command = singleRpcCommand.getCommand();
       return command instanceof RemoteLockCommand ? createReadyAction(topologyId, (RemoteLockCommand) command) : null;
    }
-
-   private ReadyAction createReadyActionForMultipleRpcCommand(int topologyId, MultipleRpcCommand command) {
-      ReplicableCommand[] commands = command.getCommands();
-      List<ReadyAction> list = new ArrayList<>(commands.length);
-      forEach(commands, cmd -> {
-         if (cmd instanceof RemoteLockCommand) {
-            ReadyAction action = createReadyAction(topologyId, (RemoteLockCommand) cmd);
-            if (action != null) {
-               list.add(action);
-            }
-         }
-      });
-
-      if (list.isEmpty()) {
-         return null;
-      } else if (list.size() == 1) {
-         return list.get(0);
-      }
-
-      CompositeAction action = new CompositeAction(list);
-      action.registerListener();
-      return action;
-   }
-
 }

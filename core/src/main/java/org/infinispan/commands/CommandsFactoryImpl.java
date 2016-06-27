@@ -24,7 +24,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -321,11 +320,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {
-      return new MultipleRpcCommand(toReplicate, cacheName);
-   }
-
-   @Override
    public SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
       return new SingleRpcCommand(cacheName, call);
    }
@@ -354,14 +348,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case RemoveCommand.COMMAND_ID:
             ((RemoveCommand) c).init(notifier, configuration);
-            break;
-         case MultipleRpcCommand.COMMAND_ID:
-            MultipleRpcCommand rc = (MultipleRpcCommand) c;
-            rc.init(interceptorChain, icf);
-            if (rc.getCommands() != null)
-               for (ReplicableCommand nested : rc.getCommands()) {
-                  initializeReplicableCommand(nested, false);
-               }
             break;
          case SingleRpcCommand.COMMAND_ID:
             SingleRpcCommand src = (SingleRpcCommand) c;

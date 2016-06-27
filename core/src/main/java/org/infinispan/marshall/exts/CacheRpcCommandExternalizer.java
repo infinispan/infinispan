@@ -8,7 +8,6 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -67,17 +66,6 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    private final ReplicableCommandExternalizer cmdExt;
    private final StreamingMarshaller globalMarshaller;
 
-   /*
-   Currently needed for MultipleRpcCommand.
-   For this command, when it tries to unmarshall the first command, the marshaller tries to read the most as possible
-   to an internal buffer.
-   What is happening is that it reads all the commands on the first try and when it tries to unmarshall the second command
-   it will fail with java.io.EOFException or java.io.StreamCorruptedException.
-   Caching in a ThreadLocal solves the problem by reusing it.
-    */
-   private final ThreadLocal<ObjectInput> reusableObjectInput = new ThreadLocal<>();
-   private final ThreadLocal<ObjectOutput> reusableObjectOutput = new ThreadLocal<>();
-
    public CacheRpcCommandExternalizer(GlobalComponentRegistry gcr, ReplicableCommandExternalizer cmdExt) {
       this.cmdExt = cmdExt;
       this.gcr = gcr;
@@ -91,7 +79,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(DistributedExecuteCommand.class,
                LockControlCommand.class,
                StateRequestCommand.class, StateResponseCommand.class, ClusteredGetCommand.class,
-               MultipleRpcCommand.class, SingleRpcCommand.class, CommitCommand.class,
+               SingleRpcCommand.class, CommitCommand.class,
                PrepareCommand.class, RollbackCommand.class, RemoveCacheCommand.class,
                TxCompletionNotificationCommand.class, GetInDoubtTransactionsCommand.class,
                GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
@@ -123,21 +111,13 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    }
 
    private void marshallParameters(CacheRpcCommand cmd, StreamingMarshaller marshaller, ObjectOutput oo) throws IOException {
-      ObjectOutput paramsOutput = reusableObjectOutput.get();
-      final boolean firstTime = paramsOutput == null;
-      if (firstTime) {
-         BufferSizePredictor sizePredictor = marshaller.getBufferSizePredictor(cmd);
-         int estimatedSize = sizePredictor.nextSize(cmd);
-         paramsOutput = marshaller.startObjectOutput(convertObjectOutput(oo), true, estimatedSize);
-         reusableObjectOutput.set(paramsOutput);
-      }
+      BufferSizePredictor sizePredictor = marshaller.getBufferSizePredictor(cmd);
+      int estimatedSize = sizePredictor.nextSize(cmd);
+      ObjectOutput paramsOutput = marshaller.startObjectOutput(convertObjectOutput(oo), true, estimatedSize);
       try {
          cmdExt.writeCommandParameters(paramsOutput, cmd);
       } finally {
-         if (firstTime) {
-            marshaller.finishObjectOutput(paramsOutput);
-            reusableObjectOutput.remove();
-         }
+         marshaller.finishObjectOutput(paramsOutput);
       }
    }
 
@@ -151,17 +131,12 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
 
       //create the object input
-      ObjectInput paramsInput = reusableObjectInput.get();
-      final boolean firsTime = paramsInput == null;
-      if (firsTime) {
-         paramsInput = marshaller.startObjectInput(convertInputStream(input), true);
-         // Not ideal, but the alternative (without changing API), would have been
-         // using thread locals which are expensive to retrieve.
-         // Remember that the aim with externalizers is for them to be stateless.
-         if (paramsInput instanceof ExtendedRiverUnmarshaller) {
-            ((ExtendedRiverUnmarshaller) paramsInput).setInfinispanMarshaller(marshaller);
-         }
-         reusableObjectInput.set(paramsInput);
+      ObjectInput paramsInput = marshaller.startObjectInput(convertInputStream(input), true);
+      // Not ideal, but the alternative (without changing API), would have been
+      // using thread locals which are expensive to retrieve.
+      // Remember that the aim with externalizers is for them to be stateless.
+      if (paramsInput instanceof ExtendedRiverUnmarshaller) {
+         ((ExtendedRiverUnmarshaller) paramsInput).setInfinispanMarshaller(marshaller);
       }
 
       CacheRpcCommand cacheRpcCommand;
@@ -169,10 +144,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
          cacheRpcCommand = cmdExt.fromStream(methodId, type, cacheName);
          cmdExt.readCommandParameters(paramsInput, cacheRpcCommand);
       } finally {
-         if (firsTime) {
-            marshaller.finishObjectInput(paramsInput);
-            reusableObjectInput.remove();
-         }
+         marshaller.finishObjectInput(paramsInput);
       }
       return cacheRpcCommand;
    }

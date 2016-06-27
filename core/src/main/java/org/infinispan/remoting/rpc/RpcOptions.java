@@ -17,21 +17,18 @@ public class RpcOptions {
    private final ResponseFilter responseFilter;
    private final ResponseMode responseMode;
    private final DeliverOrder deliverOrder;
-   private final boolean skipReplicationQueue;
 
    /**
-    * @deprecated use instead {@link #RpcOptions(long, java.util.concurrent.TimeUnit, ResponseFilter, ResponseMode,
-    * boolean, org.infinispan.remoting.inboundhandler.DeliverOrder)}
+    * @deprecated Since 8.3, use {@link #RpcOptions(long, TimeUnit, ResponseFilter, ResponseMode, DeliverOrder)} instead.
     */
    @Deprecated
-   public RpcOptions(long timeout, TimeUnit unit, ResponseFilter responseFilter,
-                     ResponseMode responseMode, boolean skipReplicationQueue, boolean fifoOrder, boolean totalOrder) {
-      this(timeout, unit, responseFilter, responseMode, skipReplicationQueue,
-           totalOrder ? DeliverOrder.TOTAL : (fifoOrder ? DeliverOrder.PER_SENDER : DeliverOrder.NONE));
+   public RpcOptions(long timeout, TimeUnit unit, ResponseFilter responseFilter, ResponseMode responseMode,
+         boolean skipReplicationQueue, DeliverOrder deliverOrder) {
+      this(timeout, unit, responseFilter, responseMode, deliverOrder);
    }
 
    public RpcOptions(long timeout, TimeUnit unit, ResponseFilter responseFilter, ResponseMode responseMode,
-                     boolean skipReplicationQueue, DeliverOrder deliverOrder) {
+         DeliverOrder deliverOrder) {
       if (unit == null) {
          throw new IllegalArgumentException("TimeUnit cannot be null");
       } else if (responseMode == null) {
@@ -43,7 +40,6 @@ public class RpcOptions {
       this.unit = unit;
       this.responseFilter = responseFilter;
       this.responseMode = responseMode;
-      this.skipReplicationQueue = skipReplicationQueue;
       this.deliverOrder = deliverOrder;
    }
 
@@ -59,24 +55,6 @@ public class RpcOptions {
     */
    public TimeUnit timeUnit() {
       return unit;
-   }
-
-   /**
-    * @return {@code true} if the message is to be delivered in FIFO order.
-    * @deprecated use instead {@link #deliverOrder()}.
-    */
-   @Deprecated
-   public boolean fifoOrder() {
-      return deliverOrder == DeliverOrder.PER_SENDER;
-   }
-
-   /**
-    * @return {@code true} if the message is to be delivered in total order.
-    * @deprecated use instead {@link #deliverOrder()}.
-    */
-   @Deprecated
-   public boolean totalOrder() {
-      return deliverOrder == DeliverOrder.TOTAL;
    }
 
    /**
@@ -102,12 +80,10 @@ public class RpcOptions {
    }
 
    /**
-    * @return if {@code true}, the remote invocation will never be dispatch to the {@link
-    * org.infinispan.remoting.ReplicationQueue}. However, only asynchronous remote invocation may be dispatched to the
-    * {@link org.infinispan.remoting.ReplicationQueue}.
+    * @deprecated Since 8.3, always returns {@code false}.
     */
    public boolean skipReplicationQueue() {
-      return skipReplicationQueue;
+      return false;
    }
 
    @Override
@@ -117,7 +93,6 @@ public class RpcOptions {
 
       RpcOptions options = (RpcOptions) o;
 
-      if (skipReplicationQueue != options.skipReplicationQueue) return false;
       if (timeout != options.timeout) return false;
       if (deliverOrder != options.deliverOrder) return false;
       if (responseFilter != null ? !responseFilter.equals(options.responseFilter) : options.responseFilter != null)
@@ -135,7 +110,6 @@ public class RpcOptions {
       result = 31 * result + deliverOrder.hashCode();
       result = 31 * result + (responseFilter != null ? responseFilter.hashCode() : 0);
       result = 31 * result + responseMode.hashCode();
-      result = 31 * result + (skipReplicationQueue ? 1 : 0);
       return result;
    }
 
@@ -147,7 +121,6 @@ public class RpcOptions {
             ", deliverOrder=" + deliverOrder +
             ", responseFilter=" + responseFilter +
             ", responseMode=" + responseMode +
-            ", skipReplicationQueue=" + skipReplicationQueue +
             '}';
    }
 }

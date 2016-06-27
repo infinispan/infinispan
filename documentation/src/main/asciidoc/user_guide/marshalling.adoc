@@ -322,7 +322,7 @@ import org.infinispan.util.Util;
 public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
   return Util.asSet(LockControlCommand.class, RehashControlCommand.class,
       StateTransferControlCommand.class, GetKeyValueCommand.class,
-      ClusteredGetCommand.class, MultipleRpcCommand.class,
+      ClusteredGetCommand.class,
       SingleRpcCommand.class, CommitCommand.class,
       PrepareCommand.class, RollbackCommand.class,
       ClearCommand.class, EvictCommand.class,
