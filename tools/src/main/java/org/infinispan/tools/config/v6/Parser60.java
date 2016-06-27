@@ -11,19 +11,8 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.BackupConfiguration;
-import org.infinispan.configuration.cache.BackupConfigurationBuilder;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
-import org.infinispan.configuration.cache.BackupForBuilder;
-import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
-import org.infinispan.configuration.cache.RecoveryConfigurationBuilder;
-import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ScheduledExecutorFactoryConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -689,22 +678,26 @@ public class Parser60 implements ConfigurationParser {
       }
 
       if (store != null) {
+         AbstractStoreConfigurationBuilder storeConfigurationBuilder = null;
          if (store instanceof SingleFileStore) {
-            SingleFileStoreConfigurationBuilder sfs = builder.persistence().addSingleFileStore();
-            if (fetchPersistentState != null)
-               sfs.fetchPersistentState(fetchPersistentState);
-            if (ignoreModifications != null)
-               sfs.ignoreModifications(ignoreModifications);
-            if (purgeOnStartup != null)
-               sfs.purgeOnStartup(purgeOnStartup);
-            if (preload != null)
-               sfs.preload(preload);
-            if (shared != null)
-               sfs.shared(shared);
-            parseStoreChildren(reader, sfs);
+            storeConfigurationBuilder = builder.persistence().addSingleFileStore();
+            parseStoreChildren(reader, storeConfigurationBuilder);
          } else if (store instanceof ClusterLoader) {
-            ClusterLoaderConfigurationBuilder cscb = builder.persistence().addClusterLoader();
-            parseLoaderChildren(reader, cscb);
+            storeConfigurationBuilder = builder.persistence().addClusterLoader();
+            parseLoaderChildren(reader, storeConfigurationBuilder);
+         }
+
+         if (storeConfigurationBuilder != null) {
+            if (fetchPersistentState != null)
+               storeConfigurationBuilder.fetchPersistentState(fetchPersistentState);
+            if (ignoreModifications != null)
+               storeConfigurationBuilder.ignoreModifications(ignoreModifications);
+            if (purgeOnStartup != null)
+               storeConfigurationBuilder.purgeOnStartup(purgeOnStartup);
+            if (preload != null)
+               storeConfigurationBuilder.preload(preload);
+            if (shared != null)
+               storeConfigurationBuilder.shared(shared);
          }
       }
    }
