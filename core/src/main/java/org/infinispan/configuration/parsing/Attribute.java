@@ -30,6 +30,7 @@ public enum Attribute {
     CAPACITY_FACTOR("capacity"),
     CHUNK_SIZE("chunk-size"),
     CLASS("class"),
+    CLASS_RESOLVER_CLASS("class-resolver"),
     CLUSTER("cluster"),
     COMPLETED_TX_TIMEOUT("complete-timeout"),
     CONCURRENCY_LEVEL("concurrency-level"),
