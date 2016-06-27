@@ -64,7 +64,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    protected final CompletableFuture<Void> visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null) {
-            releaseLocksOnFailureBeforePrepare(rCtx);
+            rethrowAndReleaseLocksIfNeeded(rCtx, throwable);
             throw throwable;
          }
 
@@ -114,7 +114,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          throws Throwable {
       ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null) {
-            releaseLocksOnFailureBeforePrepare(rCtx);
+            rethrowAndReleaseLocksIfNeeded(rCtx, throwable);
             throw throwable;
          }
 
@@ -232,9 +232,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    @Override
    public CompletableFuture<Void> visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-         if (throwable != null) {
-            lockManager.unlockAll(rCtx);
-         }
+         rethrowAndReleaseLocksIfNeeded(rCtx, throwable);
          return null;
       });
 
