@@ -89,7 +89,6 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       });
    }
 
-   //@TODO Uncomment line 100 when ISPN-6732 is fixed
    private void assertGlobalPropertiesConverted(EmbeddedCacheManager cm) {
       GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
       assertEquals("infinispan-cluster", globalConfiguration.transport().clusterName());
@@ -97,7 +96,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("m1", globalConfiguration.transport().machineId());
       assertEquals("s1", globalConfiguration.transport().siteId());
       assertTrue(globalConfiguration.transport().transport() instanceof CustomTransport);
-//      assertEquals("testGlobalSite", globalConfiguration.sites().localSite());
+      assertEquals("s1", globalConfiguration.sites().localSite());
 
       TypedProperties props = globalConfiguration.transport().properties();
       boolean stackVerified = false;
@@ -489,7 +488,6 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.storeAsBinary().defensive());
    }
 
-   //@TODO Uncomment the commented lines when ISPN-6732 is fixed;
    private void assertClusteringConverted(EmbeddedCacheManager cm) {
       Configuration config = cm.getCacheConfiguration("transactional3");
       assertTrue(config.clustering().cacheMode().isReplicated());
@@ -539,9 +537,9 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
       assertEquals(3, config.clustering().hash().numOwners());
-//      assertTrue(config.clustering().l1().enabled());
+      assertTrue(config.clustering().l1().enabled());
       assertEquals(600000, config.clustering().l1().lifespan());
-//      assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
+      assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
 
       config = cm.getCacheConfiguration("dist_with_capacity_factors");
       assertTrue(config.clustering().cacheMode().isDistributed());
@@ -551,8 +549,8 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
       assertEquals(3, config.clustering().hash().numOwners());
       assertEquals(1000, config.clustering().hash().numSegments());
-//      assertTrue(config.clustering().l1().enabled());
-//      assertEquals(610000, config.clustering().l1().lifespan());
+      assertTrue(config.clustering().l1().enabled());
+      assertEquals(610000, config.clustering().l1().lifespan());
 
       config = cm.getCacheConfiguration("groups");
       assertTrue(config.clustering().cacheMode().isDistributed());
@@ -578,9 +576,9 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(120000, config.clustering().stateTransfer().timeout());
       assertEquals(1000, config.clustering().stateTransfer().chunkSize());
       assertEquals(3, config.clustering().hash().numOwners());
-//      assertTrue(config.clustering().l1().enabled());
+      assertTrue(config.clustering().l1().enabled());
       assertEquals(600000, config.clustering().l1().lifespan());
-//      assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
+      assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
 
       config = cm.getCacheConfiguration("distAsync");
       assertTrue(config.clustering().cacheMode().isDistributed());
@@ -589,9 +587,9 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(config.clustering().stateTransfer().awaitInitialTransfer());
       assertEquals(3, config.clustering().hash().numOwners());
-//      assertTrue(config.clustering().l1().enabled());
+      assertTrue(config.clustering().l1().enabled());
       assertEquals(600000, config.clustering().l1().lifespan());
-//      assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
+      assertEquals(1200, config.clustering().l1().cleanupTaskFrequency());
 
       config = cm.getCacheConfiguration("localCache");
       assertFalse(config.clustering().cacheMode().isClustered());
@@ -646,7 +644,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
 
       config = cm.getCacheConfiguration("withFileStoreDisabledAsync");
       assertFalse(config.clustering().cacheMode().isClustered());
-//      assertFalse(config.persistence().usingAsyncStore());   <---- ISPN-6732
+      assertFalse(config.persistence().usingAsyncStore());
       assertFalse(config.persistence().passivation());
       assertTrue(config.persistence().usingStores());
       assertEquals(1, config.persistence().stores().size());
@@ -659,7 +657,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(singleFileStoreConfiguration.fetchPersistentState());
       assertTrue(singleFileStoreConfiguration.ignoreModifications());
       assertTrue(singleFileStoreConfiguration.purgeOnStartup());
-//      assertFalse(singleFileStoreConfiguration.async().enabled());  <---- ISPN-6732
+      assertFalse(singleFileStoreConfiguration.async().enabled());
       assertFalse(singleFileStoreConfiguration.singletonStore().enabled());
 
 //--------------------------------------------------------------------------------------------
@@ -692,18 +690,18 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
 
       clusterLoaderConfiguration = (ClusterLoaderConfiguration) config.persistence().stores().get(0);
       assertEquals(15000, clusterLoaderConfiguration.remoteCallTimeout());
-      /*assertTrue(clusterLoaderConfiguration.preload()); <------------- ISPN-6733
+      assertTrue(clusterLoaderConfiguration.preload());
       assertTrue(clusterLoaderConfiguration.fetchPersistentState());
       assertTrue(clusterLoaderConfiguration.ignoreModifications());
       assertTrue(clusterLoaderConfiguration.purgeOnStartup());
-      assertTrue(clusterLoaderConfiguration.shared());*/
+      assertTrue(clusterLoaderConfiguration.shared());
 
       //--------------------------------------------------------------------------------------------
       config = cm.getCacheConfiguration("lockingWithJDBCLoader");
       assertTrue(config.clustering().cacheMode().isClustered());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertEquals(20000, config.clustering().sync().replTimeout());
-//      assertFalse(config.persistence().usingAsyncStore());
+      assertFalse(config.persistence().usingAsyncStore());
       assertTrue(config.persistence().passivation());
       assertTrue(config.persistence().usingStores());
       assertEquals(1, config.persistence().stores().size());
@@ -715,7 +713,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(singleFileStoreConfiguration.ignoreModifications());
       assertTrue(singleFileStoreConfiguration.purgeOnStartup());
       assertFalse(singleFileStoreConfiguration.shared());
-//      assertFalse(singleFileStoreConfiguration.async().enabled());
+      assertFalse(singleFileStoreConfiguration.async().enabled());
       assertTrue(singleFileStoreConfiguration.singletonStore().enabled());
 //      assertEquals("${java.io.tmpdir}", singleFileStoreConfiguration.location()); <---- ISPN-6734
 

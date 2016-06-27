@@ -292,7 +292,7 @@
         <clustering>
             <async />
             <hash numOwners="3" />
-            <l1 enabled="true" lifespan="600000" invalidationThreshold="-1" onRehash="false"/>
+            <l1 enabled="true" lifespan="600000" invalidationThreshold="-1" onRehash="false" cleanupTaskFrequency="1200"/>
             <stateTransfer fetchInMemoryState="true" timeout="120000" chunkSize="1000" />
         </clustering>
     </namedCache>
