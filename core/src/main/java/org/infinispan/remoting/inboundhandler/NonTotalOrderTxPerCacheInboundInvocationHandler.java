@@ -1,9 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.Configuration;
@@ -11,7 +9,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
-import org.infinispan.remoting.inboundhandler.action.CompositeAction;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.LockAction;
 import org.infinispan.remoting.inboundhandler.action.PendingTxAction;
@@ -25,11 +22,7 @@ import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-
-import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
 /**
  * A {@link PerCacheInboundInvocationHandler} implementation for non-total order caches.
@@ -75,10 +68,6 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
          final BlockingRunnable runnable;
 
          switch (command.getCommandId()) {
-            case MultipleRpcCommand.COMMAND_ID:
-               runnable = createReadyActionRunnable(command, reply, commandTopologyId, true, onExecutorService,
-                                                    createReadyActionForMultipleRpcCommand((MultipleRpcCommand) command));
-               break;
             case PrepareCommand.COMMAND_ID:
             case VersionedPrepareCommand.COMMAND_ID:
                if (pessimisticLocking) {
@@ -146,33 +135,4 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       action.registerListener();
       return action;
    }
-
-   private ReadyAction createReadyActionForMultipleRpcCommand(MultipleRpcCommand command) {
-      ReplicableCommand[] commands = command.getCommands();
-      List<ReadyAction> list = new ArrayList<>(commands.length);
-      forEach(commands, cmd -> {
-         if (cmd instanceof LockControlCommand) {
-            ReadyAction action = createReadyAction(((LockControlCommand) cmd).getTopologyId(), (LockControlCommand) cmd);
-            if (action != null) {
-               list.add(action);
-            }
-         } else if (!pessimisticLocking && cmd instanceof PrepareCommand) {
-            ReadyAction action = createReadyAction(((PrepareCommand) cmd).getTopologyId(), (PrepareCommand) cmd);
-            if (action != null) {
-               list.add(action);
-            }
-         }
-      });
-
-      if (list.isEmpty()) {
-         return null;
-      } else if (list.size() == 1) {
-         return list.get(0);
-      }
-
-      CompositeAction action = new CompositeAction(list);
-      action.registerListener();
-      return action;
-   }
-
 }

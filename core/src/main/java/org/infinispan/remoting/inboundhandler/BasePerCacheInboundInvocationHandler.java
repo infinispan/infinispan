@@ -5,7 +5,6 @@ import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.ComponentName;
@@ -44,22 +43,10 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       return NO_TOPOLOGY_COMMAND;
    }
 
-   private static int extractCommandTopologyId(MultipleRpcCommand command) {
-      int commandTopologyId = NO_TOPOLOGY_COMMAND;
-      for (ReplicableCommand innerCmd : command.getCommands()) {
-         if (innerCmd instanceof TopologyAffectedCommand) {
-            commandTopologyId = Math.max(((TopologyAffectedCommand) innerCmd).getTopologyId(), commandTopologyId);
-         }
-      }
-      return commandTopologyId;
-   }
-
    protected static int extractCommandTopologyId(CacheRpcCommand command) {
       switch (command.getCommandId()) {
          case SingleRpcCommand.COMMAND_ID:
             return extractCommandTopologyId((SingleRpcCommand) command);
-         case MultipleRpcCommand.COMMAND_ID:
-            return extractCommandTopologyId((MultipleRpcCommand) command);
          default:
             if (command instanceof TopologyAffectedCommand) {
                return ((TopologyAffectedCommand) command).getTopologyId();

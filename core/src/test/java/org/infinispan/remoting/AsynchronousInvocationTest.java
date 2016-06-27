@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.EnumUtil;
@@ -35,7 +34,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
@@ -73,9 +71,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private ReplicableCommand nonBlockingNonCacheRpcCommand;
    private ReplicableCommand blockingSingleRpcCommand;
    private ReplicableCommand nonBlockingSingleRpcCommand;
-   private ReplicableCommand blockingMultipleRpcCommand;
-   private ReplicableCommand blockingMultipleRpcCommand2;
-   private ReplicableCommand nonBlockingMultipleRpcCommand;
 
    private static ReplicableCommand mockReplicableCommand(boolean blocking) throws Throwable {
       ReplicableCommand mock = mock(ReplicableCommand.class);
@@ -122,9 +117,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, false, null, AnyEquivalence.STRING);
       blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingReplicableCommand);
       nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, nonBlockingReplicableCommand);
-      blockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.asList(blockingReplicableCommand, blockingReplicableCommand), cacheName);
-      blockingMultipleRpcCommand2 = new MultipleRpcCommand(Arrays.asList(blockingReplicableCommand, nonBlockingReplicableCommand), cacheName);
-      nonBlockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.asList(nonBlockingReplicableCommand, nonBlockingReplicableCommand), cacheName);
    }
 
    @AfterClass
@@ -140,13 +132,10 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       Assert.assertTrue(blockingCacheRpcCommand.canBlock());
       Assert.assertTrue(blockingNonCacheRpcCommand.canBlock());
       Assert.assertTrue(blockingSingleRpcCommand.canBlock());
-      Assert.assertTrue(blockingMultipleRpcCommand.canBlock());
-      Assert.assertTrue(blockingMultipleRpcCommand2.canBlock());
 
       Assert.assertFalse(nonBlockingCacheRpcCommand.canBlock());
       Assert.assertFalse(nonBlockingNonCacheRpcCommand.canBlock());
       Assert.assertFalse(nonBlockingSingleRpcCommand.canBlock());
-      Assert.assertFalse(nonBlockingMultipleRpcCommand.canBlock());
    }
 
    public void testCacheRpcCommands() throws Exception {
@@ -157,12 +146,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    public void testSingleRpcCommand() throws Exception {
       assertDispatchForCommand(blockingSingleRpcCommand, true);
       assertDispatchForCommand(nonBlockingSingleRpcCommand, false);
-   }
-
-   public void testMultipleRpcCommand() throws Exception {
-      assertDispatchForCommand(blockingMultipleRpcCommand, true);
-      assertDispatchForCommand(blockingMultipleRpcCommand2, true);
-      assertDispatchForCommand(nonBlockingMultipleRpcCommand, false);
    }
 
    public void testNonCacheRpcCommands() throws Exception {

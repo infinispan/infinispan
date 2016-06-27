@@ -9,8 +9,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
- * Similar to {@link org.infinispan.commands.remote.MultipleRpcCommand}, but it only aggregates a single command for
- * replication.
+ * Aggregates a single command for replication.
  *
  * @author Mircea.Markus@jboss.com
  */

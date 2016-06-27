@@ -17,7 +17,6 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -235,9 +234,6 @@ public class RemoteCommandsFactory {
                break;
             case TotalOrderRollbackCommand.COMMAND_ID:
                command = new TotalOrderRollbackCommand(cacheName);
-               break;
-            case MultipleRpcCommand.COMMAND_ID:
-               command = new MultipleRpcCommand(cacheName);
                break;
             case SingleRpcCommand.COMMAND_ID:
                command = new SingleRpcCommand(cacheName);
