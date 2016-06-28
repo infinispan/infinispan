@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.CacheEntry;
@@ -46,7 +47,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    public void testConditionalReplaceWithVersion() {
       final Integer key = 2;
       NumericVersion version = new NumericVersion(1);
-      advCache.put(key, "v1", new EmbeddedMetadata.Builder().version(version).build());
+      advCache.put(key, "v1", withVersion(version));
       NumericVersion newVersion = new NumericVersion(2);
       advCache.replace(key, "v1", "v2", withVersion(newVersion));
       CacheEntry cacheEntry = advCache.getCacheEntry(key);
@@ -101,7 +102,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    public void testReplaceWithVersion() {
       final Integer key = 7;
       NumericVersion version = new NumericVersion(1);
-      advCache.put(key, "v1", new EmbeddedMetadata.Builder().version(version).build());
+      advCache.put(key, "v1", withVersion(version));
       NumericVersion newVersion = new NumericVersion(2);
       advCache.replace(key, "v2", withVersion(newVersion));
       CacheEntry cacheEntry = advCache.getCacheEntry(key);
@@ -150,6 +151,23 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       Metadata newMeta = new CustomMetadata(120000, 240000);
       advCache.put(key, "v2", newMeta);
       assertEquals(newMeta, advCache.getCacheEntry(key).getMetadata());
+   }
+
+   public void testPutForExternalRead() {
+      final Integer key = 11;
+      NumericVersion version = new NumericVersion(1);
+      advCache.putForExternalRead(key, "v1", withVersion(version));
+      CacheEntry cacheEntry = advCache.getCacheEntry(key);
+      assertEquals(version, cacheEntry.getMetadata().version());
+   }
+
+   public void testPutForExternalReadInDecaratedCache() {
+      final Integer key = 12;
+      NumericVersion version = new NumericVersion(1);
+      DecoratedCache decoratedCache = new DecoratedCache(advCache, this.getClass().getClassLoader());
+      decoratedCache.putForExternalRead(key, "v1", withVersion(version));
+      CacheEntry cacheEntry = decoratedCache.getCacheEntry(key);
+      assertEquals(version, cacheEntry.getMetadata().version());
    }
 
    private Metadata withVersion(EntryVersion version) {
