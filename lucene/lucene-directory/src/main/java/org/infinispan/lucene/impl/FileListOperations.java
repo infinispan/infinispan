@@ -1,16 +1,22 @@
 package org.infinispan.lucene.impl;
 
 import net.jcip.annotations.GuardedBy;
+import org.apache.lucene.store.Directory;
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
 import org.infinispan.lucene.FileMetadata;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static org.infinispan.lucene.impl.DirectoryImplementor.getAddress;
 
 /**
  * Collects operations on the existing fileList, stored as a Set<String> having key
@@ -150,6 +156,9 @@ public final class FileListOperations {
          cacheNoRetrieve.putAsync(fileListCacheKey, fileList);
       }
       else {
+         if (trace) {
+            log.tracef("Updating file listing view from %s", getAddress(cacheNoRetrieve));
+         }
          cacheNoRetrieve.put(fileListCacheKey, fileList);
       }
    }

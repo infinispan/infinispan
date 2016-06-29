@@ -236,7 +236,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    // Method that will be called when data needs to be removed from Lucene.
    protected void removeFromIndexes(final Object value, final Object key, final TransactionContext transactionContext) {
-      performSearchWork(value, keyToString(key), WorkType.DELETE, transactionContext);
+      ShardIdentifierProvider shardIdentifierProvider = searchFactory.getIndexBinding(value.getClass()).getShardIdentifierProvider();
+      if (shardIdentifierProvider == null || !(shardIdentifierProvider instanceof AffinityShardIdentifierProvider) || isPrimaryOwner(key)) {
+         performSearchWork(value, keyToString(key), WorkType.DELETE, transactionContext);
+      }
    }
 
    private boolean isPrimaryOwner(Object key) {

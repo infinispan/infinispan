@@ -1,5 +1,28 @@
 package org.infinispan.query.backend;
 
+import org.hibernate.annotations.common.reflection.ReflectionManager;
+import org.hibernate.search.cfg.Environment;
+import static org.hibernate.search.cfg.Environment.INDEX_MANAGER_IMPL_NAME;
+import org.hibernate.search.cfg.SearchMapping;
+import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.cfg.spi.SearchConfigurationBase;
+import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
+import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
+import org.hibernate.search.engine.service.spi.Service;
+import org.hibernate.search.engine.spi.SearchMappingHelper;
+import org.hibernate.search.exception.ErrorHandler;
+import org.hibernate.search.exception.impl.LogErrorHandler;
+import org.hibernate.search.util.StringHelper;
+import org.hibernate.search.util.impl.ClassLoaderHelper;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.hibernate.search.spi.CacheManagerService;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.affinity.AffinityErrorHandler;
+import org.infinispan.query.affinity.AffinityIndexManager;
+import org.infinispan.query.affinity.AffinityShardIdentifierProvider;
+import org.infinispan.query.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -8,24 +31,9 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
-import org.hibernate.annotations.common.reflection.ReflectionManager;
-import org.hibernate.search.cfg.SearchMapping;
-import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.cfg.spi.SearchConfigurationBase;
-import org.hibernate.search.engine.spi.SearchMappingHelper;
-import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
-import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
-import org.hibernate.search.engine.service.spi.Service;
-import org.infinispan.hibernate.search.spi.CacheManagerService;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.affinity.AffinityShardIdentifierProvider;
-import org.infinispan.query.affinity.ShardIndexManager;
-
-import static org.hibernate.search.cfg.Environment.INDEX_MANAGER_IMPL_NAME;
-
 /**
- * Class that implements {@link org.hibernate.search.cfg.spi.SearchConfiguration} so that within Infinispan-Query, there
+ * Class that implements {@link org.hibernate.search.cfg.spi.SearchConfiguration} so that within Infinispan-Query,
+ * there
  * is
  * no need for a Hibernate Core configuration object.
  *
@@ -36,6 +44,8 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
 
    private static final String HSEARCH_PREFIX = "hibernate.search.";
    private static final String SHARDING_STRATEGY = "sharding_strategy";
+   private static final Log log = LogFactory.getLog(SearchableCacheConfiguration.class, Log.class);
+
 
    private final Map<String, Class<?>> classes;
    private final Properties properties;
@@ -51,7 +61,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
          this.properties = augment(properties);
       }
 
-      classes = new HashMap<String, Class<?>>();
+      classes = new HashMap<>();
 
       for (Class<?> c : classArray) {
          String classname = c.getName();
@@ -63,7 +73,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
 
       //if we have a SearchMapping then we can predict at least those entities specified in the mapping
       //and avoid further SearchFactory rebuilds triggered by new entity discovery during cache events
-      if ( searchMapping != null ) {
+      if (searchMapping != null) {
          Set<Class<?>> mappedEntities = searchMapping.getMappedEntities();
          for (Class<?> entity : mappedEntities) {
             classes.put(entity.getName(), entity);
@@ -130,19 +140,56 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       return true;
    }
 
-   private static Properties augment(Properties origin) {
+   private Properties augment(Properties origin) {
       Properties target = new Properties();
+      boolean hasAffinity = false;
       for (Entry<Object, Object> entry : origin.entrySet()) {
          Object key = entry.getKey();
          if (key instanceof String && !key.toString().startsWith(HSEARCH_PREFIX)) {
             key = HSEARCH_PREFIX + key.toString();
          }
          target.put(key, entry.getValue());
-         if (key.toString().endsWith(INDEX_MANAGER_IMPL_NAME) && entry.getValue().equals(ShardIndexManager.class.getName())) {
+         if (key.toString().endsWith(INDEX_MANAGER_IMPL_NAME) && entry.getValue().equals(AffinityIndexManager.class.getName())) {
             target.put(key.toString().replace(INDEX_MANAGER_IMPL_NAME, SHARDING_STRATEGY), AffinityShardIdentifierProvider.class.getName());
+            hasAffinity = true;
          }
       }
+      configureErrorHandler(target, hasAffinity);
       return target;
+   }
+
+   private void configureErrorHandler(Properties target, boolean hasAffinity) {
+      if (hasAffinity) {
+         Object errorHandler = target.get(Environment.ERROR_HANDLER);
+         if (errorHandler == null) {
+            target.put(Environment.ERROR_HANDLER, new AffinityErrorHandler());
+         } else {
+            target.put(Environment.ERROR_HANDLER, new AffinityErrorHandler(createErrorHandler(errorHandler)));
+         }
+      }
+   }
+
+   private ErrorHandler createErrorHandler(Object configuredErrorHandler) {
+      if (configuredErrorHandler instanceof String) {
+         return createErrorHandlerFromString((String) configuredErrorHandler, getClassLoaderService());
+      } else if (configuredErrorHandler instanceof ErrorHandler) {
+         return (ErrorHandler) configuredErrorHandler;
+      } else {
+         throw log.unsupportedErrorHandlerConfigurationValueType(configuredErrorHandler.getClass());
+      }
+   }
+
+   private ErrorHandler createErrorHandlerFromString(String errorHandlerClassName, ClassLoaderService classLoaderService) {
+      if (StringHelper.isEmpty(errorHandlerClassName) || ErrorHandler.LOG.equals(errorHandlerClassName.trim())) {
+         return new LogErrorHandler();
+      } else {
+         Class<?> errorHandlerClass = classLoaderService.classForName(errorHandlerClassName);
+         return ClassLoaderHelper.instanceFromClass(
+                 ErrorHandler.class,
+                 errorHandlerClass,
+                 "Error Handler"
+         );
+      }
    }
 
    @Override

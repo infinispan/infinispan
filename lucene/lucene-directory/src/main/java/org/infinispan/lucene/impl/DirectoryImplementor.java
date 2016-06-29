@@ -10,6 +10,8 @@ import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -68,7 +70,7 @@ class DirectoryImplementor {
        fileOps.deleteFileName(name);
        readLocks.deleteOrReleaseReadLock(name);
        if (log.isDebugEnabled()) {
-          log.debugf("Removed file: %s from index: %s", name, indexName);
+          log.debugf("Removed file: %s from index: %s from %s", name, indexName, getAddress(chunksCache));
        }
     }
 
@@ -97,7 +99,7 @@ class DirectoryImplementor {
        // now trigger deletion of old file chunks:
        readLocks.deleteOrReleaseReadLock(from);
        if (trace) {
-          log.tracef("Renamed file from: %s to: %s in index %s", from, to, indexName);
+          log.tracef("Renamed file from: %s to: %s in index %s from %s", from, to, indexName, getAddress(metadataCache));
        }
     }
 
@@ -112,6 +114,9 @@ class DirectoryImplementor {
     }
 
     IndexOutput createOutput(final String name) {
+       if(log.isDebugEnabled()) {
+          log.tracef("Creating output file %s in index %s from %s", name, indexName,  getAddress(metadataCache));
+       }
        if (IndexFileNames.SEGMENTS.equals(name)) {
           return new InfinispanIndexOutput(metadataCache, chunksCache, segmentsGenFileKey, chunkSize, fileOps, affinitySegmentId);
        }
@@ -179,4 +184,8 @@ class DirectoryImplementor {
       return distLocksCache;
     }
 
+   static Address getAddress(Cache<?, ?> cache) {
+      Address address = cache.getCacheManager().getAddress();
+      return address == null ? LocalModeAddress.INSTANCE : address;
+   }
 }

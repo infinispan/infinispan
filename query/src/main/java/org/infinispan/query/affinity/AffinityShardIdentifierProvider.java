@@ -69,6 +69,10 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
       return String.valueOf(segment);
    }
 
+   static int getSegment(String indexName) {
+      return Integer.valueOf(indexName.substring(indexName.lastIndexOf(".") + 1));
+   }
+
    @Override
    public Set<String> getShardIdentifiersForQuery(FullTextFilterImplementor[] fullTextFilters) {
       return getShards();

@@ -2,7 +2,6 @@ package org.infinispan.hibernate.search.spi;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
-import org.hibernate.search.backend.BackendFactory;
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
@@ -11,11 +10,13 @@ import org.hibernate.search.store.spi.DirectoryHelper;
 import org.hibernate.search.store.spi.LockFactoryCreator;
 import org.infinispan.Cache;
 import org.infinispan.hibernate.search.impl.AsyncDeleteExecutorService;
+import org.infinispan.hibernate.search.impl.LoggerFactory;
 import org.infinispan.hibernate.search.logging.Log;
 import org.infinispan.hibernate.search.util.configuration.impl.ConfigurationParseHelper;
-import org.infinispan.hibernate.search.impl.LoggerFactory;
+import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 
 import java.io.File;
 import java.io.IOException;
@@ -144,6 +145,10 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       return serviceManager.requestService(AsyncDeleteExecutorService.class);
    }
 
+   public int getActiveDeleteTasks() {
+      return deletesExecutor.getActiveTasks();
+   }
+
    @Override
    public void stop() {
       deletesExecutor.closeAndFlush();
@@ -166,4 +171,9 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
       return cacheManager;
    }
 
+   public Address getLockOwner(String indexName, String lockName) {
+      FileCacheKey fileCacheKey = new FileCacheKey(indexName, lockName, affinityId);
+      Cache<?, Address> lockCache = cacheManager.getCache(lockingCacheName);
+      return lockCache.get(fileCacheKey);
+   }
 }
