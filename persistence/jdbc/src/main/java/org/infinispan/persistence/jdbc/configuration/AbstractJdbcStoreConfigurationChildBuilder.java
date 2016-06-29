@@ -34,4 +34,14 @@ public abstract class AbstractJdbcStoreConfigurationChildBuilder<S extends Abstr
       return builder.simpleConnection();
    }
 
+   @Override
+   public <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(Class<C> klass) {
+      return builder.connectionFactory(klass);
+   }
+
+   @Override
+   public <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(C factoryBuilder) {
+      return builder.connectionFactory(factoryBuilder);
+   }
+
 }

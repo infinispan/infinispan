@@ -45,6 +45,7 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
    /**
     * Use the specified {@link ConnectionFactory} to handle connection to the database
     */
+   @Override
    public <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(Class<C> klass) {
       if (connectionFactory != null) {
          throw new IllegalStateException("A ConnectionFactory has already been configured for this store");
@@ -63,6 +64,7 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
     * Use the specified {@link ConnectionFactoryConfigurationBuilder} to configure connections to
     * the database
     */
+   @Override
    public <C extends ConnectionFactoryConfigurationBuilder<?>> C connectionFactory(C builder) {
       if (connectionFactory != null) {
          throw new IllegalStateException("A ConnectionFactory has already been configured for this store");
