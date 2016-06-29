@@ -33,6 +33,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -716,6 +717,13 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
       CompletableFuture<InternalCacheEntry> remoteFuture;
       if (writeNeedsRemoteValue(ctx, command, key)) {
+         int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+         int cmdTopology = command.getTopologyId();
+         boolean topologyChanged = currentTopologyId != cmdTopology && cmdTopology != -1;
+         if (topologyChanged) {
+            throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+                    cmdTopology + ", got " + currentTopologyId);
+         }
          remoteFuture = retrieveFromProperSource(key, ctx, false, command, false);
          return remoteFuture.thenCompose(remoteEntry -> {
             handleRemoteEntry(ctx, key, remoteEntry);
