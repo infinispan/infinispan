@@ -164,7 +164,7 @@
       <version.solder>3.1.0.Final</version.solder>
       <version.spring3>3.2.9.RELEASE</version.spring3>
       <version.spring4>4.1.0.RELEASE</version.spring4>
-      <version.spymemcached>2.5</version.spymemcached>
+      <version.spymemcached>2.12.1</version.spymemcached>
       <version.testng>6.8.8</version.testng>
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
@@ -632,8 +632,8 @@
             </exclusions>
          </dependency>
          <dependency>
-            <groupId>spy</groupId>
-            <artifactId>memcached</artifactId>
+            <groupId>net.spy</groupId>
+            <artifactId>spymemcached</artifactId>
             <version>${version.spymemcached}</version>
          </dependency>
          <dependency>
