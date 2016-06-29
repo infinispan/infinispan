@@ -53,4 +53,9 @@ public class DefaultAsyncDeleteExecutor implements AsyncDeleteExecutorService, S
       }
    }
 
+   @Override
+   public int getActiveTasks() {
+      return threadPool.getActiveCount();
+   }
+
 }

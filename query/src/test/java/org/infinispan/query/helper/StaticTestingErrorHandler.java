@@ -10,6 +10,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.backend.WrappingErrorHandler;
 
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -38,10 +39,13 @@ public class StaticTestingErrorHandler implements ErrorHandler {
       SearchIntegrator searchFactory = searchManager.unwrap(SearchIntegrator.class);
       ErrorHandler errorHandler = searchFactory.getErrorHandler();
       assertNotNull(errorHandler);
+      if (errorHandler instanceof WrappingErrorHandler) {
+         errorHandler = ((WrappingErrorHandler) errorHandler).unwrap();
+      }
       assertTrue(errorHandler instanceof StaticTestingErrorHandler);
       StaticTestingErrorHandler instance = (StaticTestingErrorHandler) errorHandler;
       Object fault = instance.getAndReset();
-      if (fault!=null) {
+      if (fault != null) {
          fail(fault.toString());
       }
    }

@@ -6,6 +6,7 @@ import java.util.Map;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.query.affinity.AffinityUpdateCommand;
 import org.infinispan.query.clustered.ClusteredQueryCommand;
 import org.infinispan.query.indexmanager.IndexUpdateCommand;
 import org.infinispan.query.indexmanager.IndexUpdateStreamCommand;
@@ -22,9 +23,10 @@ public class CommandFactory implements ExtendedModuleCommandFactory {
    @Override
    public Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands() {
       Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<Byte, Class<? extends ReplicableCommand>>(1);
-      map.put(Byte.valueOf(ClusteredQueryCommand.COMMAND_ID), ClusteredQueryCommand.class);
-      map.put(Byte.valueOf(IndexUpdateCommand.COMMAND_ID), IndexUpdateCommand.class);
-      map.put(Byte.valueOf(IndexUpdateStreamCommand.COMMAND_ID), IndexUpdateStreamCommand.class);
+      map.put(ClusteredQueryCommand.COMMAND_ID, ClusteredQueryCommand.class);
+      map.put(IndexUpdateCommand.COMMAND_ID, IndexUpdateCommand.class);
+      map.put(IndexUpdateStreamCommand.COMMAND_ID, IndexUpdateStreamCommand.class);
+      map.put(AffinityUpdateCommand.COMMAND_ID, AffinityUpdateCommand.class);
       return map;
    }
 
@@ -47,6 +49,9 @@ public class CommandFactory implements ExtendedModuleCommandFactory {
             break;
          case IndexUpdateStreamCommand.COMMAND_ID:
             c = new IndexUpdateStreamCommand(cacheName);
+            break;
+         case AffinityUpdateCommand.COMMAND_ID:
+            c = new AffinityUpdateCommand(cacheName);
             break;
          default:
             throw new IllegalArgumentException("Not registered to handle command id " + commandId);

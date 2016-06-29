@@ -30,6 +30,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -271,7 +272,7 @@ public interface ClusteringDependentLogic {
       public Address getAddress() {
          Address address = cacheManager.getAddress();
          if (address == null) {
-            address = LOCAL_MODE_ADDRESS;
+            address = LocalModeAddress.INSTANCE;
          }
          return address;
       }
@@ -313,18 +314,6 @@ public interface ClusteringDependentLogic {
          return null; //not used
       }
    }
-
-   Address LOCAL_MODE_ADDRESS = new Address() {
-      @Override
-      public String toString() {
-         return "Local Address";
-      }
-
-      @Override
-      public int compareTo(Address o) {
-         return 0;
-      }
-   };
 
    /**
     * This logic is used in invalidation mode caches.

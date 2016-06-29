@@ -1716,6 +1716,15 @@
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
        </profile>
+       <profile>
+         <id>test-stress</id>
+         <properties>
+            <defaultTestGroup>stress</defaultTestGroup>
+
+            <defaultExcludedTestGroup />
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+      </profile>
       <profile>
          <id>test-unit</id>
          <properties>

@@ -5,7 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
-import org.infinispan.query.affinity.ShardIndexManager;
+import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
 
@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
  * @author gustavonalle
  * @since 8.2
  */
-@Test(groups = "functional", testName = "query.distributed.ShardedIndexManagerMassIndexTest")
-public class ShardedIndexManagerMassIndexTest extends DistributedMassIndexingTest {
+@Test(groups = "functional", testName = "query.distributed.AffinityIndexManagerMassIndexTest")
+public class AffinityIndexManagerMassIndexTest extends DistributedMassIndexingTest {
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
@@ -25,7 +25,7 @@ public class ShardedIndexManagerMassIndexTest extends DistributedMassIndexingTes
       cacheCfg.indexing()
               .index(Index.ALL)
               .addIndexedEntity(Car.class)
-              .addProperty("default.indexmanager", ShardIndexManager.class.getName())
+              .addProperty("default.indexmanager", AffinityIndexManager.class.getName())
               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
               .addProperty("lucene_version", "LUCENE_CURRENT");
       List<Cache<Object, Object>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);

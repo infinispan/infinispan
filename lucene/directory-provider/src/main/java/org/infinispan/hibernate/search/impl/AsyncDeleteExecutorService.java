@@ -19,4 +19,9 @@ public interface AsyncDeleteExecutorService extends Service {
 
    void closeAndFlush();
 
+   /**
+    * @return the number of deletions being executed
+    */
+   int getActiveTasks();
+
 }
