@@ -48,6 +48,7 @@
       <module>server/websocket</module>
       <module>server/rest</module>
       <module>client/hotrod-client</module>
+      <module>client/rest-client</module>
       <module>atomic-factory</module>
       <module>all</module>
       <module>all/remote</module>
