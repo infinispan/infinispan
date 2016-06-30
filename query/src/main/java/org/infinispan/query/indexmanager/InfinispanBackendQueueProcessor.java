@@ -9,7 +9,6 @@ import javax.transaction.TransactionManager;
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.impl.lucene.WorkspaceHolder;
-import org.hibernate.search.backend.spi.BackendQueueProcessor;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.infinispan.hibernate.search.spi.CacheManagerService;
@@ -21,6 +20,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.backend.ComponentRegistryService;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -37,7 +37,7 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
    private ServiceManager serviceManager;
    private String indexName;
    private IndexManager indexManager;
-   private SwitchingBackend fowardingBackend;
+   private SwitchingBackend forwardingBackend;
 
    @Override
    public void initialize(Properties props, WorkerBuildContext context, IndexManager indexManager) {
@@ -48,7 +48,7 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
       this.indexName = indexManager.getIndexName();
       ComponentRegistryService componentRegistryService = serviceManager.requestService(ComponentRegistryService.class);
       ComponentRegistry componentRegistry = componentRegistryService.getComponentRegistry();
-      this.fowardingBackend = createForwardingBackend(props, componentRegistry, indexName, localBackendFactory, cacheManagerService, indexManager);
+      this.forwardingBackend = createForwardingBackend(props, componentRegistry, indexName, localBackendFactory, cacheManagerService, indexManager);
       log.commandsBackendInitialized(indexName);
    }
 
@@ -66,7 +66,7 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
          //but it was changed as the intention is to evolve on this introducing non-Directory based IndexManager implementations.
          //FIXME: avoid the need for the cast or validate eagerly with a nicer error message.
          //https://issues.jboss.org/browse/ISPN-6212
-         DirectoryBasedIndexManager directoryBasedIndexManager = (DirectoryBasedIndexManager)indexManager;
+         DirectoryBasedIndexManager directoryBasedIndexManager = (DirectoryBasedIndexManager) indexManager;
          IndexLockController lockControl = new IndexManagerBasedLockController(directoryBasedIndexManager, transactionManager);
          ClusteredSwitchingBackend backend = new ClusteredSwitchingBackend(props, componentRegistry, indexName, localBackendFactory, lockControl);
          backend.initialize();
@@ -77,7 +77,7 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
 
    @Override
    public void close() {
-      fowardingBackend.shutdown();
+      forwardingBackend.shutdown();
       serviceManager.releaseService(CacheManagerService.class);
       serviceManager.releaseService(ComponentRegistryService.class);
       serviceManager = null;
@@ -85,13 +85,17 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
 
    @Override
    public void applyWork(List<LuceneWork> workList, IndexingMonitor monitor) {
-      fowardingBackend.getCurrentIndexingBackend()
-            .applyWork(workList, monitor, indexManager);
+      try {
+         forwardingBackend.getCurrentIndexingBackend().applyWork(workList, monitor, indexManager);
+      } catch (SuspectException e) {
+         forwardingBackend.refresh();
+         forwardingBackend.getCurrentIndexingBackend().applyWork(workList, monitor, indexManager);
+      }
    }
 
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor) {
-      fowardingBackend.getCurrentIndexingBackend()
+      forwardingBackend.getCurrentIndexingBackend()
             .applyStreamWork(singleOperation, monitor, indexManager);
    }
 
@@ -106,7 +110,7 @@ final class InfinispanBackendQueueProcessor extends WorkspaceHolder {
    }
 
    boolean isMasterLocal() {
-      return fowardingBackend.getCurrentIndexingBackend().isMasterLocal();
+      return forwardingBackend.getCurrentIndexingBackend().isMasterLocal();
    }
 
 }
