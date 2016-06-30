@@ -1,7 +1,11 @@
 package org.infinispan.statetransfer;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -39,7 +43,17 @@ public interface StateTransferLock {
    // transaction data latch
    void notifyTransactionDataReceived(int topologyId);
 
-   void waitForTransactionData(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException;
+   CompletableFuture<Void> transactionDataFuture(int expectedTopologyId);
+
+   @Deprecated
+   default void waitForTransactionData(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+      try {
+         CompletableFuture<Void> transactionDataFuture = transactionDataFuture(expectedTopologyId);
+         transactionDataFuture.get(timeout, unit);
+      } catch (ExecutionException e) {
+         throw new CacheException(e.getCause());
+      }
+   }
 
    boolean transactionDataReceived(int expectedTopologyId);
 
@@ -47,7 +61,17 @@ public interface StateTransferLock {
    // TODO move this to Cluster/LocalTopologyManagerImpl and don't start requesting state until every node has the jgroups view with the local node
    void notifyTopologyInstalled(int topologyId);
 
-   void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException;
+   CompletableFuture<Void> topologyFuture(int expectedTopologyId);
+
+   @Deprecated
+   default void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+      try {
+         CompletableFuture<Void> topologyFuture = topologyFuture(expectedTopologyId);
+         topologyFuture.get(timeout, unit);
+      } catch (ExecutionException e) {
+         throw new CacheException(e.getCause());
+      }
+   }
 
    boolean topologyReceived(int expectedTopologyId);
 }

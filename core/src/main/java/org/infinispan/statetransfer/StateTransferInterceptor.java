@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
@@ -180,30 +181,53 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       }
       CacheTopology beginTopology = stateTransferManager.getCacheTopology();
       consistentHashUpdater.accept(beginTopology.getReadConsistentHash());
-      updateTopologyId(command);
-      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
-         if (t == null)
-            return stage;
+      if (command.getTopologyId() == -1) {
+         command.setTopologyId(beginTopology.getTopologyId());
+      }
+      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) ->
+            handleReadCommandReturn(stage, rCtx, rCommand, rv, t, consistentHashUpdater));
+   }
 
-         Throwable ce = t;
-         while (ce instanceof RemoteException) {
-            ce = ce.getCause();
+   private BasicInvocationStage handleReadCommandReturn(BasicInvocationStage stage, InvocationContext rCtx,
+                                                        VisitableCommand rCommand, Object rv, Throwable t,
+                                                        Consumer<ConsistentHash> consistentHashConsumer) throws Throwable {
+      if (t == null)
+         return stage;
+
+      Throwable ce = t;
+      while (ce instanceof RemoteException) {
+         ce = ce.getCause();
+      }
+      final CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      int currentTopologyId = cacheTopology == null ? -1 : cacheTopology.getTopologyId();
+      AbstractTopologyAffectedCommand cmd = (AbstractTopologyAffectedCommand) rCommand;
+      if (ce instanceof SuspectException) {
+         if (trace)
+            log.tracef("Retrying command because of suspected node, current topology is %d: %s",
+                  currentTopologyId, rCommand);
+         // It is possible that current topology is actual but the view still contains a node that's about to leave;
+         // a broadcast to all nodes then can end with suspect exception, but we won't get any new topology.
+         // An example of this situation is when a node sends leave - topology can be installed before the new view.
+         // To prevent suspect exceptions use SYNCHRONOUS_IGNORE_LEAVERS response mode.
+         if (currentTopologyId == cmd.getTopologyId() && !cacheTopology.getActualMembers().contains(((SuspectException) ce).getSuspect())) {
+            // TODO: provide a test case
+            throw new IllegalStateException("Command was not sent with SYNCHRONOUS_IGNORE_LEAVERS?");
          }
-         if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-            throw t;
-
-         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
-         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
+      } else if (ce instanceof OutdatedTopologyException) {
          if (trace)
             log.tracef("Retrying command because of topology change, current topology is %d: %s",
-                  currentTopologyId(), rCommand);
-         AbstractTopologyAffectedCommand cmd = (AbstractTopologyAffectedCommand) rCommand;
-         int newTopologyId = Math.max(currentTopologyId(), cmd.getTopologyId() + 1);
-         cmd.setTopologyId(newTopologyId);
-         waitForTopology(newTopologyId);
+                  currentTopologyId, cmd);
+      } else {
+         return stage;
+      }
+      // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
+      // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
 
-         return visitReadCommand(rCtx, cmd, consistentHashUpdater);
-      });
+      int newTopologyId = Math.max(currentTopologyId, cmd.getTopologyId() + 1);
+      cmd.setTopologyId(newTopologyId);
+      CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(newTopologyId);
+      return retryWhenDone(topologyFuture, newTopologyId, rCtx, cmd, consistentHashConsumer)
+            .compose((stage1, rCtx1, rCommand1, rv1, t1) -> handleReadCommandReturn(stage1, rCtx1, rCommand1, rv1, t1, consistentHashConsumer));
    }
 
    @Override
@@ -233,59 +257,63 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     *
     */
    private BasicInvocationStage handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
-      // For local commands we may not have a GlobalTransaction yet
-      Address origin = ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
-      if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, origin);
+      if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
 
       if (isLocalOnly(command)) {
          return invokeNext(ctx, command);
       }
       updateTopologyId(command);
 
-      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
-         Object localResult = rv;
-         TransactionBoundaryCommand txCommand = (TransactionBoundaryCommand) rCommand;
+      return invokeNext(ctx, command).compose(this::handleTxReturn);
+   }
 
-         int retryTopologyId = -1;
-         if (t instanceof OutdatedTopologyException) {
-            // This can only happen on the originator
-            retryTopologyId = Math.max(currentTopologyId(), txCommand.getTopologyId() + 1);
-         } else if (t != null) {
-            throw t;
-         }
+   private Address getOrigin(TxInvocationContext ctx) {
+      // For local commands we may not have a GlobalTransaction yet
+      return ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
+   }
 
-         // We need to forward the command to the new owners, if the command was asynchronous
-         boolean async = isTxCommandAsync(txCommand);
-         if (async) {
-            stateTransferManager.forwardCommandIfNeeded(txCommand, getAffectedKeys(rCtx, txCommand), origin);
-            return stage;
-         }
+   private BasicInvocationStage handleTxReturn(BasicInvocationStage stage, InvocationContext ctx,
+                                               VisitableCommand command, Object rv, Throwable t) throws Throwable {
+      TransactionBoundaryCommand txCommand = (TransactionBoundaryCommand) command;
 
-         if (rCtx.isOriginLocal()) {
-            // On the originator, we only retry if we got an OutdatedTopologyException
-            // Which could be caused either by an owner leaving or by an owner having a newer topology
-            // No need to retry just because we have a new topology on the originator, all entries were
-            // wrapped anyway
+      int retryTopologyId = -1;
+      int currentTopology = currentTopologyId();
+      if (t instanceof OutdatedTopologyException) {
+         // This can only happen on the originator
+         retryTopologyId = Math.max(currentTopology, txCommand.getTopologyId() + 1);
+      } else if (t != null) {
+         return stage;
+      }
 
-            if (retryTopologyId > 0) {
-               // Only the originator can retry the command
-               txCommand.setTopologyId(retryTopologyId);
-               waitForTransactionData(retryTopologyId);
-               if (txCommand instanceof PrepareCommand) {
-                  ((PrepareCommand) txCommand).setRetriedCommand(true);
-               }
+      // We need to forward the command to the new owners, if the command was asynchronous
+      boolean async = isTxCommandAsync(txCommand);
+      if (async) {
+         stateTransferManager.forwardCommandIfNeeded(txCommand, getAffectedKeys(ctx, txCommand), getOrigin((TxInvocationContext) ctx));
+         return stage;
+      }
 
-               log.tracef("Retrying command %s for topology %d", txCommand, retryTopologyId);
-               return handleTxCommand((TxInvocationContext) rCtx, txCommand);
+      if (ctx.isOriginLocal()) {
+         // On the originator, we only retry if we got an OutdatedTopologyException
+         // Which could be caused either by an owner leaving or by an owner having a newer topology
+         // No need to retry just because we have a new topology on the originator, all entries were
+         // wrapped anyway
+
+         if (retryTopologyId > 0) {
+            // Only the originator can retry the command
+            txCommand.setTopologyId(retryTopologyId);
+            if (txCommand instanceof PrepareCommand) {
+               ((PrepareCommand) txCommand).setRetriedCommand(true);
             }
-         } else {
-            if (currentTopologyId() > txCommand.getTopologyId()) {
-               // Signal the originator to retry
-               localResult = UnsureResponse.INSTANCE;
-            }
+            CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(retryTopologyId);
+            return retryWhenDone(transactionDataFuture, retryTopologyId, ctx, txCommand, null).compose(this::handleTxReturn);
          }
-         return returnWith(localResult);
-      });
+      } else {
+         if (currentTopology > txCommand.getTopologyId()) {
+            // Signal the originator to retry
+            return returnWith(UnsureResponse.INSTANCE);
+         }
+      }
+      return stage;
    }
 
    private boolean isTxCommandAsync(TransactionBoundaryCommand command) {
@@ -309,45 +337,45 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private BasicInvocationStage handleTxWriteCommand(InvocationContext ctx, WriteCommand command)
          throws Throwable {
-      Address origin = ctx.getOrigin();
-      if (trace) log.tracef("handleTxWriteCommand for command %s, origin %s", command, origin);
+      if (trace) log.tracef("handleTxWriteCommand for command %s, origin %s", command, ctx.getOrigin());
 
       if (isLocalOnly(command)) {
          return invokeNext(ctx, command);
       }
       updateTopologyId(command);
 
-      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
-         int retryTopologyId = -1;
-         WriteCommand writeCommand = (WriteCommand) rCommand;
-         if (t instanceof OutdatedTopologyException) {
-            // This can only happen on the originator
-            retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
-         } else if (t != null) {
-            throw t;
-         }
+      return invokeNext(ctx, command).compose(this::handleTxWriteReturn);
+   }
 
-         if (rCtx.isOriginLocal()) {
-            // On the originator, we only retry if we got an OutdatedTopologyException
-            // Which could be caused either by an owner leaving or by an owner having a newer topology
-            // No need to retry just because we have a new topology on the originator, all entries were
-            // wrapped anyway
-            if (retryTopologyId > 0) {
-               // Only the originator can retry the command
-               writeCommand.setTopologyId(retryTopologyId);
-               waitForTransactionData(retryTopologyId);
+   private BasicInvocationStage handleTxWriteReturn(BasicInvocationStage stage, InvocationContext rCtx,
+                                                    VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+      int retryTopologyId = -1;
+      WriteCommand writeCommand = (WriteCommand) rCommand;
+      if (t instanceof OutdatedTopologyException) {
+         // This can only happen on the originator
+         retryTopologyId = Math.max(currentTopologyId(), writeCommand.getTopologyId() + 1);
+      } else if (t != null) {
+         throw t;
+      }
 
-               log.tracef("Retrying command %s for topology %d", writeCommand, retryTopologyId);
-               return handleTxWriteCommand(rCtx, writeCommand);
-            }
-         } else {
-            if (currentTopologyId() > writeCommand.getTopologyId()) {
-               // Signal the originator to retry
-               return returnWith(UnsureResponse.INSTANCE);
-            }
+      if (rCtx.isOriginLocal()) {
+         // On the originator, we only retry if we got an OutdatedTopologyException
+         // Which could be caused either by an owner leaving or by an owner having a newer topology
+         // No need to retry just because we have a new topology on the originator, all entries were
+         // wrapped anyway
+         if (retryTopologyId > 0) {
+            // Only the originator can retry the command
+            writeCommand.setTopologyId(retryTopologyId);
+            CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(retryTopologyId);
+            return retryWhenDone(transactionDataFuture, retryTopologyId, rCtx, writeCommand, null).compose(this::handleTxWriteReturn);
          }
-         return stage;
-      });
+      } else {
+         if (currentTopologyId() > writeCommand.getTopologyId()) {
+            // Signal the originator to retry
+            return returnWith(UnsureResponse.INSTANCE);
+         }
+      }
+      return stage;
    }
 
    /**
@@ -370,37 +398,41 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          return invokeNext(ctx, command);
       }
 
-      return invokeNext(ctx, command).compose((stage, rCtx, rCommand, rv, t) -> {
-         if (t == null)
-            return stage;
-
-         Throwable ce = t;
-         while (ce instanceof RemoteException) {
-            ce = ce.getCause();
-         }
-         if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
-            throw t;
-
-         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the
-         // next topology.
-         // Without this, we could retry the command too fast and we could get the
-         // OutdatedTopologyException again.
-         int currentTopologyId = currentTopologyId();
-         WriteCommand writeCommand = (WriteCommand) rCommand;
-         if (trace)
-            log.tracef("Retrying command because of topology change, current topology is %d: %s",
-                  currentTopologyId, writeCommand);
-         int commandTopologyId = writeCommand.getTopologyId();
-         int newTopologyId = Math.max(currentTopologyId, commandTopologyId + 1);
-         writeCommand.setTopologyId(newTopologyId);
-         waitForTransactionData(newTopologyId);
-
-         writeCommand.addFlag(Flag.COMMAND_RETRY);
-         return handleNonTxWriteCommand(rCtx, writeCommand);
-      });
+      return invokeNext(ctx, command).compose(this::handleNonTxWriteReturn);
    }
 
-   @Override
+   private BasicInvocationStage handleNonTxWriteReturn(BasicInvocationStage stage, InvocationContext rCtx,
+                                                    VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+      if (t == null)
+         return stage;
+
+      Throwable ce = t;
+      while (ce instanceof RemoteException) {
+         ce = ce.getCause();
+      }
+      if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
+         throw t;
+
+      // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the
+      // next topology.
+      // Without this, we could retry the command too fast and we could get the
+      // OutdatedTopologyException again.
+      int currentTopologyId = currentTopologyId();
+      WriteCommand writeCommand = (WriteCommand) rCommand;
+      if (trace)
+         log.tracef("Retrying command because of topology change, current topology is %d: %s",
+               currentTopologyId, writeCommand);
+      int commandTopologyId = writeCommand.getTopologyId();
+      int newTopologyId = Math.max(currentTopologyId, commandTopologyId + 1);
+      writeCommand.setTopologyId(newTopologyId);
+      writeCommand.addFlag(Flag.COMMAND_RETRY);
+      // In non-tx context, waiting for transaction data is equal to waiting for topology
+      CompletableFuture<Void> transactionDataFuture = stateTransferLock.transactionDataFuture(newTopologyId);
+      return retryWhenDone(transactionDataFuture, newTopologyId, rCtx, writeCommand, null).compose(this::handleNonTxWriteReturn);
+   }
+
+
+      @Override
    public BasicInvocationStage handleDefault(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
       if (command instanceof TopologyAffectedCommand) {

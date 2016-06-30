@@ -34,48 +34,84 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
 
    @Override
    public void run() {
+      if (sync) {
+         runSync();
+      } else {
+         runAsync();
+      }
+   }
+
+   private void runSync() {
       try {
-         response = beforeInvoke();
-         if (response != null) {
-            reply.reply(response);
-            onFinally();
-            return;
-         }
-
-         CompletableFuture<Response> future = handler.invokeCommand(command);
-         if (sync) {
-            response = future.join();
-            afterInvoke();
-            reply.reply(response);
-            onFinally();
-            return;
-         }
-
-         future.whenComplete((response1, throwable) -> {
-            try {
-               if (throwable == null) {
-                  response = response1;
-                  afterInvoke();
-               } else {
-                  if (throwable instanceof CompletionException) {
-                     throwable = throwable.getCause();
-                  }
-                  afterCommandException(throwable);
-               }
-            } finally {
-               reply.reply(response);
-               onFinally();
+         CompletableFuture<Response> beforeFuture = beforeInvoke();
+         if (beforeFuture != null) {
+            response = beforeFuture.join();
+            if (response != null) {
+               return;
             }
-         });
-      } catch (Throwable t) {
-         if (t.getCause() != null && t instanceof CompletionException) {
-            t = t.getCause();
          }
-         afterCommandException(t);
-         // We didn't get a CompletableFuture from invokeCommand, so we have to send the reply here
+         CompletableFuture<Response> commandFuture = handler.invokeCommand(command);
+         response = commandFuture.join();
+         afterInvoke();
+      } catch (Throwable t) {
+         afterCommandException(unwrap(t));
+      } finally {
          reply.reply(response);
          onFinally();
       }
+   }
+
+   private void runAsync() {
+      CompletableFuture<Response> beforeFuture = beforeInvoke();
+      if (beforeFuture == null) {
+         invoke();
+      } else {
+         beforeFuture.whenComplete((rsp, throwable) -> {
+            if (rsp != null) {
+               response = rsp;
+               reply.reply(rsp);
+               onFinally();
+            } else if (throwable != null) {
+               afterCommandException(unwrap(throwable));
+               reply.reply(response);
+               onFinally();
+            } else {
+               invoke();
+            }
+         });
+      }
+   }
+
+   private void invoke() {
+      CompletableFuture<Response> commandFuture;
+      try {
+         commandFuture = handler.invokeCommand(command);
+      } catch (Throwable t) {
+         afterCommandException(unwrap(t));
+         reply.reply(response);
+         onFinally();
+         return;
+      }
+      commandFuture.whenComplete((rsp, throwable) -> {
+         try {
+            if (throwable == null) {
+               response = rsp;
+               afterInvoke();
+            } else {
+               afterCommandException(unwrap(throwable));
+            }
+         } finally {
+            reply.reply(response);
+            onFinally();
+         }
+      });
+   }
+
+   private Throwable unwrap(Throwable throwable) {
+      if (throwable instanceof CompletionException && throwable.getCause() != null) {
+         throwable = throwable.getCause();
+      }
+      return throwable;
    }
 
    private void afterCommandException(Throwable throwable) {
@@ -103,7 +139,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       //no-op by default
    }
 
-   protected Response beforeInvoke() throws Exception {
+   protected CompletableFuture<Response> beforeInvoke() {
       return null; //no-op by default
    }
 }

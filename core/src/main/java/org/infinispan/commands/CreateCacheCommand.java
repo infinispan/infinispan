@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
@@ -17,7 +18,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
