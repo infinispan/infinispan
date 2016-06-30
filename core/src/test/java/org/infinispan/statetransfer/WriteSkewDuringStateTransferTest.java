@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
@@ -28,8 +29,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
 import static org.testng.AssertJUnit.*;
@@ -196,10 +200,12 @@ rebalance_start
             if (context.getOrigin().equals(address(cache(1)))) {
                //from node B, i.e, it is forwarded. it needs to wait until the topology changes
                try {
-                  cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopologyId + 2,
-                                                                                                         10, TimeUnit.SECONDS);
+                  CompletableFuture<Void> topologyFuture = cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().topologyFuture(currentTopologyId + 2);
+                  if (topologyFuture != null) topologyFuture.get(10, TimeUnit.SECONDS);
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
+               } catch (Exception e) {
+                  throw new CacheException(e);
                }
             }
          }
@@ -267,10 +273,12 @@ rebalance_start
          @Override
          public void before(InvocationContext context, VisitableCommand command, Cache cache) {
             try {
-               cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 1,
-                                                                                                      10, TimeUnit.SECONDS);
+               CompletableFuture<Void> topologyFuture = cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().topologyFuture(currentTopology + 1);
+               if (topologyFuture != null) topologyFuture.get(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+               throw new CacheException(e);
             }
          }
 
@@ -294,10 +302,12 @@ rebalance_start
          @Override
          public void before(InvocationContext context, VisitableCommand command, Cache cache) {
             try {
-               cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 2,
-                                                                                                      10, TimeUnit.SECONDS);
+               CompletableFuture<Void> topologyFuture = cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().topologyFuture(currentTopology + 2);
+               if (topologyFuture != null) topologyFuture.get(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+               throw new CacheException(e);
             }
          }
 

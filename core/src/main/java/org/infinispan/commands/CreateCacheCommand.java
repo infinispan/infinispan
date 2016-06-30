@@ -2,6 +2,7 @@ package org.infinispan.commands;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.ComponentRegistry;
@@ -11,13 +12,14 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -92,9 +94,11 @@ public class CreateCacheCommand extends BaseRpcCommand {
       while (cacheTopology.getMembers().size() < expectedMembers || cacheTopology.getPendingCH() != null) {
          long remainingTime = timeService.remainingTime(endTime, TimeUnit.NANOSECONDS);
          try {
-            stateTransferLock.waitForTopology(cacheTopology.getTopologyId() + 1, remainingTime,
-                  TimeUnit.NANOSECONDS);
-         } catch (TimeoutException ignored) {
+            CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(cacheTopology.getTopologyId() + 1);
+            if (topologyFuture != null) topologyFuture.get(remainingTime, TimeUnit.NANOSECONDS);
+         } catch (ExecutionException e) {
+            throw new CacheException(e.getCause());
+         } catch (java.util.concurrent.TimeoutException e) {
             throw log.creatingTmpCacheTimedOut(cacheNameToCreate, cacheManager.getAddress());
          }
          cacheTopology = stateTransferManager.getCacheTopology();

@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
@@ -25,8 +26,11 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
@@ -199,7 +203,12 @@ public class StateProviderImpl implements StateProvider {
                   "topology (%d). Waiting for topology %d to be installed locally.", isReqForTransactions ? "Transactions" : "Segments", destination,
                   requestTopologyId, currentTopologyId, requestTopologyId);
          }
-         stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
+         try {
+            CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(requestTopologyId);
+            if (topologyFuture != null) topologyFuture.get(timeout, TimeUnit.MILLISECONDS);
+         } catch (Exception e) {
+            throw new CacheException("Failed waiting for topology " + requestTopologyId, e);
+         }
          cacheTopology = stateConsumer.getCacheTopology();
       }
       return cacheTopology;

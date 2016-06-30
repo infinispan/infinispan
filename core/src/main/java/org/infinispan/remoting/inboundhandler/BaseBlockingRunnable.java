@@ -28,10 +28,18 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
 
    @Override
    public void run() {
+      InvocationStatus invocationStatus = null;
       try {
-         response = beforeInvoke();
-         if (response == null) {
-            response = handler.invokePerform(command);
+         invocationStatus = beforeInvoke();
+         switch (invocationStatus) {
+            case CONTINUE:
+               response = handler.invokePerform(command);
+               break;
+            case CACHE_NOT_FOUND:
+               response = CacheNotFoundResponse.INSTANCE;
+               break;
+            case DEFERRED:
+               return;
          }
          afterInvoke();
       } catch (InterruptedException e) {
@@ -50,8 +58,10 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
          response = handler.exceptionHandlingCommand(command, throwable);
          onException(throwable);
       } finally {
-         reply.reply(response);
-         onFinally();
+         if (invocationStatus != InvocationStatus.DEFERRED) {
+            reply.reply(response);
+            onFinally();
+         }
       }
    }
 
@@ -67,7 +77,13 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       //no-op by default
    }
 
-   protected Response beforeInvoke() throws Exception {
-      return null; //no-op by default
+   protected InvocationStatus beforeInvoke() throws Exception {
+      return InvocationStatus.CONTINUE; //no-op by default
+   }
+
+   protected enum InvocationStatus {
+      CONTINUE,
+      CACHE_NOT_FOUND,
+      DEFERRED
    }
 }
