@@ -29,6 +29,11 @@ public class LocalOnlyBackend implements SwitchingBackend {
    }
 
    @Override
+   public void refresh() {
+      // no op
+   }
+
+   @Override
    public void shutdown() {
       localIndexingBackend.flushAndClose(null);
    }

@@ -146,13 +146,18 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    }
 
    private synchronized void applyViewChangedEvent(ViewChangedEvent e) {
-      assert e != null;
-      assert e.getNewMembers().size() > 0;
-      assert e.getNewMembers().get(0) != null;
+      List<Address> newMembers = e.getNewMembers();
       if (log.isDebugEnabled()) {
-         log.debug("Notified of new View! Members: " + e.getNewMembers());
+         log.debug("Notified of new View! Members: " + newMembers);
       }
-      final Address newmaster = e.getNewMembers().get(0);
+      handleTopologyChange(newMembers);
+   }
+
+   private synchronized void handleTopologyChange(List<Address> newMembers) {
+      assert newMembers != null;
+      assert newMembers.size() > 0;
+      assert newMembers.get(0) != null;
+      final Address newmaster = newMembers.get(0);
       if (masterDidChange(newmaster)) {
          if (thisIsMaster()) {
             if (log.isDebugEnabled()) {
@@ -220,6 +225,11 @@ final class ClusteredSwitchingBackend implements LazyInitializableBackend {
    @Override
    public IndexingBackend getCurrentIndexingBackend() {
       return currentBackend;
+   }
+
+   @Override
+   public void refresh() {
+      handleTopologyChange(rpcManager.getMembers());
    }
 
    private static void closeBackend(final IndexingBackend oldOne, final IndexingBackend replacement) {
