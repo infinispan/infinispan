@@ -13,6 +13,8 @@ public interface SwitchingBackend {
 
    IndexingBackend getCurrentIndexingBackend();
 
+   void refresh();
+
    void shutdown();
 
 }
