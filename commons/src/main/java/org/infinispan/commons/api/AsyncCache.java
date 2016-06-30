@@ -11,15 +11,15 @@ import java.util.concurrent.TimeUnit;
  * Note that these methods only really make sense if you are using a clustered cache.  I.e., when used in LOCAL mode,
  * these "async" operations offer no benefit whatsoever.  These methods, such as {@link #putAsync(Object, Object)}
  * offer the best of both worlds between a fully synchronous and a fully asynchronous cache in that a
- * {@link CompletableFuture} is returned.  The <tt>NotifyingFuture</tt> can then be ignored or thrown away for typical
+ * {@link CompletableFuture} is returned.  The <tt>CompletableFuture</tt> can then be ignored or thrown away for typical
  * asynchronous behaviour, or queried for synchronous behaviour, which would block until any remote calls complete.
  * Note that all remote calls are, as far as the transport is concerned, synchronous.  This allows you the guarantees
  * that remote calls succeed, while not blocking your application thread unnecessarily.  For example, usage such as
  * the following could benefit from the async operations:
  * <pre>
- *   NotifyingFuture f1 = cache.putAsync("key1", "value1");
- *   NotifyingFuture f2 = cache.putAsync("key2", "value2");
- *   NotifyingFuture f3 = cache.putAsync("key3", "value3");
+ *   CompletableFuture f1 = cache.putAsync("key1", "value1");
+ *   CompletableFuture f2 = cache.putAsync("key2", "value2");
+ *   CompletableFuture f3 = cache.putAsync("key3", "value3");
  *   f1.get();
  *   f2.get();
  *   f3.get();
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * cluster.
  * <p/>
  * Also, the use of async operations when within a transaction return your local value only, as expected.  A
- * NotifyingFuture is still returned though for API consistency.
+ * {@link CompletableFuture} is still returned though for API consistency.
  * <p/>
  *
  * @author Mircea Markus

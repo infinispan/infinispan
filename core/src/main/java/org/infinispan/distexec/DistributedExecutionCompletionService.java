@@ -78,9 +78,6 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
 
     /**
      * {@inheritDoc CompletionService}
-     * <p>
-     * This future object may not be used as a NotifyingFuture.  That is because
-     * internally this class sets the listener to provide ability to add to the queue.
      */
     @Override
     public CompletableFuture<V> submit(Callable<V> task) {
@@ -91,9 +88,6 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
 
     /**
      * {@inheritDoc CompletionService}
-     * <p>
-     * This future object may not be used as a NotifyingFuture.  That is because
-     * internally this class sets the listener to provide ability to add to the queue.
      */
     @Override
     public CompletableFuture<V> submit(Runnable task, V result) {
@@ -104,10 +98,6 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
 
     /**
      * {@inheritDoc CompletionService}
-     * <p>
-     * This future may safely be used as a NotifyingFuture if desired.  This
-     * is because if it tries to set a listener it will be called immediately
-     * since the task has already been completed.
      */
     @Override
     public CompletableFuture<V> take() throws InterruptedException {
@@ -116,10 +106,6 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
 
     /**
     * {@inheritDoc CompletionService}
-    * <p>
-    * This future may safely be used as a NotifyingFuture if desired.  This
-    * is because if it tries to set a listener it will be called immediately
-    * since the task has already been completed.
     */
     @Override
     public CompletableFuture<V> poll() {
@@ -128,10 +114,6 @@ public class DistributedExecutionCompletionService<V> implements CompletionServi
 
     /**
      * {@inheritDoc CompletionService}
-     * <p>
-     * This future may safely be used as a NotifyingFuture if desired.  This
-     * is because if it tries to set a listener it will be called immediately
-     * since the task has already been completed.
      */
     @Override
     public CompletableFuture<V> poll(long timeout, TimeUnit unit) throws InterruptedException {
