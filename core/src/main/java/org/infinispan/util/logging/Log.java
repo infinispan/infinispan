@@ -1452,4 +1452,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Error while handling view %s", id = 421)
    void viewHandlingError(int viewId, @Cause Throwable t);
+
+   @Message(value = "Failed waiting for topology %d", id = 422)
+   TimeoutException failedWaitingForTopology(int requestTopologyId);
 }

@@ -39,6 +39,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -193,10 +194,6 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
       remoteSite.execute(rpcManager.getTransport(), task.waitTime, TimeUnit.MILLISECONDS);
    }
 
-   private void waitForTopology(int topologyId) throws InterruptedException {
-      stateTransferLock.waitForTopology(topologyId, 1, TimeUnit.DAYS);
-   }
-
    private class StatePushTask implements Runnable {
 
       private final XSiteBackup xSiteBackup;
@@ -228,7 +225,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                log.debugf("[X-Site State Transfer - %s] wait for min topology %s", xSiteBackup.getSiteName(), minTopologyId);
             }
 
-            waitForTopology(minTopologyId);
+            CompletableFutures.await(stateTransferLock.topologyFuture(minTopologyId));
 
             final List<XSiteState> chunk = new ArrayList<>(chunkSize <= 0 ? DEFAULT_CHUNK_SIZE : chunkSize);
 
@@ -306,7 +303,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
             } else if (debug) {
                log.debugf("[X-Site State Transfer - %s] skip Persistence iteration", xSiteBackup.getSiteName());
             }
-         } catch (InterruptedException e) {
+         } catch (Throwable e) {
             error = true;
             log.unableToSendXSiteState(xSiteBackup.getSiteName(), e);
          } finally {

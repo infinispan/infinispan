@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
@@ -207,7 +208,11 @@ public class StateProviderImpl implements StateProvider {
                   "topology (%d). Waiting for topology %d to be installed locally.", isReqForTransactions ? "Transactions" : "Segments", destination,
                   requestTopologyId, currentTopologyId, requestTopologyId);
          }
-         stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
+         try {
+            stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
+         } catch (TimeoutException e) {
+            throw log.failedWaitingForTopology(requestTopologyId);
+         }
          cacheTopology = stateConsumer.getCacheTopology();
       }
       return cacheTopology;
