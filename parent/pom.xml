@@ -1231,7 +1231,7 @@
                       <jvmArg>-Xmx256m</jvmArg>
                    </jvmArgs>
                    <args>
-                      <arg>-P:genjavadoc:out=${project.parent.build.directory}/genjavadoc</arg>
+                      <arg>-P:genjavadoc:out=${project.build.directory}/genjavadoc</arg>
                    </args>
                    <compilerPlugins>
                       <compilerPlugin>
