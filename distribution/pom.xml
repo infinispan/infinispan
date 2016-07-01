@@ -112,7 +112,14 @@
       
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-javadoc</artifactId>
+         <artifactId>infinispan-javadoc-embedded</artifactId>
+         <version>${project.version}</version>
+         <classifier>javadoc</classifier>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-javadoc-remote</artifactId>
          <version>${project.version}</version>
          <classifier>javadoc</classifier>
       </dependency>

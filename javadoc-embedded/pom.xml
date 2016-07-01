@@ -7,8 +7,8 @@
       <version>9.0.0-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
-   <artifactId>infinispan-javadoc</artifactId>
-   <name>Infinispan JavaDoc</name>
+   <artifactId>infinispan-javadoc-embedded</artifactId>
+   <name>Infinispan JavaDoc Embedded</name>
    <packaging>jar</packaging>
 
    <properties>

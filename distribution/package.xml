@@ -62,9 +62,11 @@
          </copy>
          <base-distribution-lib-remote dir="${output.dir}" />
          <base-distribution-common-files dir="${output.dir}" type="remote" />
+         <base-distribution-javadocs dir="${output.dir}" type="remote" />
+         <delete dir="${output.dir}/docs-embedded" />
+         <delete dir="${output.dir}/docs-remote" />
          <delete dir="${output.dir}/bin" />
          <delete dir="${output.dir}/configs" />
-         <delete dir="${output.dir}/docs" />
          <delete file="${output.dir}/README-GUI-Demo.txt" />
       </sequential>
    </target>
@@ -86,6 +88,8 @@
          <base-distribution-schema dir="@{dir}" />
          <base-distribution-javadocs dir="@{dir}" />
          <base-distribution-configdocs dir="@{dir}" />
+         <delete dir="@{dir}/docs-embedded" />
+         <delete dir="@{dir}/docs-remote" />
       </sequential>
    </macrodef>
 
@@ -127,14 +131,15 @@
 
    <macrodef name="base-distribution-javadocs">
       <attribute name="dir" />
+      <attribute name="type" default="embedded" />
       <sequential>
          <mkdir dir="@{dir}/docs" />
          <copy todir="@{dir}/docs">
-            <fileset dir="src/main/release/common/docs">
+            <fileset dir="src/main/release/common/docs-@{type}">
                <include name="**" />
             </fileset>
          </copy>
-         <unjar src="${org.infinispan:infinispan-javadoc:jar:javadoc}" dest="@{dir}/docs/api">
+         <unjar src="${org.infinispan:infinispan-javadoc-@{type}:jar:javadoc}" dest="@{dir}/docs/api">
          </unjar>
       </sequential>
    </macrodef>
