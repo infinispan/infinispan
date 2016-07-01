@@ -10,6 +10,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -31,8 +32,9 @@ import java.util.concurrent.Future;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "api.ReplicatedNonTxCacheTest")
-public class ReplicatedNonTxCacheTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "api.NonTxCacheTest")
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
+public class NonTxCacheTest extends MultipleCacheManagersTest {
 
    /**
     * ISPN-3354
@@ -57,19 +59,14 @@ public class ReplicatedNonTxCacheTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode(), false);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, false);
       builder.clustering().hash()
-            .numSegments(60)
-            .numOwners(2);
+            .numSegments(60);
       createClusteredCaches(2, builder);
    }
 
-   protected CacheMode cacheMode() {
-      return CacheMode.REPL_SYNC;
-   }
-
    private void performTestOn(final Operation operation) throws Exception {
-      final Object key = new MagicKey(cache(0), cache(1));
+      final Object key = getKeyForCache(cache(0), cache(1));
       final ControlledRpcManager controlledRpcManager = replaceRpcManager(cache(1));
 
       cache(0).put(key, "v1");
