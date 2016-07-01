@@ -14,10 +14,11 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.ClusterTopologyManager;
-import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
@@ -41,7 +42,17 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValueTest")
-public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManagersTest {
+public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest {
+
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+         new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+      };
+   }
 
    {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -57,8 +68,11 @@ public class NonTxStateTransferOverwritingValueTest extends MultipleCacheManager
 
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.clustering().cacheMode(CacheMode.DIST_SYNC);
-      c.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      c.clustering().cacheMode(cacheMode);
+      c.transaction().transactionMode(transactionMode());
+      if (lockingMode != null) {
+         c.transaction().lockingMode(lockingMode);
+      }
       return c;
    }
 
