@@ -12,8 +12,8 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
 /**

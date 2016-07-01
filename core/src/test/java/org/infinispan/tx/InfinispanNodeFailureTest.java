@@ -21,8 +21,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * This test reproduces following scenario in Infinispan:
@@ -133,7 +133,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
 
       // check that second node state is inconsistent, second result should be FALSE in read committed pessimistic cache
       // uncomment when this bug is fixed
-      assertEquals(Boolean.FALSE, secondResult);
+      assertEquals(false, secondResult);
    }
 
    @Override

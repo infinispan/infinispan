@@ -23,7 +23,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * CustomClassLoaderListenerTest.

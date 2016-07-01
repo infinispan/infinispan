@@ -1,19 +1,19 @@
 package org.infinispan.commons.util;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.util.Collection;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.Assert.assertEquals;
+
 
 /**
  * @author Tristan Tarrant
  * @since 9.0
  */
-
-@Test(testName = "util.ServiceFinderTest", groups = "functional")
 public class ServiceFinderTest {
 
+   @Test
    public void testDuplicateServiceFinder() {
       ClassLoader mainClassLoader = this.getClass().getClassLoader();
       ClassLoader otherClassLoader = new ClonedClassLoader(mainClassLoader);

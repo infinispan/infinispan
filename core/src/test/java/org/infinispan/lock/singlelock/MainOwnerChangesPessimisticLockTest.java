@@ -15,7 +15,7 @@ import javax.transaction.Transaction;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Main owner changes due to state transfer in a distributed cluster using pessimistic locking.

@@ -56,6 +56,12 @@
 
       <plugins>
          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skipTests>true</skipTests>
+            </configuration>
+         </plugin>
+         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-checkstyle-plugin</artifactId>
          </plugin>
@@ -71,9 +77,9 @@
                   </Export-Package>
                   <Import-Package>
                   *
-                  
+
                   </Import-Package>
-                  
+
                   <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>
             </configuration>

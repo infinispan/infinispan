@@ -41,10 +41,10 @@ import static org.infinispan.query.dsl.Expression.min;
 import static org.infinispan.query.dsl.Expression.param;
 import static org.infinispan.query.dsl.Expression.sum;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model.

@@ -9,8 +9,8 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * Test for stale remote locks on invalidation mode caches with pessimistic transactions.

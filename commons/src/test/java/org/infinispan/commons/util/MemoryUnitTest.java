@@ -1,11 +1,11 @@
 package org.infinispan.commons.util;
 
-import static org.testng.AssertJUnit.assertEquals;
-import org.testng.annotations.Test;
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
-@Test(testName="commons.util.MemoryUnitTest", groups="functional")
 public class MemoryUnitTest {
 
+   @Test
    public void testMemoryUnitParser() {
       assertEquals(1000, MemoryUnit.parseBytes("1000"));
       assertEquals(1000, MemoryUnit.parseBytes("1K"));

@@ -1,6 +1,5 @@
 package org.infinispan.affinity.impl;
 
-import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -56,7 +55,7 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       caches.get(2).getCacheManager().stop();
       caches.remove(2);
       waitForClusterToResize();
-      Assert.assertEquals(2, caches.size());
+      assertEquals(2, caches.size());
       assertUnaffected();
    }
 
@@ -64,9 +63,9 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       log.info("**** here it starts");
       caches.get(0).getCacheManager().stop();
       caches.remove(0);
-      Assert.assertEquals(1, caches.size());
+      assertEquals(1, caches.size());
       TestingUtil.blockUntilViewsReceived(10000, false, caches.toArray(new Cache[0]));
-      Assert.assertEquals(1, topology().size());
+      assertEquals(1, topology().size());
 
       eventually(new Condition() {
          @Override

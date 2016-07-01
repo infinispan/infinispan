@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.TimeZone;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author anistor@redhat.com

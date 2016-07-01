@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import java.util.Collections;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "commands.PutMapCommandNonTxTest")
 @CleanupAfterMethod

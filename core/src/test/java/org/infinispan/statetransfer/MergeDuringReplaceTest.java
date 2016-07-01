@@ -23,8 +23,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "statetransfer.MergeDuringReplaceTest")

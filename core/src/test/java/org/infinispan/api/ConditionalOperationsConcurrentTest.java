@@ -13,7 +13,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.junit.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -27,6 +26,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Verifies the atomic semantic of Infinispan's implementations of java.util.concurrent.ConcurrentMap'
@@ -120,14 +122,14 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       exec.shutdown();
       try {
          boolean finished = exec.awaitTermination(5, TimeUnit.MINUTES);
-         Assert.assertTrue("Test took too long", finished);
+         assertTrue("Test took too long", finished);
       } catch (InterruptedException e) {
-         Assert.fail("Thread interrupted!");
+         fail("Thread interrupted!");
       } finally {
          // Stop the worker threads so that they don't affect the following tests
          exec.shutdownNow();
       }
-      Assert.assertFalse(failureMessage, failed.get());
+      assertFalse(failureMessage, failed.get());
    }
 
    private String[] generateValidMoves() {

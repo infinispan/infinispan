@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Testing the ISPN Directory configuration with Async. FileCacheStore. The tests are performed on Local cache.

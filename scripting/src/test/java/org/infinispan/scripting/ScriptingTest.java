@@ -14,9 +14,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
-import static org.junit.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "scripting.ScriptingTest")
 @CleanupAfterMethod

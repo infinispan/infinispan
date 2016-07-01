@@ -1,7 +1,5 @@
 package org.infinispan.all.remote.jcache;
 
-import org.testng.Assert;
-
 import javax.cache.event.CacheEntryCreatedListener;
 import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryExpiredListener;
@@ -11,6 +9,8 @@ import javax.cache.event.CacheEntryUpdatedListener;
 import javax.cache.event.EventType;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Borrowed from TCK tests
@@ -40,7 +40,7 @@ public class TrackingCacheEntryListener<K, V> implements CacheEntryCreatedListen
    public void onCreated(Iterable<CacheEntryEvent<? extends K, ? extends V>> events) throws CacheEntryListenerException {
 
       for (CacheEntryEvent<? extends K, ? extends V> event : events) {
-         Assert.assertEquals(EventType.CREATED, event.getEventType());
+         assertEquals(EventType.CREATED, event.getEventType());
          this.created.incrementAndGet();
       }
 
@@ -52,7 +52,7 @@ public class TrackingCacheEntryListener<K, V> implements CacheEntryCreatedListen
    public void onRemoved(Iterable<CacheEntryEvent<? extends K, ? extends V>> events) throws CacheEntryListenerException {
 
       for (CacheEntryEvent<? extends K, ? extends V> event : events) {
-         Assert.assertEquals(EventType.REMOVED, event.getEventType());
+         assertEquals(EventType.REMOVED, event.getEventType());
          this.removed.incrementAndGet();
          if (event.isOldValueAvailable()) {
             event.getOldValue();
@@ -64,7 +64,7 @@ public class TrackingCacheEntryListener<K, V> implements CacheEntryCreatedListen
    public void onUpdated(Iterable<CacheEntryEvent<? extends K, ? extends V>> events) throws CacheEntryListenerException {
 
       for (CacheEntryEvent<? extends K, ? extends V> event : events) {
-         Assert.assertEquals(EventType.UPDATED, event.getEventType());
+         assertEquals(EventType.UPDATED, event.getEventType());
          this.updated.incrementAndGet();
          if (event.isOldValueAvailable()) {
             event.getOldValue();

@@ -13,7 +13,7 @@
    <name>Infinispan Server - Core Components</name>
    <description>Infinispan Server - Core Components</description>
 
-   
+
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>
@@ -32,6 +32,11 @@
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-slf4j-impl</artifactId>
          <scope>runtime</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 

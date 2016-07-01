@@ -2,7 +2,7 @@ package org.infinispan.persistence;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 
 /**
  * This is a base functional test class for tests with multiple cache stores
- * 
+ *
  * @author Michal Linhard (mlinhard@redhat.com)
  */
 @Test(groups = "unit", testName = "persistence.MultiStoresFunctionalTest")
@@ -34,7 +34,7 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
    protected abstract TStoreConfigurationBuilder buildCacheStoreConfig(PersistenceConfigurationBuilder builder, String discriminator) throws Exception;
 
    /**
-    * 
+    *
     * Create n configs using cache store. sets passivation = false, purge = false, fetch persistent
     * state = true
     */

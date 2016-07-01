@@ -14,8 +14,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertEquals;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertSame;
 
 /**

@@ -1,6 +1,6 @@
 package org.infinispan.persistence;
 
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;

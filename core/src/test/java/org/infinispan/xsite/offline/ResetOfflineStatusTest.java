@@ -13,8 +13,8 @@ import org.infinispan.xsite.BaseSiteUnreachableTest;
 import org.infinispan.xsite.OfflineStatus;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * @author Mircea Markus

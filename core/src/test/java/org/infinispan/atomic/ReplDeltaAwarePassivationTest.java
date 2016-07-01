@@ -12,8 +12,9 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.junit.Assert;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author anistor@redhat.com
@@ -47,9 +48,9 @@ public class ReplDeltaAwarePassivationTest extends ReplDeltaAwareEvictionTest {
    @Override
    protected void assertNumberOfEntries(int cacheIndex) throws Exception {
       AdvancedCacheLoader cacheStore = (AdvancedCacheLoader) TestingUtil.getCacheLoader(cache(cacheIndex));
-      Assert.assertEquals(1, PersistenceUtil.count(cacheStore, null)); // one entry in store
+      assertEquals(1, PersistenceUtil.count(cacheStore, null)); // one entry in store
 
       DataContainer dataContainer = cache(cacheIndex).getAdvancedCache().getDataContainer();
-      Assert.assertEquals(1, dataContainer.size());        // only one entry in memory (the other one was evicted)
+      assertEquals(1, dataContainer.size());        // only one entry in memory (the other one was evicted)
    }
 }

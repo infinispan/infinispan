@@ -6,7 +6,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.

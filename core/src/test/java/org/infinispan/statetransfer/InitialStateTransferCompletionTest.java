@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Tests that config option StateTransferConfiguration.awaitInitialTransfer() is honored correctly.

@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 
 import java.util.Set;
 
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test with a distributed cache (numOwners=1), a shared cache store and 'preload' enabled

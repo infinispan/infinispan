@@ -13,7 +13,7 @@
    <name>Infinispan JCACHE (JSR-107) Embedded Implementation</name>
    <description>JCACHE (JSR-107) implementation using Infinispan embedded mode</description>
 
-   
+
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>
@@ -78,6 +78,12 @@
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <optional>true</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 

@@ -26,7 +26,7 @@ import java.util.List;
 
 import static org.infinispan.scripting.utils.ScriptingUtils.getScriptingManager;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests verifying the script execution in secured clustered ispn environment.

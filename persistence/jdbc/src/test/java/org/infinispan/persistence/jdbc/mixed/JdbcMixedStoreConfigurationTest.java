@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jdbc.mixed;
 
-import org.junit.Assert;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -12,6 +11,10 @@ import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tester class for {@link org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration}.
@@ -51,12 +54,12 @@ public class JdbcMixedStoreConfigurationTest {
       config = storeBuilder.create();
 
       //some checks
-      Assert.assertFalse(config.binaryTable().createOnStart());
-      Assert.assertTrue(config.stringTable().createOnStart());
-      Assert.assertEquals(config.binaryTable().dataColumnName(), "binary_dc");
-      Assert.assertEquals(config.binaryTable().dataColumnType(), "binary_dct");
-      Assert.assertEquals(config.stringTable().dataColumnName(), "strings_dc");
-      Assert.assertEquals(config.stringTable().dataColumnType(), "strings_dct");
+      assertFalse(config.binaryTable().createOnStart());
+      assertTrue(config.stringTable().createOnStart());
+      assertEquals(config.binaryTable().dataColumnName(), "binary_dc");
+      assertEquals(config.binaryTable().dataColumnType(), "binary_dct");
+      assertEquals(config.stringTable().dataColumnName(), "strings_dc");
+      assertEquals(config.stringTable().dataColumnType(), "strings_dct");
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)
@@ -70,12 +73,12 @@ public class JdbcMixedStoreConfigurationTest {
    public void testKey2StringMapper() {
       storeBuilder.key2StringMapper(DefaultTwoWayKey2StringMapper.class.getName());
       config = storeBuilder.create();
-      Assert.assertEquals(config.key2StringMapper(), DefaultTwoWayKey2StringMapper.class.getName());
+      assertEquals(config.key2StringMapper(), DefaultTwoWayKey2StringMapper.class.getName());
    }
 
    public void testConcurrencyLevel() {
       config = storeBuilder.create();
-      Assert.assertEquals(2048, config.lockConcurrencyLevel());
+      assertEquals(2048, config.lockConcurrencyLevel());
       JdbcMixedStoreConfigurationBuilder storeBuilder2 = TestCacheManagerFactory.getDefaultCacheConfiguration
             (false)
             .persistence()
@@ -83,12 +86,12 @@ public class JdbcMixedStoreConfigurationTest {
                .read(config)
                .lockConcurrencyLevel(12);
       config = storeBuilder2.create();
-      Assert.assertEquals(12, config.lockConcurrencyLevel());
+      assertEquals(12, config.lockConcurrencyLevel());
    }
 
    public void voidTestLockAcquisitionTimeout() {
       config = storeBuilder.create();
-      Assert.assertEquals(60000, config.lockAcquisitionTimeout());
+      assertEquals(60000, config.lockAcquisitionTimeout());
       JdbcMixedStoreConfigurationBuilder storeBuilder2 = TestCacheManagerFactory.getDefaultCacheConfiguration
             (false)
             .persistence()
@@ -96,7 +99,7 @@ public class JdbcMixedStoreConfigurationTest {
                .read(config)
                .lockConcurrencyLevel(13);
       config = storeBuilder2.create();
-      Assert.assertEquals(13, config.lockConcurrencyLevel());
+      assertEquals(13, config.lockConcurrencyLevel());
    }
 
    public void testDatabaseConfiguration() {
@@ -123,6 +126,6 @@ public class JdbcMixedStoreConfigurationTest {
             .jndiUrl("java:jboss/datasources/ExampleDS");
       Configuration build = bld.build();
       JdbcMixedStoreConfiguration sc = (JdbcMixedStoreConfiguration) build.persistence().stores().get(0);
-      Assert.assertEquals(DatabaseType.MYSQL, sc.dialect());
+      assertEquals(DatabaseType.MYSQL, sc.dialect());
    }
 }

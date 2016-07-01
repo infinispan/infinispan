@@ -25,7 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest")
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {

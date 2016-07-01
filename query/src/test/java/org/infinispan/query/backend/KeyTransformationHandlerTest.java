@@ -12,9 +12,10 @@ import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.NonSerializableKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.junit.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 /**
  * This is the test class for {@link org.infinispan.query.backend.KeyTransformationHandler}
@@ -120,7 +121,7 @@ public class KeyTransformationHandlerTest {
 
       byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};
       key = keyTransformationHandler.stringToKey("A:" + Base64.encodeBytes((arr)), contextClassLoader);
-      Assert.assertArrayEquals(arr, (byte[]) key);
+      assertArrayEquals(arr, (byte[]) key);
    }
 
    @Test(expectedExceptions = CacheException.class)

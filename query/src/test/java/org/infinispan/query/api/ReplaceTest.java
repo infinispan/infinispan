@@ -10,7 +10,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "query.api.ReplaceTest")
 public class ReplaceTest extends SingleCacheManagerTest {

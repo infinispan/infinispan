@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.*;
 
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 
 /**
  * @author anistor@redhat.com

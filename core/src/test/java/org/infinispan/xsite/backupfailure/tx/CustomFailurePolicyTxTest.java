@@ -6,8 +6,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.xsite.CountingCustomFailurePolicy;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea Markus

@@ -16,7 +16,7 @@ import java.io.File;
 import java.io.InputStream;
 
 import static org.infinispan.test.TestingUtil.*;
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Single file cache store functional test.

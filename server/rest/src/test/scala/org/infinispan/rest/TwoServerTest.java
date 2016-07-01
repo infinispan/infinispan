@@ -1,6 +1,5 @@
 package org.infinispan.rest;
 
-import static org.junit.Assert.assertEquals;
 import static org.testng.Assert.*;
 
 import javax.servlet.http.HttpServletResponse;

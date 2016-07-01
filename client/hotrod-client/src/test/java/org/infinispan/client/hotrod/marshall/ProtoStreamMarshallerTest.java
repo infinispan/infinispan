@@ -23,7 +23,7 @@ import java.util.Collections;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Tests integration between HotRod client and ProtoStream marshalling library.

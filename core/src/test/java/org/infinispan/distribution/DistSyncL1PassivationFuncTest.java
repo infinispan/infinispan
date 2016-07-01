@@ -13,8 +13,8 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "distribution.DistSyncL1PassivationFuncTest")
 public class DistSyncL1PassivationFuncTest extends BaseDistFunctionalTest {

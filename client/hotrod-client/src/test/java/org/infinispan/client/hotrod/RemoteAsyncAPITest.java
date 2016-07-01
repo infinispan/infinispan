@@ -13,7 +13,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.*;
+import static org.testng.Assert.assertNotEquals;
+import static org.testng.AssertJUnit.*;
 
 /**
  * @author Mircea.Markus@jboss.com

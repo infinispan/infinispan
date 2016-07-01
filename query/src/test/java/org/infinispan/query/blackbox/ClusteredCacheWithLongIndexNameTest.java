@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * The test verifies the issue ISPN-3092.

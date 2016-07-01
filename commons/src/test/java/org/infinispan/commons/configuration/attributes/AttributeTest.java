@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.commons.util.TypedProperties;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class AttributeTest {

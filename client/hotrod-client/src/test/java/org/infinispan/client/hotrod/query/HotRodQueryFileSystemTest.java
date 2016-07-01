@@ -3,10 +3,11 @@ package org.infinispan.client.hotrod.query;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
-import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import java.io.File;
+
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests verifying the functionality of Remote queries for HotRod using FileSystem as a directory provider.
@@ -32,7 +33,7 @@ public class HotRodQueryFileSystemTest extends HotRodQueryTest {
    protected void setup() throws Exception {
       Util.recursiveFileRemove(indexDirectory);
       boolean created = new File(indexDirectory).mkdirs();
-      Assert.assertTrue(created);
+      assertTrue(created);
       super.setup();
    }
 

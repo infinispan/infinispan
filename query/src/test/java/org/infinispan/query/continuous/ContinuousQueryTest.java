@@ -1,9 +1,5 @@
 package org.infinispan.query.continuous;
 
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.param;
-import static org.junit.Assert.assertEquals;
-
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +17,10 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
+
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author anistor@redhat.com

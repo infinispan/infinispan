@@ -11,7 +11,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "query.externalizers.TermExternalizerTest")
 public class TermExternalizerTest extends MultipleCacheManagersTest {

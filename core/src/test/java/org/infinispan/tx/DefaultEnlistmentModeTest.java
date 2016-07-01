@@ -13,8 +13,8 @@ import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 @Test (groups = "functional", testName = "tx.DefaultEnlistmentModeTest")
 public class DefaultEnlistmentModeTest extends AbstractCacheTest {

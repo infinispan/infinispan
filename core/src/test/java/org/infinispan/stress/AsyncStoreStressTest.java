@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.sqrt;
 import static org.infinispan.test.TestingUtil.marshalledEntry;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Async store stress test.
@@ -317,7 +317,7 @@ public class AsyncStoreStressTest {
          }
       };
    }
-   
+
    private boolean withStore(String key, Callable<Boolean> call) {
       boolean result = false;
       try {

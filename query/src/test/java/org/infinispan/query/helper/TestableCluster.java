@@ -9,7 +9,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.junit.Assert;
+
+import static org.testng.AssertJUnit.assertTrue;
 
 public class TestableCluster<K, V> {
 
@@ -52,8 +53,8 @@ public class TestableCluster<K, V> {
    public synchronized void killNode(Cache<K, V> cache) {
       EmbeddedCacheManager cacheManager = cache.getCacheManager();
       TestingUtil.killCacheManagers(cacheManager);
-      Assert.assertTrue(caches.remove(cache));
-      Assert.assertTrue(cacheManagers.remove(cacheManager));
+      assertTrue(caches.remove(cache));
+      assertTrue(cacheManagers.remove(cacheManager));
       waitForRehashToComplete(cache, caches);
    }
 

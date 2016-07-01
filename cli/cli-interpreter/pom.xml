@@ -13,7 +13,7 @@
    <name>Infinispan CLI Interpreter</name>
    <description>Infinispan CLI Interpreter module</description>
 
-   
+
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>
@@ -101,6 +101,11 @@
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 

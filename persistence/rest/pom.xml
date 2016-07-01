@@ -11,7 +11,7 @@
    <packaging>bundle</packaging>
    <name>Infinispan REST CacheStore</name>
    <description>Infinispan REST CacheStore</description>
-   
+
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -47,6 +47,16 @@
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-all</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 

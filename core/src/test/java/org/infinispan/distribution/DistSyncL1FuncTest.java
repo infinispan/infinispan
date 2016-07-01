@@ -20,8 +20,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = {"functional", "smoke"}, testName = "distribution.DistSyncL1FuncTest")
 public class DistSyncL1FuncTest extends BaseDistSyncL1Test {

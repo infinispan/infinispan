@@ -1,6 +1,6 @@
 package org.infinispan.query.distributed;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;

@@ -12,7 +12,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
-import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -574,7 +573,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       final Cache<MagicKey, Object> cache2 = cache(1, "atomic");
       testInsertDeleteCycle(new MagicKey(cache2));
    }
-   
+
    public void testInsertDeleteInsertCyclePrimaryOwner() throws Exception {
       final Cache<MagicKey, Object> cache1 = cache(0, "atomic");
       testInsertDeleteCycle(new MagicKey(cache1));
@@ -610,7 +609,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
          fails = am.containsKey("k1");
          TestingUtil.getTransactionManager(cache1).commit();
       }
-      Assert.assertFalse(fails);
+      assertFalse(fails);
    }
 
    public void testDuplicateValue() {

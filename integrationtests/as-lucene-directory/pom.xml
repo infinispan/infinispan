@@ -110,8 +110,13 @@
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
          <scope>test</scope>
-         
+
          <version>${version.h2.driver-within-wildfly}</version>
+      </dependency>
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 
@@ -211,7 +216,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
             <executions>
-                  
+
                <execution>
                   <id>configure-as-node-node1</id>
                   <phase>pre-integration-test</phase>

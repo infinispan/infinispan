@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.infinispan.query.dsl.Expression.*;
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 
 
 /**

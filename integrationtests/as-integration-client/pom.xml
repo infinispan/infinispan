@@ -83,6 +83,11 @@
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -103,6 +108,13 @@
             </plugin>
 
             <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
@@ -114,7 +126,7 @@
                     <properties>
                         <property>
                             <name>listener</name>
-                            <value>org.infinispan.commons.test.JUnitTestListener</value>
+                            <value>${junitListener}</value>
                         </property>
                     </properties>
                 </configuration>

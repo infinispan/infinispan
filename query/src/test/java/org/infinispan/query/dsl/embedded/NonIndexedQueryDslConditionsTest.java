@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import static org.infinispan.test.TestingUtil.withTx;
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test for query conditions (filtering) on cache without indexing. Exercises the whole query DSL on the sample domain

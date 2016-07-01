@@ -12,7 +12,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 
 @Test (testName = "remoting.NonExistentCacheTest", groups = "functional")
 public class NonExistentCacheTest extends AbstractInfinispanTest {

@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Verifying the functionality of Remote Queries for filesystem directory provider.

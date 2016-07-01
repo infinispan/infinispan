@@ -16,7 +16,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.junit.Assert;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -34,9 +33,7 @@ import java.util.concurrent.TimeoutException;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Base class for various L1 tests for use with distributed cache.  Note these only currently work for synchronous based
@@ -332,14 +329,14 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          // Wait until get goes remote and retrieves value before going back into L1 interceptor
          getBarrier.await(10, TimeUnit.SECONDS);
 
-         Assert.assertEquals(firstValue, ownerCache.put(key, secondValue));
+         assertEquals(firstValue, ownerCache.put(key, secondValue));
 
          // Let the get complete finally
          getBarrier.await(10, TimeUnit.SECONDS);
 
          final String expectedValue;
          expectedValue = firstValue;
-         Assert.assertEquals(expectedValue, future.get(10, TimeUnit.SECONDS));
+         assertEquals(expectedValue, future.get(10, TimeUnit.SECONDS));
 
          assertIsNotInL1(nonOwnerCache, key);
       } finally {
@@ -374,9 +371,9 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       // Let the get complete finally
       checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
 
-      Assert.assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
+      assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
 
-      Assert.assertEquals(firstValue, putFuture.get(10, TimeUnit.SECONDS));
+      assertEquals(firstValue, putFuture.get(10, TimeUnit.SECONDS));
 
       assertIsNotInL1(nonOwnerCache, key);
    }
@@ -408,9 +405,9 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          // Let the get complete finally
          checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
 
-         Assert.assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
+         assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
 
-         Assert.assertEquals(firstValue, getFuture2.get(10, TimeUnit.SECONDS));
+         assertEquals(firstValue, getFuture2.get(10, TimeUnit.SECONDS));
 
          assertIsInL1(nonOwnerCache, key);
       } finally {
@@ -443,9 +440,9 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          // Let the get complete finally
          checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
 
-         Assert.assertNull(getFuture.get(10, TimeUnit.SECONDS));
+         assertNull(getFuture.get(10, TimeUnit.SECONDS));
 
-         Assert.assertNull(getFuture2.get(10, TimeUnit.SECONDS));
+         assertNull(getFuture2.get(10, TimeUnit.SECONDS));
       } finally {
          TestingUtil.replaceComponent(nonOwnerCache, L1Manager.class, l1Manager, true);
       }
@@ -477,9 +474,9 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       // Let the get complete finally
       checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
 
-      Assert.assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
+      assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
 
-      Assert.assertEquals(firstValue, putFuture.get(10, TimeUnit.SECONDS));
+      assertEquals(firstValue, putFuture.get(10, TimeUnit.SECONDS));
 
       if (nonOwnerCache.getCacheConfiguration().transaction().transactionMode() == TransactionMode.TRANSACTIONAL) {
          assertIsInL1(nonOwnerCache, key);
@@ -496,13 +493,13 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       ownerCache.put(key, firstValue);
 
-      Assert.assertEquals(firstValue, nonOwnerCache.get(key));
+      assertEquals(firstValue, nonOwnerCache.get(key));
 
       assertIsInL1(nonOwnerCache, key);
 
       CacheEntry<Object, String> entry = nonOwnerCache.getAdvancedCache().getCacheEntry(key);
-      Assert.assertEquals(key, entry.getKey());
-      Assert.assertEquals(firstValue, entry.getValue());
+      assertEquals(key, entry.getKey());
+      assertEquals(firstValue, entry.getValue());
    }
 
    @Test
@@ -532,11 +529,11 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          // Let the get complete finally
          checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
 
-         Assert.assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
+         assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
 
          CacheEntry<Object, String> entry = getFuture2.get(10, TimeUnit.SECONDS);
-         Assert.assertEquals(key, entry.getKey());
-         Assert.assertEquals(firstValue, entry.getValue());
+         assertEquals(key, entry.getKey());
+         assertEquals(firstValue, entry.getValue());
 
          assertIsInL1(nonOwnerCache, key);
       } finally {

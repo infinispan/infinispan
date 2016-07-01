@@ -25,7 +25,7 @@ import java.util.concurrent.Callable;
 
 import static org.infinispan.query.FetchOptions.FetchMode.*;
 import static org.infinispan.test.TestingUtil.withTx;
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 
 /**
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>

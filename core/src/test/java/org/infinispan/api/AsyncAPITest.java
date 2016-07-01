@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.*;
 import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "api.AsyncAPITest")

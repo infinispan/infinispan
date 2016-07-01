@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "commands.PutMapCommandTest")
 public class PutMapCommandTest extends MultipleCacheManagersTest {

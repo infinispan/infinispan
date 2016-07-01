@@ -1,6 +1,6 @@
 package org.infinispan.query.config;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

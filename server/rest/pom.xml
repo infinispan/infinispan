@@ -71,7 +71,7 @@
          <artifactId>xstream</artifactId>
       </dependency>
 
-      
+
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
@@ -88,7 +88,12 @@
          <artifactId>scala-xml_${version.scala.major}</artifactId>
       </dependency>
 
-      
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <scope>test</scope>
+      </dependency>
+
       <dependency>
          <groupId>org.mortbay.jetty</groupId>
          <artifactId>jetty-embedded</artifactId>

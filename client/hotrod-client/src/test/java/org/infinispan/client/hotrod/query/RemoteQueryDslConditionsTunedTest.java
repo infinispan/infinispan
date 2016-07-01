@@ -8,8 +8,8 @@ import org.infinispan.query.Search;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * Verifying that the tuned query configuration also works for Remote Queries.

@@ -13,8 +13,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests if clear operation actually succeeds in removing all keys from all nodes of a distributed cluster.

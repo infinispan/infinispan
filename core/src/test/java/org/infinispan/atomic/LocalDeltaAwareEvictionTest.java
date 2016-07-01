@@ -18,7 +18,9 @@ import org.testng.annotations.Test;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author anistor@redhat.com

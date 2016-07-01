@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Verifies the Query DSL functionality for Filesystem directory_provider.

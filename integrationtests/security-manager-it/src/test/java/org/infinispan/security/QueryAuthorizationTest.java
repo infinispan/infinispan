@@ -1,7 +1,5 @@
 package org.infinispan.security;
 
-import static org.junit.Assert.assertEquals;
-
 import java.security.Policy;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
@@ -22,6 +20,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * QueryAuthorizationTest.

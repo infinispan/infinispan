@@ -13,7 +13,7 @@
     <name>Infinispan Extended Statistics</name>
     <description>Infinispan Extended Statistics module</description>
 
-    
+
     <properties>
         <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
     </properties>
@@ -29,6 +29,7 @@
             <artifactId>infinispan-commons-test</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-core</artifactId>
@@ -46,6 +47,12 @@
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

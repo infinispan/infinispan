@@ -39,8 +39,8 @@ import java.util.NoSuchElementException;
 import static java.util.Arrays.asList;
 import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

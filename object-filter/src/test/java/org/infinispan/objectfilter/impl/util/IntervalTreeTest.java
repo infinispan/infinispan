@@ -1,8 +1,8 @@
 package org.infinispan.objectfilter.impl.util;
 
-import org.testng.annotations.Test;
-
 import java.util.List;
+
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 

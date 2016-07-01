@@ -85,6 +85,7 @@
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <forkJvmArgs>-Xmx2G</forkJvmArgs>
       <testNGListener>org.infinispan.commons.test.TestNGTestListener</testNGListener>
+      <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
@@ -985,12 +986,6 @@
       </dependencies>
    </dependencyManagement>
    <dependencies>
-
-      <dependency>
-         <groupId>com.thoughtworks.xstream</groupId>
-         <artifactId>xstream</artifactId>
-         <scope>test</scope>
-      </dependency>
       <dependency>
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-core</artifactId>
@@ -1003,17 +998,10 @@
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>org.mockito</groupId>
-         <artifactId>mockito-all</artifactId>
-         <version>${version.mockito}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.jboss</groupId>
          <artifactId>jboss-transaction-spi</artifactId>
          <scope>test</scope>
       </dependency>
-
       <dependency>
          <groupId>org.jboss.narayana.jta</groupId>
          <artifactId>narayana-jta</artifactId>
@@ -1024,16 +1012,6 @@
          <artifactId>jboss-logging-processor</artifactId>
          <version>${version.jboss.logging.processor}</version>
          <scope>provided</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.testng</groupId>
-         <artifactId>testng</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.jacoco</groupId>
@@ -1414,7 +1392,6 @@
                <trimStackTrace>false</trimStackTrace>
                <properties>
                   <property>
-
                      <name>usedefaultlisteners</name>
                      <value>false</value>
                   </property>

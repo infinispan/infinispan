@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
 import org.infinispan.client.hotrod.impl.protocol.CodecUtils;
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 

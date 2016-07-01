@@ -5,7 +5,7 @@ import org.infinispan.affinity.ListenerRegistration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -74,5 +74,5 @@ public class KeyAffinityServiceShutdownTest extends BaseKeyAffinityServiceTest {
          }
       }
       assertEquals(registered, isRegistered);
-   }   
+   }
 }

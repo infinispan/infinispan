@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests the functionality of the queries in case when the NRT index manager is used in combination with FileStore.

@@ -19,10 +19,8 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHot
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.junit.Assert.assertTrue;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 
 /**
  * @since 9.0

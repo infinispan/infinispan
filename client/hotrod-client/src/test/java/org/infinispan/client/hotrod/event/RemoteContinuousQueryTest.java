@@ -4,11 +4,7 @@ package org.infinispan.client.hotrod.event;
 import static org.infinispan.query.dsl.Expression.max;
 import static org.infinispan.query.dsl.Expression.param;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.testng.AssertJUnit.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +39,6 @@ import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
-
 
 /**
  * Test remote continuous query in compat mode.
