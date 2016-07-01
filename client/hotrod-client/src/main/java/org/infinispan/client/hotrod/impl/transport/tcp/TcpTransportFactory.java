@@ -56,7 +56,7 @@ public class TcpTransportFactory implements TransportFactory {
     * We need synchronization as the thread that calls {@link TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec,
     * org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger,
     * org.infinispan.client.hotrod.event.ClientListenerNotifier)}
-    * might(and likely will) be different from the thread(s) that calls {@link TransportFactory#getTransport(byte[],
+    * might(and likely will) be different from the thread(s) that calls {@link TransportFactory#getTransport(Object,
     * java.util.Set, byte[])} or other methods
     */
    private final Object lock = new Object();
@@ -163,7 +163,7 @@ public class TcpTransportFactory implements TransportFactory {
          balancer = Util.getInstance(configuration.balancingStrategyClass());
       }
       balancers.put(cacheName, balancer);
-      balancer.setServers(topologyInfo.getServers());
+      balancer.setServers(topologyInfo.getServers(cacheName));
       return balancer;
    }
 
@@ -316,7 +316,7 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet) {
       synchronized (lock) {
-         Collection<SocketAddress> servers = updateTopologyInfo(newServers, quiet);
+         Collection<SocketAddress> servers = updateTopologyInfo(cacheName, newServers, quiet);
          if (!servers.isEmpty()) {
             FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
             balancer.setServers(servers);
@@ -326,7 +326,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    private void updateServers(Collection<SocketAddress> newServers, boolean quiet) {
       synchronized (lock) {
-         Collection<SocketAddress> servers = updateTopologyInfo(newServers, quiet);
+         Collection<SocketAddress> servers = updateTopologyInfo(null, newServers, quiet);
          if (!servers.isEmpty()) {
             for (FailoverRequestBalancingStrategy balancer : balancers.values())
                balancer.setServers(servers);
@@ -335,7 +335,7 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @GuardedBy("lock")
-   private Collection<SocketAddress> updateTopologyInfo(Collection<SocketAddress> newServers, boolean quiet) {
+   private Collection<SocketAddress> updateTopologyInfo(byte[] cacheName, Collection<SocketAddress> newServers, boolean quiet) {
       Collection<SocketAddress> servers = topologyInfo.getServers();
       Set<SocketAddress> addedServers = new HashSet<>(newServers);
       addedServers.removeAll(servers);
@@ -370,7 +370,7 @@ public class TcpTransportFactory implements TransportFactory {
       }
 
       servers = Collections.unmodifiableList(new ArrayList(newServers));
-      topologyInfo.updateServers(servers);
+      topologyInfo.updateServers(cacheName, servers);
 
       if (!failedServers.isEmpty()) {
          listenerNotifier.failoverClientListeners(failedServers);
@@ -517,7 +517,7 @@ public class TcpTransportFactory implements TransportFactory {
                boolean alive = checkServersAlive(cluster.clusterAddresses);
                if (alive) {
                   topologyAge.incrementAndGet();
-                  Collection<SocketAddress> servers = updateTopologyInfo(cluster.clusterAddresses, true);
+                  Collection<SocketAddress> servers = updateTopologyInfo(cacheName, cluster.clusterAddresses, true);
                   if (!servers.isEmpty()) {
                      FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
                      balancer.setServers(servers);
