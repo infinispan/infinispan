@@ -14,7 +14,6 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Immutables;
 
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -36,17 +35,18 @@ public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final byte[] EMPTY_BYTES = new byte[0];
 
-   private Collection<SocketAddress> servers = new ArrayList<>();
+   private Map<byte[], Collection<SocketAddress>> servers = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
    private Map<byte[], ConsistentHash> consistentHashes = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
    private Map<byte[], Integer> segmentsByCache = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
    private Map<byte[], AtomicInteger> topologyIds = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
-   public TopologyInfo(AtomicInteger topologyId, Collection<SocketAddress> servers, Configuration configuration) {
-      this.topologyIds.put(new byte[0], topologyId);
-      this.servers = servers;
-      hashFactory.init(configuration);
+   public TopologyInfo(AtomicInteger topologyId, Collection<SocketAddress> initialServers, Configuration configuration) {
+      this.topologyIds.put(EMPTY_BYTES, topologyId);
+      this.servers.put(EMPTY_BYTES, initialServers);
+      this.hashFactory.init(configuration);
    }
 
    private Map<SocketAddress, Set<Integer>> getSegmentsByServer(byte[] cacheName) {
@@ -57,13 +57,17 @@ public final class TopologyInfo {
          Optional<Integer> numSegments = Optional.ofNullable(segmentsByCache.get(cacheName));
          Optional<Set<Integer>> segments = numSegments.map(n -> range(0, n).boxed().collect(Collectors.toSet()));
          return Immutables.immutableMapWrap(
-               servers.stream().collect(toMap(identity(), s -> segments.orElse(Collections.emptySet())))
+               servers.get(cacheName).stream().collect(toMap(identity(), s -> segments.orElse(Collections.emptySet())))
          );
       }
    }
 
+   public Collection<SocketAddress> getServers(byte[] cacheName) {
+      return servers.computeIfAbsent(cacheName, k -> servers.get(EMPTY_BYTES));
+   }
+
    public Collection<SocketAddress> getServers() {
-      return servers;
+      return servers.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
    }
 
    public void updateTopology(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace,
@@ -118,9 +122,14 @@ public final class TopologyInfo {
       return valid;
    }
 
-   public void updateServers(Collection<SocketAddress> updatedServers) {
-      servers = updatedServers;
+   public void updateServers(byte[] cacheName, Collection<SocketAddress> updatedServers) {
+      if (cacheName == null || cacheName.length == 0) {
+         servers.keySet().forEach(k -> servers.put(k, updatedServers));
+      } else {
+         servers.put(cacheName, updatedServers);
+      }
    }
+
 
    public ConsistentHash getConsistentHash(byte[] cacheName) {
       return consistentHashes.get(cacheName);
