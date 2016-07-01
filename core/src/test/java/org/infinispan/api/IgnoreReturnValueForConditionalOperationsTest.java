@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -16,12 +17,18 @@ import static org.testng.Assert.assertTrue;
 @Test(groups = "functional", testName = "api.IgnoreReturnValueForConditionalOperationsTest")
 public class IgnoreReturnValueForConditionalOperationsTest extends MultipleCacheManagersTest {
 
-   protected boolean transactional;
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+         new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+      };
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      transactional = false;
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional);
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, transactional);
       createCluster(dcc, 2);
       waitForClusterToForm();
    }

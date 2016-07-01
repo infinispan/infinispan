@@ -2,19 +2,19 @@ package org.infinispan.api;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 @Test (groups = "functional", testName = "api.GetOnRemovedKeyTest")
+@InCacheMode({ CacheMode.REPL_SYNC, CacheMode.DIST_SYNC })
 public class GetOnRemovedKeyTest extends MultipleCacheManagersTest {
-
-   protected CacheMode mode = CacheMode.REPL_SYNC;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCluster(getDefaultClusteredCacheConfig(mode, true), 2);
+      createCluster(getDefaultClusteredCacheConfig(cacheMode, true), 2);
       waitForClusterToForm();
    }
 
@@ -39,6 +39,6 @@ public class GetOnRemovedKeyTest extends MultipleCacheManagersTest {
    }
 
    protected Object getKey() {
-      return "k";
+      return cacheMode.isDistributed() ? getKeyForCache(0) : "k";
    }
 }

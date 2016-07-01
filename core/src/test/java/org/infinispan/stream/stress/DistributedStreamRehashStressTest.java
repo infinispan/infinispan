@@ -12,6 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stream.CacheCollectors;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
@@ -44,22 +45,13 @@ import static org.testng.Assert.fail;
  * @since 8.0
  */
 @Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest")
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
 public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected final static int CACHE_COUNT = 5;
    protected final static int THREAD_MULTIPLIER = 5;
    protected final static long CACHE_ENTRY_COUNT = 250000;
    protected ConfigurationBuilder builderUsed;
-   protected final CacheMode cacheMode;
-
-   public DistributedStreamRehashStressTest() {
-      this(CacheMode.DIST_SYNC);
-   }
-
-   protected DistributedStreamRehashStressTest(CacheMode cacheMode) {
-      this.cacheMode = cacheMode;
-   }
-
 
    @Override
    protected void createCacheManagers() throws Throwable {
