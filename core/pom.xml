@@ -30,7 +30,7 @@
          <artifactId>jgroups</artifactId>
       </dependency>
 
-      
+
       <dependency>
          <groupId>org.jboss.spec.javax.transaction</groupId>
          <artifactId>jboss-transaction-api_1.1_spec</artifactId>
@@ -69,7 +69,7 @@
          <artifactId>geronimo-transaction</artifactId>
          <scope>test</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>org.objectweb.howl</groupId>
          <artifactId>howl</artifactId>
@@ -101,6 +101,13 @@
          </resource>
          <resource>
             <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>META-INF/infinispan-version.properties</include>
+            </includes>
+         </resource>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
             <filtering>false</filtering>
             <includes>
                <include>schema/*-${infinispan.core.schema.version}.xsd</include>
@@ -114,6 +121,7 @@
             </includes>
             <excludes>
                <exclude>features.xml</exclude>
+               <exclude>META-INF/infinispan-version.properties</exclude>
                <exclude>schema/**</exclude>
             </excludes>
          </resource>
@@ -131,40 +139,6 @@
                   <phase>prepare-package</phase>
                </execution>
             </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.jboss.maven.plugins</groupId>
-            <artifactId>maven-injection-plugin</artifactId>
-            <executions>
-               <execution>
-                  <phase>compile</phase>
-                  <goals>
-                     <goal>bytecode</goal>
-                  </goals>
-               </execution>
-            </executions>
-            <configuration>
-               <bytecodeInjections>
-                  <bytecodeInjection>
-                     <expression>${project.version}</expression>
-                     <targetMembers>
-                        <methodBodyReturn>
-                           <className>org.infinispan.Version$Injected</className>
-                           <methodName>getVersion</methodName>
-                        </methodBodyReturn>
-                     </targetMembers>
-                  </bytecodeInjection>
-                  <bytecodeInjection>
-                     <expression>${infinispan.codename}</expression>
-                     <targetMembers>
-                        <methodBodyReturn>
-                           <className>org.infinispan.Version$Injected</className>
-                           <methodName>getCodename</methodName>
-                        </methodBodyReturn>
-                     </targetMembers>
-                  </bytecodeInjection>
-               </bytecodeInjections>
-            </configuration>
          </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
