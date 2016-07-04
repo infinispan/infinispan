@@ -432,28 +432,28 @@ public class MurmurHash3 implements Hash {
          }
 
          if (cp <= 0x7f) {
-            addByte(state, (byte) cp, ++byteLen);
+            addByte(state, (byte) cp, byteLen++);
          } else if (cp <= 0x07ff) {
             byte b1 = (byte) (0xc0 | (0x1f & (cp >> 6)));
             byte b2 = (byte) (0x80 | (0x3f & cp));
-            addByte(state, b1, ++byteLen);
-            addByte(state, b2, ++byteLen);
+            addByte(state, b1, byteLen++);
+            addByte(state, b2, byteLen++);
          } else if (cp <= 0xffff) {
             byte b1 = (byte) (0xe0 | (0x0f & (cp >> 12)));
             byte b2 = (byte) (0x80 | (0x3f & (cp >> 6)));
             byte b3 = (byte) (0x80 | (0x3f & cp));
-            addByte(state, b1, ++byteLen);
-            addByte(state, b2, ++byteLen);
-            addByte(state, b3, ++byteLen);
+            addByte(state, b1, byteLen++);
+            addByte(state, b2, byteLen++);
+            addByte(state, b3, byteLen++);
          } else {
             byte b1 = (byte) (0xf0 | (0x07 & (cp >> 18)));
             byte b2 = (byte) (0x80 | (0x3f & (cp >> 12)));
             byte b3 = (byte) (0x80 | (0x3f & (cp >> 6)));
             byte b4 = (byte) (0x80 | (0x3f & cp));
-            addByte(state, b1, ++byteLen);
-            addByte(state, b2, ++byteLen);
-            addByte(state, b3, ++byteLen);
-            addByte(state, b4, ++byteLen);
+            addByte(state, b1, byteLen++);
+            addByte(state, b2, byteLen++);
+            addByte(state, b3, byteLen++);
+            addByte(state, b4, byteLen++);
          }
       }
 
@@ -511,58 +511,17 @@ public class MurmurHash3 implements Hash {
    }
 
    private void addByte(State state, byte b, int len) {
-      switch (len & 15) {
-         case 0:
-            state.k2 |= (b & 0xffL) << 56;
+      int shift = (len & 0x7) * 8;
+      long bb = (b & 0xffL) << shift;
+      if ((len & 0x8) == 0) {
+         state.k1 |= bb;
+      } else {
+         state.k2 |= bb;
+         if ((len & 0xf) == 0xf) {
             bmix(state);
             state.k1 = 0;
             state.k2 = 0;
-            break;
-         case 15:
-            state.k2 |= (b & 0xffL) << 48;
-            break;
-         case 14:
-            state.k2 |= (b & 0xffL) << 40;
-            break;
-         case 13:
-            state.k2 |= (b & 0xffL) << 32;
-            break;
-         case 12:
-            state.k2 |= (b & 0xffL) << 24;
-            break;
-         case 11:
-            state.k2 |= (b & 0xffL) << 16;
-            break;
-         case 10:
-            state.k2 |= (b & 0xffL) << 8;
-            break;
-         case 9:
-            state.k2 |= (b & 0xffL);
-            break;
-
-         case 8:
-            state.k1 |= (b & 0xffL) << 56;
-            break;
-         case 7:
-            state.k1 |= (b & 0xffL) << 48;
-            break;
-         case 6:
-            state.k1 |= (b & 0xffL) << 40;
-            break;
-         case 5:
-            state.k1 |= (b & 0xffL) << 32;
-            break;
-         case 4:
-            state.k1 |= (b & 0xffL) << 24;
-            break;
-         case 3:
-            state.k1 |= (b & 0xffL) << 16;
-            break;
-         case 2:
-            state.k1 |= (b & 0xffL) << 8;
-            break;
-         case 1:
-            state.k1 |= (b & 0xffL);
+         }
       }
    }
 
