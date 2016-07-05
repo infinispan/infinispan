@@ -18,7 +18,6 @@
 
     <properties>
         <infinispan.version>9.0</infinispan.version>
-        <maven.deploy.skip>true</maven.deploy.skip>
         <skipTests>true</skipTests>
     </properties>
 
