@@ -1,0 +1,27 @@
+#toc {
+    overflow-x: hidden;
+}
+#tocsearch {
+    font-family: 'FontAwesome';
+    width: 80%;
+}
+#toctreecollapse, #toctreeexpand {
+    padding: 0 0.3em;
+}
+#toctree {
+    font-size: 0.9em;
+}
+.jstree-children {
+    padding-left: 0;
+}
+.jstree-default .jstree-node {
+    margin-left: 0;
+}
+.jstree-anchor {
+    white-space: normal;
+}
+.jstree-default .jstree-anchor,
+.jstree-default-small .jstree-anchor {
+    height: auto;
+}
+

@@ -1,4 +1,4 @@
-= Getting Started with Infinispan
+= Getting Started with Infinispan {infinispanversion}
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
 :toc2:
 :icons: font
@@ -8,7 +8,7 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 
 This is a guide to getting started with Infinispan.
 It is meant to be read alongside the more complete link:../user_guide/user_guide.html[User Guide],
-and as a supplement to the link:http://www.infinispan.org/documentation[Quickstarts] that have been made available.
+and as a supplement to the link:http://www.infinispan.org/tutorials[Tutorials] that have been made available.
 
 include::chapter-1-Introduction.adoc[]
 include::chapter-2-Downloading_and_installing_Infinispan.adoc[]
