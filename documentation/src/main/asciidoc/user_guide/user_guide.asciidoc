@@ -1,4 +1,4 @@
-= Infinispan User Guide
+= Infinispan {infinispanversion} User Guide
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
 :toc2:
 :icons: font
