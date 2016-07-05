@@ -75,6 +75,10 @@
    <profiles>
       <profile>
          <id>distribution</id>
+         <modules>
+           <module>documentation</module>
+         </modules>
+
          <build>
             <plugins>
                <plugin>
