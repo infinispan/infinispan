@@ -1,4 +1,4 @@
-= Infinispan Server Guide
+= Infinispan Server Guide {infinispanversion}
 The Infinispan Community
 :toc2:
 :icons: font
