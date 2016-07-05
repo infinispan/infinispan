@@ -7,41 +7,7 @@
             <channel name="cluster" />
             <?CHANNELS?>
         </channels>
-        <stacks default="${jboss.default.jgroups.stack:udp}">
-            <stack name="udp">
-                <?UDP-TRANSPORT?>
-                <protocol type="PING" />
-                <protocol type="MERGE3" />
-                <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" />
-                <protocol type="FD_ALL" />
-                <protocol type="VERIFY_SUSPECT" />
-                <protocol type="pbcast.NAKACK2" />
-                <protocol type="UNICAST3" />
-                <protocol type="pbcast.STABLE" />
-                <protocol type="pbcast.GMS" />
-                <protocol type="UFC" />
-                <protocol type="MFC" />
-                <protocol type="FRAG2" />
-                <?RELAY?>
-                <?AUTH?>
-            </stack>
-            <stack name="tcp">
-                <?TCP-TRANSPORT?>
-                <protocol type="MPING" socket-binding="jgroups-mping" />
-                <protocol type="MERGE3" />
-                <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
-                <protocol type="FD_ALL" />
-                <protocol type="VERIFY_SUSPECT" />
-                <protocol type="pbcast.NAKACK2">
-                    <property name="use_mcast_xmit">false</property>
-                </protocol>
-                <protocol type="UNICAST3" />
-                <protocol type="pbcast.STABLE" />
-                <protocol type="pbcast.GMS" />
-                <protocol type="MFC" />
-                <protocol type="FRAG2" />
-                <?AUTH?>
-            </stack>
+        <stacks default="${jboss.default.jgroups.stack:tcp-gossip}">
             <stack name="tcp-gossip">
                 <?TCP-TRANSPORT?>
                 <protocol type="TCPGOSSIP">
@@ -60,6 +26,83 @@
                 <protocol type="MFC" />
                 <protocol type="FRAG2" />
                 <?AUTH?>
+            </stack>
+            <stack name="s3-private">
+                <?TCP-TRANSPORT?>
+                <protocol type="S3_PING">
+                    <property name="location">${jgroups.s3.bucket:}</property>
+                    <property name="access_key">${jgroups.s3.access_key:}</property>
+                    <property name="secret_access_key">${jgroups.s3.secret_access_key:}</property>
+                </protocol>
+                <protocol type="MERGE3" />
+                <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
+                <protocol type="FD_ALL" />
+                <protocol type="VERIFY_SUSPECT" />
+                <protocol type="pbcast.NAKACK2">
+                    <property name="use_mcast_xmit">false</property>
+                </protocol>
+                <protocol type="UNICAST3" />
+                <protocol type="pbcast.STABLE" />
+                <protocol type="pbcast.GMS" />
+                <protocol type="MFC" />
+                <protocol type="FRAG2" />
+            </stack>
+            <stack name="s3-presigned">
+                <?TCP-TRANSPORT?>
+                <protocol type="S3_PING">
+                    <property name="pre_signed_delete_url">${jgroups.s3.pre_signed_delete_url:}</property>
+                    <property name="pre_signed_put_url">${jgroups.s3.pre_signed_put_url:}</property>
+                </protocol>
+                <protocol type="MERGE3" />
+                <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
+                <protocol type="FD_ALL" />
+                <protocol type="VERIFY_SUSPECT" />
+                <protocol type="pbcast.NAKACK2">
+                    <property name="use_mcast_xmit">false</property>
+                </protocol>
+                <protocol type="UNICAST3" />
+                <protocol type="pbcast.STABLE" />
+                <protocol type="pbcast.GMS" />
+                <protocol type="MFC" />
+                <protocol type="FRAG2" />
+            </stack>
+            <stack name="s3-public">
+                <?TCP-TRANSPORT?>
+                <protocol type="S3_PING">
+                    <property name="location">${jgroups.s3.bucket:}</property>
+                </protocol>
+                <protocol type="MERGE3" />
+                <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
+                <protocol type="FD_ALL" />
+                <protocol type="VERIFY_SUSPECT" />
+                <protocol type="pbcast.NAKACK2">
+                    <property name="use_mcast_xmit">false</property>
+                </protocol>
+                <protocol type="UNICAST3" />
+                <protocol type="pbcast.STABLE" />
+                <protocol type="pbcast.GMS" />
+                <protocol type="MFC" />
+                <protocol type="FRAG2" />
+            </stack>
+            <stack name="google">
+                <?TCP-TRANSPORT?>
+                <protocol type="GOOGLE_PING">
+                    <property name="location">${jgroups.google.bucket:}</property>
+                    <property name="access_key">${jgroups.google.access_key:}</property>
+                    <property name="secret_access_key">${jgroups.google.secret_access_key:}</property>
+                </protocol>
+                <protocol type="MERGE3" />
+                <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd" />
+                <protocol type="FD_ALL" />
+                <protocol type="VERIFY_SUSPECT" />
+                <protocol type="pbcast.NAKACK2">
+                    <property name="use_mcast_xmit">false</property>
+                </protocol>
+                <protocol type="UNICAST3" />
+                <protocol type="pbcast.STABLE" />
+                <protocol type="pbcast.GMS" />
+                <protocol type="MFC" />
+                <protocol type="FRAG2" />
             </stack>
         </stacks>
     </subsystem>

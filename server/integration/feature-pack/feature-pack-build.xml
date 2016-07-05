@@ -12,6 +12,10 @@
           template="configuration/standalone/template.xml" 
           subsystems="configuration/standalone/subsystems-clustered.xml" 
           output-file="standalone/configuration/clustered.xml" />
+        <standalone
+          template="configuration/standalone/template.xml" 
+          subsystems="configuration/standalone/subsystems-cloud.xml" 
+          output-file="standalone/configuration/cloud.xml" />
         <domain 
           template="configuration/domain/template.xml" 
           subsystems="configuration/domain/subsystems.xml" 
