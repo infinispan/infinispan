@@ -1,4 +1,4 @@
-= Infinispan Documentation
+= Infinispan {infinispanversion} Documentation
 Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the Infinispan community
 :icons: font
 
