@@ -97,6 +97,7 @@
      <profile>
         <id>distribution</id>
         <modules>
+           <module>documentation</module>
            <module>javadoc</module>
            <module>distribution</module>
         </modules>
