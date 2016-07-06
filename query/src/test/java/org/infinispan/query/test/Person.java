@@ -3,16 +3,13 @@ package org.infinispan.query.test;
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.DateBridge;
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.FilterCacheModeType;
 import org.hibernate.search.annotations.FullTextFilterDef;
 import org.hibernate.search.annotations.FullTextFilterDefs;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.bridge.builtin.StringBridge;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -20,7 +17,6 @@ import java.util.Date;
 /**
  * @author Navin Surtani
  */
-@ProvidedId(bridge = @FieldBridge(impl = StringBridge.class))
 @Indexed(index = "person")
 @FullTextFilterDefs({
       @FullTextFilterDef(name = "personFilter", impl = PersonBlurbFilterFactory.class, cache = FilterCacheModeType.INSTANCE_AND_DOCIDSETRESULTS),
