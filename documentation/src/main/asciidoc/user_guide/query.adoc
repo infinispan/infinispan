@@ -99,9 +99,9 @@ A part from _list()_ you have the option for streaming results, or use paginatio
 This barely scratches the surface of all what is possible to do: see the link:$$http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single$$[Hibernate Search reference documentation] to learn about sorting, numeric fields, declarative filters, caching filters, complex object graph indexing, custom types and the powerful faceting search API.
 
 ==== Notable differences with Hibernate Search
-Using _@DocumentId_ to mark a field as identifier does not apply to Infinispan values; in Infinispan Query the identifier for all _@Indexed_ objects is the key used to store the value. You can still customize how the key is indexed using a combination of _@Transformable_ , _@ProvidedId_ , custom types and custom _FieldBridge_ implementations.
+Using _@DocumentId_ to mark a field as identifier does not apply to Infinispan values; in Infinispan Query the identifier for all _@Indexed_ objects is the key used to store the value. You can still customize how the key is indexed using a combination of _@Transformable_ , custom types and custom _FieldBridge_ implementations.
 
-==== Requirements for the Key: @Transformable and @ProvidedId
+==== Requirements for the Key: @Transformable
 The key for each value needs to be indexed as well, and the key instance must be transformed in a _String_. Infinispan includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of _org.infinispan.query.Transformer_ .
 
 ===== Registering a Transformer via annotations
@@ -138,9 +138,6 @@ Using this technique, you don't have to annotated your custom key type:
 ----
 org.infinispan.query.SearchManager.registerKeyTransformer(Class<?>, Class<? extends Transformer>)
 ----
-
-===== @ProvidedId
-The _org.hibernate.search.annotations.ProvidedId_ annotation lets you apply advanced indexing options to the key field: the field name to be used, and/or specify a custom _FieldBridge_ .
 
 === Configuration
 ==== Configuration via XML
@@ -225,7 +222,7 @@ In the following example we start Infinispan programmatically, avoiding XML conf
 ----
 
 SearchMapping mapping = new SearchMapping();
-mapping.entity(Author.class).indexed().providedId()
+mapping.entity(Author.class).indexed()
       .property("name", ElementType.METHOD).field()
       .property("surname", ElementType.METHOD).field();
 
