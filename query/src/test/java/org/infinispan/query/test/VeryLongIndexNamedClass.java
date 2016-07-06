@@ -1,11 +1,8 @@
 package org.infinispan.query.test;
 
 import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.bridge.builtin.StringBridge;
 
 import java.io.Serializable;
 
@@ -14,7 +11,6 @@ import java.io.Serializable;
  *
  * @author Anna Manukyan
  */
-@ProvidedId(bridge = @FieldBridge(impl = StringBridge.class))
 @Indexed(index = "default_taskworker-java__com.google.appengine.api.datastore.Entity") //Sample long index name taken from the bug description
 public class VeryLongIndexNamedClass implements Serializable {
    @Field(store = Store.YES)
