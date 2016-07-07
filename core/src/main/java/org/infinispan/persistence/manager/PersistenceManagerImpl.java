@@ -22,6 +22,7 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
+import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.Metadata;
@@ -40,10 +41,12 @@ import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.persistence.support.AdvancedSingletonCacheWriter;
 import org.infinispan.persistence.support.DelegatingCacheLoader;
 import org.infinispan.persistence.support.DelegatingCacheWriter;
 import org.infinispan.persistence.support.SingletonCacheWriter;
+import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -60,6 +63,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
@@ -79,7 +84,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    TransactionManager transactionManager;
    private TimeService timeService;
    private final List<CacheLoader> loaders = new ArrayList<>();
-   private final List<CacheWriter> writers = new ArrayList<>();
+   private final List<CacheWriter> nonTxWriters = new ArrayList<>();
+   private final List<TransactionalCacheWriter> txWriters = new ArrayList<>();
 
    private final ReadWriteLock storesMutex = new ReentrantReadWriteLock();
    private final Map<Object, StoreConfiguration> configMap = new HashMap<>();
@@ -87,7 +93,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    private ExpirationManager expirationManager;
 
-   private AdvancedPurgeListener advanedListener;
+   private AdvancedPurgeListener advancedListener;
 
 
    /**
@@ -116,7 +122,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       this.cacheStoreFactoryRegistry = cacheStoreFactoryRegistry;
       this.expirationManager = expirationManager;
 
-      this.advanedListener = new AdvancedPurgeListener(expirationManager);
+      this.advancedListener = new AdvancedPurgeListener(expirationManager);
    }
 
    @Override
@@ -134,23 +140,26 @@ public class PersistenceManagerImpl implements PersistenceManager {
          try {
 
             Set undelegated = new HashSet();//black magic to make sure the store start only gets invoked once
-            for (CacheWriter w : writers) {
-               w.start();
-               if (w instanceof DelegatingCacheWriter) {
-                  CacheWriter actual = undelegate(w);
+
+            Consumer<CacheWriter> startWriter = writer -> {
+               writer.start();
+               if (writer instanceof DelegatingCacheWriter) {
+                  CacheWriter actual = undelegate(writer);
                   actual.start();
                   undelegated.add(actual);
                } else {
-                  undelegated.add(w);
+                  undelegated.add(writer);
                }
 
-               if (configMap.get(w).purgeOnStartup()) {
-                  if (!(w instanceof AdvancedCacheWriter))
+               if (configMap.get(writer).purgeOnStartup()) {
+                  if (!(writer instanceof AdvancedCacheWriter))
                      throw new PersistenceException("'purgeOnStartup' can only be set on stores implementing " +
                                                           "" + AdvancedCacheWriter.class.getName());
-                  ((AdvancedCacheWriter) w).clear();
+                  ((AdvancedCacheWriter) writer).clear();
                }
-            }
+            };
+            nonTxWriters.forEach(startWriter);
+            txWriters.forEach(startWriter);
 
             for (CacheLoader l : loaders) {
                if (!undelegated.contains(l))
@@ -180,16 +189,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
          clearAllStores(AccessMode.BOTH);
 
       Set undelegated = new HashSet();
-      for (CacheWriter w : writers) {
-         w.stop();
-         if (w instanceof DelegatingCacheWriter) {
-            CacheWriter actual = undelegate(w);
+      Consumer<CacheWriter> stopWriters = writer -> {
+         writer.stop();
+         if (writer instanceof DelegatingCacheWriter) {
+            CacheWriter actual = undelegate(writer);
             actual.stop();
             undelegated.add(actual);
          } else {
-            undelegated.add(w);
+            undelegated.add(writer);
          }
-      }
+      };
+      nonTxWriters.forEach(stopWriters);
+      txWriters.forEach(stopWriters);
 
       for (CacheLoader l : loaders) {
          if (!undelegated.contains(l))
@@ -252,23 +263,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (enabled) {
          storesMutex.writeLock().lock();
          try {
-            Iterator<CacheLoader> clIt = loaders.iterator();
-            while (clIt.hasNext()) {
-               CacheLoader l = clIt.next();
-               if (undelegate(l).getClass().getName().equals(storeType))
-                  clIt.remove();
-            }
-            Iterator<CacheWriter> cwIt = writers.iterator();
-            while (cwIt.hasNext()) {
-               CacheWriter w = cwIt.next();
-               if (undelegate(w).getClass().getName().equals(storeType))
-                  cwIt.remove();
-            }
+            removeCacheLoader(storeType, loaders);
+            removeCacheWriter(storeType, nonTxWriters);
+            removeCacheWriter(storeType, txWriters);
          } finally {
             storesMutex.writeLock().unlock();
          }
 
-         if (loaders.isEmpty() && writers.isEmpty()) {
+         if (loaders.isEmpty() && nonTxWriters.isEmpty() && txWriters.isEmpty()) {
             AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
             AsyncInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
             if (loaderInterceptor == null) {
@@ -279,7 +281,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
             AsyncInterceptor writerInterceptor = chain.findInterceptorExtending(CacheWriterInterceptor.class);
             if (writerInterceptor == null) {
-               log.persistenceWithoutCacheWriteInterceptor();
+               writerInterceptor = chain.findInterceptorWithClass(TransactionalStoreInterceptor.class);
+               if (writerInterceptor == null) {
+                  log.persistenceWithoutCacheWriteInterceptor();
+               } else {
+                  chain.removeInterceptor(writerInterceptor.getClass());
+               }
             } else {
                ((CacheWriterInterceptor) writerInterceptor).disableInterceptor();
                chain.removeInterceptor(writerInterceptor.getClass());
@@ -300,11 +307,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
                result.add((T) real);
             }
          }
-         for (CacheWriter w : writers) {
-            CacheWriter real = undelegate(w);
+
+         Consumer<CacheWriter> getWriters = writer -> {
+            CacheWriter real = undelegate(writer);
             if (storeClass.isInstance(real))
                result.add((T) real);
-         }
+         };
+         nonTxWriters.forEach(getWriters);
+         txWriters.forEach(getWriters);
+
          return result;
       } finally {
          storesMutex.readLock().unlock();
@@ -318,7 +329,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          Set<String> loaderTypes = new HashSet<String>(loaders.size());
          for (CacheLoader loader : loaders)
             loaderTypes.add(undelegate(loader).getClass().getName());
-         for (CacheWriter writer : writers)
+         for (CacheWriter writer : nonTxWriters)
+            loaderTypes.add(undelegate(writer).getClass().getName());
+         for (CacheWriter writer : txWriters)
             loaderTypes.add(undelegate(writer).getClass().getName());
          return loaderTypes;
       } finally {
@@ -358,15 +371,17 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          storesMutex.readLock().lock();
          try {
-            for (CacheWriter w : writers) {
-               if (w instanceof AdvancedCacheExpirationWriter) {
-                  ((AdvancedCacheExpirationWriter)w).purge(persistenceExecutor, advanedListener);
-               } else if (w instanceof AdvancedCacheWriter) {
-                  ((AdvancedCacheWriter)w).purge(persistenceExecutor, key -> {
+            Consumer<CacheWriter> purgeWriter = writer -> {
+               if (writer instanceof AdvancedCacheExpirationWriter) {
+                  ((AdvancedCacheExpirationWriter)writer).purge(persistenceExecutor, advancedListener);
+               } else if (writer instanceof AdvancedCacheWriter) {
+                  ((AdvancedCacheWriter)writer).purge(persistenceExecutor, key -> {
                      expirationManager.handleInStoreExpiration(key);
                   });
                }
-            }
+            };
+            nonTxWriters.forEach(purgeWriter);
+            txWriters.forEach(purgeWriter);
          } finally {
             storesMutex.readLock().unlock();
          }
@@ -385,13 +400,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void clearAllStores(AccessMode mode) {
       storesMutex.readLock().lock();
       try {
-         for (CacheWriter w : writers) {
-            if (w instanceof AdvancedCacheWriter) {
-               if (mode.canPerform(configMap.get(w))) {
-                  ((AdvancedCacheWriter) w).clear();
+         // Apply to txWriters as well as clear does not happen in a Tx context
+         Consumer<CacheWriter> clearWriter = writer -> {
+            if (writer instanceof AdvancedCacheWriter) {
+               if (mode.canPerform(configMap.get(writer))) {
+                  ((AdvancedCacheWriter) writer).clear();
                }
             }
-         }
+         };
+         nonTxWriters.forEach(clearWriter);
+         txWriters.forEach(clearWriter);
       } finally {
          storesMutex.readLock().unlock();
       }
@@ -402,7 +420,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       storesMutex.readLock().lock();
       try {
          boolean removed = false;
-         for (CacheWriter w : writers) {
+         for (CacheWriter w : nonTxWriters) {
             if (mode.canPerform(configMap.get(w))) {
                removed |= w.delete(key);
             }
@@ -473,17 +491,41 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
-   public void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode mode) {
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode accessMode) {
       storesMutex.readLock().lock();
       try {
-         for (CacheWriter w : writers) {
-            if (mode.canPerform(configMap.get(w))) {
-               w.write(marshalledEntry);
+         nonTxWriters.stream()
+               .filter(writer -> accessMode.canPerform(configMap.get(writer)))
+               .forEach(writer -> writer.write(marshalledEntry));
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+   }
+
+   @Override
+   public void prepareAllTxStores(Transaction transaction, BatchModification batchModification,
+                                  AccessMode accessMode) throws PersistenceException {
+      storesMutex.readLock().lock();
+      try {
+         for (CacheWriter writer : txWriters) {
+            if (accessMode.canPerform(configMap.get(writer))) {
+               TransactionalCacheWriter txWriter = (TransactionalCacheWriter) undelegate(writer);
+               txWriter.prepareWithModifications(transaction, batchModification);
             }
          }
       } finally {
          storesMutex.readLock().unlock();
       }
+   }
+
+   @Override
+   public void commitAllTxStores(Transaction transaction, AccessMode accessMode) {
+      performOnAllTxStores(accessMode, writer -> writer.commit(transaction));
+   }
+
+   @Override
+   public void rollbackAllTxStores(Transaction transaction, AccessMode accessMode) {
+      performOnAllTxStores(accessMode, writer -> writer.rollback(transaction));
    }
 
    @Override
@@ -525,7 +567,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    public List<CacheWriter> getAllWriters() {
-      return Collections.unmodifiableList(writers);
+      return Collections.unmodifiableList(nonTxWriters);
+   }
+
+   public List<CacheWriter> getAllTxWriters() {
+      return Collections.unmodifiableList(txWriters);
    }
 
    private void createLoadersAndWriters() {
@@ -585,7 +631,19 @@ public class PersistenceManagerImpl implements PersistenceManager {
       if (writer != null) {
          if (writer instanceof DelegatingCacheWriter)
             writer.init(ctx);
-         writers.add(writer);
+
+         if (undelegate(writer) instanceof TransactionalCacheWriter && cfg.transactional()) {
+            if (configuration.transaction().transactionMode().isTransactional()) {
+               txWriters.add((TransactionalCacheWriter) writer);
+            } else {
+               // If cache is non-transactional then it is not possible for the store to be, so treat as normal store
+               // Shouldn't happen as a CacheConfigurationException should be thrown on validation
+               nonTxWriters.add(writer);
+            }
+         } else {
+            nonTxWriters.add(writer);
+         }
+
          configMap.put(writer, cfg);
       }
    }
@@ -636,7 +694,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             CACHE_MODE_LOCAL, SKIP_OWNERSHIP_CHECK, IGNORE_RETURN_VALUES, SKIP_CACHE_STORE, SKIP_LOCKING));
 
       boolean hasShared = false;
-      for (CacheWriter w : writers) {
+      for (CacheWriter w : nonTxWriters) {
          if (configMap.get(w).shared()) {
             hasShared = true;
             break;
@@ -740,5 +798,24 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    public StreamingMarshaller getMarshaller() {
       return m;
+   }
+
+   private void removeCacheLoader(String storeType, Collection<CacheLoader> collection) {
+      collection.removeIf(cacheLoader -> undelegate(cacheLoader).getClass().getName().equals(storeType));
+   }
+
+   private void removeCacheWriter(String storeType, Collection<? extends CacheWriter> collection) {
+      collection.removeIf(cacheWriter -> undelegate(cacheWriter).getClass().getName().equals(storeType));
+   }
+
+   private void performOnAllTxStores(AccessMode accessMode, Consumer<TransactionalCacheWriter> action) {
+      storesMutex.readLock().lock();
+      try {
+         txWriters.stream()
+               .filter(writer -> accessMode.canPerform(configMap.get(writer)))
+               .forEach(action);
+      } finally {
+         storesMutex.readLock().unlock();
+      }
    }
 }

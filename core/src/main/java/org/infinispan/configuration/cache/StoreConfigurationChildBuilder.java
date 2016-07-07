@@ -68,6 +68,20 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
    S shared(boolean b);
 
    /**
+    * This setting should be set to true when the underlying cache store supports transactions and it is desirable for
+    * the underlying store and the cache to remain synchronized. With this enabled any Exceptions thrown whilst writing
+    * to the underlying store will result in both the store's and the cache's transaction rollingback.
+    * <p/>
+    * If enabled and this store is shared, then writes to this store will be performed at prepare time of the Infinispan Tx.
+    * If an exception is encountered by the store during prepare time, then this will result in the global Tx being
+    * rolledback along with this stores writes, otherwise writes to this store will be committed during the commit
+    * phase of 2PC. If this is not enabled, then writes to the cache store are performed during the commit phase of a Tx.
+    *<p/>
+    * Note that this requires {@link #shared(boolean)} to be set to true.
+    */
+   S transactional(boolean b);
+
+   /**
     * <p>
     * Defines a single property. Can be used multiple times to define all needed properties, but the
     * full set is overridden by {@link #withProperties(java.util.Properties)}.

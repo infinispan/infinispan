@@ -92,6 +92,11 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
    }
 
    @Override
+   public Object transactional(boolean b) {
+      return null;
+   }
+
+   @Override
    public Object addProperty(String key, String value) {
       return null;
    }

@@ -226,7 +226,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
             }
 
             @Override
-            public void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode modes) {
+            public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes) {
                passivate.set(true);
             }
          };

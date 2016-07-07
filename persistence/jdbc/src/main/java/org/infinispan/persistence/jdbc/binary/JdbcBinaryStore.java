@@ -8,8 +8,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -17,6 +20,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -36,8 +40,11 @@ import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.Bucket;
+import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.infinispan.util.logging.LogFactory;
+
+import javax.transaction.Transaction;
 
 /**
  * {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore} implementation that will store all the buckets as rows
@@ -299,6 +306,102 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
             connectionFactory.releaseConnection(conn);
          }
       }
+   }
+
+   @Override
+   public void prepareWithModifications(Transaction transaction, BatchModification batchModification) throws PersistenceException {
+      try {
+         Connection connection = getTxConnection(transaction);
+         connection.setAutoCommit(false);
+
+         // We load all existing buckets up front to prevent multiple SQL statements loading/writing the same bucket
+         Map<Integer, Bucket> existingBuckets = getExistingBuckets(connection, batchModification);
+         Set<Bucket> newBuckets = updateAndCreateBuckets(batchModification.getMarshalledEntries(),
+                                                         batchModification.getKeysToRemove(), existingBuckets);
+
+         // Write changes to DB
+         try (PreparedStatement insertBatch = connection.prepareStatement(tableManager.getInsertRowSql());
+              PreparedStatement updateBatch = connection.prepareStatement(tableManager.getUpdateRowSql())) {
+
+            for (Bucket bucket : existingBuckets.values()) {
+               if (newBuckets.contains(bucket)) {
+                  prepareWriteStatement(insertBatch, bucket, tableManager.getInsertRowSql());
+                  insertBatch.addBatch();
+               } else {
+                  prepareWriteStatement(updateBatch, bucket, tableManager.getUpdateRowSql());
+                  updateBatch.addBatch();
+               }
+            }
+            insertBatch.executeBatch();
+            updateBatch.executeBatch();
+         }
+      } catch (SQLException | InterruptedException e) {
+         throw log.prepareTxFailure(e);
+      }
+   }
+
+   private Map<Integer, Bucket> getExistingBuckets(Connection connection, BatchModification batchModification) throws SQLException {
+      Set<Integer> bucketIds = batchModification.getAffectedKeys().stream()
+            .map(this::getBuckedId)
+            .collect(Collectors.toSet());
+
+      String sql = tableManager.getSelectMultipleRowSql(bucketIds.size());
+      if (sql == null)
+         return new HashMap<>();
+
+      try (PreparedStatement ps = connection.prepareStatement(sql)) {
+         int count = 0;
+         for (Integer id : bucketIds)
+            ps.setInt(++count, id);
+
+         try (ResultSet rs = ps.executeQuery()) {
+            Map<Integer, Bucket> existingBuckets = new HashMap<>();
+            while (rs.next()) {
+               Bucket bucket = loadBucket(rs);
+               existingBuckets.put(bucket.getBucketId(), bucket);
+            }
+            return existingBuckets;
+         }
+      }
+   }
+
+   // Returns a set of newly created Buckets
+   private Set<Bucket> updateAndCreateBuckets(Collection<MarshalledEntry> modifiedEntries, Set<Object> keysToDelete,
+                                              Map<Integer, Bucket> existingBuckets) {
+      Set<Bucket> newBuckets = new HashSet<>();
+      for (MarshalledEntry entry : modifiedEntries) {
+         Integer bucketKey = getBuckedId(entry.getKey());
+         Object entryKey = entry.getKey();
+         InternalMetadata m = entry.getMetadata();
+         Bucket existingBucket = existingBuckets.get(bucketKey);
+
+         if (m != null && m.isExpired(ctx.getTimeService().wallClockTime())) {
+            if (existingBucket != null) {
+               existingBucket.removeEntry(entryKey);
+            }
+            continue;
+         }
+
+         if (existingBucket == null) {
+            Bucket bucket = new Bucket(keyEquivalence);
+            bucket.setBucketId(bucketKey);
+            bucket.addEntry(entryKey, entry);
+            existingBuckets.put(bucketKey, bucket);
+            newBuckets.add(bucket);
+         } else {
+            existingBucket.addEntry(entryKey, entry);
+         }
+      }
+
+      // Remove keys from bucket
+      for (Object entryKey : keysToDelete) {
+         Integer bucketKey = getBuckedId(entryKey);
+         Bucket existingBucket = existingBuckets.get(bucketKey);
+         if (existingBucket != null) {
+            existingBucket.removeEntry(entryKey);
+         }
+      }
+      return newBuckets;
    }
 
    private int unlockCompleted(ExecutorCompletionService ecs, boolean blocking) throws InterruptedException {

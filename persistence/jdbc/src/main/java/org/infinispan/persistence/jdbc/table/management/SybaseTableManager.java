@@ -5,6 +5,8 @@ import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Set;
+
 /**
  * @author Ryan Emerson
  */
@@ -33,6 +35,12 @@ class SybaseTableManager extends AbstractTableManager {
                                       config.idColumnName(), config.idColumnType());
       }
       return selectRowSql;
+   }
+
+   @Override
+   public String getSelectMultipleRowSql(int numberOfParams) {
+      String selectCriteria = config.idColumnName() + " = convert(" + config.idColumnType() + ",?)";
+      return getSelectMultipleRowSql(numberOfParams, selectCriteria);
    }
 
    @Override

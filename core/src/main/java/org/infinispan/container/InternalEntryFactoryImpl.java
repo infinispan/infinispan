@@ -1,10 +1,18 @@
 package org.infinispan.container;
 
-import org.infinispan.container.entries.*;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.entries.L1InternalCacheEntry;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientCacheValue;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.container.entries.metadata.L1MetadataInternalCacheEntry;
-import org.infinispan.container.entries.metadata.MetadataAware;
-import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheValue;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
@@ -14,7 +22,12 @@ import org.infinispan.container.entries.metadata.MetadataTransientCacheValue;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.TimeService;
 
 /**
@@ -173,6 +186,38 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
          return new L1InternalCacheEntry(key, value, metadata.lifespan(), timeService.wallClockTime());
       } else {
          return new L1MetadataInternalCacheEntry(key, value, metadata, timeService.wallClockTime());
+      }
+   }
+
+   @Override
+   public InternalCacheValue getValueFromCtxOrCreateNew(Object key, InvocationContext ctx) {
+      CacheEntry entry = ctx.lookupEntry(key);
+      if (entry instanceof InternalCacheEntry) {
+         return ((InternalCacheEntry) entry).toInternalCacheValue();
+      } else {
+         if (ctx.isInTxScope()) {
+            EntryVersionsMap updatedVersions =
+                  ((TxInvocationContext) ctx).getCacheTransaction().getUpdatedEntryVersions();
+            if (updatedVersions != null) {
+               EntryVersion version = updatedVersions.get(entry.getKey());
+               if (version != null) {
+                  Metadata metadata = entry.getMetadata();
+                  if (metadata == null) {
+                     // If no metadata passed, assumed embedded metadata
+                     metadata = new EmbeddedMetadata.Builder()
+                           .lifespan(entry.getLifespan()).maxIdle(entry.getMaxIdle())
+                           .version(version).build();
+                     return create(entry.getKey(), entry.getValue(), metadata)
+                           .toInternalCacheValue();
+                  } else {
+                     metadata = metadata.builder().version(version).build();
+                     return create(entry.getKey(), entry.getValue(), metadata)
+                           .toInternalCacheValue();
+                  }
+               }
+            }
+         }
+         return create(entry).toInternalCacheValue();
       }
    }
 

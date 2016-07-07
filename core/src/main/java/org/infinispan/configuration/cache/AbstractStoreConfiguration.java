@@ -13,11 +13,12 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    public static final AttributeDefinition<Boolean> IGNORE_MODIFICATIONS = AttributeDefinition.builder("ignoreModifications", false).immutable().xmlName("read-only").build();
    public static final AttributeDefinition<Boolean> PRELOAD = AttributeDefinition.builder("preload", false).immutable().build();
    public static final AttributeDefinition<Boolean> SHARED = AttributeDefinition.builder("shared", false).immutable().build();
+   public static final AttributeDefinition<Boolean> TRANSACTIONAL = AttributeDefinition.builder("transactional", false).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP, IGNORE_MODIFICATIONS, PRELOAD, SHARED, PROPERTIES);
+      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP, IGNORE_MODIFICATIONS, PRELOAD, SHARED, TRANSACTIONAL, PROPERTIES);
    }
 
    private final Attribute<Boolean> fetchPersistentState;
@@ -25,6 +26,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    private final Attribute<Boolean> ignoreModifications;
    private final Attribute<Boolean> preload;
    private final Attribute<Boolean> shared;
+   private final Attribute<Boolean> transactional;
    private final Attribute<TypedProperties> properties;
 
    protected final AttributeSet attributes;
@@ -43,6 +45,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       attributes.attribute(IGNORE_MODIFICATIONS).set(ignoreModifications);
       attributes.attribute(PRELOAD).set(preload);
       attributes.attribute(SHARED).set(shared);
+      attributes.attribute(TRANSACTIONAL).set(false);
       attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(properties));
 
       this.async = async;
@@ -52,6 +55,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       this.ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS);
       this.preload = attributes.attribute(PRELOAD);
       this.shared = attributes.attribute(SHARED);
+      this.transactional = attributes.attribute(TRANSACTIONAL);
       this.properties = attributes.attribute(PROPERTIES);
    }
 
@@ -65,6 +69,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       this.ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS);
       this.preload = attributes.attribute(PRELOAD);
       this.shared = attributes.attribute(SHARED);
+      this.transactional = attributes.attribute(TRANSACTIONAL);
       this.properties = attributes.attribute(PROPERTIES);
    }
 
@@ -99,6 +104,11 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    @Override
    public boolean shared() {
       return shared.get();
+   }
+
+   @Override
+   public boolean transactional() {
+      return transactional.get();
    }
 
    /**

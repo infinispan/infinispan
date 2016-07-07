@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.logging;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.Bucket;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -144,4 +145,15 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Cannot specify a ConnectionFactory and manageConnectionFactory at the same time", id = 8030)
    CacheConfigurationException unmanagedConnectionFactory();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error committing JDBC transaction", id = 8031)
+   void sqlFailureTxCommit(@Cause SQLException e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error during rollback of JDBC transaction", id = 8032)
+   void sqlFailureTxRollback(@Cause SQLException e);
+
+   @Message(value = "Exception encountered when preparing JDBC store Tx", id = 8033)
+   PersistenceException prepareTxFailure(@Cause Throwable e);
 }
