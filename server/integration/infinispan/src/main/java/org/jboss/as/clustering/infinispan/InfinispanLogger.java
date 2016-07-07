@@ -22,15 +22,16 @@
 
 package org.jboss.as.clustering.infinispan;
 
+import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.INFO;
+import static org.jboss.logging.Logger.Level.WARN;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import static org.jboss.logging.Logger.Level.DEBUG;
-import static org.jboss.logging.Logger.Level.INFO;
-import static org.jboss.logging.Logger.Level.WARN;
 
 /**
  * InfinispanLogger
@@ -167,4 +168,11 @@ public interface InfinispanLogger extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 15, value = "The 'shutdown-timeout' attribute specified on the 'write-behind' element of a cache is no longer valid")
     void shutdownTimeoutDeprecated();
+
+    /**
+     * Logs an error when requested cache store is not loaded within 1 minute
+     */
+    @LogMessage(level = ERROR)
+    @Message(id = 16, value = "Waiting for deployment of Custom Cache Store (%s) timed out. Please check if this cache store is really present.")
+    void loadingCustomCacheStoreTimeout(String customStoreClassName);
 }
