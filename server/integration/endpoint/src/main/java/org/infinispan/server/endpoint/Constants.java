@@ -24,8 +24,6 @@ import org.jboss.as.server.deployment.AttachmentKey;
 import org.jboss.as.server.deployment.AttachmentList;
 import org.jboss.msc.service.ServiceName;
 
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
-
 /**
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @author Tristan Tarrant
@@ -53,11 +51,4 @@ public class Constants {
    private Constants() {
       // Constant table
    }
-
-   public static <T> T notNull(T value) {
-      if (value == null)
-         throw ROOT_LOGGER.serviceNotStarted();
-      return value;
-   }
-
 }
