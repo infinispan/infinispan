@@ -68,7 +68,7 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
 
       tableManager.start();
       tableManager.setCacheName("aName");
-      jdbcBucketCacheStore.doConnectionFactoryInitialization(connectionFactory);
+      jdbcBucketCacheStore.initializeConnectionFactory(connectionFactory);
 
       //stop should be called even if this is an externally managed connection
       tableManager.stop();

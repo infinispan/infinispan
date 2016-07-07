@@ -69,7 +69,7 @@ public class JdbcMixedStore implements AdvancedLoadWriteStore {
       sharedConnectionFactory = ConnectionFactory.getConnectionFactory(factoryConfig.connectionFactoryClass().getName(),
             configuration.getClass().getClassLoader());
       sharedConnectionFactory.start(factoryConfig, configuration.getClass().getClassLoader());
-      binaryStore.doConnectionFactoryInitialization(sharedConnectionFactory);
+      binaryStore.initializeConnectionFactory(sharedConnectionFactory);
       binaryStore.start();
       stringStore.initializeConnectionFactory(sharedConnectionFactory);
       stringStore.start();
@@ -107,7 +107,7 @@ public class JdbcMixedStore implements AdvancedLoadWriteStore {
       binaryStore.purge(threadPool, task);
       stringStore.purge(threadPool, task);
    }
-   
+
    @Override
    public MarshalledEntry load(Object key)  {
       return getStore(key).load(key);

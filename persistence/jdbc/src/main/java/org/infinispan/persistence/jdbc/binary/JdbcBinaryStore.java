@@ -21,7 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
@@ -30,12 +29,10 @@ import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
-import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.persistence.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
+import org.infinispan.persistence.jdbc.common.AbstractJdbcStore;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.Bucket;
@@ -60,7 +57,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore
  */
 @ConfiguredBy(JdbcBinaryStoreConfiguration.class)
-public class JdbcBinaryStore implements AdvancedLoadWriteStore {
+public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
 
    private static final Log log = LogFactory.getLog(JdbcBinaryStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -68,53 +65,24 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
    private static final int BATCH_SIZE = 100; // TODO: make configurable
 
    private StripedLock locks;
-
    private JdbcBinaryStoreConfiguration configuration;
-
-   private ConnectionFactory connectionFactory;
-   private TableManager tableManager;
-   private InitializationContext ctx;
    private Equivalence<Object> keyEquivalence;
+
+   public JdbcBinaryStore() {
+      super(log);
+   }
 
    @Override
    public void init(InitializationContext ctx) {
-      this.ctx = ctx;
+      super.init(ctx);
       this.configuration = ctx.getConfiguration();
    }
 
    @Override
    public void start() {
+      super.start();
       locks = new StripedLock(configuration.lockConcurrencyLevel());
-      if (configuration.manageConnectionFactory()) {
-         ConnectionFactory factory = ConnectionFactory.getConnectionFactory(configuration.connectionFactory().connectionFactoryClass());
-         factory.start(configuration.connectionFactory(), factory.getClass().getClassLoader());
-         doConnectionFactoryInitialization(factory);
-      }
       keyEquivalence = ctx.getCache().getCacheConfiguration().dataContainer().keyEquivalence();
-   }
-
-   @Override
-   public void stop() {
-      Throwable cause = null;
-      try {
-         tableManager.stop();
-      } catch (Throwable t) {
-         cause = t;
-         log.debug("Exception while stopping", t);
-      }
-
-      try {
-         if (configuration.connectionFactory() instanceof ManagedConnectionFactory) {
-            log.tracef("Stopping mananged connection factory: %s", connectionFactory);
-            connectionFactory.stop();
-         }
-      } catch (Throwable t) {
-         if (cause == null) cause = t;
-         log.debug("Exception while stopping", t);
-      }
-      if (cause != null) {
-         throw new PersistenceException("Exceptions occurred while stopping store", cause);
-      }
    }
 
    @Override
@@ -198,24 +166,21 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          while (rs.next()) {
             InputStream binaryStream = rs.getBinaryStream(1);
             final Bucket bucket = unmarshallBucket(binaryStream);
-            ecs.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  try {
-                     for (MarshalledEntry me : bucket.getStoredEntries(filter, ctx.getTimeService()).values()) {
-                        if (!taskContext.isStopped()) {
-                           if (!fetchValue || !fetchMetadata) {
-                              me = ctx.getMarshalledEntryFactory().newMarshalledEntry(me.getKey(),
-                                                                                      fetchValue ? me.getValue() : null, fetchMetadata ? me.getMetadata() : null);
-                           }
-                           task.processEntry(me, taskContext);
+            ecs.submit(() -> {
+               try {
+                  for (MarshalledEntry me : bucket.getStoredEntries(filter, ctx.getTimeService()).values()) {
+                     if (!taskContext.isStopped()) {
+                        if (!fetchValue || !fetchMetadata) {
+                           me = ctx.getMarshalledEntryFactory().newMarshalledEntry(me.getKey(),
+                                                                                   fetchValue ? me.getValue() : null, fetchMetadata ? me.getMetadata() : null);
                         }
+                        task.processEntry(me, taskContext);
                      }
-                     return null;
-                  } catch (Exception e) {
-                     log.errorExecutingParallelStoreTask(e);
-                     throw e;
                   }
+                  return null;
+               } catch (Exception e) {
+                  log.errorExecutingParallelStoreTask(e);
+                  throw e;
                }
             });
          }
@@ -234,27 +199,6 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void clear() {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      try {
-         String sql = tableManager.getDeleteAllRowsSql();
-         conn = connectionFactory.getConnection();
-         ps = conn.prepareStatement(sql);
-         int result = ps.executeUpdate();
-         if (trace) {
-            log.tracef("Successfully removed %d rows.", result);
-         }
-      } catch (SQLException ex) {
-         log.failedClearingJdbcCacheStore(ex);
-         throw new PersistenceException("Failed clearing cache store", ex);
-      } finally {
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
-      }
-   }
-
-   @Override
    public int size() {
       return PersistenceUtil.count(this, null);
    }
@@ -264,9 +208,9 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
-      Collection<Bucket> expiredBuckets = new ArrayList<Bucket>(BATCH_SIZE);
+      Collection<Bucket> expiredBuckets = new ArrayList<>(BATCH_SIZE);
       ExecutorCompletionService ecs = new ExecutorCompletionService(threadPool);
-      BlockingQueue<Bucket> emptyBuckets = new LinkedBlockingQueue<Bucket>();
+      BlockingQueue<Bucket> emptyBuckets = new LinkedBlockingQueue<>();
       // We have to lock and unlock the buckets in the same thread - executor can execute
       // the BucketPurger task in different thread. That's why we can't unlock the locks
       // there but have to send them to this thread through this queue.
@@ -290,8 +234,8 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
                expiredBuckets.add(bucket);
                if (expiredBuckets.size() == BATCH_SIZE) {
                   ++tasksScheduled;
-                  ecs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
-                  expiredBuckets = new ArrayList<Bucket>(BATCH_SIZE);
+                  ecs.submit(new BucketPurger(expiredBuckets, task, conn, emptyBuckets));
+                  expiredBuckets = new ArrayList<>(BATCH_SIZE);
                }
             } else {
                if (trace) {
@@ -305,7 +249,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
          if (!expiredBuckets.isEmpty()) {
             ++tasksScheduled;
-            ecs.submit(new BucketPurger(expiredBuckets, task, ctx.getMarshaller(), conn, emptyBuckets));
+            ecs.submit(new BucketPurger(expiredBuckets, task, conn, emptyBuckets));
          }
          // wait until all tasks have completed
          try {
@@ -364,9 +308,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          tasksCompleted++;
          try {
             Collection<Integer> completed = future.get();
-            for (Integer bucketId : completed) {
-               unlock(bucketId);
-            }
+            completed.forEach(this::unlock);
          } catch (InterruptedException e) {
             log.errorExecutingParallelStoreTask(e);
             Thread.currentThread().interrupt();
@@ -382,15 +324,13 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
       private final Collection<Bucket> buckets;
       private final PurgeListener purgeListener;
-      private final StreamingMarshaller marshaller;
       private final Connection conn;
       private final BlockingQueue<Bucket> emptyBuckets;
 
-      private BucketPurger(Collection<Bucket> buckets, PurgeListener purgeListener, StreamingMarshaller marshaller,
-                           Connection conn, BlockingQueue<Bucket> emptyBuckets) {
+      private BucketPurger(Collection<Bucket> buckets, PurgeListener purgeListener, Connection conn,
+                           BlockingQueue<Bucket> emptyBuckets) {
          this.buckets = buckets;
          this.purgeListener = purgeListener;
-         this.marshaller = marshaller;
          this.conn = conn;
          this.emptyBuckets = emptyBuckets;
       }
@@ -398,7 +338,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       @Override
       public Collection<Integer> call() throws Exception {
          log.trace("Purger task started");
-         List<Integer> purgedBuckets = new ArrayList(buckets.size());
+         List<Integer> purgedBuckets = new ArrayList<>(buckets.size());
          {
             PreparedStatement ps = null;
             try {
@@ -409,11 +349,9 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
                   for (Object key : bucket.removeExpiredEntries(ctx.getTimeService())) {
                      if (purgeListener != null) purgeListener.entryPurged(key);
                   }
+
                   if (!bucket.isEmpty()) {
-                     ByteBuffer byteBuffer = JdbcUtil.marshall(marshaller, bucket.getStoredEntries());
-                     ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
-                     ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
-                     ps.setString(3, bucket.getBucketIdAsString());
+                     prepareWriteStatement(ps, bucket, sql);
                      ps.addBatch();
                      purgedBuckets.add(bucket.getBucketId());
                   } else {
@@ -463,15 +401,9 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       PreparedStatement ps = null;
       try {
          String sql = tableManager.getInsertRowSql();
-         ByteBuffer byteBuffer = JdbcUtil.marshall(ctx.getMarshaller(), bucket.getStoredEntries());
-         if (trace) {
-            log.tracef("Running insertBucket. Sql: '%s', on bucket: %s stored value size is %d bytes", sql, bucket, byteBuffer.getLength());
-         }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
-         ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
-         ps.setString(3, bucket.getBucketIdAsString());
+         prepareWriteStatement(ps, bucket, sql);
          int insertedRows = ps.executeUpdate();
          if (insertedRows != 1) {
             throw new PersistenceException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");
@@ -501,10 +433,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
-         ByteBuffer buffer = JdbcUtil.marshall(ctx.getMarshaller(), bucket.getStoredEntries());
-         ps.setBinaryStream(1, new ByteArrayInputStream(buffer.getBuf(), buffer.getOffset(), buffer.getLength()), buffer.getLength());
-         ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
-         ps.setString(3, bucket.getBucketIdAsString());
+         prepareWriteStatement(ps, bucket, sql);
          int updatedRows = ps.executeUpdate();
          if (updatedRows != 1) {
             throw new PersistenceException("Unexpected  update result: '" + updatedRows + "'. Expected values is 1");
@@ -524,6 +453,16 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       }
    }
 
+   private void prepareWriteStatement(PreparedStatement ps, Bucket bucket, String sql) throws InterruptedException, SQLException {
+      if (trace) {
+         log.tracef("Sql: '%s', on bucket: %s", sql, bucket);
+      }
+      ByteBuffer buffer = marshall(bucket.getStoredEntries());
+      ps.setBinaryStream(1, new ByteArrayInputStream(buffer.getBuf(), buffer.getOffset(), buffer.getLength()), buffer.getLength());
+      ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
+      ps.setString(3, bucket.getBucketIdAsString());
+   }
+
    protected Bucket loadBucket(Integer bucketId) {
       Connection conn = null;
       PreparedStatement ps = null;
@@ -540,11 +479,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
          if (!rs.next()) {
             return null;
          }
-         String bucketName = rs.getString(1);
-         InputStream inputStream = rs.getBinaryStream(2);
-         Bucket bucket = unmarshallBucket(inputStream);
-         bucket.setBucketId(bucketName);//bucket name is volatile, so not persisted.
-         return bucket;
+         return loadBucket(rs);
       } catch (SQLException e) {
          log.sqlFailureLoadingKey(String.valueOf(bucketId), e);
          throw new PersistenceException(String.format(
@@ -556,24 +491,23 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
       }
    }
 
+   private Bucket loadBucket(ResultSet resultSet) throws SQLException {
+      String bucketName = resultSet.getString(1);
+      InputStream inputStream = resultSet.getBinaryStream(2);
+      Bucket bucket = unmarshallBucket(inputStream);
+      bucket.setBucketId(bucketName);//bucket name is volatile, so not persisted.
+      return bucket;
+   }
+
    private void releaseLocks(Collection<Bucket> expiredBucketKeys) {
       for (Bucket bucket : expiredBucketKeys) {
          unlock(bucket.getBucketId());
       }
    }
 
-   public ConnectionFactory getConnectionFactory() {
-      return connectionFactory;
-   }
-
-   public void doConnectionFactoryInitialization(ConnectionFactory connectionFactory) {
-      this.connectionFactory = connectionFactory;
-      this.tableManager = TableManagerFactory.getManager(connectionFactory, configuration);
-      tableManager.setCacheName(ctx.getCache().getName());
-      tableManager.start();
-   }
-
    public TableManager getTableManager() {
+      if (tableManager == null)
+         tableManager = TableManagerFactory.getManager(connectionFactory, configuration);
       return tableManager;
    }
 
@@ -638,7 +572,7 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
    }
 
    private Bucket unmarshallBucket(InputStream stream) throws PersistenceException {
-      Map<Object, MarshalledEntry> entries = JdbcUtil.unmarshall(ctx.getMarshaller(), stream);
+      Map<Object, MarshalledEntry> entries = unmarshall(stream);
       return new Bucket(entries, keyEquivalence);
    }
 

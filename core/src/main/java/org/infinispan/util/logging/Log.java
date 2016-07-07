@@ -1426,4 +1426,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The %s is no longer supported since version %s. Attribute %s on line %d will be ignored.", id = 415)
    void ignoredAttribute(String componentName, String version, String attributeName, int line);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error executing submitted store task", id = 416)
+   void errorExecutingSubmittedStoreTask(@Cause Throwable cause);
 }
