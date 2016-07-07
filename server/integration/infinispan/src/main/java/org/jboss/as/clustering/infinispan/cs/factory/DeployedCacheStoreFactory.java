@@ -31,12 +31,13 @@ public class DeployedCacheStoreFactory implements CacheStoreFactory {
          DeployedStoreConfiguration deployedConfiguration = (DeployedStoreConfiguration) cfg;
          DeployedCacheStoreMetadata deployedCacheStoreMetadata = null;
          try {
+            InfinispanLogger.ROOT_LOGGER.debug(String.format("Waiting for deployment of Custom Cache Store (%s).", deployedConfiguration.getCustomStoreClassName()));
             deployedCacheStoreMetadata = getPromise(deployedConfiguration.getCustomStoreClassName()).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
             return (T) deployedCacheStoreMetadata.getLoaderWriterRawInstance();
          } catch (InterruptedException | ExecutionException e) {
             throw new IllegalStateException("An error occurred while processing the deployment", e);
          } catch (TimeoutException e) {
-            InfinispanLogger.ROOT_LOGGER.error("Could not get Custom Cache Store metadata (" + deployedConfiguration.getCustomStoreClassName() + ") within given time.", e);
+            InfinispanLogger.ROOT_LOGGER.loadingCustomCacheStoreTimeout(deployedConfiguration.getCustomStoreClassName());
          }
       }
       return null;
@@ -63,7 +64,7 @@ public class DeployedCacheStoreFactory implements CacheStoreFactory {
          } catch (InterruptedException | ExecutionException e) {
             throw new IllegalStateException("An error occurred while processing the deployment", e);
          } catch (TimeoutException e) {
-            InfinispanLogger.ROOT_LOGGER.error("Could not get Custom Cache Store metadata (" + deployedConfiguration.getCustomStoreClassName() + ") within given time.", e);
+            InfinispanLogger.ROOT_LOGGER.loadingCustomCacheStoreTimeout(deployedConfiguration.getCustomStoreClassName());
          }
       }
       return null;
