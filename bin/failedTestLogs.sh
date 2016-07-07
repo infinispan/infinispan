@@ -28,7 +28,7 @@ echo Failed/skipped tests: $FAILED_TESTS
 
 DATE=$(date +%Y%m%d)
 for TEST in $FAILED_TESTS ; do
-  TESTFILE=${TEST}_${DATE}.log
+  TESTFILE=${TEST//[^a-zA-Z0-9-_.]/_}_${DATE}.log
   echo "Writing $TEST log to $TESTFILE"
   $CAT $FILE | $DIR/greplog.py "\b$TEST\b" | perl -npe "s/$TEST-Node/Node/g" > $TESTFILE
 done
