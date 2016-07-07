@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.common;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -10,19 +11,25 @@ import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.spi.TransactionalCacheWriter;
 
+import javax.transaction.Transaction;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
  * @author Ryan Emerson
  */
-public abstract class AbstractJdbcStore<K,V> implements AdvancedLoadWriteStore<K,V> {
+public abstract class AbstractJdbcStore<K,V> implements AdvancedLoadWriteStore<K,V>, TransactionalCacheWriter<K,V> {
+   private final Map<Transaction, Connection> transactionConnectionMap = new ConcurrentHashMap<>();
    private final Log log;
    private AbstractJdbcStoreConfiguration configuration;
    protected ConnectionFactory connectionFactory;
@@ -57,6 +64,7 @@ public abstract class AbstractJdbcStore<K,V> implements AdvancedLoadWriteStore<K
       Throwable cause = null;
       try {
          tableManager.stop();
+         tableManager = null;
       } catch (Throwable t) {
          cause = t.getCause();
          if (cause == null) cause = t;
@@ -100,6 +108,49 @@ public abstract class AbstractJdbcStore<K,V> implements AdvancedLoadWriteStore<K
          JdbcUtil.safeClose(statement);
          connectionFactory.releaseConnection(conn);
       }
+   }
+
+   @Override
+   public void commit(Transaction tx) {
+      Connection connection;
+      try {
+         connection = getTxConnection(tx);
+         connection.commit();
+      } catch (SQLException e) {
+         log.sqlFailureTxCommit(e);
+         throw new PersistenceException(String.format("Error during commit of JDBC transaction (%s)", tx), e);
+      } finally {
+         destroyTxConnection(tx);
+      }
+   }
+
+   @Override
+   public void rollback(Transaction tx) {
+      Connection connection;
+      try {
+         connection = getTxConnection(tx);
+         connection.rollback();
+      } catch (SQLException e) {
+         log.sqlFailureTxRollback(e);
+         throw new PersistenceException(String.format("Error during rollback of JDBC transaction (%s)", tx), e);
+      } finally {
+         destroyTxConnection(tx);
+      }
+   }
+
+   protected Connection getTxConnection(Transaction tx) {
+      Connection connection = transactionConnectionMap.get(tx);
+      if (connection == null) {
+         connection = connectionFactory.getConnection();
+         transactionConnectionMap.put(tx, connection);
+      }
+      return connection;
+   }
+
+   protected void destroyTxConnection(Transaction tx) {
+      Connection connection = transactionConnectionMap.remove(tx);
+      if (connection != null)
+         connectionFactory.releaseConnection(connection);
    }
 
    /**

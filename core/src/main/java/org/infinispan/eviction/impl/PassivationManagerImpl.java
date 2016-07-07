@@ -84,7 +84,7 @@ public class PassivationManagerImpl implements PassivationManager {
          try {
             MarshalledEntry marshalledEntry = marshalledEntryFactory.newMarshalledEntry(entry.getKey(), entry.getValue(),
                                                                                         internalMetadata(entry));
-            persistenceManager.writeToAllStores(marshalledEntry, BOTH);
+            persistenceManager.writeToAllNonTxStores(marshalledEntry, BOTH);
             if (statsEnabled) passivations.getAndIncrement();
          } catch (CacheException e) {
             log.unableToPassivateEntry(key, e);
@@ -101,8 +101,8 @@ public class PassivationManagerImpl implements PassivationManager {
          log.passivatingAllEntries();
          for (InternalCacheEntry e : container) {
             if (trace) log.tracef("Passivating %s", e.getKey());
-            persistenceManager.writeToAllStores(marshalledEntryFactory.newMarshalledEntry(e.getKey(), e.getValue(),
-                                                                        internalMetadata(e)), BOTH);
+            persistenceManager.writeToAllNonTxStores(marshalledEntryFactory.newMarshalledEntry(e.getKey(), e.getValue(),
+                                                                                               internalMetadata(e)), BOTH);
          }
          log.passivatedEntries(container.size(),
                                Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));

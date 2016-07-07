@@ -163,6 +163,15 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       return self();
    }
 
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public S transactional(boolean b) {
+      attributes.attribute(TRANSACTIONAL).set(b);
+      return self();
+   }
+
    @Override
    public void validate() {
       async.validate();
@@ -171,6 +180,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       boolean fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).get();
       boolean purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).get();
       boolean preload = attributes.attribute(PRELOAD).get();
+      boolean transactional = attributes.attribute(TRANSACTIONAL).get();
       ConfigurationBuilder builder = getBuilder();
       if (!shared && !fetchPersistentState && !purgeOnStartup
             && builder.clustering().cacheMode().isClustered())
@@ -179,6 +189,12 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
       if (shared && !preload && builder.indexing().enabled()
             && builder.indexing().indexLocalOnly())
          log.localIndexingWithSharedCacheLoaderRequiresPreload();
+
+      if (transactional && !builder.transaction().transactionMode().isTransactional())
+         throw log.transactionalStoreInNonTransactionalCache();
+
+      if (transactional && builder.persistence().passivation())
+         throw log.transactionalStoreInPassivatedCache();
    }
 
    @Override

@@ -51,6 +51,11 @@ public abstract class AbstractStoreConfigurationChildBuilder<S> extends Abstract
    }
 
    @Override
+   public S transactional(boolean b) {
+      return (S)builder.transactional(b);
+   }
+
+   @Override
    public S addProperty(String key, String value) {
       return (S)builder.addProperty(key, value);
    }

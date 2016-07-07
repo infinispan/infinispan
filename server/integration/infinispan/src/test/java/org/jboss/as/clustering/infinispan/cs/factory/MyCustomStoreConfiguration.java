@@ -46,6 +46,11 @@ public class MyCustomStoreConfiguration implements StoreConfiguration {
    }
 
    @Override
+   public boolean transactional() {
+      return false;
+   }
+
+   @Override
    public Properties properties() {
       return null;
    }

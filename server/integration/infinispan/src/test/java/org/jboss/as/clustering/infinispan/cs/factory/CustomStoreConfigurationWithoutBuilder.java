@@ -44,6 +44,11 @@ public class CustomStoreConfigurationWithoutBuilder implements StoreConfiguratio
    }
 
    @Override
+   public boolean transactional() {
+      return false;
+   }
+
+   @Override
    public Properties properties() {
       return null;
    }

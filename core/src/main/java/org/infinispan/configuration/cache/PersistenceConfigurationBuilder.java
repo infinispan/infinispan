@@ -109,6 +109,14 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
             throw new CacheConfigurationException("Invalid cache loader configuration for " + storeConfiguration.getClass().getSimpleName()
                                                         + "  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!");
          }
+         if (!storeConfiguration.shared() && storeConfiguration.transactional()) {
+            throw new CacheConfigurationException("Invalid cache loader configuration for " + storeConfiguration.getClass().getSimpleName()
+                                                        + ". In order for a cache loader to be transactional, it must also be shared.");
+         }
+         if (storeConfiguration.async().enabled() && storeConfiguration.transactional()) {
+            throw new CacheConfigurationException("Invalid cache loader configuration for " + storeConfiguration.getClass().getSimpleName()
+                                                        + ". A cache loader cannot be both Asynchronous and transactional.");
+         }
          if (storeConfiguration.fetchPersistentState())
             numFetchPersistentState++;
       }

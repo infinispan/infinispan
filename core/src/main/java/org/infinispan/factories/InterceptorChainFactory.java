@@ -41,6 +41,7 @@ import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
 import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
 import org.infinispan.interceptors.impl.NotificationInterceptor;
+import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
@@ -255,6 +256,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
             else
                interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
+
+            boolean transactionalStore = configuration.persistence().stores().stream().anyMatch(StoreConfiguration::transactional);
+            if (transactionalStore && transactionMode.isTransactional())
+               interceptorChain.appendInterceptor(createInterceptor(new TransactionalStoreInterceptor(), TransactionalStoreInterceptor.class), false);
+
             switch (cacheMode) {
                case DIST_SYNC:
                case DIST_ASYNC:

@@ -56,5 +56,7 @@ public interface StoreConfiguration {
 
    boolean shared();
 
+   boolean transactional();
+
    Properties properties();
 }

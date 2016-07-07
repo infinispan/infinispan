@@ -5,6 +5,8 @@ import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Set;
+
 /**
  * @author Ryan Emerson
  */
@@ -34,6 +36,12 @@ class PostgresTableManager extends AbstractTableManager {
                                       config.idColumnName(), config.idColumnType());
       }
       return selectRowSql;
+   }
+
+   @Override
+   public String getSelectMultipleRowSql(int numberOfParams) {
+      String selectCriteria = config.idColumnName() + " = cast(? as " + config.idColumnType() + ")";
+      return getSelectMultipleRowSql(numberOfParams, selectCriteria);
    }
 
    @Override
