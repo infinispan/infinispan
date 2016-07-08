@@ -740,9 +740,8 @@ public class TestingUtil {
          str = "a cache manager at address " + a;
       log.debugf("Cleaning data for cache '%s' on %s", cache.getName(), str);
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      if (log.isDebugEnabled()) log.debugf("removeInMemoryData(): dataContainerBefore == %s", dataContainer.entrySet());
+      if (log.isDebugEnabled()) log.debugf("Data container size before clear: %d", dataContainer.size());
       dataContainer.clear();
-      if (log.isDebugEnabled()) log.debugf("removeInMemoryData(): dataContainerAfter == %s", dataContainer.entrySet());
    }
 
    /**
@@ -776,10 +775,10 @@ public class TestingUtil {
                   }
                }
                if (c.getAdvancedCache().getRpcManager() != null) {
-                  log.tracef("Cache contents on %s before stopping: %s", c.getAdvancedCache().getRpcManager().getAddress(),
-                             c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet());
+                  log.tracef("Local size on %s before stopping: %d", c.getAdvancedCache().getRpcManager().getAddress(),
+                             c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
                } else {
-                  log.tracef("Cache contents before stopping: %s", c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet());
+                  log.tracef("Local size before stopping: %d", c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
                }
                if (clear) {
                   try {
