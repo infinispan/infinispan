@@ -710,15 +710,21 @@ public final class Util {
    }
 
    public static String hexDump(ByteBuffer buffer) {
-      byte[] data = new byte[buffer.remaining()];
+      int bufferLength = buffer.remaining();
+      int dumpLength = Math.min(bufferLength, 100);
+      byte[] data = new byte[dumpLength];
       int pos = buffer.position();
       buffer.get(data);
       buffer.position(pos);
-      StringBuilder buf = new StringBuilder(buffer.remaining() + 22);
-      for (byte b : data)
-         addHexByte(buf, b);
-
-      return buf.toString();
+      StringBuilder sb = new StringBuilder(dumpLength * 2 + 30);
+      for (byte b : data) {
+         addHexByte(sb, b);
+      }
+      if (dumpLength < bufferLength) {
+         sb.append("...");
+      }
+      sb.append(" (").append(bufferLength).append(" bytes)");
+      return sb.toString();
    }
 
    private static void addHexByte(StringBuilder buf, byte b) {
