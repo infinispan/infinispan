@@ -128,12 +128,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss.modules</groupId>
-         <artifactId>jboss-modules</artifactId>
-         <optional>${uberjar.deps.optional}</optional>
-      </dependency>
-
-      <dependency>
          <groupId>com.mchange</groupId>
          <artifactId>c3p0</artifactId>
          <optional>${uberjar.deps.optional}</optional>
@@ -171,8 +165,8 @@
                            <exclude>org.fusesource.hawtjni:hawtjni-runtime:jar:</exclude>
                            <exclude>org.fusesource.leveldbjni:leveldbjni:jar:</exclude>
                            <exclude>org.iq80.leveldb:leveldb-api:jar:</exclude>
-                           <exclude>org.apache.logging.log4j:log4j-core:jar:*</exclude>
-                           <exclude>log4j:log4j:jar:*</exclude>
+                           <exclude>org.apache.logging.log4j:log4j-core:jar:</exclude>
+                           <exclude>org.apache.logging.log4j:log4j-api:jar:</exclude>
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
                            <exclude>org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.1_spec:jar:</exclude>
                            <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar:</exclude>
@@ -263,8 +257,6 @@
                            <pattern>org.iq80</pattern>
                            <shadedPattern>infinispan.org.iq80</shadedPattern>
                         </relocation>
-                        
-                        
                      </relocations>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
@@ -318,7 +310,6 @@
                            !javax.interceptor.*,
                            !javax.persistence.*,
                            !net.jcip.annotations,
-                           !org.apache.logging.*,
                            !org.hibernate.*,
                            !org.infinispan.*,
                            !org.infinispan.client.*,
