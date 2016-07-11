@@ -659,11 +659,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return () -> (K) getKeyForCache(nodeIndex, cacheName);
    }
 
-   protected Object getKeyForCache(Cache<?, ?> cache) {
+   protected MagicKey getKeyForCache(Cache<?, ?> cache) {
       return new MagicKey(cache);
    }
 
-   protected Object getKeyForCache(Cache<?, ?> primary, Cache<?, ?>... backup) {
+   protected MagicKey getKeyForCache(Cache<?, ?> primary, Cache<?, ?>... backup) {
       return new MagicKey(primary, backup);
    }
 
