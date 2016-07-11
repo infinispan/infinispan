@@ -2,6 +2,7 @@ package org.infinispan.test;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -774,11 +775,12 @@ public class TestingUtil {
                      // don't care
                   }
                }
+               // retrieve the size before calling log, as evaluating the set may cause recursive log calls
+               long size = log.isTraceEnabled() ? c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size() : 0;
                if (c.getAdvancedCache().getRpcManager() != null) {
-                  log.tracef("Local size on %s before stopping: %d", c.getAdvancedCache().getRpcManager().getAddress(),
-                             c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
+                  log.tracef("Local size on %s before stopping: %d", c.getAdvancedCache().getRpcManager().getAddress(), size);
                } else {
-                  log.tracef("Local size before stopping: %d", c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
+                  log.tracef("Local size before stopping: %d", size);
                }
                if (clear) {
                   try {

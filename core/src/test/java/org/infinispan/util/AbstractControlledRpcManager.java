@@ -40,7 +40,7 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
       beforeInvokeRemotely(rpc);
       CompletableFuture<Map<Address, Response>> future = realOne.invokeRemotelyAsync(recipients, rpc,
             options);
-      afterInvokeRemotely(rpc, null);
+      future.thenRun(() -> afterInvokeRemotely(rpc, null));
       return future;
    }
 
