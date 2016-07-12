@@ -24,6 +24,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
@@ -46,9 +47,10 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "container.versioning.ReplWriteSkewConsistencyTest")
+@Test(groups = "functional", testName = "container.versioning.WriteSkewConsistencyTest")
 @CleanupAfterMethod
-public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
+public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    public void testValidationOnlyInPrimaryOwner() throws Exception {
       final Object key = new MagicKey(cache(1), cache(0));
@@ -144,7 +146,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    @Override
    protected final void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode(), true);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
       builder.locking()
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .writeSkewCheck(true);
@@ -152,16 +154,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
             .enabled(true)
             .scheme(VersioningScheme.SIMPLE);
       builder.clustering().hash().numSegments(60);
-      amendConfiguration(builder);
       createClusteredCaches(4, builder);
-   }
-
-   protected void amendConfiguration(ConfigurationBuilder builder) {
-      //no-op
-   }
-
-   protected CacheMode cacheMode() {
-      return CacheMode.REPL_SYNC;
    }
 
    private BackupOwnerInterceptor injectBackupOwnerInterceptor(Cache cache) {
