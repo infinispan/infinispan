@@ -716,7 +716,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(singleFileStoreConfiguration.shared());
       assertFalse(singleFileStoreConfiguration.async().enabled());
       assertTrue(singleFileStoreConfiguration.singletonStore().enabled());
-//      assertEquals("${java.io.tmpdir}", singleFileStoreConfiguration.location()); <---- ISPN-6734
+      assertEquals("${java.io.tmpdir}", singleFileStoreConfiguration.location());
 
       //--------------------------------------------------------------------------------------------
       config = cm.getCacheConfiguration("jdbcStringBasedWithConnectionPool");

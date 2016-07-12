@@ -1725,7 +1725,7 @@ public class Parser60 implements ConfigurationParser {
                String key = null;
                String propertyValue = null;
                for (int i = 0; i < attributes; i++) {
-                  String value = replaceProperties(reader.getAttributeValue(i));
+                  String value = reader.getAttributeValue(i);
                   Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
                   switch (attribute) {
                      case NAME: {
