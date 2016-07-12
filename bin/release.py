@@ -192,7 +192,7 @@ def prepare_docs(base_dir, version):
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
   os.mkdir("pdf")
-  subprocess.check_call(["mvn", "org.apache.maven.plugins:maven-dependency-plugin:2.10:unpack", "-DoutputDirectory=pdf", "-DrepoUrl=https://repository.jboss.org/nexus/content/groups/public-jboss/", "-Dartifact=org.infinispan:infinispan-docs:%s:zip:pdf" % (version))
+  subprocess.check_call(["mvn", "org.apache.maven.plugins:maven-dependency-plugin:2.10:unpack", "-DoutputDirectory=pdf", "-DrepoUrl=https://repository.jboss.org/nexus/content/groups/public-jboss/", "-Dartifact=org.infinispan:infinispan-docs:%s:zip:pdf" % (version)])
 
 def upload_docs(base_dir, version):
   """Javadocs and PDFs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
