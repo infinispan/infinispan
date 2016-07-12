@@ -9,6 +9,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.testng.AssertJUnit;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -27,10 +28,31 @@ import java.util.concurrent.Future;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "statetransfer.TxReadAfterLosingOwnershipTest")
+@Test(groups = "functional", testName = "statetransfer.ReadAfterLosingOwnershipTest")
 @CleanupAfterMethod
-public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
+public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
+   private boolean l1 = false;
 
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new ReadAfterLosingOwnershipTest().transactional(true),
+         new ReadAfterLosingOwnershipTest().transactional(false),
+         new ReadAfterLosingOwnershipTest().l1(true).transactional(true),
+         new ReadAfterLosingOwnershipTest().l1(true).transactional(false),
+      };
+   }
+
+   public ReadAfterLosingOwnershipTest l1(boolean l1) {
+      this.l1 = l1;
+      return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return "{tx=" + transactional + ", l1=" + l1 + "}";
+   }
 
    public void testOwnershipLostWithPut() throws Exception {
       doOwnershipLostTest(Operation.PUT, false);
@@ -54,20 +76,12 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
    }
 
    protected final ConfigurationBuilder createConfigurationBuilder() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional());
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional);
       builder.clustering()
             .hash().numOwners(2).consistentHashFactory(new SingleKeyConsistentHashFactory()).numSegments(1)
-            .l1().enabled(l1())
+            .l1().enabled(l1)
             .stateTransfer().fetchInMemoryState(true);
       return builder;
-   }
-
-   protected boolean transactional() {
-      return true;
-   }
-
-   protected boolean l1() {
-      return false;
    }
 
    private void doOwnershipLostTest(Operation operation, boolean onOwner) throws ExecutionException, InterruptedException {
