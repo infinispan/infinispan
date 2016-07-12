@@ -7,6 +7,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -31,21 +32,18 @@ import static org.testng.AssertJUnit.assertNull;
  *
  * @author Vladimir Blagojevic
  */
-@Test(groups = "functional", testName = "replication.SyncReplPessimisticLockingTest")
-public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "replication.SyncPessimisticLockingTest")
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
+public class SyncPessimisticLockingTest extends MultipleCacheManagersTest {
 
    private String k = "key", v = "value";
 
-   public SyncReplPessimisticLockingTest() {
+   public SyncPessimisticLockingTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   protected CacheMode getCacheMode() {
-      return CacheMode.REPL_SYNC;
-   }
-
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(getCacheMode(), true);
+      ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(cacheMode, true);
       cfg.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().lockAcquisitionTimeout(500);
