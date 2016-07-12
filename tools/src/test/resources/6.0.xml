@@ -496,14 +496,12 @@
         </persistence>
     </namedCache>
 
-    <!--
-    Uncomment when ISPN-6736 is fixed
     <namedCache name="withJpaStore">
         <persistence passivation="true">
-            <jpaStoreType xmlns="urn:infinispan:config:jpa:6.0" persistenceUnitName="TestPersistentName" entityClassName="org.infinispan.tools.customs.CustomDataContainer"
+            <jpaStore xmlns="urn:infinispan:config:jpa:6.0" persistenceUnitName="TestPersistentName" entityClassName="org.infinispan.tools.customs.CustomDataContainer"
                           batchSize="80" storeMetadata="false"/>
         </persistence>
-    </namedCache>-->
+    </namedCache>
 
     <namedCache name="withRestStore">
         <jmxStatistics enabled="false"/>
