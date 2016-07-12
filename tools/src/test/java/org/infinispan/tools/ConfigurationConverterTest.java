@@ -22,6 +22,7 @@ import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigu
 import org.infinispan.persistence.jdbc.configuration.ManagedConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConfiguration;
+import org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
@@ -974,6 +975,21 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(10, levelDBStoreConfiguration.blockSize().intValue());
       assertEquals(50,levelDBStoreConfiguration.cacheSize().longValue());
       assertEquals("SNAPPY", levelDBStoreConfiguration.compressionType().name());
+
+      //-------------------------------------------------------------------------------------------
+      config = cm.getCacheConfiguration("withJpaStore");
+      assertFalse(config.clustering().cacheMode().isClustered());
+      assertFalse(config.persistence().usingAsyncStore());
+      assertTrue(config.persistence().passivation());
+      assertTrue(config.persistence().usingStores());
+      assertEquals(1, config.persistence().stores().size());
+      assertTrue(config.persistence().stores().get(0) instanceof JpaStoreConfiguration);
+
+      JpaStoreConfiguration jpaStoreConfiguration= (JpaStoreConfiguration) config.persistence().stores().get(0);
+      assertEquals("TestPersistentName", jpaStoreConfiguration.persistenceUnitName());
+      assertEquals(80, jpaStoreConfiguration.batchSize());
+      assertEquals("org.infinispan.tools.customs.CustomDataContainer", jpaStoreConfiguration.entityClass().getCanonicalName());
+      assertFalse(jpaStoreConfiguration.storeMetadata());
    }
 
    private void assertUnsafeConverted(EmbeddedCacheManager cm) {
