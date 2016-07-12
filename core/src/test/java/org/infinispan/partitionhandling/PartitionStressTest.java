@@ -16,6 +16,7 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.jgroups.protocols.DISCARD;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.XAException;
@@ -30,21 +31,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-@Test(groups = "stress", testName = "partitionhandling.NonTxPartitionStressTest")
-public class NonTxPartitionStressTest extends MultipleCacheManagersTest {
+@Test(groups = "stress", testName = "partitionhandling.PartitionStressTest")
+public class PartitionStressTest extends MultipleCacheManagersTest {
 
    public static final int NUM_NODES = 4;
-   public TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
-   public LockingMode lockingMode = null;
 
-   public NonTxPartitionStressTest() {
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+         new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new PartitionStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+      };
+   }
+
+   public PartitionStressTest() {
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      builder.transaction().transactionMode(transactionMode).lockingMode(lockingMode);
+      builder.clustering().cacheMode(cacheMode);
+      builder.transaction().transactionMode(transactionMode()).lockingMode(lockingMode);
       builder.clustering().partitionHandling().enabled(true);
       for (int i = 0; i < NUM_NODES; i++) {
          addClusterEnabledCacheManager(builder, new TransportFlags().withFD(true).withMerge(true));
