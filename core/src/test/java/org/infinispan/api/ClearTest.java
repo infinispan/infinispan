@@ -10,6 +10,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -23,7 +24,7 @@ import static org.junit.Assert.assertTrue;
  * @since 5.2
  */
 @Test(groups = "functional")
-public abstract class BaseDistClearTest extends MultipleCacheManagersTest {
+public class ClearTest extends MultipleCacheManagersTest {
 
    protected final Log log = LogFactory.getLog(getClass());
 
@@ -31,24 +32,29 @@ public abstract class BaseDistClearTest extends MultipleCacheManagersTest {
    protected AdvancedCache<Integer, String> c1;
    protected AdvancedCache<Integer, String> c2;
 
-   private final ConfigurationBuilder builder;
-
-   protected BaseDistClearTest(boolean transactional, boolean optimistic) {
-      builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional, transactional);
-      builder.clustering().hash().numSegments(3).numOwners(2)
-            .stateTransfer().fetchInMemoryState(true)
-            .locking().lockAcquisitionTimeout(1000l);
-
-      if (transactional) {
-         builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-               .transactionManagerLookup(new DummyTransactionManagerLookup())
-               .syncCommitPhase(true).syncRollbackPhase(true)
-               .lockingMode(optimistic ? LockingMode.OPTIMISTIC : LockingMode.PESSIMISTIC);
-      }
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+         new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+      };
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, transactional, transactional);
+      builder.clustering().hash().numSegments(3)
+         .stateTransfer().fetchInMemoryState(true)
+         .locking().lockAcquisitionTimeout(1000l);
+
+      if (transactional) {
+         builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
+            .transactionManagerLookup(new DummyTransactionManagerLookup())
+            .syncCommitPhase(true).syncRollbackPhase(true)
+            .lockingMode(lockingMode);
+      }
       createCluster(builder, 3);
       waitForClusterToForm();
 
