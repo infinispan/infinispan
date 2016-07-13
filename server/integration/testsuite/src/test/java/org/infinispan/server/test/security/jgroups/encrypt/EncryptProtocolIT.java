@@ -53,8 +53,8 @@ public class EncryptProtocolIT {
     final String COORDINATOR_NODE = "clustered-encrypt-1";
     final String JOINING_NODE = "clustered-encrypt-2";
 
-    final String ENCRYPT_MBEAN = "jgroups:type=protocol,cluster=\"cluster\",protocol=ENCRYPT";
-    final String ENCRYPT_PROPERTY_KEY = "key_store_name";
+    final String ENCRYPT_MBEAN = "jgroups:type=protocol,cluster=\"cluster\",protocol=SYM_ENCRYPT";
+    final String ENCRYPT_PROPERTY_KEY = "keystore_name";
     final String ENCRYPT_PROPERTY_VALUE_SUFFIX = "server_jceks.keystore";
     final String ENCRYPT_PASSWORD_KEY = "store_password";
 

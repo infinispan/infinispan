@@ -247,7 +247,7 @@
                 <transform-rest-sec securityMode="READ_WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="clustered.xml" out="testsuite/clustered-with-encrypt.xml" 
+        <transform in="clustered.xml" out="testsuite/clustered-with-sym-encrypt.xml"
             modifyInfinispan="${infinispan.parts}/default-repl.xml" 
             addEncrypt="${other.parts}/jgroups-encrypt.xml"
             addVault="${other.parts}/vault.xml"
