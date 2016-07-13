@@ -26,6 +26,7 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.*;
@@ -38,41 +39,41 @@ import static org.junit.Assert.*;
  */
 @Test(groups = "functional")
 @CleanupAfterMethod
-public abstract class BaseOperationsDuringStateTransferTest extends MultipleCacheManagersTest {
+public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest {
 
-   private static final Log log = LogFactory.getLog(BaseOperationsDuringStateTransferTest.class);
-
-   private final CacheMode cacheMode;
-
-   private final boolean isTransactional;
-
-   private final boolean isOptimistic;
+   private static final Log log = LogFactory.getLog(OperationsDuringStateTransferTest.class);
 
    private ConfigurationBuilder cacheConfigBuilder;
 
-   protected BaseOperationsDuringStateTransferTest(CacheMode cacheMode, boolean isTransactional, boolean isOptimistic) {
-      this.cacheMode = cacheMode;
-      this.isTransactional = isTransactional;
-      this.isOptimistic = isOptimistic;
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+      };
    }
 
    @Override
    protected void createCacheManagers() {
-      cacheConfigBuilder = getDefaultClusteredCacheConfig(cacheMode, isTransactional, true);
-      if (isTransactional) {
+      cacheConfigBuilder = getDefaultClusteredCacheConfig(cacheMode, transactional, true);
+      if (transactional) {
          cacheConfigBuilder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
                .transactionManagerLookup(new DummyTransactionManagerLookup())
                .syncCommitPhase(true).syncRollbackPhase(true);
 
-         if (isOptimistic) {
-            cacheConfigBuilder.transaction().lockingMode(LockingMode.OPTIMISTIC)
+         cacheConfigBuilder.transaction().lockingMode(lockingMode);
+         if (lockingMode == LockingMode.OPTIMISTIC) {
+            cacheConfigBuilder.transaction()
                   .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
                   .versioning().enable().scheme(VersioningScheme.SIMPLE);
-         } else {
-            cacheConfigBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
          }
       }
-      cacheConfigBuilder.clustering().hash().numSegments(10).numOwners(2)
+      cacheConfigBuilder.clustering().hash().numSegments(10)
             .l1().disable()
             .locking().lockAcquisitionTimeout(1000l);
       cacheConfigBuilder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
@@ -204,7 +205,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a PUT
-      Future<Object> getFuture = fork(new Callable<Object>() {
+      Future<Object> putFuture = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
             try {
@@ -237,7 +238,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       // allow PUT to continue
       putProceedLatch.countDown();
 
-      Object oldVal = getFuture.get(15, TimeUnit.SECONDS);
+      Object oldVal = putFuture.get(15, TimeUnit.SECONDS);
       assertNotNull(oldVal);
       assertEquals("myValue", oldVal);
 
