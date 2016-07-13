@@ -157,7 +157,7 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsJGroups)]//*[local-name()='protocol'][contains(@type,'STABLE')]">
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsJGroups)]//*[local-name()='protocol'][contains(@type,'VERIFY_SUSPECT')]">
         <xsl:if test="$addEncrypt = 'false'">
             <xsl:call-template name="copynode"/>
         </xsl:if>
