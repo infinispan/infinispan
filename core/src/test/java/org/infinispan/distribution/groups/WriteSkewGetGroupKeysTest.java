@@ -2,9 +2,9 @@ package org.infinispan.distribution.groups;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;
@@ -22,11 +22,28 @@ import java.util.Map;
  * @since 7.0
  */
 @Test(groups = "functional")
-public abstract class BaseWriteSkewGetGroupKeysTest extends BaseTransactionalGetGroupKeysTest {
+public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
 
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false),
+         new WriteSkewGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false),
+      };
+   }
 
-   protected BaseWriteSkewGetGroupKeysTest(TestCacheFactory factory) {
+   public WriteSkewGetGroupKeysTest() {
+      super(null);
+   }
+
+   public WriteSkewGetGroupKeysTest(TestCacheFactory factory) {
       super(factory);
+      isolationLevel = IsolationLevel.REPEATABLE_READ;
    }
 
 
@@ -161,11 +178,5 @@ public abstract class BaseWriteSkewGetGroupKeysTest extends BaseTransactionalGet
          AssertJUnit.fail("Commit should fail!");
       }
    }
-
-   protected final IsolationLevel getIsolationLevel() {
-      return IsolationLevel.REPEATABLE_READ;
-   }
-
-   protected abstract TransactionProtocol getTransactionProtocol();
 }
 

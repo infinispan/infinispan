@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;
@@ -22,10 +23,31 @@ import java.util.Map;
  * @since 7.0
  */
 @Test(groups = "functional")
-public abstract class BaseTransactionalGetGroupKeysTest extends BaseGetGroupKeysTest {
+public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false).isolationLevel(IsolationLevel.REPEATABLE_READ),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true).isolationLevel(IsolationLevel.REPEATABLE_READ),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false).isolationLevel(IsolationLevel.REPEATABLE_READ),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true).isolationLevel(IsolationLevel.REPEATABLE_READ),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false).isolationLevel(IsolationLevel.REPEATABLE_READ),
+         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true).isolationLevel(IsolationLevel.REPEATABLE_READ),
+      };
+   }
 
+   public TransactionalGetGroupKeysTest() {
+      this(null);
+   }
 
-   protected BaseTransactionalGetGroupKeysTest(TestCacheFactory factory) {
+   protected TransactionalGetGroupKeysTest(TestCacheFactory factory) {
       super(true, factory);
    }
 
@@ -120,7 +142,7 @@ public abstract class BaseTransactionalGetGroupKeysTest extends BaseGetGroupKeys
       testCache.primaryOwner.put(key(1), value(-1));
 
       if ((factory == TestCacheFactory.PRIMARY_OWNER || factory == TestCacheFactory.BACKUP_OWNER) &&
-            getIsolationLevel() == IsolationLevel.READ_COMMITTED) {
+            isolationLevel == IsolationLevel.READ_COMMITTED) {
          //in ReadCommitted the entries are not wrapped (for read). So the changes are made immediately visible.
          expectedGroupSet.put(key(1), value(-1));
       }
@@ -140,15 +162,11 @@ public abstract class BaseTransactionalGetGroupKeysTest extends BaseGetGroupKeys
    @Override
    protected ConfigurationBuilder amendConfiguration(ConfigurationBuilder builder) {
       super.amendConfiguration(builder);
-      builder.locking().isolationLevel(getIsolationLevel()).writeSkewCheck(false);
+      builder.locking().isolationLevel(isolationLevel).writeSkewCheck(false);
       builder.versioning().disable();
-      builder.transaction().transactionProtocol(getTransactionProtocol());
+      builder.transaction().transactionProtocol(totalOrder ? TransactionProtocol.TOTAL_ORDER : TransactionProtocol.DEFAULT);
       builder.transaction().recovery().disable();
       return builder;
    }
-
-   protected abstract IsolationLevel getIsolationLevel();
-
-   protected abstract TransactionProtocol getTransactionProtocol();
 }
 

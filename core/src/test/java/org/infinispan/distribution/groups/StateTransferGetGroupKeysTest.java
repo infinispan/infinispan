@@ -13,6 +13,7 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -37,9 +38,23 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 7.0
  */
 @Test(groups = "functional")
-public abstract class BaseStateTransferGetGroupKeysTest extends BaseUtilGroupTest {
+public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
 
-   protected BaseStateTransferGetGroupKeysTest(TestCacheFactory factory) {
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new StateTransferGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER),
+         new StateTransferGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER),
+         new StateTransferGetGroupKeysTest(TestCacheFactory.NON_OWNER),
+      };
+   }
+
+   public StateTransferGetGroupKeysTest() {
+      super(null);
+   }
+
+   protected StateTransferGetGroupKeysTest(TestCacheFactory factory) {
       super(factory);
    }
 

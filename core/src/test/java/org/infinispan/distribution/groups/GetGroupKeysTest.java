@@ -12,8 +12,6 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -22,6 +20,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.logging.Log;
 import org.testng.AssertJUnit;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -42,13 +41,27 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 7.0
  */
 @Test(groups = "functional")
-public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
+public class GetGroupKeysTest extends BaseUtilGroupTest {
 
    protected static final String PERSISTENCE_CACHE = "persistence-cache";
    protected static final String PERSISTENCE_PASSIVATION_CACHE = "persistence-passivation-cache";
    protected final boolean transactional;
 
-   protected BaseGetGroupKeysTest(boolean transactional, TestCacheFactory factory) {
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER),
+         new GetGroupKeysTest(false, TestCacheFactory.BACKUP_OWNER),
+         new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER),
+      };
+   }
+
+   public GetGroupKeysTest() {
+      this(false, null);
+   }
+
+   protected GetGroupKeysTest(boolean transactional, TestCacheFactory factory) {
       super(factory);
       this.transactional = transactional;
    }
@@ -239,11 +252,8 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
       BlockCommandInterceptor interceptor = chain.findInterceptorExtending(BlockCommandInterceptor.class);
       if (interceptor == null) {
          interceptor = new BlockCommandInterceptor(log);
-         if (!chain.addInterceptorAfter(interceptor, EntryWrappingInterceptor.class)) {
-            if (!chain.addInterceptorAfter(interceptor, VersionedEntryWrappingInterceptor.class)) {
-               AssertJUnit.assertTrue(chain.addInterceptorAfter(interceptor, TotalOrderVersionedEntryWrappingInterceptor.class));
-            }
-         }
+         EntryWrappingInterceptor ewi = chain.findInterceptorExtending(EntryWrappingInterceptor.class);
+         AssertJUnit.assertTrue(chain.addInterceptorAfter(interceptor, ewi.getClass()));
       }
       interceptor.reset();
       log.debugf("Injected BlockCommandInterceptor in %s. Interceptor=%s", cache, interceptor);
