@@ -15,12 +15,28 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
-public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
+public class ReplicatedAPITest extends MultipleCacheManagersTest {
 
    protected boolean isSync;
+
+   public ReplicatedAPITest sync(boolean sync) {
+      this.isSync = sync;
+      return this;
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] { new ReplicatedAPITest().sync(true), new ReplicatedAPITest().sync(false) };
+   }
+
+   @Override
+   protected String parameters() {
+      return "{sync=" + isSync + "}";
+   }
 
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder build = getDefaultClusteredCacheConfig(isSync ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC, true);
