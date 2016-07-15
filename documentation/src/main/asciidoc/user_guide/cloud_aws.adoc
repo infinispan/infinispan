@@ -1,5 +1,19 @@
 ==  Running on Cloud Services
 
+In order to turn on Cloud support for Infinispan library mode, one needs to add a new dependency to the classpath:
+
+.Cloud support in library mode
+[source,xml]
+----
+<dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-cloud</artifactId>
+      <version>${infinispan.version}</version>
+</dependency>
+----
+
+The above dependency adds `infinispan-core` to the classpath as well as some default configurations.
+
 === Amazon Web Services
 Infinispan can be used on the Amazon Web Service (AWS) platform and similar cloud based environment in several ways. As Infinispan uses JGroups as the underlying communication technology, the majority of the configuration work is done JGroups. The default auto discovery won't work on EC2 as multicast is not allowed, but JGroups provides several other discovery protocols so we only have to choose one.
 
@@ -60,5 +74,37 @@ Finally you can configure your JGroups instances to use a shared storage to exch
 ----
 
 ==== JDBC_PING
-A similar approach to S3_PING, but using a JDBC connection to a shared database. On EC2 that is quite easy using Amazon RDS. See the link:$$http://community.jboss.org/wiki/JDBCPING$$[JDBC_PING Wiki page] for details. 
+A similar approach to S3_PING, but using a JDBC connection to a shared database. On EC2 that is quite easy using Amazon RDS. See the link:$$http://community.jboss.org/wiki/JDBCPING$$[JDBC_PING Wiki page] for details.
 
+== Kubernetes and OpenShift
+
+Since OpenShift uses Kubernetes underneath both of them can use the same discovery protocol - link:$$https://github.com/jgroups-extras/jgroups-kubernetes$$[Kube_PING]. The configuration is very straightforward:
+
+.Sample KUBE_PING configuration
+[source,xml]
+----
+
+<config>
+    <TCP bind_addr="${match-interface:eth.*}" />
+    <kubernetes.KUBE_PING />
+...
+...
+</config>
+
+----
+
+The most important thing is to bind JGroups to `eth0` interface, which is link:$$https://docs.docker.com/engine/userguide/networking/dockernetworks/$$[used by Docker containers for network communication].
+
+KUBE_PING protocol is configured by environmental variables (which should be available inside a container). The most important thing is to set `OPENSHIFT_KUBE_PING_NAMESPACE` to proper namespace. It might be either hardcoded or populated via link:$$https://github.com/kubernetes/kubernetes/tree/release-1.0/docs/user-guide/downward-api$$[Kubernetes' Downward API].
+
+Since KUBE_PING uses Kubernetes API for obtaining available Pods, OpenShift requires adding additional privileges. Assuming that `oc project -q` returns current namespace and `default` is the service account name, one needs to run:
+
+.Adding additional OpenShift privileges
+[source,bash]
+----
+
+oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -n $(oc project -q)
+
+----
+
+After performing all above steps, the clustering should be enabled and all Pods should automatically form a cluster within a single namespace.

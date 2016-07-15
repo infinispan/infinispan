@@ -8,6 +8,9 @@ The Infinispan community
 This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 8.x to 9.0
+=== New Cloud module for library mode
+In Infinispan 8.x, cloud related configuration were added to `infinispan-core` module. Since 9.0 they were moved to `infinispan-cloud` module.
+
 === Entry Retriever is now removed
 The entry retriever feature has been removed.  Please update to use the new Streams feature detailed in the User Guide.
 The `org.infinispan.filter.CacheFilters` class can be used to convert `KeyValueFilter` and `Converter` instances

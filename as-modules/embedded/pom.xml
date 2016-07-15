@@ -158,6 +158,23 @@
          <scope>provided</scope>
       </dependency>
 
+      <dependency>
+         <groupId>org.jgroups.kubernetes</groupId>
+         <artifactId>kubernetes</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.jgroups.kubernetes</groupId>
+         <artifactId>common</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.jgroups.kubernetes</groupId>
+         <artifactId>dns</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>net.oauth.core</groupId>
+         <artifactId>oauth</artifactId>
+      </dependency>
+
    </dependencies>
 
    <build>

@@ -34,6 +34,12 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cloud</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
@@ -136,6 +142,22 @@
       <dependency>
          <groupId>com.mchange</groupId>
          <artifactId>c3p0</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-dmr</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.jgroups.kubernetes</groupId>
+         <artifactId>dns</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.jgroups.kubernetes</groupId>
+         <artifactId>kubernetes</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
    </dependencies>
@@ -252,6 +274,14 @@
                      <createSourcesJar>true</createSourcesJar>
                      <relocations>
                         <relocation>
+                           <pattern>org.jboss.dmr</pattern>
+                           <shadedPattern>infinispan.org.jboss.dmr</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>net.oauth</pattern>
+                           <shadedPattern>infinispan.net.oauth</shadedPattern>
+                        </relocation>
+                        <relocation>
                            <pattern>com.google</pattern>
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
@@ -325,12 +355,16 @@
                            !org.jgroups.*,
                            !org.jboss.logmanager,
                            !org.jboss.modules,
+                           !org.jboss.dmr,
                            !org.iq80.snappy,
                            !org.jboss.marshalling.*,
                            !org.xerial.snappy,
                            !sun.misc,
                            !sun.reflect,
                            !sun.nio.ch,
+                           !__redirected,
+                           com.sun.net.httpserver;resolution:=optional,
+                           io.undertow.*;resolution:=optional,
                            *
                         </Import-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>

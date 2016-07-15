@@ -361,6 +361,7 @@ The configurations available are:
 *  default-jgroups-udp.xml - Uses UDP as a transport, and UDP multicast for discovery.  Usually suitable for larger (over 100 nodes) clusters _or_ if you are using link:http://community.jboss.org/docs/DOC-14853#replicated[replication or invalidation] .  Minimises opening too many sockets. 
 *  default-jgroups-tcp.xml - Uses TCP as a transport and UDP multicast for discovery.  Better for smaller clusters (under 100 nodes) _only if_ you are using link:http://community.jboss.org/docs/DOC-14853#distribution[distribution] , as TCP is more efficient as a point-to-point protocol 
 *  default-jgroups-ec2.xml - Uses TCP as a transport and link:http://community.jboss.org/docs/DOC-15925[S3_PING] for discovery.  Suitable on link:http://aws.amazon.com/ec2/[Amazon EC2] nodes where UDP multicast isn't available. 
+*  default-jgroups-kubernetes.xml - Uses TCP as a transport and link:https://github.com/jgroups-extras/jgroups-kubernetes[KUBE_PING] for discovery.  Suitable on link:http://kubernetes.io/[Kubernetes] and link:https://www.openshift.org/[OpenShift] nodes where UDP multicast is not always available.
 
 ===== Tuning JGroups settings
 The settings above can be further tuned without editing the XML files themselves.
@@ -396,6 +397,13 @@ $ java -cp ... -Djgroups.tcp.port=1234 -Djgroups.tcp.address=10.11.12.13
 |jgroups.s3.access_key|The Amazon S3 access key used to access an S3 bucket| |No
 |jgroups.s3.secret_access_key|The Amazon S3 secret key used to access an S3 bucket| |No
 |jgroups.s3.bucket|Name of the Amazon S3 bucket to use.  Must be unique and must already exist| |No
+|===============
+
+.default-jgroups-kubernetes.xml
+|===============
+| _System Property_ | _Description_ | _Default_ | _Required?_
+|jgroups.tcp.address|IP address to use for the TCP transport.|eth0|No
+|jgroups.tcp.port|Port to use for TCP socket|7800|No
 |===============
 
 
