@@ -11,8 +11,8 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -31,7 +31,7 @@ public class CacheConfigurationTest extends AbstractInfinispanTest {
    private Cache cache1;
    private Cache cache2;
 
-   @BeforeTest
+   @BeforeClass
    public void init() throws IOException {
       cacheManager1 = TestCacheManagerFactory.fromXml("config-samples/lucene-demo-cache-config.xml");
       cacheManager1.start();
@@ -45,7 +45,7 @@ public class CacheConfigurationTest extends AbstractInfinispanTest {
       directoryNodeTwo = DirectoryBuilder.newDirectoryInstance(cache2, cache2, cache2, "index-name").create();
    }
    
-   @AfterTest
+   @AfterClass
    public void cleanup() throws IOException {
       directoryNodeOne.close();
       directoryNodeTwo.close();

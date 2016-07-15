@@ -8,9 +8,9 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.SystemException;
@@ -24,7 +24,7 @@ public class AtomicMapLocalTest extends AbstractInfinispanTest {
    TransactionManager tm;
    private CacheContainer cacheContainer;
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.invocationBatching().enable();
@@ -33,7 +33,7 @@ public class AtomicMapLocalTest extends AbstractInfinispanTest {
       tm = TestingUtil.getTransactionManager(cache);
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       TestingUtil.killCacheManagers(cacheContainer);
       cache =null;

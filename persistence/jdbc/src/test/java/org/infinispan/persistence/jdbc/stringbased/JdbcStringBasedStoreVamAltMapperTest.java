@@ -4,8 +4,8 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
@@ -22,7 +22,7 @@ public class JdbcStringBasedStoreVamAltMapperTest extends JdbcStringBasedStoreAl
    EmbeddedCacheManager cm;
    StreamingMarshaller marshaller;
 
-   @BeforeTest
+   @BeforeClass
    @Override
    public void createCacheStore() throws PersistenceException {
       cm = TestCacheManagerFactory.createCacheManager(false);
@@ -31,7 +31,7 @@ public class JdbcStringBasedStoreVamAltMapperTest extends JdbcStringBasedStoreAl
       super.createCacheStore();
    }
 
-   @AfterTest
+   @AfterClass
    @Override
    public void destroyStore() throws PersistenceException {
       super.destroyStore();

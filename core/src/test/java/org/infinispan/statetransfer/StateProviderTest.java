@@ -34,7 +34,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -99,7 +99,7 @@ public class StateProviderTest {
    private CacheTopology cacheTopology;
    private InternalEntryFactory ef;
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       // create cache configuration
       ConfigurationBuilder cb = new ConfigurationBuilder();

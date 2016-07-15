@@ -27,9 +27,9 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -47,12 +47,12 @@ public class InfinispanDirectoryIOTest extends AbstractInfinispanTest {
    private CacheContainer cacheManager;
    private File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), INDEXNAME);
 
-   @BeforeTest(alwaysRun = true)
+   @BeforeClass(alwaysRun = true)
    public void prepareCacheManager() {
       cacheManager = CacheTestSupport.createTestCacheManager();
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterClass(alwaysRun = true)
    public void killCacheManager() {
       TestingUtil.killCacheManagers(cacheManager);
    }

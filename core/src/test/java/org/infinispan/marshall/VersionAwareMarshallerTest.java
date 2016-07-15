@@ -71,7 +71,7 @@ import org.jboss.marshalling.TraceInformation;
 import org.jgroups.stack.IpAddress;
 import org.jgroups.util.UUID;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -103,7 +103,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       gtf.init(false, false, true, false);
    }
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       // Use a clustered cache manager to be able to test global marshaller interaction too
       ConfigurationBuilder builder = new ConfigurationBuilder();

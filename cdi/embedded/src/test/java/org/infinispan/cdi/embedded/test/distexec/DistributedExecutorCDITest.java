@@ -9,8 +9,8 @@ import org.infinispan.test.fwk.TestResourceTracker;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -38,12 +38,12 @@ public class DistributedExecutorCDITest extends MultipleCacheManagersArquillianT
       return delegate;
    }
 
-   @BeforeTest
+   @BeforeClass
    public void beforeTest() {
       TestResourceTracker.testStarted(this.getClass().getName());
    }
 
-   @AfterTest
+   @AfterClass
    public void afterTest() {
       TestResourceTracker.testFinished(this.getClass().getName());
    }
