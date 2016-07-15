@@ -161,6 +161,13 @@
         <module-def name="org.jgroups" slot="${infinispan.slot}">
             <maven-resource group="org.jgroups" artifact="jgroups" />
         </module-def>
+
+        <module-def name="org.jgroups.kubernetes" slot="${infinispan.slot}">
+            <maven-resource group="org.jgroups.kubernetes" artifact="kubernetes" />
+            <maven-resource group="org.jgroups.kubernetes" artifact="common" />
+            <maven-resource group="org.jgroups.kubernetes" artifact="dns" />
+            <maven-resource group="net.oauth.core" artifact="oauth" />
+        </module-def>
        
         <module-def name="org.fusesource.leveldbjni-all" slot="${infinispan.slot}">
             <maven-resource group="org.fusesource.leveldbjni" artifact="leveldbjni-all" />

@@ -171,6 +171,8 @@
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>2.3.4.Final</version.weld>
       <version.weld-se>2.3.4.Final</version.weld-se>
+      <version.groups.kubernetes>0.9.0</version.groups.kubernetes>
+      <version.oauth.core>20090531</version.oauth.core>
 
       <version.org.wildfly>10.0.0.Final</version.org.wildfly>
       <version.org.wildfly.core>2.0.10.Final</version.org.wildfly.core>
@@ -983,6 +985,32 @@
              <scope>import</scope>
              <type>pom</type>
           </dependency>
+         <dependency>
+            <groupId>org.jgroups.kubernetes</groupId>
+            <artifactId>kubernetes</artifactId>
+            <version>${version.groups.kubernetes}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.jgroups.kubernetes</groupId>
+            <artifactId>common</artifactId>
+            <version>${version.groups.kubernetes}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>io.undertow</groupId>
+                  <artifactId>undertow-core</artifactId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <dependency>
+            <groupId>org.jgroups.kubernetes</groupId>
+            <artifactId>dns</artifactId>
+            <version>${version.groups.kubernetes}</version>
+         </dependency>
+         <dependency>
+            <groupId>net.oauth.core</groupId>
+            <artifactId>oauth</artifactId>
+            <version>${version.oauth.core}</version>
+         </dependency>
       </dependencies>
    </dependencyManagement>
    <dependencies>

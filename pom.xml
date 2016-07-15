@@ -22,6 +22,7 @@
       <module>commons</module>
       <module>commons-test</module>
       <module>core</module>
+      <module>cloud</module>
       <module>extended-statistics</module>
       <module>tools</module>
       <module>query</module>

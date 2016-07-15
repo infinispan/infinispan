@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.3" name="org.jgroups.kubernetes.kubernetes">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
+
+    <resources>
+        <artifact name="${org.jgroups.kubernetes:kubernetes}"/>
+        <artifact name="${org.jgroups.kubernetes:common}"/>
+        <artifact name="${org.jgroups.kubernetes:dns}"/>
+        <artifact name="${net.oauth.core:oauth}"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="io.undertow.core"/>
+        <module name="org.jboss.dmr"/>
+        <module name="org.jgroups"/>
+    </dependencies>
+</module>
