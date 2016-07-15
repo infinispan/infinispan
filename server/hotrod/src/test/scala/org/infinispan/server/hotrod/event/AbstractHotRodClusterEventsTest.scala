@@ -27,8 +27,6 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
    private[this] val filters = ListBuffer[AcceptedKeyFilterFactory]()
    private[this] val converters = ListBuffer[AcceptedKeyValueConverterFactory]()
 
-   protected def cacheMode: CacheMode
-
    override protected def cacheName: String = "remote-clustered-events"
 
    override protected def nodeCount: Int = 3
