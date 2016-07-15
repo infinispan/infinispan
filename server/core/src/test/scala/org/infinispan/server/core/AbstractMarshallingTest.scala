@@ -1,6 +1,6 @@
 package org.infinispan.server.core
 
-import org.testng.annotations.{AfterTest, BeforeTest}
+import org.testng.annotations.{AfterClass, BeforeClass}
 import java.util.Random
 import java.io.{ByteArrayOutputStream, ObjectOutputStream}
 
@@ -20,14 +20,14 @@ abstract class AbstractMarshallingTest extends AbstractInfinispanTest {
    var marshaller : AbstractDelegatingMarshaller = _
    var cm : EmbeddedCacheManager = _
 
-   @BeforeTest(alwaysRun=true)
+   @BeforeClass(alwaysRun=true)
    def setUp() {
       // Manual addition of externalizers to replication what happens in fully functional tests
       cm = TestCacheManagerFactory.createCacheManager()
       marshaller = TestingUtil.extractCacheMarshaller(cm.getCache())
    }
 
-   @AfterTest(alwaysRun=true)
+   @AfterClass(alwaysRun=true)
    def tearDown() {
      if (cm != null) cm.stop()
    }
