@@ -19,8 +19,8 @@ import org.infinispan.persistence.jdbc.configuration.SimpleConnectionFactoryConf
 import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +35,7 @@ public class TableManagerTest {
    Connection connection;
    TableManager tableManager;
 
-   @BeforeTest
+   @BeforeClass
    public void createConnection() throws Exception {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false)
@@ -64,7 +64,7 @@ public class TableManagerTest {
       tableManager.setCacheName("aName");
    }
 
-   @AfterTest
+   @AfterClass
    public void closeConnection() throws SQLException {
       connection.close();
    }

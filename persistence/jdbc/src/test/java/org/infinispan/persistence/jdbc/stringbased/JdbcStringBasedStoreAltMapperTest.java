@@ -19,9 +19,9 @@ import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.util.PersistenceMockUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.infinispan.test.TestingUtil.marshalledEntry;
@@ -41,7 +41,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
    private StreamingMarshaller marshaller;
 
-   @BeforeTest
+   @BeforeClass
    public void createCacheStore() throws PersistenceException {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
@@ -64,7 +64,7 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       assertRowCount(0);
    }
 
-   @AfterTest
+   @AfterClass
    public void destroyStore() throws PersistenceException {
       cacheStore.stop();
       marshaller.stop();

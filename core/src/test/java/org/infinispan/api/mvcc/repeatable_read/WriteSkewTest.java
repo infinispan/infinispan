@@ -16,8 +16,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.RollbackException;
@@ -47,7 +47,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    protected EmbeddedCacheManager cacheManager;
    protected volatile Cache<String, String> cache;
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder
@@ -62,7 +62,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       TestingUtil.killCacheManagers(cacheManager);
       cacheManager = null;

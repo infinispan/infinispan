@@ -13,8 +13,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -36,12 +36,12 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cm;
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       cm = TestCacheManagerFactory.createCacheManager();
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       if (cm != null) cm.stop();
    }

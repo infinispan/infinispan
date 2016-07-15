@@ -10,8 +10,8 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -31,7 +31,7 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
    private EmbeddedCacheManager cacheManager;
    private HotRodServer hotRodServer;
 
-   @BeforeTest
+   @BeforeClass
    public void startUp() {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       assertEquals(cacheManager.getCache().size(), 0);
@@ -65,7 +65,7 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
       });
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       HotRodClientTestingUtil.killServers(hotRodServer);
       TestingUtil.killCacheManagers(cacheManager);
