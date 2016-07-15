@@ -27,7 +27,7 @@ public class TestResourceTracker {
    private static final ThreadLocal<String> threadTestName = new ThreadLocal<>();
 
    public static void addResource(AbstractInfinispanTest testInstance, final Cleaner<?> cleaner) {
-      TestResources resources = getTestResources(getTestName(testInstance));
+      TestResources resources = getTestResources(testInstance.getTestName());
       resources.addResource(cleaner);
    }
 
@@ -109,12 +109,8 @@ public class TestResourceTracker {
     * test with a {@code @Test(timeout=n)} annotation.
     */
    public static void testThreadStarted(AbstractInfinispanTest testInstance) {
-      setThreadTestName(getTestName(testInstance));
+      setThreadTestName(testInstance.getTestName());
       Thread.currentThread().setName(getNextTestThreadName());
-   }
-
-   protected static String getTestName(AbstractInfinispanTest testInstance) {
-      return testInstance.getClass().getName();
    }
 
    public static void setThreadTestName(String testName) {

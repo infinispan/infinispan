@@ -2,6 +2,7 @@ package org.infinispan.test;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -11,24 +12,45 @@ import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.fwk.InCacheMode;
+import org.infinispan.test.fwk.InTransactionMode;
+import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.testng.IMethodInstance;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Factory;
 
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 
 /**
@@ -56,10 +78,25 @@ import java.util.function.Supplier;
  *
  * @author Mircea.Markus@jboss.com
  */
+@TestSelector(filters = {
+   MultipleCacheManagersTest.CacheModeFilter.class,
+   MultipleCacheManagersTest.TransactionalModeFilter.class,
+   MultipleCacheManagersTest.TotalOrderFilter.class,
+   MultipleCacheManagersTest.LockingModeFilter.class,
+   MultipleCacheManagersTest.IsolationLevelFilter.class,
+})
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected List<EmbeddedCacheManager> cacheManagers = Collections.synchronizedList(new ArrayList<EmbeddedCacheManager>());
    protected IdentityHashMap<Cache<?, ?>, ReplListener> listeners = new IdentityHashMap<Cache<?, ?>, ReplListener>();
+   // the cache mode set in configuration is shared in many tests, therefore we'll place the field,
+   // fluent setter cacheMode(...) and parameters() to this class.
+   protected CacheMode cacheMode;
+   protected Boolean transactional;
+   protected LockingMode lockingMode;
+   protected Boolean totalOrder;
+   protected IsolationLevel isolationLevel;
+   private boolean parametrizedInstance = false;
 
    @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
@@ -383,6 +420,162 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return advancedCache(index).getDataContainer();
    }
 
+   @Factory
+   public Object[] factory() {
+      Consumer<MultipleCacheManagersTest>[] cacheModeModifiers = getModifiers(InCacheMode.class, InCacheMode::value, (t, m) -> t.cacheMode(m));
+      Consumer<MultipleCacheManagersTest>[] transactionModifiers = getModifiers(InTransactionMode.class, InTransactionMode::value, (t, m) -> t.transactional(m.isTransactional()));
+      List<Consumer<MultipleCacheManagersTest>[]> allModifiers = Arrays.asList(cacheModeModifiers, transactionModifiers);
+
+      int numTests = allModifiers.stream().mapToInt(m -> m.length).reduce(1, (m1, m2) -> m1 * m2);
+      Object[] tests = new Object[numTests];
+      tests[0] = this;
+      Constructor<? extends MultipleCacheManagersTest> ctor;
+      try {
+         ctor = getClass().getConstructor();
+      } catch (NoSuchMethodException e) {
+         throw new IllegalArgumentException("Missing no-arg constructor in " + getClass());
+      }
+      for (int i = 1; i < tests.length; ++i) {
+         try {
+            tests[i] = ctor.newInstance();
+         } catch (Exception e) {
+            throw new IllegalStateException("Cannot create test instances", e);
+         }
+      }
+      int stride = 1;
+      for (Consumer<MultipleCacheManagersTest>[] modifiers : allModifiers) {
+         applyModifiers(tests, modifiers, stride);
+         stride *= modifiers.length;
+      }
+      return tests;
+   }
+
+   private void applyModifiers(Object[] tests, Consumer<MultipleCacheManagersTest>[] modifiers, int stride) {
+      for (int i = 0, mi = 0; i < tests.length; i += stride, mi = (mi + 1) % modifiers.length) {
+         for (int j = 0; j < stride; ++j) {
+            modifiers[mi].accept((MultipleCacheManagersTest) tests[i + j]);
+         }
+      }
+   }
+
+   public List<MultipleCacheManagersTest> expand() {
+      List<MultipleCacheManagersTest> newTests = new ArrayList<>();
+      return newTests;
+   }
+
+   private <Mode, A extends Annotation> Consumer<MultipleCacheManagersTest>[] getModifiers(Class<A> annotationClass, Function<A, Mode[]> methodRetriever, BiConsumer<MultipleCacheManagersTest, Mode> applier) {
+      Mode[] classModes = classModes(annotationClass, methodRetriever);
+      Set<Mode> methodModes = methodModes(annotationClass, methodRetriever);
+      if (classModes == null && methodModes == null) {
+         return new Consumer[] { t -> {} }; // no modifications
+      }
+      Set<Mode> allModes = new HashSet<>();
+      if (classModes != null) {
+         allModes.addAll(Arrays.asList(classModes));
+      }
+      if (methodModes != null) {
+         allModes.addAll(methodModes);
+      }
+      // if there are only method-level annotations, add a version without setting mode at all
+      if (classModes == null) {
+         Consumer<MultipleCacheManagersTest>[] modifiers = new Consumer[methodModes.size() + 1];
+         modifiers[0] = t -> {};
+         int i = 1;
+         for (Mode mode : methodModes) {
+            // we have already added setting with this cache mode, don't do it twice
+         if (mode == cacheMode) continue;
+            modifiers[i++] = t -> applier.accept(t, mode);
+         }
+         return i == modifiers.length ? modifiers : Arrays.copyOf(modifiers, i);
+      } else {
+         return allModes.stream().map(mode -> (Consumer<MultipleCacheManagersTest>) t -> applier.accept(t, mode)).toArray(Consumer[]::new);
+      }
+   }
+
+   protected <Mode, A extends Annotation> Set<Mode> methodModes(Class<A> annotationClass, Function<A, Mode[]> modeRetriever) {
+      // the annotation is not inherited
+      Set<Mode> modes = null;
+      for (Method m : getClass().getMethods()) {
+         A annotation = m.getAnnotation(annotationClass);
+         if (annotation == null) continue;
+         if (modes == null) {
+            modes = new HashSet<>();
+         }
+         for (Mode mode : modeRetriever.apply(annotation)) {
+            modes.add(mode);
+         }
+      }
+      return modes;
+   }
+
+   protected <Mode, A extends Annotation> Mode[] classModes(Class<A> annotationClass, Function<A, Mode[]> modeRetriever) {
+      A annotation = getClass().getDeclaredAnnotation(annotationClass);
+      if (annotation == null) return null;
+      return modeRetriever.apply(annotation);
+   }
+
+   private MultipleCacheManagersTest internalCacheMode(CacheMode cacheMode) {
+      this.parametrizedInstance = true;
+      return cacheMode(cacheMode);
+   }
+
+   public MultipleCacheManagersTest cacheMode(CacheMode cacheMode) {
+      this.cacheMode = cacheMode;
+      return this;
+   }
+
+   public MultipleCacheManagersTest transactional(boolean transactional) {
+      this.transactional = transactional;
+      return this;
+   }
+
+   public MultipleCacheManagersTest lockingMode(LockingMode lockingMode) {
+      this.lockingMode = lockingMode;
+      return this;
+   }
+
+   public MultipleCacheManagersTest totalOrder(boolean totalOrder) {
+      this.totalOrder = totalOrder;
+      return this;
+   }
+
+   public MultipleCacheManagersTest isolationLevel(IsolationLevel isolationLevel) {
+      this.isolationLevel = isolationLevel;
+      return this;
+   }
+
+   public TransactionMode transactionMode() {
+      return transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL;
+   }
+
+   @Override
+   protected String parameters() {
+      // cacheMode is self-explaining
+      String[] names = { null, "tx", "locking", "TO", "isolation" };
+      Object[] params = { cacheMode, transactional, lockingMode, totalOrder, isolationLevel };
+      assert names.length == params.length;
+
+      boolean[] last = new boolean[params.length];
+      boolean none = true;
+      for (int i = params.length - 1; i >= 0; --i) {
+         last[i] = none;
+         none &= params[i] == null;
+      }
+      if (none) {
+         return null;
+      }
+      StringBuilder sb = new StringBuilder().append('{');
+      for (int i = 0; i < params.length; ++i) {
+         if (params[i] != null) {
+            if (names[i] != null) {
+               sb.append(names[i]).append('=');
+            }
+            sb.append(params[i]);
+            if (!last[i]) sb.append(", ");
+         }
+      }
+      return sb.append('}').toString();
+   }
 
    /**
     * Create the cache managers you need for your test.  Note that the cache managers you create *must* be created using
@@ -468,6 +661,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected Object getKeyForCache(Cache<?, ?> cache) {
       return new MagicKey(cache);
+   }
+
+   protected Object getKeyForCache(Cache<?, ?> primary, Cache<?, ?>... backup) {
+      return new MagicKey(primary, backup);
    }
 
    protected void assertNotLocked(final String cacheName, final Object key) {
@@ -593,4 +790,104 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       });
    }
 
+   protected abstract static class AnnotationFilter<A extends Annotation, AM, CM> {
+      private final Class<A> annotationClazz;
+      private final Function<A, AM[]> modesRetriever;
+      private final BiPredicate<AM, CM> modeChecker;
+
+      protected AnnotationFilter(Class<A> annotationClazz, Function<A, AM[]> modesRetriever, BiPredicate<AM, CM> modeChecker) {
+         this.annotationClazz = annotationClazz;
+         this.modesRetriever = modesRetriever;
+         this.modeChecker = modeChecker;
+      }
+
+      public boolean test(CM mode, IMethodInstance method) {
+         // If both method and class have the annotation, class annotation has priority.
+         A clazzAnnotation = method.getInstance().getClass().getAnnotation(annotationClazz);
+         A methodAnnotation = method.getMethod().getConstructorOrMethod().getMethod().getAnnotation(annotationClazz);
+         if (methodAnnotation != null) {
+            // If a method-level annotation contains current cache mode, run it, otherwise ignore that
+            if (Stream.of(modesRetriever.apply(methodAnnotation)).anyMatch(m -> modeChecker.test(m, mode))) {
+               return true;
+            }
+         } else if (clazzAnnotation != null) {
+            return true;
+         } else if (mode == null || !((MultipleCacheManagersTest) method.getInstance()).parametrizedInstance) {
+            // There are no annotations on this method nor on this class, but due to an annotation
+            // on different method there may be instances with non-default cache mode
+            return true;
+         }
+         return false;
+      }
+   }
+
+   public static class CacheModeFilter extends AnnotationFilter<InCacheMode, CacheMode, CacheMode> implements Predicate<IMethodInstance> {
+      private final String cacheModeString = System.getProperty("test.infinispan.cacheMode");
+
+      public CacheModeFilter() {
+         super(InCacheMode.class, a -> a.value(), (m1, m2) -> m1 == m2);
+      }
+
+      @Override
+      public boolean test(IMethodInstance method) {
+         CacheMode cacheMode = ((MultipleCacheManagersTest) method.getInstance()).cacheMode;
+         if (cacheModeString != null && cacheMode != null && !cacheMode.friendlyCacheModeString().equalsIgnoreCase(cacheModeString)) {
+            return false;
+         }
+         return test(cacheMode, method);
+      }
+   }
+
+   public static class TransactionalModeFilter extends AnnotationFilter<InTransactionMode, TransactionMode, Boolean> implements Predicate<IMethodInstance> {
+      private final String txModeString = System.getProperty("test.infinispan.transactional");
+
+      public TransactionalModeFilter() {
+         super(InTransactionMode.class, a -> a.value(), (m, b) -> m.isTransactional() == b.booleanValue());
+      }
+
+      @Override
+      public boolean test(IMethodInstance method) {
+         Boolean transactional = ((MultipleCacheManagersTest) method.getInstance()).transactional;
+         if (txModeString != null && transactional != null && !transactional.toString().equalsIgnoreCase(txModeString)) {
+            return false;
+         }
+         return test(transactional, method);
+      }
+   }
+
+   protected static abstract class FilterByProperty<T> implements Predicate<IMethodInstance> {
+      private final String property;
+      // this could be done through abstract method but this way is more concise
+      private final Function<MultipleCacheManagersTest, T> getMode;
+
+      public FilterByProperty(String property, Function<MultipleCacheManagersTest, T> getMode) {
+         this.property = System.getProperty(property);
+         this.getMode = getMode;
+      }
+
+      @Override
+      public boolean test(IMethodInstance method) {
+         if (property == null) return true;
+         T mode = getMode.apply((MultipleCacheManagersTest) method.getInstance());
+         return property == null || mode == null || mode.toString().equalsIgnoreCase(property);
+      }
+   }
+
+   public static class TotalOrderFilter extends FilterByProperty<Boolean> {
+      public TotalOrderFilter() {
+         super("test.infinispan.totalOrder", test -> test.totalOrder);
+      }
+   }
+
+   public static class LockingModeFilter extends FilterByProperty<LockingMode>  {
+      public LockingModeFilter() {
+         super("test.infinispan.lockingMode", test -> test.lockingMode);
+      }
+   }
+
+   public static class IsolationLevelFilter extends FilterByProperty<IsolationLevel> {
+      public IsolationLevelFilter() {
+         super("test.infinispan.isolationLevel", test -> test.isolationLevel);
+      }
+   }
 }
