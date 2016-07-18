@@ -22,6 +22,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
@@ -31,16 +32,36 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InTransactionMode;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadTest")
 @CleanupAfterMethod
-public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
+public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
    protected static final String CACHE_NAME = "pferSync";
 
    protected static final String key = "k", value = "v1", value2 = "v2";
+
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+         new PutForExternalReadTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).totalOrder(true),
+         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
+         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+         new PutForExternalReadTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).totalOrder(true),
+      };
+   }
 
    @Override
    protected void createCacheManagers() {
@@ -48,7 +69,18 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, CACHE_NAME, c);
    }
 
-   protected abstract ConfigurationBuilder createCacheConfigBuilder();
+   protected ConfigurationBuilder createCacheConfigBuilder() {
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, transactional);
+      c.clustering().hash().numOwners(100);
+      c.clustering().hash().numSegments(4);
+      if (lockingMode != null) {
+         c.transaction().lockingMode(lockingMode);
+      }
+      if (totalOrder != null && totalOrder.booleanValue()) {
+         c.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
+      }
+      return c;
+   }
 
    public void testKeyOnlyWrittenOnceOnOriginator() throws Exception {
       final Cache<MagicKey, String> cache1 = cache(0, CACHE_NAME);
@@ -126,6 +158,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
       assertEquals("PFER should have been a no-op", value, cache2.get(key));
    }
 
+   @InTransactionMode(TransactionMode.TRANSACTIONAL)
    public void testTxSuspension() throws Exception {
       final Cache<String, String> cache1 = cache(0, CACHE_NAME);
       final Cache<String, String> cache2 = cache(1, CACHE_NAME);
@@ -245,6 +278,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
     *
     * @throws Exception
     */
+   @InTransactionMode(TransactionMode.TRANSACTIONAL)
    public void testCacheModeLocalInTx(Method m) throws Exception {
       cacheModeLocalTest(true, m);
    }
@@ -252,6 +286,7 @@ public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
    /**
     * Tests that suspended transactions do not leak.  See JBCACHE-1246.
     */
+   @InTransactionMode(TransactionMode.TRANSACTIONAL)
    public void testMemLeakOnSuspendedTransactions() throws Exception {
       Cache<String, String> cache1 = cache(0, CACHE_NAME);
       Cache<String, String> cache2 = cache(1, CACHE_NAME);

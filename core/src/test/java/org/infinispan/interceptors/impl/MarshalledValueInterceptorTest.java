@@ -7,8 +7,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
@@ -25,12 +25,12 @@ import java.util.Map;
 public class MarshalledValueInterceptorTest extends AbstractInfinispanTest {
    EmbeddedCacheManager cm;
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       cm = TestCacheManagerFactory.createCacheManager(false);
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
       cm = null;

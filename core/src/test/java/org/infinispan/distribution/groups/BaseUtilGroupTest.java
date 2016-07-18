@@ -27,6 +27,13 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
       this.factory = factory;
    }
 
+   @Override
+   protected String parameters() {
+      String parameters = super.parameters();
+      if (parameters == null) return "{" + factory + "}";
+      else return "{" + factory + ", " + parameters.substring(1);
+   }
+
    protected static GroupKey key(int index) {
       return new GroupKey(GROUP, index);
    }

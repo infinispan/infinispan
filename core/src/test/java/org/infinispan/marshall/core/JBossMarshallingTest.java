@@ -16,8 +16,8 @@ import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.reflect.SunReflectiveCreator;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -31,7 +31,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
    private Marshaller marshaller;
    private Unmarshaller unmarshaller;
    
-   @BeforeTest
+   @BeforeClass
    public void setUp() throws Exception {
       factory = (MarshallerFactory) Thread.currentThread().getContextClassLoader().loadClass("org.jboss.marshalling.river.RiverMarshallerFactory").newInstance();
       MarshallingConfiguration configuration = new MarshallingConfiguration();
@@ -42,7 +42,7 @@ public class JBossMarshallingTest extends AbstractInfinispanTest {
       unmarshaller = factory.createUnmarshaller(configuration);
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
    }
    

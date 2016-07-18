@@ -17,8 +17,8 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CherryPickClassLoader;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.marshalling.ContextClassResolver;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -60,7 +60,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
    private AbstractDelegatingMarshaller marshaller;
    private EmbeddedCacheManager cm;
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       // Always use the current thread's context class loader.
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
@@ -69,7 +69,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
       marshaller = extractCacheMarshaller(cm.getCache());
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       if (cm != null) cm.stop();
    }

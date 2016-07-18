@@ -28,13 +28,13 @@ public class NonTxFlagsEnabledTest extends FlagsEnabledTest {
    }
 
    @Override
+   @Test(enabled = false, description = "non transactional cache")
    public void testReplicateSkipCacheLoaderWithinTxInCoordinator(Method m) throws Exception {
-      //non transactional cache
    }
 
    @Override
+   @Test(enabled = false, description = "non transactional cache")
    public void testReplicateSkipCacheLoaderWithinTxInNonCoordinator(Method m) throws Exception {
-      //non transactional cache
    }
 
    public void testCacheLocalInNonOwner() {

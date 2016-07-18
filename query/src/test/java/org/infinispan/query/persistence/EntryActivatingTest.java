@@ -22,8 +22,8 @@ import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -40,12 +40,12 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
    SearchManager search;
    QueryParser queryParser = TestQueryHelperFactory.createQueryParser("countryName");
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() {
       recreateCacheManager();
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
    }

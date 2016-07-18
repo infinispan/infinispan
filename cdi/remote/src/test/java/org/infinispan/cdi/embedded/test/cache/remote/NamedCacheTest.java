@@ -10,8 +10,8 @@ import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -53,7 +53,7 @@ public class NamedCacheTest extends Arquillian {
    @Small
    private RemoteCache<String, String> cacheWithQualifier;
 
-   @BeforeTest
+   @BeforeClass
    public void beforeMethod() {
       embeddedCacheManager = TestCacheManagerFactory.createCacheManager(
             hotRodCacheConfiguration(TestCacheManagerFactory
@@ -63,7 +63,7 @@ public class NamedCacheTest extends Arquillian {
       hotRodServer = startHotRodServer(embeddedCacheManager);
    }
 
-   @AfterTest(alwaysRun = true)
+   @AfterClass(alwaysRun = true)
    public void afterMethod() {
       if (embeddedCacheManager != null) embeddedCacheManager.stop();
       if (hotRodServer != null) hotRodServer.stop();

@@ -10,6 +10,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractCacheTest;
@@ -267,7 +268,7 @@ public class DatagridManager extends MultipleCacheManagersTest
    }
 
    @Override
-   public Object getKeyForCache(Cache cache) {
+   public MagicKey getKeyForCache(Cache cache) {
       return super.getKeyForCache(cache);
    }
 

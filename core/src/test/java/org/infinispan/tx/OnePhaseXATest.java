@@ -8,8 +8,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -43,14 +43,14 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       }
    }
 
-   @BeforeTest
+   @BeforeClass
    public void setUp() throws Exception {
       caches = new ArrayList<Cache>();
       cacheContainers = new ArrayList<EmbeddedCacheManager>();
       for (int i = 0; i < CACHES_NUM; i++) caches.add(getCache());
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       if (caches != null) TestingUtil.killCacheManagers(cacheContainers);
    }
