@@ -72,6 +72,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             ((TxInvocationContext<?>) ctx).addAffectedKey(key);
          }
          return invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         // The command will be retried, no need to release this or other locks
+         throw e;
       } catch (Throwable t) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw t;
@@ -89,6 +92,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             lockAllOrRegisterBackupLock((TxInvocationContext<?>) ctx, (Collection<Object>) command.getKeys(), getLockTimeoutMillis(command));
          }
          return invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         // The command will be retried, no need to release this or other locks
+         throw e;
       } catch (Throwable t) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw t;
@@ -110,6 +116,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             lockAllOrRegisterBackupLock((TxInvocationContext<?>) ctx, affectedKeys, getLockTimeoutMillis(command));
          }
          return invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         // The command will be retried, no need to release this or other locks
+         throw e;
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
@@ -148,6 +157,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             }
          }
          return invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         // The command will be retried, no need to release this or other locks
+         throw e;
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
       }
@@ -189,6 +201,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
          lockAllOrRegisterBackupLock(ctx, command.getKeys(), getLockTimeoutMillis(command));
          return Boolean.TRUE;
+      } catch (OutdatedTopologyException e) {
+         // The command will be retried, no need to release this or other locks
+         throw e;
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
