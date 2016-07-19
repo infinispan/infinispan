@@ -18,9 +18,10 @@ public class SslConfiguration {
    private final String trustStoreFileName;
    private final char[] trustStorePassword;
    private String sniHostName;
+   private String protocol;
 
    SslConfiguration(boolean enabled, String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword, SSLContext sslContext, String trustStoreFileName,
-                    char[] trustStorePassword, String sniHostName) {
+                    char[] trustStorePassword, String sniHostName, String protocol) {
       this.enabled = enabled;
       this.keyStoreFileName = keyStoreFileName;
       this.keyStorePassword = keyStorePassword;
@@ -29,6 +30,7 @@ public class SslConfiguration {
       this.trustStoreFileName = trustStoreFileName;
       this.trustStorePassword = trustStorePassword;
       this.sniHostName = sniHostName;
+      this.protocol = protocol;
    }
 
    public boolean enabled() {
@@ -73,5 +75,9 @@ public class SslConfiguration {
 
    public String sniHostName() {
       return sniHostName;
+   }
+
+   public String protocol() {
+      return protocol;
    }
 }

@@ -280,7 +280,10 @@ public class Configuration {
          properties.setProperty(ConfigurationProperties.TRUST_STORE_PASSWORD, new String(security.ssl().trustStorePassword()));
 
       if (security.ssl().sniHostName() != null)
-         properties.setProperty(ConfigurationProperties.SNI_HOST_NAME, new String(security.ssl().sniHostName()));
+         properties.setProperty(ConfigurationProperties.SNI_HOST_NAME, security.ssl().sniHostName());
+
+      if(security.ssl().protocol() != null)
+         properties.setProperty(ConfigurationProperties.SSL_PROTOCOL, security.ssl().protocol());
 
       if (security.ssl().sslContext() != null)
          properties.put(ConfigurationProperties.SSL_CONTEXT, security.ssl().sslContext());

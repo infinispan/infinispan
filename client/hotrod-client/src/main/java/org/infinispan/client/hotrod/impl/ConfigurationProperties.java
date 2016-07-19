@@ -42,6 +42,7 @@ public class ConfigurationProperties {
    public static final String KEY_STORE_CERTIFICATE_PASSWORD = "infinispan.client.hotrod.key_store_certificate_password";
    public static final String TRUST_STORE_FILE_NAME = "infinispan.client.hotrod.trust_store_file_name";
    public static final String TRUST_STORE_PASSWORD = "infinispan.client.hotrod.trust_store_password";
+   public static final String SSL_PROTOCOL = "infinispan.client.hotrod.ssl_protocol";
    public static final String SSL_CONTEXT = "infinispan.client.hotrod.ssl_context";
    public static final String MAX_RETRIES = "infinispan.client.hotrod.max_retries";
    public static final String USE_AUTH = "infinispan.client.hotrod.use_auth";
@@ -167,6 +168,10 @@ public class ConfigurationProperties {
 
    public String getTrustStorePassword() {
       return props.getProperty(TRUST_STORE_PASSWORD, null);
+   }
+
+   public String getSSLProtocol() {
+      return props.getProperty(SSL_PROTOCOL, null);
    }
 
    public int getMaxRetries() {

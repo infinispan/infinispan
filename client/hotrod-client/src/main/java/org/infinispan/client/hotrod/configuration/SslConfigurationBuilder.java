@@ -29,6 +29,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private char[] trustStorePassword;
    private SSLContext sslContext;
    private String sniHostName;
+   private String protocol;
 
    protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
@@ -122,6 +123,17 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return this;
    }
 
+   /**
+    * Configures the secure socket protocol.
+    *
+    * @see javax.net.ssl.SSLContext#getInstance(String)
+    * @param protocol The standard name of the requested protocol
+    */
+   public SslConfigurationBuilder protocol(String protocol) {
+      this.protocol = protocol;
+      return this;
+   }
+
    @Override
    public void validate() {
       if (enabled) {
@@ -145,7 +157,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
    @Override
    public SslConfiguration create() {
-      return new SslConfiguration(enabled, keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, sslContext, trustStoreFileName, trustStorePassword, sniHostName);
+      return new SslConfiguration(enabled, keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, sslContext, trustStoreFileName, trustStorePassword, sniHostName, protocol);
    }
 
    @Override
@@ -158,6 +170,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.trustStoreFileName = template.trustStoreFileName();
       this.trustStorePassword = template.trustStorePassword();
       this.sniHostName = template.sniHostName();
+      this.protocol = template.protocol();
       return this;
    }
 
@@ -177,6 +190,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
       if (typed.containsKey(ConfigurationProperties.TRUST_STORE_PASSWORD))
          this.trustStorePassword(typed.getProperty(ConfigurationProperties.TRUST_STORE_PASSWORD).toCharArray());
+
+      if(typed.containsKey(ConfigurationProperties.SSL_PROTOCOL))
+         this.protocol(typed.getProperty(ConfigurationProperties.SSL_PROTOCOL));
 
       if (typed.containsKey(ConfigurationProperties.SNI_HOST_NAME))
          this.sniHostName(typed.getProperty(ConfigurationProperties.SNI_HOST_NAME));

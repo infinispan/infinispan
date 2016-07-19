@@ -57,6 +57,7 @@ public class ConfigurationTest {
       OPTIONS.put(KEY_STORE_CERTIFICATE_PASSWORD, c -> new String(c.security().ssl().keyStoreCertificatePassword()));
       OPTIONS.put(TRUST_STORE_FILE_NAME, c -> c.security().ssl().trustStoreFileName());
       OPTIONS.put(TRUST_STORE_PASSWORD, c -> new String(c.security().ssl().trustStorePassword()));
+      OPTIONS.put(SSL_PROTOCOL, c -> c.security().ssl().protocol());
       OPTIONS.put(SSL_CONTEXT, c -> c.security().ssl().sslContext());
       OPTIONS.put(USE_AUTH, c -> c.security().authentication().enabled());
       OPTIONS.put(SASL_MECHANISM, c -> c.security().authentication().saslMechanism());
@@ -133,6 +134,7 @@ public class ConfigurationTest {
                .keyStoreCertificatePassword("my-key-store-certificate.password".toCharArray())
                .trustStoreFileName("my-trust-store.file")
                .trustStorePassword("my-trust-store.password".toCharArray())
+               .protocol("TLSv1.1")
          .security()
             .authentication()
                .enable()
@@ -184,6 +186,7 @@ public class ConfigurationTest {
       p.setProperty(KEY_STORE_CERTIFICATE_PASSWORD, "my-key-store-certificate.password");
       p.setProperty(TRUST_STORE_FILE_NAME, "my-trust-store.file");
       p.setProperty(TRUST_STORE_PASSWORD, "my-trust-store.password");
+      p.setProperty(SSL_PROTOCOL, "TLSv1.1");
       p.setProperty(USE_AUTH, "true");
       p.setProperty(SASL_MECHANISM, "my-sasl-mechanism");
       p.put(AUTH_CALLBACK_HANDLER, callbackHandler);
@@ -396,6 +399,7 @@ public class ConfigurationTest {
       assertEqualsConfig("my-key-store-certificate.password", KEY_STORE_CERTIFICATE_PASSWORD, configuration);
       assertEqualsConfig("my-trust-store.file", TRUST_STORE_FILE_NAME, configuration);
       assertEqualsConfig("my-trust-store.password", TRUST_STORE_PASSWORD, configuration);
+      assertEqualsConfig("TLSv1.1", SSL_PROTOCOL, configuration);
       assertEqualsConfig(true, USE_AUTH, configuration);
       assertEqualsConfig("my-sasl-mechanism", SASL_MECHANISM, configuration);
       assertEqualsConfig(callbackHandler, AUTH_CALLBACK_HANDLER, configuration);
