@@ -19,6 +19,8 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
+import java.io.IOException;
+
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
@@ -178,7 +180,7 @@ public class CompatibilityCacheFactory<K, V> {
       restClient = new HttpClient();
    }
 
-   private void createMemcachedCache(int port) {
+   private void createMemcachedCache(int port) throws IOException {
       memcached = startMemcachedTextServer(cacheManager, port);
       memcachedClient = createMemcachedClient(60000, memcached.getPort());
    }
