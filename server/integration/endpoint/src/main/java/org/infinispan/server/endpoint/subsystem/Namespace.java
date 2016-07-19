@@ -18,21 +18,18 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import java.util.List;
-
-import org.jboss.dmr.ModelNode;
-import org.jboss.staxmapper.XMLElementReader;
+import org.jboss.as.controller.ModelVersion;
 
 /**
  * @author Tristan Tarrant
  */
 public enum Namespace {
     // must be first
-    UNKNOWN(null, 0, 0, null),
+    UNKNOWN(null, 0, 0),
 
-    INFINISPAN_ENDPOINT_7_2("infinispan:server:endpoint", 7, 2, EndpointSubsystemReader_7_2.INSTANCE),
-    INFINISPAN_ENDPOINT_8_0("infinispan:server:endpoint", 8, 0, EndpointSubsystemReader_8_0.INSTANCE),
-    INFINISPAN_ENDPOINT_9_0("infinispan:server:endpoint", 9, 0, EndpointSubsystemReader_9_0.INSTANCE),
+    INFINISPAN_ENDPOINT_7_2("infinispan:server:endpoint", 7, 2),
+    INFINISPAN_ENDPOINT_8_0("infinispan:server:endpoint", 8, 0),
+    INFINISPAN_ENDPOINT_9_0("infinispan:server:endpoint", 9, 0),
     ;
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
@@ -43,14 +40,14 @@ public enum Namespace {
 
     private final int major;
     private final int minor;
-    private final XMLElementReader<List<ModelNode>> reader;
     private final String domain;
+    private final ModelVersion version;
 
-    Namespace(String domain, int major, int minor, XMLElementReader<List<ModelNode>> reader) {
+    Namespace(String domain, int major, int minor) {
         this.domain = domain;
         this.major = major;
         this.minor = minor;
-        this.reader = reader;
+        this.version = ModelVersion.create(major, minor);
     }
 
     /**
@@ -62,7 +59,15 @@ public enum Namespace {
         return String.format(URN_PATTERN, domain, this.major, this.minor);
     }
 
-    public XMLElementReader<List<ModelNode>> getXMLReader() {
-        return this.reader;
+    public ModelVersion getVersion() {
+        return this.version;
+    }
+
+    public String format(String format) {
+        return String.format(format, major, minor);
+    }
+
+    public boolean since(Namespace schema) {
+        return (this.major > schema.major) || ((this.major == schema.major) && (this.minor >= schema.minor));
     }
 }

@@ -43,8 +43,12 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
  * @author Tristan Tarrant
  *
  */
-class EndpointSubsystemReader_7_2 implements XMLStreamConstants, XMLElementReader<List<ModelNode>> {
-   public static final XMLElementReader<List<ModelNode>> INSTANCE = new EndpointSubsystemReader_7_2();
+class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<List<ModelNode>> {
+   private final Namespace namespace;
+
+   EndpointSubsystemReader(Namespace namespace) {
+      this.namespace = namespace;
+   }
 
    @Override
    public void readElement(final XMLExtendedStreamReader reader, final List<ModelNode> operations)
@@ -165,6 +169,14 @@ class EndpointSubsystemReader_7_2 implements XMLStreamConstants, XMLElementReade
    private String parseConnectorAttributes(XMLExtendedStreamReader reader, ModelNode connector, String name, int i,
          String value, Attribute attribute) throws XMLStreamException {
       switch (attribute) {
+      case IGNORED_CACHES: {
+         if (namespace.since(Namespace.INFINISPAN_ENDPOINT_8_0)) {
+            reader.getListAttributeValue(i).forEach(a -> connector.get(ModelKeys.IGNORED_CACHES).add(a));
+         } else {
+            throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+         break;
+      }
       case CACHE_CONTAINER: {
          CommonConnectorResource.CACHE_CONTAINER.parseAndSetParameter(value, connector, reader);
          break;
@@ -251,6 +263,14 @@ class EndpointSubsystemReader_7_2 implements XMLStreamConstants, XMLElementReade
          }
          case VIRTUAL_HOST: {
             ROOT_LOGGER.virtualHostNotInUse();
+            break;
+         }
+         case IGNORED_CACHES: {
+            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_8_0)) {
+               reader.getListAttributeValue(i).forEach(a -> connector.get(ModelKeys.IGNORED_CACHES).add(a));
+            } else {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
             break;
          }
          default: {
@@ -551,9 +571,44 @@ class EndpointSubsystemReader_7_2 implements XMLStreamConstants, XMLElementReade
             throw ParseUtils.unexpectedAttribute(reader, i);
          }
          }
-
       }
-      ParseUtils.requireNoContent(reader);
       operations.add(security);
+
+      //Since nextTag() moves the pointer, we need to make sure we won't move too far
+      boolean skipTagCheckAtTheEnd = reader.hasNext();
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         final Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case SNI: {
+               if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+                  parseSni(reader, security, operations);
+                  break;
+               }
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+
+      if(!skipTagCheckAtTheEnd)
+         ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseSni(final XMLExtendedStreamReader reader, final ModelNode encryption, final List<ModelNode> operations) throws XMLStreamException {
+      ParseUtils.requireAttributes(reader, Attribute.HOST_NAME.getLocalName());
+      String hostName = reader.getAttributeValue(null, Attribute.HOST_NAME.getLocalName());
+
+      PathAddress sniOpAddress = PathAddress.pathAddress(encryption.get(OP_ADDR)).append(ModelKeys.SNI, hostName);
+      ModelNode sniOp = Util.createAddOperation(sniOpAddress);
+
+      SniResource.HOST_NAME.parseAndSetParameter(hostName, sniOp, reader);
+
+      String securityRealm = reader.getAttributeValue(null, Attribute.SECURITY_REALM.getLocalName());
+      SniResource.SECURITY_REALM.parseAndSetParameter(securityRealm, sniOp, reader);
+
+      ParseUtils.requireNoContent(reader);
+      operations.add(sniOp);
    }
 }
