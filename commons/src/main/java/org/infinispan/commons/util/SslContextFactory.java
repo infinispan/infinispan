@@ -24,7 +24,7 @@ import java.security.KeyStore;
  */
 public class SslContextFactory {
    private static final Log log = LogFactory.getLog(SslContextFactory.class);
-   public static final String DEFAULT_SSL_PROTOCOL = "TLS";
+   private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
 
    public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, String trustStoreFileName, char[] trustStorePassword) {
       return getContext(keyStoreFileName, keyStorePassword, null, trustStoreFileName, trustStorePassword, DEFAULT_SSL_PROTOCOL);
