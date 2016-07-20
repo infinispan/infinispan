@@ -1,20 +1,21 @@
 package org.infinispan.cdi.embedded;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.cdi.embedded.event.cache.CacheEventBridge;
 import org.infinispan.cdi.common.util.Reflections;
+import org.infinispan.cdi.embedded.event.cache.CacheEventBridge;
 import org.infinispan.cdi.embedded.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-import java.lang.annotation.Annotation;
-import java.util.Set;
 
 /**
  * This class is responsible to produce the {@link Cache} and {@link AdvancedCache}. This class use the
@@ -24,10 +25,11 @@ import java.util.Set;
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@ApplicationScoped
 public class AdvancedCacheProducer {
 
    @Inject
-   private CacheContainer defaultCacheContainer;
+   private EmbeddedCacheManager defaultCacheContainer;
 
    @Inject
    private CacheEventBridge cacheEventBridge;
@@ -72,12 +74,5 @@ public class AdvancedCacheProducer {
       );
 
       return cache.getAdvancedCache();
-   }
-
-   @Produces
-   <K, V> AdvancedCache<K, V> getDefaultAdvancedCache() {
-       // lazy register stuff
-       infinispanExtension.registerCacheConfigurations(eventBridge, cacheManagers, beanManager);
-       return defaultCacheContainer.<K, V>getCache().getAdvancedCache();
    }
 }

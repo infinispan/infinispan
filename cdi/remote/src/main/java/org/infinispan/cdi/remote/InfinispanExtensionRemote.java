@@ -1,15 +1,10 @@
 package org.infinispan.cdi.remote;
 
-import org.infinispan.cdi.common.util.AnyLiteral;
-import org.infinispan.cdi.common.util.BeanBuilder;
-import org.infinispan.cdi.common.util.ContextualLifecycle;
-import org.infinispan.cdi.common.util.DefaultLiteral;
-import org.infinispan.cdi.common.util.Reflections;
-import org.infinispan.cdi.remote.logging.RemoteLog;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.logging.LogFactory;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.spi.CreationalContext;
@@ -23,16 +18,21 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.enterprise.inject.spi.InjectionTarget;
-import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.inject.spi.ProcessProducer;
 import javax.enterprise.inject.spi.Producer;
 import javax.enterprise.util.AnnotationLiteral;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+
+import org.infinispan.cdi.common.util.AnyLiteral;
+import org.infinispan.cdi.common.util.BeanBuilder;
+import org.infinispan.cdi.common.util.ContextualLifecycle;
+import org.infinispan.cdi.common.util.DefaultLiteral;
+import org.infinispan.cdi.common.util.Reflections;
+import org.infinispan.cdi.remote.logging.RemoteLog;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.logging.LogFactory;
 
 public class InfinispanExtensionRemote implements Extension {
 
@@ -52,17 +52,6 @@ public class InfinispanExtensionRemote implements Extension {
         AnnotatedMember<?> member = event.getAnnotatedMember();
         if (RemoteCacheProducer.class.equals(member.getDeclaringType().getBaseType())) {
             remoteCacheProducer = (Producer<RemoteCache<?, ?>>) event.getProducer();
-        }
-    }
-
-    // This is a work around for CDI Uber Jar deployment. When Weld scans the classpath it  pick up RemoteCacheManager
-    // (this is an implementation, not an interface, so it gets instantiated). As a result we get duplicated classes
-    // in CDI BeanManager.
-    @SuppressWarnings("unused")
-    <T extends RemoteCacheManager> void removeDuplicatedRemoteCacheManager(@Observes ProcessAnnotatedType<T> bean) {
-        if (RemoteCacheManager.class.getCanonicalName().equals(bean.getAnnotatedType().getJavaClass().getCanonicalName())) {
-            LOGGER.info("removing duplicated  RemoteCacheManager" + bean.getAnnotatedType());
-            bean.veto();
         }
     }
 
@@ -108,11 +97,12 @@ public class InfinispanExtensionRemote implements Extension {
         }
 
         for (Map.Entry<Type, Set<Annotation>> entry : remoteCacheInjectionPoints.entrySet()) {
-
             event.addBean(new BeanBuilder(beanManager)
                     .readFromType(beanManager.createAnnotatedType(Reflections.getRawType(entry.getKey())))
                     .addType(entry.getKey())
                     .addQualifiers(entry.getValue())
+                    .passivationCapable(true)
+                    .id(InfinispanExtensionRemote.class.getSimpleName() + "#" + RemoteCache.class.getSimpleName())
                     .beanLifecycle(new ContextualLifecycle<RemoteCache<?, ?>>() {
                         @Override
                         public RemoteCache<?, ?> create(Bean<RemoteCache<?, ?>> bean, CreationalContext<RemoteCache<?, ?>> ctx) {
@@ -136,9 +126,13 @@ public class InfinispanExtensionRemote implements Extension {
      * @return a custom bean
      */
     private Bean<RemoteCacheManager> createDefaultRemoteCacheManagerBean(BeanManager beanManager) {
-        return new BeanBuilder<RemoteCacheManager>(beanManager).beanClass(InfinispanExtensionRemote.class)
-                .addTypes(Object.class, RemoteCacheManager.class).scope(ApplicationScoped.class)
+        return new BeanBuilder<RemoteCacheManager>(beanManager)
+                .beanClass(InfinispanExtensionRemote.class)
+                .addTypes(Object.class, RemoteCacheManager.class)
+                .scope(ApplicationScoped.class)
                 .qualifiers(DefaultLiteral.INSTANCE, AnyLiteral.INSTANCE)
+                .passivationCapable(true)
+                .id(InfinispanExtensionRemote.class.getSimpleName() + "#" + RemoteCacheManager.class.getSimpleName())
                 .beanLifecycle(new ContextualLifecycle<RemoteCacheManager>() {
 
                     @Override

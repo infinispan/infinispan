@@ -1,24 +1,27 @@
 package org.infinispan.cdi.remote;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
+import static org.infinispan.cdi.common.util.Reflections.getMetaAnnotation;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
+
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.Annotated;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Inject;
-import java.lang.annotation.Annotation;
-import java.util.Set;
 
-import static org.infinispan.cdi.common.util.Reflections.getMetaAnnotation;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 
 /**
  * The {@link RemoteCache} producer.
  *
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+@ApplicationScoped
 public class RemoteCacheProducer {
 
    @Inject

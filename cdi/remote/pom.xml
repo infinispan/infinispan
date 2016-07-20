@@ -42,7 +42,6 @@
             <artifactId>infinispan-query-dsl</artifactId>
             <optional>true</optional>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-commons-test</artifactId>
@@ -77,7 +76,6 @@
             <artifactId>infinispan-server-hotrod</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.jboss.arquillian.testng</groupId>
             <artifactId>arquillian-testng-container</artifactId>
@@ -104,8 +102,6 @@
             <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
             <scope>test</scope>
         </dependency>
-        
-
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>

@@ -1,11 +1,13 @@
 package org.infinispan.cdi.embedded.event.cache;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
+
+import javax.enterprise.context.Dependent;
+
 import org.infinispan.cdi.embedded.event.AbstractEventBridge;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.notifications.cachelistener.event.Event;
-
-import java.lang.annotation.Annotation;
-import java.util.Set;
 
 /**
  * Bridges Infinispan with CDI events.
@@ -13,6 +15,7 @@ import java.util.Set;
  * @author Pete Muir
  * @author Sebastian Laskawiec
  */
+@Dependent
 public class CacheEventBridge extends AbstractEventBridge<Event<?, ?>> {
 
    public void registerObservers(Set<Annotation> qualifierSet,

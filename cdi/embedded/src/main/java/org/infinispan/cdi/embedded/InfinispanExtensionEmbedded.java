@@ -1,5 +1,23 @@
 package org.infinispan.cdi.embedded;
 
+import java.lang.annotation.Annotation;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.inject.spi.ProcessBean;
+import javax.enterprise.inject.spi.ProcessProducer;
+import javax.enterprise.inject.spi.Producer;
+import javax.enterprise.util.TypeLiteral;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cdi.common.util.AnyLiteral;
@@ -19,24 +37,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessAnnotatedType;
-import javax.enterprise.inject.spi.ProcessBean;
-import javax.enterprise.inject.spi.ProcessProducer;
-import javax.enterprise.inject.spi.Producer;
-import javax.enterprise.util.TypeLiteral;
-import java.lang.annotation.Annotation;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * The Infinispan CDI extension for embedded caches
@@ -63,35 +63,43 @@ public class InfinispanExtensionEmbedded implements Extension {
       this.configurations = new HashSet<>();
    }
 
-   @SuppressWarnings("unchecked")
-   void processProducers(@Observes ProcessProducer<?, ?> event, BeanManager beanManager) {
-      final ConfigureCache annotation = event.getAnnotatedMember().getAnnotation(ConfigureCache.class);
-      if (annotation != null) {
-         configurations.add(new ConfigurationHolder((Producer<Configuration>) event.getProducer(), annotation.value(),
-               Reflections.getQualifiers(beanManager, event.getAnnotatedMember().getAnnotations())));
-      }
-   }
+    @SuppressWarnings("unchecked")
+    void observeConfigurationProducers(@Observes ProcessProducer<?, Configuration> event, BeanManager beanManager) {
+        final ConfigureCache annotation = event.getAnnotatedMember().getAnnotation(ConfigureCache.class);
+        String configurationName = "";
+        if (annotation != null) {
+            configurationName = annotation.value();
+        }
+        configurations.add(new ConfigurationHolder((Producer<Configuration>) event.getProducer(), configurationName,
+                Reflections.getQualifiers(beanManager, event.getAnnotatedMember().getAnnotations())));
+    }
 
-   // This is a work around for CDI Uber Jar deployment. When Weld scans the classpath it  pick up DefaultCacheManager
-   // (this is an implementation, not an interface, so it gets instantiated). As a result we get duplicated classes
-   // in CDI BeanManager.
-   <T extends DefaultCacheManager> void removeDuplicatedRemoteCacheManager(@Observes ProcessAnnotatedType<T> bean) {
-       if(DefaultCacheManager.class.getCanonicalName().equals(bean.getAnnotatedType().getJavaClass().getCanonicalName())) {
-          LOGGER.info("removing duplicated  DefaultCacheManager" + bean.getAnnotatedType());
-          bean.veto();
-       }
-   }
+    public void observeEmbeddedCacheManagerBean(@Observes ProcessBean<?> processBean) {
+        if (processBean.getBean().getTypes().contains(EmbeddedCacheManager.class)) {
+            installedEmbeddedCacheManagers.add(processBean.getBean().getQualifiers());
+        }
+    }
 
    @SuppressWarnings("unchecked")
    <T, X>void registerBeans(@Observes AfterBeanDiscovery event, final BeanManager beanManager) {
 
-      for (final ConfigurationHolder holder : configurations) {
+       if (beanManager.getBeans(Configuration.class).isEmpty()) {
+           LOGGER.addDefaultEmbeddedConfiguration();
+           final Configuration defaultConfiguration = new ConfigurationBuilder().build();
+           // Must be added after AdvancedCache producer registration - see also AdvancedCacheProducer.getDefaultAdvancedCache()
+           configurations.add(new ConfigurationHolder(defaultConfiguration, "", defaultQualifiers()));
+           event.addBean(createDefaultEmbeddedConfigurationBean(beanManager, defaultConfiguration));
+       }
+
+       for (final ConfigurationHolder holder : configurations) {
           // register a AdvancedCache producer for each configuration
           Bean<?> advancedCacheBean = new BeanBuilder(beanManager)
           .readFromType(beanManager.createAnnotatedType(AdvancedCache.class))
           .qualifiers(Beans.buildQualifiers(holder.getQualifiers()))
           .addType(new TypeLiteral<AdvancedCache<T, X>>() {}.getType())
           .addType(new TypeLiteral<Cache<T, X>>() {}.getType())
+          .passivationCapable(true)
+          .id(InfinispanExtensionEmbedded.class.getSimpleName() + "#" + AdvancedCache.class.getSimpleName() + "#" + Cache.class.getSimpleName())
           .beanLifecycle(new ContextualLifecycle<AdvancedCache<?, ?>>() {
               @Override
               public AdvancedCache<?, ?> create(Bean<AdvancedCache<?, ?>> bean,
@@ -102,13 +110,6 @@ public class InfinispanExtensionEmbedded implements Extension {
           event.addBean(advancedCacheBean);
       }
 
-      if (beanManager.getBeans(Configuration.class).isEmpty()) {
-         LOGGER.addDefaultEmbeddedConfiguration();
-         final Configuration defaultConfiguration = new ConfigurationBuilder().build();
-         // Must be added after AdvancedCache producer registration - see also AdvancedCacheProducer.getDefaultAdvancedCache()
-         configurations.add(new ConfigurationHolder(defaultConfiguration, "", defaultQualifiers()));
-         event.addBean(createDefaultEmbeddedConfigurationBean(beanManager, defaultConfiguration));
-      }
       if (beanManager.getBeans(EmbeddedCacheManager.class).isEmpty()) {
          LOGGER.addDefaultEmbeddedCacheManager();
          event.addBean(createDefaultEmbeddedCacheManagerBean(beanManager));
@@ -130,12 +131,6 @@ public class InfinispanExtensionEmbedded implements Extension {
                            CreationalContext<Cache<K, V>> creationalContext) {
                      return ContextInputCache.get();
                   }
-
-                  @Override
-                  public void destroy(Bean<Cache<K, V>> bean, Cache<K, V> instance,
-                           CreationalContext<Cache<K, V>> creationalContext) {
-
-                  }
                }).create());
    }
 
@@ -147,12 +142,6 @@ public class InfinispanExtensionEmbedded implements Extension {
            installedCacheManagers.add(new InstalledCacheManager(cm, qualifiers.contains(DefaultLiteral.INSTANCE)));
        }
        return installedCacheManagers;
-   }
-
-   public void observeEmbeddedCacheManagerBean(@Observes ProcessBean<?> processBean) {
-       if (processBean.getBean().getTypes().contains(EmbeddedCacheManager.class)) {
-           installedEmbeddedCacheManagers.add(processBean.getBean().getQualifiers());
-       }
    }
 
    public void registerCacheConfigurations(CacheManagerEventBridge eventBridge, Instance<EmbeddedCacheManager> cacheManagers, BeanManager beanManager) {
@@ -208,6 +197,8 @@ public class InfinispanExtensionEmbedded implements Extension {
             .addTypes(Object.class, Configuration.class)
             .scope(Dependent.class)
             .qualifiers(defaultQualifiers())
+            .passivationCapable(true)
+            .id(InfinispanExtensionEmbedded.class.getSimpleName() + "#" + Configuration.class.getSimpleName())
             .beanLifecycle(new ContextualLifecycle<Configuration>() {
                @Override
                public Configuration create(Bean<Configuration> bean,
@@ -233,6 +224,8 @@ public class InfinispanExtensionEmbedded implements Extension {
             .addTypes(Object.class, EmbeddedCacheManager.class)
             .scope(ApplicationScoped.class)
             .qualifiers(defaultQualifiers())
+            .passivationCapable(true)
+            .id(InfinispanExtensionEmbedded.class.getSimpleName() + "#" + EmbeddedCacheManager.class.getSimpleName())
             .beanLifecycle(new ContextualLifecycle<EmbeddedCacheManager>() {
 
                @Override
