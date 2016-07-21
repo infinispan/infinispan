@@ -56,9 +56,9 @@ class RestCacheManager(instance: EmbeddedCacheManager, isCacheIgnored: String =>
          else getCache(cacheName)
 
       cache.getCacheEntry(key) match {
-         case ice: InternalCacheEntry[String, V] => ice
+         case ice: InternalCacheEntry[String, _] => ice.asInstanceOf[InternalCacheEntry[String, V]]
          case null => null
-         case mvcc: MVCCEntry[String, V] => cache.getCacheEntry(key)  // FIXME: horrible re-get to be fixed by ISPN-3460
+         case mvcc: MVCCEntry[String, _] => (cache.getCacheEntry(key)).asInstanceOf[MVCCEntry[String, V]]  // FIXME: horrible re-get to be fixed by ISPN-3460
       }
    }
 
