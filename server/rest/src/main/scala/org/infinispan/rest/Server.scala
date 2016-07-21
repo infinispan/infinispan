@@ -88,7 +88,7 @@ class Server(configuration: RestServerConfiguration, manager: RestCacheManager) 
                 @DefaultValue("") @HeaderParam("Cache-Control") cacheControl: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          manager.getInternalEntry(cacheName, key) match {
-            case ice: InternalCacheEntry[String, V] => {
+            case ice: InternalCacheEntry[String, _] => {
                val lastMod = lastModified(ice)
                val expires = if (ice.canExpire) new Date(ice.getExpiryTime) else null
                val minFreshSeconds = minFresh(cacheControl)
@@ -299,7 +299,7 @@ class Server(configuration: RestServerConfiguration, manager: RestCacheManager) 
                  @DefaultValue("") @HeaderParam("Cache-Control") cacheControl: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          manager.getInternalEntry(cacheName, key) match {
-            case ice: InternalCacheEntry[String, V] => {
+            case ice: InternalCacheEntry[String, _] => {
                val lastMod = lastModified(ice)
                val expires = if (ice.canExpire) new Date(ice.getExpiryTime) else null
                val minFreshSeconds = minFresh(cacheControl)
@@ -347,7 +347,7 @@ class Server(configuration: RestServerConfiguration, manager: RestCacheManager) 
             Response.status(Status.CONFLICT).build()
          } else {
             manager.getInternalEntry(cacheName, key, skipListener = true) match {
-               case ice: InternalCacheEntry[String, V] => {
+               case ice: InternalCacheEntry[String, _] => {
                   val lastMod = lastModified(ice)
                   ice.getMetadata match {
                      case mime: MimeMetadata =>
@@ -432,7 +432,7 @@ class Server(configuration: RestServerConfiguration, manager: RestCacheManager) 
          @PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) =>
          manager.getInternalEntry(cacheName, key) match {
-            case ice: InternalCacheEntry[String, V] => {
+            case ice: InternalCacheEntry[String, _] => {
                val lastMod = lastModified(ice)
                ice.getMetadata match {
                   case meta: MimeMetadata =>
