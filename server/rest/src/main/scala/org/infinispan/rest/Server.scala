@@ -34,6 +34,16 @@ import org.jboss.resteasy.util.HttpHeaderNames
 class Server(configuration: RestServerConfiguration, manager: RestCacheManager) {
 
    @GET
+   @HEAD
+   @PUT
+   @POST
+   @DELETE
+   @Path("/")
+   def handleRoot(): Response = {
+      Response.status(Status.NOT_IMPLEMENTED).build
+   }
+
+   @GET
    @Path("/{cacheName}")
    def getKeys(@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean,
          @PathParam("cacheName") cacheName: String, @QueryParam("global") globalKeySet: String): Response = {

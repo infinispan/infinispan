@@ -130,6 +130,14 @@ class IntegrationTest extends RestServerTestBase {
       assertEquals("foo", ce.contentType)
    }
 
+   def testRootPath() {
+      assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, call(new GetMethod(HOST + "/rest/")).getStatusCode)
+      assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, call(new HeadMethod(HOST + "/rest/")).getStatusCode)
+      assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, call(new PutMethod(HOST + "/rest/")).getStatusCode)
+      assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, call(new PostMethod(HOST + "/rest/")).getStatusCode)
+      assertEquals(HttpServletResponse.SC_NOT_IMPLEMENTED, call(new DeleteMethod(HOST + "/rest/")).getStatusCode)
+   }
+
    def testEmptyGet() {
       assertEquals(
          HttpServletResponse.SC_NOT_FOUND,
