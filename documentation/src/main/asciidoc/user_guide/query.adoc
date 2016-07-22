@@ -631,6 +631,58 @@ reduce the amount of groups based on their properties. Sorting may also be speci
 ordering operation is performed after the grouping operation and can reference any of the _groupBy_ fields or aggregated
 fields.
 
+=== Using Named Query Parameters
+
+Instead of building a new Query object for every execution it is possible to include named parameters in the query which
+can be substituted with actual values before execution. This allows a query to be defined once and be efficiently
+executed many times. Parameters can only be used on the right-hand side of an operator and are defined when the query is
+created by supplying an object produced by the _org.infinispan.query.dsl.Expression.param(String paramName)_ method to
+the operator instead of the usual constant value. Once the parameters have been defined they can be set by invoking either
+_Query.setParameter(parameterName, value)_ or _Query.setParameters(parameterMap)_ as shown in the examples below.
+⁠
+[source,java,tile="Using Named Parameters"]
+----
+import org.infinispan.query.Search;
+import org.infinispan.query.dsl.*;
+[...]
+
+QueryFactory queryFactory = Search.getQueryFactory(cache);
+// Defining a query to search for various authors and publication years
+Query query = queryFactory.from(Book.class)
+    .select("title")
+    .having("author").eq(Expression.param("authorName"))
+    .and()
+    .having("publicationYear").eq(Expression.param("publicationYear"))
+    .toBuilder().build();
+
+// Set actual parameter values
+query.setParameter("authorName", "Doe");
+query.setParameter("publicationYear", 2010);
+
+// Execute the query
+List<Book> found = query.list();
+----
+
+Alternatively, multiple parameters may be set at once by supplying a map of actual parameter values:
+⁠
+[source,java,title="Setting multiple named parameters at once"]
+----
+import java.util.Map;
+import java.util.HashMap;
+
+[...]
+
+Map<String, Object> parameterMap = new HashMap<>();
+parameterMap.put("authorName", "Doe");
+parameterMap.put("publicationYear", 2010);
+
+query.setParameters(parameterMap);
+----
+
+NOTE: A significant portion of the query parsing, validation and execution planning effort is performed during the first
+execution of a query with parameters. This effort is not repeated during subsequent executions leading to better
+performance compared to a similar query using constant values instead of query parameters.
+
 === Continuous Queries
 
 Continuous Queries allow an application to register a listener which will receive the entries that currently match a
