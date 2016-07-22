@@ -1,14 +1,14 @@
 package org.infinispan.query.dsl.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com
@@ -81,14 +81,14 @@ public abstract class BaseQuery implements Query {
       if (namedParameters == null) {
          throw log.queryDoesNotHaveParameters();
       }
-      Set<String> unknownParams = null;
+      List<String> unknownParams = null;
       for (String paramName : paramValues.keySet()) {
          if (paramName == null || paramName.isEmpty()) {
             throw log.parameterNameCannotBeNulOrEmpty();
          }
          if (!namedParameters.containsKey(paramName)) {
             if (unknownParams == null) {
-               unknownParams = new HashSet<>();
+               unknownParams = new ArrayList<>();
             }
             unknownParams.add(paramName);
          }
