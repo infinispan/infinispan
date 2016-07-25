@@ -23,12 +23,12 @@ import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.infinispan.server.core.transport.SaslQopHandler;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
-import org.infinispan.server.hotrod.logging.JavaLog;
+import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.ssl.SslHandler;
-import scala.Tuple2;
 
 /**
  * Handler that when added will make sure authentication is applied to requests.
@@ -37,7 +37,7 @@ import scala.Tuple2;
  * @since 9.0
  */
 public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
-   private final static JavaLog log = LogFactory.getLog(AuthenticationHandler.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(AuthenticationHandler.class, Log.class);
 
    private final HotRodServer server;
 
@@ -57,30 +57,30 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       serverConfig = server.getConfiguration();
       authenticationConfig = server.getConfiguration().authentication();
       requireAuthentication = authenticationConfig.mechProperties().containsKey(Sasl.POLICY_NOANONYMOUS)
-              && authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS).equals("true");
+            && authenticationConfig.mechProperties().get(Sasl.POLICY_NOANONYMOUS).equals("true");
    }
 
    @Override
    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
       if (msg instanceof CacheDecodeContext) {
          CacheDecodeContext cdc = (CacheDecodeContext) msg;
-         HotRodHeader hrh = cdc.header();
-         HotRodOperation op = hrh.op();
+         HotRodHeader hrh = cdc.header;
+         HotRodOperation op = hrh.op;
          switch (op) {
             case AuthMechListRequest:
-               writeResponse(cdc, ctx.channel(), new AuthMechListResponse(hrh.version(), hrh.messageId(), hrh.cacheName(),
-                       hrh.clientIntel(), authenticationConfig.allowedMechs(), hrh.topologyId()));
+               writeResponse(cdc, ctx.channel(), new AuthMechListResponse(hrh.version, hrh.messageId, hrh.cacheName,
+                     hrh.clientIntel, authenticationConfig.allowedMechs(), hrh.topologyId));
                break;
-               // AuthRequest never requires authentication
+            // AuthRequest never requires authentication
             case AuthRequest:
                if (!serverConfig.authentication().enabled()) {
-                  cdc.getDecoder().createErrorResponse(hrh, log.invalidOperation());
+                  cdc.decoder.createErrorResponse(hrh, log.invalidOperation());
                } else {
                   // Retrieve the authorization context
-                  Tuple2<String, byte[]> opContext = (Tuple2<String, byte[]>) cdc.operationDecodeContext();
+                  KeyValuePair<String, byte[]> opContext = (KeyValuePair<String, byte[]>) cdc.operationDecodeContext;
                   if (saslServer == null) {
                      ServerAuthenticationProvider sap = authenticationConfig.serverAuthenticationProvider();
-                     String mech = opContext._1();
+                     String mech = opContext.getKey();
                      callbackHandler = sap.getCallbackHandler(mech, authenticationConfig.mechProperties());
                      final SaslServerFactory ssf;
                      if ("EXTERNAL".equals(mech)) {
@@ -98,17 +98,17 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                      }
                      if (authenticationConfig.serverSubject() != null) {
                         saslServer = Subject.doAs(authenticationConfig.serverSubject(), (PrivilegedExceptionAction<SaslServer>) () ->
-                                ssf.createSaslServer(mech, "hotrod", authenticationConfig.serverName(),
-                                        authenticationConfig.mechProperties(), callbackHandler));
+                              ssf.createSaslServer(mech, "hotrod", authenticationConfig.serverName(),
+                                    authenticationConfig.mechProperties(), callbackHandler));
                      } else {
                         saslServer = ssf.createSaslServer(mech, "hotrod", authenticationConfig.serverName(),
-                                authenticationConfig.mechProperties(), callbackHandler);
+                              authenticationConfig.mechProperties(), callbackHandler);
                      }
                   }
-                  byte[] serverChallenge = saslServer.evaluateResponse(opContext._2());
+                  byte[] serverChallenge = saslServer.evaluateResponse(opContext.getValue());
 
-                  writeResponse(cdc, ctx.channel(), new AuthResponse(hrh.version(), hrh.messageId(), hrh.cacheName(),
-                          hrh.clientIntel(), serverChallenge, hrh.topologyId()));
+                  writeResponse(cdc, ctx.channel(), new AuthResponse(hrh.version, hrh.messageId, hrh.cacheName,
+                        hrh.clientIntel, serverChallenge, hrh.topologyId));
                   if (saslServer.isComplete()) {
                      List<Principal> extraPrincipals = new ArrayList<>();
                      String id = normalizeAuthorizationId(saslServer.getAuthorizationID());
@@ -116,7 +116,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                      extraPrincipals.add(new InetAddressPrincipal(((InetSocketAddress) ctx.channel().remoteAddress()).getAddress()));
                      SslHandler sslHandler = (SslHandler) ctx.pipeline().get("ssl");
                      try {
-                        if (sslHandler != null) extraPrincipals.add(sslHandler.engine().getSession().getPeerPrincipal());
+                        if (sslHandler != null)
+                           extraPrincipals.add(sslHandler.engine().getSession().getPeerPrincipal());
                      } catch (SSLPeerUnverifiedException e) {
                         // Ignore any SSLPeerUnverifiedExceptions
                      }
@@ -140,7 +141,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                   throw log.unauthorizedOperation();
                }
                if (op.requiresAuthentication()) {
-                  ((CacheDecodeContext) msg).setSubject(subject);
+                  ((CacheDecodeContext) msg).subject = subject;
                }
                super.channelRead(ctx, msg);
                break;
@@ -153,6 +154,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
    String normalizeAuthorizationId(String id) {
       int realm = id.indexOf('@');
-      if (realm >= 0) return id.substring(0, realm); else return id;
+      if (realm >= 0) return id.substring(0, realm);
+      else return id;
    }
 }

@@ -40,30 +40,30 @@ class HotRodStatsClusterTest extends HotRodMultiNodeTest {
       client1.remove(k(m))
 
       var stats1 = client1.stats
-      assertEquals(stats1.get("currentNumberOfEntries").get, "1")
-      assertEquals(stats1.get("totalNumberOfEntries").get, "1")
-      assertEquals(stats1.get("stores").get, "1")
-      assertEquals(stats1.get("hits").get, "1")
-      assertEquals(stats1.get("retrievals").get, "1")
-      assertEquals(stats1.get("removeMisses").get, "1")
-      assertEquals(stats1.get("globalCurrentNumberOfEntries").get, "1")
-      assertEquals(stats1.get("globalStores").get, "1")
-      assertEquals(stats1.get("globalHits").get, "1")
-      assertEquals(stats1.get("globalRetrievals").get, "1")
-      assertEquals(stats1.get("globalRemoveMisses").get, "1")
+      assertEquals(stats1.get("currentNumberOfEntries"), "1")
+      assertEquals(stats1.get("totalNumberOfEntries"), "1")
+      assertEquals(stats1.get("stores"), "1")
+      assertEquals(stats1.get("hits"), "1")
+      assertEquals(stats1.get("retrievals"), "1")
+      assertEquals(stats1.get("removeMisses"), "1")
+      assertEquals(stats1.get("globalCurrentNumberOfEntries"), "1")
+      assertEquals(stats1.get("globalStores"), "1")
+      assertEquals(stats1.get("globalHits"), "1")
+      assertEquals(stats1.get("globalRetrievals"), "1")
+      assertEquals(stats1.get("globalRemoveMisses"), "1")
 
       var stats2 = client2.stats
-      assertEquals(stats2.get("currentNumberOfEntries").get, "0")
-      assertEquals(stats2.get("totalNumberOfEntries").get, "0")
-      assertEquals(stats2.get("stores").get, "0")
-      assertEquals(stats2.get("hits").get, "0")
-      assertEquals(stats2.get("retrievals").get, "0")
-      assertEquals(stats2.get("removeMisses").get, "0")
-      assertEquals(stats2.get("globalCurrentNumberOfEntries").get, "1")
-      assertEquals(stats2.get("globalStores").get, "1")
-      assertEquals(stats2.get("globalHits").get, "1")
-      assertEquals(stats2.get("globalRetrievals").get, "1")
-      assertEquals(stats2.get("globalRemoveMisses").get, "1")
+      assertEquals(stats2.get("currentNumberOfEntries"), "0")
+      assertEquals(stats2.get("totalNumberOfEntries"), "0")
+      assertEquals(stats2.get("stores"), "0")
+      assertEquals(stats2.get("hits"), "0")
+      assertEquals(stats2.get("retrievals"), "0")
+      assertEquals(stats2.get("removeMisses"), "0")
+      assertEquals(stats2.get("globalCurrentNumberOfEntries"), "1")
+      assertEquals(stats2.get("globalStores"), "1")
+      assertEquals(stats2.get("globalHits"), "1")
+      assertEquals(stats2.get("globalRetrievals"), "1")
+      assertEquals(stats2.get("globalRemoveMisses"), "1")
 
       TestingUtil.sleepThread(ClusterCacheStatsImpl.DEFAULT_STALE_STATS_THRESHOLD + 2000)
 
@@ -71,16 +71,16 @@ class HotRodStatsClusterTest extends HotRodMultiNodeTest {
       assertKeyDoesNotExist(client1.get(key1, 0))
 
       stats1 = client1.stats
-      assertEquals(stats1.get("misses").get, "1")
-      assertEquals(stats1.get("removeHits").get, "1")
-      assertEquals(stats1.get("globalMisses").get, "1")
-      assertEquals(stats1.get("globalRemoveHits").get, "1")
+      assertEquals(stats1.get("misses"), "1")
+      assertEquals(stats1.get("removeHits"), "1")
+      assertEquals(stats1.get("globalMisses"), "1")
+      assertEquals(stats1.get("globalRemoveHits"), "1")
 
       stats2 = client2.stats
-      assertEquals(stats2.get("misses").get, "0")
-      assertEquals(stats2.get("removeHits").get, "0")
-      assertEquals(stats2.get("globalMisses").get, "1")
-      assertEquals(stats2.get("globalRemoveHits").get, "1")
+      assertEquals(stats2.get("misses"), "0")
+      assertEquals(stats2.get("removeHits"), "0")
+      assertEquals(stats2.get("globalMisses"), "1")
+      assertEquals(stats2.get("globalRemoveHits"), "1")
    }
 
 }

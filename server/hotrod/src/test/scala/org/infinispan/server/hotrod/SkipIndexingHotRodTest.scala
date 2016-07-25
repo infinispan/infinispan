@@ -25,9 +25,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.put(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.id), OperationStatus.Success)
-      assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.SuccessWithPrevious)
+      assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.Success)
+      assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                     ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.SuccessWithPrevious)
    }
 
    def testReplace(m: Method) {
@@ -37,9 +37,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.replace(k(m), 0, 0, v(m), 0), OperationStatus.OperationNotExecuted)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.replace(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.id), OperationStatus.OperationNotExecuted)
-      assertStatus(client.replace(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.id,
-                                                         ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.OperationNotExecuted)
+      assertStatus(client.replace(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.OperationNotExecuted)
+      assertStatus(client.replace(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                         ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.OperationNotExecuted)
 
    }
 
@@ -50,9 +50,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.id), OperationStatus.OperationNotExecuted)
-      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.id,
-                                                             ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.NotExecutedWithPrevious)
+      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.OperationNotExecuted)
+      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                             ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.NotExecutedWithPrevious)
    }
 
    def testReplaceIfUnmodified(m: Method) {
@@ -62,9 +62,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipIndexing.id,
-                                                                        ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipIndexing.getValue(),
+                                                                        ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testGet(m: Method) {
@@ -74,9 +74,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.get(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.get(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.get(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                         ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.get(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.get(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                         ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testGetWithVersion(m: Method) {
@@ -86,9 +86,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.getWithVersion(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.getWithVersion(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.getWithVersion(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                                    ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithVersion(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithVersion(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                    ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
 
    }
 
@@ -99,9 +99,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.getWithMetadata(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.getWithMetadata(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.getWithMetadata(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithMetadata(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithMetadata(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                     ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testRemove(m: Method) {
@@ -111,9 +111,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.remove(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.remove(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.remove(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                            ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.remove(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.remove(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                            ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testRemoveIfUnmodified(m: Method) {
@@ -123,9 +123,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.removeIfUnmodified(k(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = true
-      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipIndexing.id,
-                                                                       ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipIndexing.getValue(),
+                                                                       ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    def testContainsKey(m: Method) {
@@ -135,9 +135,9 @@ class SkipIndexingHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.containsKey(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipIndexingFlag = false
-      assertStatus(client.containsKey(k(m), ProtocolFlag.SkipIndexing.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.containsKey(k(m), join(ProtocolFlag.SkipIndexing.id,
-                                                 ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), ProtocolFlag.SkipIndexing.getValue()), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), join(ProtocolFlag.SkipIndexing.getValue(),
+                                                 ProtocolFlag.ForceReturnPreviousValue.getValue())), OperationStatus.KeyDoesNotExist)
    }
 
    private def init(): SkipIndexingFlagCheckCommandInterceptor = {

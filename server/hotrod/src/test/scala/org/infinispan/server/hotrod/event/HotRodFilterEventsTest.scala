@@ -2,6 +2,8 @@ package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
 import java.util
+import java.util.{Collections, List, Optional}
+
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications.cachelistener.event.Event
@@ -9,6 +11,7 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.{Bytes, HotRodServer, HotRodSingleNodeTest}
 import org.testng.annotations.Test
 import org.infinispan.notifications.cachelistener.filter._
+import org.infinispan.util.KeyValuePair
 
 /**
  * @author Galder Zamarreño
@@ -26,7 +29,7 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
    def testFilteredEvents(m: Method) {
       implicit val eventListener = new EventLogListener
       val acceptedKey = Array[Byte](1, 2, 3)
-      withClientListener(filterFactory = Some(("static-filter-factory", List.empty))) { () =>
+      withClientListener(filterFactory = Optional.of(new KeyValuePair[String, util.List[Bytes]]("static-filter-factory", Collections.emptyList()))) { () =>
          eventListener.expectNoEvents()
          val key = k(m)
          client.remove(key)
@@ -47,7 +50,7 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
    def testParameterBasedFiltering(m: Method) {
       implicit val eventListener = new EventLogListener
       val acceptedKey = Array[Byte](4, 5, 6)
-      withClientListener(filterFactory = Some(("dynamic-filter-factory", List(Array[Byte](4, 5, 6))))) { () =>
+      withClientListener(filterFactory = Optional.of(new KeyValuePair[String, util.List[Bytes]]("dynamic-filter-factory", Collections.singletonList(Array[Byte](4, 5, 6))))) { () =>
          eventListener.expectNoEvents()
          val key = k(m)
          client.put(key, 0, 0, v(m))
@@ -71,10 +74,10 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
       client.put(key, 0, 0, v(m))
       client.put(staticAcceptedKey, 0, 0, v(m))
       client.put(dynamicAcceptedKey, 0, 0, v(m))
-      withClientListener(filterFactory = Some(("static-filter-factory", List.empty)), includeState = true) { () =>
+      withClientListener(filterFactory = Optional.of(new KeyValuePair[String, util.List[Bytes]]("static-filter-factory", Collections.emptyList())), includeState = true) { () =>
          eventListener.expectSingleEvent(staticAcceptedKey, Event.Type.CACHE_ENTRY_CREATED)
       }
-      withClientListener(filterFactory = Some(("dynamic-filter-factory", List(Array[Byte](7, 8, 9)))), includeState = true) { () =>
+      withClientListener(filterFactory = Optional.of(new KeyValuePair[String, util.List[Bytes]]("dynamic-filter-factory", Collections.singletonList(Array[Byte](7, 8, 9)))), includeState = true) { () =>
          eventListener.expectSingleEvent(dynamicAcceptedKey, Event.Type.CACHE_ENTRY_CREATED)
       }
    }
@@ -87,10 +90,10 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
       client.put(key, 0, 0, v(m))
       client.put(staticAcceptedKey, 0, 0, v(m))
       client.put(dynamicAcceptedKey, 0, 0, v(m))
-      withClientListener(filterFactory = Some(("static-filter-factory", List.empty)), includeState = false) { () =>
+      withClientListener(filterFactory = Optional.of(new KeyValuePair[String, util.List[Bytes]]("static-filter-factory", Collections.emptyList())), includeState = false) { () =>
          eventListener.expectNoEvents()
       }
-      withClientListener(filterFactory = Some(("dynamic-filter-factory", List(Array[Byte](7, 8, 9)))), includeState = false) { () =>
+      withClientListener(filterFactory = Optional.of(new KeyValuePair[String, util.List[Bytes]]("dynamic-filter-factory", Collections.singletonList(Array[Byte](7, 8, 9)))), includeState = false) { () =>
          eventListener.expectNoEvents()
       }
    }

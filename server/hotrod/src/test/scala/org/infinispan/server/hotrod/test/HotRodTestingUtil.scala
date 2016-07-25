@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod.test
 
 import java.lang.reflect.Method
 import java.net.NetworkInterface
-import java.util.Arrays
+import java.util.{Arrays, Collections, Optional, List => JList, Map => JMap}
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -18,10 +18,11 @@ import org.infinispan.notifications.Listener
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
 import org.infinispan.remoting.transport.Address
+import org.infinispan.server.core.transport.NettyInitializers
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.configuration.{HotRodServerConfiguration, HotRodServerConfigurationBuilder}
-import org.infinispan.server.hotrod.logging.JavaLog
+import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.transport.{HotRodChannelInitializer, SingleByteFrameDecoderChannelInitializer, TimeoutEnabledChannelInitializer}
 import org.infinispan.statetransfer.StateTransferManager
 import org.infinispan.test.TestingUtil
@@ -40,7 +41,7 @@ import scala.collection.JavaConverters._
 object HotRodTestingUtil {
 
    val EXPECTED_HASH_FUNCTION_VERSION: Byte = 2
-   val log = LogFactory.getLog(getClass, classOf[JavaLog])
+   val log = LogFactory.getLog(getClass, classOf[Log])
 
    def host = "127.0.0.1"
 
@@ -106,20 +107,26 @@ object HotRodTestingUtil {
             def getTransport() = {
                transport
             }
+            val inits =
+
             if (perf) {
                if (configuration.idleTimeout > 0)
-                  new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
-                    with TimeoutEnabledChannelInitializer[HotRodServerConfiguration] with SingleByteFrameDecoderChannelInitializer
+                  Arrays.asList(
+                     new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test")),
+                     new TimeoutEnabledChannelInitializer[HotRodServerConfiguration](this), new SingleByteFrameDecoderChannelInitializer());
                else // Idle timeout logic is disabled with -1 or 0 values
-                  new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
-                    with SingleByteFrameDecoderChannelInitializer
+                  Arrays.asList(
+                     new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test")),
+                     new SingleByteFrameDecoderChannelInitializer());
             } else {
                if (configuration.idleTimeout > 0)
-                  new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
-                    with TimeoutEnabledChannelInitializer[HotRodServerConfiguration]
+                  Arrays.asList(
+                     new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test")),
+                     new TimeoutEnabledChannelInitializer[HotRodServerConfiguration](this));
                else // Idle timeout logic is disabled with -1 or 0 values
-                  new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test"))
+                  Collections.singletonList(new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test")));
             }
+            new NettyInitializers(inits);
          }
       }
       builder.host(host).port(port)
@@ -164,7 +171,7 @@ object HotRodTestingUtil {
    def v(m: Method): Array[Byte] = v(m, "v-")
 
    def assertStatus(resp: TestResponse, expected: OperationStatus): Boolean = {
-      val status = resp.status
+      val status = resp.getStatus();
       val isSuccess = status == expected
       resp match {
          case e: TestErrorResponse =>
@@ -193,7 +200,7 @@ object HotRodTestingUtil {
    }
 
    def assertSuccess(resp: TestGetWithVersionResponse, expected: Array[Byte], expectedVersion: Int): Boolean = {
-      assertTrue(resp.version != expectedVersion)
+      assertTrue(resp.getVersion() != expectedVersion)
       assertSuccess(resp, expected)
    }
 
@@ -204,9 +211,9 @@ object HotRodTestingUtil {
    }
 
    def assertKeyDoesNotExist(resp: TestGetResponse): Boolean = {
-      val status = resp.status
+      val status = resp.getStatus()
       assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
-      assertEquals(resp.data, None)
+      assertEquals(resp.data, Optional.empty())
       status == KeyDoesNotExist
    }
 
@@ -219,7 +226,7 @@ object HotRodTestingUtil {
             assertEquals(h10.members.toSet, servers.map(_.getAddress).toSet)
          case h11: TestHashDistAware11Response =>
             assertEquals(h11.membersToHash.size, servers.size)
-            assertEquals(h11.membersToHash.keySet, servers.map(_.getAddress).toSet)
+            assertEquals(h11.membersToHash.keySet.toSet, servers.map(_.getAddress).toSet)
          case t: TestTopologyAwareResponse =>
             assertEquals(t.members.size, servers.size)
             assertEquals(t.members.toSet, servers.map(_.getAddress).toSet)
@@ -304,7 +311,7 @@ object HotRodTestingUtil {
       assertEquals(hashTopologyResp.numVirtualNodes, expectedVirtualNodes)
    }
 
-   def assertHashIds(hashIds: Map[ServerAddress, Seq[Int]], servers: List[HotRodServer], cacheName: String) {
+   def assertHashIds(hashIds: JMap[ServerAddress, JList[Integer]], servers: List[HotRodServer], cacheName: String) {
       val cache = servers.head.getCacheManager.getCache(cacheName)
       val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
       val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
@@ -422,8 +429,8 @@ object HotRodTestingUtil {
    def unmarshall[T](key: Array[Byte]): T =
       new JBossMarshaller().objectFromByteBuffer(key).asInstanceOf[T]
 
-   def withClientListener(filterFactory: NamedFactory = None, converterFactory: NamedFactory = None,
-           includeState: Boolean = false, useRawData: Boolean = true)(fn: () => Unit)
+   def withClientListener(filterFactory: NamedFactory = Optional.empty(), converterFactory: NamedFactory = Optional.empty(),
+                          includeState: Boolean = false, useRawData: Boolean = true)(fn: () => Unit)
            (implicit listener: TestClientListener, client: HotRodClient): Unit = {
       assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory, useRawData), Success)
       try {

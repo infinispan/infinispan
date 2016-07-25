@@ -37,35 +37,35 @@ class HotRod11ReplicationTest extends HotRodMultiNodeTest {
 
       var resp = client1.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
+      assertTopologyReceived(resp.topologyResponse, servers, currentServerTopologyId)
 
       // Client intelligence is now 1, which means no topology updates
       resp = client1.put(k(m) , 0, 0, v(m), INTELLIGENCE_BASIC, 0)
       assertStatus(resp, Success)
-      assertEquals(resp.topologyResponse, None)
+      assertEquals(resp.topologyResponse, null)
       assertSuccess(client2.get(k(m), 0), v(m))
 
       resp = client1.put(k(m) , 0, 0, v(m, "v1-"), INTELLIGENCE_TOPOLOGY_AWARE, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
+      assertTopologyReceived(resp.topologyResponse, servers, currentServerTopologyId)
 
       resp = client2.put(k(m) , 0, 0, v(m, "v2-"), INTELLIGENCE_TOPOLOGY_AWARE, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
+      assertTopologyReceived(resp.topologyResponse, servers, currentServerTopologyId)
 
       resp = client1.put(k(m) , 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount)
       assertStatus(resp, Success)
-      assertEquals(resp.topologyResponse, None)
+      assertEquals(resp.topologyResponse, null)
       assertSuccess(client2.get(k(m), 0), v(m, "v3-"))
 
       resp = client1.put(k(m) , 0, 0, v(m, "v4-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
+      assertTopologyReceived(resp.topologyResponse, servers, currentServerTopologyId)
       assertSuccess(client2.get(k(m), 0), v(m, "v4-"))
 
       resp = client2.put(k(m) , 0, 0, v(m, "v5-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
+      assertTopologyReceived(resp.topologyResponse, servers, currentServerTopologyId)
       assertSuccess(client2.get(k(m), 0), v(m, "v5-"))
 
       val newServer = startClusteredServer(servers.tail.head.getPort + 25)
@@ -76,14 +76,14 @@ class HotRod11ReplicationTest extends HotRodMultiNodeTest {
          log.trace("New client started, modify key to be v6-*")
          resp = newClient.put(k(m) , 0, 0, v(m, "v6-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
          assertStatus(resp, Success)
-         assertTopologyReceived(resp.topologyResponse.get, allServers, currentServerTopologyId)
+         assertTopologyReceived(resp.topologyResponse, allServers, currentServerTopologyId)
 
          log.trace("Get key from other client and verify that's v6-*")
          assertSuccess(client2.get(k(m), 0), v(m, "v6-"))
 
          resp = client2.put(k(m), 0, 0, v(m, "v7-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0)
          assertStatus(resp, Success)
-         assertTopologyReceived(resp.topologyResponse.get, allServers, currentServerTopologyId)
+         assertTopologyReceived(resp.topologyResponse, allServers, currentServerTopologyId)
 
          assertSuccess(newClient.get(k(m), 0), v(m, "v7-"))
       } finally {
@@ -96,7 +96,7 @@ class HotRod11ReplicationTest extends HotRodMultiNodeTest {
 
       resp = client2.put(k(m) , 0, 0, v(m, "v8-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount)
       assertStatus(resp, Success)
-      assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
+      assertTopologyReceived(resp.topologyResponse, servers, currentServerTopologyId)
 
       assertSuccess(client1.get(k(m), 0), v(m, "v8-"))
    }

@@ -26,9 +26,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.put(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.Success)
-      assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.SuccessWithPrevious)
+      assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.Success)
+      assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                     ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.SuccessWithPrevious)
    }
 
    def testReplace(m: Method) {
@@ -38,9 +38,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.replace(k(m), 0, 0, v(m), 0), OperationStatus.OperationNotExecuted)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.replace(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.OperationNotExecuted)
-      assertStatus(client.replace(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                         ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.OperationNotExecuted)
+      assertStatus(client.replace(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.OperationNotExecuted)
+      assertStatus(client.replace(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                         ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.OperationNotExecuted)
 
    }
 
@@ -51,9 +51,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), 0), OperationStatus.Success)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.OperationNotExecuted)
-      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                             ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.NotExecutedWithPrevious)
+      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.OperationNotExecuted)
+      assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                             ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.NotExecutedWithPrevious)
    }
 
    def testReplaceIfUnmodified(m: Method) {
@@ -63,9 +63,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipCacheLoader.id,
-                                                                        ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.replaceIfUnmodified(k(m), 0, 0, v(m), 0, join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                                        ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testGet(m: Method) {
@@ -75,9 +75,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.get(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.get(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.get(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                         ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.get(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.get(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                         ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testGetWithVersion(m: Method) {
@@ -87,9 +87,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.getWithVersion(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.getWithVersion(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.getWithVersion(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                    ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithVersion(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithVersion(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                    ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
 
    }
 
@@ -100,9 +100,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.getWithMetadata(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.getWithMetadata(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.getWithMetadata(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithMetadata(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.getWithMetadata(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                     ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testRemove(m: Method) {
@@ -112,9 +112,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.remove(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.remove(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.remove(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                            ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.remove(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.remove(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                            ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testRemoveIfUnmodified(m: Method) {
@@ -124,9 +124,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.removeIfUnmodified(k(m), 0, 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = false
-      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipCacheLoader.id,
-                                                                       ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.removeIfUnmodified(k(m), 0, join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                                       ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    def testContainsKey(m: Method) {
@@ -136,9 +136,9 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       assertStatus(client.containsKey(k(m), 0), OperationStatus.KeyDoesNotExist)
 
       commandInterceptor.expectSkipLoadFlag = true
-      assertStatus(client.containsKey(k(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.KeyDoesNotExist)
-      assertStatus(client.containsKey(k(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                 ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), ProtocolFlag.SkipCacheLoader.getValue), OperationStatus.KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), join(ProtocolFlag.SkipCacheLoader.getValue,
+                                                 ProtocolFlag.ForceReturnPreviousValue.getValue)), OperationStatus.KeyDoesNotExist)
    }
 
    private def init(): FlagCheckCommandInterceptor = {

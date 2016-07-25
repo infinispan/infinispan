@@ -332,7 +332,7 @@ public abstract class CustomEventLogListener<K, E> implements RemoteCacheSupplie
          private final Object[] params;
          private final CallbackCounter counter = new NumericCallbackCounter();
 
-         public FilterConverter(Object[] params) {
+         FilterConverter(Object[] params) {
             this.params = params;
          }
 

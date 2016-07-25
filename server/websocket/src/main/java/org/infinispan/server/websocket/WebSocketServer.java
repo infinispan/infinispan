@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.lang.invoke.MethodHandles;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,8 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.CacheIgnoreAware;
+import org.infinispan.server.core.transport.NettyInitializer;
+import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.websocket.configuration.WebSocketServerConfiguration;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
@@ -63,10 +66,10 @@ public class WebSocketServer extends AbstractProtocolServer<WebSocketServerConfi
 
    @Override
    public ChannelInitializer<Channel> getInitializer() {
-      return new WebSocketServerPipelineFactory(cacheManager, this);
+      return new NettyInitializers(new WebSocketServerPipelineFactory(cacheManager, this));
    }
 
-   private static class WebSocketServerPipelineFactory extends ChannelInitializer<Channel> {
+   private static class WebSocketServerPipelineFactory implements NettyInitializer {
 
       private CacheContainer cacheContainer;
       private final CacheIgnoreAware cacheIgnoreAware;
@@ -87,9 +90,9 @@ public class WebSocketServer extends AbstractProtocolServer<WebSocketServerConfi
       }
 
       @Override
-      public void initChannel(Channel channel) throws Exception {
+      public void initializeChannel(Channel ch) throws Exception {
          // Create a default pipeline implementation.
-         ChannelPipeline pipeline = channel.pipeline();
+         ChannelPipeline pipeline = ch.pipeline();
 
          pipeline.addLast("decoder", new HttpRequestDecoder());
          pipeline.addLast("aggregator", new HttpObjectAggregator(65536));

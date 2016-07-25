@@ -19,7 +19,8 @@ import io.netty.util.AttributeKey;
  */
 @ChannelHandler.Sharable
 public class LoggingContextHandler extends ChannelDuplexHandler {
-   public LoggingContextHandler() { }
+   public LoggingContextHandler() {
+   }
 
    private static final LoggingContextHandler INSTANCE = new LoggingContextHandler();
 
@@ -45,9 +46,9 @@ public class LoggingContextHandler extends ChannelDuplexHandler {
    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
       if (msg instanceof ErrorResponse) {
          ErrorResponse errorResponse = (ErrorResponse) msg;
-         ctx.channel().attr(OPERATION_KEY).set(OperationResponse.fromResponse(errorResponse.operation()));
-         ctx.channel().attr(CACHE_NAME_KEY).set(errorResponse.cacheName());
-         ctx.channel().attr(EXCEPTION_MESSAGE_KEY).set(errorResponse.msg());
+         ctx.channel().attr(OPERATION_KEY).set(OperationResponse.fromResponse(errorResponse.getOperation()));
+         ctx.channel().attr(CACHE_NAME_KEY).set(errorResponse.getCacheName());
+         ctx.channel().attr(EXCEPTION_MESSAGE_KEY).set(errorResponse.getMsg());
       }
       super.write(ctx, msg, promise);
    }
