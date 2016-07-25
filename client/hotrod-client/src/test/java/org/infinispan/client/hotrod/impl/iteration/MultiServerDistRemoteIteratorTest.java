@@ -96,7 +96,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
 
    private void assertIterationActiveOnlyOnServer(int index) {
       for (int i = 0; i < servers.size(); i++) {
-         int activeIterations = server(i).iterationManager().activeIterations();
+         int activeIterations = server(i).getIterationManager().activeIterations();
          if (i == index) {
             assertEquals(1L, activeIterations);
          } else {

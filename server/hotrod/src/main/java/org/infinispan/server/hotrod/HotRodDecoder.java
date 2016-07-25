@@ -51,7 +51,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
 
    void resetNow() {
       decodeCtx = new CacheDecodeContext(server);
-      decodeCtx.setHeader(new HotRodHeader());
+      decodeCtx.header = new HotRodHeader();
       state = HotRodDecoderState.DECODE_HEADER;
       resetRequested = false;
    }
@@ -70,7 +70,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    @Override
    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
       try {
-         if (decodeCtx.isTrace()) {
+         if (CacheDecodeContext.isTrace) {
             log.tracef("Decode using instance @%x", System.identityHashCode(this));
          }
 
@@ -122,7 +122,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          previousException = t;
          resetRequested = true;
          // Faster than throwing exception
-         ctx.pipeline().fireExceptionCaught(new HotRodException(decodeCtx.createExceptionResponse(t), t));
+         ctx.pipeline().fireExceptionCaught(new HotRodException(decodeCtx.createExceptionResponse(t), t.getMessage(), t));
       }
    }
 
@@ -132,13 +132,13 @@ public class HotRodDecoder extends ByteToMessageDecoder {
       if (!shouldContinue) {
          return false;
       }
-      HotRodHeader header = decodeCtx.getHeader();
+      HotRodHeader header = decodeCtx.header;
       // Check if this cache can be accessed or not
-      if (ignoreCache.test(header.cacheName())) {
+      if (ignoreCache.test(header.cacheName)) {
          throw new CacheUnavailableException();
       }
       decodeCtx.obtainCache(cacheManager, isLoopBack);
-      HotRodOperation op = header.op();
+      HotRodOperation op = header.op;
       switch (op.getDecoderRequirements()) {
          case HEADER_CUSTOM:
             state(HotRodDecoderState.DECODE_HEADER_CUSTOM, in);
@@ -162,14 +162,14 @@ public class HotRodDecoder extends ByteToMessageDecoder {
     * @throws Exception
     */
    boolean readHeader(ByteBuf buffer) throws Exception {
-      AbstractVersionedDecoder decoder = decodeCtx.decoder();
-      HotRodHeader header = decodeCtx.header();
+      VersionedDecoder decoder = decodeCtx.decoder;
+      HotRodHeader header = decodeCtx.header;
       if (decoder == null) {
          if (buffer.readableBytes() < 1) {
             return false;
          }
          short magic = buffer.readUnsignedByte();
-         if (magic != Constants$.MODULE$.MAGIC_REQ()) {
+         if (magic != Constants.MAGIC_REQ) {
             if (previousException == null) {
                throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic);
             } else {
@@ -184,43 +184,43 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          if (messageId == Integer.MIN_VALUE) {
             return false;
          }
-         header.messageId_$eq(messageId);
+         header.messageId = messageId;
          if (buffer.readableBytes() < 1) {
             buffer.resetReaderIndex();
             return false;
          }
          byte version = (byte) buffer.readUnsignedByte();
-         header.version_$eq(version);
+         header.version = version;
 
-         if (Constants$.MODULE$.isVersion2x(version)) {
-            decoder = Decoder2x$.MODULE$;
-         } else if (Constants$.MODULE$.isVersion1x(version)) {
-            decoder = Decoder10$.MODULE$;
+         if (Constants.isVersion2x(version)) {
+            decoder = new Decoder2x();
+         } else if (Constants.isVersion1x(version)) {
+            decoder = new Decoder10();
          } else {
             throw new UnknownVersionException("Unknown version:" + version, version, messageId);
          }
-         decodeCtx.setDecoder(decoder);
+         decodeCtx.decoder = decoder;
          // This way we won't have to reread the decoder related material again
          buffer.markReaderIndex();
       }
 
       try {
-         if (!decoder.readHeader(buffer, header.version(), header.messageId(), header)) {
+         if (!decoder.readHeader(buffer, header.version, header.messageId, header)) {
             return false;
          }
-         if (decodeCtx.isTrace()) {
+         if (CacheDecodeContext.isTrace) {
             log.tracef("Decoded header %s", header);
          }
          return true;
       } catch (HotRodUnknownOperationException | SecurityException e) {
          throw e;
       } catch (Exception e) {
-         throw new RequestParsingException("Unable to parse header", header.version(), header.messageId(), e);
+         throw new RequestParsingException("Unable to parse header", header.version, header.messageId, e);
       }
    }
 
    private void readCustomHeader(ByteBuf in, List<Object> out) {
-      decodeCtx.decoder().customReadHeader(decodeCtx.header(), in, decodeCtx, out);
+      decodeCtx.decoder.customReadHeader(decodeCtx.header, in, decodeCtx, out);
       // If out was written to, it means we read everything, else we have to reread again
       if (!out.isEmpty()) {
          resetRequested = true;
@@ -228,13 +228,13 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    }
 
    boolean decodeKey(ByteBuf in, List<Object> out) {
-      HotRodOperation op = decodeCtx.getHeader().op();
+      HotRodOperation op = decodeCtx.header.op;
       // If we want a single key read that - else we do try for custom read
       if (op.requiresKey()) {
          byte[] bytes = ExtendedByteBufJava.readMaybeRangedBytes(in);
          // If the bytes don't exist then we need to reread
          if (bytes != null) {
-            decodeCtx.key_$eq(bytes);
+            decodeCtx.key = bytes;
          } else {
             return false;
          }
@@ -254,7 +254,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    }
 
    private void readCustomKey(ByteBuf in, List<Object> out) {
-      decodeCtx.decoder().customReadKey(decodeCtx.header(), in, decodeCtx, out);
+      decodeCtx.decoder.customReadKey(decodeCtx.header, in, decodeCtx, out);
       // If out was written to, it means we read everything, else we have to reread again
       if (!out.isEmpty()) {
          resetRequested = true;
@@ -262,10 +262,10 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    }
 
    boolean decodeParameters(ByteBuf in, List<Object> out) {
-      RequestParameters params = decodeCtx.decoder().readParameters(decodeCtx.header(), in);
+      CacheDecodeContext.RequestParameters params = decodeCtx.decoder.readParameters(decodeCtx.header, in);
       if (params != null) {
-         decodeCtx.params_$eq(params);
-         if (decodeCtx.header().op().getDecoderRequirements() == DecoderRequirements.PARAMETERS) {
+         decodeCtx.params = params;
+         if (decodeCtx.header.op.getDecoderRequirements() == DecoderRequirements.PARAMETERS) {
             out.add(decodeCtx);
             resetRequested = true;
             return false;
@@ -277,15 +277,15 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    }
 
    boolean decodeValue(ByteBuf in, List<Object> out) {
-      HotRodOperation op = decodeCtx.header().op();
+      HotRodOperation op = decodeCtx.header.op;
       if (op.requireValue()) {
-         int valueLength = decodeCtx.params().valueLength();
+         int valueLength = decodeCtx.params.valueLength;
          if (in.readableBytes() < valueLength) {
             return false;
          }
          byte[] bytes = new byte[valueLength];
          in.readBytes(bytes);
-         decodeCtx.operationDecodeContext_$eq(bytes);
+         decodeCtx.operationDecodeContext = bytes;
       }
       switch (op.getDecoderRequirements()) {
          case VALUE_CUSTOM:
@@ -302,7 +302,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    }
 
    private void readCustomValue(ByteBuf in, List<Object> out) {
-      decodeCtx.decoder().customReadValue(decodeCtx.header(), in, decodeCtx, out);
+      decodeCtx.decoder.customReadValue(decodeCtx.header, in, decodeCtx, out);
       // If out was written to, it means we read everything, else we have to reread again
       if (!out.isEmpty()) {
          resetRequested = true;

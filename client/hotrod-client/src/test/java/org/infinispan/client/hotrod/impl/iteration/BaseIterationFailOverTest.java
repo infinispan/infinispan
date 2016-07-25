@@ -62,7 +62,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
 
    protected void killIterationServer() {
       servers.stream()
-            .filter(s -> s.iterationManager().activeIterations() > 0)
+            .filter(s -> s.getIterationManager().activeIterations() > 0)
             .forEach(HotRodClientTestingUtil::killServers);
    }
 

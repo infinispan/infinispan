@@ -21,7 +21,7 @@ import io.netty.channel.ChannelPromise;
  * @since 9.0
  */
 public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
-   private static final JavaLog log = LogFactory.getLog(HotRodAccessLoggingHandler.class, JavaLog.class);
+   private static final Log log = LogFactory.getLog(HotRodAccessLoggingHandler.class, Log.class);
 
    LocalDateTime startTime;
    private int bytesRead = 0;
@@ -53,10 +53,10 @@ public class HotRodAccessLoggingHandler extends ChannelDuplexHandler {
          // This is only null if an exception was thrown before we could decode a proper message
          if (cacheDecodeContext != null && exception == null) {
             // Method
-            op = cacheDecodeContext.header().op();
-            key = cacheDecodeContext.key();
+            op = cacheDecodeContext.getHeader().getOp();
+            key = cacheDecodeContext.getKey();
             // Cache name
-            cacheName = cacheDecodeContext.header().cacheName();
+            cacheName = cacheDecodeContext.getHeader().getCacheName();
             status = "OK";
          } else {
             op = ctx.channel().attr(LoggingContextHandler.OPERATION_KEY).get();

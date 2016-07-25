@@ -29,7 +29,7 @@ import io.netty.util.DomainMappingBuilder;
   * @author Sebastian Łaskawiec
   * @since 4.1
   */
-public class NettyChannelInitializer<A extends ProtocolServerConfiguration> extends ChannelInitializer<Channel> {
+public class NettyChannelInitializer<A extends ProtocolServerConfiguration> implements NettyInitializer {
    protected final ProtocolServer<A> server;
    protected final NettyTransport transport;
    protected final ChannelOutboundHandler encoder;
@@ -41,8 +41,8 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> exte
    }
 
    @Override
-   protected void initChannel(Channel ch) throws Exception {
-      ChannelPipeline pipeline = ch.pipeline();
+   public void initializeChannel(Channel ch) throws Exception {
+   ChannelPipeline pipeline = ch.pipeline();
       pipeline.addLast("stats", new StatsChannelHandler(transport));
       SslConfiguration ssl = server.getConfiguration().ssl();
       if (ssl.enabled()) {

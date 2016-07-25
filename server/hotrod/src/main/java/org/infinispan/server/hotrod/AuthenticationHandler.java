@@ -1,19 +1,8 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
-
-import java.net.InetSocketAddress;
-import java.security.Principal;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.security.auth.Subject;
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslServerFactory;
-
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.ssl.SslHandler;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.security.AuthorizingCallbackHandler;
 import org.infinispan.server.core.security.InetAddressPrincipal;
@@ -23,12 +12,21 @@ import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.infinispan.server.core.transport.SaslQopHandler;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
-import org.infinispan.server.hotrod.logging.JavaLog;
+import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.util.KeyValuePair;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.ssl.SslHandler;
-import scala.Tuple2;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.security.auth.Subject;
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
+import java.net.InetSocketAddress;
+import java.security.Principal;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
 /**
  * Handler that when added will make sure authentication is applied to requests.
@@ -37,7 +35,7 @@ import scala.Tuple2;
  * @since 9.0
  */
 public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
-   private final static JavaLog log = LogFactory.getLog(AuthenticationHandler.class, JavaLog.class);
+   private final static Log log = LogFactory.getLog(AuthenticationHandler.class, Log.class);
 
    private final HotRodServer server;
 
@@ -64,23 +62,23 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
       if (msg instanceof CacheDecodeContext) {
          CacheDecodeContext cdc = (CacheDecodeContext) msg;
-         HotRodHeader hrh = cdc.header();
-         HotRodOperation op = hrh.op();
+         HotRodHeader hrh = cdc.header;
+         HotRodOperation op = hrh.op;
          switch (op) {
             case AuthMechListRequest:
-               writeResponse(cdc, ctx.channel(), new AuthMechListResponse(hrh.version(), hrh.messageId(), hrh.cacheName(),
-                       hrh.clientIntel(), authenticationConfig.allowedMechs(), hrh.topologyId()));
+               writeResponse(cdc, ctx.channel(), new AuthMechListResponse(hrh.version, hrh.messageId, hrh.cacheName,
+                       hrh.clientIntel, authenticationConfig.allowedMechs(), hrh.topologyId));
                break;
                // AuthRequest never requires authentication
             case AuthRequest:
                if (!serverConfig.authentication().enabled()) {
-                  cdc.getDecoder().createErrorResponse(hrh, log.invalidOperation());
+                  cdc.decoder.createErrorResponse(hrh, log.invalidOperation());
                } else {
                   // Retrieve the authorization context
-                  Tuple2<String, byte[]> opContext = (Tuple2<String, byte[]>) cdc.operationDecodeContext();
+                  KeyValuePair<String, byte[]> opContext = (KeyValuePair<String, byte[]>) cdc.operationDecodeContext;
                   if (saslServer == null) {
                      ServerAuthenticationProvider sap = authenticationConfig.serverAuthenticationProvider();
-                     String mech = opContext._1();
+                     String mech = opContext.getKey();
                      callbackHandler = sap.getCallbackHandler(mech, authenticationConfig.mechProperties());
                      final SaslServerFactory ssf;
                      if ("EXTERNAL".equals(mech)) {
@@ -105,10 +103,10 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                                 authenticationConfig.mechProperties(), callbackHandler);
                      }
                   }
-                  byte[] serverChallenge = saslServer.evaluateResponse(opContext._2());
+                  byte[] serverChallenge = saslServer.evaluateResponse(opContext.getValue());
 
-                  writeResponse(cdc, ctx.channel(), new AuthResponse(hrh.version(), hrh.messageId(), hrh.cacheName(),
-                          hrh.clientIntel(), serverChallenge, hrh.topologyId()));
+                  writeResponse(cdc, ctx.channel(), new AuthResponse(hrh.version, hrh.messageId, hrh.cacheName,
+                          hrh.clientIntel, serverChallenge, hrh.topologyId));
                   if (saslServer.isComplete()) {
                      List<Principal> extraPrincipals = new ArrayList<>();
                      String id = normalizeAuthorizationId(saslServer.getAuthorizationID());
@@ -140,7 +138,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                   throw log.unauthorizedOperation();
                }
                if (op.requiresAuthentication()) {
-                  ((CacheDecodeContext) msg).setSubject(subject);
+                  ((CacheDecodeContext) msg).subject = subject;
                }
                super.channelRead(ctx, msg);
                break;
