@@ -160,7 +160,7 @@
                     other nodes. Defaults to true.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="await-initial-transfer" type="xs:boolean" use="optional" default="true">
+        <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional" default="true">
             <xs:annotation>
                 <xs:documentation>Configures whether to initial state retrieval should happen immediately at startup. Only applies when lazy-retrieval is false. Defaults to true.</xs:documentation>
             </xs:annotation>

@@ -27,6 +27,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -53,23 +54,30 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(value = Parameterized.class)
 public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
 
-   String xmlFile = null;
+   private final String xmlFile;
+   private final String xsdPath;
    int operations = 0;
 
-   public EndpointSubsystemTestCase(String xmlFile, int operations) {
+   public EndpointSubsystemTestCase(String xmlFile, int operations, String xsdPath) {
       super(Constants.SUBSYSTEM_NAME, new EndpointExtension(), xmlFile);
       this.xmlFile = xmlFile;
       this.operations = operations;
+      this.xsdPath = xsdPath;
    }
 
    @Parameters
    public static Collection<Object[]> data() {
       Object[][] data = new Object[][] {
-            { "endpoint-7.2.xml", 16 },
-            { "endpoint-8.0.xml", 16 },
-            { "endpoint-9.0.xml", 21 },
+            { "endpoint-7.2.xml", 16, "schema/jboss-infinispan-endpoint_7_2.xsd" },
+            { "endpoint-8.0.xml", 16, "schema/jboss-infinispan-endpoint_8_0.xsd" },
+            { "endpoint-9.0.xml", 21, "schema/jboss-infinispan-endpoint_9_0.xsd" },
       };
       return Arrays.asList(data);
+   }
+
+   @Override
+   protected String getSubsystemXsdPath() throws Exception {
+      return xsdPath;
    }
 
    @Override
