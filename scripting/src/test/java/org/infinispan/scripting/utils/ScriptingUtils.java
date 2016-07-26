@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.Buffer;
 import java.nio.CharBuffer;
+import java.util.stream.Collectors;
 
 /**
  * Utility class containing general methods for use.
@@ -24,15 +25,10 @@ public class ScriptingUtils {
     public static void loadData(BasicCache<String, String> cache, String fileName) throws IOException {
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
                 ScriptingUtils.class.getResourceAsStream(fileName)))) {
-            int chunkSize = 10;
+            String value = null;
             int chunkId = 0;
-
-            CharBuffer cbuf = CharBuffer.allocate(1024 * chunkSize);
-            while (bufferedReader.read(cbuf) >= 0) {
-                Buffer buffer = cbuf.flip();
-                String textChunk = buffer.toString();
-                cache.put(fileName + (chunkId++), textChunk);
-                cbuf.clear();
+            while (!(value = bufferedReader.lines().limit(400).collect(Collectors.joining(" "))).isEmpty()) {
+                cache.put(fileName + (chunkId++), value);
             }
         }
     }

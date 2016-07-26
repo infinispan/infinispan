@@ -212,7 +212,7 @@ public class ScriptingTest extends AbstractScriptingTest {
 
       scriptingManager.addScript("wordCountStream.js", script);
       Map<String, Long> result = (Map<String, Long>) scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache())).get();
-      assertEquals(3209, result.size());
+      assertEquals(3202, result.size());
       assertEquals(Long.valueOf(287), result.get("macbeth"));
    }
 }
