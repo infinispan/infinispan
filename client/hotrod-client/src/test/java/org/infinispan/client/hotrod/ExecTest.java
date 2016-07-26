@@ -150,8 +150,8 @@ public class ExecTest extends MultiHotRodServersTest {
 
       ArrayList<Map<String, Long>> results = cache.execute("wordCountStream_dist.js", new HashMap<String, String>());
       assertEquals(2, results.size());
-      assertEquals(3209, results.get(0).size());
-      assertEquals(3209, results.get(1).size());
+      assertEquals(3202, results.get(0).size());
+      assertEquals(3202, results.get(1).size());
       assertTrue(results.get(0).get("macbeth").equals(Long.valueOf(287)));
       assertTrue(results.get(1).get("macbeth").equals(Long.valueOf(287)));
    }
