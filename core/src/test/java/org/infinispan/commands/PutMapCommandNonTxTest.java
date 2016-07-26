@@ -9,22 +9,27 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Collections;
 import java.util.concurrent.Future;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "commands.PutMapCommandNonTxTest")
 @CleanupAfterMethod
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() {
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      dcc.clustering().hash().numOwners(3).l1().disable();
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, false);
+      if (!cacheMode.isScattered()) {
+         dcc.clustering().hash().numOwners(3).l1().disable();
+      }
 
       createCluster(dcc, 3);
       waitForClusterToForm();
@@ -59,8 +64,19 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
          assertFalse(f.isCancelled());
       }
 
-      assertEquals("value", cache(0).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
-      assertEquals("value", cache(1).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
-      assertEquals("value", cache(2).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+      if (cacheMode.isScattered()) {
+         int hasValue = 0;
+         for (Cache c : caches()) {
+            Object value = c.getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_OWNERSHIP_CHECK).get(key);
+            if ("value".equals(value)) {
+               hasValue++;
+            } else assertNull(value);
+         }
+         assertEquals(2, hasValue);
+      } else {
+         assertEquals("value", cache(0).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+         assertEquals("value", cache(1).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+         assertEquals("value", cache(2).getAdvancedCache().withFlags(Flag.SKIP_REMOTE_LOOKUP).get(key));
+      }
    }
 }

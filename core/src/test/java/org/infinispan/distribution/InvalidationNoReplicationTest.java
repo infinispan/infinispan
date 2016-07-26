@@ -19,7 +19,10 @@ import org.testng.annotations.Test;
 public class InvalidationNoReplicationTest extends MultipleCacheManagersTest {
 
    protected Object k0;
-   protected boolean transactional = true;
+
+   {
+      transactional = true;
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {

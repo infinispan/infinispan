@@ -1086,8 +1086,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to acquire lock after %s for key %s and requestor %s. Lock is held by %s", id = 299)
    TimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner);
 
-//   @Message(value = "There was an exception while processing retrieval of entry values", id = 300)
-//   CacheException exceptionProcessingEntryRetrievalValues(@Cause Throwable cause);
+   @Message(value = "There was an exception while processing retrieval of entry values", id = 300)
+   CacheException exceptionProcessingEntryRetrievalValues(@Cause Throwable cause);
 
 //   @Message(value = "Iterator response for identifier %s encountered unexpected exception", id = 301)
 //   CacheException exceptionProcessingIteratorResponse(UUID identifier, @Cause Throwable cause);
@@ -1596,4 +1596,21 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Exception encountered when trying to resolve conflict on Keys '%s': %s", id = 466)
    void exceptionDuringConflictResolution(Object key, Throwable t);
+
+   @Message(value = "Scattered cache supports only single owner.", id = 467)
+   CacheConfigurationException scatteredCacheNeedsSingleOwner();
+
+   @Message(value = "Invalidation batch size configuration options applies only to scattered caches.", id = 468)
+   CacheConfigurationException invalidationBatchSizeAppliesOnNonScattered();
+
+   @Message(value = "Scattered cache does not support transactional mode.", id = 469)
+   CacheConfigurationException scatteredCacheIsNonTransactional();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed confirming revoked segments. State transfer cannot continue.", id = 470)
+   void failedConfirmingRevokedSegments(@Cause Throwable t);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed processing values received from remote node during rebalance.", id = 471)
+   void failedProcessingValuesDuringRebalance(@Cause Throwable t);
 }

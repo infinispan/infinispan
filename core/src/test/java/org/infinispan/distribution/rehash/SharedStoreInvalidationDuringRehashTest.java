@@ -28,6 +28,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -39,6 +40,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "distribution.rehash.SharedStoreInvalidationDuringRehashTest", groups = "functional")
 @CleanupAfterMethod
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(SharedStoreInvalidationDuringRehashTest.class);
@@ -57,7 +59,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
 
    private void addNewCacheManagerAndWaitForRehash(int index, boolean preload) {
       EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(getDefaultClusteredCacheConfig(
-            CacheMode.DIST_SYNC, false));
+            cacheMode, false));
       Configuration config = buildCfg(index, true, preload);
       cacheManager.defineConfiguration(TEST_CACHE_NAME, config);
       log.debugf("\n\nstarted CacheManager #%d", getCacheManagers().size() - 1);
@@ -87,7 +89,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
 
       if (clustered) {
          cb.clustering().l1().disable();
-         cb.clustering().cacheMode(CacheMode.DIST_SYNC);
+         cb.clustering().cacheMode(cacheMode);
          cb.clustering().hash().numOwners(1); // one owner!
 
          cb.clustering().stateTransfer().fetchInMemoryState(true);
@@ -178,8 +180,10 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
          for (int j = 0; j < NUM_KEYS; j++) {
             String key = "key" + j;
             if (!dm.getLocality(key).isLocal()) {
-               assertFalse("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
-                     dataContainer.containsKey(key));
+               if (!cacheMode.isScattered()) {
+                  assertFalse("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
+                        dataContainer.containsKey(key));
+               }
             } else {
                currentOwners.put(key, i);
                if (preload) {
@@ -194,6 +198,10 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
       for (int i = 0; i < NUM_KEYS; i++) {
          String key = "key" + i;
          assertTrue("Key " + key + " is missing from the shared store", store.keySet().contains(key));
+      }
+      if (cacheMode.isScattered()) {
+         // In scattered cache the invalidation happens only on some entries and through InvalidateVersionsCommand
+         return;
       }
 
       log.debugf("Invalidations: %s, L1 invalidations: %s", invalidationCounts, l1InvalidationCounts);

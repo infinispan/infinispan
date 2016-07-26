@@ -68,7 +68,7 @@ Map<Object, String> jbossValues = cache.entrySet().stream()
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 ----
 
-=== Distribution/Replication
+=== Distribution/Replication/Scattered
 
 This is where streams come into their stride.  When a stream operation is performed it will
 send the various intermediate and terminal operations to each node that has pertinent data.

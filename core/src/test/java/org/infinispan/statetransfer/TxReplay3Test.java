@@ -106,7 +106,7 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       builder.clustering()
             .remoteTimeout(1, TimeUnit.MINUTES)
             .hash().numOwners(1).numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory(0))
+            .consistentHashFactory(new ControlledConsistentHashFactory.Default(0))
             .stateTransfer().fetchInMemoryState(false);
       return builder;
    }

@@ -10,8 +10,10 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "streams.DistributedStreamTest")
 public class DistributedStreamTest extends BaseStreamTest {
+
    public DistributedStreamTest() {
-      super(false, CacheMode.DIST_SYNC);
+      super(false);
+      cacheMode(CacheMode.DIST_SYNC);
    }
 
    @Override

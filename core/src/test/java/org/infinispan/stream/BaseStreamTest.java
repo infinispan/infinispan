@@ -42,7 +42,6 @@ import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -64,8 +63,6 @@ import org.testng.annotations.Test;
 public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected ConfigurationBuilder builderUsed;
-   protected final boolean tx;
-   protected final CacheMode cacheMode;
 
    static final Map<Integer, Object> forEachStructure = new ConcurrentHashMap<>();
    static final AtomicInteger forEachOffset = new AtomicInteger();
@@ -85,9 +82,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
 
-   public BaseStreamTest(boolean tx, CacheMode mode) {
-      this.tx = tx;
-      cacheMode = mode;
+   public BaseStreamTest(boolean tx) {
+      this.transactional = tx;
    }
 
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
@@ -100,11 +96,10 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
-      if (tx) {
+      if (transactional) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
       if (cacheMode.isClustered()) {
-         builderUsed.clustering().hash().numOwners(2);
          builderUsed.clustering().stateTransfer().chunkSize(50);
          enhanceConfiguration(builderUsed);
          createClusteredCaches(3, CACHE_NAME, builderUsed);

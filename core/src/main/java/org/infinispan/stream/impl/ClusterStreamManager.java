@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.infinispan.CacheStream;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -52,9 +51,9 @@ public interface ClusterStreamManager<K> {
 
    /**
     * Performs the remote stream operation without rehash awareness.
+    * @param <R> the type of response
     * @param parallelDistribution whether or not parallel distribution is enabled
     * @param parallelStream whether or not the stream is paralllel
-    * @param ch the consistent hash to use when determining segment ownership
     * @param segments the segments that this request should utilize
     * @param keysToInclude which keys to include in the request
     * @param keysToExclude which keys to exclude in the request
@@ -62,18 +61,17 @@ public interface ClusterStreamManager<K> {
     * @param operation the actual operation to perform
     * @param callback the callback to collect individual node results
     * @param earlyTerminatePredicate a predicate to determine if this operation should stop based on intermediate results
-    * @param <R> the type of response
     * @return the operation id to be used for further calls
     */
-   <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate);
+   <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
+                                    Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+                                    TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate);
 
    /**
     * Performs the remote stream operation with rehash awareness.
+    * @param <R> the type of response
     * @param parallelDistribution whether or not parallel distribution is enabled
     * @param parallelStream whether or not the stream is paralllel
-    * @param ch the consistent hash to use when determining segment ownership
     * @param segments the segments that this request should utilize
     * @param keysToInclude which keys to include in the request
     * @param keysToExclude which keys to exclude in the request
@@ -81,50 +79,47 @@ public interface ClusterStreamManager<K> {
     * @param operation the actual operation to perform
     * @param callback the callback to collect individual node results
     * @param earlyTerminatePredicate a predicate to determine if this operation should stop based on intermediate results
-    * @param <R> the type of response
     * @return the operation id to be used for further calls
     */
-   <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate);
+   <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
+                                               Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+                                               TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate);
 
    /**
     * Key tracking remote operation that doesn't have rehash enabled.
+    * @param <R> the type of response
     * @param parallelDistribution whether or not parallel distribution is enabled
     * @param parallelStream whether or not the stream is paralllel
-    * @param ch the consistent hash to use when determining segment ownership
     * @param segments the segments that this request should utilize
     * @param keysToInclude which keys to include in the request
     * @param keysToExclude which keys to exclude in the request
     * @param includeLoader whether or not to use a loader
     * @param operation the actual operation to perform
     * @param callback the callback to collect individual node results
-    * @param <R> the type of response
     * @return the operation id to be used for further calls
     */
-   <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback);
+   <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
+                                    Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+                                    KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback);
 
    /**
     * Key tracking remote operation that has rehash enabled
+    * @param <R2> the type of response
     * @param parallelDistribution whether or not parallel distribution is enabled
     * @param parallelStream whether or not the stream is paralllel
-    * @param ch the consistent hash to use when determining segment ownership
     * @param segments the segments that this request should utilize
     * @param keysToInclude which keys to include in the request
     * @param keysToExclude which keys to exclude in the request
     * @param includeLoader whether or not to use a loader
     * @param operation the actual operation to perform
     * @param callback the callback to collect individual node results
-    * @param <R2> the type of response
     * @return the operation id to be used for further calls
     */
-   <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-                                                 Set<Integer> segments, Set<K> keysToInclude,
-                                                 Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-                                                 KeyTrackingTerminalOperation<K, ?, R2> operation,
-                                                 ResultsCallback<Map<K, R2>> callback);
+   <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
+                                                Set<Integer> segments, Set<K> keysToInclude,
+                                                Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+                                                KeyTrackingTerminalOperation<K, ?, R2> operation,
+                                                ResultsCallback<Map<K, R2>> callback);
 
    /**
     * Tests whether this operation is still pending or not.

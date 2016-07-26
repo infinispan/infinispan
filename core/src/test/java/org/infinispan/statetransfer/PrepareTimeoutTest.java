@@ -38,7 +38,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ControlledConsistentHashFactory consistentHashFactory = new ControlledConsistentHashFactory(1, 2);
+      ControlledConsistentHashFactory consistentHashFactory = new ControlledConsistentHashFactory.Default(1, 2);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);

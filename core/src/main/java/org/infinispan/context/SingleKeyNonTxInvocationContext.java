@@ -168,4 +168,15 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
       this.isLocked = false;
    }
 
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("SingleKeyNonTxInvocationContext{");
+      sb.append("isLocked=").append(isLocked);
+      sb.append(", key=").append(key);
+      sb.append(", cacheEntry=").append(cacheEntry);
+      sb.append(", origin=").append(origin);
+      sb.append(", lockOwner=").append(lockOwner);
+      sb.append('}');
+      return sb.toString();
+   }
 }
