@@ -90,6 +90,11 @@
                 <xs:documentation>The name of the cache container which will be exposed by this connector</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="socket-binding" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The socket on which this connector will bind itself</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="virtual-host" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>This setting has been deprecated and will be ignored.</xs:documentation>
@@ -118,6 +123,11 @@
         <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional">
             <xs:annotation>
                 <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="ignored-caches" type="tns:ignored-caches">
+            <xs:annotation>
+                <xs:documentation>The list of ignored caches for this connector</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
@@ -165,7 +175,7 @@
                     other nodes. Defaults to true.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="await-initial-transfer" type="xs:boolean" use="optional" default="true">
+        <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional" default="true">
             <xs:annotation>
                 <xs:documentation>Configures whether to initial state retrieval should happen immediately at startup. Only applies when lazy-retrieval is false. Defaults to true.</xs:documentation>
             </xs:annotation>
@@ -209,9 +219,14 @@
             <xs:element name="policy" type="tns:policy" minOccurs="0" />
             <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
-        <xs:attribute name="security-context-name" type="xs:string">
+        <xs:attribute name="server-context-name" type="xs:string">
             <xs:annotation>
                 <xs:documentation>The name of the login context to be used to retrieve a server subject for certain SASL mechs (i.e. GSSAPI)</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="server-name" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>The name the server which is exposed to clients</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="mechanisms" type="tns:name-list" />
@@ -354,7 +369,7 @@
 
     <xs:complexType name="encryption">
         <xs:sequence>
-            <xs:element name="sni" type="tns:sni" minOccurs="0" />
+            <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional" default="false">
             <xs:annotation>
