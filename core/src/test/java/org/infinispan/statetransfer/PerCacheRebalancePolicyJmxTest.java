@@ -23,6 +23,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.testng.annotations.Test;
 
@@ -32,6 +33,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "statetransfer.PerCacheRebalancePolicyJmxTest")
 @CleanupAfterMethod
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private static final String REBALANCING_ENABLED = "rebalancingEnabled";
@@ -51,7 +53,7 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder getConfigurationBuilder(boolean awaitInitialTransfer) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC)
+      cb.clustering().cacheMode(cacheMode)
             .stateTransfer().awaitInitialTransfer(awaitInitialTransfer);
       return cb;
    }
@@ -83,8 +85,8 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
       String domain1 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
       ObjectName ltmName1 = TestingUtil.getCacheManagerObjectName(domain1, "DefaultCacheManager", "LocalTopologyManager");
 
-      ObjectName jmxCacheA = TestingUtil.getCacheObjectName(domain0, "a(dist_sync)");
-      ObjectName jmxCacheB = TestingUtil.getCacheObjectName(domain0, "b(dist_sync)");
+      ObjectName jmxCacheA = TestingUtil.getCacheObjectName(domain0, "a(" + cacheMode.name().toLowerCase() + ")");
+      ObjectName jmxCacheB = TestingUtil.getCacheObjectName(domain0, "b(" + cacheMode.name().toLowerCase() + ")");
 
       // Check initial state
       StateTransferManager stm0a = TestingUtil.extractComponent(cache(0, "a"), StateTransferManager.class);
@@ -149,7 +151,7 @@ public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
       ConsistentHash ch = stm.getCacheTopology().getCurrentCH();
       assertEquals(addresses, ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
-         assertEquals(2, ch.locateOwnersForSegment(i).size());
+         assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());
       }
    }
 }

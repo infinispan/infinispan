@@ -18,8 +18,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @since 8.0
  */
 public class AvailablePartitionHandlingManager implements PartitionHandlingManager {
-
-
    private AvailablePartitionHandlingManager() {
    }
 

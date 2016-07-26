@@ -34,6 +34,7 @@ public class LocalizedCacheTopology extends CacheTopology {
    private final int numSegments;
    private final int numOwners;
    private final DistributionInfo[] distributionInfos;
+   private final boolean isScattered;
 
    public static LocalizedCacheTopology makeSingletonTopology(CacheMode cacheMode, Address localAddress) {
       List<Address> members = Collections.singletonList(localAddress);
@@ -54,18 +55,19 @@ public class LocalizedCacheTopology extends CacheTopology {
       this.localAddress = localAddress;
       this.keyPartitioner = keyPartitioner;
       this.isDistributed = cacheMode.isDistributed();
+      isScattered = cacheMode.isScattered();
       boolean isReplicated = cacheMode.isReplicated();
-      this.isSegmented = isDistributed || isReplicated;
+      this.isSegmented = isDistributed || isReplicated || isScattered;
       this.numSegments = readCH.getNumSegments();
       this.numOwners = readCH.getNumOwners();
 
-      if (isDistributed) {
+      if (isDistributed || isScattered) {
          this.distributionInfos = new DistributionInfo[numSegments];
          for (int segmentId = 0; segmentId < numSegments; segmentId++) {
             Address primary = readCH.locatePrimaryOwnerForSegment(segmentId);
             List<Address> readOwners = readCH.locateOwnersForSegment(segmentId);
             List<Address> writeOwners = writeCH.locateOwnersForSegment(segmentId);
-            Collection<Address> writeBackups = writeOwners.subList(1, writeOwners.size());
+            Collection<Address> writeBackups = isScattered ? Collections.emptyList() : writeOwners.subList(1, writeOwners.size());
             this.distributionInfos[segmentId] =
                   new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
          }
@@ -148,7 +150,7 @@ public class LocalizedCacheTopology extends CacheTopology {
     * @return An unordered collection with the write owners of {@code key}.
     */
    public Collection<Address> getWriteOwners(Object key) {
-      int segmentId = isDistributed ? keyPartitioner.getSegment(key) : 0;
+      int segmentId = isDistributed || isScattered ? keyPartitioner.getSegment(key) : 0;
       return distributionInfos[segmentId].writeOwners();
    }
 
@@ -159,7 +161,7 @@ public class LocalizedCacheTopology extends CacheTopology {
       if (keys.isEmpty()) {
          return Collections.emptySet();
       }
-      if (isDistributed) {
+      if (isDistributed || isScattered) {
          if (keys.size() == 1) {
             Object singleKey = keys.iterator().next();
             return getDistribution(singleKey).writeOwners();

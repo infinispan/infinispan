@@ -38,7 +38,7 @@ public class ExpirationWithClusteredWriteSkewTest extends MultipleCacheManagersT
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ControlledConsistentHashFactory chf = new ControlledConsistentHashFactory(0, 1);
+      ControlledConsistentHashFactory chf = new ControlledConsistentHashFactory.Default(0, 1);
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder
             .clustering()

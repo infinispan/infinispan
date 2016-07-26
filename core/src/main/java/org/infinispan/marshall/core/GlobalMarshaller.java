@@ -123,7 +123,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    @Start(priority = 8) // Should start after the externalizer table and before transport
    public void start() {
       internalExts = InternalExternalizers.load(this, gcr, cmdFactory);
-      reverseInternalExts = internalExts.reverseMap(128);
+      reverseInternalExts = internalExts.reverseMap(Ids.MAX_ID);
       if (trace) {
          log.tracef("Internal class to externalizer ids: %s", internalExts);
          log.tracef("Internal reverse externalizers: %s", reverseInternalExts);

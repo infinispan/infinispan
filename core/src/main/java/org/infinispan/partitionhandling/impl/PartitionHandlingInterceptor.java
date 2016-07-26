@@ -53,9 +53,9 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private boolean performPartitionCheck(InvocationContext ctx, FlagAffectedCommand command) {
       // We always perform partition check if this is a remote command
       if (!ctx.isOriginLocal()) {
-         return true;
+         return !command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
       }
-      return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
+      return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK);
    }
 
    @Override
@@ -154,11 +154,11 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             // There is no way to verify the cause here, but there isn't any other way to get an invalid
             // get response.
             throw log.degradedModeKeyUnavailable(dataCommand.getKey());
-         } else {
-            if (t instanceof AllOwnersLostException && performPartitionCheck(rCtx, dataCommand)) {
+         } else if (t instanceof AllOwnersLostException && performPartitionCheck(rCtx, dataCommand)) {
+            // Scattered cache throws AllOwnersException even if there's no need to fail with AvailabilityException
+            if (!cacheConfiguration.clustering().cacheMode().isScattered()) {
                throw log.degradedModeKeyUnavailable(dataCommand.getKey());
             }
-            throw t;
          }
       }
 
@@ -207,8 +207,6 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             // There is no way to verify the cause here, but there isn't any other way to get an invalid
             // get response.
             throw log.degradedModeKeysUnavailable(((GetAllCommand) rCommand).getKeys());
-         } else {
-            throw t;
          }
       }
 
@@ -219,11 +217,15 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             partitionHandlingManager.checkRead(key);
          }
 
-         Map<Object, Object> result = ((Map<Object, Object>) rv);
-         if (result.size() != getAllCommand.getKeys().size()) {
-            Set<Object> missingKeys = new HashSet<>(getAllCommand.getKeys());
-            missingKeys.removeAll(result.keySet());
-            throw log.degradedModeKeysUnavailable(missingKeys);
+         // Scattered cache throws AllOwnersLostException instead of returning map with only a subset of keys
+         // because the owners might be unknown even if there's no data loss and then the command has to be retried.
+         if (t == null) {
+            Map<Object, Object> result = ((Map<Object, Object>) rv);
+            if (result.size() != getAllCommand.getKeys().size()) {
+               Set<Object> missingKeys = new HashSet<>(getAllCommand.getKeys());
+               missingKeys.removeAll(result.keySet());
+               throw log.degradedModeKeysUnavailable(missingKeys);
+            }
          }
       }
    }

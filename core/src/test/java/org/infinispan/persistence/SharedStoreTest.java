@@ -1,11 +1,14 @@
 package org.infinispan.persistence;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -13,11 +16,13 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 @Test (testName = "persistence.SharedStoreTest", groups = "functional")
 @CleanupAfterMethod
+@InCacheMode({CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC})
 public class SharedStoreTest extends MultipleCacheManagersTest {
 
    @Override
@@ -29,7 +34,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
                .storeName(SharedStoreTest.class.getName())
                .purgeOnStartup(false).shared(true)
          .clustering()
-            .cacheMode(CacheMode.REPL_SYNC)
+            .cacheMode(cacheMode)
          .build();
       createCluster(cfg, 3);
       // don't create the caches here, we want them to join the cluster one by one
@@ -69,9 +74,16 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
          assert c.get("key") == null;
 
       for (CacheLoader cs: cacheStores) {
-         assert !cs.contains("key");
          DummyInMemoryStore dimcs = (DummyInMemoryStore) cs;
-         assert dimcs.stats().get("delete") == 1 : "Entry should have been removed from the cache store just once, but was removed " + dimcs.stats().get("delete") + " times";
+         if (cacheMode.isScattered()) {
+            // scattered cache leaves tombstones
+            MarshalledEntry entry = cs.load("key");
+            assert entry == null || entry.getValue() == null;
+            assertEquals("Entry should have been replaced by tombstone", Integer.valueOf(2), dimcs.stats().get("write"));
+         } else {
+            assert !cs.contains("key");
+            assertEquals("Entry should have been removed from the cache store just once", Integer.valueOf(1), dimcs.stats().get("delete"));
+         }
       }
    }
 

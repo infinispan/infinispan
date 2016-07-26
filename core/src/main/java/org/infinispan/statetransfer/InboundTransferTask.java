@@ -114,6 +114,14 @@ public class InboundTransferTask {
     * @return a {@code CompletableFuture} that completes when the transfer is done.
     */
    public CompletableFuture<Void> requestSegments() {
+      return startTransfer(applyState ? StateRequestCommand.Type.START_STATE_TRANSFER : StateRequestCommand.Type.START_CONSISTENCY_CHECK);
+   }
+
+   public CompletableFuture<Void> requestKeys() {
+      return startTransfer(StateRequestCommand.Type.START_KEYS_TRANSFER);
+   }
+
+   private CompletableFuture<Void> startTransfer(StateRequestCommand.Type type) {
       if (!isCancelled) {
          Set<Integer> segmentsCopy = getSegments();
          if (segmentsCopy.isEmpty()) {
@@ -122,18 +130,16 @@ public class InboundTransferTask {
             return completionFuture;
          }
          if (trace) {
-            log.tracef("Requesting state from node %s for segments %s", source, segmentsCopy);
+            log.tracef("Requesting state (%s) from node %s for segments %s", type, source, segmentsCopy);
          }
          // start transfer of cache entries
          try {
-            StateRequestCommand.Type requestType = applyState ? StateRequestCommand.Type.START_STATE_TRANSFER : StateRequestCommand.Type.START_CONSISTENCY_CHECK;
-            StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(requestType, rpcManager.getAddress(),
-                  topologyId, segmentsCopy);
+            StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(type, rpcManager.getAddress(), topologyId, segmentsCopy);
             Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
             Response response = responses.get(source);
             if (response instanceof SuccessfulResponse) {
                if (trace) {
-                  log.tracef("Successfully requested state from node %s for segments %s", source, segmentsCopy);
+                  log.tracef("Successfully requested state (%s) from node %s for segments %s", type, source, segmentsCopy);
                }
                return completionFuture;
             } else {

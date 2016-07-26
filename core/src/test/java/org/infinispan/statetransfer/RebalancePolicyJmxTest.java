@@ -20,6 +20,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.RebalancingStatus;
 import org.testng.annotations.Test;
@@ -29,6 +30,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "statetransfer.RebalancePolicyJmxTest")
 @CleanupAfterMethod
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private static final String REBALANCING_ENABLED = "rebalancingEnabled";
@@ -48,7 +50,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder getConfigurationBuilder(boolean awaitInitialTransfer) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC)
+      cb.clustering().cacheMode(cacheMode)
             .stateTransfer().awaitInitialTransfer(awaitInitialTransfer);
       return cb;
    }
@@ -119,7 +121,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       ConsistentHash ch = stm0.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(0), address(1), address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
-         assertEquals(2, ch.locateOwnersForSegment(i).size());
+         assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());
       }
 
       // Suspend rebalancing again
@@ -141,8 +143,11 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       assertNull(stm2.getCacheTopology().getPendingCH());
       ch = stm2.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
-      for (int i = 0; i < ch.getNumSegments(); i++) {
-         assertEquals(1, ch.locateOwnersForSegment(i).size());
+      // Scattered cache cannot reliably tolerate failure of two nodes, some segments may get lost
+      if (cacheMode.isDistributed()) {
+         for (int i = 0; i < ch.getNumSegments(); i++) {
+            assertEquals(1, ch.locateOwnersForSegment(i).size());
+         }
       }
       assertEquals(RebalancingStatus.SUSPENDED.toString(), stm2.getRebalancingStatus());
 
@@ -163,7 +168,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       ch = stm2.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
-         assertEquals(2, ch.locateOwnersForSegment(i).size());
+         assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());
       }
    }
 }

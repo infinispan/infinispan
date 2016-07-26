@@ -206,7 +206,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       ConsistentHash ch = dm.getWriteConsistentHash();
       TerminalOperation<R> op = new SingleRunOperation(intermediateOperations,
               supplierForSegments(ch, segmentsToFilter, null), function);
-      Object id = csm.remoteStreamOperation(getParallelDistribution(), parallel, ch, segmentsToFilter, keysToFilter,
+      Object id = csm.remoteStreamOperation(getParallelDistribution(), parallel, segmentsToFilter, keysToFilter,
               Collections.emptyMap(), includeLoader, op, remoteResults, earlyTerminatePredicate);
       try {
          R localValue = op.performOperation();
@@ -243,7 +243,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
             op = new SingleRunOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess, null),
                     function);
          }
-         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
+         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, segmentsToProcess,
                  keysToFilter, Collections.emptyMap(), includeLoader, op, remoteResults, earlyTerminatePredicate);
          try {
             R localValue;
@@ -328,7 +328,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
          KeyTrackingTerminalOperation<Object, ? extends T, Object> op = function.apply(supplierForSegments(ch,
                  segmentsToProcess, excludedKeys));
          op.handleInjection(registry);
-         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
+         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, segmentsToProcess,
                  keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray), includeLoader, op,
                  results);
          try {

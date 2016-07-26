@@ -38,6 +38,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -119,6 +120,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private ByteBufferFactory byteBufferFactory;
    private MarshalledEntryFactory marshalledEntryFactory;
    private volatile boolean clearOnStop;
+   private boolean preloaded;
 
    @Inject
    public void inject(AdvancedCache<Object, Object> cache, StreamingMarshaller marshaller,
@@ -143,6 +145,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    @Start(priority = 10)
    public void start() {
+      preloaded = false;
       enabled = configuration.persistence().usingStores();
       if (!enabled)
          return;
@@ -227,7 +230,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
       }
+      preloaded = false;
+   }
 
+   @Override
+   public boolean isPreloaded() {
+      return preloaded;
    }
 
    @Override
@@ -258,17 +266,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
       final long maxEntries = getMaxEntries();
       final AtomicInteger loadedEntries = new AtomicInteger(0);
       final AdvancedCache<Object, Object> flaggedCache = getCacheForStateInsertion();
+      ByRef.Boolean preloaded = new ByRef.Boolean(true);
       preloadCl.process(null, (me, taskContext) -> {
          if (loadedEntries.getAndIncrement() >= maxEntries) {
             taskContext.stop();
+            preloaded.set(false);
             return;
          }
          Metadata metadata = me.getMetadata() != null ? ((InternalMetadataImpl) me.getMetadata()).actual() :
                null; //the downcast will go away with ISPN-3460
          preloadKey(flaggedCache, me.getKey(), me.getValue(), metadata);
       }, new WithinThreadExecutor(), true, true);
+      this.preloaded = preloaded.get();
 
-      log.debugf("Preloaded %s keys in %s", loadedEntries, Util.prettyPrintTime(timeService.timeDuration(start, MILLISECONDS)));
+      log.debugf("Preloaded %d keys in %s", loadedEntries.get(), Util.prettyPrintTime(timeService.timeDuration(start, MILLISECONDS)));
    }
 
    @Override

@@ -8,6 +8,7 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
@@ -24,13 +25,14 @@ import org.infinispan.util.logging.LogFactory;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-public class RemoveCommand extends AbstractDataWriteCommand {
+public class RemoveCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
    private static final Log log = LogFactory.getLog(RemoveCommand.class);
    public static final byte COMMAND_ID = 10;
    protected CacheNotifier<Object, Object> notifier;
    protected boolean successful = true;
    private boolean nonExistent = false;
 
+   protected Metadata metadata;
    protected ValueMatcher valueMatcher;
 
    /**
@@ -110,6 +112,16 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    @Override
+   public void setMetadata(Metadata metadata) {
+      this.metadata = metadata;
+   }
+
+   @Override
+   public Metadata getMetadata() {
+      return metadata;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (!super.equals(o)) {
          return false;
@@ -134,6 +146,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          .append("RemoveCommand{key=")
          .append(toStr(key))
          .append(", value=").append(toStr(value))
+         .append(", metadata=").append(metadata)
          .append(", flags=").append(printFlags())
          .append(", commandInvocationId=").append(CommandInvocationId.show(commandInvocationId))
          .append(", valueMatcher=").append(valueMatcher)
@@ -160,6 +173,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(value);
+      output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
@@ -169,6 +183,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       value = input.readObject();
+      metadata = (Metadata) input.readObject();
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);

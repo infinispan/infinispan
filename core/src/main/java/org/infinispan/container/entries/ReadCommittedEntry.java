@@ -90,12 +90,12 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public final long getLifespan() {
-      return metadata.lifespan();
+      return metadata == null ? -1 : metadata.lifespan();
    }
 
    @Override
    public final long getMaxIdle() {
-      return metadata.maxIdle();
+      return metadata == null ? -1 : metadata.maxIdle();
    }
 
    @Override

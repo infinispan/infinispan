@@ -19,13 +19,11 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class SimpleClusteredVersion implements IncrementableEntryVersion {
-
    /**
     * The cache topology id in which it was first created.
     */
-   private final int topologyId;
-
-   final long version;
+   public final int topologyId;
+   public final long version;
 
    public SimpleClusteredVersion(int topologyId, long version) {
       this.version = version;

@@ -148,6 +148,11 @@ public class BlockingClusterTopologyManager implements ClusterTopologyManager {
       delegate.broadcastShutdownCache(cacheName, currentTopology, totalOrder, distributed);
    }
 
+   @Override
+   public void setInitialCacheTopologyId(String cacheName, int topologyId) {
+      delegate.setInitialCacheTopologyId(cacheName, topologyId);
+   }
+
    public class Handle<T> {
       private final Predicate<T> condition;
       private final NotifierLatch latch = new NotifierLatch();

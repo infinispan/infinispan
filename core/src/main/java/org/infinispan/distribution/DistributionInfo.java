@@ -31,7 +31,7 @@ public class DistributionInfo {
       this.writeOwners = writeOwners;
       this.writeBackups = writeBackups;
 
-      this.isPrimary = primary.equals(localAddress);
+      this.isPrimary = primary != null && primary.equals(localAddress);
       this.isReadOwner = readOwners.contains(localAddress);
       this.isWriteOwner = writeOwners.contains(localAddress);
       this.isWriteBackup = this.isWriteOwner && !this.isPrimary;

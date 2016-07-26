@@ -303,7 +303,7 @@ rebalance_start
 
    }
 
-   public static class ConsistentHashFactoryImpl extends BaseControlledConsistentHashFactory {
+   public static class ConsistentHashFactoryImpl extends BaseControlledConsistentHashFactory.Default {
 
       public ConsistentHashFactoryImpl() {
          super(1);
