@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
@@ -52,7 +53,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          }
          // check consensus
          assertOwnershipConsensus(key);
-         assertEquals("Expected 2 owners for key " + key + " but was " + owners, 2, owners.size());
+         assertEquals("Expected " + numOwners + " owners for key " + key + " but was " + owners, numOwners, owners.size());
       }
    }
 
@@ -78,24 +79,17 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       // No non-owners have requested the key, so no invalidations
       asyncWait(k1, PutKeyValueCommand.class);
 
-      for (Cache<Object, String> c : caches) {
-         if (isOwner(c, k1)) {
-            assertIsInContainerImmortal(c, k1);
-         } else {
-            assertIsNotInL1(c, k1);
-         }
-      }
-
       // should be available everywhere!
       assertOnAllCachesAndOwnership(k1, "value");
 
       // and should now be in L1
-
-      for (Cache<Object, String> c : caches) {
-         if (isOwner(c, k1)) {
-            assertIsInContainerImmortal(c, k1);
-         } else {
-            assertIsInL1(c, k1);
+      if (l1CacheEnabled) {
+         for (Cache<Object, String> c : caches) {
+            if (isOwner(c, k1)) {
+               assertIsInContainerImmortal(c, k1);
+            } else {
+               assertIsInL1(c, k1);
+            }
          }
       }
    }
@@ -242,17 +236,19 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
          Collection expValueEntries = ObjectDuplicator.duplicateCollection(expValues);
 
-         Set keys = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet();
+         // CACHE_MODE_LOCAL prohibits RPCs and SKIP_OWNERSHIP_CHECKS forces that all entries from DC are read
+         AdvancedCache cacheWithIgnoredOwnership = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK);
+         Set keys = cacheWithIgnoredOwnership.keySet();
          for (Object key : keys)
             assertTrue(expKeys.remove(key));
          assertTrue("Did not see keys " + expKeys + " in iterator!", expKeys.isEmpty());
 
-         Collection values = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).values();
+         Collection values = cacheWithIgnoredOwnership.values();
          for (Object value : values)
             assertTrue(expValues.remove(value));
          assertTrue("Did not see keys " + expValues + " in iterator!", expValues.isEmpty());
 
-         Set<Map.Entry> entries = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet();
+         Set<Map.Entry> entries = cacheWithIgnoredOwnership.entrySet();
          for (Map.Entry entry : entries) {
             assertTrue(expKeyEntries.remove(entry.getKey()));
             assertTrue(expValueEntries.remove(entry.getValue()));

@@ -157,8 +157,7 @@ public enum Flag {
    @Deprecated
    REMOVE_DATA_ON_STOP,
    /**
-    * Used by the DistLockingInterceptor to commit the change no matter what (if the flag is set). This is used when
-    * a node A pushes state to another node B and A doesn't want B to check if the state really belongs to it
+    * Ignore current consistent hash and read from data container/commit the change no matter what (if the flag is set).
     */
    SKIP_OWNERSHIP_CHECK,
    /**

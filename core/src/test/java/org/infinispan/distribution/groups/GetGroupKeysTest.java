@@ -52,6 +52,8 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
          new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER),
          new GetGroupKeysTest(false, TestCacheFactory.BACKUP_OWNER),
          new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER),
+         new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
+         new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
       };
    }
 
@@ -225,15 +227,14 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
       }
    }
 
-   private static ConfigurationBuilder createConfigurationBuilder(boolean transactional) {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional);
+   private ConfigurationBuilder createConfigurationBuilder(boolean transactional) {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, transactional);
       builder.clustering().stateTransfer().fetchInMemoryState(false);
       builder.clustering().hash().groups().enabled(true);
-      builder.clustering().hash().numOwners(2);
       return builder;
    }
 
-   private static ConfigurationBuilder createConfigurationBuilderWithPersistence(boolean transactional, boolean passivation) {
+   private ConfigurationBuilder createConfigurationBuilderWithPersistence(boolean transactional, boolean passivation) {
       ConfigurationBuilder builder = createConfigurationBuilder(transactional);
       if (passivation) {
          builder.eviction().maxEntries(2);

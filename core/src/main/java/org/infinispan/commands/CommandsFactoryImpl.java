@@ -68,6 +68,7 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -102,6 +103,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateConsumer;
@@ -174,6 +176,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private CommandAckCollector commandAckCollector;
    private StateReceiver stateReceiver;
    private ComponentRegistry componentRegistry;
+   private OrderedUpdatesManager orderedUpdatesManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
    private StreamingMarshaller marshaller;
@@ -193,7 +196,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
                                  CommandAckCollector commandAckCollector,
                                  StateReceiver stateReceiver,
-                                 ComponentRegistry componentRegistry) {
+                                 ComponentRegistry componentRegistry,
+                                 OrderedUpdatesManager orderedUpdatesManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -222,6 +226,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.commandAckCollector = commandAckCollector;
       this.stateReceiver = stateReceiver;
       this.componentRegistry = componentRegistry;
+      this.orderedUpdatesManager = orderedUpdatesManager;
    }
 
    @Start(priority = 1)
@@ -536,6 +541,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case BackupPutMapRpcCommand.COMMAND_ID:
             ((BackupPutMapRpcCommand) c).init(icf, interceptorChain, notifier);
             break;
+         case InvalidateVersionsCommand.COMMAND_ID:
+            InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
+            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -562,13 +571,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int viewId, Set<Integer> segments) {
-      return new StateRequestCommand(cacheName, subtype, sender, viewId, segments);
+   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, Set<Integer> segments) {
+      return new StateRequestCommand(cacheName, subtype, sender, topologyId, segments);
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, Collection<StateChunk> stateChunks, boolean applyState) {
-      return new StateResponseCommand(cacheName, sender, topologyId, stateChunks, applyState);
+   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer) {
+      return new StateResponseCommand(cacheName, sender, topologyId, stateChunks, applyState, pushTransfer);
    }
 
    @Override
@@ -722,6 +731,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
       return new ReadWriteManyEntriesCommand<>(entries, f, params, generateUUID(transactional));
+   }
+
+   @Override
+   public InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
+      return new InvalidateVersionsCommand(cacheName, keys, topologyIds, versions, removed);
    }
 
    @Override

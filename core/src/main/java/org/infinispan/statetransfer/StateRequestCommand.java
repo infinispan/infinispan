@@ -14,6 +14,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.scattered.ScatteredStateProvider;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.util.concurrent.CompletableFutures;
@@ -35,8 +36,11 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       GET_CACHE_LISTENERS,
       START_CONSISTENCY_CHECK,
       CANCEL_CONSISTENCY_CHECK,
+      START_KEYS_TRANSFER,
       START_STATE_TRANSFER,
-      CANCEL_STATE_TRANSFER;
+      CANCEL_STATE_TRANSFER,
+      CONFIRM_REVOKED_SEGMENTS,
+      ;
 
       private static final Type[] CACHED_VALUES = values();
    }
@@ -86,6 +90,10 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
                stateProvider.startOutboundTransfer(getOrigin(), topologyId, segments, false);
                return CompletableFutures.completedNull();
 
+            case START_KEYS_TRANSFER:
+               ((ScatteredStateProvider) stateProvider).startKeysTransfer(segments, getOrigin());
+               return CompletableFutures.completedNull();
+
             case START_STATE_TRANSFER:
                stateProvider.startOutboundTransfer(getOrigin(), topologyId, segments, true);
                return CompletableFutures.completedNull();
@@ -98,6 +106,10 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
             case GET_CACHE_LISTENERS:
                Collection<DistributedCallable> listeners = stateProvider.getClusterListenersToInstall();
                return CompletableFuture.completedFuture(listeners);
+
+            case CONFIRM_REVOKED_SEGMENTS:
+               return ((ScatteredStateProvider) stateProvider)
+                     .confirmRevokedSegments(topologyId).thenApply(nil -> null);
             default:
                throw new CacheException("Unknown state request command type: " + type);
          }
@@ -147,6 +159,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       switch (type) {
          case START_CONSISTENCY_CHECK:
          case CANCEL_CONSISTENCY_CHECK:
+         case START_KEYS_TRANSFER:
          case START_STATE_TRANSFER:
          case GET_TRANSACTIONS:
          case CANCEL_STATE_TRANSFER:
@@ -154,6 +167,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
             MarshallUtil.marshallCollection(segments, output);
             return;
          case GET_CACHE_LISTENERS:
+         case CONFIRM_REVOKED_SEGMENTS:
             return;
          default:
             throw new IllegalStateException("Unknown state request command type: " + type);
@@ -166,6 +180,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       switch (type) {
          case START_CONSISTENCY_CHECK:
          case CANCEL_CONSISTENCY_CHECK:
+         case START_KEYS_TRANSFER:
          case START_STATE_TRANSFER:
          case GET_TRANSACTIONS:
          case CANCEL_STATE_TRANSFER:
@@ -173,6 +188,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
             segments = MarshallUtil.unmarshallCollectionUnbounded(input, SmallIntSet::new);
             return;
          case GET_CACHE_LISTENERS:
+         case CONFIRM_REVOKED_SEGMENTS:
             return;
          default:
             throw new IllegalStateException("Unknown state request command type: " + type);

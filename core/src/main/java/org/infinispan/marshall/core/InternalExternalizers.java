@@ -22,6 +22,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
@@ -41,6 +42,8 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
+import org.infinispan.distribution.ch.impl.ScatteredConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
@@ -207,8 +210,11 @@ final class InternalExternalizers {
       addInternalExternalizer(new PersistentUUID.Externalizer(), exts);
       addInternalExternalizer(new RecoveryAwareDldGlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new RecoveryAwareGlobalTransaction.Externalizer(), exts);
+      addInternalExternalizer(new RemoteMetadata.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
+      addInternalExternalizer(new ScatteredConsistentHash.Externalizer(), exts);
+      addInternalExternalizer(new ScatteredConsistentHashFactory.Externalizer(), exts);
       addInternalExternalizer(new SerializableXid.XidExternalizer(), exts);
       addInternalExternalizer(new SimpleClusteredVersion.Externalizer(), exts);
       addInternalExternalizer(new StateChunk.Externalizer(), exts);

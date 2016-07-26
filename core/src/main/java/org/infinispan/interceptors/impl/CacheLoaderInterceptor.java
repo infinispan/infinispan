@@ -393,7 +393,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return true;
       }
 
-      if (!canLoad(key)) {
+      if (!cmd.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK) && !canLoad(key)) {
          if (trace) {
             log.tracef("Skip load for command %s. Cannot load the key.", cmd);
          }

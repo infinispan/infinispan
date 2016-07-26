@@ -55,6 +55,7 @@ public enum Attribute {
     INITIAL_CLUSTER_SIZE("initial-cluster-size"),
     INITIAL_CLUSTER_TIMEOUT("initial-cluster-timeout"),
     INTERVAL("interval"),
+    INVALIDATION_BATCH_SIZE("invalidation-batch-size"),
     INVALIDATION_CLEANUP_TASK_FREQUENCY("l1-cleanup-interval"),
     ISOLATION("isolation"),
     JNDI_NAME("jndi-name"),

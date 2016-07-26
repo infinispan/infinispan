@@ -244,7 +244,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       return stableTopology != null && cacheTopology.getActualMembers().containsAll(stableTopology.getActualMembers());
    }
 
-   private void doCheck(Object key, boolean isWrite) {
+   protected void doCheck(Object key, boolean isWrite) {
       if (trace) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
@@ -259,7 +259,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
    }
 
-   private boolean isOperationAllowed(boolean isWrite) {
+   protected boolean isOperationAllowed(boolean isWrite) {
       return availabilityMode == AvailabilityMode.AVAILABLE ||
             partitionHandling == PartitionHandling.ALLOW_READ_WRITES ||
             (!isWrite && partitionHandling != PartitionHandling.DENY_READ_WRITES);

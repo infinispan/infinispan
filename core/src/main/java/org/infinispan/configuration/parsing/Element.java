@@ -72,6 +72,8 @@ public enum Element {
     REPLICATED_CACHE_CONFIGURATION("replicated-cache-configuration"),
     ROLE("role"),
     ROOT("infinispan"),
+    SCATTERED_CACHE("scattered-cache"),
+    SCATTERED_CACHE_CONFIGURATION("scattered-cache-configuration"),
     SCHEDULED_THREAD_POOL("scheduled-thread-pool"),
     SECURITY("security"),
     SERIALIZATION("serialization"),

@@ -29,11 +29,9 @@ import org.testng.annotations.Test;
 public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected ConfigurationBuilder builderUsed;
-   protected final boolean tx;
-   protected final CacheMode cacheMode;
 
    public BaseSetupStreamIteratorTest(boolean tx, CacheMode mode) {
-      this.tx = tx;
+      transactional = tx;
       cacheMode = mode;
    }
 
@@ -44,12 +42,11 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
-      builderUsed.clustering().cacheMode(cacheMode);
-      if (tx) {
+      builderUsed.clustering().cacheMode(cacheMode).hash().numSegments(16);
+      if (transactional) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
       if (cacheMode.isClustered()) {
-         builderUsed.clustering().hash().numOwners(2);
          builderUsed.clustering().stateTransfer().chunkSize(50);
          enhanceConfiguration(builderUsed);
          createClusteredCaches(3, CACHE_NAME, builderUsed);

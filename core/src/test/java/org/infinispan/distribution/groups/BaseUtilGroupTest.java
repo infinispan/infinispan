@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.Group;
@@ -27,6 +28,7 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
 
    protected BaseUtilGroupTest(TestCacheFactory factory) {
       this.factory = factory;
+      this.cacheMode = CacheMode.DIST_SYNC; // default for the transactional tests
    }
 
    @Override

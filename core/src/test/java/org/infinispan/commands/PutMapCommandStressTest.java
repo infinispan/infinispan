@@ -35,8 +35,9 @@ public class PutMapCommandStressTest extends StressTest {
    @Override
    public Object[] factory() {
       return new Object[] {
-         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
-         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+//         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+//         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+         new PutMapCommandStressTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 
@@ -44,7 +45,9 @@ public class PutMapCommandStressTest extends StressTest {
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
-      builderUsed.clustering().hash().numOwners(NUM_OWNERS);
+      if (!cacheMode.isScattered()) {
+         builderUsed.clustering().hash().numOwners(NUM_OWNERS);
+      }
       builderUsed.clustering().stateTransfer().chunkSize(25000);
       // This is increased just for the put all command when doing full tracing
       builderUsed.clustering().remoteTimeout(12000);

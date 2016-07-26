@@ -25,6 +25,12 @@ import org.infinispan.persistence.support.BatchModification;
 public interface PersistenceManager extends Lifecycle {
 
    /**
+    * @return true if all entries from the store have been inserted to the cache. If the persistence/preload
+    * is disabled or eviction limit was reached when preloading, returns false.
+    */
+   boolean isPreloaded();
+
+   /**
     * Loads the data from the external store into memory during cache startup.
     */
    void preload();

@@ -179,6 +179,10 @@ public interface Ids {
    int FUNCTION_MAPPER = 125;
    int BI_FUNCTION_MAPPER = 126;
 
+   int SCATTERED_CONSISTENT_HASH_FACTORY = 127;
+   int SCATTERED_CONSISTENT_HASH = 128;
+   int METADATA_REMOTE = 129;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }
