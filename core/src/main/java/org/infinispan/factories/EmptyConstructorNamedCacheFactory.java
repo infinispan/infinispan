@@ -61,7 +61,7 @@ import static org.infinispan.commons.util.Util.getInstance;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, CacheConfigurationMBean.class, ClusterCacheNotifier.class, CommandsFactory.class,
-                              PersistenceManager.class, InvocationContextContainer.class,
+                              PersistenceManager.class,
                               PassivationManager.class, ActivationManager.class,
                               BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
@@ -93,8 +93,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             componentImpl = isTransactional ? TransactionalInvocationContextFactory.class
                   : NonTransactionalInvocationContextFactory.class;
             return componentType.cast(getInstance(componentImpl));
-         } else if (componentType.equals(InvocationContextContainer.class)) {
-            return (T) new InvocationContextContainerImpl();
          } else if (componentType.equals(CacheNotifier.class)) {
             return (T) new CacheNotifierImpl();
          } else if (componentType.equals(CacheConfigurationMBean.class)) {

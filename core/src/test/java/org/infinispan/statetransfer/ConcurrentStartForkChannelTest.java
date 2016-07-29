@@ -101,11 +101,11 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
       try {
          Method getOrCreateComponent = ReflectionUtil
                .findMethod(GlobalComponentRegistry.class, "getOrCreateComponent",
-                     new Class[]{Class.class, String.class});
+                     new Class[]{Class.class});
          getOrCreateComponent.setAccessible(true);
          GlobalComponentRegistry gcr = manager.getGlobalComponentRegistry();
          StreamingMarshaller marshaller = (StreamingMarshaller) getOrCreateComponent
-               .invoke(gcr, StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+               .invoke(gcr, StreamingMarshaller.class);
          return marshaller.objectToByteBuffer(CacheNotFoundResponse.INSTANCE);
       } finally {
          manager.stop();

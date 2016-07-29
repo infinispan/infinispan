@@ -84,7 +84,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -109,7 +109,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
-      marshaller = extractCacheMarshaller(cm.getCache());
+      marshaller = extractGlobalMarshaller(cm);
    }
 
    @AfterClass

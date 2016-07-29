@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
@@ -527,12 +527,12 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    public void testEqualsAndHashCode() throws Exception {
       Pojo pojo = new Pojo();
-      MarshalledValue mv = new MarshalledValue(pojo, extractCacheMarshaller(cache(0)));
+      MarshalledValue mv = new MarshalledValue(pojo, extractGlobalMarshaller(cache(0).getCacheManager()));
       int oldHashCode = mv.hashCode();
       assertSerialized(mv);
       assertTrue(oldHashCode == mv.hashCode());
 
-      MarshalledValue mv2 = new MarshalledValue(pojo, extractCacheMarshaller(cache(0)));
+      MarshalledValue mv2 = new MarshalledValue(pojo, extractGlobalMarshaller(cache(0).getCacheManager()));
       assertSerialized(mv);
 
       assertTrue(mv2.hashCode() == oldHashCode);

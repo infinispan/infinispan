@@ -5,7 +5,6 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.tasks.TaskContext;
 
 import java.io.Serializable;
@@ -37,7 +36,7 @@ public class DistributedServerTask<T> implements Serializable, DistributedCallab
       // todo inject global component registry to be independent of existence of cache.
       GlobalComponentRegistry componentRegistry = cache.getCacheManager().getGlobalComponentRegistry();
       taskRegistry = componentRegistry.getComponent(ServerTaskRegistry.class);
-      marshaller = componentRegistry.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+      marshaller = componentRegistry.getComponent(StreamingMarshaller.class);
    }
 
    @Override

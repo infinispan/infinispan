@@ -850,16 +850,9 @@ public class TestingUtil {
       return extractComponentRegistry(cache).getComponent(LockManager.class);
    }
 
-   public static AbstractDelegatingMarshaller extractCacheMarshaller(Cache cache) {
-      ComponentRegistry cr = extractField(cache, "componentRegistry");
-      StreamingMarshaller marshaller = cr.getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
-      return (AbstractDelegatingMarshaller) marshaller;
-   }
-
    public static AbstractDelegatingMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
       GlobalComponentRegistry gcr = extractField(cm, "globalComponentRegistry");
-      return (AbstractDelegatingMarshaller)
-            gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+      return (AbstractDelegatingMarshaller) gcr.getComponent(StreamingMarshaller.class);
    }
 
    public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {
@@ -1403,10 +1396,6 @@ public class TestingUtil {
       return (T) persistenceManager.getAllTxWriters().get(0);
    }
 
-   public static StreamingMarshaller marshaller(Cache cache) {
-      return cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
-   }
-
    public static Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore cl, KeyFilter filter) {
       final Set<MarshalledEntry> result = new HashSet<MarshalledEntry>();
       cl.process(filter, new AdvancedCacheLoader.CacheLoaderTask() {
@@ -1459,7 +1448,7 @@ public class TestingUtil {
    public static <K, V> void writeToAllStores(K key, V value, Cache<K, V> cache) {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
-      StreamingMarshaller marshaller = advCache.getComponentRegistry().getCacheMarshaller();
+      StreamingMarshaller marshaller = extractGlobalMarshaller(advCache.getCacheManager());
       pm.writeToAllNonTxStores(new MarshalledEntryImpl(key, value, null, marshaller), BOTH);
    }
 

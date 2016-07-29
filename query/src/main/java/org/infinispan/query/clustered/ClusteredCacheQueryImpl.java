@@ -13,15 +13,11 @@ import org.apache.lucene.search.Sort;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.CacheQueryImpl;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 
 /**
  * A extension of CacheQueryImpl used for distributed queries.
@@ -43,16 +39,12 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    private int firstResult = 0;
 
-   private Marshaller marshaller;
-
    public ClusteredCacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory,
             ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;
       this.hSearchQuery = searchFactory.createHSQuery().luceneQuery(luceneQuery)
                .targetedEntities(Arrays.asList(classes));
-      this.marshaller = ComponentRegistryUtils.getComponent(cache,
-            StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
    }
 
    @Override

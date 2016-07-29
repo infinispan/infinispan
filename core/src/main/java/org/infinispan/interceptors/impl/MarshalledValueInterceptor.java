@@ -44,7 +44,6 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import static org.infinispan.marshall.core.MarshalledValue.isTypeExcluded;
 
 /**
@@ -83,7 +82,7 @@ public class MarshalledValueInterceptor<K, V> extends DDAsyncInterceptor {
    };
 
    @Inject
-   protected void inject(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
+   protected void inject(StreamingMarshaller marshaller,
                          InternalEntryFactory entryFactory, Cache<K, V> cache) {
       this.marshaller = marshaller;
       this.entryFactory = entryFactory;

@@ -2,36 +2,25 @@ package org.infinispan.commons.marshall.jboss;
 
 import java.io.IOException;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
 import org.jboss.marshalling.river.RiverMarshallerFactory;
 import org.jboss.marshalling.river.RiverUnmarshaller;
 
 /**
- * An extended {@link RiverUnmarshaller} that allows Infinispan {@link StreamingMarshaller}
- * instances to travel down the stack to potential externalizer implementations
- * that might need it, such as {@link org.infinispan.commons.marshall.MarshalledValue.Externalizer}
+ * An extended {@link RiverUnmarshaller} that allows to track lifecycle of
+ * unmarshaller so that pools can be notified when not in use any more.
  *
  * @author Galder Zamarreño
  * @since 5.1
  */
 public class ExtendedRiverUnmarshaller extends RiverUnmarshaller {
 
-   private StreamingMarshaller infinispanMarshaller;
    private RiverCloseListener listener;
 
    protected ExtendedRiverUnmarshaller(RiverMarshallerFactory factory,
          SerializableClassRegistry registry, MarshallingConfiguration cfg) {
       super(factory, registry, cfg);
-   }
-
-   public StreamingMarshaller getInfinispanMarshaller() {
-      return infinispanMarshaller;
-   }
-
-   public void setInfinispanMarshaller(StreamingMarshaller infinispanMarshaller) {
-      this.infinispanMarshaller = infinispanMarshaller;
    }
 
    void setCloseListener(RiverCloseListener closeListener) {

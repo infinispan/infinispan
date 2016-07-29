@@ -28,12 +28,8 @@ import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.DelegatingObjectInput;
 import org.infinispan.commons.marshall.DelegatingObjectOutput;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -70,7 +66,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       this.cmdExt = cmdExt;
       this.gcr = gcr;
       //Cache this locally to avoid having to look it up often:
-      this.globalMarshaller = gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.GLOBAL_MARSHALLER);
+      this.globalMarshaller = gcr.getComponent(StreamingMarshaller.class);
    }
 
    @Override
@@ -102,12 +98,10 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       ByteString cacheName = command.getCacheName();
       ByteString.writeObject(output, cacheName);
 
-      StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
-
       // Take the cache marshaller and generate the payload for the rest of
       // the command using that cache marshaller and the write the bytes in
       // the original payload.
-      marshallParameters(command, marshaller, output);
+      marshallParameters(command, globalMarshaller, output);
    }
 
    private void marshallParameters(CacheRpcCommand cmd, StreamingMarshaller marshaller, ObjectOutput oo) throws IOException {
@@ -128,23 +122,14 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
       byte methodId = (byte) input.readShort();
       ByteString cacheName = ByteString.readObject(input);
 
-      StreamingMarshaller marshaller = getCacheMarshaller(cacheName);
-
       //create the object input
-      ObjectInput paramsInput = marshaller.startObjectInput(convertInputStream(input), true);
-      // Not ideal, but the alternative (without changing API), would have been
-      // using thread locals which are expensive to retrieve.
-      // Remember that the aim with externalizers is for them to be stateless.
-      if (paramsInput instanceof ExtendedRiverUnmarshaller) {
-         ((ExtendedRiverUnmarshaller) paramsInput).setInfinispanMarshaller(marshaller);
-      }
-
+      ObjectInput paramsInput = globalMarshaller.startObjectInput(convertInputStream(input), true);
       CacheRpcCommand cacheRpcCommand;
       try {
          cacheRpcCommand = cmdExt.fromStream(methodId, type, cacheName);
          cmdExt.readCommandParameters(paramsInput, cacheRpcCommand);
       } finally {
-         marshaller.finishObjectInput(paramsInput);
+         globalMarshaller.finishObjectInput(paramsInput);
       }
       return cacheRpcCommand;
    }
@@ -152,25 +137,6 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
    @Override
    public Integer getId() {
       return Ids.CACHE_RPC_COMMAND;
-   }
-
-   private StreamingMarshaller getCacheMarshaller(ByteString cacheName) {
-      ComponentRegistry registry = gcr.getNamedComponentRegistry(cacheName);
-      if (registry == null || registry.getStatus() != ComponentStatus.RUNNING) {
-         // When starting, even though the command is directed at a cache,
-         // it could happen that the cache is not yet started, so fallback on
-         // global marshaller.
-
-         // The reason cache and global marshallers are different is cos right
-         // now they could be associated with different classloaders. There are
-         // situations when the cache marshaller might not yet be available
-         // (i.e. StateRequestCommand), so this fallback is basically saying:
-         // "when cache is starting, if you can't find the cache marshaller,
-         // use the global marshaller and the global classloader"
-         return globalMarshaller;
-      } else {
-         return registry.getCacheMarshaller();
-      }
    }
 
    private static OutputStream convertObjectOutput(ObjectOutput objectOutput) {

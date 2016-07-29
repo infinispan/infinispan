@@ -76,8 +76,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
-
 /**
  * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of
  * methods, usually by passing in one of the following properties:
@@ -176,7 +174,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
     * @param gcr           the global component registry
     */
    @Inject
-   public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
+   public void initialize(StreamingMarshaller marshaller,
                           CacheManagerNotifier notifier, GlobalComponentRegistry gcr,
                           TimeService timeService, InboundInvocationHandler globalHandler,
                           @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,

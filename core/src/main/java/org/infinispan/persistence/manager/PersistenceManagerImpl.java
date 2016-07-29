@@ -68,7 +68,6 @@ import java.util.function.Predicate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 
@@ -106,7 +105,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private volatile boolean clearOnStop;
 
    @Inject
-   public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
+   public void inject(AdvancedCache<Object, Object> cache, StreamingMarshaller marshaller,
                       Configuration configuration, TransactionManager transactionManager,
                       TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
                       ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory,

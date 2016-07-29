@@ -1,7 +1,5 @@
 package org.infinispan.distexec;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-
 import java.io.Externalizable;
 import java.io.NotSerializableException;
 import java.io.Serializable;
@@ -183,7 +181,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       this.rpc = SecurityActions.getCacheRpcManager(cache);
       this.invoker = registry.getComponent(AsyncInterceptorChain.class);
       this.factory = registry.getComponent(CommandsFactory.class);
-      this.marshaller = registry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
+      this.marshaller = registry.getComponent(StreamingMarshaller.class);
       this.cancellationService = registry.getComponent(CancellationService.class);
       this.localExecutorService = localExecutorService;
       this.takeExecutorOwnership = takeExecutorOwnership;
