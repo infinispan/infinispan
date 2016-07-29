@@ -18,7 +18,8 @@ import static org.testng.AssertJUnit.assertNotNull;
 public class DistSyncTxStoreSharedTest extends BaseDistStoreTest {
 
    public DistSyncTxStoreSharedTest() {
-      tx = true;
+      transactional = true;
+      testRetVals = true;
       shared = true;
    }
 
@@ -29,7 +30,6 @@ public class DistSyncTxStoreSharedTest extends BaseDistStoreTest {
       assertEquals("v1", cacheX.get("key1"));
       assertNotNull(storeX.load("key1"));
       assertEquals("v1", storeX.load("key1").getValue());
-      assertNumberOfInvocations(storeX, "write", 1); // Shared store, so only one node should have written the change
    }
 
 }

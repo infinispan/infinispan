@@ -25,8 +25,6 @@ public class DistSyncL1PassivationFuncTest extends BaseDistFunctionalTest {
    protected AdvancedCacheLoader nonOwnerCacheStore;
 
    public DistSyncL1PassivationFuncTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
       numOwners = 1;
       INIT_CLUSTER_SIZE = 2;

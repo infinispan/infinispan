@@ -35,8 +35,6 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
    private static final String[] keys = new String[]{k1, k2, k3, k4};
 
    public DistSyncStoreNotSharedTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
       shared = false;
    }

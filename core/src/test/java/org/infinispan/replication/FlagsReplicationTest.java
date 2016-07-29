@@ -29,7 +29,7 @@ public class FlagsReplicationTest extends BaseDistFunctionalTest<Object, String>
    private final String key = TEST_NAME;
 
    public FlagsReplicationTest() {
-      tx = true;
+      transactional = true;
       cacheName = TEST_NAME;
       cleanup = CleanupPhase.AFTER_METHOD;
       lockingMode = LockingMode.PESSIMISTIC;

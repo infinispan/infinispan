@@ -15,7 +15,7 @@ public class DistSkipRemoteLookupBatchingTest extends BaseDistFunctionalTest<Obj
    public DistSkipRemoteLookupBatchingTest() {
       cleanup = AbstractCacheTest.CleanupPhase.AFTER_METHOD;
       batchingEnabled = true;
-      tx = true;
+      transactional = true;
    }
 
    public void testSkipLookupOnGetWhileBatching() {

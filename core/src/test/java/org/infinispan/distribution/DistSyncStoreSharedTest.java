@@ -30,8 +30,6 @@ import static org.testng.AssertJUnit.assertEquals;
 public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
 
    public DistSyncStoreSharedTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
       shared = true;
    }

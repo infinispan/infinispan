@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
@@ -26,8 +27,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
    List<Address> listenerCaches;
 
    public DistAsyncTxFuncTest() {
-      sync = false;
-      tx = true;
+      cacheMode = CacheMode.DIST_ASYNC;
       testRetVals = true;
       cleanup = CleanupPhase.AFTER_METHOD; // ensure any stale TXs are wiped
    }

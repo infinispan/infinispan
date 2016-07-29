@@ -14,8 +14,6 @@ import static org.infinispan.test.TestingUtil.v;
 public class DisabledL1Test extends BaseDistFunctionalTest<Object, String> {
 
    public DisabledL1Test () {
-      sync = true;
-      tx = false;
       testRetVals = false;
       l1CacheEnabled = false;
    }

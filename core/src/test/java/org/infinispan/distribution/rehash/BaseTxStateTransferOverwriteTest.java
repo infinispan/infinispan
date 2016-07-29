@@ -51,7 +51,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
    public BaseTxStateTransferOverwriteTest() {
       INIT_CLUSTER_SIZE = 3;
       numOwners = 2;
-      tx = true;
+      transactional = true;
       performRehashing = true;
       cleanup = CleanupPhase.AFTER_METHOD;
    }

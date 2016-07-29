@@ -9,7 +9,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.testng.AssertJUnit;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -33,7 +32,6 @@ import java.util.concurrent.Future;
 public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
    private boolean l1 = false;
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

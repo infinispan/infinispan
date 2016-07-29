@@ -22,8 +22,6 @@ import java.util.Set;
 public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
    public DistSyncFuncTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
    }
 
