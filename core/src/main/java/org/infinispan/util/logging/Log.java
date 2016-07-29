@@ -1407,5 +1407,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot enable '%s' in invalidation caches!", id = 420)
    CacheConfigurationException attributeNotAllowedInInvalidationMode(String attributeName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Eviction of an entry invoked without an explicit eviction strategy for cache %s", id = 419)
+   void evictionDisabled(String cacheName);
 }
 
