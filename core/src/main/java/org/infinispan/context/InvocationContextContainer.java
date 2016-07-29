@@ -11,7 +11,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @author Mircea.Markus@jboss.com
  * @deprecated Since 9.0, this interface is going to be moved to an internal package.
  */
-@Scope(Scopes.NAMED_CACHE)
+@Scope(Scopes.GLOBAL)
 public interface InvocationContextContainer {
    /**
     * Returns the {@link InvocationContext} that is currently associated with the calling thread. Important:

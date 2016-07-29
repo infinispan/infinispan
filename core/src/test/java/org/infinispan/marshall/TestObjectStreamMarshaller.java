@@ -4,6 +4,8 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -22,6 +24,7 @@ import java.io.OutputStream;
  *
  * @author Manik Surtani
  */
+@Scope(Scopes.GLOBAL)
 public class TestObjectStreamMarshaller extends AbstractMarshaller implements StreamingMarshaller {
 
    private static Log log = LogFactory.getLog(TestObjectStreamMarshaller.class);

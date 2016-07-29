@@ -16,8 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.marshaller;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -348,7 +348,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
 
       // Simulate c3 was by itself and someone wrote a value that is now stale
       CacheWriter store = (CacheWriter) TestingUtil.getFirstLoader(c3);
-      store.write(new MarshalledEntryImpl(k, v2, null, marshaller(c3)));
+      store.write(new MarshalledEntryImpl(k, v2, null, extractGlobalMarshaller(c3.getCacheManager())));
 
       c1.put(k, v1);
 

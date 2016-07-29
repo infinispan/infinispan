@@ -45,7 +45,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private CacheManagerNotifier cacheManagerNotifier;
 
    //Cached fields:
-   protected StreamingMarshaller cacheMarshaler;
    private StateTransferManager stateTransferManager;
    private ResponseGenerator responseGenerator;
    private CommandsFactory commandsFactory;
@@ -158,12 +157,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    private boolean isGlobal(String componentClassName, String name, boolean nameIsFQCN) {
-      if (!nameIsFQCN) {
-         for (String s : KnownComponentNames.PER_CACHE_COMPONENT_NAMES) {
-            if (s.equals(name))
-               return false;
-         }
-      }
       return isGlobal(nameIsFQCN ? name : componentClassName);
    }
 
@@ -279,7 +272,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     * Caching shortcut for #getComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
     */
    public StreamingMarshaller getCacheMarshaller() {
-      return cacheMarshaler;
+      return globalComponents.getComponent(StreamingMarshaller.class);
    }
 
    /**
@@ -333,7 +326,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     * Invoked last after all services are wired
     */
    public void cacheComponents() {
-      cacheMarshaler = getOrCreateComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
       stateTransferManager = getOrCreateComponent(StateTransferManager.class);
       responseGenerator = getOrCreateComponent(ResponseGenerator.class);
       commandsFactory = getLocalComponent(CommandsFactory.class);

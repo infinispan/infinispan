@@ -31,7 +31,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -66,7 +66,7 @@ public class MultiPojoVersionMarshallTest extends AbstractInfinispanTest {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.serialization().classResolver(new ContextClassResolver());
       cm = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder());
-      marshaller = extractCacheMarshaller(cm.getCache());
+      marshaller = extractGlobalMarshaller(cm);
    }
 
    @AfterClass

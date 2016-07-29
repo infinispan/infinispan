@@ -20,7 +20,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
@@ -34,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.logging.Log;
@@ -55,7 +53,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
 
    @Inject
    protected void init(PersistenceManager persistenceManager, InternalEntryFactory entryFactory,
-                       @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller) {
+                       StreamingMarshaller marshaller) {
       this.persistenceManager = persistenceManager;
       this.entryFactory = entryFactory;
       this.marshaller = marshaller;

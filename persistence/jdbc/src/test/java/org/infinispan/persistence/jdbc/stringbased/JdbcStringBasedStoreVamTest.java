@@ -8,7 +8,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 
 /**
  * JdbcStringBasedStoreTest using production level marshaller.
@@ -25,7 +25,7 @@ public class JdbcStringBasedStoreVamTest extends JdbcStringBasedStoreTest {
    @BeforeClass
    public void setUpClass() {
       cm = TestCacheManagerFactory.createCacheManager(false);
-      marshaller = extractCacheMarshaller(cm.getCache());
+      marshaller = extractGlobalMarshaller(cm.getCache().getCacheManager());
    }
 
    @AfterClass

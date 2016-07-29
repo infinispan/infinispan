@@ -18,7 +18,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
 import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -54,7 +53,7 @@ public class SharedStreamMultiMarshallerTest extends AbstractInfinispanTest {
             /** END: Special treatment **/
 
             // Now try cache marshaller to 'borrow' the output stream
-            StreamingMarshaller cacheMarshaller = extractCacheMarshaller(cm.getCache());
+            StreamingMarshaller cacheMarshaller = extractGlobalMarshaller(cm);
             ObjectOutput cacheOO = cacheMarshaller.startObjectOutput(baos, true, 1024);
             try {
                cacheOO.writeObject(cmd);
@@ -77,7 +76,7 @@ public class SharedStreamMultiMarshallerTest extends AbstractInfinispanTest {
             /** BEGIN: Special treatment **/
             int offset = globalOI.readInt();
             // Now try the cache marshaller and borrow the input stream to read
-            StreamingMarshaller cacheMarshaller = extractCacheMarshaller(cm.getCache());
+            StreamingMarshaller cacheMarshaller = extractGlobalMarshaller(cm);
             // Advance 4 bytes to go over the number of bytes written
             bais = new ByteArrayInputStream(bytes, offset + 4, bytes.length);
             ObjectInput cacheOI = cacheMarshaller.startObjectInput(bais, true);

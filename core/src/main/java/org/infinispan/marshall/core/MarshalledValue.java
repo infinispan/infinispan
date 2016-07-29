@@ -9,7 +9,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.marshall.jboss.ExtendedRiverUnmarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -214,21 +213,7 @@ public final class MarshalledValue implements Externalizable {
          byte[] raw = new byte[length];
          input.readFully(raw);
          int hc = input.readInt();
-
-         // A better way of sending down context information is needed in the future
-         StreamingMarshaller marshaller;
-         if (input instanceof ExtendedRiverUnmarshaller) {
-            StreamingMarshaller ispnMarshaller =
-                  ((ExtendedRiverUnmarshaller) input).getInfinispanMarshaller();
-            if (ispnMarshaller != null)
-               marshaller = ispnMarshaller;
-            else
-               marshaller = globalMarshaller;
-         } else {
-            marshaller = globalMarshaller;
-         }
-
-         return new MarshalledValue(raw, hc, marshaller);
+         return new MarshalledValue(raw, hc, globalMarshaller);
       }
 
       @Override

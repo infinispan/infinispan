@@ -23,8 +23,6 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-
 /**
  * Interceptor to verify whether parameters passed into cache are marshallables
  * or not. This is handy in situations where we want to find out before
@@ -46,7 +44,7 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    private boolean storeAsBinary;
 
    @Inject
-   protected void injectMarshaller(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
+   protected void injectMarshaller(StreamingMarshaller marshaller,
                                    DistributionManager distManager) {
       this.marshaller = marshaller;
       this.distManager = distManager;

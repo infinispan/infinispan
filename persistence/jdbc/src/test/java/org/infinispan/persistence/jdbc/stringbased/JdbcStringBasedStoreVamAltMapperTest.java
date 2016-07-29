@@ -8,7 +8,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.infinispan.test.TestingUtil.extractCacheMarshaller;
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 
 /**
  * JdbcStringBasedStoreAltMapperTest using production level marshaller.
@@ -26,7 +26,7 @@ public class JdbcStringBasedStoreVamAltMapperTest extends JdbcStringBasedStoreAl
    @Override
    public void createCacheStore() throws PersistenceException {
       cm = TestCacheManagerFactory.createCacheManager(false);
-      marshaller = extractCacheMarshaller(cm.getCache());
+      marshaller = extractGlobalMarshaller(cm);
 
       super.createCacheStore();
    }

@@ -2,11 +2,8 @@ package org.infinispan.marshall.core;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.InternalMetadata;
-
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * @author Mircea Markus
@@ -18,7 +15,7 @@ public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory {
 
 
    @Inject
-   public void init(@ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller) {
+   public void init(StreamingMarshaller marshaller) {
       this.marshaller = marshaller;
    }
 
