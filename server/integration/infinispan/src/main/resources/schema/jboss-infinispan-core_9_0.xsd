@@ -1599,6 +1599,11 @@
                     <xs:documentation>Low Inter-reference Recency Set. An improved version of LRU which uses cache-locality access information to better decide which data to evict.</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+            <xs:enumeration value="MANUAL">
+                <xs:annotation>
+                    <xs:documentation>Eviction will be performed manually. Equivalent internally to NONE.</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
         </xs:restriction>
     </xs:simpleType>
 

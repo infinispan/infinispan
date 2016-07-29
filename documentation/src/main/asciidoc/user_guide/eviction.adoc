@@ -4,7 +4,7 @@ Infinispan supports eviction of entries, such that you do not run out of memory.
 
 TIP:  Passivation is also a popular option when using eviction, so that only a single copy of an entry is maintained - either in memory or in a cache store, but not both. The main benefit of using passivation over a regular cache store is that updates to entries which exist in memory are cheaper since the update doesn't need to be made to the cache store as well.
 
-IMPORTANT: that eviction occurs on a _local_ basis, and is not cluster-wide.  Each node runs an eviction thread to analyse the contents of its in-memory container and decide what to evict. Eviction does not take into account the amount of free memory in the JVM as threshold to  starts evicting entries. You have to set maxEntries attribute of the eviction element to be greater than zero in order for eviction to be turned on. If maxEntries is too large you can run out of memory. maxEntries attribute will probably take some tuning in each use case. 
+IMPORTANT: that eviction occurs on a _local_ basis, and is not cluster-wide.  Each node runs an eviction thread to analyse the contents of its in-memory container and decide what to evict. Eviction does not take into account the amount of free memory in the JVM as threshold to  starts evicting entries. You have to set maxEntries attribute of the eviction element to be greater than zero in order for eviction to be turned on. If maxEntries is too large you can run out of memory. maxEntries attribute will probably take some tuning in each use case.
 
 === Enabling Eviction
 Eviction is configured by adding the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<eviction />`] element to your `<*-cache />` configuration sections or using link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/cache/EvictionConfigurationBuilder.html[EvictionConfigurationBuilder] API programmatic approach.
@@ -14,10 +14,8 @@ Periodic pruning of expired cache entries from cache is done on a dedicated thre
 
 ==== Eviction strategies
 
-NOTE: LIRS is default eviction algorithm in Infinispan 5.2 onwards.  LRU was the default prior to that.
-
 .`NONE`
-This eviction strategy effectively disables the eviction thread.
+This eviction strategy effectively disables the eviction thread. This is the default configuration.
 
 .`UNORDERED`
 UNORDERED eviction strategy is a legacy eviction strategy that has been deprecated. If UNORDERED strategy is specified LRU eviction algorithm will be used.
@@ -27,6 +25,9 @@ If LRU eviction is used cache entries are selected for eviction using a well kno
 
 .`LIRS`
 LRU eviction algorithm, although simple and easy to understand, under performs in cases of weak access locality (one time access entries are not timely replaced, entries to be accessed soonest are unfortunately replaced, and so on). Recently, a new eviction algorithm - LIRS has gathered a lot of attention because it addresses weak access locality shortcomings of LRU yet it retains LRU's simplicity. Eviction in LIRS algorithm relies on history information of cache entries accesses using so called Inter-Reference Recency (a.k.a IRR) and the Recency. The IRR of a cache entry A refers to number of other distinct entries accessed between the last two consecutive accesses to cache entry A, while recency refers to the number of other entries accessed from last reference to A up to current time point. If we relied only on cache recency we would essentially have LRU functionality. However, in addition to recency LIRS tracks elements that are in low IRR and high IRR, aptly named LIR and HIR cache entry blocks respectively. LIRS eviction algorithm essentially keeps entries with a low IRR in the cache as much as possible while evicting high IRR entries if eviction is required. If recency of a LIR cache entry increases to a certain point and entry  in HIR gets accessed at a smaller recency than that of the LIR entry, the LIR/HIR statuses of the two blocks are switched. Entries in HIR may be evicted regardless of its recency, even if element was recently accessed.
+
+.`MANUAL`
+This eviction strategy is identical to NONE, in that it disables automatic eviction altogether, but signals the intention that the user wants to evict entries manually. The effect is to disable misleading warning validation messages.
 
 ==== More defaults
 By default when no `<eviction />` element is specified, no eviction takes place.
@@ -55,20 +56,20 @@ Similar to, but unlike eviction, is expiration. Expiration allows you to attach 
 TIP: Unlike eviction, expired entries are removed globally - from memory, cache stores, and cluster-wide.
 
 By default entries created are immortal and do not have a lifespan or maximum idle time.  Using the cache API, mortal entries can be created with lifespans and/or maximum idle times.
-Further, default lifespans and/or maximum idle times can be configured by adding the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[&lt;expiration /&gt;] element to your `<*-cache />`  configuration sections. 
+Further, default lifespans and/or maximum idle times can be configured by adding the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[&lt;expiration /&gt;] element to your `<*-cache />`  configuration sections.
 
 ==== Difference between Eviction and Expiration
 Both Eviction and Expiration are means of cleaning the cache of unused entries and thus guarding the heap against OutOfMemory exceptions, so now a brief explanation of the difference.
 
-With _eviction_ you set _maximal number of entries_ you want to keep in the cache and if this limit is exceeded, some candidates are found to be removed according to a choosen _eviction strategy_ (LRU, LIRS, etc...). Eviction can be setup to work with passivation (evicting to a cache store). 
+With _eviction_ you set _maximal number of entries_ you want to keep in the cache and if this limit is exceeded, some candidates are found to be removed according to a choosen _eviction strategy_ (LRU, LIRS, etc...). Eviction can be setup to work with passivation (evicting to a cache store).
 
-With _expiration_ you set _time criteria_ for entries, _how long you want to keep them_ in cache. Either you set maximum _lifespan_ of the entry - time it is allowed to stay in the cache or _maximum idle time_ , time it's allowed to be untouched (no operation performed with given key). 
+With _expiration_ you set _time criteria_ for entries, _how long you want to keep them_ in cache. Either you set maximum _lifespan_ of the entry - time it is allowed to stay in the cache or _maximum idle time_ , time it's allowed to be untouched (no operation performed with given key).
 
 ===  Eviction Examples
 
 .  _Expiration_ is a top-level construct, represented in the configuration as well as in the cache API.
-.  While eviction is _local to each cache instance_ , expiration is _cluster-wide_ .  Expiration lifespans and maxIdle values are replicated along with the cache entry. 
-.  Expiration lifespan and maxIdle are also persisted in CacheStores, so this information survives eviction/passivation. 
+.  While eviction is _local to each cache instance_ , expiration is _cluster-wide_ .  Expiration lifespans and maxIdle values are replicated along with the cache entry.
+.  Expiration lifespan and maxIdle are also persisted in CacheStores, so this information survives eviction/passivation.
 .  Four eviction strategies are shipped, link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/eviction/EvictionStrategy.html#NONE[EvictionStrategy.NONE] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/eviction/EvictionStrategy.html#LRU[EvictionStrategy.LRU] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/eviction/EvictionStrategy.html#UNORDERED[EvictionStrategy.UNORDERED] , and link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/eviction/EvictionStrategy.html#LIRS[EvictionStrategy.LIRS] .
 
 ==== Configuration
