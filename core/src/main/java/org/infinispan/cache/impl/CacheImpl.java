@@ -43,6 +43,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -731,6 +732,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final void evict(K key, long explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
+      if (config.eviction().strategy() == EvictionStrategy.NONE) {
+         log.evictionDisabled(name);
+      }
       InvocationContext ctx = createSingleKeyNonTxInvocationContext(explicitClassLoader);
       EvictCommand command = commandsFactory.buildEvictCommand(key, explicitFlags);
       invoker.invoke(ctx, command);

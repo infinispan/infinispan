@@ -1436,4 +1436,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "It is not possible for a store to be transactional when passivation is enabled. ", id = 418)
    CacheConfigurationException transactionalStoreInPassivatedCache();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Eviction of an entry invoked without an explicit eviction strategy for cache %s", id = 419)
+   void evictionDisabled(String cacheName);
 }
