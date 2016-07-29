@@ -24,8 +24,6 @@ public class IllegalMonitorTest extends BaseDistFunctionalTest<Object, String> {
    private final String key = TEST_NAME;
 
    public IllegalMonitorTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
       l1CacheEnabled = true;
    }

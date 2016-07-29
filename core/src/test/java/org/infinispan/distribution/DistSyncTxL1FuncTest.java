@@ -18,6 +18,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -48,9 +49,16 @@ import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "functional", testName = "distribution.DistSyncTxL1FuncTest")
 public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new DistSyncTxL1FuncTest().isolationLevel(IsolationLevel.READ_COMMITTED),
+         new DistSyncTxL1FuncTest().isolationLevel(IsolationLevel.REPEATABLE_READ)
+      };
+   }
+
    public DistSyncTxL1FuncTest() {
-      sync = true;
-      tx = true;
+      transactional = true;
       testRetVals = true;
    }
 

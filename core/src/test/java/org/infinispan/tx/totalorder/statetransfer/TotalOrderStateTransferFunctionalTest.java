@@ -5,7 +5,6 @@ import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.statetransfer.StateTransferFunctionalTest;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -19,7 +18,6 @@ public class TotalOrderStateTransferFunctionalTest extends StateTransferFunction
    protected final boolean writeSkew;
    protected final boolean useSynchronization;
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

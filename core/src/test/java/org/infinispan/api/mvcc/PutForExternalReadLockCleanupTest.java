@@ -8,7 +8,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.function.Consumer;
@@ -25,7 +24,6 @@ public class PutForExternalReadLockCleanupTest extends MultipleCacheManagersTest
    private String name;
    private Consumer<ConfigurationBuilder> amendConfiguration;
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

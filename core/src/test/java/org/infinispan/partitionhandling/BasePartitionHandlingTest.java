@@ -30,14 +30,13 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-import static java.util.stream.Stream.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -147,7 +146,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
       private List<Address> installMergeView(ArrayList<Channel> view1, ArrayList<Channel> view2) {
          List<Address> allAddresses =
-               concat(view1.stream(), view2.stream()).map(Channel::getAddress).distinct()
+               Stream.concat(view1.stream(), view2.stream()).map(Channel::getAddress).distinct()
                      .collect(Collectors.toList());
 
          View v1 = toView(view1);

@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -17,9 +18,16 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
    ReplListener[] r;
    Map<Cache<?, ?>, ReplListener> listenerLookup;
 
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new DistAsyncFuncTest(),
+         new DistAsyncFuncTest().groupers(true)
+      };
+   }
+
    public DistAsyncFuncTest() {
-      sync = false;
-      tx = false;
+      cacheMode = CacheMode.DIST_ASYNC;
       testRetVals = false;
    }
 

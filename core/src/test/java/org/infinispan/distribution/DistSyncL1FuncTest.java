@@ -10,6 +10,7 @@ import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -26,9 +27,15 @@ import static org.testng.AssertJUnit.assertNull;
 @Test(groups = {"functional", "smoke"}, testName = "distribution.DistSyncL1FuncTest")
 public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new DistSyncL1FuncTest().isolationLevel(IsolationLevel.READ_COMMITTED),
+         new DistSyncL1FuncTest().isolationLevel(IsolationLevel.REPEATABLE_READ)
+      };
+   }
+
    public DistSyncL1FuncTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
    }
 

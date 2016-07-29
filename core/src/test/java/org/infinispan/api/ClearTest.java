@@ -10,7 +10,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -32,7 +31,6 @@ public class ClearTest extends MultipleCacheManagersTest {
    protected AdvancedCache<Integer, String> c1;
    protected AdvancedCache<Integer, String> c2;
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

@@ -17,8 +17,6 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest<Object
    public static final String KEY1 = "k1";
 
    public MulticastInvalidationFuncTest() {
-      sync = true;
-      tx = false;
       testRetVals = true;
       l1Threshold = 0;
    }
