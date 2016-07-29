@@ -29,7 +29,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
 
    protected RehashTestBase() {
       cleanup = CleanupPhase.AFTER_METHOD;
-      tx = true;
+      transactional = true;
       performRehashing = true;
    }
 

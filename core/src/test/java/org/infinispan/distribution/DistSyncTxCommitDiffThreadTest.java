@@ -28,8 +28,7 @@ public class DistSyncTxCommitDiffThreadTest extends BaseDistFunctionalTest<Objec
    public DistSyncTxCommitDiffThreadTest() {
       cacheName = this.getClass().getSimpleName();
       INIT_CLUSTER_SIZE = 2;
-      sync = true;
-      tx = true;
+      transactional = true;
       l1CacheEnabled = false;
       numOwners = 1;
    }

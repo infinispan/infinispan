@@ -11,6 +11,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.L1InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.Grouper;
+import org.infinispan.distribution.groups.KXGrouper;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -23,6 +24,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -34,8 +36,6 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected ConfigurationBuilder configuration;
    protected List<Cache<K, V>> caches;
    protected List<Address> cacheAddresses;
-   protected boolean sync = true;
-   protected boolean tx = false;
    protected boolean testRetVals = true;
    protected boolean l1CacheEnabled = true;
    protected int l1Threshold = 5;
@@ -43,10 +43,38 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected boolean batchingEnabled = false;
    protected int numOwners = 2;
    protected int lockTimeout = 45;
-   protected boolean groupsEnabled = false;
-   protected List<Grouper<?>> groupers;
-   protected LockingMode lockingMode;
+   protected boolean groupers = false;
    protected boolean onePhaseCommitOptimization = false;
+
+   {
+      cacheMode = CacheMode.DIST_SYNC;
+      transactional = false;
+   }
+
+   public BaseDistFunctionalTest numOwners(int numOwners) {
+      this.numOwners = numOwners;
+      return this;
+   }
+
+   public BaseDistFunctionalTest l1(boolean l1) {
+      this.l1CacheEnabled = l1;
+      return this;
+   }
+
+   public BaseDistFunctionalTest groupers(boolean groupers) {
+      this.groupers = groupers;
+      return this;
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "numOwners", "l1", "groupers");
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), numOwners != 2 ? numOwners : null, l1CacheEnabled ? null : Boolean.FALSE, groupers ? Boolean.TRUE : null);
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -69,7 +97,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    }
 
    protected ConfigurationBuilder buildConfiguration() {
-      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(sync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC, tx);
+      ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(cacheMode, transactional);
       configuration.clustering().stateTransfer().fetchInMemoryState(performRehashing);
       if (lockingMode != null) {
          configuration.transaction().lockingMode(lockingMode);
@@ -81,18 +109,18 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
          // tests repeatedly queries changes
          configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       }
-      if (tx) {
+      if (transactional) {
          configuration.invocationBatching().enable();
          if (onePhaseCommitOptimization) {
             configuration.transaction().use1PcForAutoCommitTransactions(true);
          }
       }
-      if (sync) configuration.clustering().remoteTimeout(60, TimeUnit.SECONDS);
+      if (cacheMode.isSynchronous()) configuration.clustering().remoteTimeout(60, TimeUnit.SECONDS);
       configuration.locking().lockAcquisitionTimeout(lockTimeout, TimeUnit.SECONDS);
       configuration.clustering().l1().enabled(l1CacheEnabled);
-      if (groupsEnabled) {
+      if (groupers) {
           configuration.clustering().hash().groups().enabled(true);
-          configuration.clustering().hash().groups().withGroupers(groupers);
+          configuration.clustering().hash().groups().withGroupers(Collections.singletonList(new KXGrouper()));
       }
       if (l1CacheEnabled) configuration.clustering().l1().invalidationThreshold(l1Threshold);
       return configuration;

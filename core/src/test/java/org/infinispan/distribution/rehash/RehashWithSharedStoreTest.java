@@ -25,8 +25,6 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest {
 
    public RehashWithSharedStoreTest() {
       INIT_CLUSTER_SIZE = 3;
-      sync = true;
-      tx = false;
       testRetVals = true;
       shared = true;
       performRehashing = true;

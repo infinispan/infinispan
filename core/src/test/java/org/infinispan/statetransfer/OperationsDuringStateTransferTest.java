@@ -26,7 +26,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.*;
@@ -45,7 +44,6 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
    private ConfigurationBuilder cacheConfigBuilder;
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

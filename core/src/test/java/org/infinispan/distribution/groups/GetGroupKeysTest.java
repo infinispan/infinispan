@@ -20,7 +20,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.logging.Log;
 import org.testng.AssertJUnit;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -47,7 +46,6 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
    protected static final String PERSISTENCE_PASSIVATION_CACHE = "persistence-passivation-cache";
    protected final boolean transactional;
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {
