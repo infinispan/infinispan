@@ -172,8 +172,8 @@
       <version.weld>2.3.4.Final</version.weld>
       <version.weld-se>2.3.4.Final</version.weld-se>
 
-      <version.org.wildfly>10.0.0.Final</version.org.wildfly>
-      <version.org.wildfly.core>2.0.10.Final</version.org.wildfly.core>
+      <version.org.wildfly>10.1.0.CR1</version.org.wildfly>
+      <version.org.wildfly.core>2.2.0.CR9</version.org.wildfly.core>
       <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
       <version.org.wildfly.maven-plugin>1.1.0.Alpha5</version.org.wildfly.maven-plugin>
