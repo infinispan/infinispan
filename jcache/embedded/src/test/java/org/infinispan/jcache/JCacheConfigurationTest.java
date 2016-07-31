@@ -1,16 +1,18 @@
 package org.infinispan.jcache;
 
+import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.net.URI;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.net.URI;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * // TODO: Document this
@@ -31,6 +33,22 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
             assertTrue(null != jCacheManager.getCache("oneCache"));
          }
       });
+   }
+
+   public void testJCacheManagerWherePathContainsFileSchema() throws IOException {
+      withCachingProvider(provider -> new JCacheManager(
+            URI.create("file:infinispan_uri.xml"),
+            provider.getClass().getClassLoader(),
+            provider,
+            null));
+   }
+
+   public void testJCacheManagerWherePathContainsJarFileSchema() throws IOException {
+      withCachingProvider(provider -> new JCacheManager(
+            URI.create("jar:file:infinispan_uri.xml"),
+            provider.getClass().getClassLoader(),
+            provider,
+            null));
    }
 
 }
