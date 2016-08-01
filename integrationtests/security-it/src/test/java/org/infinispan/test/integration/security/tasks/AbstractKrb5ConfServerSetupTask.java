@@ -69,7 +69,7 @@ public abstract class AbstractKrb5ConfServerSetupTask implements ServerSetupTask
       FileUtils.write(
             KRB5_CONF_FILE,
             StrSubstitutor.replace(
-                  IOUtils.toString(getClass().getResourceAsStream(File.separator + KRB5_CONF), "UTF-8"), map),
+                  IOUtils.toString(Utils.getResource(KRB5_CONF), "UTF-8"), map),
             "UTF-8");
       createLdapServerKeytab(cannonicalHost);
       final List<UserForKeyTab> kerberosUsers = kerberosUsers();
