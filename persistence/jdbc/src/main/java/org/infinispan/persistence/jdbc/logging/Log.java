@@ -156,4 +156,12 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Exception encountered when preparing JDBC store Tx", id = 8033)
    PersistenceException prepareTxFailure(@Cause Throwable e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error when creating Hikari connection pool", id = 8034)
+   void errorCreatingHikariCP(@Cause Exception e);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error loading HikariCP properties file, only the properties set in %s will be loaded", id = 8035)
+   void errorLoadingHikariCPProperties(String name);
 }

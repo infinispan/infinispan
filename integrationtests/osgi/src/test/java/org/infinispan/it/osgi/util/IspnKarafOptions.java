@@ -122,6 +122,7 @@ public class IspnKarafOptions {
    public static Option featureEmbededUberJarAndTests() throws Exception {
       return composite(mvnFeature("org.infinispan", "infinispan-embedded", "infinispan-embedded"),
                        mvnFeature("org.infinispan", "infinispan-embedded", "c3p0"),
+                       mvnFeature("org.infinispan", "infinispan-embedded", "hikaricp"),
                        mvnFeature("org.infinispan", "infinispan-embedded", "hibernate"),
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-core", "org.infinispan.embedded"),
                        mvnTestsAsFragmentBundle("org.infinispan", "infinispan-cachestore-jdbc", "org.infinispan.embedded"),

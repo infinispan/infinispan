@@ -46,6 +46,11 @@
            <artifactId>c3p0</artifactId>
            <scope>provided</scope>
        </dependency>
+       <dependency>
+           <groupId>com.zaxxer</groupId>
+           <artifactId>HikariCP</artifactId>
+           <scope>provided</scope>
+       </dependency>
       <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>

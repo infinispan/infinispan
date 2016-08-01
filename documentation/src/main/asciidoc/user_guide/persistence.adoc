@@ -408,7 +408,15 @@ It is generally preferable to use link:http://docs.jboss.org/infinispan/{infinis
 In order to obtain a connection to the database all the JDBC cache loaders rely on a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ConnectionFactory.html[ConnectionFactory] implementation. The connection factory is specified programmatically using one of the connectionPool(), dataSource() or simpleConnection() methods on the JdbcBinaryCacheStoreConfigurationBuilder class or declaratively using one of the `<connectionPool />`, `<dataSource />` or `<simpleConnection />` elements. Infinispan ships with three ConnectionFactory implementations:
 
 
-*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html[PooledConnectionFactory] is a factory based on link:http://sourceforge.net/projects/c3p0/[C3P0] . Refer to link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html[javadoc] for details on configuring it.
+*  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/PooledConnectionFactory.html[PooledConnectionFactory]
+is a factory based on link:https://github.com/brettwooldridge/HikariCP[HikariCP]. Additional properties for HikariCP can
+be provided by a properties file, either via placing a `hikari.properties` file on the classpath or by specifying the
+path to the file via `PooledConnectionFactoryConfiguration.propertyFile` or `properties-file` in the connection pool's
+xml config. N.B. a properties file specified explicitly in the configuration is loaded instead of the `hikari.properties`
+file on the class path and Connection pool characteristics which are explicitly set in PooledConnectionFactoryConfiguration
+always override the values loaded from a properties file.
+
+Refer to the official link:https://github.com/brettwooldridge/HikariCP[documentation] for details of all configuration properties.
 
 
 *  link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html[ManagedConnectionFactory] is a connection factory that can be used within managed environments, such as application servers. It knows how to look into the JNDI tree at a certain location (configurable) and delegate connection management to the DataSource. Refer to javadoc link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/persistence/jdbc/connectionfactory/ManagedConnectionFactory.html[javadoc] for details on how this can be configured.

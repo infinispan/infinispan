@@ -172,7 +172,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    @BuiltBy(SharedConnectionFactoryConfigurationBuilder.class)
    public static class SharedConnectionFactoryConfiguration extends PooledConnectionFactoryConfiguration {
       SharedConnectionFactoryConfiguration(String connectionUrl, String driverClass, String username, String password) {
-         super(connectionUrl, driverClass, username, password);
+         super(null, connectionUrl, driverClass, username, password);
       }
 
       @Override
