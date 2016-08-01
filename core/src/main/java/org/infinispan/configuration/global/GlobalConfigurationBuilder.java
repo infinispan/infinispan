@@ -190,6 +190,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @SuppressWarnings("unchecked")
    public void validate() {
+      List<RuntimeException> validationExceptions = new ArrayList<>();
       Arrays.asList(
             expirationThreadPool,
             listenerThreadPool,
@@ -204,8 +205,21 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             shutdown,
             globalState,
             site
-      ).forEach(c -> c.validate());
-      modules.forEach(c -> c.validate());
+      ).forEach(c -> {
+         try {
+            c.validate();
+         } catch (RuntimeException e) {
+            validationExceptions.add(e);
+         }
+      });
+      modules.forEach(c -> {
+         try {
+            c.validate();
+         } catch (RuntimeException e) {
+            validationExceptions.add(e);
+         }
+      });
+      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> { throw e; });
    }
 
    @Override

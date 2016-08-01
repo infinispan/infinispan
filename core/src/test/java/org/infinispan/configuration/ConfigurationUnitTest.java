@@ -4,6 +4,8 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.net.URL;
 
@@ -15,6 +17,7 @@ import javax.xml.validation.SchemaFactory;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.CacheMode;
@@ -392,4 +395,50 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       });
    }
 
+   public void testMultipleValidationErrors() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.eviction().strategy(EvictionStrategy.LRU).size(0);
+      builder.transaction().reaperWakeUpInterval(-1);
+      builder.modules().add(new NonValidatingBuilder());
+      try {
+         builder.validate();
+         fail("Expected CacheConfigurationException");
+      } catch (CacheConfigurationException e) {
+         assertTrue(e.getMessage().startsWith("ISPN000919"));
+         assertEquals(e.getSuppressed().length, 3);
+         assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000424"));
+         assertTrue(e.getSuppressed()[1].getMessage().startsWith("ISPN000344"));
+         assertEquals("MODULE ERROR", e.getSuppressed()[2].getMessage());
+      }
+
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.security().authorization().enable();
+      global.modules().add(new NonValidatingBuilder());
+      try {
+         global.validate();
+         fail("Expected CacheConfigurationException");
+      } catch (CacheConfigurationException e) {
+         assertTrue(e.getMessage().startsWith("ISPN000919"));
+         assertEquals(e.getSuppressed().length, 2);
+         assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000288"));
+         assertEquals("MODULE ERROR", e.getSuppressed()[1].getMessage());
+      }
+   }
+
+   public static class NonValidatingBuilder implements Builder<Object> {
+      @Override
+      public void validate() {
+         throw new RuntimeException("MODULE ERROR");
+      }
+
+      @Override
+      public Object create() {
+         return null;
+      }
+
+      @Override
+      public Builder<?> read(Object template) {
+         return this;
+      }
+   }
 }

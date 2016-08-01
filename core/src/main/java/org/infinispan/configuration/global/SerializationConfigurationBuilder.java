@@ -117,7 +117,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    /**
-    * Class resolver to use when unmarshallig objects.
+    * Class resolver to use when unmarshalling objects.
     *
     * @param classResolver
     */
