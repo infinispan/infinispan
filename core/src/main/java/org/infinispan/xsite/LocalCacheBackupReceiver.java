@@ -21,7 +21,7 @@ import java.util.List;
 public class LocalCacheBackupReceiver extends BaseBackupReceiver {
 
    private static final Log log = LogFactory.getLog(LocalCacheBackupReceiver.class);
-   private static final boolean trace = log.isDebugEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    public LocalCacheBackupReceiver(Cache<Object, Object> cache) {
       super(cache);
@@ -30,9 +30,9 @@ public class LocalCacheBackupReceiver extends BaseBackupReceiver {
    @Override
    public void handleStateTransferControl(XSiteStateTransferControlCommand command) throws Exception {
       XSiteStateTransferControlCommand invokeCommand = command;
-      if (!command.getCacheName().equals(cache.getName())) {
+      if (!command.getCacheName().equals(cacheName)) {
          //copy if the cache name is different
-         invokeCommand = command.copyForCache(cache.getName());
+         invokeCommand = command.copyForCache(cacheName);
       }
       invokeCommand.setSiteName(command.getOriginSite());
       LocalInvocation.newInstanceFromCache(cache, invokeCommand).call();
@@ -41,9 +41,7 @@ public class LocalCacheBackupReceiver extends BaseBackupReceiver {
    @Override
    public void handleStateTransferState(XSiteStatePushCommand cmd) throws Exception {
       //split the state and forward it to the primary owners...
-      if (!cache.getStatus().allowInvocations()) {
-         throw new CacheException("Cache is stopping or terminated: " + cache.getStatus());
-      }
+      assertAllowInvocation();
 
       final List<XSiteState> localChunks = Arrays.asList(cmd.getChunk());
 

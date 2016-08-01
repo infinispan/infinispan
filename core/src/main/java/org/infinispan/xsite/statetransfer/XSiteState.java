@@ -69,7 +69,7 @@ public class XSiteState {
 
       @Override
       public Set<Class<? extends XSiteState>> getTypeClasses() {
-         return Collections.<Class<? extends XSiteState>>singleton(XSiteState.class);
+         return Collections.singleton(XSiteState.class);
       }
 
       @Override

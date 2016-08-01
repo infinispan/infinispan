@@ -104,7 +104,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
       return found;
    }
 
-   static class SiteCachePair {
+   private static class SiteCachePair {
       public final String remoteSite;
       public final String remoteCache;
       public String localCacheName;

@@ -27,7 +27,7 @@ public class BackupFailureException extends RpcException {
    public void addFailure(String site, Throwable t) {
       if(site != null && t != null) {
          if(failures == null)
-            failures = new HashMap<String,Throwable>(3);
+            failures = new HashMap<>(3);
          failures.put(site, t);
       }
    }

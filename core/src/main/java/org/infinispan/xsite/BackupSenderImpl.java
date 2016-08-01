@@ -331,14 +331,15 @@ public class BackupSenderImpl implements BackupSender {
       return eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress());
    }
 
-   public static final class CustomBackupPolicyInvoker extends AbstractVisitor {
+   private static final class CustomBackupPolicyInvoker extends AbstractVisitor {
 
       private final String site;
-      private final CustomFailurePolicy failurePolicy;
+      private final CustomFailurePolicy<Object, Object> failurePolicy;
       private final Transaction tx;
 
       public CustomBackupPolicyInvoker(String site, CustomFailurePolicy failurePolicy, Transaction tx) {
          this.site = site;
+         //noinspection unchecked
          this.failurePolicy = failurePolicy;
          this.tx = tx;
       }
