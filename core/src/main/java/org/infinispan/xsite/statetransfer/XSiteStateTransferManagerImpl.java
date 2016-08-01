@@ -156,12 +156,12 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    @Override
    public List<String> getRunningStateTransfers() {
-      return siteCollector.isEmpty() ? Collections.<String>emptyList() : new ArrayList<>(siteCollector.keySet());
+      return siteCollector.isEmpty() ? Collections.emptyList() : new ArrayList<>(siteCollector.keySet());
    }
 
    @Override
    public Map<String, String> getStatus() {
-      return status.isEmpty() ? Collections.<String, String>emptyMap() : new HashMap<>(status);
+      return status.isEmpty() ? Collections.emptyMap() : new HashMap<>(status);
    }
 
    @Override

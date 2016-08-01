@@ -47,7 +47,7 @@ public interface BackupSender {
     */
    Map<String, Boolean> status();
 
-   public enum BringSiteOnlineResponse {
+   enum BringSiteOnlineResponse {
       NO_SUCH_SITE,
       ALREADY_ONLINE,
       BROUGHT_ONLINE
@@ -58,7 +58,7 @@ public interface BackupSender {
     */
    BringSiteOnlineResponse bringSiteOnline(String siteName);
 
-   public enum TakeSiteOfflineResponse {
+   enum TakeSiteOfflineResponse {
       NO_SUCH_SITE,
       ALREADY_OFFLINE,
       TAKEN_OFFLINE

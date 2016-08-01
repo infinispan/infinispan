@@ -8,6 +8,7 @@ import org.infinispan.util.ByteString;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 /**
  * Command used for handling XSiteReplication administrative operations.
@@ -27,6 +28,10 @@ public class XSiteAdminCommand extends BaseRpcCommand {
       AMEND_TAKE_OFFLINE;
 
       private static final AdminOperation[] CACHED_VALUES = values();
+
+      private static AdminOperation valueOf(int index) {
+         return CACHED_VALUES[index];
+      }
    }
 
    public enum Status {
@@ -40,6 +45,7 @@ public class XSiteAdminCommand extends BaseRpcCommand {
 
    private BackupSender backupSender;
 
+   @SuppressWarnings("unused")
    public XSiteAdminCommand() {
       super(null);// For command id uniqueness test
    }
@@ -117,7 +123,7 @@ public class XSiteAdminCommand extends BaseRpcCommand {
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      adminOperation = MarshallUtil.unmarshallEnum(input, ordinal -> AdminOperation.CACHED_VALUES[ordinal]);
+      adminOperation = Objects.requireNonNull(MarshallUtil.unmarshallEnum(input, AdminOperation::valueOf));
       switch (adminOperation) {
          case SITE_STATUS:
          case TAKE_OFFLINE:

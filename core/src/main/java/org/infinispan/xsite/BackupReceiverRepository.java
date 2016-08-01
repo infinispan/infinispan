@@ -19,5 +19,5 @@ public interface BackupReceiverRepository {
     * Also starts the cache if not already stated; that is because the cache is needed for update after when this method
     * is invoked.
     */
-   public BackupReceiver getBackupReceiver(String originSiteName, String cacheName);
+   BackupReceiver getBackupReceiver(String originSiteName, String cacheName);
 }

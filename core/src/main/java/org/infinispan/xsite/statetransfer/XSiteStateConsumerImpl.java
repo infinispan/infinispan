@@ -10,7 +10,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,13 +38,13 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    private TransactionManager transactionManager;
    private InvocationContextFactory invocationContextFactory;
    private CommandsFactory commandsFactory;
-   private InterceptorChain interceptorChain;
+   private AsyncInterceptorChain interceptorChain;
    private CommitManager commitManager;
    private AtomicReference<String> sendingSite = new AtomicReference<>(null);
 
    @Inject
    public void inject(TransactionManager transactionManager, InvocationContextFactory invocationContextFactory,
-                      CommandsFactory commandsFactory, InterceptorChain interceptorChain,
+                      CommandsFactory commandsFactory, AsyncInterceptorChain interceptorChain,
                       CommitManager commitManager) {
       this.transactionManager = transactionManager;
       this.invocationContextFactory = invocationContextFactory;
