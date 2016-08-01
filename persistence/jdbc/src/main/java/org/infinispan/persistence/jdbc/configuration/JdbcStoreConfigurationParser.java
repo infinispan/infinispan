@@ -189,6 +189,10 @@ public class JdbcStoreConfigurationParser implements ConfigurationParser {
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
+            case PROPERTIES_FILE: {
+               builder.propertyFile(value);
+               break;
+            }
             case CONNECTION_URL: {
                builder.connectionUrl(value);
                break;

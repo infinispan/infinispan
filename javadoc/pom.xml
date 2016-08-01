@@ -249,6 +249,11 @@
                            <artifactId>c3p0</artifactId>
                            <version>0.9.5-pre8</version>
                         </additionalDependency>
+                        <additionalDependency>
+                           <groupId>com.zaxxer</groupId>
+                           <artifactId>HikariCP</artifactId>
+                           <version>${version.hikaricp}</version>
+                        </additionalDependency>
                      </additionalDependencies>
                   </configuration>
                </execution>

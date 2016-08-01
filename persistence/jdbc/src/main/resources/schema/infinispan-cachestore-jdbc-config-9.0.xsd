@@ -215,6 +215,13 @@
   </xs:complexType>
 
   <xs:complexType name="connection-pool">
+    <xs:attribute name="properties-file" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          The path of a properties file that provides additional configuration for the connection pool.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="connection-url" type="xs:string">
       <xs:annotation>
         <xs:documentation>

@@ -7,6 +7,8 @@
 
       <bundle>wrap:mvn:com.mchange/c3p0/${version.c3p0}$DynamicImport-Package=*</bundle>
       <bundle>wrap:mvn:com.mchange/mchange-commons-java/${version.c3p0_dep.mchange-commons-java}</bundle>
+      <bundle>mvn:com.zaxxer/HikariCP/${version.hikaricp}</bundle>
+      <bundle>wrap:mvn:org.jboss.slf4j/slf4j-jboss-logging/${version.slf4j-jboss-logging}</bundle>
 
       <feature version="${project.version}">infinispan-core</feature>
    </feature>

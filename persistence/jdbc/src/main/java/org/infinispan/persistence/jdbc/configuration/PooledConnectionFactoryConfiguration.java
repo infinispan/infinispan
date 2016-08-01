@@ -6,16 +6,23 @@ import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory
 
 @BuiltBy(PooledConnectionFactoryConfigurationBuilder.class)
 public class PooledConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {
+   private final String propertyFile;
    private final String connectionUrl;
    private final String driverClass;
    private final String username;
    private final String password;
 
-   protected PooledConnectionFactoryConfiguration(String connectionUrl, String driverClass, String username, String password) {
+   protected PooledConnectionFactoryConfiguration(String propertyFile, String connectionUrl, String driverClass,
+                                                  String username, String password) {
+      this.propertyFile = propertyFile;
       this.connectionUrl = connectionUrl;
       this.driverClass = driverClass;
       this.username = username;
       this.password = password;
+   }
+
+   public String propertyFile() {
+      return propertyFile;
    }
 
    public String connectionUrl() {
@@ -41,7 +48,8 @@ public class PooledConnectionFactoryConfiguration implements ConnectionFactoryCo
 
    @Override
    public String toString() {
-      return "PooledConnectionFactoryConfiguration [connectionUrl=" + connectionUrl + ", driverClass=" + driverClass + ", username=" + username + ", password=" + password + "]";
+      return "PooledConnectionFactoryConfiguration [propertyFile=" + propertyFile + ", connectionUrl=" +
+            connectionUrl + ", driverClass=" + driverClass + ", username=" + username + ", password=" + password + "]";
    }
 
    @Override
@@ -51,6 +59,7 @@ public class PooledConnectionFactoryConfiguration implements ConnectionFactoryCo
 
       PooledConnectionFactoryConfiguration that = (PooledConnectionFactoryConfiguration) o;
 
+      if (propertyFile != null ? !propertyFile.equals(that.propertyFile) : that.propertyFile != null) return false;
       if (connectionUrl != null ? !connectionUrl.equals(that.connectionUrl) : that.connectionUrl != null) return false;
       if (driverClass != null ? !driverClass.equals(that.driverClass) : that.driverClass != null) return false;
       if (username != null ? !username.equals(that.username) : that.username != null) return false;
@@ -60,7 +69,8 @@ public class PooledConnectionFactoryConfiguration implements ConnectionFactoryCo
 
    @Override
    public int hashCode() {
-      int result = connectionUrl != null ? connectionUrl.hashCode() : 0;
+      int result = propertyFile != null ? propertyFile.hashCode() : 0;
+      result = 31 * result + (connectionUrl != null ? connectionUrl.hashCode() : 0);
       result = 31 * result + (driverClass != null ? driverClass.hashCode() : 0);
       result = 31 * result + (username != null ? username.hashCode() : 0);
       result = 31 * result + (password != null ? password.hashCode() : 0);

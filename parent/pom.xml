@@ -127,6 +127,7 @@
       <version.hibernate_dep.hibernate-commons-annotations>5.0.1.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.hibernate_dep.jandex>2.0.0.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javaassist>3.18.1-GA</version.hibernate_dep.javaassist>
+      <version.hikaricp>2.4.6</version.hikaricp>
       <version.httpclient>4.2.4</version.httpclient>
       <version.howl>1.0.1-1</version.howl>
       <version.jackson>1.9.13</version.jackson>
@@ -160,7 +161,8 @@
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
       <version.resteasy>3.0.11.Final</version.resteasy>
       <version.shrinkwrapResolver>2.1.0</version.shrinkwrapResolver>
-      <version.slf4j>1.7.5</version.slf4j>
+      <version.slf4j>1.7.21</version.slf4j>
+      <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.snappy>1.0.5</version.snappy>
       <version.solder>3.1.0.Final</version.solder>
       <version.spring3>3.2.9.RELEASE</version.spring3>
@@ -346,6 +348,11 @@
             <artifactId>commons-logging</artifactId>
             <version>${version.commons.logging}</version>
             <scope>runtime</scope>
+         </dependency>
+         <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${version.hikaricp}</version>
          </dependency>
          <dependency>
             <groupId>org.javassist</groupId>
@@ -604,10 +611,14 @@
             <version>${version.jetty}</version>
          </dependency>
          <dependency>
+            <groupId>org.jboss.slf4j</groupId>
+            <artifactId>slf4j-jboss-logging</artifactId>
+            <version>${version.slf4j-jboss-logging}</version>
+         </dependency>
+         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${version.slf4j}</version>
-            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.slf4j</groupId>

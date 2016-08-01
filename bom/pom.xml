@@ -68,6 +68,7 @@
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
       <version.hibernate.core>5.0.9.Final</version.hibernate.core>
       <version.hibernate.search>5.6.0.Beta1</version.hibernate.search>
+      <version.hikaricp>2.4.6</version.hikaricp>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.cdi>1.2</version.cdi>
       <version.jboss.marshalling>1.4.11.Final</version.jboss.marshalling>
@@ -79,6 +80,7 @@
       <version.scala.major>2.11</version.scala.major>
       <version.scala>${version.scala.major}.7</version.scala>
       <version.scala.xml>1.0.2</version.scala.xml>
+      <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.xstream>1.4.9</version.xstream>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
@@ -474,6 +476,18 @@
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
             <version>${version.c3p0}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${version.hikaricp}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jboss.slf4j</groupId>
+            <artifactId>slf4j-jboss-logging</artifactId>
+            <version>${version.slf4j-jboss-logging}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>
