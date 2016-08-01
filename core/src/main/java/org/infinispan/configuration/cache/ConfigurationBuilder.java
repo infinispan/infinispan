@@ -196,15 +196,25 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       if (attributes.attribute(SIMPLE_CACHE).get()) {
          validateSimpleCacheConfiguration();
       }
+      List<RuntimeException> validationExceptions = new ArrayList<>();
       for (Builder<?> validatable:
             asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
                    versioning, unsafe, sites, compatibility)) {
-         validatable.validate();
+         try {
+            validatable.validate();
+         } catch (RuntimeException e) {
+            validationExceptions.add(e);
+         }
       }
       for (Builder<?> m : modules) {
-         m.validate();
+         try {
+            m.validate();
+         } catch (RuntimeException e) {
+            validationExceptions.add(e);
+         }
       }
+      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> { throw e; });
    }
 
    private void validateSimpleCacheConfiguration() {
@@ -222,13 +232,19 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      List<RuntimeException> validationExceptions = new ArrayList<>();
       for (ConfigurationChildBuilder validatable:
             asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
                    versioning, unsafe, sites, compatibility, security)) {
-         validatable.validate(globalConfig);
+         try {
+            validatable.validate(globalConfig);
+         } catch (RuntimeException e) {
+            validationExceptions.add(e);
+         }
       }
       // Modules cannot be checked with GlobalConfiguration
+      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> { throw e; });
    }
 
    @Override

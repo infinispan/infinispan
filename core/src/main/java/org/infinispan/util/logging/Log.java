@@ -1459,4 +1459,9 @@ public interface Log extends BasicLogger {
    @Message(value="Duplicate id found! AdvancedExternalizer id=%d is shared by another externalizer (%s)", id = 423)
    CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, String otherExternalizer);
 
+   @Message(value = "Eviction size value cannot be less than or equal to zero if eviction is enabled", id = 424)
+   CacheConfigurationException invalidEvictionSize();
+
+   @Message(value = "Eviction cannot use memory-based approximation with LIRS", id = 425)
+   CacheConfigurationException memoryEvictionInvalidStrategyLIRS();
 }

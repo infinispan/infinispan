@@ -107,4 +107,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot find resource '%s'", id = 918)
    IOException cannotFindResource(String fileName);
+
+   @Message(value = "Multiple errors encountered while validating configuration", id = 919)
+   CacheConfigurationException multipleConfigurationValidationErrors();
+
 }

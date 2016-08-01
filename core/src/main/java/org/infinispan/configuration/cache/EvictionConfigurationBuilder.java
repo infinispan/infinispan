@@ -5,7 +5,6 @@ import static org.infinispan.configuration.cache.EvictionConfiguration.STRATEGY;
 import static org.infinispan.configuration.cache.EvictionConfiguration.THREAD_POLICY;
 import static org.infinispan.configuration.cache.EvictionConfiguration.TYPE;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -101,13 +100,13 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public void validate() {
       EvictionStrategy strategy = attributes.attribute(STRATEGY).get();
-      Long maxEntries = attributes.attribute(SIZE).get();
+      Long size = attributes.attribute(SIZE).get();
       if (strategy == EvictionStrategy.FIFO)
          log.warnFifoStrategyIsDeprecated();
-      if (strategy.isEnabled() && maxEntries <= 0)
-         throw new CacheConfigurationException("Eviction maxEntries value cannot be less than or equal to zero if eviction is enabled");
+      if (strategy.isEnabled() && size <= 0)
+         throw log.invalidEvictionSize();
       if (!strategy.isEnabled()) {
-         if (maxEntries > 0) {
+         if (size > 0) {
             strategy(EvictionStrategy.LIRS);
             log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", maxEntries, strategy);
          } else if (getBuilder().persistence().passivation() && strategy != EvictionStrategy.MANUAL) {
@@ -115,10 +114,10 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
          }
       }
       if (strategy == EvictionStrategy.LIRS && attributes.attribute(TYPE).get() == EvictionType.MEMORY) {
-         throw new CacheConfigurationException("Eviction cannot use memory based approximation with LIRS");
+         throw log.memoryEvictionInvalidStrategyLIRS();
       }
-      if (maxEntries > EVICTION_MAX_SIZE) {
-         throw log.evictionSizeTooLarge(maxEntries);
+      if (size > EVICTION_MAX_SIZE) {
+         throw log.evictionSizeTooLarge(size);
       }
       if (attributes.attribute(TYPE).get() == EvictionType.MEMORY) {
          String javaVM = SecurityActions.getSystemProperty("java.vm.name");
