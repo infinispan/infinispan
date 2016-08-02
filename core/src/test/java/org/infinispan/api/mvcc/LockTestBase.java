@@ -2,7 +2,6 @@ package org.infinispan.api.mvcc;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -35,7 +34,6 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       public Cache<String, String> cache;
       public TransactionManager tm;
       public LockManager lockManager;
-      public InvocationContextContainer icc;
    }
 
    protected final ThreadLocal<LockTestBaseTL> threadLocal = new ThreadLocal<LockTestBaseTL>();
@@ -55,7 +53,6 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
       tl.cache = cm.getCache();
       tl.lockManager = TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);
-      tl.icc = TestingUtil.extractComponentRegistry(tl.cache).getComponent(InvocationContextContainer.class);
       tl.tm = TestingUtil.extractComponentRegistry(tl.cache).getComponent(TransactionManager.class);
       threadLocal.set(tl);
    }
@@ -70,12 +67,12 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
 
    protected void assertLocked(Object key) {
       LockTestBaseTL tl = threadLocal.get();
-      LockAssert.assertLocked(key, tl.lockManager, tl.icc);
+      LockAssert.assertLocked(key, tl.lockManager);
    }
 
    protected void assertNotLocked(Object key) {
       LockTestBaseTL tl = threadLocal.get();
-      LockAssert.assertNotLocked(key, tl.icc);
+      LockAssert.assertNotLocked(key, tl.lockManager);
    }
 
    protected void assertNoLocks() {

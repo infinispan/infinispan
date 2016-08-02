@@ -28,8 +28,6 @@ public final class SingleKeyNonTxInvocationContext extends BaseAsyncInvocationCo
 
    //TODO move reference to Equivalence to InvocationContextFactory (Memory allocation cost)
    private final Equivalence keyEquivalence;
-   //TODO move reference to ClassLoader to InvocationContextFactory (Memory allocation cost)
-   private ClassLoader classLoader;
    //TODO move the Origin's address to the InvocationContextFactory when isOriginLocal=true -> all addresses are the same  (Memory allocation cost)
    //(verify if this is worth it by looking at object alignment - would need a different implementation as pointing to null wouldn't help)
    private final Address origin;
@@ -137,12 +135,12 @@ public final class SingleKeyNonTxInvocationContext extends BaseAsyncInvocationCo
 
    @Override
    public ClassLoader getClassLoader() {
-      return classLoader;
+      return null;
    }
 
    @Override
    public void setClassLoader(ClassLoader classLoader) {
-      this.classLoader = classLoader;
+      // No-op
    }
 
    @Override
