@@ -1,5 +1,13 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -33,17 +41,6 @@ import org.jgroups.stack.Protocol;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.NotifyingFuture;
 import org.jgroups.util.Rsp;
-import org.jgroups.util.RspList;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.
@@ -53,8 +50,6 @@ import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGr
  * @since 4.0
  */
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
-   public static final RspList<Response> EMPTY_RESPONSES_LIST = new RspList<>();
-
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = SecurityActions.getBooleanProperty("infinispan.unsafe.force_multicast");
@@ -112,23 +107,18 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    /**
     * @param recipients Must <b>not</b> contain self.
     */
-   public CompletableFuture<RspList<Response>> invokeRemoteCommands(List<Address> recipients, ReplicableCommand command,
-                                                       ResponseMode mode, long timeout, RspFilter filter,
-                                                       DeliverOrder deliverOrder) {
-      CompletableFuture<RspList<Response>> future;
+   public CompletableFuture<Responses> invokeRemoteCommands(List<Address> recipients, ReplicableCommand command,
+                                                            ResponseMode mode, long timeout, RspFilter filter,
+                                                            DeliverOrder deliverOrder) {
+      CompletableFuture<Responses> future;
       try {
          if (recipients != null && mode == ResponseMode.GET_FIRST && STAGGER_DELAY_NANOS > 0) {
             future = new CompletableFuture<>();
-            // We populate the RspList ahead of time to avoid additional synchronization afterwards
-            RspList<Response> rsps = new RspList<>();
-            for (Address recipient : recipients) {
-               rsps.put(recipient, new Rsp<>(recipient));
-            }
             // This isn't really documented, but some of our internal code uses timeout = 0 as no timeout.
             long nanoTimeout = timeout > 0 ? TimeUnit.MILLISECONDS.toNanos(timeout) : Long.MAX_VALUE;
             long deadline = timeService.expectedEndTime(nanoTimeout, TimeUnit.NANOSECONDS);
             processCallsStaggered(command, filter, recipients, mode, deliverOrder, req_marshaller, future,
-                  0, deadline, rsps);
+                  0, deadline, new Responses(recipients));
          } else {
             future = processCalls(command, recipients == null, timeout, filter, recipients, mode, deliverOrder,
                   req_marshaller);
@@ -306,8 +296,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    private void processCallsStaggered(ReplicableCommand command, RspFilter filter, List<Address> dests,
                                       ResponseMode mode, DeliverOrder deliverOrder, Marshaller marshaller,
-                                      CompletableFuture<RspList<Response>> theFuture, int destIndex,
-                                      long deadline, RspList<Response> rsps)
+                                      CompletableFuture<Responses> theFuture, int destIndex,
+                                      long deadline, Responses rsps)
          throws Exception {
       if (destIndex == dests.size())
          return;
@@ -320,24 +310,15 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                // We should never get here, any remote exception will be in the Rsp
                theFuture.completeExceptionally(throwable);
             }
-            Rsp<Response> futureRsp = rsps.get(rsp.getSender());
-            if (rsp.hasException()) {
-               futureRsp.setException(rsp.getException());
-            } else {
-               futureRsp.setValue(rsp.getValue());
-            }
-            if (filter.isAcceptable(rsp.getValue(), rsp.getSender())) {
+            rsps.addResponse(rsp);
+            // Do not fail the request if one response is suspected/unreachable
+            if (rsp.wasReceived() && (filter == null || filter.isAcceptable(rsp.getValue(), rsp.getSender()))) {
                // We got an acceptable response
                theFuture.complete(rsps);
             } else {
-               boolean missingResponses = false;
-               for (Rsp<Response> rsp1 : rsps) {
-                  if (!rsp1.wasReceived()) {
-                     missingResponses = true;
-                     break;
-                  }
-               }
-               if (!missingResponses) {
+               // We only give up after we've received invalid responses from all recipients,
+               // even after the stagger timeout expired for them.
+               if (!rsps.isMissingResponses()) {
                   // This was the last response, need to complete the future
                   theFuture.complete(rsps);
                } else {
@@ -365,13 +346,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    }
 
    private void staggeredProcessNext(ReplicableCommand command, RspFilter filter, List<Address> dests,
-         ResponseMode mode, DeliverOrder deliverOrder, Marshaller marshaller,
-         CompletableFuture<RspList<Response>> theFuture, int destIndex, long deadline,
-         RspList<Response> rsps) {
+                                     ResponseMode mode, DeliverOrder deliverOrder, Marshaller marshaller,
+                                     CompletableFuture<Responses> theFuture, int destIndex, long deadline,
+                                     Responses rsps) {
       if (theFuture.isDone()) {
          return;
       }
       if (timeService.isTimeExpired(deadline)) {
+         rsps.setTimedOut();
          theFuture.complete(rsps);
          return;
       }
@@ -384,9 +366,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   private RspListFuture processCalls(ReplicableCommand command, boolean broadcast, long timeout,
-                                      RspFilter filter, List<Address> dests, ResponseMode mode,
-                                      DeliverOrder deliverOrder, Marshaller marshaller) throws Exception {
+   private CompletableFuture<Responses> processCalls(ReplicableCommand command, boolean broadcast, long timeout,
+                                                     RspFilter filter, List<Address> dests, ResponseMode mode,
+                                                     DeliverOrder deliverOrder, Marshaller marshaller) throws Exception {
       if (trace) log.tracef("Replication task sending %s to addresses %s with response mode %s", command, dests, mode);
       boolean rsvp = isRsvpCommand(command);
 
@@ -412,16 +394,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (request == null) {
          // cast() returns null when there no other nodes in the cluster
          if (broadcast) {
-            retval.complete(EMPTY_RESPONSES_LIST);
+            retval.complete(Responses.EMPTY);
          } else {
-            // TODO Use EMPTY_RESPONSES_LIST here too
-            List<Rsp<Response>> rsps = new ArrayList<>(dests.size());
-            for (Address dest : dests) {
-               Rsp<Response> rsp = new Rsp<>(dest);
-               rsp.setSuspected();
-               rsps.add(rsp);
-            }
-            retval.complete(new RspList<>(rsps));
+            // TODO Use Responses.EMPTY here too
+            retval.complete(Responses.suspected(dests));
          }
       }
       if (timeout > 0 && !retval.isDone()) {
