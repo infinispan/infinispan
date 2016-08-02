@@ -850,9 +850,9 @@ public class TestingUtil {
       return extractComponentRegistry(cache).getComponent(LockManager.class);
    }
 
-   public static AbstractDelegatingMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
+   public static StreamingMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
       GlobalComponentRegistry gcr = extractField(cm, "globalComponentRegistry");
-      return (AbstractDelegatingMarshaller) gcr.getComponent(StreamingMarshaller.class);
+      return gcr.getComponent(StreamingMarshaller.class);
    }
 
    public static ExternalizerTable extractExtTable(CacheContainer cacheContainer) {

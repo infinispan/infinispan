@@ -2,6 +2,7 @@ package org.infinispan.marshall;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -94,7 +95,7 @@ import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
-   private org.infinispan.commons.marshall.AbstractDelegatingMarshaller marshaller;
+   private StreamingMarshaller marshaller;
    private EmbeddedCacheManager cm;
 
    private final TransactionFactory gtf = new TransactionFactory();

@@ -43,7 +43,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
       this.globalCfg = null;
    }
 
-   public JBossMarshaller(ExternalizerTable externalizerTable, Configuration cfg,
+   public JBossMarshaller(ExternalizerTable externalizerTable,
          GlobalConfiguration globalCfg) {
       this.externalizerTable = externalizerTable;
       this.globalCfg = globalCfg;

@@ -23,8 +23,8 @@ import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizerTest;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.core.VersionAwareMarshaller;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -356,7 +356,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assertEquals(ShutdownHookBehavior.REGISTER, gc.shutdown().hookBehavior());
 
-      assertTrue(gc.serialization().marshaller() instanceof VersionAwareMarshaller);
+      assertTrue(gc.serialization().marshaller() instanceof TestObjectStreamMarshaller);
       assertEquals(Version.getVersionShort("1.0"), gc.serialization().version());
       final Map<Integer, AdvancedExternalizer<?>> externalizers = gc.serialization().advancedExternalizers();
       assertEquals(3, externalizers.size());

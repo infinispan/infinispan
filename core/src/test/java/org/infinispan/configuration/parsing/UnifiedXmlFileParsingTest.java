@@ -30,7 +30,7 @@ import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.jmx.CustomMBeanServerPropertiesTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.AdvancedExternalizerTest;
-import org.infinispan.marshall.core.VersionAwareMarshaller;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
@@ -237,7 +237,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
       assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
 
-      assertTrue(g.serialization().marshaller() instanceof VersionAwareMarshaller);
+      assertTrue(g.serialization().marshaller() instanceof TestObjectStreamMarshaller);
       assertEquals(Version.getVersionShort("1.0"), g.serialization().version());
       Map<Integer, AdvancedExternalizer<?>> externalizers = g.serialization().advancedExternalizers();
       AdvancedExternalizer<?> externalizer = externalizers.get(9001);

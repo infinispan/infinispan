@@ -5,7 +5,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.marshall.core.GlobalMarshaller;
-import org.infinispan.marshall.core.VersionAwareMarshaller;
 
 /**
  * MarshallerFactory.
@@ -21,11 +20,9 @@ public class MarshallerFactory extends EmptyConstructorFactory implements AutoIn
       Object comp;
       Marshaller configMarshaller =
             globalConfiguration.serialization().marshaller();
-      boolean isVersionAwareMarshaller =
-            configMarshaller instanceof VersionAwareMarshaller;
 
-      if (isVersionAwareMarshaller) {
-         comp = new GlobalMarshaller((VersionAwareMarshaller) configMarshaller);
+      if (configMarshaller == null) {
+         comp = new GlobalMarshaller();
       } else {
          comp = configMarshaller;
       }
