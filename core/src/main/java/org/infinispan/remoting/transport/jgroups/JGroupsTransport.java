@@ -52,7 +52,6 @@ import org.jgroups.protocols.tom.TOA;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.Rsp;
-import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
 
 import javax.management.MBeanServer;
@@ -586,7 +585,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       List<Address> localMembers = this.members;
       int membersSize = localMembers.size();
       boolean broadcast = membersSize > 2 && (jgAddressList == null || recipients.size() == membersSize);
-      CompletableFuture<RspList<Response>> rspListFuture = null;
+      CompletableFuture<Responses> rspListFuture = null;
       SingleResponseFuture singleResponseFuture = null;
       org.jgroups.Address singleJGAddress = null;
 
@@ -654,7 +653,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                   new HashMap<>(CollectionFactory.computeCapacity(rsps.size()));
             boolean hasResponses = false;
             boolean hasValidResponses = false;
-            for (Rsp<Response> rsp : rsps.values()) {
+            for (Rsp<Response> rsp : rsps) {
+               if (rsp == null) {
+                  if (ignoreLeavers) {
+                     continue;
+                  } else {
+                     throw new TimeoutException("Replication timeout");
+                  }
+               }
                hasResponses |= rsp.wasReceived();
                Address sender = fromJGroupsAddress(rsp.getSender());
                Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), ignoreLeavers);
