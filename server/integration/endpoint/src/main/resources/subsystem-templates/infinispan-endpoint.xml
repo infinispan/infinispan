@@ -91,6 +91,14 @@
          </hotrod-connector>
       </replacement>
    </supplement>
+   <supplement name="indexing">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector socket-binding="hotrod" cache-container="clustered">
+            <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+      </replacement>
+   </supplement>
    <socket-binding name="hotrod" port="11222" />
    <socket-binding name="hotrod-internal" port="11223" />
    <socket-binding name="memcached" port="11211" />

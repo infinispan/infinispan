@@ -7,6 +7,7 @@
       <subsystem>jdr.xml</subsystem>
       <subsystem>infinispan-jgroups.xml</subsystem>
       <subsystem supplement="indexing">infinispan-core.xml</subsystem>
+      <subsystem supplement="indexing">infinispan-endpoint.xml</subsystem>
       <subsystem>jmx.xml</subsystem>
       <subsystem>naming.xml</subsystem>
       <subsystem>remoting.xml</subsystem>
