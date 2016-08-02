@@ -9,8 +9,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextContainerImpl;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.NonTransactionalInvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;

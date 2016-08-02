@@ -4,7 +4,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.context.Flag;
-import org.infinispan.test.CherryPickClassLoader;
 import org.testng.annotations.Test;
 
 /**
@@ -14,9 +13,8 @@ import org.testng.annotations.Test;
 public class DecoratedCacheTest {
 
    public void testDecoratedCacheFlagsSet() {
-      ClassLoader thisClassLoader = this.getClass().getClassLoader();
       CacheImpl impl = new CacheImpl("baseCache");
-      DecoratedCache decoratedCache = new DecoratedCache(impl, thisClassLoader);
+      DecoratedCache decoratedCache = new DecoratedCache(impl);
       DecoratedCache nofailCache = (DecoratedCache) decoratedCache.withFlags(Flag.FAIL_SILENTLY);
       assert nofailCache.getFlags().contains(Flag.FAIL_SILENTLY);
       assert nofailCache.getFlags().size() == 1;
@@ -26,14 +24,6 @@ public class DecoratedCacheTest {
       assert asyncNoFailCache.getFlags().contains(Flag.FORCE_ASYNCHRONOUS);
       AdvancedCache again = asyncNoFailCache.withFlags(Flag.FAIL_SILENTLY);
       assert again == asyncNoFailCache; // as FAIL_SILENTLY was already specified
-      
-      CherryPickClassLoader cl = new CherryPickClassLoader(null, null, null, thisClassLoader);
-      assert again.getClassLoader() == thisClassLoader;
-      DecoratedCache clCache = (DecoratedCache) again.with(cl);
-      assert clCache.getClassLoader() == cl;
-      assert clCache.getFlags().size() == 2; //Flags inherited from previous withFlag()
-      assert again.getClassLoader() == thisClassLoader; //original cache unaffected
-      assert decoratedCache.getFlags() == null || decoratedCache.getFlags().size() == 0;
    }
 
 }

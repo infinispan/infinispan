@@ -5,7 +5,6 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.NotSerializableException;
@@ -42,9 +41,8 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
    private ExternalizerTable extTable;
    private GlobalConfiguration globalCfg;
    private Configuration cfg;
-   private InvocationContextContainer icc;
 
-   public void inject(Cache cache, Configuration cfg, InvocationContextContainer icc,
+   public void inject(Cache cache, Configuration cfg,
          ExternalizerTable extTable, GlobalConfiguration globalCfg) {
       if (cfg == null) {
          this.cacheName = null;
@@ -55,12 +53,11 @@ public class VersionAwareMarshaller extends AbstractMarshaller implements Stream
       this.extTable = extTable;
       this.globalCfg = globalCfg;
       this.cfg = cfg;
-      this.icc = icc;
    }
 
    @Override
    public void start() {
-      defaultMarshaller = new JBossMarshaller(extTable, cfg, icc, globalCfg);
+      defaultMarshaller = new JBossMarshaller(extTable, cfg, globalCfg);
       defaultMarshaller.start();
    }
 

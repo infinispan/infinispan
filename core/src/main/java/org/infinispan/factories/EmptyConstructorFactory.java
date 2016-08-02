@@ -4,8 +4,6 @@ import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.CancellationServiceImpl;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextContainerImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -31,7 +29,6 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 
 @DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
                               ExternalizerTable.class, InboundInvocationHandler.class, PersistentUUIDManager.class,
-                              InvocationContextContainer.class,
                               RemoteCommandsFactory.class, TimeService.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -55,8 +52,6 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new EventLogManagerImpl();
       else if (componentType.equals(PersistentUUIDManager.class))
          return (T) new PersistentUUIDManagerImpl();
-      else if (componentType.equals(InvocationContextContainer.class))
-         return (T) new InvocationContextContainerImpl();
 
       throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
    }

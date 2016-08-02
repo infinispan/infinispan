@@ -61,12 +61,17 @@ public interface InvocationContext extends EntryLookup, AsyncInvocationContext, 
     *
     * @return a class loader instance or null if no class loader was
     *         specifically associated
+    * @deprecated Not in use any more, implementations might return null.
     */
+   @Deprecated
    ClassLoader getClassLoader();
 
    /**
     * Sets the class loader associated for this invocation
+    *
+    * @deprecated Not in use any more.
     */
+   @Deprecated
    void setClassLoader(ClassLoader classLoader);
 
    /**

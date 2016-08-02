@@ -223,7 +223,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * cache operations and the context information associated with them.
     *
     * @return the invocation context container component
-    * @deprecated This method may be removed in a future version of Infinispan.
+    * @deprecated No longer in use, implementations might return null.
     */
    @Deprecated
    InvocationContextContainer getInvocationContextContainer();
@@ -309,6 +309,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @return an {@link AdvancedCache} instance upon which operations can be called
     * with a particular {@link ClassLoader}.
+    * @deprecated A cache manager, and all caches within it, can only have
+    * one classloader associated to it, so it's no longer possible to read
+    * cached data with a different classloader.
     */
    AdvancedCache<K, V> with(ClassLoader classLoader);
 

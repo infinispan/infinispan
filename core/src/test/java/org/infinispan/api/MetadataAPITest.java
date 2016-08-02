@@ -261,7 +261,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    public void testPutForExternalReadInDecaratedCacheWithVersion() {
       final Integer key = 12;
       NumericVersion version = new NumericVersion(1);
-      DecoratedCache decoratedCache = new DecoratedCache(advCache, this.getClass().getClassLoader());
+      DecoratedCache decoratedCache = new DecoratedCache(advCache);
       decoratedCache.putForExternalRead(key, "v1", withVersion(version));
       CacheEntry cacheEntry = decoratedCache.getCacheEntry(key);
       assertEquals(version, cacheEntry.getMetadata().version());
@@ -278,7 +278,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
    public void testPutForExternalReadInDecaratedCacheWithLifespan() {
       final Integer key = 12;
       long lifespan = 1_000_000;
-      DecoratedCache decoratedCache = new DecoratedCache(advCache, this.getClass().getClassLoader());
+      DecoratedCache decoratedCache = new DecoratedCache(advCache);
       decoratedCache.putForExternalRead(key, "v1", withLifespan(lifespan));
       CacheEntry cacheEntry = decoratedCache.getCacheEntry(key);
       assertEquals(lifespan, cacheEntry.getMetadata().lifespan());

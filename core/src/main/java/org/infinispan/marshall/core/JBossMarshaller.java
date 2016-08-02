@@ -10,8 +10,6 @@ import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
 import org.infinispan.commons.marshall.jboss.SerializeWithExtFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.jboss.marshalling.ClassResolver;
 import org.jboss.marshalling.Externalize;
 import org.jboss.marshalling.ObjectTable;
@@ -39,19 +37,16 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
    final ExternalizerTable externalizerTable;
    ExternalizerTableProxy proxy;
    final GlobalConfiguration globalCfg;
-   final InvocationContextContainer icc;
 
    public JBossMarshaller() {
       this.externalizerTable = null;
       this.globalCfg = null;
-      this.icc = null;
    }
 
    public JBossMarshaller(ExternalizerTable externalizerTable, Configuration cfg,
-         InvocationContextContainer icc, GlobalConfiguration globalCfg) {
+         GlobalConfiguration globalCfg) {
       this.externalizerTable = externalizerTable;
       this.globalCfg = globalCfg;
-      this.icc = icc;
    }
 
    @Override
@@ -68,7 +63,7 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
          // Override the class resolver with one that can detect injected
          // classloaders via AdvancedCache.with(ClassLoader) calls.
          ClassLoader cl = globalCfg.classLoader();
-         classResolver = new EmbeddedContextClassResolver(cl, icc);
+         classResolver = new DefaultContextClassResolver(cl);
       }
 
       baseCfg.setClassResolver(classResolver);
@@ -90,33 +85,6 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
             || externalizerTable.isMarshallableCandidate(o)
             || o.getClass().getAnnotation(SerializeWith.class) != null
             || o.getClass().getAnnotation(Externalize.class) != null;
-   }
-
-   /**
-    * An embedded context class resolver that is able to retrieve a class
-    * loader from the embedded Infinispan call context. This might happen when
-    * {@link org.infinispan.AdvancedCache#with(ClassLoader)} is used.
-    */
-   public static final class EmbeddedContextClassResolver extends DefaultContextClassResolver {
-
-      private final InvocationContextContainer icc;
-
-      public EmbeddedContextClassResolver(ClassLoader defaultClassLoader, InvocationContextContainer icc) {
-         super(defaultClassLoader);
-         this.icc = icc;
-      }
-
-      @Override
-      protected ClassLoader getClassLoader() {
-         if (icc != null) {
-            InvocationContext ctx = icc.getInvocationContext(true);
-            if (ctx != null) {
-               ClassLoader cl = ctx.getClassLoader();
-               if (cl != null) return cl;
-            }
-         }
-         return super.getClassLoader();
-      }
    }
 
    /**

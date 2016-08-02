@@ -10,7 +10,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -47,7 +46,6 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private TransactionManager tm;
    private ComponentRegistry componentRegistry;
    private TransactionTable txTable;
-   private InvocationContextContainer invocationContextContainer;
 
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -57,7 +55,6 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       @Override
       public CompletableFuture<Object> handle(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
             Throwable throwable) throws Throwable {
-         invocationContextContainer.clearThreadLocal(rCtx);
          if (throwable == null)
             return null;
 
@@ -87,11 +84,10 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    }
 
    @Inject
-   public void init(TransactionManager tm, ComponentRegistry componentRegistry, TransactionTable txTable, InvocationContextContainer invocationContextContainer) {
+   public void init(TransactionManager tm, ComponentRegistry componentRegistry, TransactionTable txTable) {
       this.tm = tm;
       this.componentRegistry = componentRegistry;
       this.txTable = txTable;
-      this.invocationContextContainer = invocationContextContainer;
    }
 
 
@@ -114,7 +110,6 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          }
       }
 
-      invocationContextContainer.setThreadLocal(ctx);
       return ctx.onReturn(defaultReturnHandler);
    }
 
