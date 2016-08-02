@@ -18,12 +18,8 @@ import static org.testng.AssertJUnit.assertNotNull;
 public class DistSyncTxStoreSharedTest extends BaseDistStoreTest {
 
    public DistSyncTxStoreSharedTest() {
-      sync = true;
       tx = true;
-      testRetVals = true;
       shared = true;
-      INIT_CLUSTER_SIZE = 2;
-      numOwners = 1;
    }
 
    public void testPutFromNonOwner() throws Exception {
@@ -33,6 +29,7 @@ public class DistSyncTxStoreSharedTest extends BaseDistStoreTest {
       assertEquals("v1", cacheX.get("key1"));
       assertNotNull(storeX.load("key1"));
       assertEquals("v1", storeX.load("key1").getValue());
+      assertNumberOfInvocations(storeX, "write", 1); // Shared store, so only one node should have written the change
    }
 
 }
