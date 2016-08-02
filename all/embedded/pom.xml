@@ -154,6 +154,22 @@
          <artifactId>kubernetes</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
+
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-dmr</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.jgroups.kubernetes</groupId>
+         <artifactId>dns</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.jgroups.kubernetes</groupId>
+         <artifactId>kubernetes</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+      </dependency>
    </dependencies>
 
    <build>
