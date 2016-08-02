@@ -170,17 +170,6 @@ public abstract class AbstractJdbcStore<K,V> implements AdvancedLoadWriteStore<K
       return connectionFactory;
    }
 
-   protected void waitForFutureToComplete(Future<Void> future) {
-      try {
-         future.get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-         log.errorExecutingSubmittedStoreTask(e);
-         throw new PersistenceException(e);
-      }
-   }
-
    protected ByteBuffer marshall(Object obj) throws PersistenceException, InterruptedException {
       try {
          return ctx.getMarshaller().objectToBuffer(obj);
