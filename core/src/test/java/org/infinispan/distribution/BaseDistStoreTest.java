@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheLoader;
 
 /**
  * DistSyncCacheStoreTest.
@@ -26,4 +27,11 @@ public abstract class BaseDistStoreTest<K, V> extends BaseDistFunctionalTest<K, 
       }
       return cfg;
    }
+
+   protected void assertNumberOfInvocations(CacheLoader cs, String method, int expected) {
+      int actual = ((DummyInMemoryStore) cs).stats().get(method);
+      assert expected == actual : "Expected " + expected + " but was " + actual;
+   }
+
+
 }
