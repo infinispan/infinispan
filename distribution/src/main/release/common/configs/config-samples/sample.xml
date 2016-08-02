@@ -102,7 +102,7 @@
             http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_the_role_of_jboss_marshalling
             http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_plugging_infinispan_with_user_defined_externalizers
        -->
-      <serialization marshaller="org.infinispan.marshall.core.VersionAwareMarshaller" version="1.0">
+      <serialization marshaller="org.infinispan.marshall.TestObjectStreamMarshaller" version="1.0">
          <!-- AdvancedExternalizer defined as inner static class, with id set via XML configuration -->
          <advanced-externalizer id="1234" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer"/>
          <!-- AdvancedExternalizer defined as inner static class, with id set via annotation -->

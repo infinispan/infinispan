@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -23,7 +24,7 @@ import java.util.Map;
 import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional")
-public abstract class AbstractConfigurationSerializerTest {
+public abstract class AbstractConfigurationSerializerTest extends AbstractInfinispanTest {
    @Test(dataProvider="configurationFiles")
    public void configurationSerializationTest(String config) throws Exception {
       ParserRegistry registry = new ParserRegistry();

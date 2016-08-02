@@ -78,7 +78,7 @@
             <!-- See the JGroupsTransport javadocs for more flags -->
         </transport>
 
-        <serialization marshallerClass="org.infinispan.marshall.core.VersionAwareMarshaller" version="1.0">
+        <serialization marshallerClass="org.infinispan.marshall.TestObjectStreamMarshaller" version="1.0">
             <advancedExternalizers>
                 <advancedExternalizer id="1234" externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer" />
                 <advancedExternalizer externalizerClass="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer" />

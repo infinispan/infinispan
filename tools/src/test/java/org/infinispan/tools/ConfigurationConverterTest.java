@@ -16,6 +16,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
@@ -150,7 +151,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
    }
 
    private void assertGlobalSerialization(GlobalConfiguration globalConfiguration) {
-      assertTrue(globalConfiguration.serialization().marshaller() instanceof org.infinispan.marshall.core.VersionAwareMarshaller);
+      assertTrue(globalConfiguration.serialization().marshaller() instanceof TestObjectStreamMarshaller);
       assertEquals(Version.getVersionShort("1.0.0"), globalConfiguration.serialization().version());
       assertEquals(3, globalConfiguration.serialization().advancedExternalizers().size());
       assertTrue(globalConfiguration.serialization().advancedExternalizers().get(1234) instanceof org.infinispan.marshall.AdvancedExternalizerTest.IdViaConfigObj.Externalizer);

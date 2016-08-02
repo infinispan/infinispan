@@ -7,12 +7,11 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.marshall.core.VersionAwareMarshaller;
 import org.jboss.marshalling.ClassResolver;
 
 public class SerializationConfiguration {
    public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class)
-         .initializer(() -> new VersionAwareMarshaller()).immutable().build();
+         .immutable().build();
    public static final AttributeDefinition<Short> VERSION = AttributeDefinition.builder("version", Version.getMarshallVersion()).immutable().build();
    public static final AttributeDefinition<ClassResolver> CLASS_RESOLVER = AttributeDefinition.builder("classResolver", null, ClassResolver.class).immutable().build();
 
