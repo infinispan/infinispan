@@ -104,12 +104,6 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       assertOnAllCachesAndOwnership(key, value);
    }
 
-   private void assertNumberOfInvocations(CacheLoader cs, String method, int expected) {
-      int actual = ((DummyInMemoryStore) cs).stats().get(method);
-      assert expected == actual : "Expected " + expected + " but was " + actual;
-   }
-
-
    public void testPutAll() throws Exception {
       log.trace("Here it begins");
       String k1 = "1", v1 = "one", k2 = "2", v2 = "two", k3 = "3", v3 = "three", k4 = "4", v4 = "four";

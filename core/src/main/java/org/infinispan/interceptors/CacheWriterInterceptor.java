@@ -371,7 +371,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                ice = entryFactory.create(entry);
             }
             MarshalledEntryImpl marshalledEntry = new MarshalledEntryImpl(ice.getKey(), ice.getValue(), internalMetadata(ice), marshaller);
-            persistenceManager.writeToAllStores(marshalledEntry, command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE) ? PRIVATE : BOTH);
+            persistenceManager.writeToAllStores(marshalledEntry, skipSharedStores(ctx, command.getKey(), command) ? PRIVATE : BOTH);
          }
          return null;
       }
@@ -393,7 +393,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          Object key = command.getKey();
          if (isProperWriter(ctx, command, key)) {
-            persistenceManager.deleteFromAllStores(key, BOTH);
+            persistenceManager.deleteFromAllStores(key, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
          }
          return null;
       }
@@ -409,7 +409,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             if (generateStatistics) putCount++;
             InternalCacheValue sv = getStoredValue(key, ctx);
             MarshalledEntryImpl me = new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller);
-            persistenceManager.writeToAllStores(me, command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE) ? PRIVATE : BOTH);
+            persistenceManager.writeToAllStores(me, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
          }
          return null;
       }
