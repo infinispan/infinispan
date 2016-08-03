@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.logging;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.Bucket;
 import org.jboss.logging.annotations.Cause;
@@ -156,4 +157,9 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Exception encountered when preparing JDBC store Tx", id = 8033)
    PersistenceException prepareTxFailure(@Cause Throwable e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to notify the PurgeListener of expired cache entries as the configured key2StringMapper " +
+         "does not implement %s", id = 8034)
+   void twoWayKey2StringMapperIsMissing(String className);
 }

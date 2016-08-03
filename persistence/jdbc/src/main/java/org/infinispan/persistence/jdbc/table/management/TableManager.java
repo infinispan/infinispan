@@ -59,7 +59,7 @@ public interface TableManager {
 
    String getDeleteAllRowsSql();
 
-   String getSelectExpiredRowsSql();
+   String getSelectExpiredBucketsSql();
 
-   String getDeleteExpiredRowsSql();
+   String getSelectOnlyExpiredRowsSql();
 }
