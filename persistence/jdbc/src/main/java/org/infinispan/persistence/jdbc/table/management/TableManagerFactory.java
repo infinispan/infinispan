@@ -36,6 +36,7 @@ public class TableManagerFactory {
       DbMetaData metaData = getDbMetaData(connectionFactory, databaseType, dbMajorVersion, dbMinorVersion);
 
       switch (metaData.getType()) {
+         case MARIA_DB:
          case MYSQL:
             return new MySQLTableManager(connectionFactory, config, metaData);
          case ORACLE:
