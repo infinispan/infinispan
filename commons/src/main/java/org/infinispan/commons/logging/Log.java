@@ -10,6 +10,8 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
+import java.io.IOException;
+
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
  * <p/>
@@ -103,5 +105,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot resize unbounded container", id = 917)
    UnsupportedOperationException cannotResizeUnboundedContainer();
 
+   @Message(value = "Cannot find resource '%s'", id = 918)
+   IOException cannotFindResource(String fileName);
 }
 
