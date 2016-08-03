@@ -34,9 +34,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
-import org.infinispan.transaction.impl.AbstractCacheTransaction;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * An interceptor which ensures that writes to an underlying transactional store are prepared->committed/rolledback as part

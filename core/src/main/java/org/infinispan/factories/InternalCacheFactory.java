@@ -6,7 +6,6 @@ import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.*;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;

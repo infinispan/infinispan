@@ -1,6 +1,5 @@
 package org.infinispan.context;
 
-import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
