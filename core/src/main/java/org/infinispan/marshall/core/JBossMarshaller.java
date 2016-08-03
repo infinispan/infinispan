@@ -8,7 +8,6 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
 import org.infinispan.commons.marshall.jboss.DefaultContextClassResolver;
 import org.infinispan.commons.marshall.jboss.SerializeWithExtFactory;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.jboss.marshalling.ClassResolver;
 import org.jboss.marshalling.Externalize;

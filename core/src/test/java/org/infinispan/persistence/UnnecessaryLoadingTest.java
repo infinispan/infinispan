@@ -1,7 +1,6 @@
 package org.infinispan.persistence;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -31,7 +30,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import java.util.Properties;
 import java.util.concurrent.Executor;
 
 import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;

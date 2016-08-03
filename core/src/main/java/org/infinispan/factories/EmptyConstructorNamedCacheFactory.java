@@ -21,7 +21,6 @@ import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.impl.ActivationManagerImpl;
 import org.infinispan.eviction.impl.EvictionManagerImpl;
 import org.infinispan.eviction.impl.PassivationManagerImpl;
-import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.functional.impl.FunctionalNotifierImpl;
