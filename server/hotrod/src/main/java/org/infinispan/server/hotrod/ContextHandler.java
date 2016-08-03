@@ -5,6 +5,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
+import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
@@ -130,8 +131,9 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
             if (msg.isTrace()) {
                log.tracef("About to create bulk response count = %d", size);
             }
+            CloseableIteratorSet<Map.Entry<byte[], byte[]>> set = msg.cache().entrySet();
             writeResponse(msg, ctx.channel(), new BulkGetResponse(h.version(), h.messageId(), h.cacheName(), h.clientIntel(),
-                    h.topologyId(), size, msg.cache().entrySet()));
+                    h.topologyId(), size, set));
             break;
          case BulkGetKeysRequest:
             int scope = (int) msg.operationDecodeContext();

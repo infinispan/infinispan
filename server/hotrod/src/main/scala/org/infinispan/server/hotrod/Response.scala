@@ -4,10 +4,10 @@ import java.util.function.BiConsumer
 
 import OperationStatus._
 import OperationResponse._
-import org.infinispan.commons.util.Util
+import org.infinispan.commons.util.{CloseableIteratorSet, CloseableIterator, Util}
 import org.infinispan.remoting.transport.Address
 import java.lang.StringBuilder
-import java.util.{Iterator => JavaIterator, Set => JavaSet, Map => JavaMap}
+import java.util.{Map => JavaMap, Set => JavaSet}
 
 import org.infinispan.server.hotrod.iteration.IterableIterationResult
 
@@ -64,7 +64,7 @@ class GetResponse(override val version: Byte, override val messageId: Long, over
    }
 }
 class BulkGetResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
-                  override val topologyId: Int, val count: Int, val entries: JavaSet[JavaMap.Entry[Bytes, Bytes]])
+                  override val topologyId: Int, val count: Int, val entries: CloseableIteratorSet[JavaMap.Entry[Bytes, Bytes]])
       extends Response(version, messageId, cacheName, clientIntel, BulkGetResponse, Success, topologyId) {
    override def toString = {
       new StringBuilder().append("BulkGetResponse").append("{")
@@ -78,7 +78,7 @@ class BulkGetResponse(override val version: Byte, override val messageId: Long, 
 }
 
 class BulkGetKeysResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
-                  override val topologyId: Int, scope: Int, val iterator: JavaIterator[Bytes])
+                  override val topologyId: Int, scope: Int, val iterator: CloseableIterator[Bytes])
       extends Response(version, messageId, cacheName, clientIntel, BulkGetKeysResponse, Success, topologyId) {
    override def toString = {
       new StringBuilder().append("BulkGetKeysResponse").append("{")
