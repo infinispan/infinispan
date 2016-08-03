@@ -359,7 +359,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void purgeExpired() {
       if (!enabled)
          return;
-
       long start = -1;
       try {
          if (trace) {
@@ -370,6 +369,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
          storesMutex.readLock().lock();
          try {
             Consumer<CacheWriter> purgeWriter = writer -> {
+               // ISPN-6711 Shared stores should only be purged by the coordinator
+               if (configMap.get(writer).shared() && !cache.getCacheManager().isCoordinator())
+                  return;
+
                if (writer instanceof AdvancedCacheExpirationWriter) {
                   ((AdvancedCacheExpirationWriter)writer).purge(persistenceExecutor, advancedListener);
                } else if (writer instanceof AdvancedCacheWriter) {
@@ -392,7 +395,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
          log.exceptionPurgingDataContainer(e);
       }
    }
-
 
    @Override
    public void clearAllStores(AccessMode mode) {
