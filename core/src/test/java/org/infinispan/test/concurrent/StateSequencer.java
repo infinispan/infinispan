@@ -355,6 +355,39 @@ public class StateSequencer {
       }
    }
 
+   public boolean isInState(String stateName) {
+      lock.lock();
+      try {
+         State state = stateMap.get(stateName);
+         LogicalThread logicalThread = logicalThreads.get(state.threadName);
+         return stateName.equals(logicalThread.currentState);
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   public boolean isAfterState(String stateName) {
+      lock.lock();
+      try {
+         State state = stateMap.get(stateName);
+         return state.signalled;
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   public boolean isInOrAfterState(String stateName) {
+      lock.lock();
+      try {
+         State state = stateMap.get(stateName);
+         if (state.signalled) return true;
+         LogicalThread logicalThread = logicalThreads.get(state.threadName);
+         return stateName.equals(logicalThread.currentState);
+      } finally {
+         lock.unlock();
+      }
+   }
+
    private interface StatesVisitor {
       void visitStates(List<String> visitedStates);
 
