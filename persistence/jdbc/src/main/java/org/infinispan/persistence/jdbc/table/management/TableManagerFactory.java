@@ -39,6 +39,7 @@ public class TableManagerFactory {
       switch (metaData.getType()) {
          case H2:
             return new H2TableManager(connectionFactory, tableConfig, metaData);
+         case MARIA_DB:
          case MYSQL:
             return new MySQLTableManager(connectionFactory, tableConfig, metaData);
          case ORACLE:
