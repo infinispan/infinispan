@@ -1,6 +1,7 @@
 package org.infinispan.persistence.jdbc.logging;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.Bucket;
 import org.jboss.logging.annotations.Cause;
@@ -164,4 +165,9 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = ERROR)
    @Message(value = "Error loading HikariCP properties file, only the properties set in %s will be loaded", id = 8035)
    void errorLoadingHikariCPProperties(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to notify the PurgeListener of expired cache entries as the configured key2StringMapper " +
+         "does not implement %s", id = 8036)
+   void twoWayKey2StringMapperIsMissing(String className);
 }

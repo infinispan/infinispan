@@ -267,7 +267,7 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public String getSelectExpiredRowsSql() {
+   public String getSelectExpiredBucketsSql() {
       if (selectExpiredRowsSql == null) {
          selectExpiredRowsSql = String.format("%s WHERE %s < ?", getLoadAllRowsSql(), config.timestampColumnName());
       }
@@ -275,9 +275,9 @@ public abstract class AbstractTableManager implements TableManager {
    }
 
    @Override
-   public String getDeleteExpiredRowsSql() {
+   public String getSelectOnlyExpiredRowsSql() {
       if (deleteExpiredRowsSql == null) {
-         deleteExpiredRowsSql = String.format("DELETE FROM %1$s WHERE %2$s < ? AND %2$s > 0", getTableName(), config.timestampColumnName());
+         deleteExpiredRowsSql = String.format("%1$s WHERE %2$s < ? AND %2$s > 0", getLoadAllRowsSql(), config.timestampColumnName());
       }
       return deleteExpiredRowsSql;
    }

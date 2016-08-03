@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import org.infinispan.executors.ExecutorAllCompletionService;
 import static org.infinispan.persistence.PersistenceUtil.getExpiryTime;
 
 import java.io.ByteArrayInputStream;
@@ -10,20 +9,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Future;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.AbstractJdbcStore;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration;
 import org.infinispan.persistence.jdbc.logging.Log;
-import org.infinispan.persistence.jdbc.common.AbstractJdbcStore;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
@@ -250,23 +248,47 @@ public class JdbcStringBasedStore<K,V> extends AbstractJdbcStore<K,V> {
    }
 
    @Override
-   public void purge(Executor executor, PurgeListener task) {
-      //todo we should make the notification to the purge listener here
+   public void purge(Executor executor, PurgeListener purgeListener) {
       Connection conn = null;
       PreparedStatement ps = null;
+      ResultSet rs = null;
       try {
-         String sql = tableManager.getDeleteExpiredRowsSql();
+         String sql = tableManager.getSelectOnlyExpiredRowsSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          ps.setLong(1, ctx.getTimeService().wallClockTime());
-         int result = ps.executeUpdate();
-         if (trace) {
-            log.tracef("Successfully purged %d rows.", result);
+         rs = ps.executeQuery();
+
+         try (PreparedStatement batchDelete = conn.prepareStatement(tableManager.getDeleteRowSql())) {
+            int affectedRows = 0;
+            boolean twoWayMapperExists = key2StringMapper instanceof TwoWayKey2StringMapper;
+            while (rs.next()) {
+               affectedRows++;
+               String keyStr = rs.getString(2);
+               batchDelete.setString(1, keyStr);
+               batchDelete.addBatch();
+
+               if (twoWayMapperExists && purgeListener != null) {
+                  Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
+                  purgeListener.entryPurged(key);
+               }
+            }
+
+            if (!twoWayMapperExists)
+               log.twoWayKey2StringMapperIsMissing(TwoWayKey2StringMapper.class.getSimpleName());
+
+            if (affectedRows > 0) {
+               int[] result = batchDelete.executeBatch();
+               if (trace) {
+                  log.tracef("Successfully purged %d rows.", result.length);
+               }
+            }
          }
       } catch (SQLException ex) {
          log.failedClearingJdbcCacheStore(ex);
          throw new PersistenceException("Failed clearing string based JDBC store", ex);
       } finally {
+         JdbcUtil.safeClose(rs);
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
       }
