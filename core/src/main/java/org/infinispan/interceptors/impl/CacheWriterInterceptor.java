@@ -72,7 +72,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    private InternalEntryFactory entryFactory;
    private TransactionManager transactionManager;
    private StreamingMarshaller marshaller;
-   protected volatile boolean enabled = true;
 
    private static final Log log = LogFactory.getLog(CacheWriterInterceptor.class);
 
@@ -94,17 +93,16 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
       loaderConfig = cacheConfiguration.persistence();
    }
+
    @Override
    public CompletableFuture<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (isStoreEnabled())
-         commitCommand(ctx);
-
+      commitCommand(ctx);
       return ctx.continueInvocation();
    }
 
    @Override
    public CompletableFuture<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (isStoreEnabled() && command.isOnePhaseCommit()) {
+      if (command.isOnePhaseCommit()) {
          commitCommand(ctx);
       }
       return ctx.continueInvocation();
@@ -371,14 +369,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
-   protected boolean isStoreEnabled() {
-      return enabled;
-   }
-
    protected boolean isStoreEnabled(FlagAffectedCommand command) {
-      if (!isStoreEnabled())
-         return false;
-
       if (command.hasFlag(Flag.SKIP_CACHE_STORE)) {
          log.trace("Skipping cache store since the call contain a skip cache store flag");
          return false;
@@ -490,9 +481,5 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {
       return !ctx.isOriginLocal() || command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE);
-   }
-
-   public void disableInterceptor() {
-      enabled = false;
    }
 }

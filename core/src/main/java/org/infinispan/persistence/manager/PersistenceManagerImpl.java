@@ -274,7 +274,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
             if (loaderInterceptor == null) {
                log.persistenceWithoutCacheLoaderInterceptor();
             } else {
-               ((CacheLoaderInterceptor) loaderInterceptor).disableInterceptor();
                chain.removeInterceptor(loaderInterceptor.getClass());
             }
             AsyncInterceptor writerInterceptor = chain.findInterceptorExtending(CacheWriterInterceptor.class);
@@ -286,7 +285,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   chain.removeInterceptor(writerInterceptor.getClass());
                }
             } else {
-               ((CacheWriterInterceptor) writerInterceptor).disableInterceptor();
                chain.removeInterceptor(writerInterceptor.getClass());
             }
             enabled = false;
