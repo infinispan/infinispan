@@ -8,6 +8,9 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorMapper;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.configuration.cache.CacheMode;
@@ -31,14 +34,14 @@ public final class BulkUtil {
    public static final int GLOBAL_SCOPE = 1;
    public static final int LOCAL_SCOPE = 2;
 
-   public static Iterator<byte[]> getAllKeys(Cache<byte[], ?> cache, int scope) {
+   public static CloseableIterator<byte[]> getAllKeys(Cache<byte[], ?> cache, int scope) {
       CompatibilityModeConfiguration compatibility = cache.getCacheConfiguration().compatibility();
       CacheStream stream = cache.keySet().stream();
       HotRodTypeConverter converter = new HotRodTypeConverter();
       if (compatibility.enabled() && compatibility.marshaller() != null) {
          converter.setMarshaller(compatibility.marshaller());
       }
-      return new IteratorMapper<Object, byte[]>(stream.iterator(), k -> {
+      return new CloseableIteratorMapper<>(Closeables.iterator(stream), k -> {
          if (k instanceof byte[]) {
             return (byte[]) k;
          }

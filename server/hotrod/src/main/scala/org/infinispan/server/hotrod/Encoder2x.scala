@@ -280,27 +280,36 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          case g: BulkGetResponse =>
             if (isTrace) log.trace("About to respond to bulk get request")
             if (g.status == Success) {
-               var iterator = asScalaIterator(g.entries.iterator)
-               if (g.count != 0) {
-                  if (isTrace) trace("About to write (max) %d messages to the client", g.count)
-                  iterator = iterator.take(g.count)
+               var javaIterator = g.entries.iterator
+               try {
+                  var iterator = asScalaIterator(javaIterator)
+                  if (g.count != 0) {
+                     if (isTrace) trace("About to write (max) %d messages to the client", g.count)
+                     iterator = iterator.take(g.count)
+                  }
+                  for (entry <- iterator) {
+                     buf.writeByte(1) // Not done
+                     writeRangedBytes(entry.getKey, buf)
+                     writeRangedBytes(entry.getValue, buf)
+                  }
+                  buf.writeByte(0) // Done
+               } finally {
+                  javaIterator.close
                }
-               for (entry <- iterator) {
-                  buf.writeByte(1) // Not done
-                  writeRangedBytes(entry.getKey, buf)
-                  writeRangedBytes(entry.getValue, buf)
-               }
-               buf.writeByte(0) // Done
             }
          case g: BulkGetKeysResponse =>
             if (isTrace) log.trace("About to respond to bulk get keys request")
             if (g.status == Success) {
-               val iterator = asScalaIterator(g.iterator)
-               for (key <- iterator) {
-                  buf.writeByte(1) // Not done
-                  writeRangedBytes(key, buf)
+               try {
+                  val iterator = asScalaIterator(g.iterator)
+                  for (key <- iterator) {
+                     buf.writeByte(1) // Not done
+                     writeRangedBytes(key, buf)
+                  }
+                  buf.writeByte(0) // Done
+               } finally {
+                  g.iterator.close
                }
-               buf.writeByte(0) // Done
             }
          case g: GetAllResponse =>
            if (isTrace)
