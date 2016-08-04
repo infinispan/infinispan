@@ -37,6 +37,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.RemoteException;
+import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
@@ -189,11 +190,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, rpcManager.getAddress());
       RpcOptions options = rpcOptionsBuilder.responseFilter(filter).build();
       Map<Address, Response> responses = rpcManager.invokeRemotely(targets, get, options);
-
+      boolean hasSuccesfulResponse = false;
       if (!responses.isEmpty()) {
          for (Response r : responses.values()) {
             if (r instanceof SuccessfulResponse) {
-
+               hasSuccesfulResponse = true;
                // The response value might be null.
                SuccessfulResponse response = (SuccessfulResponse) r;
                Object responseValue = response.getResponseValue();
@@ -213,7 +214,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (rvrl != null) {
          rvrl.remoteValueNotFound(key);
       }
-      return null;
+      if (!hasSuccesfulResponse) {
+         throw new RpcException("No successful response: " + responses);
+      } else {
+         return null;
+      }
    }
 
    protected Map<Object, InternalCacheEntry> retrieveFromRemoteSources(Set<?> requestedKeys, InvocationContext ctx, Set<Flag> flags) throws Throwable {

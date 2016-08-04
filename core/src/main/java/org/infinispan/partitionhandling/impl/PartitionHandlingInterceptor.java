@@ -5,8 +5,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -31,9 +31,14 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 
 public class PartitionHandlingInterceptor extends CommandInterceptor {
-   PartitionHandlingManager partitionHandlingManager;
+   private static final Log log = LogFactory.getLog(PartitionHandlingInterceptor.class);
+
+   private PartitionHandlingManager partitionHandlingManager;
    private Transport transport;
    private DistributionManager distributionManager;
 
@@ -115,29 +120,19 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      Object key = command.getKey();
-      Object result;
-      try {
-         result = super.visitGetKeyValueCommand(ctx, command);
-      } catch (RpcException e) {
-         if (performPartitionCheck(ctx, command)) {
-            // We must have received an AvailabilityException from one of the owners.
-            // There is no way to verify the cause here, but there isn't any other way to get an invalid get response.
-            throw getLog().degradedModeKeyUnavailable(key);
-         } else {
-            throw e;
-         }
-      }
-      postOperationPartitionCheck(ctx, command, key, result);
-      return result;
+      return handleDataReadCommand(ctx, command);
    }
 
    @Override
    public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      return handleDataReadCommand(ctx, command);
+   }
+
+   private Object handleDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       Object key = command.getKey();
       Object result;
       try {
-         result = super.visitGetCacheEntryCommand(ctx, command);
+         result = invokeNextInterceptor(ctx, command);
       } catch (RpcException e) {
          if (performPartitionCheck(ctx, command)) {
             // We must have received an AvailabilityException from one of the owners.
@@ -147,7 +142,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
             throw e;
          }
       }
-      postOperationPartitionCheck(ctx, command, key, result);
+      postOperationPartitionCheck(ctx, command, key);
       return result;
    }
 
@@ -177,25 +172,13 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
       }
    }
 
-   private Object postOperationPartitionCheck(InvocationContext ctx, AbstractDataCommand command, Object key, Object result) throws Throwable {
+   private void postOperationPartitionCheck(InvocationContext ctx, DataCommand command, Object key) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          // We do the availability check after the read, because the cache may have entered degraded mode
          // while we were reading from a remote node.
          partitionHandlingManager.checkRead(key);
-
-         // If all owners left and we still haven't received the availability update yet, we could return
-         // an incorrect null value. So we need a special check for null results.
-         if (result == null) {
-            // Unlike in PartitionHandlingManager.checkRead(), here we ignore the availability status
-            // and we only fail the operation if _all_ owners have left the cluster.
-            // TODO Move this to the availability strategy when implementing ISPN-4624
-            if (!InfinispanCollections.containsAny(transport.getMembers(), distributionManager.locate(key))) {
-               throw getLog().degradedModeKeyUnavailable(key);
-            }
-         }
       }
       // TODO We can still return a stale value if the other partition stayed active without us and we haven't entered degraded mode yet.
-      return result;
    }
 
    @Override
