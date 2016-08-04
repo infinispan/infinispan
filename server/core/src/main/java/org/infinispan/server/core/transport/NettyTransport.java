@@ -7,7 +7,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.ServerChannel;
-import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.group.ChannelGroup;
@@ -59,12 +58,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NettyTransport implements Transport {
 
    static private final Log log = LogFactory.getLog(NettyTransport.class, Log.class);
-
-   static private final String UseEpollProperty = "infinispan.server.channel.epoll";
-   static private final boolean IsLinux = System.getProperty("os.name").toLowerCase().startsWith("linux");
-   static private final boolean EpollDisabled = System.getProperty(UseEpollProperty, "true").equalsIgnoreCase("false");
-   static private final boolean useEPoll;
-
    static private final boolean isLog4jAvailable;
 
    static {
@@ -76,21 +69,15 @@ public class NettyTransport implements Transport {
          exception = true;
       }
       isLog4jAvailable = !exception;
-
-      if (Epoll.isAvailable()) {
-         useEPoll = !EpollDisabled && IsLinux;
-      } else {
-         log.epollNotAvailable(Epoll.unavailabilityCause().toString());
-         useEPoll = false;
-      }
    }
 
    public NettyTransport(InetSocketAddress address, ProtocolServerConfiguration configuration, String threadNamePrefix,
-           EmbeddedCacheManager cacheManager) {
+           EmbeddedCacheManager cacheManager, boolean useNativeEpoll) {
       this.address = address;
       this.configuration = configuration;
       this.threadNamePrefix = threadNamePrefix;
       this.cacheManager = cacheManager;
+      this.useNativeEpoll = useNativeEpoll;
 
       // Need to initialize these in constructor since they require configuration
       masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "ServerMaster"));
@@ -113,6 +100,7 @@ public class NettyTransport implements Transport {
 
    private final ChannelGroup serverChannels;
    final ChannelGroup acceptedChannels;
+   private final boolean useNativeEpoll;
 
    private final EventLoopGroup masterGroup;
    private final EventLoopGroup workerGroup;
@@ -259,13 +247,13 @@ public class NettyTransport implements Transport {
    }
 
    private Class<? extends ServerChannel> getServerSocketChannel() {
-      Class<? extends ServerChannel> channel = useEPoll ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
+      Class<? extends ServerChannel> channel = useNativeEpoll ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
       log.createdSocketChannel(channel.getName(), configuration.toString());
       return channel;
    }
 
    private EventLoopGroup buildEventLoop(int nThreads, DefaultThreadFactory threadFactory) {
-      EventLoopGroup eventLoop = useEPoll ? new EpollEventLoopGroup(nThreads, threadFactory) :
+      EventLoopGroup eventLoop = useNativeEpoll ? new EpollEventLoopGroup(nThreads, threadFactory) :
               new NioEventLoopGroup(nThreads, threadFactory);
       log.createdNettyEventLoop(eventLoop.getClass().getName(), configuration.toString());
       return eventLoop;
