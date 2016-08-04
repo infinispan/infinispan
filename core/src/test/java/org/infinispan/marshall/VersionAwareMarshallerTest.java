@@ -228,7 +228,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    public void testReplicableCommandsMarshalling() throws Exception {
       ByteString cacheName = ByteString.fromString(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
       ClusteredGetCommand c2 = new ClusteredGetCommand("key", cacheName,
-                                                       EnumUtil.EMPTY_BIT_SET, false, null, AnyEquivalence.getInstance());
+                                                       EnumUtil.EMPTY_BIT_SET, AnyEquivalence.getInstance());
       marshallAndAssertEquality(c2);
 
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.

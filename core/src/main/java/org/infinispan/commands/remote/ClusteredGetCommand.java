@@ -5,7 +5,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.EnumUtil;
@@ -18,7 +17,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -43,10 +41,7 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    private InvocationContextFactory icf;
    private CommandsFactory commandsFactory;
    private InterceptorChain invoker;
-   private boolean acquireRemoteLock;
-   private GlobalTransaction gtx;
 
-   private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
    private Equivalence keyEquivalence;
    //only used by extended statistics. this boolean is local.
@@ -60,25 +55,19 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
       super(cacheName, EnumUtil.EMPTY_BIT_SET);
    }
 
-   public ClusteredGetCommand(Object key, ByteString cacheName, long flags,
-                              boolean acquireRemoteLock, GlobalTransaction gtx, Equivalence keyEquivalence) {
+   public ClusteredGetCommand(Object key, ByteString cacheName, long flags, Equivalence keyEquivalence) {
       super(cacheName, flags);
       this.key = key;
-      this.acquireRemoteLock = acquireRemoteLock;
-      this.gtx = gtx;
       this.keyEquivalence = keyEquivalence;
       this.isWrite = false;
-      if (acquireRemoteLock && (gtx == null))
-         throw new IllegalArgumentException("Cannot have null tx if we need to acquire locks");
    }
 
    public void initialize(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
-                          InterceptorChain interceptorChain, TransactionTable txTable,
+                          InterceptorChain interceptorChain,
                           Equivalence keyEquivalence) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
-      this.txTable = txTable;
       this.entryFactory = entryFactory;
       this.keyEquivalence = keyEquivalence;
    }
@@ -91,7 +80,6 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
     */
    @Override
    public InternalCacheValue perform(InvocationContext context) throws Throwable {
-      acquireLocksIfNeeded();
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
@@ -113,16 +101,9 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
       }
    }
 
+   @Deprecated
    public GlobalTransaction getGlobalTransaction() {
-      return gtx;
-   }
-
-   private void acquireLocksIfNeeded() throws Throwable {
-      if (acquireRemoteLock) {
-         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(key, getFlagsBitSet(), gtx);
-         lockControlCommand.init(invoker, icf, txTable);
-         lockControlCommand.perform(null);
-      }
+      return null;
    }
 
    @Override
@@ -134,20 +115,12 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeBoolean(acquireRemoteLock);
-      if (acquireRemoteLock) {
-         output.writeObject(gtx);
-      }
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       setFlagsBitSet(input.readLong());
-      acquireRemoteLock = input.readBoolean();
-      if (acquireRemoteLock) {
-         gtx = (GlobalTransaction) input.readObject();
-      }
    }
 
    @Override

@@ -98,7 +98,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             if (trace)
                log.tracef("Doing a remote get for key %s", key);
             CompletableFuture<InternalCacheEntry> remoteFuture =
-                  retrieveFromProperSource(key, ctx, false, command, false);
+                  retrieveFromProperSource(key, command, false);
             return remoteFuture.thenCompose(remoteEntry -> {
                command.setRemotelyFetchedValue(remoteEntry);
                handleRemoteEntry(ctx, key, remoteEntry);
@@ -255,7 +255,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             if (readNeedsRemoteValue(ctx, command)) {
                if (trace)
                   log.tracef("Doing a remote get for key %s", key);
-               remoteFuture = retrieveFromProperSource(key, ctx, false, command, false);
+               remoteFuture = retrieveFromProperSource(key, command, false);
             } else {
                remoteFuture = CompletableFutures.completedNull();
             }
@@ -724,7 +724,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
                     cmdTopology + ", got " + currentTopologyId);
          }
-         remoteFuture = retrieveFromProperSource(key, ctx, false, command, false);
+         remoteFuture = retrieveFromProperSource(key, command, false);
          return remoteFuture.thenCompose(remoteEntry -> {
             handleRemoteEntry(ctx, key, remoteEntry);
             return ctx.continueInvocation();
