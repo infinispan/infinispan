@@ -12,13 +12,15 @@ class DbMetaData {
    private final int majorVersion;
    private final int minorVersion;
    private final boolean upsertDisabled;
+   private final boolean indexingDisabled;
 
-   DbMetaData(DatabaseType type, Integer majorVersion, Integer minorVersion, boolean upsertDisabled) {
+   DbMetaData(DatabaseType type, Integer majorVersion, Integer minorVersion, boolean upsertDisabled, boolean indexingDisabled) {
       Objects.requireNonNull(type);
       this.type = type;
       this.majorVersion = majorVersion == null ? -1 : majorVersion;
       this.minorVersion = minorVersion == null ? -1 : minorVersion;
       this.upsertDisabled = upsertDisabled;
+      this.indexingDisabled = indexingDisabled;
    }
 
    DatabaseType getType() {
@@ -35,5 +37,9 @@ class DbMetaData {
 
    boolean isUpsertDisabled() {
       return upsertDisabled;
+   }
+
+   public boolean isIndexingDisabled() {
+      return indexingDisabled;
    }
 }
