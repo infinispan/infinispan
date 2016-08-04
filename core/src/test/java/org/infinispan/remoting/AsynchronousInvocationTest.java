@@ -111,10 +111,10 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
       //populate commands
       blockingCacheRpcCommand = new StreamRequestCommand<>(cacheName);
-      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, false, null, null);
+      nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, null);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
-      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, false, null, AnyEquivalence.STRING);
+      nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, EnumUtil.EMPTY_BIT_SET, AnyEquivalence.STRING);
       blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingReplicableCommand);
       nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, nonBlockingReplicableCommand);
    }

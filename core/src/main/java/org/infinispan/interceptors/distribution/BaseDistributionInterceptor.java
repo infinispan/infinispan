@@ -140,15 +140,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return ctx.continueInvocation();
    }
 
-   protected final CompletableFuture<InternalCacheEntry> retrieveFromProperSource(Object key,
-         InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command, boolean isWrite)
+   protected final CompletableFuture<InternalCacheEntry> retrieveFromProperSource(
+         Object key, FlagAffectedCommand command, boolean isWrite)
          throws Exception {
-      return doRetrieveFromProperSource(key, null, -1, ctx, command, acquireRemoteLock, isWrite);
+      return doRetrieveFromProperSource(key, null, -1, command, isWrite);
    }
 
    private CompletableFuture<InternalCacheEntry> doRetrieveFromProperSource(Object key, InternalCacheEntry value,
-         int lastTopologyId, InvocationContext ctx, FlagAffectedCommand command, boolean acquireRemoteLock,
-         boolean isWrite) {
+         int lastTopologyId, FlagAffectedCommand command, boolean isWrite) {
       if (value != null)
          return CompletableFuture.completedFuture(value);
 
@@ -203,17 +202,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          return CompletableFutures.completedNull();
       }
-
-      GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
-      ClusteredGetCommand getCommand =
-            cf.buildClusteredGetCommand(key, command.getFlagsBitSet(), acquireRemoteLock, gtx);
+      
+      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, command.getFlagsBitSet());
       getCommand.setWrite(isWrite);
 
       RpcOptionsBuilder rpcOptionsBuilder =
             rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
       return invokeClusterGetCommandRemotely(targets, rpcOptionsBuilder, getCommand, key).thenCompose(
-            newValue -> doRetrieveFromProperSource(key, newValue, newTopologyId, ctx, command, acquireRemoteLock,
-                  isWrite));
+            newValue -> doRetrieveFromProperSource(key, newValue, newTopologyId, command, isWrite));
    }
 
    private CompletableFuture<InternalCacheEntry> invokeClusterGetCommandRemotely(List<Address> targets,

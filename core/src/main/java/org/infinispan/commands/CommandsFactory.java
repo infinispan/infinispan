@@ -290,7 +290,13 @@ public interface CommandsFactory {
     * @param flagsBitSet Command flags provided by cache
     * @return a ClusteredGetCommand
     */
-   ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx);
+   ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet);
+
+   @Deprecated
+   default ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
+      if (acquireRemoteLock) throw new UnsupportedOperationException("acquireRemoteLock is not supported, use Flag.FORCE_WRITE_LOCK");
+      return buildClusteredGetCommand(key, flagsBitSet);
+   }
 
    /**
     * Builds a ClusteredGetAllCommand, which is a remote lookup command

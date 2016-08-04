@@ -334,7 +334,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected InternalCacheEntry remoteGet(InvocationContext ctx, Object key, boolean isWrite,
                                           FlagAffectedCommand command) throws Throwable {
       // attempt a remote lookup
-      InternalCacheEntry ice = retrieveFromProperSource(key, ctx, false, command, isWrite).get();
+      InternalCacheEntry ice = retrieveFromProperSource(key, command, isWrite).get();
 
       if (ice != null) {
          if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {

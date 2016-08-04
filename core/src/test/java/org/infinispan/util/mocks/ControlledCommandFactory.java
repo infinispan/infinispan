@@ -257,8 +257,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet, boolean acquireRemoteLock, GlobalTransaction gtx) {
-      return actual.buildClusteredGetCommand(key, flagsBitSet, acquireRemoteLock, gtx);
+   public ClusteredGetCommand buildClusteredGetCommand(Object key, long flagsBitSet) {
+      return actual.buildClusteredGetCommand(key, flagsBitSet);
    }
 
    @Override
