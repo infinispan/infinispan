@@ -2,6 +2,7 @@ package org.infinispan.partitionhandling.impl;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -31,14 +32,16 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(PartitionHandlingInterceptor.class);
 
-   PartitionHandlingManager partitionHandlingManager;
+   private PartitionHandlingManager partitionHandlingManager;
    private Transport transport;
    private DistributionManager distributionManager;
 
@@ -129,20 +132,20 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    }
 
    private CompletableFuture<Void> handleDataReadCommand(InvocationContext ctx, DataCommand command) {
-      Object key = command.getKey();
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
+         DataCommand dataCommand = (DataCommand) rCommand;
          if (throwable != null) {
-            if (throwable instanceof RpcException && performPartitionCheck(rCtx, ((DataCommand) rCommand))) {
+            if (throwable instanceof RpcException && performPartitionCheck(rCtx, dataCommand)) {
                // We must have received an AvailabilityException from one of the owners.
                // There is no way to verify the cause here, but there isn't any other way to get an invalid
                // get response.
-               throw log.degradedModeKeyUnavailable(key);
+               throw log.degradedModeKeyUnavailable(dataCommand.getKey());
             } else {
                throw throwable;
             }
          }
 
-         postOperationPartitionCheck(rCtx, ((DataCommand) rCommand), key, rv);
+         postOperationPartitionCheck(rCtx, dataCommand, dataCommand.getKey());
          return null;
       });
    }
@@ -181,25 +184,13 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   private Object postOperationPartitionCheck(InvocationContext ctx, DataCommand command, Object key, Object result) throws Throwable {
+   private void postOperationPartitionCheck(InvocationContext ctx, DataCommand command, Object key) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          // We do the availability check after the read, because the cache may have entered degraded mode
          // while we were reading from a remote node.
          partitionHandlingManager.checkRead(key);
-
-         // If all owners left and we still haven't received the availability update yet, we could return
-         // an incorrect null value. So we need a special check for null results.
-         if (result == null) {
-            // Unlike in PartitionHandlingManager.checkRead(), here we ignore the availability status
-            // and we only fail the operation if _all_ owners have left the cluster.
-            // TODO Move this to the availability strategy when implementing ISPN-4624
-            if (!InfinispanCollections.containsAny(transport.getMembers(), distributionManager.locate(key))) {
-               throw log.degradedModeKeyUnavailable(key);
-            }
-         }
       }
       // TODO We can still return a stale value if the other partition stayed active without us and we haven't entered degraded mode yet.
-      return result;
    }
 
    @Override
