@@ -55,7 +55,7 @@ public class GetKeysInGroupCommand extends AbstractFlagAffectedCommand implement
             new RemoteContextKeyValueCollector();
       final GroupFilter<Object> filter = new GroupFilter<>(getGroupName(), groupManager);
       for (CacheEntry entry : ctx.getLookedUpEntries().values()) {
-         if (!entry.isRemoved() && filter.accept(entry.getKey())) {
+         if (!entry.isRemoved() && filter.accept(entry.getKey()) && entry.getValue() != null) {
             collector.addCacheEntry(entry);
          }
       }

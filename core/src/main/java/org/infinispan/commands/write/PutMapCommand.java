@@ -237,6 +237,11 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    }
 
    @Override
+   public void fail() {
+      // Do nothing
+   }
+
+   @Override
    public boolean isReturnValueExpected() {
       return false;
    }

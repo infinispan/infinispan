@@ -18,6 +18,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -90,25 +91,31 @@ public class ClusteredGetCommand extends LocalFlagAffectedRpcCommand {
     * @return returns an <code>CacheEntry</code> or null, if no entry is found.
     */
    @Override
-   public InternalCacheValue perform(InvocationContext context) throws Throwable {
+   public Object perform(InvocationContext context) throws Throwable {
       acquireLocksIfNeeded();
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
-      CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
-      if (cacheEntry == null) {
-         if (trace) log.trace("Did not find anything, returning null");
-         return null;
+      Object retval = invoker.invoke(invocationContext, command);
+      if (!(retval instanceof CacheEntry)) {
+         if (trace) {
+            if (retval == null) {
+               log.trace("Did not find anything, returning null");
+            } else {
+               log.trace("Returning " + retval);
+            }
+         }
+         return retval;
       }
       //this might happen if the value was fetched from a cache loader
-      if (cacheEntry instanceof MVCCEntry) {
+      if (retval instanceof MVCCEntry) {
          if (trace) log.trace("Handling an internal cache entry...");
-         MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
+         MVCCEntry mvccEntry = (MVCCEntry) retval;
          return entryFactory.createValue(mvccEntry);
       } else {
-         InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
+         InternalCacheEntry internalCacheEntry = (InternalCacheEntry) retval;
          return internalCacheEntry.toInternalCacheValue();
       }
    }

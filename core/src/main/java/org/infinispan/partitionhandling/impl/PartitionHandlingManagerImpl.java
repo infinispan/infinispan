@@ -30,12 +30,14 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private static final Log log = LogFactory.getLog(PartitionHandlingManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private final Map<GlobalTransaction, TransactionInfo> partialTransactions;
    private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
+   private volatile CompletableFuture<AvailabilityMode> degradedFuture = new CompletableFuture<>();
 
    private DistributionManager distributionManager;
    private LocalTopologyManager localTopologyManager;
@@ -84,8 +86,19 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
          log.debugf("Updating availability for cache %s: %s -> %s", cacheName, this.availabilityMode, availabilityMode);
          notifier.notifyPartitionStatusChanged(availabilityMode, true);
          this.availabilityMode = availabilityMode;
+         // here is a potential race condition; don't expect availabilityMode and degradedFuture to be in sync
+         if (availabilityMode == AvailabilityMode.DEGRADED_MODE) {
+            this.degradedFuture.complete(AvailabilityMode.DEGRADED_MODE);
+         } else {
+            this.degradedFuture = new CompletableFuture<>();
+         }
          notifier.notifyPartitionStatusChanged(availabilityMode, false);
       }
+   }
+
+   @Override
+   public CompletableFuture<AvailabilityMode> degradedFuture() {
+      return degradedFuture;
    }
 
    @Override
@@ -234,7 +247,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       return stableTopology != null && cacheTopology.getActualMembers().containsAll(stableTopology.getActualMembers());
    }
 
-   private void doCheck(Object key) {
+   protected void doCheck(Object key) {
       if (trace) log.tracef("Checking availability for key=%s, status=%s", key, availabilityMode);
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;

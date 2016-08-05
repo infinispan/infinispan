@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
@@ -13,6 +14,8 @@ import org.testng.annotations.Test;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+import static org.testng.Assert.assertEquals;
 
 @Test(groups="functional", testName = "replication.AsyncAPINonTxSyncReplTest")
 public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
@@ -50,7 +53,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       Future<String> f = c1.putAsync(key, v);
       assert f != null;
       assert !f.isDone();
-      assert c2.get(key) == null;
+      assertOnCache(c2, key, null);
       log.info("*** Allowing serialization on key");
       key.allowSerialization();
       log.info("*** Finished allowing serialization on key, checking future if cancelled");
@@ -64,7 +67,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       f = c1.putAsync(key, v2);
       assert f != null;
       assert !f.isDone();
-      assert c2.get(key).equals(v);
+      assertOnCache(c2, key, v);
       key.allowSerialization();
       assert !f.isCancelled();
       assertFutureValue(f, v);
@@ -75,7 +78,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       Future<Void> f2 = c1.putAllAsync(Collections.singletonMap(key, v3));
       assert f2 != null;
       assert !f2.isDone();
-      assert c2.get(key).equals(v2);
+      assertOnCache(c2, key, v2);
       key.allowSerialization();
       assert !f2.isCancelled();
       assert f2.get() == null;
@@ -85,7 +88,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       log.trace("Before putIfAbsent");
       f = c1.putIfAbsentAsync(key, v4);
       assert f != null;
-      assert c2.get(key).equals(v3);
+      assertOnCache(c2, key, v3);
       if (!isLockOwner(c1, key))
          key.allowSerialization();
       assert !f.isCancelled();
@@ -97,7 +100,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       f = c1.removeAsync(key);
       assert f != null;
       assert !f.isDone();
-      assert c2.get(key).equals(v3);
+      assertOnCache(c2, key, v3);
       key.allowSerialization();
       assert !f.isCancelled();
       assertFutureValue(f, v3);
@@ -128,7 +131,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       f3 = c1.removeAsync(key, v4);
       assert f3 != null;
       assert !f3.isDone();
-      assert c2.get(key).equals(v4);
+      assertOnCache(c2, key, v4);
       key.allowSerialization();
       assert !f3.isCancelled();
       assertFutureValue(f3, true);
@@ -149,12 +152,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       key.allowSerialization();
       resetListeners();
       c1.put(key, v);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return v.equals(c1.get(key)) && v.equals(c2.get(key));
-         }
-      });
+      assertOnAllCaches(key, v, c1, c2);
 
       log.trace("After put(k,v) " + key + ", " + v);
 
@@ -162,7 +160,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       f = c1.replaceAsync(key, v5);
       assert f != null;
       assert !f.isDone();
-      assert c2.get(key).equals(v);
+      assertOnCache(c2, key, v);
       key.allowSerialization();
       assert !f.isCancelled();
       assertFutureValue(f, v);
@@ -183,12 +181,18 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
       f3 = c1.replaceAsync(key, v5, v6);
       assert f3 != null;
       assert !f3.isDone();
-      assert c2.get(key).equals(v5);
+      assertOnCache(c2, key, v5);
       key.allowSerialization();
       assert !f3.isCancelled();
       assertFutureValue(f3, true);
       assert f3.isDone();
       assertOnAllCaches(key, v6, c1, c2);
+   }
+
+   protected void assertOnCache(Cache c2, Key key, Object expectedValue) {
+      InternalCacheEntry entry = c2.getAdvancedCache().getDataContainer().peek(key);
+      Object localValue = entry == null ? null : entry.getValue();
+      assertEquals(localValue, expectedValue);
    }
 
    protected void assertFutureValue(Future f, Object value) throws ExecutionException, InterruptedException {

@@ -57,21 +57,7 @@ public class SuccessfulResponse extends ValidResponse {
 
    @Override
    public String toString() {
-      return "SuccessfulResponse{" +
-            "responseValue=" + toStr(responseValue) +
-            "} ";
-   }
-
-   private String toStr(Object responseValue) {
-      if (responseValue == null || !responseValue.getClass().isArray()) {
-         return String.valueOf(responseValue);
-      }
-      int length = Array.getLength(responseValue);
-      if (length == 0) return "[]";
-
-      StringBuilder sb = new StringBuilder("[").append(Array.get(responseValue, 0));
-      for (int i = 1; i < length; ++i) sb.append(", ").append(Array.get(responseValue, i));
-      return sb.append("]").toString();
+      return "SuccessfulResponse{responseValue=" + Util.toStr(responseValue) + "} ";
    }
 
    public static class Externalizer extends AbstractExternalizer<SuccessfulResponse> {

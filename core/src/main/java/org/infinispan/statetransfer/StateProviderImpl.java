@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
@@ -25,8 +26,11 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
@@ -39,24 +43,24 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
 @Listener
 public class StateProviderImpl implements StateProvider {
 
-   private static final Log log = LogFactory.getLog(StateProviderImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   protected static final Log log = LogFactory.getLog(StateProviderImpl.class);
+   protected static final boolean trace = log.isTraceEnabled();
 
-   private String cacheName;
+   protected String cacheName;
    private Configuration configuration;
-   private RpcManager rpcManager;
-   private CommandsFactory commandsFactory;
+   protected RpcManager rpcManager;
+   protected CommandsFactory commandsFactory;
    private ClusterCacheNotifier clusterCacheNotifier;
    private TransactionTable transactionTable;     // optional
-   private DataContainer dataContainer;
-   private PersistenceManager persistenceManager; // optional
-   private ExecutorService executorService;
-   private StateTransferLock stateTransferLock;
-   private InternalEntryFactory entryFactory;
-   private long timeout;
-   private int chunkSize;
+   protected DataContainer dataContainer;
+   protected PersistenceManager persistenceManager; // optional
+   protected ExecutorService executorService;
+   protected StateTransferLock stateTransferLock;
+   protected InternalEntryFactory entryFactory;
+   protected long timeout;
+   protected int chunkSize;
 
-   private StateConsumer stateConsumer;
+   protected StateConsumer stateConsumer;
 
    /**
     * A map that keeps track of current outbound state transfers by destination address. There could be multiple transfers
@@ -199,7 +203,12 @@ public class StateProviderImpl implements StateProvider {
                   "topology (%d). Waiting for topology %d to be installed locally.", isReqForTransactions ? "Transactions" : "Segments", destination,
                   requestTopologyId, currentTopologyId, requestTopologyId);
          }
-         stateTransferLock.waitForTopology(requestTopologyId, timeout, TimeUnit.MILLISECONDS);
+         try {
+            CompletableFuture<Void> topologyFuture = stateTransferLock.topologyFuture(requestTopologyId);
+            if (topologyFuture != null) topologyFuture.get(timeout, TimeUnit.MILLISECONDS);
+         } catch (Exception e) {
+            throw new CacheException("Failed waiting for topology " + requestTopologyId, e);
+         }
          cacheTopology = stateConsumer.getCacheTopology();
       }
       return cacheTopology;
@@ -277,12 +286,14 @@ public class StateProviderImpl implements StateProvider {
 
       // the destination node must already have an InboundTransferTask waiting for these segments
       OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, requestTopologyId,
-            cacheTopology.getReadConsistentHash(), this, dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName);
+            cacheTopology.getReadConsistentHash(), this::onTaskCompletion, chunks -> {},
+            OutboundTransferTask::defaultMapEntryFromDataContainer, OutboundTransferTask::defaultMapEntryFromStore,
+            dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName, false);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);
    }
 
-   private void addTransfer(OutboundTransferTask transferTask) {
+   protected void addTransfer(OutboundTransferTask transferTask) {
       if (trace) {
          log.tracef("Adding outbound transfer of segments %s to %s", transferTask.getSegments(), transferTask.getDestination());
       }
@@ -328,7 +339,7 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   void onTaskCompletion(OutboundTransferTask transferTask) {
+   protected void onTaskCompletion(OutboundTransferTask transferTask) {
       if (trace) {
          log.tracef("Removing %s outbound transfer of segments %s to %s for cache %s",
                transferTask.isCancelled() ? "cancelled" : "completed", transferTask.getSegments(), transferTask.getDestination(), cacheName);

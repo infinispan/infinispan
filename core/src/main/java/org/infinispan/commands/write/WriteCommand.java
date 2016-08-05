@@ -54,6 +54,11 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
    void updateStatusFromRemoteResponse(Object remoteResponse);
 
    /**
+    * Make subsequent invocations of {@link #isSuccessful()} return <code>false</code>.
+    */
+   void fail();
+
+   /**
     * Indicates whether the command is write-only, meaning that it makes no
     * attempt to read the previously associated value with key for which the
     * command is directed.

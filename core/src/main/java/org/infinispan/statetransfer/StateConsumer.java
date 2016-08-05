@@ -31,7 +31,7 @@ public interface StateConsumer {
     */
    void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
 
-   void applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks);
+   void applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks);
 
    /**
     * Cancels all incoming state transfers. The already received data is not discarded.
@@ -42,8 +42,9 @@ public interface StateConsumer {
    /**
     * Stops applying incoming state. Also stops tracking updated keys. Should be called at the end of state transfer or
     * when a ClearCommand is committed during state transfer.
+    * @param topologyId
     */
-   void stopApplyingState();
+   void stopApplyingState(int topologyId);
 
    /**
     * @return  true if this node has already received the first rebalance command

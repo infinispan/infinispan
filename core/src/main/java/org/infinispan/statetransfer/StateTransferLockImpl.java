@@ -1,16 +1,25 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 
 /**
  * {@code StateTransferLock} implementation.
@@ -25,14 +34,21 @@ public class StateTransferLockImpl implements StateTransferLock {
    private static final int TOPOLOGY_ID_STOPPED = Integer.MAX_VALUE;
 
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
+   private Executor remoteExecutor;
 
    private volatile int topologyId = -1;
    private final Lock topologyLock = new ReentrantLock();
-   private final Condition topologyCondition = topologyLock.newCondition();
+   private final Map<Integer, CompletableFuture<Void>> topologyFutures = new HashMap<>();
 
    private volatile int transactionDataTopologyId = -1;
    private final Lock transactionDataLock = new ReentrantLock();
-   private final Condition transactionDataCondition = transactionDataLock.newCondition();
+   private final Map<Integer, CompletableFuture<Void>> transactionDataFutures = new HashMap<>();
+
+
+   @Inject
+   public void init(@ComponentName(REMOTE_COMMAND_EXECUTOR) Executor executor) {
+      this.remoteExecutor = executor;
+   }
 
    public void stop() {
       notifyTransactionDataReceived(TOPOLOGY_ID_STOPPED);
@@ -71,19 +87,13 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Signalling transaction data received for topology %d", topologyId);
       }
       transactionDataTopologyId = topologyId;
-      transactionDataLock.lock();
-      try {
-         transactionDataCondition.signalAll();
-      } finally {
-         transactionDataLock.unlock();
-      }
+      completeFutures(topologyId, transactionDataLock, transactionDataFutures);
    }
 
    @Override
-   public void waitForTransactionData(int expectedTopologyId, long timeout,
-                                      TimeUnit unit) throws InterruptedException {
+   public CompletableFuture<Void> transactionDataFuture(int expectedTopologyId) throws InterruptedException {
       if (transactionDataTopologyId >= expectedTopologyId)
-         return;
+         return null;
 
       if (trace) {
          log.tracef("Waiting for transaction data for topology %d, current topology is %d", expectedTopologyId,
@@ -91,17 +101,13 @@ public class StateTransferLockImpl implements StateTransferLock {
       }
       transactionDataLock.lock();
       try {
-         long timeoutNanos = unit.toNanos(timeout);
-         while (transactionDataTopologyId < expectedTopologyId && timeoutNanos > 0) {
-            timeoutNanos = transactionDataCondition.awaitNanos(timeoutNanos);
+         if (transactionDataTopologyId < expectedTopologyId) {
+            return transactionDataFutures.computeIfAbsent(expectedTopologyId, k -> new CompletableFuture<>());
+         } else {
+            return null;
          }
-         reportErrorAfterWait(expectedTopologyId, timeoutNanos);
       } finally {
          transactionDataLock.unlock();
-      }
-      if (trace) {
-         log.tracef("Received transaction data for topology %d, expected topology was %d", transactionDataTopologyId,
-               expectedTopologyId);
       }
    }
 
@@ -122,35 +128,46 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Signalling topology %d is installed", topologyId);
       }
       this.topologyId = topologyId;
+      completeFutures(topologyId, topologyLock, topologyFutures);
+   }
 
-      topologyLock.lock();
+   private void completeFutures(int topologyId, Lock lock, Map<Integer, CompletableFuture<Void>> futures) {
+      List<CompletableFuture<Void>> toComplete = new ArrayList<>();
+      lock.lock();
       try {
-         topologyCondition.signalAll();
+         for (Iterator<Map.Entry<Integer, CompletableFuture<Void>>> it = futures.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<Integer, CompletableFuture<Void>> entry = it.next();
+            if (entry.getKey() <= topologyId) {
+               // remoteExecutor can have caller-runs policy, so don't complete the future when holding the lock
+               toComplete.add(entry.getValue());
+               it.remove();
+            }
+         }
       } finally {
-         topologyLock.unlock();
+         lock.unlock();
+         for (CompletableFuture<Void> future : toComplete) {
+            remoteExecutor.execute(() -> future.complete(null));
+         }
       }
    }
 
    @Override
-   public void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException {
+   public CompletableFuture<Void> topologyFuture(int expectedTopologyId) throws InterruptedException {
       if (topologyId >= expectedTopologyId)
-         return;
+         return null;
 
       if (trace) {
          log.tracef("Waiting for topology %d to be installed, current topology is %d", expectedTopologyId, topologyId);
       }
       topologyLock.lock();
       try {
-         long timeoutNanos = unit.toNanos(timeout);
-         while (topologyId < expectedTopologyId && timeoutNanos > 0) {
-            timeoutNanos = topologyCondition.awaitNanos(timeoutNanos);
+         if (topologyId < expectedTopologyId) {
+            return topologyFutures.computeIfAbsent(expectedTopologyId, k -> new CompletableFuture<>());
+         } else {
+            return null;
          }
-         reportErrorAfterWait(expectedTopologyId, timeoutNanos);
       } finally {
          topologyLock.unlock();
-      }
-      if (trace) {
-         log.tracef("Topology %d is now installed, expected topology was %d", topologyId, expectedTopologyId);
       }
    }
 

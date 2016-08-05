@@ -16,7 +16,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -31,13 +30,14 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
    private boolean compatibility = false;
 
    @Override
-   @Factory
    public Object[] factory() {
       return new Object[] {
          new GetAllCommandTest(false).transactional(false).cacheMode(CacheMode.DIST_SYNC),
          new GetAllCommandTest(true) .transactional(false).cacheMode(CacheMode.DIST_SYNC),
          new GetAllCommandTest(false).transactional(false).cacheMode(CacheMode.REPL_SYNC),
          new GetAllCommandTest(true) .transactional(false).cacheMode(CacheMode.REPL_SYNC),
+         new GetAllCommandTest(false).transactional(false).cacheMode(CacheMode.SCATTERED_SYNC),
+         new GetAllCommandTest(true) .transactional(false).cacheMode(CacheMode.SCATTERED_SYNC),
          new GetAllCommandTest(false).transactional(true).cacheMode(CacheMode.DIST_SYNC),
          new GetAllCommandTest(true) .transactional(true).cacheMode(CacheMode.DIST_SYNC),
          new GetAllCommandTest(false).transactional(true).cacheMode(CacheMode.REPL_SYNC),

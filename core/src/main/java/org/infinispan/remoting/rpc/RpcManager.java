@@ -43,8 +43,10 @@ public interface RpcManager {
     *                   unpredictable behavior.
     * @return  a map of responses from each member contacted.
     */
+   @Deprecated
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options);
 
+   @Deprecated
    Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options);
 
    /**

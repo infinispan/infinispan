@@ -49,8 +49,6 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
    protected static final String firstValue = "first-put";
    protected static final String secondValue = "second-put";
 
-   protected IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
-
    @Override
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder builder = super.buildConfiguration();

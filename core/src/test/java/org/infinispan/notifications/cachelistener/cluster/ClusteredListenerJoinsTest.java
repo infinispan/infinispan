@@ -6,12 +6,15 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "notifications.cachelistener.cluster.ClusteredListenerJoinsTest")
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class ClusteredListenerJoinsTest extends MultipleCacheManagersTest {
+
    @Listener(clustered = true)
    private static final class NoOpListener {
       @CacheEntryCreated
@@ -28,8 +31,7 @@ public class ClusteredListenerJoinsTest extends MultipleCacheManagersTest {
    }
 
    private ConfigurationBuilder buildConfiguration() {
-      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false); //unreproducible with CacheMode.REPL_SYNC
-      c.clustering().hash().numOwners(2);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(cacheMode, false); //unreproducible with CacheMode.REPL_SYNC
       return c;
    }
 

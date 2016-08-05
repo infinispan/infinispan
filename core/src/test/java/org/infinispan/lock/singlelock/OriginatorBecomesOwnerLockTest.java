@@ -66,7 +66,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       configurationBuilder.clustering().hash().l1().disable().locking().lockAcquisitionTimeout(1000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       ControlledConsistentHashFactory consistentHashFactory =
-            new ControlledConsistentHashFactory(new int[]{KILLED_INDEX, ORIGINATOR_INDEX},
+            new ControlledConsistentHashFactory.Default(new int[]{KILLED_INDEX, ORIGINATOR_INDEX},
                   new int[]{KILLED_INDEX, OTHER_INDEX});
       configurationBuilder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
       createCluster(configurationBuilder, 3);

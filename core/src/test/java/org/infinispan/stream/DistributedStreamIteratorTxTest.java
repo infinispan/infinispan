@@ -1,6 +1,7 @@
 package org.infinispan.stream;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
@@ -35,7 +36,7 @@ import static org.testng.AssertJUnit.assertEquals;
 @Test(groups = {"functional", "smoke"}, testName = "stream.DistributedStreamIteratorTxTest")
 public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTest {
    public DistributedStreamIteratorTxTest() {
-      super(true);
+      super(true, CacheMode.DIST_SYNC);
    }
 
    public void testFilterWithExistingTransaction() throws NotSupportedException,

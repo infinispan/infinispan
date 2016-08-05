@@ -17,9 +17,10 @@ public class ClusteringConfiguration {
    public static final AttributeDefinition<CacheMode> CACHE_MODE = AttributeDefinition.builder("cacheMode",  CacheMode.LOCAL).immutable().build();
    public static final AttributeDefinition<Long> REMOTE_TIMEOUT =
          AttributeDefinition.builder("remoteTimeout", TimeUnit.SECONDS.toMillis(15)).build();
+   public static final AttributeDefinition<Integer> INVALIDATION_BATCH_SIZE = AttributeDefinition.builder("invalidationBatchSize",  128).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE, INVALIDATION_BATCH_SIZE);
    }
 
    private final Attribute<CacheMode> cacheMode;
@@ -74,6 +75,13 @@ public class ClusteringConfiguration {
 
    public String cacheModeString() {
       return cacheMode() == null ? "none" : cacheMode().toString();
+   }
+
+   /**
+    * For scattered cache, the threshold after which batched invalidations are sent
+    */
+   public int invalidationBatchSize() {
+      return attributes.attribute(INVALIDATION_BATCH_SIZE).get();
    }
 
    /**

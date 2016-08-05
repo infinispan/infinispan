@@ -80,6 +80,7 @@ public interface AsyncInvocationContext {
     *
     * @param newCommand The command to fork
     */
+   @Deprecated
    @Experimental
    Object forkInvocationSync(VisitableCommand newCommand) throws Throwable;
 }

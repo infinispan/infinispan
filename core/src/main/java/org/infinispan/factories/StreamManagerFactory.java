@@ -20,7 +20,7 @@ public class StreamManagerFactory extends AbstractNamedCacheComponentFactory imp
    @Override
    public <T> T construct(Class<T> componentType) {
       CacheMode cacheMode = configuration.clustering().cacheMode();
-      if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
+      if (cacheMode.isDistributed() || cacheMode.isReplicated() || cacheMode.isScattered()) {
          if (componentType.equals(LocalStreamManager.class)) {
             return componentType.cast(new LocalStreamManagerImpl<>());
          }

@@ -108,6 +108,10 @@ public class OnlyPrimaryOwnerTest {
       public Address getAddress() {
          throw new UnsupportedOperationException();
       }
+
+      @Override
+      public void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      }
    }
 
    public void testOwnership() {

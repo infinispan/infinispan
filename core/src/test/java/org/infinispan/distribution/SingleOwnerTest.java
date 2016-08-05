@@ -34,7 +34,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
    @Override
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
-      configuration = getDefaultClusteredCacheConfig(sync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC, tx);
+      configuration = getDefaultClusteredCacheConfig(cacheMode, transactional);
       if (!testRetVals) {
          configuration.unsafe().unreliableReturnValues(true);
          // we also need to use repeatable read for tests to work when we dont have reliable return values, since the

@@ -49,7 +49,6 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    public L1StateTransferRemovesValueTest() {
       INIT_CLUSTER_SIZE = 3;
       numOwners = 2;
-      tx = false;
       performRehashing = true;
       l1CacheEnabled = true;
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -59,7 +58,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    private final String startValue = "starting-value";
    private final String newValue = "new-value";
 
-   protected final ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory(0, 1);
+   protected final ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory.Default(0, 1);
 
    @AfterMethod
    public void resetFactory() {

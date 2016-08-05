@@ -38,7 +38,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      consistentHashFactory = new ControlledConsistentHashFactory(1);
+      consistentHashFactory = new ControlledConsistentHashFactory.Default(1);
       dcc.clustering().hash().numOwners(1).numSegments(1).consistentHashFactory(consistentHashFactory);
       createCluster(dcc, 2);
       waitForClusterToForm();

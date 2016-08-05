@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * Inbound state transfer task. Fetches multiple data segments from a remote source node and applies them to local
@@ -68,7 +69,7 @@ public class InboundTransferTask {
     */
    private final CountDownLatch completionLatch = new CountDownLatch(1);
 
-   private final StateConsumerImpl stateConsumer;
+   private final Consumer<InboundTransferTask> onCompletion;
 
    private final int topologyId;
 
@@ -82,7 +83,7 @@ public class InboundTransferTask {
 
    private final RpcOptions rpcOptions;
 
-   public InboundTransferTask(Set<Integer> segments, Address source, int topologyId, StateConsumerImpl stateConsumer, RpcManager rpcManager, CommandsFactory commandsFactory, long timeout, String cacheName) {
+   public InboundTransferTask(Set<Integer> segments, Address source, int topologyId, Consumer<InboundTransferTask> onCompletion, RpcManager rpcManager, CommandsFactory commandsFactory, long timeout, String cacheName) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("segments must not be null or empty");
       }
@@ -93,7 +94,7 @@ public class InboundTransferTask {
       this.segments.addAll(segments);
       this.source = source;
       this.topologyId = topologyId;
-      this.stateConsumer = stateConsumer;
+      this.onCompletion = onCompletion;
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
@@ -128,6 +129,14 @@ public class InboundTransferTask {
     * @return {@code true} if the transfer was started, otherwise {@code false}
     */
    public boolean requestSegments() {
+      return startTransfer(StateRequestCommand.Type.START_STATE_TRANSFER);
+   }
+
+   public boolean requestKeys() {
+      return startTransfer(StateRequestCommand.Type.START_KEYS_TRANSFER);
+   }
+
+   private boolean startTransfer(StateRequestCommand.Type type) {
       if (!isCancelled && isStarted.compareAndSet(false, true)) {
          Set<Integer> segmentsCopy = getSegments();
          if (segmentsCopy.isEmpty()) {
@@ -139,7 +148,7 @@ public class InboundTransferTask {
          }
          // start transfer of cache entries
          try {
-            StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.START_STATE_TRANSFER, rpcManager.getAddress(), topologyId, segmentsCopy);
+            StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(type, rpcManager.getAddress(), topologyId, segmentsCopy);
             Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
             Response response = responses.get(source);
             if (response instanceof SuccessfulResponse) {
@@ -246,7 +255,7 @@ public class InboundTransferTask {
    private void notifyCompletion(boolean success) {
       isCompletedSuccessfully = success;
       completionLatch.countDown();
-      stateConsumer.onTaskCompletion(this);
+      onCompletion.accept(this);
    }
 
    /**

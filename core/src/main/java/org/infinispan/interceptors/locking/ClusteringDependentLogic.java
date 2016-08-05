@@ -5,6 +5,7 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -12,7 +13,9 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -36,11 +39,14 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static org.infinispan.transaction.impl.WriteSkewHelper.performTotalOrderWriteSkewCheckAndReturnNewVersions;
 import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
@@ -62,6 +68,26 @@ public interface ClusteringDependentLogic {
 
    boolean localNodeIsPrimaryOwner(Object key);
 
+   /**
+    * Decouples the concept of ownership vs. ability to write data locally.
+    *
+    * @param key
+    * @return
+    */
+   default boolean canWriteEntry(Object key) {
+      return localNodeIsOwner(key);
+   }
+
+   /**
+    * Decouples the concept of ownership vs. ability to read data locally.
+    *
+    * @param key
+    * @return
+    */
+   default boolean canReadEntry(Object key) {
+      return localNodeIsOwner(key);
+   }
+
    Address getPrimaryOwner(Object key);
 
    void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
@@ -74,6 +100,10 @@ public interface ClusteringDependentLogic {
    EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
 
    Address getAddress();
+
+   // TODO: pulled out to interface as we want to reuse this
+   void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
+                          InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata);
 
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
 
@@ -131,8 +161,9 @@ public interface ClusteringDependentLogic {
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder);
 
-      protected void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
-              InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      @Override
+      public void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
+                                    InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
          boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
          if (removed) {
             if (command instanceof RemoveCommand) {
@@ -451,7 +482,7 @@ public interface ClusteringDependentLogic {
     */
    class DistributionLogic extends AbstractClusteringDependentLogic {
 
-      private DistributionManager dm;
+      protected DistributionManager dm;
       private Configuration configuration;
       private RpcManager rpcManager;
       private StateTransferLock stateTransferLock;
@@ -478,7 +509,7 @@ public interface ClusteringDependentLogic {
       @Override
       public boolean localNodeIsPrimaryOwner(Object key) {
          final Address address = rpcManager.getAddress();
-         return dm.getPrimaryLocation(key).equals(address);
+         return Objects.equals(dm.getPrimaryLocation(key), address);
       }
 
       @Override
@@ -586,6 +617,37 @@ public interface ClusteringDependentLogic {
                      return localNodeIsPrimaryOwner(key);
                   }
                };
+      }
+   }
+
+   class ScatteredLogic extends DistributionLogic {
+      private static Log log = LogFactory.getLog(ScatteredLogic.class);
+      private static boolean trace = log.isTraceEnabled();
+
+      @Override
+      public List<Address> getOwners(Object key) {
+         return Collections.singletonList(dm.getPrimaryLocation(key));
+      }
+
+      @Override
+      public boolean localNodeIsOwner(Object key) {
+         return localNodeIsPrimaryOwner(key);
+      }
+
+      @Override
+      public boolean canWriteEntry(Object key) {
+         return true;
+      }
+
+      @Override
+      public boolean canReadEntry(Object key) {
+         return dm.getLocality(key).isLocal();
+      }
+
+      @Override
+      protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+         // the logic is in ScatteringInterceptor
+         throw new IllegalStateException("Shouldn't be called");
       }
    }
 }

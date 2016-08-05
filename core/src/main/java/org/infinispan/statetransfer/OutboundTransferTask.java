@@ -26,6 +26,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * Outbound state transfer task. Pushes data segments to another cluster member on request. Instances of
@@ -41,7 +43,13 @@ public class OutboundTransferTask implements Runnable {
 
    private final boolean trace = log.isTraceEnabled();
 
-   private final StateProviderImpl stateProvider;
+   private final Consumer<OutboundTransferTask> onCompletion;
+
+   private final Consumer<List<StateChunk>> onChunkReplicated;
+
+   private final BiFunction<InternalCacheEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromDataContainer;
+
+   private final BiFunction<MarshalledEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore;
 
    private final int topologyId;
 
@@ -65,6 +73,8 @@ public class OutboundTransferTask implements Runnable {
 
    private final String cacheName;
 
+   private final boolean pushTransfer;
+
    private final Map<Integer, List<InternalCacheEntry>> entriesBySegment = CollectionFactory.makeConcurrentMap();
 
    /**
@@ -82,9 +92,12 @@ public class OutboundTransferTask implements Runnable {
    private InternalEntryFactory entryFactory;
 
    public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
-                               int topologyId, ConsistentHash readCh, StateProviderImpl stateProvider, DataContainer dataContainer,
+                               int topologyId, ConsistentHash readCh,
+                               Consumer<OutboundTransferTask> onCompletion, Consumer<List<StateChunk>> onChunkReplicated,
+                               BiFunction<InternalCacheEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromDataContainer,
+                               BiFunction<MarshalledEntry, InternalEntryFactory, InternalCacheEntry> mapEntryFromStore, DataContainer dataContainer,
                                PersistenceManager persistenceManager, RpcManager rpcManager,
-                               CommandsFactory commandsFactory, InternalEntryFactory ef, long timeout, String cacheName) {
+                               CommandsFactory commandsFactory, InternalEntryFactory ef, long timeout, String cacheName, boolean pushTransfer) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("Segments must not be null or empty");
       }
@@ -94,7 +107,10 @@ public class OutboundTransferTask implements Runnable {
       if (stateTransferChunkSize <= 0) {
          throw new IllegalArgumentException("stateTransferChunkSize must be greater than 0");
       }
-      this.stateProvider = stateProvider;
+      this.onCompletion = onCompletion;
+      this.onChunkReplicated = onChunkReplicated;
+      this.mapEntryFromDataContainer = mapEntryFromDataContainer;
+      this.mapEntryFromStore = mapEntryFromStore;
       this.destination = destination;
       this.segments.addAll(segments);
       this.stateTransferChunkSize = stateTransferChunkSize;
@@ -107,6 +123,7 @@ public class OutboundTransferTask implements Runnable {
       this.commandsFactory = commandsFactory;
       this.timeout = timeout;
       this.cacheName = cacheName;
+      this.pushTransfer = pushTransfer;
       //the rpc options does not change in runtime. re-use the same instance
       this.rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
             .timeout(timeout, TimeUnit.MILLISECONDS).build();
@@ -119,7 +136,7 @@ public class OutboundTransferTask implements Runnable {
       runnableFuture = new FutureTask<Void>(this, null) {
          @Override
          protected void done() {
-            stateProvider.onTaskCompletion(OutboundTransferTask.this);
+            onCompletion.accept(OutboundTransferTask.this);
          }
       };
       executorService.submit(runnableFuture);
@@ -145,7 +162,10 @@ public class OutboundTransferTask implements Runnable {
             Object key = ice.getKey();  //todo [anistor] should we check for expired entries?
             int segmentId = readCh.getSegment(key);
             if (segments.contains(segmentId)) {
-               sendEntry(ice, segmentId);
+               InternalCacheEntry entry = mapEntryFromDataContainer.apply(ice, entryFactory);
+               if (entry != null) {
+                  sendEntry(entry, segmentId);
+               }
             }
          }
 
@@ -153,17 +173,16 @@ public class OutboundTransferTask implements Runnable {
          if (stProvider != null) {
             try {
                CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
-               AdvancedCacheLoader.CacheLoaderTask task = new AdvancedCacheLoader.CacheLoaderTask() {
-                  @Override
-                  public void processEntry(MarshalledEntry me, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-                        int segmentId = readCh.getSegment(me.getKey());
-                        if (segments.contains(segmentId)) {
-                           try {
-                              InternalCacheEntry icv = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
-                              sendEntry(icv, segmentId);
-                           } catch (CacheException e) {
-                              log.failedLoadingValueFromCacheStore(me.getKey(), e);
+               AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
+                     int segmentId = readCh.getSegment(me.getKey());
+                     if (segments.contains(segmentId)) {
+                        try {
+                           InternalCacheEntry entry = mapEntryFromStore.apply(me, entryFactory);
+                           if (entry != null) {
+                              sendEntry(entry, segmentId);
                            }
+                        } catch (CacheException e) {
+                           log.failedLoadingValueFromCacheStore(me.getKey(), e);
                         }
                      }
                   };
@@ -232,10 +251,11 @@ public class OutboundTransferTask implements Runnable {
             }
          }
 
-         StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, chunks);
+         StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(rpcManager.getAddress(), topologyId, pushTransfer, chunks);
          // send synchronously, in order. it is important that the last chunk is received last in order to correctly detect completion of the stream of chunks
          try {
             rpcManager.invokeRemotely(Collections.singleton(destination), cmd, rpcOptions);
+            onChunkReplicated.accept(chunks);
          } catch (SuspectException e) {
             log.debugf("Node %s left cache %s while we were sending state to it, cancelling transfer.", destination, cacheName);
             cancel();
@@ -291,5 +311,13 @@ public class OutboundTransferTask implements Runnable {
             ", timeout=" + timeout +
             ", cacheName='" + cacheName + '\'' +
             '}';
+   }
+
+   public static InternalCacheEntry defaultMapEntryFromDataContainer(InternalCacheEntry ice, InternalEntryFactory entryFactory) {
+      return ice;
+   }
+
+   public static InternalCacheEntry defaultMapEntryFromStore(MarshalledEntry me, InternalEntryFactory entryFactory) {
+      return entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
    }
 }

@@ -25,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class DefaultConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
+public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<DefaultConsistentHash> {
 
    private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -53,20 +53,6 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
          throw log.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
       return new DefaultConsistentHash(state);
-   }
-
-   private void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {
-      if (capacityFactors != null) {
-         float totalCapacity = 0;
-         for (Address node : members) {
-            Float capacityFactor = capacityFactors.get(node);
-            if (capacityFactor == null || capacityFactor < 0)
-               throw new IllegalArgumentException("Invalid capacity factor for node " + node);
-            totalCapacity += capacityFactor;
-         }
-         if (totalCapacity == 0)
-            throw new IllegalArgumentException("There must be at least one node with a non-zero capacity factor");
-      }
    }
 
    /**

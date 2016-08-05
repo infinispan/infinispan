@@ -63,6 +63,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
    public String toString() {
       return "KeySetCommand{" +
             "cache=" + cache.getName() +
+            ", flags=" + printFlags() +
             '}';
    }
 

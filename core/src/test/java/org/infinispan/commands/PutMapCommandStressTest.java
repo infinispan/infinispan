@@ -1,7 +1,5 @@
 package org.infinispan.commands;
 
-import static org.testng.AssertJUnit.fail;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +15,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -35,12 +32,12 @@ public class PutMapCommandStressTest extends StressTest {
    protected final static int THREAD_WORKER_COUNT = (CACHE_COUNT - 1) * THREAD_MULTIPLIER;
    protected final static int CACHE_ENTRY_COUNT = 50000;
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {
-         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
-         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+//         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+//         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+         new PutMapCommandStressTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 
@@ -48,7 +45,9 @@ public class PutMapCommandStressTest extends StressTest {
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
-      builderUsed.clustering().hash().numOwners(NUM_OWNERS);
+      if (!cacheMode.isScattered()) {
+         builderUsed.clustering().hash().numOwners(NUM_OWNERS);
+      }
       builderUsed.clustering().stateTransfer().chunkSize(25000);
       // This is increased just for the put all command when doing full tracing
       builderUsed.clustering().remoteTimeout(12000);

@@ -15,7 +15,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional")
@@ -28,9 +27,12 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
       return this;
    }
 
-   @Factory
+   @Override
    public Object[] factory() {
-      return new Object[] { new ReplicatedAPITest().sync(true), new ReplicatedAPITest().sync(false) };
+      return new Object[] {
+         new ReplicatedAPITest().sync(true),
+         new ReplicatedAPITest().sync(false)
+      };
    }
 
    @Override

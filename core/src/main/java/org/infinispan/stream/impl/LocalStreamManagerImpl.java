@@ -9,6 +9,7 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -58,6 +59,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private Equivalence<? super K> keyEquivalence;
 
    private Address localAddress;
+   private CacheMode cacheMode;
 
    private final ConcurrentMap<Object, SegmentListener> changeListener = CollectionFactory.makeConcurrentMap();
    private ByteString cacheName;
@@ -120,6 +122,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    public void start() {
       localAddress = rpc.getAddress();
       cache.addListener(this);
+      cacheMode = cache.getCacheConfiguration().clustering().cacheMode();
    }
 
    /**
@@ -180,6 +183,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
            Set<Integer> segments, Set<K> keysToInclude, Set<K> keysToExclude) {
       Stream<CacheEntry<K, V>> stream = (parallelStream ? cacheEntrySet.parallelStream() : cacheEntrySet.stream())
               .filterKeys(keysToInclude).filterKeySegments(segments);
+      if (cacheMode.isScattered()) {
+         stream = stream.filter(entry -> entry.getValue() != null);
+      }
       if (!keysToExclude.isEmpty()) {
          // AnyEquivalence is how HashSet works so we don't need to worry then
          if (!(keyEquivalence instanceof AnyEquivalence)) {

@@ -59,7 +59,7 @@ public class StateSequencerUtil {
     * Start decorating the component {@code componentClass} on {@code cacheManager} to interact with a {@code StateSequencer}
     * when a method is called.
     */
-   public static <T> GlobalComponentSequencerAction advanceOnGlobalComponentMethod(StateSequencer stateSequencer,
+   public static <T> GlobalComponentSequencerAction<T> advanceOnGlobalComponentMethod(StateSequencer stateSequencer,
          EmbeddedCacheManager cacheManager, Class<T> componentClass, InvocationMatcher matcher) {
       return new GlobalComponentSequencerAction(stateSequencer, cacheManager, componentClass, matcher);
    }

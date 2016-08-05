@@ -3,9 +3,12 @@ package org.infinispan.interceptors.impl;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -14,9 +17,12 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,16 +38,19 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
    protected StateTransferManager stateTransferManager;
-   private StateTransferLock stateTransferLock;
+   protected StateTransferLock stateTransferLock;
    private GroupManager groupManager;
    private long transactionDataTimeout;
+   private ScheduledExecutorService timeoutExecutor;
 
    @Inject
    public void init(StateTransferLock stateTransferLock, Configuration configuration,
-                    StateTransferManager stateTransferManager, GroupManager groupManager) {
+                    StateTransferManager stateTransferManager, GroupManager groupManager,
+                    @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
       this.stateTransferLock = stateTransferLock;
       this.stateTransferManager = stateTransferManager;
       this.groupManager = groupManager;
+      this.timeoutExecutor = timeoutExecutor;
       transactionDataTimeout = configuration.clustering().remoteTimeout();
    }
 
@@ -99,14 +108,6 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       return cacheTopology == null ? -1 : cacheTopology.getTopologyId();
    }
 
-   protected final void waitForTransactionData(int topologyId) throws InterruptedException {
-      stateTransferLock.waitForTransactionData(topologyId, transactionDataTimeout, TimeUnit.MILLISECONDS);
-   }
-
-   protected final void waitForTopology(int topologyId) throws InterruptedException {
-      stateTransferLock.waitForTopology(topologyId, transactionDataTimeout, TimeUnit.MILLISECONDS);
-   }
-
    protected final void updateTopologyId(TopologyAffectedCommand command) throws InterruptedException {
       // set the topology id if it was not set before (ie. this is local command)
       // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in TransactionTable.cleanupStaleTransactions
@@ -125,8 +126,40 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
       int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
       command.setTopologyId(newTopologyId);
-      waitForTransactionData(newTopologyId);
-      return visitGetKeysInGroupCommand(context, command);
+      return retryCommandWithTransactionData(newTopologyId, context, command, (ctx, cmd) -> visitGetKeysInGroupCommand(ctx, cmd));
+
+   }
+
+   protected <T extends VisitableCommand> CompletableFuture<Void> retryCommandWithTransactionData(int topologyId,
+        InvocationContext ctx, T command, RetryHandler<T> handler) throws Throwable {
+      CompletableFuture<Void> future = stateTransferLock.transactionDataFuture(topologyId);
+      if (future == null) {
+         getLog().tracef("Retrying command %s for topology %d", command, topologyId);
+         return handler.handle(ctx, command);
+      } else {
+         CompletableFuture<Void> retryFuture = future.thenCompose(ignored -> {
+            try {
+               getLog().tracef("Retrying command %s for topology %d", command, topologyId);
+               return handler.handle(ctx, command);
+            } catch (Throwable t) {
+               throw new CacheException(t);
+            }
+         });
+         // We want to time out the current command future, not the main topology-waiting future,
+         // but the command future can take longer time to finish.
+         // This scheduled future does not have to be cancelled because it won't do anything (it will
+         // sit idle in the scheduler queue).
+         timeoutExecutor.schedule(() -> {
+               if (!future.isDone()) {
+                  retryFuture.completeExceptionally(new TimeoutException("Timed out waiting for topology " + topologyId));
+               }
+            }, transactionDataTimeout, TimeUnit.MILLISECONDS);
+         return retryFuture;
+      }
+   }
+
+   protected interface RetryHandler<T extends VisitableCommand> {
+      CompletableFuture<Void> handle(InvocationContext ctx, T command) throws Throwable;
    }
 
    protected abstract Log getLog();

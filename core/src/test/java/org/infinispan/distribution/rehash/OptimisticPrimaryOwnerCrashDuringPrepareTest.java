@@ -72,7 +72,7 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
       config.clustering().cacheMode(CacheMode.DIST_SYNC);
       config.transaction().lockingMode(LockingMode.OPTIMISTIC);
       config.clustering().hash().numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory(1, 0));
+            .consistentHashFactory(new ControlledConsistentHashFactory.Default(1, 0));
       config.transaction().transactionManagerLookup(new DummyTransactionManagerLookup())
             .cacheStopTimeout(1, SECONDS);
       createCluster(config, 2);

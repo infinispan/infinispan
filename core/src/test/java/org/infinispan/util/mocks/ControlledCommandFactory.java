@@ -38,16 +38,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
@@ -286,8 +277,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
-      return actual.buildStateResponseCommand(sender, topologyId, stateChunks);
+   public StateResponseCommand buildStateResponseCommand(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
+      return actual.buildStateResponseCommand(sender, topologyId, pushTransfer, stateChunks);
    }
 
    @Override
@@ -440,6 +431,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f, Params params) {
       return actual.buildReadWriteManyEntriesCommand(entries, f, params);
+   }
+
+   @Override
+   public InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, long[] versions, boolean removed) {
+      return actual.buildInvalidateVersionsCommand(keys, versions, removed);
    }
 
 }

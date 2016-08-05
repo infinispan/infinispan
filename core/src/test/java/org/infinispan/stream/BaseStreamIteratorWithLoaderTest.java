@@ -64,7 +64,7 @@ public abstract class BaseStreamIteratorWithLoaderTest extends MultipleCacheMana
       Cache<Object, String> cache0 = cache(0, cacheName);
       Map<Object, String> originalValues = new HashMap<>();
       Object loaderKey;
-      if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
+      if (cacheMode.isDistributed() || cacheMode.isReplicated() || cacheMode.isScattered()) {
          Cache<Object, String> cache1 = cache(1, cacheName);
          Cache<Object, String> cache2 = cache(2, cacheName);
          originalValues.put(new MagicKey(cache0), "cache0");

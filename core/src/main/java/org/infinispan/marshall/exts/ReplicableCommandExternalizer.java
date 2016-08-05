@@ -119,7 +119,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             WriteOnlyKeyCommand.class, WriteOnlyKeyValueCommand.class,
             WriteOnlyManyCommand.class, WriteOnlyManyEntriesCommand.class,
             ReadWriteManyCommand.class, ReadWriteManyEntriesCommand.class, ReplicableCommandRunnable.class,
-            ReplicableCommandManagerFunction.class);
+            ReplicableCommandManagerFunction.class, InvalidateVersionsCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);

@@ -5,7 +5,9 @@ import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
 
@@ -79,6 +81,8 @@ public class GroupManagerImpl implements GroupManager {
     private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
     private final List<Grouper<?>> groupers;
     private ClusteringDependentLogic clusteringDependentLogic;
+    private Configuration configuration;
+    private boolean scattered;
     
     public GroupManagerImpl(List<Grouper<?>> groupers) {
         this.groupMetadataCache = CollectionFactory.makeConcurrentMap();
@@ -89,8 +93,14 @@ public class GroupManagerImpl implements GroupManager {
     }
 
     @Inject
-    public void injectDependencies(ClusteringDependentLogic clusteringDependentLogic) {
+    public void injectDependencies(ClusteringDependentLogic clusteringDependentLogic, Configuration configuration) {
         this.clusteringDependentLogic = clusteringDependentLogic;
+        this.configuration = configuration;
+    }
+
+    @Start
+    public void start() {
+       this.scattered = configuration.clustering().cacheMode().isScattered();
     }
     
     @Override
@@ -104,7 +114,11 @@ public class GroupManagerImpl implements GroupManager {
 
    @Override
    public boolean isOwner(String group) {
-      return clusteringDependentLogic.localNodeIsOwner(group);
+      if (scattered) {
+         return clusteringDependentLogic.localNodeIsPrimaryOwner(group);
+      } else {
+         return clusteringDependentLogic.localNodeIsOwner(group);
+      }
    }
 
    @Override

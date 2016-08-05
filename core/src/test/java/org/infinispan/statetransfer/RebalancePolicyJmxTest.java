@@ -8,6 +8,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.RebalancingStatus;
 import org.testng.annotations.Test;
@@ -28,6 +29,7 @@ import static org.testng.AssertJUnit.assertTrue;
  */
 @Test(groups = "functional", testName = "statetransfer.RebalancePolicyJmxTest")
 @CleanupAfterMethod
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private static final String REBALANCING_ENABLED = "rebalancingEnabled";
@@ -47,7 +49,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder getConfigurationBuilder(boolean awaitInitialTransfer) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC)
+      cb.clustering().cacheMode(cacheMode)
             .stateTransfer().awaitInitialTransfer(awaitInitialTransfer);
       return cb;
    }
@@ -118,7 +120,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       ConsistentHash ch = stm0.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(0), address(1), address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
-         assertEquals(2, ch.locateOwnersForSegment(i).size());
+         assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());
       }
 
       // Suspend rebalancing again
@@ -162,7 +164,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       ch = stm2.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
-         assertEquals(2, ch.locateOwnersForSegment(i).size());
+         assertEquals(ch.getNumOwners(), ch.locateOwnersForSegment(i).size());
       }
    }
 }

@@ -2,10 +2,15 @@ package org.infinispan.stream.impl;
 
 import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
+import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
@@ -28,6 +33,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -36,7 +42,6 @@ import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Abstract stream that provides all of the common functionality required for all types of Streams including the various
@@ -64,6 +69,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
    protected Boolean parallelDistribution;
    protected boolean rehashAware = true;
+   protected CacheMode cacheMode;
 
    protected Set<?> keysToFilter;
    protected Set<Integer> segmentsToFilter;
@@ -90,7 +96,9 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       this.executor = executor;
       this.registry = registry;
       this.partition = registry.getComponent(PartitionHandlingManager.class);
-      keyEquivalence = registry.getComponent(Configuration.class).dataContainer().keyEquivalence();
+      Configuration configuration = registry.getComponent(Configuration.class);
+      keyEquivalence = configuration.dataContainer().keyEquivalence();
+      cacheMode = configuration.clustering().cacheMode();
       intermediateOperations = new ArrayDeque<>();
    }
 
@@ -124,6 +132,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
       this.timeout = other.timeout;
       this.timeoutUnit = other.timeoutUnit;
+      this.cacheMode = other.cacheMode;
    }
 
    protected S2 addIntermediateOperation(IntermediateOperation<T, S, T, S> intermediateOperation) {
@@ -232,7 +241,9 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       Set<Integer> segmentsToProcess = segmentsToFilter;
       TerminalOperation<R> op;
       do {
-         ConsistentHash ch = dm.getReadConsistentHash();
+         Function<DistributionManager, ConsistentHash> hashProvider = cacheMode.isScattered() ?
+            dm -> dm.getWriteConsistentHash() : dm -> dm.getReadConsistentHash();
+         ConsistentHash ch = hashProvider.apply(dm);
          if (retryOnRehash) {
             op = new SegmentRetryingOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess,
                     null), function);
@@ -248,7 +259,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
             if (localRun) {
                localValue = op.performOperation();
                // TODO: we can do this more efficiently - since we drop all results locally
-               if (dm.getReadConsistentHash().equals(ch)) {
+               if (hashProvider.apply(dm).equals(ch)) {
                   Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
                   if (segmentsToProcess != null) {
                      ourSegments.retainAll(segmentsToProcess);
@@ -299,15 +310,23 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
    void performRehashKeyTrackingOperation(
            Function<Supplier<Stream<CacheEntry>>, KeyTrackingTerminalOperation<Object, ? extends T, Object>> function) {
+      Function<DistributionManager, ConsistentHash> hashProvider;
+      if (cacheMode.isScattered()) {
+         // In scattered cache even reads should be directed to the future owner, and that should block the read until
+         // it can return the value. Though, this code deals with multiple versions anyway, so I am not that 100% sure
+         hashProvider = dm -> dm.getWriteConsistentHash();
+      } else {
+         hashProvider = dm -> dm.getReadConsistentHash();
+      }
+      KeyTrackingConsumer<Object, Object> results = new KeyTrackingConsumer<>(hashProvider.apply(dm), (c) -> {},
+         c -> c, null, keyEquivalence);
+
       final AtomicBoolean complete = new AtomicBoolean();
 
-      ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
-      KeyTrackingConsumer<Object, Object> results = new KeyTrackingConsumer<>(segmentInfoCH, (c) -> {},
-              c -> c, null, keyEquivalence);
       Set<Integer> segmentsToProcess = segmentsToFilter == null ?
-              new ReplicatedConsistentHash.RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
+              new ReplicatedConsistentHash.RangeSet(hashProvider.apply(dm).getNumSegments()) : segmentsToFilter;
       do {
-         ConsistentHash ch = dm.getReadConsistentHash();
+         ConsistentHash ch = hashProvider.apply(dm);
          boolean localRun = ch.getMembers().contains(localAddress);
          Set<Integer> segments;
          Set<Object> excludedKeys;
@@ -332,7 +351,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
             if (localRun) {
                Collection<CacheEntry<Object, Object>> localValue = op.performOperationRehashAware(results);
                // TODO: we can do this more efficiently - this hampers performance during rehash
-               if (dm.getReadConsistentHash().equals(ch)) {
+               if (hashProvider.apply(dm).equals(ch)) {
                   log.tracef("Found local values %s for id %s", localValue.size(), id);
                   results.onCompletion(null, segments, localValue);
                } else {
@@ -510,6 +529,137 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
          onIntermediateResult(null, response);
       }
    }
+
+   static class VersionInfo<K> implements BiConsumer<Address, CacheEntry<K, Object>> {
+      private static final Object DUMMY = new Object();
+      private CacheEntry<K, Object> entry;
+      private HashMap<Address, Object> responses = new HashMap<>();
+
+      @Override
+      public synchronized void accept(Address source, CacheEntry<K, Object> cacheEntry) {
+         responses.put(source, DUMMY);
+         if (entry == null) {
+            entry = cacheEntry;
+         } else {
+            if (cacheEntry.getMetadata() != null && cacheEntry.getMetadata().version() != null) {
+               if (entry.getMetadata() == null || entry.getMetadata().version() == null) {
+                  entry = cacheEntry;
+               } else if (entry.getMetadata().version().compareTo(cacheEntry.getMetadata().version()) == InequalVersionComparisonResult.BEFORE) {
+                  entry = cacheEntry;
+               }
+            }
+         }
+      }
+
+      public int getNumResponses() {
+         return responses.size();
+      }
+
+      public CacheEntry<K,Object> getEntry() {
+         return entry;
+      }
+   }
+
+//   class VersionTrackingConsumer<K, V> extends KeyTrackingConsumer<K, V> {
+//      final AtomicReferenceArray<Set<Address>> completedSegments;
+//      // we keep per-segment map to remove the records ASAP when the segment is completed
+//      final AtomicReferenceArray<Map<K, VersionInfo<K>>> entryVersions;
+//
+//      VersionTrackingConsumer(ConsistentHash ch, Consumer<V> consumer, Function<CacheEntry<K, Object>, V> valueFunction,
+//                          DistributedCacheStream.SegmentListenerNotifier listenerNotifier, Equivalence<? super K> keyEquivalence) {
+//         super(ch, consumer, valueFunction, listenerNotifier, keyEquivalence);
+//         this.completedSegments = new AtomicReferenceArray<>(ch.getNumSegments());
+//         this.entryVersions = new AtomicReferenceArray<>(ch.getNumSegments());
+//         for (int i = 0; i < entryVersions.length(); ++i) {
+//            if (ch.locatePrimaryOwnerForSegment(i) == null) {
+//               completedSegments.set(i, new ConcurrentHashSet<>());
+//               entryVersions.set(i, CollectionFactory.makeConcurrentMap(keyEquivalence, AnyEquivalence.getInstance()));
+//            }
+//         }
+//      }
+//
+//      @Override
+//      public Set<Integer> onIntermediateResult(Address address, Collection<CacheEntry<K, Object>> results) {
+//         if (results == null) {
+//            return null;
+//         }
+//         log.tracef("Response from %s with results %s", address, results.size());
+//         Set<Integer> completedSegments;
+//         if (listenerNotifier != null) {
+//            completedSegments = new HashSet<>();
+//         } else {
+//            completedSegments = null;
+//         }
+//         ByRef<CacheEntry<K, Object>> lastCompleted = new ByRef<>(null);
+//         results.forEach(e -> {
+//            K key = e.getKey();
+//            int segment = ch.getSegment(key);
+//            if (ch.locatePrimaryOwnerForSegment(segment) != null) {
+//               Set<K> keys = referenceArray.get(segment);
+//               if (keys != null) {
+//                  keys.add(key);
+//               } else if (completedSegments != null) {
+//                  completedSegments.add(segment);
+//                  lastCompleted.set(e);
+//               }
+//               consumer.accept(valueFunction.apply(e));
+//            } else {
+//               Map<K, VersionInfo<K>> entries = entryVersions.get(segment);
+//               if (entries == null) {
+//                  log.errorf("Received data for segment %d from %s but this has been already completed.", segment, address);
+//               }
+//               VersionInfo<K> info = entries.computeIfAbsent(key, k -> new VersionInfo<K>());
+//               info.accept(address == null ? localAddress : address, e);
+//               if (info.getNumResponses() == ch.getMembers().size()) {
+//                  if (completedSegments != null && this.completedSegments.get(segment) == null) {
+//                     completedSegments.add(segment);
+//                     lastCompleted.set(info.getEntry());
+//                  }
+//                  consumer.accept(valueFunction.apply(info.getEntry()));
+//               }
+//            }
+//         });
+//         if (lastCompleted.get() != null) {
+//            listenerNotifier.addSegmentsForObject(lastCompleted.get(), completedSegments);
+//         }
+//         return completedSegments;
+//      }
+//
+//      @Override
+//      public void onCompletion(Address address, Set<Integer> completedSegments, Collection<CacheEntry<K, Object>> results) {
+//         if (!completedSegments.isEmpty()) {
+//            log.tracef("Completing segments %s on node %s", completedSegments, address);
+//            // We null this out first so intermediate results don't add for no reason
+//            for (int segment : completedSegments) {
+//               if (ch.locatePrimaryOwnerForSegment(segment) != null) {
+//                  this.referenceArray.set(segment, null);
+//               } else {
+//                  Set<Address> targets = this.completedSegments.get(segment);
+//                  targets.add(address == null ? localAddress : address);
+//                  if (targets.size() == ch.getMembers().size()) {
+//                     this.completedSegments.set(segment, null);
+//                  }
+//               }
+//            }
+//         } else {
+//            log.tracef("No segments to complete from %s", address);
+//         }
+//         Set<Integer> valueSegments = onIntermediateResult(address, results);
+//         if (valueSegments != null) {
+//            Set<Integer> emptyCompletedSegments = new HashSet<>(completedSegments);
+//            emptyCompletedSegments.removeAll(valueSegments);
+//            if (!emptyCompletedSegments.isEmpty()) {
+//               listenerNotifier.completeSegmentsNoResults(emptyCompletedSegments);
+//            }
+//         }
+//      }
+//
+//      @Override
+//      public void onSegmentsLost(Set<Integer> segments) {
+//         // TODO: this is probably not called correctly
+//         super.onSegmentsLost(segments);
+//      }
+//   }
 
    static class ResultsAccumulator<R> implements ClusterStreamManager.ResultsCallback<R> {
       private final BinaryOperator<R> binaryOperator;

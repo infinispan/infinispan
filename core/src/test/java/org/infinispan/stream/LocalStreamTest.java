@@ -11,7 +11,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "streams.LocalStreamTest")
 public class LocalStreamTest extends BaseStreamTest {
    public LocalStreamTest() {
-      super(false, CacheMode.LOCAL);
+      super(false);
+      cacheMode(CacheMode.LOCAL);
    }
 
    @Override

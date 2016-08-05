@@ -2,6 +2,8 @@ package org.infinispan.factories;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.scattered.impl.ScatteredStateConsumerImpl;
+import org.infinispan.scattered.impl.ScatteredStateProviderImpl;
 import org.infinispan.statetransfer.*;
 
 /**
@@ -24,9 +26,17 @@ public class StateTransferComponentFactory extends AbstractNamedCacheComponentFa
       if (componentType.equals(StateTransferManager.class)) {
          return componentType.cast(new StateTransferManagerImpl());
       } else if (componentType.equals(StateProvider.class)) {
-         return componentType.cast(new StateProviderImpl());
+         if (configuration.clustering().cacheMode().isScattered()) {
+            return componentType.cast(new ScatteredStateProviderImpl());
+         } else {
+            return componentType.cast(new StateProviderImpl());
+         }
       } else if (componentType.equals(StateConsumer.class)) {
-         return componentType.cast(new StateConsumerImpl());
+         if (configuration.clustering().cacheMode().isScattered()) {
+            return componentType.cast(new ScatteredStateConsumerImpl());
+         } else {
+            return componentType.cast(new StateConsumerImpl());
+         }
       }
 
       throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());

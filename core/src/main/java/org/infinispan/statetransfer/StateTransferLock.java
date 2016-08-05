@@ -3,7 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * We use the state transfer lock for three different things:
@@ -39,7 +39,7 @@ public interface StateTransferLock {
    // transaction data latch
    void notifyTransactionDataReceived(int topologyId);
 
-   void waitForTransactionData(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException;
+   CompletableFuture<Void> transactionDataFuture(int expectedTopologyId) throws InterruptedException;
 
    boolean transactionDataReceived(int expectedTopologyId);
 
@@ -47,7 +47,7 @@ public interface StateTransferLock {
    // TODO move this to Cluster/LocalTopologyManagerImpl and don't start requesting state until every node has the jgroups view with the local node
    void notifyTopologyInstalled(int topologyId);
 
-   void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException;
+   CompletableFuture<Void> topologyFuture(int expectedTopologyId) throws InterruptedException;
 
    boolean topologyReceived(int expectedTopologyId);
 }

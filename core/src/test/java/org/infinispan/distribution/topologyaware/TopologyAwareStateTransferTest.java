@@ -10,6 +10,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -22,13 +23,14 @@ import java.util.List;
  */
 @Test(groups = "functional", testName = "distribution.topologyaware.TopologyAwareStateTransferTest")
 @CleanupAfterTest
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC})
 public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
 
    private Address[] addresses;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      ConfigurationBuilder defaultConfig = getDefaultClusteredCacheConfig(cacheMode);
       log.debug("defaultConfig = " + defaultConfig.build().clustering().hash().numOwners());
       defaultConfig.clustering().l1().disable().stateTransfer().fetchInMemoryState(true);
       createClusteredCaches(5, defaultConfig);
@@ -50,7 +52,11 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       throw new RuntimeException("Address: " + addr);
    }
 
-   public void testInitialState() {
+   /**
+    * dependsOnMethods does not work well with multiple instances of test.
+    * See http://stackoverflow.com/questions/38345330 for details.
+    */
+   public void test() {
       cache(0).put(addresses[0],"v0");
       cache(0).put(addresses[1],"v1");
       cache(0).put(addresses[2],"v2");
@@ -67,14 +73,14 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       assertExistence(addresses[2]);
       assertExistence(addresses[3]);
       assertExistence(addresses[4]);
-   }
-
-   @Test (dependsOnMethods = "testInitialState")
-   public void testNodeDown() {
-      EmbeddedCacheManager cm = cache(addresses[4]).getCacheManager();
+//   }
+//
+//   @Test (dependsOnMethods = "testInitialState")
+//   public void testNodeDown() {
+      EmbeddedCacheManager cm4 = cache(addresses[4]).getCacheManager();
       log.info("Here is where ST starts");
-      TestingUtil.killCacheManagers(cm);
-      cacheManagers.remove(cm);
+      TestingUtil.killCacheManagers(cm4);
+      cacheManagers.remove(cm4);
       TestingUtil.blockUntilViewsReceived(60000, false, caches());
       TestingUtil.waitForRehashToComplete(caches());
       log.info("Here is where ST ends");
@@ -91,16 +97,16 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       assertExistence(addresses[2]);
       assertExistence(addresses[3]);
       assertExistence(addresses[4]);
-   }
-
-   @Test (dependsOnMethods = "testNodeDown")
-   public void testNodeDown2() {
-      EmbeddedCacheManager cm = cache(addresses[2]).getCacheManager();
-      TestingUtil.killCacheManagers(cm);
-      cacheManagers.remove(cm);
+//   }
+//
+//   @Test (dependsOnMethods = "testNodeDown")
+//   public void testNodeDown2() {
+      EmbeddedCacheManager cm2 = cache(addresses[2]).getCacheManager();
+      TestingUtil.killCacheManagers(cm2);
+      cacheManagers.remove(cm2);
       TestingUtil.blockUntilViewsReceived(60000, false, caches());
       TestingUtil.waitForRehashToComplete(caches());
-      List<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getMembers();
+      addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getMembers();
       log.debug("After shutting down " + addresses[2] + " caches are " +  addressList);
 
       log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
@@ -112,16 +118,16 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       assertExistence(addresses[2]);
       assertExistence(addresses[3]);
       assertExistence(addresses[4]);
-   }
-
-   @Test (dependsOnMethods = "testNodeDown2")
-   public void testNodeDown3() {
-      EmbeddedCacheManager cm = cache(addresses[1]).getCacheManager();
-      TestingUtil.killCacheManagers(cm);
-      cacheManagers.remove(cm);
+//   }
+//
+//   @Test (dependsOnMethods = "testNodeDown2")
+//   public void testNodeDown3() {
+      EmbeddedCacheManager cm1 = cache(addresses[1]).getCacheManager();
+      TestingUtil.killCacheManagers(cm1);
+      cacheManagers.remove(cm1);
       TestingUtil.blockUntilViewsReceived(60000, false, caches());
       TestingUtil.waitForRehashToComplete(caches());
-      List<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getMembers();
+      addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager().getConsistentHash().getMembers();
       log.debug("After shutting down " + addresses[1] + " caches are " +  addressList);
 
       log.debugf("Cache on node %s: %s", addresses[0], TestingUtil.printCache(cache(addresses[0])));
@@ -150,11 +156,13 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       log.debug("count = " + count);
       assert count == 2;
 
-      for (Cache<? super K, ?> c : caches()) {
-         if (addresses.contains(address(c))) {
-            assert c.getAdvancedCache().getDataContainer().containsKey(key);
-         } else {
-            assert !c.getAdvancedCache().getDataContainer().containsKey(key);
+      if (!cacheMode.isScattered()) {
+         for (Cache<? super K, ?> c : caches()) {
+            if (addresses.contains(address(c))) {
+               assert c.getAdvancedCache().getDataContainer().containsKey(key);
+            } else {
+               assert !c.getAdvancedCache().getDataContainer().containsKey(key);
+            }
          }
       }
    }

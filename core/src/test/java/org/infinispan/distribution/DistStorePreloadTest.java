@@ -7,6 +7,8 @@ import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InTransactionMode;
+import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -19,14 +21,13 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "distribution.DistStorePreloadTest")
+@InTransactionMode({ TransactionMode.TRANSACTIONAL, TransactionMode.NON_TRANSACTIONAL })
 public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
 
    public static final int NUM_KEYS = 10;
 
    public DistStorePreloadTest() {
       INIT_CLUSTER_SIZE = 1;
-      sync = true;
-      tx = false;
       testRetVals = true;
       shared = true;
       preload = true;
@@ -56,6 +57,7 @@ public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
       EmbeddedCacheManager cm2 = cacheManagers.get(1);
       cm2.defineConfiguration(cacheName, buildConfiguration().build());
       c2 = cache(1, cacheName);
+      caches.add(c2);
       waitForClusterToForm();
 
       DataContainer dc2 = c2.getAdvancedCache().getDataContainer();

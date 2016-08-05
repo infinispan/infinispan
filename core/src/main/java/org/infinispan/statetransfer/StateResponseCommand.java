@@ -37,6 +37,12 @@ public class StateResponseCommand extends BaseRpcCommand {
    private Collection<StateChunk> stateChunks;
 
    /**
+    * Traditional state transfer is pull based (node sends StateRequestCommand and expects StateResponseCommand).
+    * This flags unsolicited StateResponseCommand that should be applied anyway. Used by scattered cache.
+    */
+   private boolean pushTransfer;
+
+   /**
     * This is injected on target node via init() method before the command is performed.
     */
    private StateConsumer stateConsumer;
@@ -49,10 +55,11 @@ public class StateResponseCommand extends BaseRpcCommand {
       super(cacheName);
    }
 
-   public StateResponseCommand(ByteString cacheName, Address origin, int topologyId, Collection<StateChunk> stateChunks) {
+   public StateResponseCommand(ByteString cacheName, Address origin, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
       super(cacheName);
       setOrigin(origin);
       this.topologyId = topologyId;
+      this.pushTransfer = pushTransfer;
       this.stateChunks = stateChunks;
    }
 
@@ -65,7 +72,7 @@ public class StateResponseCommand extends BaseRpcCommand {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         stateConsumer.applyState(getOrigin(), topologyId, stateChunks);
+         stateConsumer.applyState(getOrigin(), topologyId, pushTransfer, stateChunks);
          return null;
       } finally {
          LogFactory.popNDC(trace);
@@ -91,6 +98,7 @@ public class StateResponseCommand extends BaseRpcCommand {
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(getOrigin());
       output.writeInt(topologyId);
+      output.writeBoolean(pushTransfer);
       MarshallUtil.marshallCollection(stateChunks, output);
    }
 
@@ -98,6 +106,7 @@ public class StateResponseCommand extends BaseRpcCommand {
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       setOrigin((Address) input.readObject());
       topologyId = input.readInt();
+      pushTransfer = input.readBoolean();
       stateChunks = MarshallUtil.unmarshallCollection(input, ArrayList::new);
    }
 
@@ -105,6 +114,7 @@ public class StateResponseCommand extends BaseRpcCommand {
    public String toString() {
       return "StateResponseCommand{" +
             "cache=" + cacheName +
+            ", pushTransfer=" + pushTransfer +
             ", stateChunks=" + stateChunks +
             ", origin=" + getOrigin() +
             ", topologyId=" + topologyId +

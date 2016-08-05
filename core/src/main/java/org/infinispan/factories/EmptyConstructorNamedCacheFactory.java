@@ -81,8 +81,12 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return componentType.cast(new ClusteringDependentLogic.InvalidationLogic());
          } else if (cacheMode.isReplicated()) {
             return componentType.cast(new ClusteringDependentLogic.ReplicationLogic());
-         } else {
+         } else if (cacheMode.isDistributed()){
             return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
+         } else if (cacheMode.isScattered()) {
+            return componentType.cast(new ClusteringDependentLogic.ScatteredLogic());
+         } else {
+            throw new UnsupportedOperationException();
          }
       } else {
          boolean isTransactional = configuration.transaction().transactionMode().isTransactional();

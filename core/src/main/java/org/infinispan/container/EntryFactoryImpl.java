@@ -11,9 +11,9 @@ import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.container.entries.StateChangingEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -37,16 +37,16 @@ public class EntryFactoryImpl implements EntryFactory {
    private DataContainer container;
    private boolean isL1Enabled; //cache the value
    private Configuration configuration;
-   private DistributionManager distributionManager;//is null for non-clustered caches
+   private ClusteringDependentLogic cdl;
    private TimeService timeService;
 
    @Inject
    public void injectDependencies(DataContainer dataContainer, Configuration configuration,
-                                  DistributionManager distributionManager,
+                                  ClusteringDependentLogic cdl,
                                   TimeService timeService) {
       this.container = dataContainer;
       this.configuration = configuration;
-      this.distributionManager = distributionManager;
+      this.cdl = cdl;
       this.timeService = timeService;
    }
 
@@ -57,10 +57,10 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    @Override
-   public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key, CacheEntry existing) {
+   public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key, CacheEntry existing, boolean ignoreOwnership) {
       CacheEntry cacheEntry = getFromContext(ctx, key);
       if (cacheEntry == null) {
-         cacheEntry = existing != null ? existing : getFromContainer(key, false, false);
+         cacheEntry = existing != null ? existing : getFromContainer(key, ignoreOwnership, false);
 
          // With repeatable read, we need to create a RepeatableReadEntry
          // Otherwise we can store the InternalCacheEntry directly in the context
@@ -101,6 +101,7 @@ public class EntryFactoryImpl implements EntryFactory {
             log.tracef("Updated context entry %s", contextEntry);
       } else {
          // Not in the context yet.
+         // We load the entry to context even if the command won't use it because listeners may need that value.
          InternalCacheEntry ice = getFromContainer(key, ignoreOwnership, true);
          if (ice == null && wrap == Wrap.WRAP_NON_NULL) {
             mvccEntry = null;
@@ -227,12 +228,14 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    private InternalCacheEntry getFromContainer(Object key, boolean ignoreOwnership, boolean writeOperation) {
-      final boolean isLocal = distributionManager == null || distributionManager.getLocality(key).isLocal();
-      if (isLocal || ignoreOwnership) {
+      // we have to check the locality after ignoreOwnership because some commands (preload) execute
+      // before cacheTopology is set; these have ignoreOwnership=true. If we checked fo locality, we would get NPE
+      boolean isLocal = false;
+      if (ignoreOwnership || (isLocal = cdl.canReadEntry(key))) {
          final InternalCacheEntry ice = innerGetFromContainer(key, writeOperation);
          if (trace)
             log.tracef("Retrieved from container %s (ignoreOwnership=%s, isLocal=%s)", ice, ignoreOwnership,
-                       isLocal);
+                       ignoreOwnership ? "maybe" : isLocal);
          return ice;
       } else if (isL1Enabled) {
          final InternalCacheEntry ice = innerGetFromContainer(key, writeOperation);

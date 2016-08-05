@@ -2,15 +2,19 @@ package org.infinispan.distribution.groups;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestSelector;
+import org.testng.IMethodInstance;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * This class contains some utility methods to the grouping advanced interface tests.
@@ -18,6 +22,7 @@ import java.util.Map;
  * @author Pedro Ruivo
  * @since 7.0
  */
+@TestSelector(filters = BaseUtilGroupTest.OwnerFilter.class)
 public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
 
    protected static final String GROUP = "test-group";
@@ -25,6 +30,7 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
 
    protected BaseUtilGroupTest(TestCacheFactory factory) {
       this.factory = factory;
+      this.cacheMode = CacheMode.DIST_SYNC; // default for the transactional tests
    }
 
    @Override
@@ -184,6 +190,12 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
       public TestCache(Cache<GroupKey, String> primaryOwner, AdvancedCache<GroupKey, String> testCache) {
          this.primaryOwner = primaryOwner;
          this.testCache = testCache;
+      }
+   }
+
+   public static class OwnerFilter extends FilterByProperty<TestCacheFactory> {
+      public OwnerFilter() {
+         super("test.infinispan.owner", test -> ((BaseUtilGroupTest) test).factory);
       }
    }
 }

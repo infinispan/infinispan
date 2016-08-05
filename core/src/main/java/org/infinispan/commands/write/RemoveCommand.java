@@ -34,6 +34,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    boolean successful = true;
    boolean nonExistent = false;
 
+   protected Metadata metadata;
    protected ValueMatcher valueMatcher;
    protected Equivalence valueEquivalence;
 
@@ -109,6 +110,16 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    }
 
    @Override
+   public void setMetadata(Metadata metadata) {
+      this.metadata = metadata;
+   }
+
+   @Override
+   public Metadata getMetadata() {
+      return metadata;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (!super.equals(o)) {
          return false;
@@ -137,6 +148,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          .append("RemoveCommand{key=")
          .append(toStr(key))
          .append(", value=").append(toStr(value))
+         .append(", metadata=").append(metadata)
          .append(", flags=").append(printFlags())
          .append(", valueMatcher=").append(valueMatcher)
          .append("}")
@@ -161,6 +173,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(value);
+      output.writeObject(metadata);
       output.writeLong(Flag.copyWithoutRemotableFlags(getFlagsBitSet()));
       MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
@@ -170,6 +183,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       value = input.readObject();
+      metadata = (Metadata) input.readObject();
       setFlagsBitSet(input.readLong());
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);
@@ -191,6 +205,11 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       if (value != null) {
          successful = (Boolean) remoteResponse;
       }
+   }
+
+   @Override
+   public void fail() {
+      successful = false;
    }
 
    @Override

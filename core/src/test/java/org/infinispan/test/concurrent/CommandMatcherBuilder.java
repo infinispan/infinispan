@@ -27,7 +27,7 @@ public class CommandMatcherBuilder<T extends ReplicableCommand> {
       if (matchCount < 0) {
          return buildInternal();
       } else {
-         return new MatchCountMatcher(buildInternal(), matchCount);
+         return new MatchCountCommandMatcher(buildInternal(), matchCount);
       }
    }
 

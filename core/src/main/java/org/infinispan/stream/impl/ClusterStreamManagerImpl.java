@@ -261,15 +261,9 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       Map<Address, Set<Integer>> targets = new ConcurrentHashMap<>();
       for (Integer segment : segments) {
          Address owner = ch.locatePrimaryOwnerForSegment(segment);
-         if (owner.equals(localAddress)) {
-            continue;
+         if (!owner.equals(localAddress)) {
+            targets.computeIfAbsent(owner, t -> new HashSet<>()).add(segment);
          }
-         Set<Integer> targetSegments = targets.get(owner);
-         if (targetSegments == null) {
-            targetSegments = new HashSet<>();
-            targets.put(owner, targetSegments);
-         }
-         targetSegments.add(segment);
       }
       return targets;
    }

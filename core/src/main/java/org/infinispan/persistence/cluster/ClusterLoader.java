@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -59,8 +60,10 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader {
    public MarshalledEntry load(Object key) throws PersistenceException {
       if (!isCacheReady()) return null;
 
+      // Ignoring ownership check is important for caches that allow reads only on certain nodes
+      // (such as scattered cache). If this you want to force load the entry, shoot yourselves...
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(
-            key, cacheName, EnumUtil.EMPTY_BIT_SET, false, null,
+            key, cacheName, EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK), false, null,
             cache.getCacheConfiguration().dataContainer().keyEquivalence());
 
       Collection<Response> responses = doRemoteCall(clusteredGetCommand);
