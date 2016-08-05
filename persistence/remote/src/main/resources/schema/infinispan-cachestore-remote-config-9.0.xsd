@@ -81,7 +81,7 @@
         <xs:attribute name="key-size-estimate" type="xs:int" default="64">
           <xs:annotation>
             <xs:documentation>
-              The class name of the driver used for connecting to the database.
+              This hint allows sizing of byte buffers when serializing and deserializing keys, to minimize array resizing. It defaults to 64.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -196,7 +196,7 @@
       <xs:enumeration value="WAIT">
         <xs:annotation>
           <xs:documentation>
-            The caller will block (invoke waits until a new or idle connections is available.
+            The caller will block (invoke waits until a new or idle connections is available).
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>

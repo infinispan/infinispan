@@ -95,19 +95,19 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder keySizeEstimate(int keySizeEstimate);
 
    /**
-    * Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to
+    * Allows you to specify a custom {@link Marshaller} implementation to
     * serialize and deserialize user objects. This method is mutually exclusive with {@link #marshaller(Marshaller)}.
     */
    ConfigurationBuilder marshaller(String marshaller);
 
    /**
-    * Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to
+    * Allows you to specify a custom {@link Marshaller} implementation to
     * serialize and deserialize user objects. This method is mutually exclusive with {@link #marshaller(Marshaller)}.
     */
    ConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller);
 
    /**
-    * Allows you to specify an instance of {@link org.infinispan.marshall.Marshaller} to serialize
+    * Allows you to specify an instance of {@link Marshaller} to serialize
     * and deserialize user objects. This method is mutually exclusive with {@link #marshaller(Class)}.
     */
    ConfigurationBuilder marshaller(Marshaller marshaller);
