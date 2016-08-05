@@ -20,6 +20,7 @@ import org.infinispan.commons.util.Util;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
@@ -265,7 +266,7 @@ public class ClientListenerNotifier {
                clientEvent = null;
             } catch (TransportException e) {
                Throwable cause = e.getCause();
-               if (cause instanceof ClosedChannelException) {
+               if (cause instanceof ClosedChannelException || (cause instanceof SocketException && !transport.isValid())) {
                   // Channel closed, ignore and exit
                   log.debug("Channel closed, exiting event reader thread");
                   stopped = true;
