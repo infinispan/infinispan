@@ -1,9 +1,12 @@
 package org.infinispan.functional.decorators;
 
+import static org.infinispan.commons.marshall.MarshallableFunctions.identity;
 import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
 import static org.infinispan.commons.marshall.MarshallableFunctions.removeIfValueEqualsReturnBoolean;
 import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnBoolean;
 import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindIsPresent;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindOrNull;
 import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
 import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfAbsentReturnBoolean;
 import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
@@ -90,18 +93,18 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
 
    @Override
    public V get(K key) {
-      return await(readOnly.eval(key, ro -> ro.find().orElse(null)));
+      return await(readOnly.eval(key, returnReadOnlyFindOrNull()));
    }
 
    @Override
    public Map<K, V> getAll(Set<? extends K> keys) {
-      Traversable<ReadEntryView<K, V>> t = readOnly.evalMany(keys, ro -> ro);
-      return t.collect(HashMap::new, (m, ro) -> ro.find().map(v -> m.put(ro.key(), v)), HashMap::putAll);
+      Traversable<ReadEntryView<K, V>> t = readOnly.evalMany(keys, identity());
+      return t.collect(HashMap::new, (m, ro) -> ro.find().ifPresent(v -> m.put(ro.key(), v)), HashMap::putAll);
    }
 
    @Override
    public boolean containsKey(K key) {
-      return await(readOnly.eval(key, e -> e.find().isPresent()));
+      return await(readOnly.eval(key, returnReadOnlyFindIsPresent()));
    }
 
    @Override

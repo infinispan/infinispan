@@ -19,6 +19,7 @@ import org.infinispan.remoting.responses.SelfDeliverFilter;
 import org.infinispan.remoting.responses.TimeoutValidationResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -37,6 +38,8 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected RpcManager rpcManager;
 
    protected boolean defaultSynchronous;
+   protected RpcOptions staggeredOptions;
+   protected RpcOptions defaultSyncOptions;
 
    protected abstract Log getLog();
 
@@ -48,6 +51,8 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    @Start
    public void init() {
       defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
+      staggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE).build();
+      defaultSyncOptions = rpcManager.getDefaultRpcOptions(true);
    }
 
    protected final boolean isSynchronous(FlagAffectedCommand command) {

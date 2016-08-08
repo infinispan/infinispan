@@ -9,6 +9,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -216,8 +217,13 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Override
+   public CompletableFuture<Void> visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+      return visitReadCommand(ctx, command, NOP);
+   }
+
+   @Override
    public CompletableFuture<Void> visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
-      return visitReadCommand(ctx, command, command::setConsistentHash);
+      return visitReadCommand(ctx, command, NOP);
    }
 
    /**

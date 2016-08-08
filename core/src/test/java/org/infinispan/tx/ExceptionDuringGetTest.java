@@ -1,6 +1,7 @@
 package org.infinispan.tx;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -27,7 +28,7 @@ public class ExceptionDuringGetTest extends MultipleCacheManagersTest {
       assert cache(1).get("k").equals("v");
    }
 
-   @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "Induced!")
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "java.lang.RuntimeException: Induced!")
    public void testExceptionDuringGet() {
       advancedCache(0).getAsyncInterceptorChain().addInterceptorAfter(new CommandInterceptor() {
          @Override

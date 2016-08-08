@@ -72,8 +72,9 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
          CacheEntry<K, V> cacheEntry = ctx.lookupEntry(entry.getKey());
 
          // Could be that the key is not local, 'null' is how this is signalled
-         if (cacheEntry != null)
+         if (cacheEntry != null) {
             f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry));
+         }
       }
 
       return null;

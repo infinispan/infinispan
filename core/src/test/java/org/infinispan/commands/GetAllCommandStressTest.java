@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -35,7 +36,6 @@ public class GetAllCommandStressTest extends StressTest {
    protected final static int CACHE_COUNT = 6;
    protected final static int THREAD_MULTIPLIER = 4;
    protected final static int CACHE_ENTRY_COUNT = 50000;
-   protected ConfigurationBuilder builderUsed;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -85,13 +85,7 @@ public class GetAllCommandStressTest extends StressTest {
          keys[i] = Collections.unmodifiableSet(keys[i]);
       }
 
-      List<Future<Void>> futures = forkWorkerThreads(CACHE_NAME, THREAD_MULTIPLIER, CACHE_COUNT, keys, (cache, threadKeys, iteration) -> {
-         Map<Integer, Integer> results = cache.getAdvancedCache().getAll(threadKeys);
-         assertEquals("Keys: " + threadKeys + "\nResults: " + results, threadKeys.size(), results.size());
-         for (Integer key : threadKeys) {
-            assertEquals(key, results.get(key));
-         }
-      });
+      List<Future<Void>> futures = forkWorkerThreads(CACHE_NAME, THREAD_MULTIPLIER, CACHE_COUNT, keys, this::workerLogic);
 
       // Then spawn a thread that just constantly kills the last cache and recreates over and over again
       futures.add(forkRestartingThread());
@@ -99,4 +93,11 @@ public class GetAllCommandStressTest extends StressTest {
       waitAndFinish(futures, 1, TimeUnit.MINUTES);
    }
 
+   protected void workerLogic(Cache<Integer, Integer> cache, Set<Integer> threadKeys, int iteration) {
+      Map<Integer, Integer> results = cache.getAdvancedCache().getAll(threadKeys);
+      assertEquals("Keys: " + threadKeys + "\nResults: " + results, threadKeys.size(), results.size());
+      for (Integer key : threadKeys) {
+         assertEquals(key, results.get(key));
+      }
+   }
 }

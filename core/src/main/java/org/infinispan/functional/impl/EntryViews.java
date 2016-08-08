@@ -12,6 +12,7 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
@@ -288,7 +289,7 @@ public final class EntryViews {
 
       @Override
       public Optional<V> find() {
-         return prevValue == null ? Optional.empty() : Optional.ofNullable(prevValue);
+         return Optional.ofNullable(prevValue);
       }
 
       @Override
@@ -328,6 +329,7 @@ public final class EntryViews {
 
       @Override
       public V get() throws NoSuchElementException {
+         if (prevValue == null) throw new NoSuchElementException();
          return prevValue;
       }
 
@@ -355,7 +357,7 @@ public final class EntryViews {
 
       @Override
       public V get() throws NoSuchElementException {
-         throw new NoSuchElementException("No value");
+         throw new NoSuchElementException("No value for key " + key);
       }
 
       @Override
@@ -467,6 +469,56 @@ public final class EntryViews {
       }
 
       return MetaParams.empty();
+   }
+
+   public static final class ReadOnlySnapshotViewExternalizer implements AdvancedExternalizer<ReadOnlySnapshotView> {
+      @Override
+      public Set<Class<? extends ReadOnlySnapshotView>> getTypeClasses() {
+         return Util.asSet(ReadOnlySnapshotView.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.READ_ONLY_SNAPSHOT_VIEW;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ReadOnlySnapshotView object) throws IOException {
+         output.writeObject(object.key);
+         output.writeObject(object.value);
+         output.writeObject(object.metadata);
+      }
+
+      @Override
+      public ReadOnlySnapshotView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object key = input.readObject();
+         Object value = input.readObject();
+         Metadata metadata = (Metadata) input.readObject();
+         return new ReadOnlySnapshotView<>(key, value, metadata);
+      }
+   }
+
+   public static final class NoValueReadOnlyViewExternalizer implements AdvancedExternalizer<NoValueReadOnlyView> {
+
+      @Override
+      public Set<Class<? extends NoValueReadOnlyView>> getTypeClasses() {
+         return Util.asSet(NoValueReadOnlyView.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.NO_VALUE_READ_ONLY_VIEW;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, NoValueReadOnlyView object) throws IOException {
+         output.writeObject(object.key);
+      }
+
+      @Override
+      public NoValueReadOnlyView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new NoValueReadOnlyView(input.readObject());
+      }
    }
 
    // Externalizer class defined outside of externalized class to avoid having
