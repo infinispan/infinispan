@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.util.AbstractDelegatingSet;
+import org.infinispan.util.AbstractDelegatingCollection;
 
 /**
  * Set implementation that shows a read only view of the provided set by only allowing
@@ -20,21 +20,21 @@ import org.infinispan.util.AbstractDelegatingSet;
  * @author wburns
  * @since 7.2
  */
-public class ReadOnlySegmentAwareSet<E> extends AbstractDelegatingSet<E> {
+public class ReadOnlySegmentAwareCollection<E> extends AbstractDelegatingCollection<E> {
 
-   protected final Set<E> set;
+   protected final Collection<E> set;
    protected final ConsistentHash ch;
    protected final Set<Integer> allowedSegments;
 
-   public ReadOnlySegmentAwareSet(Set<E> set, ConsistentHash ch, Set<Integer> allowedSegments) {
+   public ReadOnlySegmentAwareCollection(Collection<E> set, ConsistentHash ch, Set<Integer> allowedSegments) {
       super();
-      this.set = Collections.unmodifiableSet(set);
+      this.set = Collections.unmodifiableCollection(set);
       this.ch = ch;
       this.allowedSegments = allowedSegments;
    }
 
    @Override
-   protected Set<E> delegate() {
+   protected Collection<E> delegate() {
       return set;
    }
 
@@ -80,7 +80,7 @@ public class ReadOnlySegmentAwareSet<E> extends AbstractDelegatingSet<E> {
     * values counting all that are in the segments.
     * <p>
     * If you are using this method to verify if the set is empty, you should instead use
-    * the {@link ReadOnlySegmentAwareEntrySet#isEmpty()} as it will perform better if the
+    * the {@link ReadOnlySegmentAwareEntryCollection#isEmpty()} as it will perform better if the
     * size is only used for this purpose.
     * <p>
     * This time complexity for this method is always O(N).

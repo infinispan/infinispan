@@ -398,7 +398,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Set<? extends K> keys, Function<EntryView.ReadEntryView<K, V>, R> f) {
+   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<EntryView.ReadEntryView<K, V>, R> f) {
       return actual.buildReadOnlyManyCommand(keys, f);
    }
 
@@ -429,12 +429,12 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<EntryView.WriteEntryView<V>> f, Params params) {
+   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<EntryView.WriteEntryView<V>> f, Params params) {
       return actual.buildWriteOnlyManyCommand(keys, f, params);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<EntryView.ReadWriteEntryView<K, V>, R> f, Params params) {
+   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<EntryView.ReadWriteEntryView<K, V>, R> f, Params params) {
       return actual.buildReadWriteManyCommand(keys, f, params);
    }
 

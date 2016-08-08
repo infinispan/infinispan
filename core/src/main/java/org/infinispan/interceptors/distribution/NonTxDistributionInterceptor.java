@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
-import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -41,7 +41,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
-import org.infinispan.distribution.util.ReadOnlySegmentAwareSet;
+import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -282,12 +282,6 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   public CompletableFuture<Void> visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command)
-         throws Throwable {
-      return super.visitReadOnlyManyCommand(ctx, command);    // TODO: Customise this generated block
-   }
-
-   @Override
    public CompletableFuture<Void> visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
          WriteOnlyManyEntriesCommand command) throws Throwable {
       // TODO: Refactor this and visitPutMapCommand...
@@ -390,7 +384,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    public CompletableFuture<Void> visitWriteOnlyManyCommand(InvocationContext ctx,
          WriteOnlyManyCommand command) throws Throwable {
       // TODO: Refactor this, visitWriteOnlyManyCommand and visitPutMapCommand...
-      Set<Object> originalMap = command.getKeys();
+      Collection<Object> originalMap = command.getKeys();
       ConsistentHash ch = dm.getConsistentHash();
       Address localAddress = rpcManager.getAddress();
       if (ctx.isOriginLocal()) {
@@ -404,7 +398,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             }
             Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
             if (!segments.isEmpty()) {
-               Set<Object> segmentKeysSet = new ReadOnlySegmentAwareSet<>(originalMap, ch, segments);
+               Collection<Object> segmentKeysSet = new ReadOnlySegmentAwareCollection<>(originalMap, ch, segments);
                if (!segmentKeysSet.isEmpty()) {
                   WriteOnlyManyCommand copy = new WriteOnlyManyCommand(command);
                   copy.setKeys(segmentKeysSet);
@@ -455,7 +449,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
             for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
                Set<Integer> segments = entry.getValue();
-               Set<Object> segmentKeysSet = new ReadOnlySegmentAwareSet<>(originalMap, ch, segments);
+               Collection<Object> segmentKeysSet = new ReadOnlySegmentAwareCollection<>(originalMap, ch, segments);
                if (!segmentKeysSet.isEmpty()) {
                   WriteOnlyManyCommand copy = new WriteOnlyManyCommand(command);
                   copy.setKeys(segmentKeysSet);
@@ -486,7 +480,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    public CompletableFuture<Void> visitReadWriteManyCommand(InvocationContext ctx,
          ReadWriteManyCommand command) throws Throwable {
       // TODO: Refactor to avoid code duplication
-      Set<Object> originalMap = command.getKeys();
+      Collection<Object> originalKeys = command.getKeys();
       ConsistentHash ch = dm.getConsistentHash();
       Address localAddress = rpcManager.getAddress();
       if (ctx.isOriginLocal()) {
@@ -500,7 +494,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             }
             Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
             if (!segments.isEmpty()) {
-               Set<Object> segmentKeysSet = new ReadOnlySegmentAwareSet<>(originalMap, ch, segments);
+               Collection<Object> segmentKeysSet = new ReadOnlySegmentAwareCollection<>(originalKeys, ch, segments);
                if (!segmentKeysSet.isEmpty()) {
                   ReadWriteManyCommand copy = new ReadWriteManyCommand(command);
                   copy.setKeys(segmentKeysSet);
@@ -562,7 +556,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
             for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
                Set<Integer> segments = entry.getValue();
-               Set<Object> segmentKeysSet = new ReadOnlySegmentAwareSet<>(originalMap, ch, segments);
+               Collection<Object> segmentKeysSet = new ReadOnlySegmentAwareCollection<>(originalKeys, ch, segments);
                if (!segmentKeysSet.isEmpty()) {
                   ReadWriteManyCommand copy = new ReadWriteManyCommand(command);
                   copy.setKeys(segmentKeysSet);

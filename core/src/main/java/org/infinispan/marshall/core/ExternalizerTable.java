@@ -265,6 +265,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new EnumSetExternalizer());
       addInternalExternalizer(new ArrayExternalizers.ListArray());
       addInternalExternalizer(new SingletonListExternalizer());
+      addInternalExternalizer(new CollectionExternalizer());
 
       addInternalExternalizer(new IntSummaryStatisticsExternalizer());
       addInternalExternalizer(new LongSummaryStatisticsExternalizer());

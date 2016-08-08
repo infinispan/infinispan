@@ -183,7 +183,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return visitDataCommand(ctx, command);
    }
 
-   private <T extends FlagAffectedCommand> CompletableFuture<Void> visitManyDataCommand(InvocationContext ctx, T command, Set<?> keys)
+   private <T extends FlagAffectedCommand> CompletableFuture<Void> visitManyDataCommand(InvocationContext ctx, T command, Collection<?> keys)
          throws Throwable {
       for (Object key : keys) {
          loadIfNeeded(ctx, key, command);

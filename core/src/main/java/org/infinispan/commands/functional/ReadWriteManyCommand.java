@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,14 +25,14 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
 
    public static final byte COMMAND_ID = 52;
 
-   private Set<? extends K> keys;
+   private Collection<? extends K> keys;
    private Function<ReadWriteEntryView<K, V>, R> f;
 
    private int topologyId = -1;
    boolean isForwarded = false;
    private List<R> remoteReturns = new ArrayList<>();
 
-   public ReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
+   public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
       this.keys = keys;
       this.f = f;
       this.params = params;
@@ -46,11 +47,11 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    public ReadWriteManyCommand() {
    }
 
-   public Set<? extends K> getKeys() {
+   public Collection<? extends K> getKeys() {
       return keys;
    }
 
-   public void setKeys(Set<? extends K> keys) {
+   public void setKeys(Collection<? extends K> keys) {
       this.keys = keys;
    }
 
@@ -69,7 +70,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, size -> new HashSet<>());
+      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);

@@ -4,6 +4,7 @@ import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -320,7 +321,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private <T extends WriteCommand & ParamsCommand> CompletableFuture<Void> visitWriteManyCommand(
-         InvocationContext ctx, Set<?> keys) throws Throwable {
+         InvocationContext ctx, Collection<?> keys) throws Throwable {
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          if (throwable != null)
             throw throwable;

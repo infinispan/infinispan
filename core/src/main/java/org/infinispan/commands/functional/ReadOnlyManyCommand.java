@@ -5,8 +5,8 @@ import static org.infinispan.functional.impl.EntryViews.snapshot;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.commands.LocalCommand;
@@ -21,7 +21,7 @@ import org.infinispan.functional.impl.EntryViews;
 
 public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand implements LocalCommand {
 
-   private Set<? extends K> keys;
+   private Collection<? extends K> keys;
    private Function<ReadEntryView<K, V>, R> f;
 
    private ConsistentHash ch;
@@ -29,7 +29,7 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
    //       the unboxing executed as the topmost interceptor?
    private Map<Object, InternalCacheEntry> remotelyFetched;
 
-   public ReadOnlyManyCommand(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
+   public ReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
       this.keys = keys;
       this.f = f;
    }
@@ -37,7 +37,7 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
    public ReadOnlyManyCommand() {
    }
 
-   public Set<? extends K> getKeys() {
+   public Collection<? extends K> getKeys() {
       return keys;
    }
 
