@@ -29,18 +29,8 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "owningModeAndMethod")
    public void testLoad(boolean isSourceOwner, Method method) {
-      Object key;
-      if (isSourceOwner) {
-         // this is simple: find a key that is local to the originating node
-         key = getKeyForCache(0, DIST);
-      } else {
-         // this is more complicated: we need a key that is *not* local to the originating node
-         key = IntStream.iterate(0, i -> i + 1)
-               .mapToObj(i -> "key" + i)
-               .filter(k -> !cache(0, DIST).getAdvancedCache().getDistributionManager().getLocality(k).isLocal())
-               .findAny()
-               .get();
-      }
+      Object key = getKey(isSourceOwner);
+
       List<Cache<Object, Object>> owners = caches(DIST).stream()
             .filter(cache -> cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal())
             .collect(Collectors.toList());
@@ -49,12 +39,13 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
             (Consumer<ReadEntryView<Object, String>> & Serializable) view -> assertFalse(view.find().isPresent()),
             (Consumer<WriteEntryView<String>> & Serializable) view -> view.set("value"));
 
+      assertInvocations(2);
+
       caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
       caches(DIST).forEach(cache -> cache.evict(key));
       caches(DIST).forEach(cache -> assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString()));
       owners.forEach(cache -> {
-         Set<DummyInMemoryStore> stores = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class).getStores(DummyInMemoryStore.class);
-         DummyInMemoryStore store = stores.iterator().next();
+         DummyInMemoryStore store = getStore(cache);
          assertTrue(store.contains(key), getAddress(cache).toString());
       });
 
@@ -64,5 +55,40 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
                assertEquals(view.get(), "value");
             },
             (Consumer<WriteEntryView<String>> & Serializable) view -> {});
+
+      assertInvocations(4);
+   }
+
+   public DummyInMemoryStore getStore(Cache cache) {
+      Set<DummyInMemoryStore> stores = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class).getStores(DummyInMemoryStore.class);
+      return stores.iterator().next();
+   }
+
+   @Test(dataProvider = "methods")
+   public void testLoadLocal(Method method) {
+      Integer key = 1;
+
+      method.action.eval(key, lwo, lrw,
+         (Consumer<ReadEntryView<Integer, String>> & Serializable) view -> assertFalse(view.find().isPresent()),
+         (Consumer<WriteEntryView<String>> & Serializable) view -> view.set("value"));
+
+      assertInvocations(1);
+
+      Cache<Integer, String> cache = cacheManagers.get(0).getCache();
+      assertEquals(cache.get(key), "value");
+      cache.evict(key);
+      assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key));
+
+      DummyInMemoryStore store = getStore(cache);
+      assertTrue(store.contains(key));
+
+      method.action.eval(key, lwo, lrw,
+         (Consumer<ReadEntryView<Object, String>> & Serializable) view -> {
+            assertTrue(view.find().isPresent());
+            assertEquals(view.get(), "value");
+         },
+         (Consumer<WriteEntryView<String>> & Serializable) view -> {});
+
+      assertInvocations(2);
    }
 }

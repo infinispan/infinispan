@@ -9,6 +9,8 @@ import java.util.Set;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -124,6 +126,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             PutKeyValueCommand.class,
             PutMapCommand.class, RemoveCommand.class, RemoveExpiredCommand.class,
             ReplaceCommand.class, GetKeysInGroupCommand.class,
+            ReadOnlyKeyCommand.class, ReadOnlyManyCommand.class,
             ReadWriteKeyCommand.class, ReadWriteKeyValueCommand.class,
             WriteOnlyKeyCommand.class, WriteOnlyKeyValueCommand.class,
             WriteOnlyManyCommand.class, WriteOnlyManyEntriesCommand.class,

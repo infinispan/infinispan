@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -37,6 +38,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -45,10 +47,11 @@ import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -245,40 +248,53 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public CompletableFuture<Void> visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
          throws Throwable {
+      Object key = command.getKey();
+      CacheEntry entry = ctx.lookupEntry(key);
       if (ctx.isOriginLocal()) {
-         Object key = command.getKey();
-         CacheEntry entry = ctx.lookupEntry(key);
-         if (valueIsMissing(entry)) {
-            // First try to fetch from remote owners
-            CompletableFuture<InternalCacheEntry> remoteFuture;
-            boolean isLocal = dm.getReadConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
-            if (readNeedsRemoteValue(ctx, command)) {
-               if (trace)
-                  log.tracef("Doing a remote get for key %s", key);
-               remoteFuture = retrieveFromProperSource(key, command, false);
-            } else {
-               remoteFuture = CompletableFutures.completedNull();
-            }
-            return remoteFuture.thenCompose(remoteEntry -> {
-               // TODO Do we need to do something else instead of setRemotelyFetchedValue?
-               // command.setRemotelyFetchedValue(remoteEntry);
-               if (remoteEntry != null) {
-                  entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.STORE, false);
-                  return ctx.shortCircuit(command.perform(remoteEntry));
-               } else {
-                  // Then search for the entry in the local data container, in case we became an owner after
-                  // EntryWrappingInterceptor and the local node is now the only owner.
-                  // TODO Check fails if the entry was passivated
-                  InternalCacheEntry localEntry = isLocal ? dataContainer.get(key) : null;
-                  if (localEntry != null) {
-                     entryFactory.wrapExternalEntry(ctx, key, localEntry, EntryFactory.Wrap.STORE, false);
+         if (entry != null) {
+            // the entry is owned locally (it is NullCacheEntry if it was not found), no need to go remote
+            return ctx.continueInvocation();
+         }
+         if (readNeedsRemoteValue(ctx, command)) {
+            CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+            List<Address> owners = cacheTopology.getReadConsistentHash().locateOwners(key);
+            if (trace)
+               log.tracef("Doing a remote get for key %s in topology %d to %s", key, cacheTopology.getTopologyId(), owners);
+
+            // make sure that the command topology is set to the value according which we route it
+            command.setTopologyId(cacheTopology.getTopologyId());
+
+            return rpcManager.invokeRemotelyAsync(owners, command, staggeredOptions).handle((responseMap, throwable) -> {
+               if (throwable != null) {
+                  if (throwable instanceof CompletionException) {
+                     throw (CompletionException) throwable;
                   }
-                  return ctx.shortCircuit(command.perform(localEntry));
+                  throw new CompletionException(throwable);
                }
+               for (Response rsp : responseMap.values()) {
+                  if (rsp.isSuccessful()) {
+                     ctx.shortCircuit(((SuccessfulResponse) rsp).getResponseValue());
+                     return null;
+                  }
+               }
+               // On receiver side the command topology id is checked and if it's too new, the command is delayed.
+               // We can assume that we miss successful response only because the owners already have new topology
+               // in which they're not owners - we'll wait for this topology, then.
+               throw new OutdatedTopologyException("We haven't found an owner");
             });
+         } else {
+            // This has LOCAL flags, just wrap NullCacheEntry and let the command run
+            entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), EntryFactory.Wrap.STORE, false);
+            return ctx.continueInvocation();
+         }
+      } else {
+         if (entry == null) {
+            // this is not an owner of the entry, don't pass to call interceptor at all
+            return ctx.shortCircuit(UnsuccessfulResponse.INSTANCE);
+         } else {
+            return ctx.continueInvocation();
          }
       }
-      return ctx.continueInvocation();
    }
 
    @Override
@@ -369,7 +385,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                try {
                   compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
                } catch (ExecutionException e) {
-                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+                  if (e.getCause() instanceof RemoteException) {
+                     throw e.getCause();
+                  } else {
+                     throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+                  }
                } catch (TimeoutException e) {
                   throw new CacheException(e);
                }
@@ -414,7 +434,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             try {
                compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
             } catch (ExecutionException e) {
-               throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+               Throwable cause = e.getCause();
+               if (cause instanceof RemoteException) {
+                  throw cause.getCause();
+               }
+               throw new RemoteException("Exception while processing put on primary owner", cause);
             } catch (TimeoutException e) {
                throw new CacheException(e);
             }
@@ -465,7 +489,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                try {
                   compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
                } catch (ExecutionException e) {
-                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+                  if (e.getCause() instanceof RemoteException) {
+                     throw e.getCause();
+                  } else {
+                     throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+                  }
                } catch (TimeoutException e) {
                   throw new CacheException(e);
                }
@@ -521,7 +549,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                   }
                }
             } catch (ExecutionException e) {
-               throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+               if (e.getCause() instanceof RemoteException) {
+                  throw e.getCause();
+               } else {
+                  throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+               }
             } catch (TimeoutException e) {
                throw new CacheException(e);
             }
@@ -572,7 +604,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                try {
                   compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
                } catch (ExecutionException e) {
-                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+                  if (e.getCause() instanceof RemoteException) {
+                     throw e.getCause();
+                  } else {
+                     throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+                  }
                } catch (TimeoutException e) {
                   throw new CacheException(e);
                }
@@ -629,7 +665,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                   }
                }
             } catch (ExecutionException e) {
-               throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+               if (e.getCause() instanceof RemoteException) {
+                  throw e.getCause();
+               } else {
+                  throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+               }
             } catch (TimeoutException e) {
                throw new CacheException(e);
             }
@@ -681,7 +721,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                try {
                   compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
                } catch (ExecutionException e) {
-                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+                  if (e.getCause() instanceof RemoteException) {
+                     throw e.getCause();
+                  } else {
+                     throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+                  }
                } catch (TimeoutException e) {
                   throw new CacheException(e);
                }

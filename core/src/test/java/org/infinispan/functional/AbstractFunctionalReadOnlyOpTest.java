@@ -1,7 +1,10 @@
 package org.infinispan.functional;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
@@ -19,8 +22,13 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "functional.AbstractFunctionalOpTest")
 public abstract class AbstractFunctionalReadOnlyOpTest extends AbstractFunctionalTest {
+   @DataProvider(name = "methods")
+   public static Object[][] methods() {
+      return Stream.of(Method.values()).map(m -> new Object[] { m }).toArray(Object[][]::new);
+   }
+
    @DataProvider(name = "owningModeAndMethod")
-   public static Object[][] booleans() {
+   public static Object[][] owningModeAndMethod() {
       return Stream.of(Boolean.TRUE, Boolean.FALSE)
             .flatMap(isSourceOwner -> Stream.of(Method.values())
                   .map(method -> new Object[] { isSourceOwner, method }))
@@ -32,6 +40,7 @@ public abstract class AbstractFunctionalReadOnlyOpTest extends AbstractFunctiona
    }
 
    ReadOnlyMap<Object, String> ro;
+   ReadOnlyMap<Integer, String> lro;
 
    public AbstractFunctionalReadOnlyOpTest() {
       numNodes = 4;
@@ -44,26 +53,47 @@ public abstract class AbstractFunctionalReadOnlyOpTest extends AbstractFunctiona
    public void createBeforeMethod() throws Throwable {
       super.createBeforeMethod();
       this.ro = ReadOnlyMapImpl.create(fmapD1).withParams(Param.FutureMode.COMPLETED);
+      this.lro = ReadOnlyMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
    }
 
-   static enum Method {
+   protected Object getKey(boolean isOwner) {
+      Object key;
+      if (isOwner) {
+         // this is simple: find a key that is local to the originating node
+         key = getKeyForCache(0, DIST);
+      } else {
+         // this is more complicated: we need a key that is *not* local to the originating node
+         key = IntStream.iterate(0, i -> i + 1)
+               .mapToObj(i -> "key" + i)
+               .filter(k -> !cache(0, DIST).getAdvancedCache().getDistributionManager().getLocality(k).isLocal())
+               .findAny()
+               .get();
+      }
+      return key;
+   }
+
+   enum Method {
       RO_EVAL((key, ro, read) ->
-            ro.eval(key, view -> { read.accept(view); return null; }).join()),
+            ro.eval(key,
+               (Function<ReadEntryView<Object, String>, String> & Serializable) (view -> { read.accept(view); return null; })
+            ).join()),
       RO_EVAL_MANY((key, ro, read) ->
-            ro.evalMany(Collections.singleton(key), view -> { read.accept(view); return null; }).forEach(v -> {})),
+            ro.evalMany(Collections.singleton(key),
+               (Function<ReadEntryView<Object, String>, String> & Serializable) (view -> { read.accept(view); return null; })
+            ).forEach(v -> {})),
       ;
 
       final Performer action;
 
-      private Method(Performer action) {
+      Method(Performer action) {
          this.action = action;
       }
 
       @FunctionalInterface
-      static interface Performer {
-         void eval(Object key,
-               ReadOnlyMap<Object, String> ro,
-               Consumer<ReadEntryView<Object, String>> read);
+      interface Performer<K> {
+         void eval(K key,
+                   ReadOnlyMap<K, String> ro,
+                   Consumer<ReadEntryView<Object, String>> read);
       }
    }
 }

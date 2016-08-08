@@ -2,6 +2,8 @@ package org.infinispan.functional.decorators;
 
 import static org.infinispan.commons.marshall.MarshallableFunctions.removeIfValueEqualsReturnBoolean;
 import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindIsPresent;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindOrNull;
 import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
 import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfAbsentReturnPrevOrNull;
 import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
@@ -79,7 +81,7 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public boolean containsKey(Object key) {
-      return await(readOnly.eval(toK(key), e -> e.find().isPresent()));
+      return await(readOnly.eval(toK(key), returnReadOnlyFindIsPresent()));
    }
 
    @Override
@@ -89,7 +91,7 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public V get(Object key) {
-      return await(readOnly.eval(toK(key), e -> e.find().orElse(null)));
+      return await(readOnly.eval(toK(key), returnReadOnlyFindOrNull()));
    }
 
    @SuppressWarnings("unchecked")

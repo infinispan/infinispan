@@ -177,4 +177,7 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
 
    // 167 is ImmutableEntry in commons
    int COLLECTIONS = 168;
+
+   int READ_ONLY_SNAPSHOT_VIEW = 169;
+   int NO_VALUE_READ_ONLY_VIEW = 170;
 }

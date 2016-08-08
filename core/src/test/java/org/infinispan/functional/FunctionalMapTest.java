@@ -1,7 +1,9 @@
 package org.infinispan.functional;
 
 import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
+import static org.infinispan.commons.marshall.MarshallableFunctions.identity;
 import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadOnlyFindOrNull;
 import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteFind;
 import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteGet;
 import static org.infinispan.commons.marshall.MarshallableFunctions.returnReadWriteView;
@@ -103,7 +105,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       K key = keySupplier.get();
       await(
          map2.eval(key, SetStringConstant.INSTANCE).thenCompose(r ->
-               map1.eval(key, ReadEntryView::get).thenAccept(v -> {
+               map1.eval(key, returnReadOnlyFindOrNull()).thenAccept(v -> {
                      assertNull(r);
                      assertEquals("one", v);
                   }
@@ -155,7 +157,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       K key = keySupplier.get();
       await(
          map2.eval(key, "one", SetValueAndConstantLifespan.getInstance()).thenCompose(r ->
-               map1.eval(key, ro -> ro).thenAccept(ro -> {
+               map1.eval(key, identity()).thenAccept(ro -> {
                      assertNull(r);
                      assertEquals(Optional.of("one"), ro.find());
                      assertEquals("one", ro.get());
@@ -440,7 +442,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    private <K> void doReadOnlyEvalManyEmpty(Supplier<K> keySupplier, ReadOnlyMap<K, String> map) {
       K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
       Traversable<ReadEntryView<K, String>> t = map
-         .evalMany(new HashSet<>(Arrays.asList(key1, key2, key3)), ro -> ro);
+         .evalMany(new HashSet<>(Arrays.asList(key1, key2, key3)), identity());
       t.forEach(ro -> assertFalse(ro.find().isPresent()));
    }
 
@@ -472,7 +474,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       data.put(key2, "two");
       data.put(key3, "three");
       await(map2.evalMany(data, setValueConsumer()));
-      Traversable<String> currentValues = map1.evalMany(data.keySet(), ro -> ro.get());
+      Traversable<String> currentValues = map1.evalMany(data.keySet(), returnReadOnlyFindOrNull());
       List<String> collectedValues = currentValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
       Collections.sort(collectedValues);
       List<String> dataValues = new ArrayList<>(data.values());
@@ -488,7 +490,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       Collections.sort(collectedPrev);
       assertEquals(dataValues, collectedPrev);
 
-      Traversable<String> updatedValues = map1.evalMany(data.keySet(), ro -> ro.get());
+      Traversable<String> updatedValues = map1.evalMany(data.keySet(), returnReadOnlyFindOrNull());
       List<String> collectedUpdates = updatedValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
       Collections.sort(collectedUpdates);
       List<String> newDataValues = new ArrayList<>(newData.values());
@@ -552,9 +554,9 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    private <K> void doReturnViewFromReadOnlyEval(Supplier<K> keySupplier,
          ReadOnlyMap<K, String> ro, WriteOnlyMap<K, String> wo) {
       K k = keySupplier.get();
-      assertReadOnlyViewEmpty(k, await(ro.eval(k, rv -> rv)));
+      assertReadOnlyViewEmpty(k, await(ro.eval(k, identity())));
       await(wo.eval(k, setOneWriteOnly()));
-      assertReadOnlyViewEquals(k, "one", await(ro.eval(k, rv -> rv)));
+      assertReadOnlyViewEquals(k, "one", await(ro.eval(k, identity())));
    }
 
    private Consumer<WriteEntryView<String>> setOneWriteOnly() {

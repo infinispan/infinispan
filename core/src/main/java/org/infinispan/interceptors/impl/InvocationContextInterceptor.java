@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Collection;
@@ -134,7 +133,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             log.outdatedTopology(th);
          } else if (th instanceof RetryPrepareException) {
             log.debugf("Retrying total order prepare command for transaction %s, affected keys %s",
-                  ctx.getLockOwner(), toStr(extractWrittenKeys(ctx, command)));
+               ctx.getLockOwner(), toStr(extractWrittenKeys(ctx, command)));
          } else {
             Collection<Object> affectedKeys = extractWrittenKeys(ctx, command);
             log.executionError(command.getClass().getSimpleName(), toStr(affectedKeys), th);
@@ -143,6 +142,9 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             if (trace) log.trace("Transaction marked for rollback as exception was received.");
             markTxForRollbackAndRethrow(ctx, th);
             throw new IllegalStateException("This should not be reached");
+         }
+         if (ctx.isOriginLocal() && !(th instanceof CacheException)) {
+            th = new CacheException(th);
          }
          throw th;
       }

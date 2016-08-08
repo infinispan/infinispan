@@ -62,9 +62,11 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
@@ -90,6 +92,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private XSiteStateConsumer xSiteStateConsumer;
    private GroupManager groupManager;
    private CacheNotifier notifier;
+   private StateTransferManager stateTransferManager;
+   private Address localAddress;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -147,7 +151,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Inject
    public void init(EntryFactory entryFactory, DataContainer<Object, Object> dataContainer, ClusteringDependentLogic cdl,
                     CommandsFactory commandFactory, StateConsumer stateConsumer, StateTransferLock stateTransferLock,
-                    XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager, CacheNotifier notifier) {
+                    XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager, CacheNotifier notifier,
+                    StateTransferManager stateTransferManager) {
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.cdl = cdl;
@@ -157,6 +162,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       this.xSiteStateConsumer = xSiteStateConsumer;
       this.groupManager = groupManager;
       this.notifier = notifier;
+      this.stateTransferManager = stateTransferManager;
    }
 
    @Start
@@ -166,6 +172,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                    cacheConfiguration.clustering().cacheMode().isReplicated());
       isInvalidation = cacheConfiguration.clustering().cacheMode().isInvalidation();
       isSync = cacheConfiguration.clustering().cacheMode().isSynchronous();
+      localAddress = cdl.getAddress();
    }
 
    @Override
@@ -422,25 +429,26 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       // locally, but if there's no need to get remote, the read-only
       // function needs to be executed, so force a non-null entry in
       // context with null content
-      if (entry == null && cdl.localNodeIsOwner(command.getKey())) {
+      // TODO: move this logic to entryFactory
+      if (entry == null && shouldRead(command.getKey())) {
          entryFactory.wrapEntryForReading(ctx, command.getKey(), NullCacheEntry.getInstance());
       }
 
-      //needed because entries might be added in L1
-      if (!ctx.isInTxScope())
-         return ctx.onReturn(commitEntriesReturnHandler);
-      else {
-         return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
-            setSkipLookup(rCtx, ((ReadOnlyKeyCommand) rCommand).getKey());
-            return null;
-         });
-      }
+      // The entry is not fetched to local node and it cannot be committed to L1; no need for handler
+      return ctx.continueInvocation();
+   }
+
+   private boolean shouldRead(Object key) {
+      return stateTransferManager == null || stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key).contains(localAddress);
    }
 
    @Override
    public CompletableFuture<Void> visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
       for (Object key : command.getKeys()) {
-         entryFactory.wrapEntryForReading(ctx, key, null);
+         CacheEntry entry = entryFactory.wrapEntryForReading(ctx, key, null);
+         if (entry == null && shouldRead(key)) {
+            entryFactory.wrapEntryForReading(ctx, key, NullCacheEntry.getInstance());
+         }
       }
       return ctx.onReturn((rCtx, rCommand, rv, throwable) -> {
          for (Object key : ((ReadOnlyManyCommand) rCommand).getKeys()) {

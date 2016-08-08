@@ -75,6 +75,7 @@ import org.infinispan.functional.impl.MetaParams;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.exts.ArrayExternalizers;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
+import org.infinispan.marshall.exts.CollectionExternalizer;
 import org.infinispan.marshall.exts.DoubleSummaryStatisticsExternalizer;
 import org.infinispan.marshall.exts.EnumSetExternalizer;
 import org.infinispan.marshall.exts.IntSummaryStatisticsExternalizer;
@@ -390,6 +391,8 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer());
 
       addInternalExternalizer(new EntryViews.ReadWriteSnapshotViewExternalizer());
+      addInternalExternalizer(new EntryViews.ReadOnlySnapshotViewExternalizer());
+      addInternalExternalizer(new EntryViews.NoValueReadOnlyViewExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.ConstantLambdaExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer());
