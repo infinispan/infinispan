@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -22,10 +22,10 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    public static final byte COMMAND_ID = 56;
 
-   private Set<? extends K> keys;
+   private Collection<? extends K> keys;
    private Consumer<WriteEntryView<V>> f;
 
-   public WriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params) {
+   public WriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params) {
       this.keys = keys;
       this.f = f;
       this.params = params;
@@ -40,11 +40,11 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    public WriteOnlyManyCommand() {
    }
 
-   public Set<? extends K> getKeys() {
+   public Collection<? extends K> getKeys() {
       return keys;
    }
 
-   public void setKeys(Set<? extends K> keys) {
+   public void setKeys(Collection<? extends K> keys) {
       this.keys = keys;
    }
 
@@ -63,7 +63,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+      keys = MarshallUtil.unmarshallCollectionUnbounded(input, ArrayList::new);
       f = (Consumer<WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
