@@ -757,6 +757,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    protected final void wrapEntriesForPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
          for (WriteCommand c : command.getModifications()) {
+            c.setTopologyId(command.getTopologyId());
             InvocationStage visitorStage = (InvocationStage) c.acceptVisitor(ctx, entryWrappingVisitor);
             if (visitorStage != null) {
                // Wait for the sub-command to finish. If there was an exception, rethrow it.

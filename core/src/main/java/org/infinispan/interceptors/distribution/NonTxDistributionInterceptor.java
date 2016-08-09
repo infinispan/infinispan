@@ -25,8 +25,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -35,7 +33,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -75,42 +72,6 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(NonTxDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
-
-   @Override
-   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws
-         Throwable {
-      return visitGetCommand(ctx, command);
-   }
-
-   @Override
-   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
-         throws Throwable {
-      return visitGetCommand(ctx, command);
-   }
-
-   private <T extends AbstractDataCommand> BasicInvocationStage visitGetCommand(
-         InvocationContext ctx, T command) throws Throwable {
-      if (!ctx.isOriginLocal())
-         return invokeNext(ctx, command);
-
-      Object key = command.getKey();
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (valueIsMissing(entry)) {
-         if (readNeedsRemoteValue(ctx, command)) {
-            if (trace)
-               log.tracef("Doing a remote get for key %s", key);
-            CompletableFuture<InternalCacheEntry> remoteFuture = retrieveFromProperSource(key, ctx, command, false);
-            return invokeNextAsync(ctx, command, remoteFuture.thenAccept(remoteEntry -> handleRemoteEntry(ctx, key, remoteEntry)));
-         }
-      }
-      return invokeNext(ctx, command);
-   }
-
-   private void handleRemoteEntry(InvocationContext ctx, Object key, InternalCacheEntry remoteEntry) {
-      if (remoteEntry != null) {
-         entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.STORE, false);
-      }
-   }
 
    @Override
    public BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws
@@ -737,27 +698,12 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   protected CompletableFuture<?> remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key)
-         throws Throwable {
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (!valueIsMissing(entry)) {
-         return null;
-      }
-      CompletableFuture<InternalCacheEntry> remoteFuture;
-      if (writeNeedsRemoteValue(ctx, command, key)) {
-         int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
-         int cmdTopology = command.getTopologyId();
-         boolean topologyChanged = currentTopologyId != cmdTopology && cmdTopology != -1;
-         if (topologyChanged) {
-            throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                    cmdTopology + ", got " + currentTopologyId);
+   protected CompletableFuture<?> remoteGet(InvocationContext ctx, AbstractDataCommand command, Object key, boolean isWrite) throws Exception {
+      return retrieveFromProperSource(key, ctx, command, isWrite).thenAccept(remoteEntry -> {
+         if (remoteEntry != null) {
+            entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.STORE, false);
          }
-         remoteFuture = retrieveFromProperSource(key, ctx, command, false);
-         return remoteFuture.thenAccept(remoteEntry -> {
-            handleRemoteEntry(ctx, key, remoteEntry);
-         });
-      }
-      return null;
+      });
    }
 
    @Override
