@@ -10,6 +10,14 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distribution.DistSkipRemoteLookupTest")
 public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, String> {
 
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new DistSkipRemoteLookupTest(),
+         new DistSkipRemoteLookupTest().l1(false),
+      };
+   }
+
    public DistSkipRemoteLookupTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }

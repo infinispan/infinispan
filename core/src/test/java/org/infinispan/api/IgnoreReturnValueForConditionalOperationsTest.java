@@ -4,7 +4,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -17,7 +16,6 @@ import static org.testng.Assert.assertTrue;
 @Test(groups = "functional", testName = "api.IgnoreReturnValueForConditionalOperationsTest")
 public class IgnoreReturnValueForConditionalOperationsTest extends MultipleCacheManagersTest {
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

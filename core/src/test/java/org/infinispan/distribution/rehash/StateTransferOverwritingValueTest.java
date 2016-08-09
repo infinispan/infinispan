@@ -18,7 +18,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
@@ -43,8 +42,6 @@ import static org.testng.AssertJUnit.assertEquals;
  */
 @Test(groups = "functional", testName = "distribution.rehash.NonTxStateTransferOverwritingValueTest")
 public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest {
-
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

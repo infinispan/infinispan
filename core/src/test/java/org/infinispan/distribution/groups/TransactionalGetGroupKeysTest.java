@@ -4,7 +4,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;
@@ -24,7 +23,6 @@ import java.util.Map;
  */
 @Test(groups = "functional")
 public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

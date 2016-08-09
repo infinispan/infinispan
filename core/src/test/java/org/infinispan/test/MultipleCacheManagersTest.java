@@ -420,8 +420,26 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return advancedCache(index).getDataContainer();
    }
 
-   @Factory
+   /**
+    * This is the method you should override when providing factory method.
+    */
    public Object[] factory() {
+      throw new IllegalStateException("Only overridden methods should be called!");
+   }
+
+   @Factory
+   public Object[] defaultFactory() {
+      // It is possible to override the factory method, but if we extend a class that defines such overridden
+      // method, the factory method will be inherited, too - that results in running the superclass tests
+      // instead of current class tests.
+      try {
+         Method factory = getClass().getMethod("factory");
+         if (factory.getDeclaringClass() == getClass()) {
+            return factory();
+         }
+      } catch (NoSuchMethodException e) {
+         throw new IllegalStateException("Every class should have factory method, at least inherited", e);
+      }
       Consumer<MultipleCacheManagersTest>[] cacheModeModifiers = getModifiers(InCacheMode.class, InCacheMode::value, (t, m) -> t.cacheMode(m));
       Consumer<MultipleCacheManagersTest>[] transactionModifiers = getModifiers(InTransactionMode.class, InTransactionMode::value, (t, m) -> t.transactional(m.isTransactional()));
       List<Consumer<MultipleCacheManagersTest>[]> allModifiers = Arrays.asList(cacheModeModifiers, transactionModifiers);
@@ -551,8 +569,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    @Override
    protected String parameters() {
       // cacheMode is self-explaining
-      String[] names = { null, "tx", "locking", "TO", "isolation" };
-      Object[] params = { cacheMode, transactional, lockingMode, totalOrder, isolationLevel };
+      String[] names = parameterNames();
+      Object[] params = parameterValues();
       assert names.length == params.length;
 
       boolean[] last = new boolean[params.length];
@@ -575,6 +593,20 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          }
       }
       return sb.append('}').toString();
+   }
+
+   protected String[] parameterNames() {
+      return new String[]{ null, "tx", "locking", "TO", "isolation" };
+   }
+
+   protected Object[] parameterValues() {
+      return new Object[]{ cacheMode, transactional, lockingMode, totalOrder, isolationLevel };
+   }
+
+   protected static <T> T[] concat(T[] a1, T... a2) {
+      T[] na = Arrays.copyOf(a1, a1.length + a2.length);
+      System.arraycopy(a2, 0, na, a1.length, a2.length);
+      return na;
    }
 
    /**

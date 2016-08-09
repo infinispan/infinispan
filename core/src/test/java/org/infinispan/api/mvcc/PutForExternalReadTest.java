@@ -37,7 +37,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadTest")
@@ -48,7 +47,6 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
    protected static final String key = "k", value = "v1", value2 = "v2";
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

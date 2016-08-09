@@ -19,8 +19,7 @@ import java.util.Collections;
 public class GroupsChFunctionalTest extends DistSyncFuncTest {
 
    public GroupsChFunctionalTest() {
-      groupsEnabled = true;
-      groupers = Collections.<Grouper<?>>singletonList(new KXGrouper());
+      groupers = true;
    }
 
    public void testGrouper() throws Throwable {

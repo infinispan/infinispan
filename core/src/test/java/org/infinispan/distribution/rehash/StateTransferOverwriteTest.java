@@ -14,9 +14,16 @@ import java.util.concurrent.Callable;
  */
 @Test(groups = "functional", testName = "distribution.rehash.StateTransferOverwriteTest")
 public class StateTransferOverwriteTest extends BaseTxStateTransferOverwriteTest {
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new StateTransferOverwriteTest().l1(false),
+         new StateTransferOverwriteTest().l1(true),
+      };
+   }
+
    public StateTransferOverwriteTest() {
-      super();
-      tx = false;
+      transactional = false;
    }
 
    @Override

@@ -19,8 +19,7 @@ import static org.testng.AssertJUnit.fail;
 public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
 
    public DistSyncL1PessimisticFuncTest() {
-      sync = true;
-      tx = true;
+      transactional = true;
       testRetVals = true;
       lockingMode = LockingMode.PESSIMISTIC;
    }

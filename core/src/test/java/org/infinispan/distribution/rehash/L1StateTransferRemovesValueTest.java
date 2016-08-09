@@ -49,7 +49,6 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    public L1StateTransferRemovesValueTest() {
       INIT_CLUSTER_SIZE = 3;
       numOwners = 2;
-      tx = false;
       performRehashing = true;
       l1CacheEnabled = true;
       cleanup = CleanupPhase.AFTER_METHOD;

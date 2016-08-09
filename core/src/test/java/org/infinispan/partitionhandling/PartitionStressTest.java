@@ -14,9 +14,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
 import org.jgroups.protocols.DISCARD;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import javax.transaction.xa.XAException;
@@ -36,7 +34,6 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
 
    public static final int NUM_NODES = 4;
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

@@ -32,8 +32,7 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
    public SingleOwnerAndAsyncMethodsWithTxTest() {
       INIT_CLUSTER_SIZE = 2;
       numOwners = 1;
-      sync = true;
-      tx = true;
+      transactional = true;
       l1CacheEnabled = true;
       lockTimeout = 5;
       lockingMode = LockingMode.PESSIMISTIC;

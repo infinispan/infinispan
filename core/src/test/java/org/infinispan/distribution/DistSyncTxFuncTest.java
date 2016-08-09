@@ -12,8 +12,7 @@ import javax.transaction.TransactionManager;
 public class DistSyncTxFuncTest extends BaseDistFunctionalTest<Object, String> {
    
    public DistSyncTxFuncTest() {
-      sync = true;
-      tx = true;
+      transactional = true;
       testRetVals = true;
       cleanup = CleanupPhase.AFTER_METHOD; // ensure any stale TXs are wiped
    }

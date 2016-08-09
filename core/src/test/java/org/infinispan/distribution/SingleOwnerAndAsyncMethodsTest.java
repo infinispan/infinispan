@@ -26,8 +26,6 @@ public class SingleOwnerAndAsyncMethodsTest extends BaseDistFunctionalTest<Objec
    public SingleOwnerAndAsyncMethodsTest() {
       INIT_CLUSTER_SIZE = 2;
       numOwners = 1;
-      sync = true;
-      tx = false;
       l1CacheEnabled = false;
    }
 
