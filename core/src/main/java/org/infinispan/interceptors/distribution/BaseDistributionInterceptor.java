@@ -23,9 +23,12 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
@@ -45,6 +48,7 @@ import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.RpcException;
@@ -314,14 +318,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   protected final BasicInvocationStage handleNonTxWriteCommand(InvocationContext ctx, DataWriteCommand command)
+   protected final BasicInvocationStage handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command)
          throws Throwable {
       if (ctx.isInTxScope()) {
          throw new CacheException("Attempted execution of non-transactional write command in a transactional invocation context");
       }
 
       // see if we need to load values from remote sources first
-      CompletableFuture<?> remoteGetFuture = remoteGetBeforeWrite(ctx, command, command.getKey());
+      CompletableFuture<?> remoteGetFuture = remoteGetBeforeWrite(ctx, command, command.getKey(), true);
       if (remoteGetFuture != null) {
          return invokeNextAsync(ctx, command, remoteGetFuture).thenCompose(this::handleLocalResult);
       } else {
@@ -730,7 +734,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-
    /**
     * @return Whether a remote get is needed to obtain the previous values of the affected entries.
     */
@@ -740,8 +743,52 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return entry == null || (entry.isNull() && !entry.isRemoved() && !entry.skipLookup());
    }
 
-   protected abstract CompletableFuture<?> remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key)
-         throws Throwable;
+   private InvocationStage visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+      if (!ctx.isOriginLocal())
+         return invokeNext(ctx, command);
+
+      Object key = command.getKey();
+      CacheEntry entry = ctx.lookupEntry(key);
+      if (valueIsMissing(entry)) {
+         if (readNeedsRemoteValue(ctx, command)) {
+            if (trace)
+               log.tracef("Doing a remote get for key %s", key);
+            CompletableFuture<?> getFuture = remoteGet(ctx, command, command.getKey(), false);
+            return invokeNextAsync(ctx, command, getFuture);
+         }
+      }
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+         throws Throwable {
+      return visitGetCommand(ctx, command);
+   }
+
+   @Override
+   public BasicInvocationStage visitGetCacheEntryCommand(InvocationContext ctx,
+         GetCacheEntryCommand command) throws Throwable {
+      return visitGetCommand(ctx, command);
+   }
+
+   protected abstract CompletableFuture<?> remoteGet(InvocationContext ctx, AbstractDataCommand command,
+                                                        Object key, boolean isWrite) throws Throwable;
+
+   protected CompletableFuture<?> remoteGetBeforeWrite(InvocationContext ctx, AbstractDataWriteCommand command,
+                                                          Object key, boolean isWrite) throws Throwable {
+      CacheEntry entry = ctx.lookupEntry(key);
+      if (valueIsMissing(entry) && writeNeedsRemoteValue(ctx, command, key)) {
+         int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+         int cmdTopology = command.getTopologyId();
+         if (currentTopologyId != cmdTopology && cmdTopology != -1) {
+            throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+               cmdTopology + ", got " + currentTopologyId);
+         }
+         return remoteGet(ctx, command, key, isWrite);
+      }
+      return null;
+   }
 
    /**
     * @return {@code true} if the value is not available on the local node and a read command is allowed to
