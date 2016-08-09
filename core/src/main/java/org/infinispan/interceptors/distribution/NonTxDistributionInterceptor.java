@@ -27,7 +27,6 @@ import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.RemoteFetchingCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -89,7 +88,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return visitGetCommand(ctx, command);
    }
 
-   private <T extends AbstractDataCommand & RemoteFetchingCommand> BasicInvocationStage visitGetCommand(
+   private <T extends AbstractDataCommand> BasicInvocationStage visitGetCommand(
          InvocationContext ctx, T command) throws Throwable {
       if (!ctx.isOriginLocal())
          return invokeNext(ctx, command);
@@ -101,10 +100,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             if (trace)
                log.tracef("Doing a remote get for key %s", key);
             CompletableFuture<InternalCacheEntry> remoteFuture = retrieveFromProperSource(key, ctx, command, false);
-            return invokeNextAsync(ctx, command, remoteFuture.thenAccept(remoteEntry -> {
-               command.setRemotelyFetchedValue(remoteEntry);
-               handleRemoteEntry(ctx, key, remoteEntry);
-            }));
+            return invokeNextAsync(ctx, command, remoteFuture.thenAccept(remoteEntry -> handleRemoteEntry(ctx, key, remoteEntry)));
          }
       }
       return invokeNext(ctx, command);
