@@ -87,6 +87,8 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public <R> Traversable<R> evalAll(Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalAll(%s)", params);
+      // TODO: during commmand execution the set is iterated multiple times, and can execute remote operations
+      // therefore we should rather have separate command (or different semantics for keys == null)
       CloseableIteratorSet<K> keys = fmap.cache.keySet();
       ReadWriteManyCommand cmd = fmap.cmdFactory().buildReadWriteManyCommand(keys, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());

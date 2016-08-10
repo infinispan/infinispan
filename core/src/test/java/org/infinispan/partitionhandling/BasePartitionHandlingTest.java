@@ -56,12 +56,15 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = new ConfigurationBuilder();
+      ConfigurationBuilder dcc = cacheConfiguration();
       dcc.clustering().cacheMode(cacheMode).partitionHandling().enabled(partitionHandling);
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
    }
 
+   protected ConfigurationBuilder cacheConfiguration() {
+      return new ConfigurationBuilder();
+   }
 
    @Listener
    static class ViewChangedHandler {

@@ -7,7 +7,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -74,12 +74,15 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
             InvocationContext context = (InvocationContext) invocation.getArguments()[0];
-            log.debugf("wrapEntryForPut invoked with %s", context);
-            assertFalse("Entry should not be wrapped!", context.isOriginLocal());
-            return invocation.callRealMethod();
+            log.debugf("wrapEntryForWriting invoked with %s", context);
+
+            Object mvccEntry = invocation.callRealMethod();
+            assertNull(mvccEntry, "Entry should not be wrapped!");
+            assertNull(context.lookupEntry(key), "Entry should not be wrapped!");
+            return mvccEntry;
          }
       }).when(spyEntryFactory).wrapEntryForWriting(any(InvocationContext.class), anyObject(),
-                                                   any(EntryFactory.Wrap.class), anyBoolean(), anyBoolean());
+            anyBoolean());
 
       Future<?> killMemberResult = fork(new Runnable() {
          @Override

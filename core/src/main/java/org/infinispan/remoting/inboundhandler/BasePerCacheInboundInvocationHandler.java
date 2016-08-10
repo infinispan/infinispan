@@ -9,6 +9,8 @@ import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.ComponentName;
@@ -50,6 +52,11 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       switch (command.getCommandId()) {
          case SingleRpcCommand.COMMAND_ID:
             return extractCommandTopologyId((SingleRpcCommand) command);
+         case ClusteredGetCommand.COMMAND_ID:
+         case ClusteredGetAllCommand.COMMAND_ID:
+            // These commands are topology aware but we don't block them here - topologyId logic
+            // is handled in StateTransferInterceptor
+            return NO_TOPOLOGY_COMMAND;
          default:
             if (command instanceof TopologyAffectedCommand) {
                return ((TopologyAffectedCommand) command).getTopologyId();

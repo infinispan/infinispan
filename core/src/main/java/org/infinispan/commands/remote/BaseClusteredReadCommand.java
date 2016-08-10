@@ -1,5 +1,6 @@
 package org.infinispan.commands.remote;
 
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.util.ByteString;
@@ -7,7 +8,8 @@ import org.infinispan.util.ByteString;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public abstract class BaseClusteredReadCommand extends BaseRpcCommand {
+public abstract class BaseClusteredReadCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+   protected int topologyId = -1;
    private long flags;
 
    protected BaseClusteredReadCommand(ByteString cacheName, long flagBitSet) {
@@ -29,5 +31,15 @@ public abstract class BaseClusteredReadCommand extends BaseRpcCommand {
 
    public boolean hasFlag(Flag flag) {
       return EnumUtil.hasEnum(getFlagsBitSet(), flag);
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
    }
 }

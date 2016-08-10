@@ -1,6 +1,7 @@
 package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 
 /**
@@ -19,36 +20,21 @@ public class LockUtil {
     *
     * @param key                      the key to check
     * @param clusteringDependentLogic the {@link ClusteringDependentLogic} to check the ownership of the keys.
-    * @return the {@link org.infinispan.util.concurrent.locks.LockUtil.LockOwnership}.
+    * @return the {@link Ownership}.
     * @throws NullPointerException if {@code clusteringDependentLogic} is {@code null}.
     */
-   public static LockOwnership getLockOwnership(Object key, ClusteringDependentLogic clusteringDependentLogic) {
+   public static Ownership getLockOwnership(Object key, ClusteringDependentLogic clusteringDependentLogic) {
       Object keyToCheck = key instanceof DeltaCompositeKey ?
             ((DeltaCompositeKey) key).getDeltaAwareValueKey() :
             key;
       if (clusteringDependentLogic.localNodeIsPrimaryOwner(keyToCheck)) {
-         return LockOwnership.PRIMARY;
+         return Ownership.PRIMARY;
       } else if (clusteringDependentLogic.localNodeIsOwner(keyToCheck)) {
-         return LockOwnership.BACKUP;
+         return Ownership.BACKUP;
       } else {
-         return LockOwnership.NO_OWNER;
+         return Ownership.NON_OWNER;
       }
    }
 
-
-   public enum LockOwnership {
-      /**
-       * This node is not an owner.
-       */
-      NO_OWNER,
-      /**
-       * This node is the primary lock owner.
-       */
-      PRIMARY,
-      /**
-       * this node is the backup lock owner.
-       */
-      BACKUP
-   }
 
 }

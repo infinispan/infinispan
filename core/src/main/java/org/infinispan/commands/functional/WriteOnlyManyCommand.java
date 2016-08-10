@@ -43,6 +43,11 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       this.keys = keys;
    }
 
+   public final WriteOnlyManyCommand<K, V> withKeys(Collection<? extends K> keys) {
+      setKeys(keys);
+      return this;
+   }
+
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
@@ -82,10 +87,11 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
          CacheEntry<K, V> cacheEntry = ctx.lookupEntry(k);
 
          // Could be that the key is not local, 'null' is how this is signalled
-         if (cacheEntry != null) {
-            f.accept(EntryViews.writeOnly(cacheEntry));
-            returns.add(null);
+         if (cacheEntry == null) {
+            throw new IllegalStateException();
          }
+         f.accept(EntryViews.writeOnly(cacheEntry));
+         returns.add(null);
       });
       return returns.stream();
    }
@@ -116,13 +122,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.DONT_LOAD;
    }
 
    @Override
@@ -130,4 +131,13 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       return true;
    }
 
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("WriteOnlyManyCommand{");
+      sb.append("keys=").append(keys);
+      sb.append(", f=").append(f.getClass().getName());
+      sb.append(", isForwarded=").append(isForwarded);
+      sb.append('}');
+      return sb.toString();
+   }
 }

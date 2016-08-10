@@ -3,7 +3,6 @@ package org.infinispan.commands.write;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -29,7 +28,7 @@ public class PrimaryMultiKeyAckCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 31;
    private static final Type[] CACHED_TYPE = Type.values();
    private CommandInvocationId commandInvocationId;
-   private Map<Object, Object> returnValue = Collections.emptyMap();
+   private Map<Object, Object> returnValue = null;
    private Type type;
    private CommandAckCollector commandAckCollector;
    private int topologyId;

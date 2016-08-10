@@ -100,8 +100,8 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffected
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override

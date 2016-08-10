@@ -84,11 +84,6 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public void rollback() {
-      delegate().rollback();
-   }
-
-   @Override
    public void setChanged(boolean changed) {
       delegate().setChanged(changed);
    }
@@ -121,11 +116,6 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    @Override
    public void setSkipLookup(boolean skipLookup) {
       delegate().setSkipLookup(skipLookup);
-   }
-
-   @Override
-   public boolean undelete(boolean doUndelete) {
-      return delegate().undelete(doUndelete);
    }
 
    @Override

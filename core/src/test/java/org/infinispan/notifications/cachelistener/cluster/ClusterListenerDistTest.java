@@ -19,6 +19,8 @@ import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -62,21 +64,24 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
       // Maybe some day this can work properly
       assertEquals(future.get(10, TimeUnit.SECONDS), FIRST_VALUE);
 
-      if (TestingUtil.isTriangleAlgorithm(cacheMode, tx)) {
-         //because of the triangle, it is possible to put to be retried twice originating the same event twice.
-         assertTrue(clusterListener.events.size() == 1 || clusterListener.events.size() == 2);
-      } else {
-         // We should have received an event that was marked as retried
-         assertEquals(clusterListener.events.size(), 1);
-      }
-      while (!clusterListener.events.isEmpty()) {
-         CacheEntryEvent<Object, String> event = clusterListener.events.remove(0);
-         // Since it was a retry but the backup got the write the event isn't a CREATE!!
-         assertEquals(event.getType(), Event.Type.CACHE_ENTRY_MODIFIED);
-         CacheEntryModifiedEvent<Object, String> modEvent = (CacheEntryModifiedEvent<Object, String>)event;
-         assertTrue(modEvent.isCommandRetried());
-         assertEquals(modEvent.getKey(), key);
-         assertEquals(modEvent.getValue(), FIRST_VALUE);
+      // The command is retried during rebalance, but there are two topologies - in the first (rebalancing) topology
+      // one node can be primary owner and in the second (rebalanced) the other. In this case, it's possible that
+      // the listener is fired both in the first topology and then after the response from primary owner arrives
+      // and the originator now has become the new primary owner.
+      // Similar situation is possible with triangle algorigthm (TODO pruivo: elaborate)
+      assertTrue(clusterListener.events.size() >= 1);
+      assertTrue(clusterListener.events.size() <= 2);
+
+      Address cache0primary = cache0.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
+      Address cache2primary = cache2.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
+      // we expect that now both nodes have the same topology
+      assertEquals(cache0primary, cache2primary);
+      checkEvent(clusterListener.events.get(0), key, false, true);
+
+      // This is possible after rebalance; when rebalancing, primary owner is always the old backup
+      if (clusterListener.events.size() == 2) {
+         assertTrue(cache0primary.equals(cache0.getCacheManager().getAddress()));
+         checkEvent(clusterListener.events.get(1), key, false, true);
       }
    }
 }

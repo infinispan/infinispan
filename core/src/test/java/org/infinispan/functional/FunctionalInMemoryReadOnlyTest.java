@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "functional.FunctionalInMemoryReadOnlyTest")
 public class FunctionalInMemoryReadOnlyTest extends AbstractFunctionalReadOnlyOpTest {
    public FunctionalInMemoryReadOnlyTest() {
-      isPersistenceEnabled = false;
+      persistence = false;
    }
 
    @Test(dataProvider = "owningModeAndMethod")

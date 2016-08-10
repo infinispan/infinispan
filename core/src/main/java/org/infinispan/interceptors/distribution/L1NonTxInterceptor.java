@@ -250,7 +250,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          // may not have the value - if so we need to add it then now that we know we waited for the get response
          // to complete
          if (ctx.lookupEntry(key) == null) {
-            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, true, true);
+            entryFactory.wrapEntryForWriting(ctx, key, true);
          }
       }
       return invokeNext(ctx, invalidateL1Command);
@@ -326,7 +326,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
       abortL1UpdateOrWait(key);
       ctx.removeLookedUpEntry(key);
-      entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, true, true);
+      entryFactory.wrapEntryForWriting(ctx, key, true);
 
       return commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET,
             Collections.singleton(key));

@@ -39,17 +39,14 @@ public final class GetCacheEntryCommand extends AbstractDataCommand {
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
-      if (entry == null || entry.isNull()) {
-         return null;
-      }
-      if (entry.isRemoved()) {
+      if (entry.isNull() || entry.isRemoved()) {
          return null;
       }
 

@@ -59,25 +59,26 @@ public class RemoveExpiredCommand extends RemoveCommand {
       if (e != null && !e.isRemoved()) {
          Object value = e.getValue();
          // If the provided lifespan is null, that means it is a store removal command, so we can't compare lifespan
+         Object prevValue = e.getValue();
          if (lifespan == null) {
-            if (valueMatcher.matches(e, value, e.getValue(), valueEquivalence)) {
+            if (valueMatcher.matches(prevValue, value, e.getValue(), valueEquivalence)) {
                e.setExpired(true);
-               return performRemove(e, ctx);
+               return performRemove(e, prevValue, ctx);
             }
          } else if (e.getMetadata() == null) {
             // If there is no metadata and no value that means it is gone currently or not shown due to expired
             // If we have a value though we should verify it matches the value as well
-            if (value == null || valueMatcher.matches(e, value, e.getValue(), valueEquivalence)) {
+            if (value == null || valueMatcher.matches(prevValue, value, e.getValue(), valueEquivalence)) {
                e.setExpired(true);
-               return performRemove(e, ctx);
+               return performRemove(e, prevValue, ctx);
             }
          } else if (e.getLifespan() > 0 && e.getLifespan() == lifespan) {
             // If the entries lifespan is not positive that means it can't expire so don't even try to remove it
             // Lastly if there is metadata we have to verify it equals our lifespan and the value match.
             // TODO: add a threshold to verify this wasn't just created with the same value/lifespan just before expiring
-            if (valueMatcher.matches(e, value, e.getValue(), valueEquivalence)) {
+            if (valueMatcher.matches(prevValue, value, e.getValue(), valueEquivalence)) {
                e.setExpired(true);
-               return performRemove(e, ctx);
+               return performRemove(e, prevValue, ctx);
             }
          } else {
             log.trace("Cannot remove entry as its lifespan or value do not match");
@@ -96,7 +97,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
 
    @Override
    public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata,
-         boolean isPre) {
+                      boolean isPre) {
       if (!isPre) {
          notifier.notifyCacheEntryExpired(key, value, removedMetadata, ctx);
       }

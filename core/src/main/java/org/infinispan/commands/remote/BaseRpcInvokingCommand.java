@@ -1,5 +1,7 @@
 package org.infinispan.commands.remote;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
@@ -10,8 +12,6 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Base class for RPC commands.

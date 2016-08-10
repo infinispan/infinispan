@@ -160,14 +160,10 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
                if (cacheEntry == null) {
                   unboxed.put(entry.getKey(), null);
                } else {
-                  if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
-                     unboxed.put(converter.unboxKey(entry.getKey()), entryFactory
-                           .create(entry.getKey(), converter.unboxValue(cacheEntry.getValue()),
-                                 cacheEntry.getMetadata(), cacheEntry.getLifespan(),
-                                 cacheEntry.getMaxIdle()));
-                  } else {
-                     unboxed.put(converter.unboxKey(entry.getKey()), cacheEntry);
-                  }
+                  unboxed.put(converter.unboxKey(entry.getKey()), entryFactory
+                        .create(entry.getKey(), converter.unboxValue(cacheEntry.getValue()),
+                              cacheEntry.getMetadata(), cacheEntry.getLifespan(),
+                              cacheEntry.getMaxIdle()));
                }
             }
             return unboxed;

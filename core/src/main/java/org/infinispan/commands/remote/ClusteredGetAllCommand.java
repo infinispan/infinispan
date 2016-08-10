@@ -16,13 +16,13 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -93,29 +93,25 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
       return future.thenApply(rv -> {
-         Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) rv;
-         if (trace) log.trace("Found: " + map);
-
-         if (map == null) {
-            return null;
+         if (trace) log.trace("Found: " + rv);
+         if (rv == null || rv instanceof Response) {
+            return rv;
          }
 
-         List<InternalCacheValue<V>> values = new ArrayList<>(keys.size());
+         Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) rv;
+         InternalCacheValue<V>[] values = new InternalCacheValue[keys.size()];
+         int i = 0;
          for (Object key : keys) {
-            if (map.containsKey(key)) {
-               CacheEntry<K, V> entry = map.get(key);
-               InternalCacheValue<V> value;
-               if (entry instanceof InternalCacheEntry) {
-                  value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
-               } else if (entry != null) {
-                  value = entryFactory.createValue(entry);
-               } else {
-                  value = new ImmortalCacheValue(null);
-               }
-               values.add(value);
+            CacheEntry<K, V> entry = map.get(key);
+            InternalCacheValue<V> value;
+            if (entry == null) {
+               value = null;
+            } else if (entry instanceof InternalCacheEntry) {
+               value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
             } else {
-               values.add(null);
+               value = entryFactory.createValue(entry);
             }
+            values[i++] = value;
          }
          return values;
       });

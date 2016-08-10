@@ -259,7 +259,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
+      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
          if (responseMap != null) {
             Map<Address, Response> newResponseMap = new LinkedHashMap<>();
             boolean containsLastResponseAddress = false;

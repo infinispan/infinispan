@@ -275,7 +275,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    public void testLoading() throws PersistenceException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");
       for (int i = 1; i < 5; i++) writer.write(new MarshalledEntryImpl("k" + i, "v" + i, null, sm));
-      for (int i = 1; i < 5; i++) assert cache.get("k" + i).equals("v" + i);
+      for (int i = 1; i < 5; i++) assertEquals("v" + i, cache.get("k" + i));
       // make sure we have no stale locks!!
       assertNoLocks(cache);
 
@@ -283,14 +283,15 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       // make sure we have no stale locks!!
       assertNoLocks(cache);
 
-      assert cache.putIfAbsent("k1", "v1-SHOULD-NOT-STORE").equals("v1");
-      assert cache.remove("k2").equals("v2");
-      assert cache.replace("k3", "v3-REPLACED").equals("v3");
-      assert cache.replace("k4", "v4", "v4-REPLACED");
+      assertEquals("v1", cache.putIfAbsent("k1", "v1-SHOULD-NOT-STORE"));
+      assertEquals("v2", cache.remove("k2"));
+      assertEquals("v3", cache.replace("k3", "v3-REPLACED"));
+      assertTrue(cache.replace("k4", "v4", "v4-REPLACED"));
       // make sure we have no stale locks!!
       assertNoLocks(cache);
 
-      assert cache.size() == 3 : "Expected the cache to contain 3 elements but contained " + cache.entrySet();
+      int size = cache.size();
+      assertEquals("Expected the cache to contain 3 elements but contained " + cache.entrySet(), 3, size);
 
       for (int i = 1; i < 5; i++) cache.evict("k" + i);
       // make sure we have no stale locks!!

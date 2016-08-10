@@ -317,21 +317,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public void replaceVersionRead(Object key, EntryVersion version) {
-      if (version == null) {
-         return;
-      }
-      if (versionsSeenMap == null) {
-         versionsSeenMap = new EntryVersionsMap();
-      }
-      EntryVersion oldVersion = versionsSeenMap.put(key, (IncrementableEntryVersion) version);
-      if (trace) {
-         log.tracef("Transaction %s replaced version for key %s. old=%s, new=%s", getGlobalTransaction().globalId(), key,
-                    oldVersion, version);
-      }
-   }
-
-   @Override
    public EntryVersionsMap getVersionsRead() {
       return versionsSeenMap == null ? new EntryVersionsMap() : versionsSeenMap;
    }

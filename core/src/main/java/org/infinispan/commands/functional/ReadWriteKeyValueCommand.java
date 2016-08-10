@@ -14,6 +14,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -103,22 +104,24 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       // If the value has been update while on the retry, use the newer value.
       // Also take into account that the value might have been removed.
       // TODO: Configure equivalence function
-      if (valueUnchanged(e, prevValue, value) || valueRemoved(e, prevValue)) {
+      // TODO: this won't work properly until we store if the command was executed or not...
+      Object oldPrevValue = e.getValue();
+      // Note: other commands don't clone the entry as they don't carry the previous value for comparison
+      // using value matcher - if other commands are retried these can apply the function multiple times.
+      // Here we don't want to modify the value in context when trying what would be the outcome of the operation.
+      CacheEntry<K, V> copy = e.clone();
+      R ret = f.apply(value, EntryViews.readWrite(copy, prevValue, prevMetadata));
+      if (valueMatcher.matches(oldPrevValue, prevValue, copy.getValue(), AnyEquivalence.getInstance())) {
          log.tracef("Execute read-write function on previous value %s and previous metadata %s", prevValue, prevMetadata);
-         R ret = f.apply(value, EntryViews.readWrite(e, prevValue, prevMetadata));
+         e.setValue(copy.getValue());
+         e.setMetadata(copy.getMetadata());
+         // These are the only flags that should be changed with EntryViews.readWrite
+         e.setChanged(copy.isChanged());
+         e.setRemoved(copy.isRemoved());
          return snapshot(ret);
       }
 
       return f.apply(value, EntryViews.readWrite(e, e.getValue(), e.getMetadata()));
-   }
-
-
-   boolean valueRemoved(MVCCEntry<K, V> e, V prevValue) {
-      return valueUnchanged(e, prevValue, null);
-   }
-
-   boolean valueUnchanged(MVCCEntry<K, V> e, V prevValue, V value) {
-      return valueMatcher.matches(e, prevValue, value, AnyEquivalence.getInstance());
    }
 
    @Override
@@ -132,13 +135,8 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override

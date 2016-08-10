@@ -39,7 +39,7 @@ import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.impl.ActivationInterceptor;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
@@ -322,13 +322,13 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
                     break;
                 }
                 case CACHE_LOADER_LOADS: {
-                    ActivationInterceptor
-                          interceptor = getFirstInterceptorWhichExtends(interceptors, ActivationInterceptor.class);
+                    CacheLoaderInterceptor
+                          interceptor = getFirstInterceptorWhichExtends(interceptors, CacheLoaderInterceptor.class);
                     result.set(interceptor != null ? interceptor.getCacheLoaderLoads() : 0);
                     break;
                 }
                 case CACHE_LOADER_MISSES: {
-                    ActivationInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, ActivationInterceptor.class);
+                    CacheLoaderInterceptor interceptor = getFirstInterceptorWhichExtends(interceptors, CacheLoaderInterceptor.class);
                     result.set(interceptor != null ? interceptor.getCacheLoaderMisses() : 0);
                     break;
                 }

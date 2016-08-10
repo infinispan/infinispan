@@ -24,12 +24,22 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "functional.FunctionalCachestoreTest")
 public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
+
    // As the functional API should not have side effects, it's hard to verify its execution when it does not
    // have any return value.
    static AtomicInteger invocationCount = new AtomicInteger();
 
-   public FunctionalCachestoreTest() {
-      isPersistenceEnabled = true;
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new FunctionalCachestoreTest().persistence(true).passivation(false),
+         new FunctionalCachestoreTest().persistence(true).passivation(true)
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[passivation=" + passivation + "]";
    }
 
    @Test(dataProvider = "owningModeAndMethod")

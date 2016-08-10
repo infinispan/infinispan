@@ -22,7 +22,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.impl.ActivationInterceptor;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
@@ -722,8 +722,8 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
          }
 
          //cache loaders
-         ActivationInterceptor
-               aInterceptor = getFirstInterceptorWhichExtends(remoteCache, ActivationInterceptor.class);
+         CacheLoaderInterceptor
+               aInterceptor = getFirstInterceptorWhichExtends(remoteCache, CacheLoaderInterceptor.class);
          if (aInterceptor != null) {
             map.put(CACHE_LOADER_LOADS, aInterceptor.getCacheLoaderLoads());
             map.put(CACHE_LOADER_MISSES, aInterceptor.getCacheLoaderMisses());

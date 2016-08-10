@@ -195,9 +195,9 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @Override
-   public boolean readsExistingValues() {
-      // TODO Return true only if there are invalidation listeners registered
-      return true;
+   public LoadType loadType() {
+      // TODO Return LoadType.OWNER only if there are invalidation listeners registered
+      return LoadType.OWNER;
    }
 
    @Override

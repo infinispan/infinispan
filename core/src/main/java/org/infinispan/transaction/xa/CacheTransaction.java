@@ -102,9 +102,15 @@ public interface CacheTransaction {
 
    void setUpdatedEntryVersions(EntryVersionsMap updatedEntryVersions);
 
+   /**
+    * @deprecated since 9.0
+    */
    @Deprecated
    default void putLookedUpRemoteVersion(Object key, EntryVersion version) {}
 
+   /**
+    * @deprecated since 9.0
+    */
    @Deprecated
    default EntryVersion getLookedUpRemoteVersion(Object key) { return null; }
 
@@ -129,8 +135,10 @@ public interface CacheTransaction {
     * of the key. This method is used when a remote get is performed for the key.
     * <p/>
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
+    * @deprecated since 9.0
     */
-   void replaceVersionRead(Object key, EntryVersion version);
+   @Deprecated
+   default void replaceVersionRead(Object key, EntryVersion version) { addVersionRead(key, version);}
 
    /**
     * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.

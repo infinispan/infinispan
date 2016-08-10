@@ -22,6 +22,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.KnownComponentNames;
@@ -157,9 +158,8 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
                   OutdatedTopologyException.getCachedInstance());
             throw OutdatedTopologyException.getCachedInstance();
          }
-         KeyOwnership keyOwnership = KeyOwnership
-               .ownership(cacheTopology.getWriteConsistentHash().locateOwners(command.getKey()), localAddress);
-         switch (keyOwnership) {
+         DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), cacheTopology.getWriteConsistentHash(), localAddress);
+         switch (distributionInfo.ownership()) {
             case BACKUP:
                return invokeNext(ctx, command).compose(this::onRemoteBackupOwner);
             case PRIMARY:
@@ -296,25 +296,6 @@ public class TriangleAckInterceptor extends DDAsyncInterceptor {
       } else {
          rpcManager
                .sendTo(origin, commandsFactory.buildExceptionAckCommand(id, throwable, topologyId), DeliverOrder.NONE);
-      }
-   }
-
-   public enum KeyOwnership {
-      PRIMARY,
-      BACKUP,
-      NONE;
-
-      public static KeyOwnership ownership(List<Address> owners, Address localNode) {
-         Iterator<Address> iterator = owners.iterator();
-         if (localNode.equals(iterator.next())) {
-            return PRIMARY;
-         }
-         while (iterator.hasNext()) {
-            if (localNode.equals(iterator.next())) {
-               return BACKUP;
-            }
-         }
-         return NONE;
       }
    }
 }

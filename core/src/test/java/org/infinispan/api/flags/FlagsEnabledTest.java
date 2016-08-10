@@ -93,6 +93,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
             cache1LocalOnly.withFlags(SKIP_CACHE_LOAD);
       MagicKey localKey2 = new MagicKey("local2", cache1);
       cache1SkipRemoteAndStores.put(localKey2, "value");
+      // CACHE_MODE_LOCAL operation is not replicated with the PrepareCommand and WSC is not executed,
+      // but the entry is committed on the origin
       assertLoadsAndReset(cache1, 0, cache2, 0);
 
       assertCacheValue(cache1, localKey2, "value");
@@ -206,8 +208,8 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    private void assertLoadsAndReset(Cache<?, ?> cache1, int expected1, Cache<?, ?> cache2, int expected2) {
       DummyInMemoryStore store1 = getCacheStore(cache1);
       DummyInMemoryStore store2 = getCacheStore(cache2);
-      assertEquals(cache1 + ": " + expected1 + ", " + cache2 + ": " + expected2,
-                   cache1 + ": " + store1.stats().get("load") + ", " + cache2 + ": " + store2.stats().get("load"));
+      assertEquals(expected1, (int) store1.stats().get("load"));
+      assertEquals(expected2, (int) store2.stats().get("load"));
       store1.clearStats();
       store2.clearStats();
    }

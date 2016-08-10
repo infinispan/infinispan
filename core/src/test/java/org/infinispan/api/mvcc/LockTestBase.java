@@ -225,10 +225,13 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       assertNoLocks();
 
       tm.resume(read);
-      if (repeatableRead)
-         assert null == cache.get("k2") : "Should have repeatable read";
+      String value = cache.get("k2");
+      if (repeatableRead) {
+         assert null == value : "Should have repeatable read";
+      }
       else
-         assertEquals("Read committed should see committed changes", "v2", cache.get("k2"));
+         // no guarantees with read committed
+         assertTrue(null == value || "v2".equals(value));
       tm.commit();
       assertNoLocks();
    }
@@ -286,10 +289,12 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       assertNoLocks();
 
       tm.resume(read);
+      String value = cache.get("k");
       if (repeatableRead) {
-         assert null == cache.get("k") : "Should have repeatable read";
+         assert null == value : "Should have repeatable read";
       } else {
-         assertEquals("Read committed should see committed changes", "v", cache.get("k"));
+         // no guarantees with read committed
+         assertTrue(null == value || "v".equals(value));
       }
       tm.commit();
       assertNoLocks();

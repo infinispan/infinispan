@@ -44,17 +44,17 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
          return true;
       }
       EntryVersion prevVersion;
-      InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, persistenceManager, getKey(),
-                                                                           ctx, timeService, ignored);
-      if (ice == null) {
-         if (trace) {
-            log.tracef("No entry for key %s found in data container" , toStr(key));
-         }
-         prevVersion = versionGenerator.nonExistingVersion();
+      if (ctx.isOriginLocal()) {
+         prevVersion = getCurrentEntryVersion(container, persistenceManager, ctx, versionGenerator, timeService);
       } else {
-         prevVersion = ice.getMetadata().version();
-         if (prevVersion == null)
-            throw new IllegalStateException("Entries cannot have null versions!");
+         // If this node is an owner and not originator, the entry has been loaded and wrapped under lock,
+         // so the version in context should be up-to-date
+         prevVersion = ctx.getCacheTransaction().getVersionsRead().get(key);
+         if (prevVersion == null) {
+            // If the command has IGNORE_RETURN_VALUE flags it's possible that the entry was not loaded
+            // from cache loader - we have to force load
+            prevVersion = getCurrentEntryVersion(container, persistenceManager, ctx, versionGenerator, timeService);
+         }
       }
       if (trace) {
          log.tracef("Is going to compare versions %s and %s for key %s.", prevVersion, versionSeen, toStr(key));
@@ -71,6 +71,25 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
       return InequalVersionComparisonResult.EQUAL == result;
    }
 
+   private EntryVersion getCurrentEntryVersion(DataContainer container, PersistenceManager persistenceManager, TxInvocationContext ctx, VersionGenerator versionGenerator, TimeService timeService) {
+      EntryVersion prevVersion;// on origin, the version seen is acquired without the lock, so we have to retrieve it again
+      // TODO: persistence should be more orthogonal to any entry type - this should be handled in interceptor
+      InternalCacheEntry ice = PersistenceUtil.loadAndStoreInDataContainer(container, persistenceManager, getKey(),
+            ctx, timeService, ignored);
+      if (ice == null) {
+         if (trace) {
+            log.tracef("No entry for key %s found in data container", toStr(key));
+         }
+         //in this case, the key does not exist. So, the only result possible is the version seen be the NonExistingVersion
+         prevVersion = versionGenerator.nonExistingVersion();
+      } else {
+         prevVersion = ice.getMetadata().version();
+         if (prevVersion == null)
+            throw new IllegalStateException("Entries cannot have null versions!");
+      }
+      return prevVersion;
+   }
+
    // This entry is only used when versioning is enabled, and in these
    // situations, versions are generated internally and assigned at a
    // different stage to the rest of metadata. So, keep the versioned API
@@ -84,11 +103,6 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
    @Override
    public void setVersion(EntryVersion version) {
       metadata = metadata.builder().version(version).build();
-   }
-
-   @Override
-   public boolean isNull() {
-      return value == null;
    }
 
    @Override

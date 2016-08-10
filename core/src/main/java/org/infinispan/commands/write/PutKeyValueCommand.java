@@ -80,13 +80,14 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return putIfAbsent || !hasFlag(Flag.IGNORE_RETURN_VALUES);
-   }
-
-   @Override
-   public boolean alwaysReadsExistingValues() {
-      return hasFlag(Flag.DELTA_WRITE);
+   public LoadType loadType() {
+      if (hasFlag(Flag.DELTA_WRITE)) {
+         return LoadType.OWNER;
+      } else if (isConditional() || !hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+         return LoadType.PRIMARY;
+      } else {
+         return LoadType.DONT_LOAD;
+      }
    }
 
    @Override
@@ -99,13 +100,14 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       //noinspection unchecked
       MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
 
-      //possible as in certain situations (e.g. when locking delegation is used) we don't wrap
-      if (e == null) return null;
+      if (e == null) {
+         throw new IllegalStateException("Not wrapped");
+      }
 
-      Object entryValue = e.getValue();
-      if (!valueMatcher.matches(e, null, value, valueEquivalence)) {
+      Object prevValue = e.getValue();
+      if (!valueMatcher.matches(prevValue, null, value, valueEquivalence)) {
          successful = false;
-         return entryValue;
+         return prevValue;
       }
 
       return performPut(e, ctx);
@@ -242,11 +244,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       Object o;
 
       if (e.isCreated()) {
-         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx,
-                                           this);
+         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
       } else {
-         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx,
-                                           this);
+         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
       }
 
       if (value instanceof Delta) {

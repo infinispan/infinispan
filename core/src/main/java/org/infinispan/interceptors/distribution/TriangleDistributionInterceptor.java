@@ -4,12 +4,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.BackupWriteRcpCommand;
@@ -20,8 +21,10 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
@@ -107,8 +110,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    private BasicInvocationStage handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      checkTopology(command.getTopologyId(), cacheTopology.getTopologyId());
+      CacheTopology cacheTopology = checkTopologyId(command);
       final ConsistentHash ch = cacheTopology.getWriteConsistentHash();
       if (command.isForwarded() || ch.getNumOwners() == 1) {
          //backup & remote || no backups
@@ -133,8 +135,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
    private BasicInvocationStage handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       //local command. we need to split by primary owner to send the command to them
-      final CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      checkTopology(command.getTopologyId(), cacheTopology.getTopologyId());
+      final CacheTopology cacheTopology = checkTopologyId(command);
       final ConsistentHash consistentHash = cacheTopology.getWriteConsistentHash();
       final PrimaryOwnerClassifier filter = new PrimaryOwnerClassifier(consistentHash);
       final boolean sync = isSynchronous(command);
@@ -180,39 +181,43 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       }
    }
 
-   private BasicInvocationStage handleDataWriteCommand(InvocationContext context, DataWriteCommand command) {
+   // TODO: this should just override handleNonTxWriteCommand when functional commands will be triangelized
+   private BasicInvocationStage handleDataWriteCommand(InvocationContext context, AbstractDataWriteCommand command) {
       assert !context.isInTxScope();
       if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          //don't go through the triangle
          return invokeNext(context, command);
       }
-      final CacheTopology topology = stateTransferManager.getCacheTopology();
-      checkTopology(command.getTopologyId(), topology.getTopologyId());
+      final CacheTopology topology = checkTopologyId(command);
+      DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), topology.getWriteConsistentHash(), rpcManager.getAddress());
 
-      final List<Address> owners = topology.getWriteConsistentHash().locateOwners(command.getKey());
-      //TODO remove this when Radim's PR is integrated!
-      TriangleAckInterceptor.KeyOwnership ownership = TriangleAckInterceptor.KeyOwnership
-            .ownership(owners, rpcManager.getAddress());
-
-      switch (ownership) {
+      switch (distributionInfo.ownership()) {
          case PRIMARY:
-            return primaryOwnerWrite(context, command, owners);
+            assert context.lookupEntry(command.getKey()) != null;
+            return primaryOwnerWrite(context, command, distributionInfo);
          case BACKUP:
             if (context.isOriginLocal()) {
-               return localWriteInvocation(context, command, owners);
+               return localWriteInvocation(context, command, distributionInfo);
             } else {
+               CacheEntry entry = context.lookupEntry(command.getKey());
+               if (entry == null) {
+                  if (command.loadType() == VisitableCommand.LoadType.OWNER) {
+                     return invokeNextAsync(context, command, remoteGet(context, command, command.getKey(), true));
+                  }
+                  entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
+               }
                return invokeNext(context, command);
             }
-         case NONE:
+         case NON_OWNER:
             //always local!
             assert context.isOriginLocal();
-            return localWriteInvocation(context, command, owners);
+            return localWriteInvocation(context, command, distributionInfo);
       }
       throw new IllegalStateException();
    }
 
    private BasicInvocationStage primaryOwnerWrite(InvocationContext context, DataWriteCommand command,
-         final List<Address> owners) {
+         final DistributionInfo distributionInfo) {
       //we are the primary owner. we need to execute the command, check if successful, send to backups and reply to originator is needed.
       if (command.hasFlag(Flag.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
@@ -227,11 +232,10 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             }
             return;
          }
-         final int size = owners.size();
-         if (size > 1) {
-            Collection<Address> backupOwners = owners.subList(1, size);
+         if (distributionInfo.owners().size() > 1) {
+            Collection<Address> backupOwners = distributionInfo.backups();
             if (rCtx.isOriginLocal() && (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected())) {
-               commandAckCollector.create(id, rv, owners, dwCommand.getTopologyId());
+               commandAckCollector.create(id, rv, distributionInfo.owners(), dwCommand.getTopologyId());
             }
             if (trace) {
                log.tracef("Command %s send to backup owner %s.", dwCommand.getCommandInvocationId(), backupOwners);
@@ -245,24 +249,18 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    private BasicInvocationStage localWriteInvocation(InvocationContext context, DataWriteCommand command,
-         List<Address> owners) {
+                                                     DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
       if ((isSynchronous(command) || command.isReturnValueExpected()) &&
             !command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-         commandAckCollector.create(invocationId, owners, command.getTopologyId());
+         commandAckCollector.create(invocationId, distributionInfo.owners(), command.getTopologyId());
       }
       if (command.hasFlag(Flag.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
-      rpcManager.sendTo(owners.get(0), command, DeliverOrder.NONE);
+      rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
       return returnWith(null);
-   }
-
-   private void checkTopology(int commandTopologyId, int currentTopologyId) {
-      if (commandTopologyId != -1 && commandTopologyId != currentTopologyId) {
-         throw OutdatedTopologyException.getCachedInstance();
-      }
    }
 
    /**

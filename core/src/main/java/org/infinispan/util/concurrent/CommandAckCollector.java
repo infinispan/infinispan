@@ -373,7 +373,7 @@ public class CommandAckCollector {
 
    private static class MultiKeyCollector implements Collector<Map<Object, Object>> {
       private final CommandInvocationId id;
-      private final Map<Object, Object> returnValue;
+      private Map<Object, Object> returnValue;
       private final Collection<Address> primary;
       private final Map<Address, Collection<Integer>> backups;
       private final CompletableFuture<Map<Object, Object>> future;
@@ -383,7 +383,7 @@ public class CommandAckCollector {
             int topologyId) {
          this.id = id;
          this.topologyId = topologyId;
-         this.returnValue = new HashMap<>();
+         this.returnValue = null;
          this.backups = backups;
          this.primary = new HashSet<>(primary);
          future = new CompletableFuture<>();
@@ -434,7 +434,12 @@ public class CommandAckCollector {
          if (this.topologyId != topologyId) {
             return;
          }
-         this.returnValue.putAll(returnValue);
+         if (returnValue != null) {
+            if (this.returnValue == null) {
+               this.returnValue = new HashMap<>(returnValue.size());
+            }
+            this.returnValue.putAll(returnValue);
+         }
          if (primary.remove(from)) {
             checkCompleted();
          }
@@ -465,7 +470,7 @@ public class CommandAckCollector {
       }
 
       private void doCompleteExceptionally(Throwable throwable) {
-         returnValue.clear();
+         returnValue = null;
          primary.clear();
          backups.clear();
          future.completeExceptionally(throwable);
