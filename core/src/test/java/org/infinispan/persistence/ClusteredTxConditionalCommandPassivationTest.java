@@ -3,6 +3,7 @@ package org.infinispan.persistence;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import org.infinispan.distribution.Ownership;
 import org.testng.annotations.Test;
 
 /**
@@ -24,19 +25,24 @@ public class ClusteredTxConditionalCommandPassivationTest extends ClusteredCondi
    @Override
    protected <K, V> void assertLoadAfterOperation(CacheHelper<K, V> cacheHelper, ConditionalOperation operation, Ownership ownership, boolean skipLoad) {
       switch (ownership) {
-         case PRIMARY_OWNER:
+         case PRIMARY:
             assertLoad(cacheHelper, skipLoad ? 0 : 1, 0, 0);
             break;
-         case BACKUP_OWNER:
+         case BACKUP:
             assertLoad(cacheHelper, 0, skipLoad ? 0 : 1, 0);
             break;
          case NON_OWNER:
-            if (!skipLoad) {
-               assertTrue("any owner load", cacheHelper.loads(Ownership.PRIMARY_OWNER) +
-                     cacheHelper.loads(Ownership.BACKUP_OWNER) >= 1);
-               assertEquals("non owner load", 0, cacheHelper.loads(Ownership.NON_OWNER));
-            } else {
+            if (skipLoad) {
                assertLoad(cacheHelper, 0, 0, 0);
+            } else {
+               // The entry is loaded into DC upon the initial value retrieval (ClusteredGetCommand).
+               // It gets loaded all the time on primary, but if the response to the retrieval does not
+               // come soon enough, staggered logic sends second retrieval to backup owner, so it's possible
+               // that both owners load once.
+               assertEquals("primary owner load", 1, cacheHelper.loads(Ownership.PRIMARY));
+               long backupLoads = cacheHelper.loads(Ownership.BACKUP);
+               assertTrue("backup owner load: " + backupLoads, backupLoads <= 1);
+               assertEquals("non owner load", 0, cacheHelper.loads(Ownership.NON_OWNER));
             }
             break;
       }

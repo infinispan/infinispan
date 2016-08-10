@@ -5,11 +5,9 @@ import org.jgroups.Address;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -42,7 +40,10 @@ public class Responses implements Iterable<Rsp<Response>> {
       int i = 0;
       for (Rsp<Response> rsp : results) {
          addresses[i] = rsp.getSender();
-         responses.set(i, rsp);
+         // keep non-received response as null
+         if (rsp.wasReceived() || rsp.wasSuspected() || rsp.wasUnreachable()) {
+            responses.set(i, rsp);
+         }
          ++i;
       }
    }

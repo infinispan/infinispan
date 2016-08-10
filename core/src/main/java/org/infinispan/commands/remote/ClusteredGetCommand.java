@@ -6,11 +6,11 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -30,13 +30,14 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClusteredGetCommand extends BaseClusteredReadCommand {
+public class ClusteredGetCommand extends BaseClusteredReadCommand implements TopologyAffectedCommand {
 
    public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private Object key;
+   private int topologyId = -1;
 
    private InvocationContextFactory icf;
    private CommandsFactory commandsFactory;
@@ -78,24 +79,23 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
    public CompletableFuture<Object> invokeAsync() throws Throwable {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
-      long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
+      // CACHE_MODE_LOCAL is not used as it can be used when we want to ignore the ownership with respect to reads
+      long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
+      command.setTopologyId(topologyId);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
       return future.thenApply(rv -> {
-         CacheEntry cacheEntry = (CacheEntry) rv;
-         if (cacheEntry == null) {
-            if (trace) log.trace("Did not find anything, returning null");
-            return null;
-         }
          //this might happen if the value was fetched from a cache loader
-         if (cacheEntry instanceof MVCCEntry) {
+         if (rv instanceof MVCCEntry) {
             if (trace) log.trace("Handling an internal cache entry...");
-            MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
+            MVCCEntry mvccEntry = (MVCCEntry) rv;
             return entryFactory.createValue(mvccEntry);
-         } else {
-            InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
+         } else if (rv instanceof InternalCacheEntry) {
+            InternalCacheEntry internalCacheEntry = (InternalCacheEntry) rv;
             return internalCacheEntry.toInternalCacheValue();
+         } else {
+            return rv;
          }
       });
    }
@@ -173,5 +173,15 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
    @Override
    public boolean canBlock() {
       return false;
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
    }
 }

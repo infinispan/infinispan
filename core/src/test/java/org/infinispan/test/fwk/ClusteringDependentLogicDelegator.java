@@ -50,6 +50,11 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
+   public Commit shouldCommit(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
+      return clusteringDependentLogic.shouldCommit(command, ctx, key, removed);
+   }
+
+   @Override
    public List<Address> getOwners(Collection<Object> keys) {
       return clusteringDependentLogic.getOwners(keys);
    }

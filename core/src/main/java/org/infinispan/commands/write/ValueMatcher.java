@@ -32,7 +32,7 @@ public enum ValueMatcher {
     */
    MATCH_ALWAYS() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
          return true;
       }
 
@@ -53,8 +53,8 @@ public enum ValueMatcher {
     */
    MATCH_EXPECTED() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return equal(extractValue(existingEntry), expectedValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+         return equal(existingValue, expectedValue, valueEquivalence);
       }
 
       @Override
@@ -73,9 +73,9 @@ public enum ValueMatcher {
     */
    MATCH_EXPECTED_OR_NEW() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return equal(extractValue(existingEntry), expectedValue, valueEquivalence) ||
-               equal(extractValue(existingEntry), newValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+         return equal(existingValue, expectedValue, valueEquivalence) ||
+               equal(existingValue, newValue, valueEquivalence);
       }
 
       @Override
@@ -91,8 +91,8 @@ public enum ValueMatcher {
 
    MATCH_EXPECTED_OR_NULL() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return newValue == null || equal(extractValue(existingEntry), expectedValue, valueEquivalence);
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+         return newValue == null || equal(existingValue, expectedValue, valueEquivalence);
       }
 
       @Override
@@ -110,8 +110,8 @@ public enum ValueMatcher {
     */
    MATCH_NON_NULL() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
-         return extractValue(existingEntry) != null;
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+         return existingValue != null;
       }
 
       @Override
@@ -130,7 +130,7 @@ public enum ValueMatcher {
     */
    MATCH_NEVER() {
       @Override
-      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+      public boolean matches(Object existingValue, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
          return false;
       }
 
@@ -145,8 +145,8 @@ public enum ValueMatcher {
       }
    },;
 
-   public abstract boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue,
-                          Equivalence valueEquivalence);
+   public abstract boolean matches(Object existingValue, Object expectedValue, Object newValue,
+                                   Equivalence valueEquivalence);
 
    public abstract boolean nonExistentEntryCanMatch();
 

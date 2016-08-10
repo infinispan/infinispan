@@ -105,8 +105,8 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    public String getGroupName() {

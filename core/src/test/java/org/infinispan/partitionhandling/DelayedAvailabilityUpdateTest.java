@@ -2,15 +2,19 @@ package org.infinispan.partitionhandling;
 
 import static org.infinispan.test.TestingUtil.extractComponentRegistry;
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.fail;
+
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.concurrent.StateSequencer;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -18,6 +22,16 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "partitionhandling.DelayedAvailabilityUpdateTest")
 public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
    private static final Log log = LogFactory.getLog(DelayedAvailabilityUpdateTest.class);
+
+   @Override
+   protected ConfigurationBuilder cacheConfiguration() {
+      // With default timeout (15 s), waiting for TimeoutException in assertPartiallyAvailable
+      // takes too long (30 s because we wait for both existing and missing key), and this
+      // hits the default timeout in StateSequencer
+      ConfigurationBuilder configurationBuilder = super.cacheConfiguration();
+      configurationBuilder.clustering().remoteTimeout(5, TimeUnit.SECONDS);
+      return configurationBuilder;
+   }
 
    public void testDelayedAvailabilityUpdate0() throws Exception {
       testDelayedAvailabilityUpdate(new PartitionDescriptor(0, 1), new PartitionDescriptor(2, 3));
@@ -98,12 +112,9 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
 
    private void assertPartiallyAvailable(PartitionDescriptor p0, Object k3Existing, Object value) {
       assertEquals(value, cache(p0.node(0)).get(k3Existing));
-      try {
-         cache(p0.node(1)).get(k3Existing);
-         fail("Should have failed, cache " + cache(p0.node(1)) + " is in degraded mode");
-      } catch (AvailabilityException e) {
-         // Expected
-      }
+      // cache(p0.node(0)) does not have new topology as we're blocking the availability update
+      // (and topology as well, in consequence) and therefore the command is delayed
+      Exceptions.expectException(TimeoutException.class, () -> cache(p0.node(1)).get(k3Existing));
    }
 
    @Listener

@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -24,15 +24,13 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.container.EntryFactory;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
@@ -63,16 +61,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private PartitionHandlingManager partitionHandlingManager;
 
-   private boolean useClusteredWriteSkewCheck;
-
    @Inject
    public void inject(PartitionHandlingManager partitionHandlingManager) {
       this.partitionHandlingManager = partitionHandlingManager;
-   }
-
-   @Start
-   public void start() {
-      useClusteredWriteSkewCheck = Configurations.isVersioningEnabled(cacheConfiguration);
    }
 
    @Override
@@ -81,8 +72,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private void updateMatcherForRetry(WriteCommand command) {
-      // TODO Not sure if this is really necessary, tx write commands should never be replicated to other nodes
-      // If the state transfer interceptor has to retry the command, it should ignore the previous value.
+      // The command is already included in PrepareCommand.modifications - when the command is executed on the remote
+      // owners it should not behave conditionally anymore because its success/failure is defined on originator.
       command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
    }
 
@@ -102,6 +93,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      // remote commands are replayed in EWI
+      if (ctx.isOriginLocal()) {
+         wrapMissingWrittenKeysAsNull(ctx, command.getMap().keySet(), dm.getWriteConsistentHash(), rpcManager.getAddress());
+      }
       // don't bother with a remote get for the PutMapCommand!
       return invokeNext(ctx, command);
    }
@@ -265,57 +260,28 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   private InvocationStage handleTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command, Object key)
-         throws Throwable {
-      // see if we need to load values from remote sources first
+   private InvocationStage handleTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command,
+         Object key) throws Throwable {
       try {
-         CompletableFuture<?> remoteGetFuture = remoteGetBeforeWrite(ctx, command, key, true);
-         InvocationStage stage;
-         if (remoteGetFuture == null) {
-            stage = invokeNext(ctx, command);
-         } else {
-            stage = invokeNextAsync(ctx, command, remoteGetFuture);
+         CacheEntry entry = ctx.lookupEntry(command.getKey());
+         if (entry == null) {
+            if (isLocalModeForced(command) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
+               // in transactional mode, we always need the entry wrapped
+               entryFactory.wrapExternalEntry(ctx, key, null, true, command.hasFlag(Flag.IGNORE_RETURN_VALUES));
+            } else {
+               // we need to retrieve the value locally regardless of execution type; in transactional mode all operations
+               // execute on origin
+               // Also, operations that need value on backup [delta write] need to do the remote lookup even on non-origin
+               return invokeNextAsync(ctx, command, remoteGet(ctx, command, true)).handle(
+                     (rCtx, rCommand, rv, t) -> updateMatcherForRetry((WriteCommand) rCommand));
+            }
          }
-
-         if (!ctx.isOriginLocal()) return stage;
-
-         return stage.handle((rCtx, rCommand, rv, t) -> updateMatcherForRetry((WriteCommand) rCommand));
+         // already wrapped, we can continue
+         return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> updateMatcherForRetry((WriteCommand) rCommand));
       } catch (Throwable t) {
          updateMatcherForRetry(command);
          throw t;
       }
-   }
-
-   @Override
-   protected boolean writeNeedsRemoteValue(InvocationContext ctx, WriteCommand command, Object key) {
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         return false;
-      }
-      if (ctx.isOriginLocal()) {
-         // The return value only matters on the originator.
-         // Conditional commands also check the previous value only on the originator.
-         if (!command.readsExistingValues()) {
-            return false;
-         }
-         // TODO Could make DELTA_WRITE/ApplyDeltaCommand override SKIP_REMOTE_LOOKUP by changing next line to
-         // return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || command.alwaysReadsExistingValues();
-         return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP);
-      } else {
-         // Ignore SKIP_REMOTE_LOOKUP on remote nodes
-         // TODO Can we ignore the CACHE_MODE_LOCAL flag as well?
-         return command.alwaysReadsExistingValues();
-      }
-   }
-
-   @Override
-   protected CompletableFuture<?> remoteGet(InvocationContext ctx, AbstractDataCommand command, Object key, boolean isWrite) throws Throwable {
-      // attempt a remote lookup
-      return retrieveFromProperSource(key, ctx, command, isWrite).thenAccept(ice -> {
-         if (ice != null) {
-            EntryFactory.Wrap wrap = isWrite ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
-            entryFactory.wrapExternalEntry(ctx, key, ice, wrap, false);
-         }
-      });
    }
 
    private RpcOptions createCommitRpcOptions() {

@@ -30,13 +30,13 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
    @Override
    protected MVCCEntry createWrappedEntry(Object key, CacheEntry cacheEntry, InvocationContext context,
                                           boolean skipRead) {
-      Metadata metadata;
-      Object value;
+      Metadata metadata = null;
+      Object value = null;
       if (cacheEntry != null) {
          value = cacheEntry.getValue();
          metadata = cacheEntry.getMetadata(); // take the metadata in memory
-      } else {
-         value = null;
+      }
+      if (metadata == null) {
          metadata = new EmbeddedMetadata.Builder().version(versionGenerator.nonExistingVersion()).build();
       }
 
@@ -45,34 +45,37 @@ public class IncrementalVersionableEntryFactoryImpl extends EntryFactoryImpl {
       }
 
       //only the ClusteredRepeatableReadEntry are used, even to represent the null values.
-      return new ClusteredRepeatableReadEntry(key, value, metadata);
+      ClusteredRepeatableReadEntry mvccEntry = new ClusteredRepeatableReadEntry(key, value, metadata);
+      mvccEntry.setSkipLookup(cacheEntry == null ? false : cacheEntry.skipLookup());
+      return mvccEntry;
    }
 
    @Override
-   public boolean wrapExternalEntry(InvocationContext ctx, Object key, CacheEntry externalEntry, Wrap wrap,
+   public boolean wrapExternalEntry(InvocationContext ctx, Object key, CacheEntry externalEntry, boolean isWrite,
                                     boolean skipRead) {
-      boolean added = super.wrapExternalEntry(ctx, key, externalEntry, wrap, skipRead);
-      if (added) {
-         if (ctx.isOriginLocal() && ctx.isInTxScope()) {
-            if (externalEntry != null) {
-               EntryVersion version = externalEntry.getMetadata().version();
-               ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(key, version);
-            }
-         }
+      boolean added = super.wrapExternalEntry(ctx, key, externalEntry, isWrite, skipRead);
+      // TODO: if super.wrapExternalEntry calls createWrappedEntry we set the seen version twice
+      if (added && ctx.isInTxScope() && !skipRead) {
+         Metadata metadata = externalEntry == null ? null : externalEntry.getMetadata();
+         EntryVersion version = metadata == null ? versionGenerator.nonExistingVersion() : metadata.version();
+         ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(key, version);
       }
       return added;
    }
 
    private void addReadVersion(Object key, CacheEntry cacheEntry, InvocationContext context,
                                Metadata metadata) {
-      if (context.isOriginLocal() && context.isInTxScope()) {
+      if (context.isInTxScope()) {
+         // Difficulties appear here when wrapping entry for write and the entry is not in DC but in cache store.
+         // The actual read version should be set by persistence so we have to replace the version on the call
+         // from cache loader. Callers have to make sure that this is not called for repeatable reads.
          EntryVersion version;
-         if (cacheEntry != null)
+         if (cacheEntry != null) {
             version = metadata.version();
-         else {
+         } else {
             version = versionGenerator.nonExistingVersion();
          }
-         ((TxInvocationContext) context).getCacheTransaction().addVersionRead(key, version);
+         ((TxInvocationContext) context).getCacheTransaction().replaceVersionRead(key, version);
       }
    }
 }

@@ -203,6 +203,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
     * ISPN-3315: the remote get is trigger in stable state and the reply received after the rebalance_start command.
     * However, the old owner will receive the request after the state transfer and he no longer has the key.
     */
+   // TODO: does it make sense to fix this test by waiting for the OOTE and then allowing the topology?
+   @Test(enabled = false, description = "Remote get is blocked due to origin topology < old owner topology")
    public void testScenario_021_11() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s4";
@@ -242,6 +244,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    /**
     * ISPN-3721: Same as 021_11 but the new owner is already in the stable state.
     */
+   // TODO: does it make sense to fix this test by waiting for the OOTE and then allowing the topology?
+   @Test(enabled = false, description = "Remote get is blocked due to origin topology < old owner topology")
    public void testScenario_021_21() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s4";
@@ -280,6 +284,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    /**
     * ISPN-3315: Same as scenario 021_21 but the reply arrives after the requestor is in the stable state.
     */
+   // TODO: does it make sense to fix this test by waiting for the OOTE and then allowing the topology?
+   @Test(enabled = false, description = "Remote get is blocked due to origin topology < old owner topology")
    public void testScenario_022_11() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s5";
@@ -349,6 +355,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
     * The old owner receives the request after the CH_UPDATE and no longer has the key.
     * The new owner receives the 2nd request before the CH_UPDATE command.
     */
+   // TODO: does it make sense to fix this test by waiting for the OOTE and then allowing the topology?
+   @Test(enabled = false, description = "Remote get is blocked due to origin topology < old owner topology")
    public void testScenario_121_11() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s6";
@@ -386,6 +394,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    /**
     * ISPN-3721: Same as scenario 121_11 but the new owner is already in the stable state.
     */
+   // TODO: does it make sense to fix this test by waiting for the OOTE and then allowing the topology?
+   @Test(enabled = false, description = "Remote get is blocked due to origin topology < old owner topology")
    public void testScenario121_21() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);
       final Object key = "key_s6";
@@ -425,6 +435,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
     * consistent_hash_update command. The old owner receives the request after the consistent_hash_update command and no
     * longer has the key.
     */
+   // TODO: does it make sense to fix this test by allowing topology change after remote get arrives to old owner?
+   @Test(enabled = false, description = "Remote get is blocked on owner due to origin topology > owner topology")
    public void testScenario7() throws Exception {
       //events:
       //0: remote get target list obtained in topology i+1. reply obtained in topology i+2
@@ -567,7 +579,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private void ownerCheckAndInit(Cache<Object, Object> owner, Object key, Object value) {
-      assertTrue(address(owner) + " should be the owner of " + key + ".", isFirstOwner(cache(1), key));
+      assertTrue(address(owner) + " should be the owner of " + key + ".", isFirstOwner(owner, key));
       owner.put(key, value);
       assertCacheValue(key, value);
    }

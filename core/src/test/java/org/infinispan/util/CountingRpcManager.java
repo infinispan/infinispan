@@ -39,7 +39,7 @@ public class CountingRpcManager extends AbstractControlledRpcManager {
    }
 
    @Override
-   protected void beforeInvokeRemotely(ReplicableCommand rpcCommand) {
+   protected Object beforeInvokeRemotely(ReplicableCommand rpcCommand) {
       if (rpcCommand instanceof LockControlCommand) {
          lockCount++;
       } else if (rpcCommand instanceof ClusteredGetCommand) {
@@ -47,5 +47,6 @@ public class CountingRpcManager extends AbstractControlledRpcManager {
       } else {
          otherCount++;
       }
+      return null;
    }
 }

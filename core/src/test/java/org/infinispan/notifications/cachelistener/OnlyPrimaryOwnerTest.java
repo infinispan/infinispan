@@ -90,6 +90,11 @@ public class OnlyPrimaryOwnerTest {
       }
 
       @Override
+      public Commit shouldCommit(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed) {
+         return isOwner ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
+      }
+
+      @Override
       public List<Address> getOwners(Collection<Object> keys) {
          throw new UnsupportedOperationException();
       }

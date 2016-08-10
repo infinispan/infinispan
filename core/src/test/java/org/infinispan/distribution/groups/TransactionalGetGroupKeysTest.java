@@ -140,8 +140,7 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
 
       testCache.primaryOwner.put(key(1), value(-1));
 
-      if ((factory == TestCacheFactory.PRIMARY_OWNER || factory == TestCacheFactory.BACKUP_OWNER) &&
-            isolationLevel == IsolationLevel.READ_COMMITTED) {
+      if (isolationLevel == IsolationLevel.READ_COMMITTED) {
          //in ReadCommitted the entries are not wrapped (for read). So the changes are made immediately visible.
          expectedGroupSet.put(key(1), value(-1));
       }

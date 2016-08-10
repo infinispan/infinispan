@@ -98,7 +98,7 @@ public class PessimistTxFailureAfterLockingTest extends MultipleCacheManagersTes
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
+      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
          if (command instanceof LockControlCommand) {
             throw new TimeoutException("Exception expected!");
          }

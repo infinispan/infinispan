@@ -341,15 +341,18 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                theFuture.completeExceptionally(throwable);
             }
             rsps.addResponse(rsp);
-            // Do not fail the request if one response is suspected/unreachable
-            if (rsp.wasReceived() && (filter == null || filter.isAcceptable(rsp.getValue(), rsp.getSender()))) {
+            // It is possible that a response has not been received as the node got suspected. Ignore such response
+            // (either all nodes are suspected or we get a more meaningful response from another node).
+            if (rsp.wasReceived() && (filter == null || filter.isAcceptable(rsp.hasException() ? rsp.getException() : rsp.getValue(), rsp.getSender()))) {
                // We got an acceptable response
+               if (trace) log.tracef("Got acceptable response: " + rsps);
                theFuture.complete(rsps);
             } else {
                // We only give up after we've received invalid responses from all recipients,
                // even after the stagger timeout expired for them.
                if (!rsps.isMissingResponses()) {
                   // This was the last response, need to complete the future
+                  if (trace) log.tracef("No missing responses: " + rsps);
                   theFuture.complete(rsps);
                } else {
                   // The response was not acceptable, complete the timeout future to start the next request
@@ -384,6 +387,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
       if (timeService.isTimeExpired(deadline)) {
          rsps.setTimedOut();
+         if (trace) log.tracef("All requests timed out: " + rsps);
          theFuture.complete(rsps);
          return;
       }

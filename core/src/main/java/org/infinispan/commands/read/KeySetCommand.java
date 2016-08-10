@@ -48,8 +48,8 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      return null;
    }
 
    @Override

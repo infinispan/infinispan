@@ -16,6 +16,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -43,7 +44,6 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    private final String key = getClass().getSimpleName() + "-key";
    private final String value1 = getClass().getSimpleName() + "-value1";
    private final String value2 = getClass().getSimpleName() + "-value2";
-   private final boolean transactional;
    private final boolean passivation;
 
    public ClusteredConditionalCommandTest() {
@@ -86,10 +86,10 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          log.debugf("owners for key %s are %s", key, clusteringDependentLogic.getOwners(key));
          if (clusteringDependentLogic.localNodeIsPrimaryOwner(key)) {
             log.debug("Cache " + address(cache) + " is the primary owner");
-            assertTrue(cacheHelper.addCache(Ownership.PRIMARY_OWNER, cache));
+            assertTrue(cacheHelper.addCache(Ownership.PRIMARY, cache));
          } else if (clusteringDependentLogic.localNodeIsOwner(key)) {
             log.debug("Cache " + address(cache) + " is the backup owner");
-            assertTrue(cacheHelper.addCache(Ownership.BACKUP_OWNER, cache));
+            assertTrue(cacheHelper.addCache(Ownership.BACKUP, cache));
          } else {
             log.debug("Cache " + address(cache) + " is the non owner");
             assertTrue(cacheHelper.addCache(Ownership.NON_OWNER, cache));
@@ -120,19 +120,20 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
 
       assertLoadAfterOperation(cacheHelper, operation, ownership, skipLoad);
 
-      assertEquals(operation.finalValue(value1, value2, skipLoad), cacheHelper.cache(Ownership.PRIMARY_OWNER).get(key));
-      assertEquals(operation.finalValue(value1, value2, skipLoad), cacheHelper.cache(Ownership.BACKUP_OWNER).get(key));
+      assertEquals(operation.finalValue(value1, value2, skipLoad), cacheHelper.cache(Ownership.PRIMARY).get(key));
+      assertEquals(operation.finalValue(value1, value2, skipLoad), cacheHelper.cache(Ownership.BACKUP).get(key));
       //don't test in non_owner because it generates remote gets and they can cross tests causing random failures.
    }
 
    protected <K, V> void assertLoadAfterOperation(CacheHelper<K, V> cacheHelper, ConditionalOperation operation, Ownership ownership, boolean skipLoad) {
       //in non-transactional caches, only the primary owner will load from store
+      // backup will load only in case that it is origin (and needs previous value)
       assertLoad(cacheHelper, skipLoad ? 0 : 1, 0, 0);
    }
 
    protected final <K, V> void assertLoad(CacheHelper<K, V> cacheHelper, int primaryOwner, int backupOwner, int nonOwner) {
-      assertEquals("primary owner load", primaryOwner, cacheHelper.loads(Ownership.PRIMARY_OWNER));
-      assertEquals("backup owner load", backupOwner, cacheHelper.loads(Ownership.BACKUP_OWNER));
+      assertEquals("primary owner load", primaryOwner, cacheHelper.loads(Ownership.PRIMARY));
+      assertEquals("backup owner load", backupOwner, cacheHelper.loads(Ownership.BACKUP));
       assertEquals("non owner load", nonOwner, cacheHelper.loads(Ownership.NON_OWNER));
    }
 
@@ -144,20 +145,20 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
 
    private void initStore(CacheHelper<String, String> cacheHelper, boolean shared) {
       if (shared) {
-         writeToStore(cacheHelper, Ownership.PRIMARY_OWNER, key, value1);
-         assertTrue(cacheHelper.cacheStore(Ownership.PRIMARY_OWNER).contains(key));
-         assertTrue(cacheHelper.cacheStore(Ownership.BACKUP_OWNER).contains(key));
+         writeToStore(cacheHelper, Ownership.PRIMARY, key, value1);
+         assertTrue(cacheHelper.cacheStore(Ownership.PRIMARY).contains(key));
+         assertTrue(cacheHelper.cacheStore(Ownership.BACKUP).contains(key));
          assertTrue(cacheHelper.cacheStore(Ownership.NON_OWNER).contains(key));
       } else {
-         writeToStore(cacheHelper, Ownership.PRIMARY_OWNER, key, value1);
-         writeToStore(cacheHelper, Ownership.BACKUP_OWNER, key, value1);
-         assertTrue(cacheHelper.cacheStore(Ownership.PRIMARY_OWNER).contains(key));
-         assertTrue(cacheHelper.cacheStore(Ownership.BACKUP_OWNER).contains(key));
+         writeToStore(cacheHelper, Ownership.PRIMARY, key, value1);
+         writeToStore(cacheHelper, Ownership.BACKUP, key, value1);
+         assertTrue(cacheHelper.cacheStore(Ownership.PRIMARY).contains(key));
+         assertTrue(cacheHelper.cacheStore(Ownership.BACKUP).contains(key));
          assertFalse(cacheHelper.cacheStore(Ownership.NON_OWNER).contains(key));
       }
 
-      cacheHelper.resetStats(Ownership.PRIMARY_OWNER);
-      cacheHelper.resetStats(Ownership.BACKUP_OWNER);
+      cacheHelper.resetStats(Ownership.PRIMARY);
+      cacheHelper.resetStats(Ownership.BACKUP);
       cacheHelper.resetStats(Ownership.NON_OWNER);
    }
 
@@ -178,51 +179,51 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    }
 
    public void testPutIfAbsentOnPrimaryOwnerWithSkipCacheLoaderShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY_OWNER, Flag.SKIP_CACHE_LOAD, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY, Flag.SKIP_CACHE_LOAD, true);
    }
 
    public void testPutIfAbsentOnPrimaryOwnerWithSkipCacheLoader() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY_OWNER, Flag.SKIP_CACHE_LOAD, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY, Flag.SKIP_CACHE_LOAD, false);
    }
 
    public void testPutIfAbsentOnPrimaryOwnerWithIgnoreReturnValuesShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY_OWNER, Flag.IGNORE_RETURN_VALUES, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY, Flag.IGNORE_RETURN_VALUES, true);
    }
 
    public void testPutIfAbsentOnPrimaryOwnerWithIgnoreReturnValues() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY_OWNER, Flag.IGNORE_RETURN_VALUES, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY, Flag.IGNORE_RETURN_VALUES, false);
    }
 
    public void testPutIfAbsentOnPrimaryOwnerShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY_OWNER, null, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY, null, true);
    }
 
    public void testPutIfAbsentOnPrimaryOwner() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY_OWNER, null, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.PRIMARY, null, false);
    }
 
    public void testPutIfAbsentOnBackupOwnerWithSkipCacheLoaderShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP_OWNER, Flag.SKIP_CACHE_LOAD, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP, Flag.SKIP_CACHE_LOAD, true);
    }
 
    public void testPutIfAbsentOnBackupOwnerWithSkipCacheLoader() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP_OWNER, Flag.SKIP_CACHE_LOAD, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP, Flag.SKIP_CACHE_LOAD, false);
    }
 
    public void testPutIfAbsentOnBackupOwnerWithIgnoreReturnValuesShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP_OWNER, Flag.IGNORE_RETURN_VALUES, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP, Flag.IGNORE_RETURN_VALUES, true);
    }
 
    public void testPutIfAbsentOnBackupOwnerWithIgnoreReturnValues() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP_OWNER, Flag.IGNORE_RETURN_VALUES, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP, Flag.IGNORE_RETURN_VALUES, false);
    }
 
    public void testPutIfAbsentOnBackupOwnerShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP_OWNER, null, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP, null, true);
    }
 
    public void testPutIfAbsentOnBackupOwner() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP_OWNER, null, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.PUT_IF_ABSENT, Ownership.BACKUP, null, false);
    }
 
    public void testPutIfAbsentOnNonOwnerWithSkipCacheLoaderShared() {
@@ -250,51 +251,51 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    }
 
    public void testReplaceOnPrimaryOwnerWithSkipCacheLoaderShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY_OWNER, Flag.SKIP_CACHE_LOAD, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY, Flag.SKIP_CACHE_LOAD, true);
    }
 
    public void testReplaceOnPrimaryOwnerWithSkipCacheLoader() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY_OWNER, Flag.SKIP_CACHE_LOAD, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY, Flag.SKIP_CACHE_LOAD, false);
    }
 
    public void testReplaceOnPrimaryOwnerWithIgnoreReturnValuesShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY_OWNER, Flag.IGNORE_RETURN_VALUES, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY, Flag.IGNORE_RETURN_VALUES, true);
    }
 
    public void testReplaceOnPrimaryOwnerWithIgnoreReturnValues() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY_OWNER, Flag.IGNORE_RETURN_VALUES, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY, Flag.IGNORE_RETURN_VALUES, false);
    }
 
    public void testReplaceOnPrimaryOwnerShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY_OWNER, null, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY, null, true);
    }
 
    public void testReplaceOnPrimaryOwner() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY_OWNER, null, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.PRIMARY, null, false);
    }
 
    public void testReplaceOnBackupOwnerWithSkipCacheLoaderShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP_OWNER, Flag.SKIP_CACHE_LOAD, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP, Flag.SKIP_CACHE_LOAD, true);
    }
 
    public void testReplaceOnBackupOwnerWithSkipCacheLoader() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP_OWNER, Flag.SKIP_CACHE_LOAD, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP, Flag.SKIP_CACHE_LOAD, false);
    }
 
    public void testReplaceOnBackupOwnerWithIgnoreReturnValuesShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP_OWNER, Flag.IGNORE_RETURN_VALUES, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP, Flag.IGNORE_RETURN_VALUES, true);
    }
 
    public void testReplaceOnBackupOwnerWithIgnoreReturnValues() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP_OWNER, Flag.IGNORE_RETURN_VALUES, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP, Flag.IGNORE_RETURN_VALUES, false);
    }
 
    public void testReplaceOnBackupOwnerShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP_OWNER, null, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP, null, true);
    }
 
    public void testReplaceOnBackupOwner() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP_OWNER, null, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE, Ownership.BACKUP, null, false);
    }
 
    public void testReplaceOnNonOwnerWithSkipCacheLoaderShared() {
@@ -322,51 +323,51 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    }
 
    public void testReplaceIfOnPrimaryOwnerWithSkipCacheLoaderShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY_OWNER, Flag.SKIP_CACHE_LOAD, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY, Flag.SKIP_CACHE_LOAD, true);
    }
 
    public void testReplaceIfOnPrimaryOwnerWithSkipCacheLoader() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY_OWNER, Flag.SKIP_CACHE_LOAD, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY, Flag.SKIP_CACHE_LOAD, false);
    }
 
    public void testReplaceIfOnPrimaryOwnerWithIgnoreReturnValuesShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY_OWNER, Flag.IGNORE_RETURN_VALUES, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY, Flag.IGNORE_RETURN_VALUES, true);
    }
 
    public void testReplaceIfOnPrimaryOwnerWithIgnoreReturnValues() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY_OWNER, Flag.IGNORE_RETURN_VALUES, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY, Flag.IGNORE_RETURN_VALUES, false);
    }
 
    public void testReplaceIfOnPrimaryOwnerShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY_OWNER, null, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY, null, true);
    }
 
    public void testReplaceIfOnPrimaryOwner() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY_OWNER, null, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.PRIMARY, null, false);
    }
 
    public void testReplaceIfOnBackupOwnerWithSkipCacheLoaderShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP_OWNER, Flag.SKIP_CACHE_LOAD, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP, Flag.SKIP_CACHE_LOAD, true);
    }
 
    public void testReplaceIfOnBackupOwnerWithSkipCacheLoader() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP_OWNER, Flag.SKIP_CACHE_LOAD, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP, Flag.SKIP_CACHE_LOAD, false);
    }
 
    public void testReplaceIfOnBackupOwnerWithIgnoreReturnValuesShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP_OWNER, Flag.IGNORE_RETURN_VALUES, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP, Flag.IGNORE_RETURN_VALUES, true);
    }
 
    public void testReplaceIfOnBackupOwnerWithIgnoreReturnValues() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP_OWNER, Flag.IGNORE_RETURN_VALUES, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP, Flag.IGNORE_RETURN_VALUES, false);
    }
 
    public void testReplaceIfOnBackupOwnerShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP_OWNER, null, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP, null, true);
    }
 
    public void testReplaceIfOnBackupOwner() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP_OWNER, null, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REPLACE_IF, Ownership.BACKUP, null, false);
    }
 
    public void testReplaceIfOnNonOwnerWithSkipCacheLoaderShared() {
@@ -394,51 +395,51 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    }
 
    public void testRemoveIfOnPrimaryOwnerWithSkipCacheLoaderShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY_OWNER, Flag.SKIP_CACHE_LOAD, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY, Flag.SKIP_CACHE_LOAD, true);
    }
 
    public void testRemoveIfOnPrimaryOwnerWithSkipCacheLoader() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY_OWNER, Flag.SKIP_CACHE_LOAD, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY, Flag.SKIP_CACHE_LOAD, false);
    }
 
    public void testRemoveIfOnPrimaryOwnerWithIgnoreReturnValuesShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY_OWNER, Flag.IGNORE_RETURN_VALUES, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY, Flag.IGNORE_RETURN_VALUES, true);
    }
 
    public void testRemoveIfOnPrimaryOwnerWithIgnoreReturnValues() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY_OWNER, Flag.IGNORE_RETURN_VALUES, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY, Flag.IGNORE_RETURN_VALUES, false);
    }
 
    public void testRemoveIfOnPrimaryOwnerShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY_OWNER, null, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY, null, true);
    }
 
    public void testRemoveIfOnPrimaryOwner() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY_OWNER, null, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.PRIMARY, null, false);
    }
 
    public void testRemoveIfOnBackupOwnerWithSkipCacheLoaderShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP_OWNER, Flag.SKIP_CACHE_LOAD, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP, Flag.SKIP_CACHE_LOAD, true);
    }
 
    public void testRemoveIfOnBackupOwnerWithSkipCacheLoader() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP_OWNER, Flag.SKIP_CACHE_LOAD, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP, Flag.SKIP_CACHE_LOAD, false);
    }
 
    public void testRemoveIfOnBackupOwnerWithIgnoreReturnValuesShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP_OWNER, Flag.IGNORE_RETURN_VALUES, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP, Flag.IGNORE_RETURN_VALUES, true);
    }
 
    public void testRemoveIfOnBackupOwnerWithIgnoreReturnValues() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP_OWNER, Flag.IGNORE_RETURN_VALUES, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP, Flag.IGNORE_RETURN_VALUES, false);
    }
 
    public void testRemoveIfOnBackupOwnerShared() {
-      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP_OWNER, null, true);
+      doTest(this.caches(SHARED_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP, null, true);
    }
 
    public void testRemoveIfOnBackupOwner() {
-      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP_OWNER, null, false);
+      doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.BACKUP, null, false);
    }
 
    public void testRemoveIfOnNonOwnerWithSkipCacheLoaderShared() {
@@ -463,12 +464,6 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
 
    public void testRemoveIfOnNonOwner() {
       doTest(this.caches(PRIVATE_STORE_CACHE_NAME), ConditionalOperation.REMOVE_IF, Ownership.NON_OWNER, null, false);
-   }
-
-   protected enum Ownership {
-      PRIMARY_OWNER,
-      BACKUP_OWNER,
-      NON_OWNER
    }
 
    protected enum ConditionalOperation {
