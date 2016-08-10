@@ -39,19 +39,13 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
+   public LoadType loadType() {
+      return LoadType.OWNER;
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
-      if (entry == null || entry.isNull()) {
-         if (trace) {
-            log.trace("Entry not found");
-         }
-         return null;
-      }
       if (entry.isRemoved()) {
          if (trace) {
             log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());

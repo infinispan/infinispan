@@ -134,8 +134,8 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      throw new UnsupportedOperationException();
    }
 
    public boolean equals(Object o) {

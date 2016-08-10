@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Field;
@@ -15,22 +16,24 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.RemoteException;
-import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -42,6 +45,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -118,6 +122,22 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       cacheManagers.clear();
    }
 
+   public void testDelayed(Method m) {
+      initAndCheck(m);
+
+      CountDownLatch release = new CountDownLatch(1);
+      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(null, release), 0);
+
+      long requestStart = System.nanoTime();
+      assertEquals(m.getName(), cache(0).get(key));
+      long requestEnd = System.nanoTime();
+      long remoteTimeout = cache(0).getCacheConfiguration().clustering().remoteTimeout();
+      long delay = TimeUnit.NANOSECONDS.toMillis(requestEnd - requestStart);
+      assertTrue(delay < remoteTimeout);
+
+      release.countDown();
+   }
+
    public void testExceptionFromBothOwners(Method m) {
       initAndCheck(m);
 
@@ -156,15 +176,21 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
 
       CountDownLatch arrival = new CountDownLatch(2);
       CountDownLatch release = new CountDownLatch(1);
+      AtomicInteger thrown = new AtomicInteger();
+      AtomicInteger retried = new AtomicInteger();
+      cache(0).getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(new CheckOTEInterceptor(thrown, retried), StateTransferInterceptor.class);
       cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release), 0);
       cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release), 0);
 
-      Future<?> future = fork(() -> expectException(RpcException.class, () -> cache(0).get(key)));
+      Future<Object> future = fork(() -> cache(0).get(key));
       assertTrue(arrival.await(10, TimeUnit.SECONDS));
 
       installNewView(cache(0), cache(0));
 
-      future.get();
+      // The entry was lost, so we'll get null
+      assertNull(future.get());
+      assertEquals(1, thrown.get());
+      assertEquals(1, retried.get());
       release.countDown();
    }
 
@@ -297,6 +323,27 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
          // the timeout has to be longer than remoteTimeout!
          release.await(30, TimeUnit.SECONDS);
          return super.visitGetCacheEntryCommand(ctx, command);
+      }
+   }
+
+   private class CheckOTEInterceptor extends DDAsyncInterceptor {
+      private final AtomicInteger thrown;
+      private final AtomicInteger retried;
+
+      public CheckOTEInterceptor(AtomicInteger thrown, AtomicInteger retried) {
+         this.thrown = thrown;
+         this.retried = retried;
+      }
+
+      @Override
+      public BasicInvocationStage visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         if (command.hasFlag(Flag.COMMAND_RETRY)) {
+            retried.incrementAndGet();
+         }
+         return invokeNext(ctx, command).exceptionally((rCtx, rCommand, t) -> {
+            thrown.incrementAndGet();
+            throw t;
+         });
       }
    }
 }

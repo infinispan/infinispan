@@ -78,8 +78,8 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return false;
+   public LoadType loadType() {
+      throw new UnsupportedOperationException();
    }
 
    @Override

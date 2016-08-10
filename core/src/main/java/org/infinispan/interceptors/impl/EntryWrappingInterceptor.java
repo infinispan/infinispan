@@ -2,8 +2,8 @@ package org.infinispan.interceptors.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
+import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +45,9 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.NullCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
@@ -65,17 +67,21 @@ import org.infinispan.interceptors.InvocationSuccessHandler;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
 
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.
+ *
+ * @see EntryFactory for overview of entry wrapping.
  *
  * @author Mircea Markus
  * @author Pedro Ruivo
@@ -85,9 +91,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private EntryFactory entryFactory;
    private DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
+   private VersionGenerator versionGenerator;
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
-   private CommandsFactory commandFactory;
-   private boolean isUsingLockDelegation;
    private boolean isInvalidation;
    private boolean isSync;
    private StateConsumer stateConsumer;       // optional
@@ -97,47 +102,41 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private CacheNotifier notifier;
    private StateTransferManager stateTransferManager;
    private Address localAddress;
+   private boolean useRepeatableRead;
+   private boolean writeSkewCheck;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final EnumSet<Flag> EVICT_FLAGS =
          EnumSet.of(Flag.SKIP_OWNERSHIP_CHECK, Flag.CACHE_MODE_LOCAL);
 
-   private final InvocationFinallyHandler dataReadReturnHandler = new InvocationFinallyHandler() {
-      @Override
-      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
-         AbstractDataCommand command1 = (AbstractDataCommand) rCommand;
+   private final InvocationSuccessHandler dataReadReturnHandler = (rCtx, rCommand, rv) -> {
+      AbstractDataCommand dataCommand = (AbstractDataCommand) rCommand;
 
-         // TODO needed because entries might be added in L1?
-         if (!rCtx.isInTxScope()) {
-            commitContextEntries(rCtx, command1, null);
-         } else {
-            setSkipLookup(rCtx, command1.getKey());
-         }
-
-         // Entry visit notifications used to happen in the CallInterceptor
-         // We do it after (maybe) committing the entries, to avoid adding another try/finally block
-         if (t == null && rv != null) {
-            Object value = command1 instanceof GetCacheEntryCommand ? ((CacheEntry) rv).getValue() : rv;
-            notifier.notifyCacheEntryVisited(command1.getKey(), value, true, rCtx, command1);
-            notifier.notifyCacheEntryVisited(command1.getKey(), value, false, rCtx, command1);
+      // TODO needed because entries might be added in L1?
+      if (!rCtx.isInTxScope()) {
+         commitContextEntries(rCtx, dataCommand, null);
+      } else if (useRepeatableRead) {
+         // The entry must be in the context
+         CacheEntry cacheEntry = rCtx.lookupEntry(dataCommand.getKey());
+         cacheEntry.setSkipLookup(true);
+         if (writeSkewCheck) {
+            addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataCommand.getKey());
          }
       }
-   };
 
-   private final InvocationSuccessHandler commitEntriesSuccessHandler = new InvocationSuccessHandler() {
-      @Override
-      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
-         commitContextEntries(rCtx, null, null);
+      // Entry visit notifications used to happen in the CallInterceptor
+      // We do it after (maybe) committing the entries, to avoid adding another try/finally block
+      if (rv != null && !(rv instanceof Response)) {
+         Object value = dataCommand instanceof GetCacheEntryCommand ? ((CacheEntry) rv).getValue() : rv;
+         notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, true, rCtx, dataCommand);
+         notifier.notifyCacheEntryVisited(dataCommand.getKey(), value, false, rCtx, dataCommand);
       }
    };
 
-   private final InvocationFinallyHandler commitEntriesFinallyHandler = new InvocationFinallyHandler() {
-      @Override
-      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
-         commitContextEntries(rCtx, null, null);
-      }
-   };
+   private final InvocationSuccessHandler commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null, null);
+
+   private final InvocationFinallyHandler commitEntriesFinallyHandler = (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null);
 
    protected Log getLog() {
       return log;
@@ -145,29 +144,39 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Inject
    public void init(EntryFactory entryFactory, DataContainer<Object, Object> dataContainer, ClusteringDependentLogic cdl,
-                    CommandsFactory commandFactory, StateConsumer stateConsumer, StateTransferLock stateTransferLock,
+                    StateConsumer stateConsumer, StateTransferLock stateTransferLock,
                     XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager, CacheNotifier notifier,
-                    StateTransferManager stateTransferManager) {
+                    StateTransferManager stateTransferManager, VersionGenerator versionGenerator) {
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.cdl = cdl;
-      this.commandFactory = commandFactory;
       this.stateConsumer = stateConsumer;
       this.stateTransferLock = stateTransferLock;
       this.xSiteStateConsumer = xSiteStateConsumer;
       this.groupManager = groupManager;
       this.notifier = notifier;
       this.stateTransferManager = stateTransferManager;
+      this.versionGenerator = versionGenerator;
    }
 
    @Start
    public void start() {
-      isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional() &&
-            (cacheConfiguration.clustering().cacheMode().isDistributed() ||
-                   cacheConfiguration.clustering().cacheMode().isReplicated());
       isInvalidation = cacheConfiguration.clustering().cacheMode().isInvalidation();
       isSync = cacheConfiguration.clustering().cacheMode().isSynchronous();
       localAddress = cdl.getAddress();
+      // isolation level makes no sense without transactions
+      useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
+            && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+      writeSkewCheck = cacheConfiguration.locking().writeSkewCheck();
+   }
+
+   private boolean ignoreOwnership(FlagAffectedCommand command) {
+      return command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK);
+   }
+
+   private boolean canRead(Object key) {
+      // STM is null in local cache
+      return stateTransferManager == null || stateTransferManager.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(localAddress, key);
    }
 
    @Override
@@ -197,25 +206,27 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private BasicInvocationStage visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
-      entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
-      return invokeNext(ctx, command).handle(dataReadReturnHandler);
+      entryFactory.wrapEntryForReading(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      return invokeNext(ctx, command).thenAccept(dataReadReturnHandler);
    }
 
    @Override
    public BasicInvocationStage visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getKeys()) {
-         entryFactory.wrapEntryForReading(ctx, key, null);
+         entryFactory.wrapEntryForReading(ctx, key, ignoreOwnership || canRead(key));
       }
       return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
-         if (ctx.isInTxScope()) {
+         if (useRepeatableRead) {
             for (Object key : getAllCommand.getKeys()) {
-               setSkipLookup(rCtx, key);
+               rCtx.lookupEntry(key).setSkipLookup(true);
             }
          }
 
          // Entry visit notifications used to happen in the CallInterceptor
-         if (t == null && rv != null) {
+         // instanceof check excludes the case when the command returns UnsuccessfulResponse
+         if (t == null && rv instanceof Map) {
             log.tracef("Notifying getAll? %s; result %s", !command.hasFlag(Flag.SKIP_LISTENER_NOTIFICATION), rv);
             Map<Object, Object> map = (Map<Object, Object>) rv;
             // TODO: it would be nice to know if a listener was registered for this and
@@ -234,24 +245,18 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       });
    }
 
-   private void setSkipLookup(InvocationContext ctx, Object key) {
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (entry != null) {
-         entry.setSkipLookup(true);
-      }
-   }
-
    @Override
    public final BasicInvocationStage visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
          throws Throwable {
       if (command.getKeys() != null) {
          for (Object key : command.getKeys()) {
-            //for the invalidate command, we need to try to fetch the key from the data container
-            //otherwise it may be not removed
-            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, true);
+            // TODO: move this to distribution interceptors?
+            // we need to try to wrap the entry to get it removed
+            // for the removal itself, wrapping null would suffice, but listeners need previous value
+            entryFactory.wrapEntryForWriting(ctx, key, true);
          }
       }
-      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
    @Override
@@ -280,114 +285,108 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public BasicInvocationStage visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command command)
          throws Throwable {
       for (Object key : command.getKeys()) {
-         //for the invalidate command, we need to try to fetch the key from the data container
-         //otherwise it may be not removed
-         entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, true);
-         if (trace) log.tracef("Entry to be removed: %s", toStr(key));
+         // TODO: move to distribution interceptors?
+         // we need to try to wrap the entry to get it removed
+         // for the removal itself, wrapping null would suffice, but listeners need previous value
+         entryFactory.wrapEntryForWriting(ctx, key, false);
+         if (trace)
+           log.tracef("Entry to be removed: %s", toStr(key));
       }
-      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
    @Override
    public final BasicInvocationStage visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
-      wrapEntryForPutIfNeeded(ctx, command);
+      wrapEntryIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
-   private void wrapEntryForPutIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) {
-      if (shouldWrap(command.getKey(), ctx, command)) {
-         boolean skipRead = command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional();
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), EntryFactory.Wrap.WRAP_ALL, skipRead, false);
+   private void wrapEntryIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
+      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getKey());
+      }
+      entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+   }
+
+   private void removeFromContextOnRetry(InvocationContext ctx, Object key) {
+      // When originator is a backup and it becomes primary (and we retry the command), the context already
+      // contains the value before the command started to be executed. However, another modification could happen
+      // after this node became an owner, so we have to force a reload.
+      // With repeatable reads, we cannot just remove the entry from context; instead of we will rely
+      // on the write skew check to do the reload & comparison in the end.
+      // With pessimistic locking, there's no WSC but as we have the entry locked, there shouldn't be any
+      // modification concurrent to the retried operation, therefore we don't have to deal with this problem.
+      if (useRepeatableRead) {
+         MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(key);
+         if (trace) {
+            log.tracef("This is a retry - resetting previous value in entry ", entry);
+         }
+         entry.resetCurrentValue();
+      } else {
+         if (trace) {
+            log.tracef("This is a retry - removing looked up entry " + ctx.lookupEntry(key));
+         }
+         ctx.removeLookedUpEntry(key);
       }
    }
 
-   private boolean shouldWrap(Object key, InvocationContext ctx, FlagAffectedCommand command) {
-      if (command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK)) {
-         if (trace)
-            log.tracef("Skipping ownership check and wrapping key %s", toStr(key));
-
-         return true;
-      } else if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (trace) {
-            log.tracef("CACHE_MODE_LOCAL is set. Wrapping key %s", toStr(key));
+   private void removeFromContextOnRetry(InvocationContext ctx, Collection<?> keys) {
+      if (useRepeatableRead) {
+         for (Object key : keys) {
+            MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(key);
+            if (trace) {
+               log.tracef("This is a retry - resetting previous value in entry ", entry);
+            }
+            entry.resetCurrentValue();
          }
-         return true;
-      }
-      boolean result;
-      boolean isTransactional = cacheConfiguration.transaction().transactionMode().isTransactional();
-      boolean isPutForExternalRead = command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ);
-
-      // Invalidated caches should always wrap entries in order to local
-      // changes from nodes that are not lock owners for these entries.
-      // Switching ClusteringDependentLogic to handle this, i.e.
-      // localNodeIsPrimaryOwner to always return true, would have had negative
-      // impact on locking since locks would be always be acquired locally
-      // and that would lead to deadlocks.
-      if (isInvalidation || (isTransactional && !isPutForExternalRead)) {
-         result = true;
       } else {
-         if (isUsingLockDelegation || isTransactional) {
-            result = ctx.isOriginLocal() ? cdl.localNodeIsPrimaryOwner(key) : cdl.localNodeIsOwner(key);
-         } else {
-            result = cdl.localNodeIsOwner(key);
+         for (Object key : keys) {
+            if (trace) {
+               log.tracef("This is a retry - removing looked up entry " + ctx.lookupEntry(key));
+            }
+            ctx.removeLookedUpEntry(key);
          }
       }
-
-      if (trace)
-         log.tracef("Wrapping entry '%s'? %s", toStr(key), result);
-
-      return result;
    }
 
    @Override
-   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
-         throws Throwable {
-      entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta());
+   public BasicInvocationStage visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getKey());
+      }
+      entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta(), ignoreOwnership(command) || canRead(command.getKey()));
       return invokeNext(ctx, command);
    }
 
    @Override
    public final BasicInvocationStage visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      wrapEntryForRemoveIfNeeded(ctx, command);
+      wrapEntryIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
-   }
-
-   private void wrapEntryForRemoveIfNeeded(InvocationContext ctx, RemoveCommand command) {
-      if (shouldWrap(command.getKey(), ctx, command)) {
-         boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
-         EntryFactory.Wrap wrap = forceWrap ? EntryFactory.Wrap.WRAP_ALL : EntryFactory.Wrap.WRAP_NON_NULL;
-         boolean skipRead = command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional();
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, skipRead, false);
-      }
    }
 
    @Override
    public final BasicInvocationStage visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
          throws Throwable {
-      wrapEntryForReplaceIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
-   }
-
-   private void wrapEntryForReplaceIfNeeded(InvocationContext ctx, ReplaceCommand command) {
-      if (shouldWrap(command.getKey(), ctx, command)) {
-         // When retrying, we might still need to perform the command even if the previous value was removed
-         EntryFactory.Wrap wrap =
-               command.getValueMatcher().nonExistentEntryCanMatch() ? EntryFactory.Wrap.WRAP_ALL :
-               EntryFactory.Wrap.WRAP_NON_NULL;
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, false, false);
+      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getKey());
       }
+      // When retrying, we might still need to perform the command even if the previous value was removed
+      entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
    @Override
    public BasicInvocationStage visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      for (Object key : command.getMap().keySet()) {
-         if (shouldWrap(key, ctx, command)) {
-            //the put map never reads the keys
-            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
-         }
+      boolean ignoreOwnership = ignoreOwnership(command);
+      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
-      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
+      for (Object key : command.getMap().keySet()) {
+         // as listeners may need the value, we'll load the previous value
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+      }
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
    @Override
@@ -400,130 +399,135 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public BasicInvocationStage visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command)
          throws Throwable {
       final String groupName = command.getGroupName();
-      if (!command.isGroupOwner()) {
-         return invokeNext(ctx, command);
+      if (command.isGroupOwner()) {
+         final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
+               new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
+         dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
+            synchronized (ctx) {
+               //the process can be made in multiple threads, so we need to synchronize in the context.
+               entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry, false);
+            }
+         });
       }
-      final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
-            new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
-      dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
-         synchronized (ctx) {
-            //the process can be made in multiple threads, so we need to synchronize in the context.
-            entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry,
-                  EntryFactory.Wrap.STORE, false);
-         }
-      });
+      // We don't make sure that all read entries have skipLookup here, since EntryFactory does that
+      // for those we have really read, and there shouldn't be any null-read entries.
+      InvocationStage stage = invokeNext(ctx, command);
+      if (ctx.isInTxScope() && useRepeatableRead) {
+         return stage.thenAccept((rCtx, rCommand, rv) -> {
+            TxInvocationContext txCtx = (TxInvocationContext) rCtx;
+            for (Map.Entry<Object, CacheEntry> keyEntry : txCtx.getLookedUpEntries().entrySet()) {
+               CacheEntry cacheEntry = keyEntry.getValue();
+               cacheEntry.setSkipLookup(true);
+               if (writeSkewCheck) {
+                  addVersionRead(txCtx, cacheEntry, keyEntry.getKey());
+               }
+            }
+         });
+      } else {
+         return stage;
+      }
+   }
+
+   @Override
+   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+      entryFactory.wrapEntryForReading(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+
+      // Repeatable reads are not achievable with functional commands, as we don't store the value locally
+      // and we don't "fix" it on the remote node; therefore, the value will be able to change and identity read
+      // could return different values in the same transaction.
+      // (Note: at this point TX mode is not implemented for functional commands anyway).
       return invokeNext(ctx, command);
    }
 
    @Override
-   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
-         throws Throwable {
-      CacheEntry entry = entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
-      // Null entry is often considered to mean that entry is not available
-      // locally, but if there's no need to get remote, the read-only
-      // function needs to be executed, so force a non-null entry in
-      // context with null content
-      // TODO: move this logic to entryFactory
-      if (entry == null && shouldRead(command.getKey())) {
-         entryFactory.wrapEntryForReading(ctx, command.getKey(), NullCacheEntry.getInstance());
-      }
-
-      // The entry is not fetched to local node and it cannot be committed to L1; no need for handler
-      return invokeNext(ctx, command);
-   }
-
-   private boolean shouldRead(Object key) {
-      return stateTransferManager == null || stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key).contains(localAddress);
-   }
-
-   @Override
-   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command)
-         throws Throwable {
+   public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      boolean ignoreOwnership = ignoreOwnership(command);
       for (Object key : command.getKeys()) {
-         CacheEntry entry = entryFactory.wrapEntryForReading(ctx, key, null);
-         if (entry == null && shouldRead(key)) {
-            entryFactory.wrapEntryForReading(ctx, key, NullCacheEntry.getInstance());
-         }
+         entryFactory.wrapEntryForReading(ctx, key, ignoreOwnership || canRead(key));
       }
-      return invokeNext(ctx, command).handle((rCtx, rCommand, rv, t) -> {
-         for (Object key : ((ReadOnlyManyCommand) rCommand).getKeys()) {
-            setSkipLookup(rCtx, key);
-         }
-      });
+      // Repeatable reads are not achievable with functional commands, see visitReadOnlyKeyCommand
+      return invokeNext(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
          throws Throwable {
-      wrapEntryForPutIfNeeded(ctx, command);
+      wrapEntryIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public BasicInvocationStage visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
          throws Throwable {
-      wrapEntryForPutIfNeeded(ctx, command);
+      wrapEntryIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public BasicInvocationStage visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
          throws Throwable {
-      wrapEntryForPutIfNeeded(ctx, command);
+      wrapEntryIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public BasicInvocationStage visitWriteOnlyManyEntriesCommand(InvocationContext ctx,
          WriteOnlyManyEntriesCommand command) throws Throwable {
-      for (Object key : command.getEntries().keySet()) {
-         if (shouldWrap(key, ctx, command)) {
-            //the put map never reads the keys
-            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
-         }
+      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
-      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
+      boolean ignoreOwnership = ignoreOwnership(command);
+      for (Object key : command.getEntries().keySet()) {
+         //the put map never reads the keys
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+      }
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command)
          throws Throwable {
-      for (Object key : command.getAffectedKeys()) {
-         if (shouldWrap(key, ctx, command)) {
-            //the put map never reads the keys
-            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
-         }
+      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
-      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
+      boolean ignoreOwnership = ignoreOwnership(command);
+      for (Object key : command.getAffectedKeys()) {
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+      }
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
          throws Throwable {
-      wrapEntryForPutIfNeeded(ctx, command);
+      wrapEntryIfNeeded(ctx, command);
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
    }
 
    @Override
    public BasicInvocationStage visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command)
          throws Throwable {
-      for (Object key : command.getAffectedKeys()) {
-         if (shouldWrap(key, ctx, command)) {
-            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
-         }
+      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
-      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
+      boolean ignoreOwnership = ignoreOwnership(command);
+      for (Object key : command.getAffectedKeys()) {
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+      }
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
    @Override
    public BasicInvocationStage visitReadWriteManyEntriesCommand(InvocationContext ctx,
          ReadWriteManyEntriesCommand command) throws Throwable {
-      for (Object key : command.getEntries().keySet()) {
-         if (shouldWrap(key, ctx, command)) {
-            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
-         }
+      if (command.hasFlag(Flag.COMMAND_RETRY)) {
+         removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
-      return setSkipRemoteGetsAndInvokeNextForWriteCommand(ctx, command);
+      boolean ignoreOwnership = ignoreOwnership(command);
+      for (Object key : command.getAffectedKeys()) {
+         entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
+      }
+      return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
    private Flag extractStateTransferFlag(InvocationContext ctx, FlagAffectedCommand command) {
@@ -577,7 +581,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       stateTransferLock.acquireSharedTopologyLock();
       try {
          // We only retry non-tx write commands
-         if (!isInvalidation ) {
+         if (!isInvalidation) {
             // Can't perform the check during preload or if the cache isn't clustered
             boolean syncRpc = isSync && !command.hasFlag(Flag.FORCE_ASYNCHRONOUS) ||
                   command.hasFlag(Flag.FORCE_SYNCHRONOUS);
@@ -612,21 +616,43 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   private BasicInvocationStage setSkipRemoteGetsAndInvokeNextForWriteCommand(InvocationContext ctx, WriteCommand command) {
+   private BasicInvocationStage setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
       return invokeNext(ctx, command).thenAccept((rCtx, rCommand, rv) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
             applyChanges(rCtx, writeCommand, null);
+            return;
          }
 
          if (trace)
             log.tracef("The return value is %s", toStr(rv));
-         if (rCtx.isInTxScope()) {
+         if (useRepeatableRead) {
+            boolean addVersionRead = writeSkewCheck && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
+            TxInvocationContext txCtx = (TxInvocationContext) rCtx;
             for (Object key : writeCommand.getAffectedKeys()) {
-               setSkipLookup(rCtx, key);
+               CacheEntry cacheEntry = rCtx.lookupEntry(key);
+               if (cacheEntry != null) {
+                  cacheEntry.setSkipLookup(true);
+                  if (addVersionRead) {
+                     addVersionRead(txCtx, cacheEntry, key);
+                  }
+                  ((MVCCEntry) cacheEntry).updatePreviousValue();
+               }
             }
          }
       });
+   }
+
+   private void addVersionRead(TxInvocationContext rCtx, CacheEntry cacheEntry, Object key) {
+      EntryVersion version;
+      if (cacheEntry != null && cacheEntry.getMetadata() != null) {
+         version = cacheEntry.getMetadata().version();
+         if (trace) log.tracef("Adding version read %s for key %s", version, key);
+      } else {
+         version = versionGenerator.nonExistingVersion();
+         if (trace) log.tracef("Adding non-existent version read for key %s", key);
+      }
+      rCtx.getCacheTransaction().addVersionRead(key, version);
    }
 
    /**
@@ -638,90 +664,72 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
             applyChanges(rCtx, dataWriteCommand, metadata);
+            return;
          }
 
          if (trace)
             log.tracef("The return value is %s", rv);
-         if (rCtx.isInTxScope()) {
-            setSkipLookup(rCtx, dataWriteCommand.getKey());
+         if (useRepeatableRead) {
+            CacheEntry cacheEntry = rCtx.lookupEntry(dataWriteCommand.getKey());
+            // The entry is not in context when the command's execution type does not contain origin
+            if (cacheEntry != null) {
+               cacheEntry.setSkipLookup(true);
+               if (writeSkewCheck && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
+                  addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataWriteCommand.getKey());
+               }
+               ((MVCCEntry) cacheEntry).updatePreviousValue();
+            }
          }
       });
    }
 
    // This visitor replays the entry wrapping during remote prepare.
-   // Remote writes never request the previous value from a different node,
-   // so it should be safe to keep this synchronous.
+   // The command is passed down the stack even if its keys do not belong to this node according
+   // to writeCH, it's a role of TxDistributionInterceptor to ignore such command.
+   // The entry is wrapped only if it's available for reading, otherwise it has to be wrapped
+   // in TxDistributionInterceptor. When the entry is not wrapped, the value is not loaded in
+   // CacheLoaderInterceptor, therefore passing the command down the stack causes only minimal overhead.
    private final class EntryWrappingVisitor extends AbstractVisitor {
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         Map<Object, Object> newMap = new HashMap<>(4);
-         for (Map.Entry<Object, Object> e : command.getMap().entrySet()) {
-            Object key = e.getKey();
-            if (cdl.localNodeIsOwner(key)) {
-               entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
-               newMap.put(key, e.getValue());
-            }
+         boolean ignoreOwnership = ignoreOwnership(command);
+         for (Object key : command.getAffectedKeys()) {
+            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
          }
-         if (newMap.size() > 0) {
-            PutMapCommand clonedCommand = commandFactory.buildPutMapCommand(newMap,
-                  command.getMetadata(), command.getFlagsBitSet());
-            return invokeNext(ctx, clonedCommand);
-         }
-         return null;
+         return invokeNext(ctx, command);
       }
 
       @Override
       public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
-         if (command.getKeys() != null) {
-            for (Object key : command.getKeys()) {
-               if (cdl.localNodeIsOwner(key)) {
-                  entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, false);
-               }
-            }
-            return invokeNext(ctx, command);
+         boolean ignoreOwnership = ignoreOwnership(command);
+         for (Object key : command.getAffectedKeys()) {
+            entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key));
          }
-         return null;
+         return invokeNext(ctx, command);
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
-            boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
-            EntryFactory.Wrap wrap = forceWrap ? EntryFactory.Wrap.WRAP_ALL : EntryFactory.Wrap.WRAP_NON_NULL;
-            entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, false, false);
-            return invokeNext(ctx, command);
-         }
-         return null;
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+         return invokeNext(ctx, command);
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForWriting(ctx, command.getKey(), EntryFactory.Wrap.WRAP_ALL, false, false);
-            return invokeNext(ctx, command);
-         }
-         return null;
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+         return invokeNext(ctx, command);
       }
 
       @Override
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta());
-            return invokeNext(ctx, command);
-         }
-         return null;
+         entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta(), ignoreOwnership(command) || canRead(command.getKey()));
+         return invokeNext(ctx, command);
       }
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
-            // When retrying, we need to perform the command even if the previous value was deleted.
-            boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
-            EntryFactory.Wrap wrap = forceWrap ? EntryFactory.Wrap.WRAP_ALL : EntryFactory.Wrap.WRAP_NON_NULL;
-            entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, false, false);
-            return invokeNext(ctx, command);
-         }
-         return null;
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()));
+         return invokeNext(ctx, command);
       }
    }
 
@@ -758,6 +766,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
          for (WriteCommand c : command.getModifications()) {
             c.setTopologyId(command.getTopologyId());
+            // TODO: we need async invocation since the interceptors may do remote get
             InvocationStage visitorStage = (InvocationStage) c.acceptVisitor(ctx, entryWrappingVisitor);
             if (visitorStage != null) {
                // Wait for the sub-command to finish. If there was an exception, rethrow it.

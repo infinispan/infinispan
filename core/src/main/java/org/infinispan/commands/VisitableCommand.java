@@ -48,15 +48,27 @@ public interface VisitableCommand extends ReplicableCommand {
    boolean ignoreCommandOnStatus(ComponentStatus status);
 
    /**
-    * @return {@code true} if the command needs to read the previous values of the keys it acts on.
+    * @return Nodes on which the command needs to read the previous values of the keys it acts on.
+    * @throws UnsupportedOperationException if the distinction does not make any sense.
     */
-   boolean readsExistingValues();
+   LoadType loadType();
 
-   /**
-    * @return {@code true} if the command needs to read the previous values even on the backup owners.
-    *   In transactional caches, this refers to all the owners except the originator.
-    */
-   default boolean alwaysReadsExistingValues() {
-      return false;
+   enum LoadType {
+      /**
+       * Never load previous value.
+       */
+      DONT_LOAD,
+      /**
+       * In non-transactional cache, load previous value only on the primary owner.
+       * In transactional cache, the value is fetched to originator. Primary then does not have to
+       * load the value but for write-skew check.
+       */
+      PRIMARY,
+      /**
+       * In non-transactional cache, load previous value on both primary and backups.
+       * In transactional cache, the value is both fetched to originator and all owners have to load
+       * it because it is needed to produce the new value.
+       */
+      OWNER
    }
 }

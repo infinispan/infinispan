@@ -15,9 +15,11 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SelfDeliverFilter;
 import org.infinispan.remoting.responses.TimeoutValidationResponseFilter;
+import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -42,6 +44,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected boolean defaultSynchronous;
    protected RpcOptions staggeredOptions;
    protected RpcOptions defaultSyncOptions;
+   protected RpcOptions defaultAsyncOptions;
 
    protected abstract Log getLog();
 
@@ -53,8 +56,20 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    @Start
    public void init() {
       defaultSynchronous = cacheConfiguration.clustering().cacheMode().isSynchronous();
-      staggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE).build();
+      // This is a simplified state-less version of ClusteredGetResponseValidityFilter
+      staggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE).responseFilter(new ResponseFilter() {
+         @Override
+         public boolean isAcceptable(Response response, Address sender) {
+            return response.isValid() || response instanceof ExceptionResponse;
+         }
+
+         @Override
+         public boolean needMoreResponses() {
+            return true;
+         }
+      }).build();
       defaultSyncOptions = rpcManager.getDefaultRpcOptions(true);
+      defaultAsyncOptions = rpcManager.getDefaultRpcOptions(false);
    }
 
    protected final boolean isSynchronous(FlagAffectedCommand command) {

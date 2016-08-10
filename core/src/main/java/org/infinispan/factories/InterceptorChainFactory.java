@@ -1,6 +1,5 @@
 package org.infinispan.factories;
 
-
 import java.util.List;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -25,14 +24,12 @@ import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
-import org.infinispan.interceptors.impl.ActivationInterceptor;
 import org.infinispan.interceptors.impl.AsyncInterceptorChainImpl;
 import org.infinispan.interceptors.impl.BatchingInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
-import org.infinispan.interceptors.impl.ClusteredActivationInterceptor;
 import org.infinispan.interceptors.impl.ClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CompatibilityInterceptor;
 import org.infinispan.interceptors.impl.DeadlockDetectingInterceptor;
@@ -236,17 +233,13 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new EntryWrappingInterceptor(), EntryWrappingInterceptor.class), false);
 
       if (configuration.persistence().usingStores()) {
-         if (configuration.persistence().passivation()) {
-            if (cacheMode.isClustered())
-               interceptorChain.appendInterceptor(createInterceptor(new ClusteredActivationInterceptor(), ClusteredActivationInterceptor.class), false);
-            else
-               interceptorChain.appendInterceptor(createInterceptor(new ActivationInterceptor(), ActivationInterceptor.class), false);
+         if (cacheMode.isClustered()) {
+            interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
          } else {
-            if (cacheMode.isClustered())
-               interceptorChain.appendInterceptor(createInterceptor(new ClusteredCacheLoaderInterceptor(), ClusteredCacheLoaderInterceptor.class), false);
-            else
-               interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
+            interceptorChain.appendInterceptor(createInterceptor(new CacheLoaderInterceptor(), CacheLoaderInterceptor.class), false);
+         }
 
+         if (!configuration.persistence().passivation()) {
             boolean transactionalStore = configuration.persistence().stores().stream().anyMatch(StoreConfiguration::transactional);
             if (transactionalStore && transactionMode.isTransactional())
                interceptorChain.appendInterceptor(createInterceptor(new TransactionalStoreInterceptor(), TransactionalStoreInterceptor.class), false);

@@ -21,8 +21,18 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "functional.FunctionalCachestoreReadOnlyTest")
 public class FunctionalCachestoreReadOnlyTest extends AbstractFunctionalReadOnlyOpTest {
-   public FunctionalCachestoreReadOnlyTest() {
-      isPersistenceEnabled = true;
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+         new FunctionalCachestoreReadOnlyTest().persistence(true).passivation(false),
+         new FunctionalCachestoreReadOnlyTest().persistence(true).passivation(true),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[passivation=" + passivation + "]";
    }
 
    @Test(dataProvider = "owningModeAndMethod")

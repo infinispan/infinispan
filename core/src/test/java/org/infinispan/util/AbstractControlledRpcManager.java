@@ -37,18 +37,18 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
                                                                         ReplicableCommand rpc,
                                                                         RpcOptions options) {
       log.trace("ControlledRpcManager.invokeRemotelyAsync");
-      beforeInvokeRemotely(rpc);
+      Object argument = beforeInvokeRemotely(rpc);
       CompletableFuture<Map<Address, Response>> future = realOne.invokeRemotelyAsync(recipients, rpc,
             options);
-      return future.thenApply(responses -> afterInvokeRemotely(rpc, responses));
+      return future.thenApply(responses -> afterInvokeRemotely(rpc, responses, argument));
    }
 
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
       log.trace("ControlledRpcManager.invokeRemotely");
-      beforeInvokeRemotely(rpc);
+      Object argument = beforeInvokeRemotely(rpc);
       Map<Address, Response> responses = realOne.invokeRemotely(recipients, rpc, options);
-      return afterInvokeRemotely(rpc, responses);
+      return afterInvokeRemotely(rpc, responses, argument);
    }
 
    @Override
@@ -113,8 +113,9 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
     *
     * @param command the command to be invoked remotely
     */
-   protected void beforeInvokeRemotely(ReplicableCommand command) {
+   protected Object beforeInvokeRemotely(ReplicableCommand command) {
       //no-op by default
+      return null;
    }
 
    /**
@@ -122,9 +123,10 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
     *
     * @param command     the command invoked remotely.
     * @param responseMap can be null if not response is expected.
+    * @param argument
     * @return the new response map
     */
-   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
+   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
       return responseMap;
    }
 }

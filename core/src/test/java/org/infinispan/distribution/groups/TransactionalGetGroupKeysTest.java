@@ -140,10 +140,12 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
 
       testCache.primaryOwner.put(key(1), value(-1));
 
-      if ((factory == TestCacheFactory.PRIMARY_OWNER || factory == TestCacheFactory.BACKUP_OWNER) &&
-            isolationLevel == IsolationLevel.READ_COMMITTED) {
+      if (isolationLevel == IsolationLevel.READ_COMMITTED) {
          //in ReadCommitted the entries are not wrapped (for read). So the changes are made immediately visible.
          expectedGroupSet.put(key(1), value(-1));
+         // GetKeysInGroupCommand will be always replicated to owner nodes and will return all entries, including
+         // those we already have in context. With RC, the context gets overwritten by these updated values.
+         // If we ran regular testCache.get(key(1)), it would still return just v1 (we wouldn't fetch remote value)
       }
 
       tm.resume(tx);

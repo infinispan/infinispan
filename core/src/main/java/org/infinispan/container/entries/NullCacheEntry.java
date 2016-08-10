@@ -85,11 +85,6 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public void rollback() {
-      // No-op
-   }
-
-   @Override
    public void setChanged(boolean changed) {
       // No-op
    }
@@ -125,13 +120,8 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public boolean undelete(boolean doUndelete) {
-      return false;
-   }
-
-   @Override
    public CacheEntry clone() {
-      return null;
+      return INSTANCE;
    }
 
    @Override
@@ -142,5 +132,10 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
    @Override
    public void setMetadata(Metadata metadata) {
       // No-op
+   }
+
+   @Override
+   public String toString() {
+      return "NullCacheEntry{}";
    }
 }

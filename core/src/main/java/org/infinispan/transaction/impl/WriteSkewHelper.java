@@ -50,9 +50,10 @@ public class WriteSkewHelper {
 
                if (entry.performWriteSkewCheck(dataContainer, persistenceManager, context,
                                                prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
-                  IncrementableEntryVersion newVersion = entry.isCreated()
+                  IncrementableEntryVersion oldVersion = (IncrementableEntryVersion) entry.getMetadata().version();
+                  IncrementableEntryVersion newVersion = entry.isCreated() || oldVersion == null
                         ? versionGenerator.generateNew()
-                        : versionGenerator.increment((IncrementableEntryVersion) entry.getMetadata().version());
+                        : versionGenerator.increment(oldVersion);
                   uv.put(k, newVersion);
                } else {
                   // Write skew check detected!

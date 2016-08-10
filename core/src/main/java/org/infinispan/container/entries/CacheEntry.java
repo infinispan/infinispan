@@ -117,8 +117,11 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
 
    /**
     * Rolls back changes
+    *
+    * @deprecated since 9.0
     */
-   void rollback();
+   @Deprecated
+   default void rollback() {}
 
    void setChanged(boolean changed);
 
@@ -147,9 +150,11 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
     * flag is set to false.
     */
    @Deprecated
-   boolean undelete(boolean doUndelete);
+   default boolean undelete(boolean doUndelete) {
+      return false;
+   }
 
-   public CacheEntry<K, V> clone();
+   CacheEntry<K, V> clone();
 
    default void setCreated(long created) {}
 

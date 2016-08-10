@@ -13,17 +13,29 @@ import org.infinispan.commons.CacheException;
  * @since 6.0
  */
 public class OutdatedTopologyException extends CacheException {
+   public final int requestedTopologyId;
 
    @SuppressWarnings("ThrowableInstanceNeverThrown")
    private static final OutdatedTopologyException CACHED = new OutdatedTopologyException();
 
 
    private OutdatedTopologyException() {
-      super("Topology Changed while handling command", null, false, false);
+      super("Topology changed while handling command", null, false, false);
+      requestedTopologyId = -1;
    }
 
    public OutdatedTopologyException(String msg) {
       super(msg, null, false, false);
+      requestedTopologyId = -1;
+   }
+
+   /**
+    * Request retrying the command in explicitly set topology (or later one).
+    * @param requestedTopologyId
+    */
+   public OutdatedTopologyException(int requestedTopologyId) {
+      super(null, null, false, false);
+      this.requestedTopologyId = requestedTopologyId;
    }
 
    /**

@@ -1,25 +1,24 @@
 package org.infinispan.interceptors.distribution;
 
-import static org.infinispan.commons.util.Util.toStr;
-
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.AbstractTopologyAffectedCommand;
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -32,16 +31,17 @@ import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.Ownership;
 import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.GroupManager;
@@ -51,19 +51,16 @@ import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.RpcException;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
-import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.topology.CacheTopology;
@@ -81,7 +78,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author Dan Berindei <dan@infinispan.org>
  */
 public abstract class BaseDistributionInterceptor extends ClusteringInterceptor {
-
    protected DistributionManager dm;
 
    protected ClusteringDependentLogic cdl;
@@ -131,7 +127,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                //noinspection unchecked
                List<CacheEntry> cacheEntries = (List<CacheEntry>) ((SuccessfulResponse) response).getResponseValue();
                for (CacheEntry entry : cacheEntries) {
-                  entryFactory.wrapExternalEntry(ctx, entry.getKey(), entry, EntryFactory.Wrap.STORE, false);
+                  entryFactory.wrapExternalEntry(ctx, entry.getKey(), entry, false);
                }
             }
          }
@@ -148,288 +144,180 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNext(ctx, command);
    }
 
-   protected final CompletableFuture<InternalCacheEntry> retrieveFromProperSource(Object key, InvocationContext ctx,
-         FlagAffectedCommand command, boolean isWrite) throws Exception {
-      return doRetrieveFromProperSource(key, null, -1, ctx, command, isWrite);
-   }
+   protected final CompletableFuture<Void> remoteGet(InvocationContext ctx, AbstractTopologyAffectedCommand command,
+                                                     Object key, boolean isWrite) {
+      CacheTopology cacheTopology = checkTopologyId(command);
+      int topologyId = cacheTopology.getTopologyId();
+      ConsistentHash readCH = cacheTopology.getReadConsistentHash();
 
-   private CompletableFuture<InternalCacheEntry> doRetrieveFromProperSource(Object key, InternalCacheEntry value,
-         int lastTopologyId, InvocationContext ctx, FlagAffectedCommand command, boolean isWrite) {
-      if (value != null)
-         return CompletableFuture.completedFuture(value);
-
-      final CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      final int currentTopologyId = cacheTopology.getTopologyId();
-
-      if (trace) {
-            log.tracef("Perform remote get for key %s. topologyId=%s, currentTopologyId=%s",
-                       key, lastTopologyId, currentTopologyId);
-      }
-      List<Address> targets;
-      int newTopologyId;
-      if (lastTopologyId < currentTopologyId) {
-         // Cache topology has changed or it is the first time.
-         newTopologyId = currentTopologyId;
-         ConsistentHash readCH = cacheTopology.getReadConsistentHash();
-         boolean isLocal;
-         List<Address> owners;
-         if (readCH.isReplicated()) {
-            isLocal = readCH.isSegmentLocalToNode(rpcManager.getAddress(), 0);
-            owners = readCH.getMembers();
-         } else {
-            owners = readCH.locateOwners(key);
-            isLocal = owners.contains(rpcManager.getAddress());
-         }
-         if (isLocal) {
-            // Normally looking the value up in the local data container doesn't help, because we already
-            // tried to read it in the EntryWrappingInterceptor.
-            // But ifIf we became an owner in the read CH after EntryWrappingInterceptor, we may not find the
-            // value on the remote nodes (e.g. because the local node is now the only owner).
-            return CompletableFuture.completedFuture(dataContainer.get(key));
-         } else {
-            targets = new ArrayList<>(owners);
-         }
-      } else if (lastTopologyId == currentTopologyId && cacheTopology.getPendingCH() != null) {
-         // Same topologyId, but the owners could have already installed the next topology
-         // Lets try with pending consistent owners (the read owners in the next topology)
-         newTopologyId = currentTopologyId + 1;
-         targets = new ArrayList<>(cacheTopology.getPendingCH().locateOwners(key));
-         // Remove already contacted nodes
-         targets.removeAll(cacheTopology.getReadConsistentHash().locateOwners(key));
-         if (targets.isEmpty()) {
-            if (trace) {
-               log.tracef("No valid values found for key '%s' (topologyId=%s).", key, currentTopologyId);
-            }
-            return CompletableFutures.completedNull();
-         }
-      } else {
-         // lastTopologyId > currentTopologyId || cacheTopology.getPendingCH() == null
-         // We have not received a valid value from the pending CH owners either, and the topology id hasn't changed
+      DistributionInfo info = new DistributionInfo(key, readCH, rpcManager.getAddress());
+      if (info.ownership() != Ownership.NON_OWNER) {
          if (trace) {
-            log.tracef("No valid values found for key '%s' (topologyId=%s).", key, currentTopologyId);
+            log.tracef("Key %s is local, skipping remote get. Command topology is %d, current topology is %d",
+                  key, command.getTopologyId(), topologyId);
          }
-         return CompletableFutures.completedNull();
+         // The topology has changed between EWI and BDI, let's retry
+         if (command.getTopologyId() == topologyId) {
+            throw new IllegalStateException();
+         }
+         throw new OutdatedTopologyException(topologyId);
+      }
+      if (trace) {
+         log.tracef("Perform remote get for key %s. currentTopologyId=%s, owners=%s",
+            key, topologyId, info.owners());
       }
 
       ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, command.getFlagsBitSet());
+      getCommand.setTopologyId(topologyId);
       getCommand.setWrite(isWrite);
 
-      RpcOptionsBuilder rpcOptionsBuilder =
-            rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
-      return invokeClusterGetCommandRemotely(targets, rpcOptionsBuilder, getCommand, key).thenCompose(
-            newValue -> doRetrieveFromProperSource(key, newValue, newTopologyId, ctx, command, isWrite));
-   }
-
-   private CompletableFuture<InternalCacheEntry> invokeClusterGetCommandRemotely(List<Address> targets,
-         RpcOptionsBuilder rpcOptionsBuilder, ClusteredGetCommand get, Object key) {
-      ResponseFilter filter = new ClusteredGetResponseValidityFilter(targets, rpcManager.getAddress());
-      RpcOptions options = rpcOptionsBuilder.responseFilter(filter).build();
-      return rpcManager.invokeRemotelyAsync(targets, get, options).thenApply(responses -> {
-         boolean hasSuccesfulResponse = false;
-         if (!responses.isEmpty()) {
-            for (Response r : responses.values()) {
-               if (r instanceof SuccessfulResponse) {
-                  hasSuccesfulResponse = true;
-                  // The response value might be null.
-                  SuccessfulResponse response = (SuccessfulResponse) r;
-                  Object responseValue = response.getResponseValue();
-                  if (responseValue == null) {
-                     continue;
-                  }
-
-                  InternalCacheValue cacheValue = (InternalCacheValue) responseValue;
-                  InternalCacheEntry ice = cacheValue.toInternalCacheEntry(key);
+      return rpcManager.invokeRemotelyAsync(info.owners(), getCommand, staggeredOptions).thenAccept(responses -> {
+         for (Response r : responses.values()) {
+            if (r instanceof SuccessfulResponse) {
+               SuccessfulResponse response = (SuccessfulResponse) r;
+               Object responseValue = response.getResponseValue();
+               if (responseValue == null) {
                   if (rvrl != null) {
-                     rvrl.remoteValueFound(ice);
+                     rvrl.remoteValueNotFound(key);
                   }
-                  return ice;
+                  entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), isWrite);
+                  return;
                }
+               InternalCacheEntry ice = ((InternalCacheValue) responseValue).toInternalCacheEntry(key);
+               if (rvrl != null) {
+                  rvrl.remoteValueFound(ice);
+               }
+               entryFactory.wrapExternalEntry(ctx, key, ice, isWrite);
+               return;
             }
          }
-         if (rvrl != null) {
-            rvrl.remoteValueNotFound(key);
-         }
-         if (!hasSuccesfulResponse) {
-            throw new RpcException("No successful response: " + responses);
-         } else {
-            return null;
-         }
+         // If this node has topology higher than some of the nodes and the nodes could not respond
+         // with the remote entry, these nodes are blocking the response and therefore we can get only timeouts.
+         // Therefore, if we got here it means that we have lower topology than some other nodes and we can wait
+         // for it in StateTransferInterceptor and retry the read later.
+         // TODO: These situations won't happen as soon as we'll implement 4-phase topology change in ISPN-5021
+         throw new OutdatedTopologyException("Did not get any successful response, got " + responses);
       });
-   }
-
-   protected Map<Object, InternalCacheEntry> retrieveFromRemoteSources(Set<?> requestedKeys, InvocationContext ctx, long flagsBitSet) throws Throwable {
-      GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      ConsistentHash ch = cacheTopology.getReadConsistentHash();
-
-      Map<Address, List<Object>> ownerKeys = new HashMap<>();
-      for (Object key : requestedKeys) {
-         Address owner = ch.locatePrimaryOwner(key);
-         List<Object> requestedKeysFromNode = ownerKeys.get(owner);
-         if (requestedKeysFromNode == null) {
-            ownerKeys.put(owner, requestedKeysFromNode = new ArrayList<>());
-         }
-         requestedKeysFromNode.add(key);
-      }
-
-      Map<Address, ReplicableCommand> commands = new HashMap<>();
-      for (Map.Entry<Address, List<Object>> entry : ownerKeys.entrySet()) {
-         List<Object> keys = entry.getValue();
-         ClusteredGetAllCommand remoteGetAll = cf.buildClusteredGetAllCommand(keys, flagsBitSet, gtx);
-         commands.put(entry.getKey(), remoteGetAll);
-      }
-
-      RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(
-            ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE);
-      RpcOptions options = rpcOptionsBuilder.build();
-      // TODO Use multiple async invocations
-      Map<Address, Response> responses = rpcManager.invokeRemotely(commands, options);
-
-      Map<Object, InternalCacheEntry> entries = new HashMap<>();
-      for (Map.Entry<Address, Response> entry : responses.entrySet()) {
-         updateWithValues(((ClusteredGetAllCommand) commands.get(entry.getKey())).getKeys(),
-               entry.getValue(), entries);
-      }
-
-      return entries;
-   }
-
-   private void updateWithValues(List<?> keys, Response r, Map<Object, InternalCacheEntry> entries) {
-      if (r instanceof SuccessfulResponse) {
-         SuccessfulResponse response = (SuccessfulResponse) r;
-         List<InternalCacheValue> values = (List<InternalCacheValue>) response.getResponseValue();
-         // Only process if we got a return value - this can happen if the node is shutting
-         // down when it received the request
-         if (values != null) {
-            for (int i = 0; i < keys.size(); ++i) {
-               InternalCacheValue icv = values.get(i);
-               if (icv != null) {
-                  Object key = keys.get(i);
-                  Object value = icv.getValue();
-                  if (value == null) {
-                     entries.put(key, null);
-                  } else {
-                     InternalCacheEntry ice = icv.toInternalCacheEntry(key);
-                     entries.put(key, ice);
-                  }
-               }
-            }
-         }
-      }
    }
 
    protected final BasicInvocationStage handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command)
          throws Throwable {
-      if (ctx.isInTxScope()) {
-         throw new CacheException("Attempted execution of non-transactional write command in a transactional invocation context");
+      Object key = command.getKey();
+      CacheEntry entry = ctx.lookupEntry(key);
+
+      if (isLocalModeForced(command)) {
+         if (entry == null) {
+            entryFactory.wrapExternalEntry(ctx, key, null, true);
+         }
+         return invokeNext(ctx, command);
       }
 
-      // see if we need to load values from remote sources first
-      CompletableFuture<?> remoteGetFuture = remoteGetBeforeWrite(ctx, command, command.getKey(), true);
-      if (remoteGetFuture != null) {
-         return invokeNextAsync(ctx, command, remoteGetFuture).thenCompose(this::handleLocalResult);
+      if (entry == null) {
+         DistributionInfo info = new DistributionInfo(key, checkTopologyId(command).getWriteConsistentHash(), rpcManager.getAddress());
+         boolean load = shouldLoad(ctx, command, info);
+         if (info.isPrimary()) {
+            throw new IllegalStateException("Primary owner in writeCH should always be an owner in readCH as well.");
+         } else if (ctx.isOriginLocal()) {
+            return invokeRemotely(command, info.primary());
+         } else {
+            if (load) {
+               CompletableFuture<?> getFuture = remoteGet(ctx, command, command.getKey(), true);
+               return invokeNextAsync(ctx, command, getFuture);
+            } else {
+               entryFactory.wrapExternalEntry(ctx, key, null, true);
+               return invokeNext(ctx, command);
+            }
+         }
       } else {
-         return invokeNext(ctx, command).thenCompose(this::handleLocalResult);
+         DistributionInfo info = new DistributionInfo(key, checkTopologyId(command).getWriteConsistentHash(), rpcManager.getAddress());
+         if (info.isPrimary()) {
+            return invokeNext(ctx, command).thenCompose(this::primaryReturnHandler);
+         } else if (ctx.isOriginLocal()) {
+            return invokeRemotely(command, info.primary());
+         } else {
+            return invokeNext(ctx, command);
+         }
       }
    }
 
-   private BasicInvocationStage handleLocalResult(BasicInvocationStage stage, InvocationContext ctx,
-                                                  VisitableCommand command, Object localResult) throws Throwable {
-      // if this is local mode then skip distributing
-      DataWriteCommand dataCommand = (DataWriteCommand) command;
-      if (isLocalModeForced(dataCommand)) {
+   private boolean shouldLoad(InvocationContext ctx, AbstractDataWriteCommand command, DistributionInfo info) {
+      if (!command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
+         VisitableCommand.LoadType loadType = command.loadType();
+         switch (loadType) {
+            case DONT_LOAD:
+               return false;
+            case OWNER:
+               switch (info.ownership()) {
+                  case PRIMARY:
+                     return true;
+                  case BACKUP:
+                     return !ctx.isOriginLocal();
+                  case NON_OWNER:
+                     return false;
+                  default:
+                     throw new IllegalStateException();
+               }
+            case PRIMARY:
+               return info.isPrimary();
+            default:
+               throw new IllegalStateException();
+         }
+      } else {
+         return false;
+      }
+   }
+
+   private BasicInvocationStage invokeRemotely(DataWriteCommand command, Address primaryOwner) {
+      if (trace) log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
+      boolean isSyncForwarding = isSynchronous(command) || command.isReturnValueExpected();
+
+      CompletableFuture<Map<Address, Response>> remoteInvocation;
+      try {
+         remoteInvocation = rpcManager.invokeRemotelyAsync(Collections.singletonList(primaryOwner), command,
+               rpcManager.getDefaultRpcOptions(isSyncForwarding));
+      } catch (Throwable t) {
+         command.setValueMatcher(command.getValueMatcher().matcherForRetry());
+         throw t;
+      }
+      if (isSyncForwarding) {
+         return returnWithAsync(remoteInvocation.handle((responses, t) -> {
+            command.setValueMatcher(command.getValueMatcher().matcherForRetry());
+            CompletableFutures.rethrowException(t);
+
+            Object primaryResult = getResponseFromPrimaryOwner(primaryOwner, responses);
+            command.updateStatusFromRemoteResponse(primaryResult);
+            return primaryResult;
+         }));
+      } else {
+         return returnWith(null);
+      }
+   }
+
+   private BasicInvocationStage primaryReturnHandler(BasicInvocationStage ignored, InvocationContext ctx, VisitableCommand visitableCommand, Object localResult) {
+      DataWriteCommand command = (DataWriteCommand) visitableCommand;
+      if (!command.isSuccessful()) {
+         if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return returnWith(localResult);
       }
-
-      return invokeRemotelyIfNeeded(ctx, dataCommand, localResult);
-   }
-
-   private BasicInvocationStage invokeRemotelyIfNeeded(InvocationContext ctx, DataWriteCommand command,
-         Object localResult) throws Throwable {
-      boolean isSync = isSynchronous(command);
-      Address primaryOwner = cdl.getPrimaryOwner(command.getKey());
-      int commandTopologyId = command.getTopologyId();
-      int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
-      // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
-      // TODO Shouldn't PFERs be executed in a tx with total order?
-      boolean topologyChanged = isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1;
-      if (trace) {
-         log.tracef("Command topology id is %d, current topology id is %d, successful? %s",
-               (Object) commandTopologyId, currentTopologyId, command.isSuccessful());
+      // check if a single owner has been configured and the target for the key is the local address
+      boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
+      if (isSingleOwnerAndLocal) {
+         return returnWith(localResult);
       }
-      // We need to check for topology changes on the origin even if the command was unsuccessful
-      // otherwise we execute the command on the correct primary owner, and then we still
-      // throw an OutdatedTopologyInterceptor when we return in EntryWrappingInterceptor.
-      if (topologyChanged) {
-         throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                     commandTopologyId + ", got " + currentTopologyId);
-      }
+      ConsistentHash writeCH = checkTopologyId(command).getWriteConsistentHash();
+      List<Address> recipients = writeCH.isReplicated() ? null : writeCH.locateOwners(command.getKey());
 
-      ValueMatcher valueMatcher = command.getValueMatcher();
-      if (!ctx.isOriginLocal()) {
-         if (!primaryOwner.equals(rpcManager.getAddress())) {
-            return returnWith(localResult);
-         }
-         if (!command.isSuccessful()) {
-            if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
-            return returnWith(localResult);
-         }
-         List<Address> recipients = cdl.getOwners(command.getKey());
-         return invokeOnBackups(recipients, command, localResult, isSync, valueMatcher);
-      } else {
-         if (primaryOwner.equals(rpcManager.getAddress())) {
-            if (!command.isSuccessful()) {
-               if (trace) log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", command);
-               return returnWith(localResult);
-            }
-            List<Address> recipients = cdl.getOwners(command.getKey());
-            if (trace) log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",
-                  recipients);
-            // check if a single owner has been configured and the target for the key is the local address
-            boolean isSingleOwnerAndLocal = cacheConfiguration.clustering().hash().numOwners() == 1;
-            if (isSingleOwnerAndLocal) {
-               return returnWith(localResult);
-            }
-            return invokeOnBackups(recipients, command, localResult, isSync, valueMatcher);
-         } else {
-            if (trace) log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
-            boolean isSyncForwarding = isSync || command.isReturnValueExpected();
-
-            CompletableFuture<Map<Address, Response>> remoteInvocation;
-            try {
-               remoteInvocation = rpcManager.invokeRemotelyAsync(Collections.singletonList(primaryOwner), command,
-                     rpcManager.getDefaultRpcOptions(isSyncForwarding));
-            } catch (Throwable t) {
-               command.setValueMatcher(valueMatcher.matcherForRetry());
-               throw t;
-            }
-            return returnWithAsync(remoteInvocation.handle((responses, t) -> {
-               command.setValueMatcher(valueMatcher.matcherForRetry());
-               CompletableFutures.rethrowException(t);
-
-               if (!isSyncForwarding) return localResult;
-
-               Object primaryResult = getResponseFromPrimaryOwner(primaryOwner, responses);
-               command.updateStatusFromRemoteResponse(primaryResult);
-               return primaryResult;
-            }));
-         }
-      }
-   }
-
-   private BasicInvocationStage invokeOnBackups(List<Address> recipients, DataWriteCommand command, Object localResult,
-                                                boolean isSync,
-                                                ValueMatcher valueMatcher) {
+      // Cache the matcher and reset it if we get OOTE (or any other exception) from backup
+      ValueMatcher originalMatcher = command.getValueMatcher();
       // Ignore the previous value on the backup owners
       command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
-      RpcOptions rpcOptions = determineRpcOptionsForBackupReplication(rpcManager, isSync, recipients);
+      RpcOptions rpcOptions = determineRpcOptionsForBackupReplication(rpcManager, isSynchronous(command), recipients);
       CompletableFuture<Map<Address, Response>> remoteInvocation =
             rpcManager.invokeRemotelyAsync(recipients, command, rpcOptions);
       return returnWithAsync(remoteInvocation.handle((responses, t) -> {
          // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
-         command.setValueMatcher(valueMatcher.matcherForRetry());
-         CompletableFutures.rethrowException(t);
-
+         command.setValueMatcher(originalMatcher.matcherForRetry());
+         CompletableFutures.rethrowException(t instanceof RemoteException ? t.getCause() : t);
          return localResult;
       }));
    }
@@ -476,225 +364,213 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNext(ctx, command);
       }
 
-      int commandTopologyId = command.getTopologyId();
-      if (ctx.isOriginLocal()) {
-         int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
-         boolean topologyChanged = currentTopologyId != commandTopologyId && commandTopologyId != -1;
-         if (trace) {
-            log.tracef("Command topology id is %d, current topology id is %d", commandTopologyId, currentTopologyId);
-         }
-         if (topologyChanged) {
-            throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                        commandTopologyId + ", got " + currentTopologyId);
-         }
-
-         // At this point, we know that an entry located on this node that exists in the data container/store
-         // must also exist in the context.
-         ConsistentHash ch = command.getConsistentHash();
-         Set<Object> requestedKeys = new HashSet<>();
+      if (!ctx.isOriginLocal()) {
          for (Object key : command.getKeys()) {
-            CacheEntry entry = ctx.lookupEntry(key);
-            if (entry == null) {
-               if (!ch.isKeyLocalToNode(rpcManager.getAddress(), key)) {
-                  requestedKeys.add(key);
-               } else {
-                  if (trace) {
-                     log.tracef("Not doing a remote get for missing key %s since entry is "
-                                 + "mapped to current node (%s). Owners are %s",
-                           toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
-                  }
-                  // Force a map entry to be created, because we know this entry is local
-                  entryFactory.wrapExternalEntry(ctx, key, null, EntryFactory.Wrap.WRAP_ALL, false);
-               }
-            }
-         }
-
-         boolean missingRemoteValues = false;
-         if (!requestedKeys.isEmpty()) {
-            if (trace) {
-               log.tracef("Fetching entries for keys %s from remote nodes", requestedKeys);
-            }
-
-            Map<Object, InternalCacheEntry> justRetrieved = retrieveFromRemoteSources(
-                  requestedKeys, ctx, command.getFlagsBitSet());
-            Map<Object, InternalCacheEntry> previouslyFetched = command.getRemotelyFetched();
-            if (previouslyFetched != null) {
-               previouslyFetched.putAll(justRetrieved);
-            } else {
-               command.setRemotelyFetched(justRetrieved);
-            }
-            for (Object key : requestedKeys) {
-               if (!justRetrieved.containsKey(key)) {
-                  missingRemoteValues = true;
-               } else {
-                  InternalCacheEntry remoteEntry = justRetrieved.get(key);
-                  entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.WRAP_NON_NULL,
-                                                 false);
-               }
-            }
-         }
-
-         if (missingRemoteValues) {
-            throw new OutdatedTopologyException("Remote values are missing because of a topology change");
-         }
-         return invokeNext(ctx, command);
-      } else { // remote
-         int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
-         boolean topologyChanged = currentTopologyId != commandTopologyId && commandTopologyId != -1;
-         // If the topology changed while invoking, this means we cannot trust any null values
-         // so we shouldn't return them
-         ConsistentHash ch = command.getConsistentHash();
-         for (Object key : command.getKeys()) {
-            CacheEntry entry = ctx.lookupEntry(key);
-            if (entry == null || entry.isNull()) {
-               if (ch.isKeyLocalToNode(rpcManager.getAddress(), key) &&
-                     !topologyChanged) {
-                  if (trace) {
-                     log.tracef("Not doing a remote get for missing key %s since entry is "
-                                 + "mapped to current node (%s). Owners are %s",
-                           toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
-                  }
-                  // Force a map entry to be created, because we know this entry is local
-                  entryFactory.wrapExternalEntry(ctx, key, null, EntryFactory.Wrap.WRAP_ALL, false);
-               }
+            if (ctx.lookupEntry(key) == null) {
+               return handleMissingEntryOnRead(command);
             }
          }
          return invokeNext(ctx, command);
       }
+
+      CacheTopology cacheTopology = checkTopologyId(command);
+      ConsistentHash ch = cacheTopology.getReadConsistentHash();
+
+      Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, command.getKeys(), ch, null);
+      if (requestedKeys.isEmpty()) {
+         return invokeNext(ctx, command);
+      }
+
+      GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
+      CompletableFutureWithCounter allFuture = new CompletableFutureWithCounter(requestedKeys.size());
+
+      for (Map.Entry<Address, List<Object>> pair : requestedKeys.entrySet()) {
+         List<Object> keys = pair.getValue();
+         ClusteredGetAllCommand clusteredGetAllCommand = cf.buildClusteredGetAllCommand(keys, command.getFlagsBitSet(), gtx);
+         rpcManager.invokeRemotelyAsync(Collections.singleton(pair.getKey()), clusteredGetAllCommand, defaultSyncOptions).whenComplete((responseMap, throwable) -> {
+            if (throwable != null) {
+               allFuture.completeExceptionally(throwable);
+            }
+            Response response = getSingleSuccessfulResponseOrFail(responseMap, allFuture);
+            if (response == null) return;
+            Object responseValue = ((SuccessfulResponse) response).getResponseValue();
+            if (responseValue instanceof InternalCacheValue[]) {
+               InternalCacheValue[] values = (InternalCacheValue[]) responseValue;
+               int counterValue;
+               synchronized (allFuture) {
+                  for (int i = 0; i < keys.size(); ++i) {
+                     Object key = keys.get(i);
+                     InternalCacheValue value = values[i];
+                     CacheEntry entry = value == null ? NullCacheEntry.getInstance() : value.toInternalCacheEntry(key);
+                     entryFactory.wrapExternalEntry(ctx, key, entry, false);
+                  }
+                  counterValue = --allFuture.counter;
+               }
+               // complete the future after sync block!
+               if (counterValue == 0) {
+                  allFuture.complete(null);
+               }
+            } else {
+               allFuture.completeExceptionally(new IllegalStateException("Unexpected response value: " + responseValue));
+            }
+         });
+      }
+      return invokeNextAsync(ctx, command, allFuture);
    }
 
    @Override
    public BasicInvocationStage visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      // We cannot merge this method with visitGetAllCommand because this can't wrap entries into context
       if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
-         return invokeNext(ctx, command);
+         return handleLocalOnlyReadOnlyManyCommand(ctx, command);
       }
 
-      int commandTopologyId = command.getTopologyId();
-      if (ctx.isOriginLocal()) {
-         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-         int currentTopologyId = cacheTopology.getTopologyId();
-         boolean topologyChanged = currentTopologyId != commandTopologyId && commandTopologyId != -1;
-         if (trace) {
-            log.tracef("Command topology id is %d, current topology id is %d", commandTopologyId, currentTopologyId);
-         }
-         if (topologyChanged) {
-            throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-                        commandTopologyId + ", got " + currentTopologyId);
-         }
-         if (command.getKeys().isEmpty()) {
-            return returnWith(Stream.empty());
-         }
+      CacheTopology cacheTopology = checkTopologyId(command);
+      if (!ctx.isOriginLocal()) {
+         return handleRemoteReadOnlyManyCommand(ctx, command);
+      }
+      if (command.getKeys().isEmpty()) {
+         return returnWith(Stream.empty());
+      }
 
-         ConsistentHash ch = cacheTopology.getReadConsistentHash();
-         int estimateForOneNode = 2 * command.getKeys().size() / ch.getMembers().size();
-         Map<Address, List<Object>> requestedKeys = new HashMap<>(ch.getMembers().size());
-         List<Object> availableKeys = new ArrayList<>(estimateForOneNode);
-         for (Object key : command.getKeys()) {
-            CacheEntry entry = ctx.lookupEntry(key);
-            if (entry == null) {
-               List<Address> owners = ch.locateOwners(key);
-               // Let's try to minimize the number of messages by preferring owner to which we've already
-               // decided to send message
-               boolean foundExisting = false;
-               for (Address address : owners) {
-                  if (address.equals(rpcManager.getAddress())) {
-                     throw new IllegalStateException("Entry should be always wrapped!");
-                  }
-                  List<Object> keys = requestedKeys.get(address);
-                  if (keys != null) {
-                     keys.add(key);
-                     foundExisting = true;
-                     break;
-                  }
-               }
-               if (!foundExisting) {
-                  List<Object> keys = new ArrayList<>(estimateForOneNode);
-                  keys.add(key);
-                  requestedKeys.put(owners.get(0), keys);
-               }
-            } else {
-               availableKeys.add(key);
+      ConsistentHash ch = cacheTopology.getReadConsistentHash();
+      int estimateForOneNode = 2 * command.getKeys().size() / ch.getMembers().size();
+      List<Object> availableKeys = new ArrayList<>(estimateForOneNode);
+      Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, command.getKeys(), ch, availableKeys);
+
+      // TODO: while this works in a non-blocking way, the returned stream is not lazy as the functional
+      // contract suggests. Traversable is also not honored as it is executed only locally on originator.
+      // On FutureMode.ASYNC, there should be one command per target node going from the top level
+      // to allow retries in StateTransferInterceptor in case of topology change.
+      MergingCompletableFuture<Object> allFuture = new MergingCompletableFuture<>(
+         ctx, requestedKeys.size() + (availableKeys.isEmpty() ? 0 : 1),
+         new Object[command.getKeys().size()], Arrays::stream);
+
+      handleLocallyAvailableKeys(ctx, command, availableKeys, allFuture);
+      int pos = availableKeys.size();
+      for (Map.Entry<Address, List<Object>> addressKeys : requestedKeys.entrySet()) {
+         List<Object> keys = addressKeys.getValue();
+         remoteReadOnlyMany(addressKeys.getKey(), keys, command.getFunction(), allFuture, pos);
+         pos += keys.size();
+      }
+      return returnWithAsync(allFuture);
+   }
+
+   private InvocationStage handleLocalOnlyReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) {
+      for (Object key : command.getKeys()) {
+         if (ctx.lookupEntry(key) == null) {
+            entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), false);
+         }
+      }
+      return invokeNext(ctx, command);
+   }
+
+   private BasicInvocationStage handleRemoteReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) {
+      for (Object key : command.getKeys()) {
+         if (ctx.lookupEntry(key) == null) {
+            return handleMissingEntryOnRead(command);
+         }
+      }
+      return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
+         // apply function happens here
+         return ((Stream) rv).toArray();
+      });
+   }
+
+   private void remoteReadOnlyMany(Address owner, List<Object> keys, Function function, MergingCompletableFuture<Object> allFuture, int destinationIndex) {
+      ReadOnlyManyCommand remoteCommand = cf.buildReadOnlyManyCommand(keys, function);
+      rpcManager.invokeRemotelyAsync(Collections.singleton(owner), remoteCommand, defaultSyncOptions)
+         .whenComplete((responseMap, throwable) -> {
+            if (throwable != null) {
+               allFuture.completeExceptionally(throwable);
             }
-         }
+            Response response = getSingleSuccessfulResponseOrFail(responseMap, allFuture);
+            if (response == null) return;
+            Object responseValue = ((SuccessfulResponse) response).getResponseValue();
+            if (responseValue instanceof Object[]) {
+               Object[] values = (Object[]) responseValue;
+               System.arraycopy(values, 0, allFuture.results, destinationIndex, values.length);
+               allFuture.countDown();
+            } else {
+               allFuture.completeExceptionally(new IllegalStateException("Unexpected response value " + responseValue));
+            }
+         });
+   }
 
-         // TODO: while this works in a non-blocking way, the returned stream is not lazy as the functional
-         // contract suggests. Traversable is also not honored as it is executed only locally on originator.
-         // On FutureMode.ASYNC, there should be one command per target node going from the top level
-         // to allow retries in StateTransferInterceptor in case of topology change.
-         StreamMergingCompletableFuture allFuture = new StreamMergingCompletableFuture(
-            ctx, requestedKeys.size() + (availableKeys.isEmpty() ? 0 : 1), command.getKeys().size());
-         int pos = 0;
-         if (!availableKeys.isEmpty()) {
-            ReadOnlyManyCommand localCommand = cf.buildReadOnlyManyCommand(availableKeys, command.getFunction());
-            invokeNext(ctx, localCommand).compose((stage, rCtx, rCommand, rv, throwable) -> {
-               if (throwable != null) {
-                  allFuture.completeExceptionally(throwable);
-               } else {
-                  try {
-                     Supplier<ArrayIterator> supplier = () -> new ArrayIterator(allFuture.results);
-                     BiConsumer<ArrayIterator, Object> consumer = ArrayIterator::add;
-                     BiConsumer<ArrayIterator, ArrayIterator> combiner = ArrayIterator::combine;
-                     ((Stream) rv).collect(supplier, consumer, combiner);
-                     allFuture.countDown();
-                  } catch (Throwable t) {
-                     allFuture.completeExceptionally(t);
-                  }
-               }
-               return returnWithAsync(allFuture);
-            });
-            pos += availableKeys.size();
-         }
-         for (Map.Entry<Address, List<Object>> addressKeys : requestedKeys.entrySet()) {
-            List<Object> keys = addressKeys.getValue();
-            ReadOnlyManyCommand remoteCommand = cf.buildReadOnlyManyCommand(keys, command.getFunction());
-            final int myPos = pos;
-            pos += keys.size();
-            rpcManager.invokeRemotelyAsync(Collections.singleton(addressKeys.getKey()), remoteCommand, defaultSyncOptions)
-               .whenComplete((responseMap, throwable) -> {
-                  if (throwable != null) {
-                     allFuture.completeExceptionally(throwable);
-                  }
-                  Iterator<Response> it = responseMap.values().iterator();
-                  if (it.hasNext()) {
-                     Response response = it.next();
-                     if (it.hasNext()) {
-                        allFuture.completeExceptionally(new IllegalStateException("Too many responses " + responseMap));
-                     }
-                     if (response.isSuccessful()) {
-                        Object responseValue = ((SuccessfulResponse) response).getResponseValue();
-                        if (responseValue instanceof Object[]) {
-                           Object[] values = (Object[]) responseValue;
-                           System.arraycopy(values, 0, allFuture.results, myPos, values.length);
-                           allFuture.countDown();
-                        } else {
-                           allFuture.completeExceptionally(new IllegalStateException("Unexpected response value " + responseValue));
-                        }
-                     } else {
-                        // CHECKME: The command is sent with current topology and deferred until the node gets our topology;
-                        // therefore if it returns unsuccessful response we can assume that there is a newer topology
-                        allFuture.completeExceptionally(new OutdatedTopologyException("Remote node has higher topology, response " + response));
-                     }
-                  } else {
-                     allFuture.completeExceptionally(new RpcException("Expected one response"));
-                  }
-               });
+   private void handleLocallyAvailableKeys(InvocationContext ctx, ReadOnlyManyCommand command, List<Object> availableKeys, MergingCompletableFuture<Object> allFuture) {
+      if (availableKeys.isEmpty()) {
+         return;
+      }
+      ReadOnlyManyCommand localCommand = cf.buildReadOnlyManyCommand(availableKeys, command.getFunction());
+      invokeNext(ctx, localCommand).compose((stage, rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null) {
+            allFuture.completeExceptionally(throwable);
+         } else {
+            try {
+               Supplier<ArrayIterator> supplier = () -> new ArrayIterator(allFuture.results);
+               BiConsumer<ArrayIterator, Object> consumer = ArrayIterator::add;
+               BiConsumer<ArrayIterator, ArrayIterator> combiner = ArrayIterator::combine;
+               ((Stream) rv).collect(supplier, consumer, combiner);
+               allFuture.countDown();
+            } catch (Throwable t) {
+               allFuture.completeExceptionally(t);
+            }
          }
          return returnWithAsync(allFuture);
-      } else { // remote
-         for (Object key : command.getKeys()) {
-            CacheEntry entry = ctx.lookupEntry(key);
-            if (entry == null) {
-               // Two possibilities:
-               // a) this node already lost the entry -> we should retry on originator
-               // b) the command was wrapped in old topology but now we have the entry -> retry locally
-               // TODO: to simplify things, retrying on originator all the time
-               return returnWith(UnsuccessfulResponse.INSTANCE);
+      });
+   }
+
+   private Map<Address, List<Object>> getKeysByOwner(InvocationContext ctx, Collection<?> keys, ConsistentHash ch, List<Object> availableKeys) {
+      Map<Address, List<Object>> requestedKeys = new HashMap<>(ch.getMembers().size());
+      int estimateForOneNode = 2 * keys.size() / ch.getMembers().size();
+      for (Object key : keys) {
+         CacheEntry entry = ctx.lookupEntry(key);
+         if (entry == null) {
+            List<Address> owners = ch.locateOwners(key);
+            // Let's try to minimize the number of messages by preferring owner to which we've already
+            // decided to send message
+            boolean foundExisting = false;
+            for (Address address : owners) {
+               if (address.equals(rpcManager.getAddress())) {
+                  throw new IllegalStateException("Entry should be always wrapped!");
+               }
+               List<Object> list = requestedKeys.get(address);
+               if (list != null) {
+                  list.add(key);
+                  foundExisting = true;
+                  break;
+               }
             }
+            if (!foundExisting) {
+               List<Object> list = new ArrayList<>(estimateForOneNode);
+               list.add(key);
+               requestedKeys.put(owners.get(0), list);
+            }
+         } else if (availableKeys != null) {
+            availableKeys.add(key);
          }
-         return invokeNext(ctx, command).thenApply((rCtx, rCommand, rv) -> {
-            // apply function happens here
-            return ((Stream) rv).toArray();
-         });
+      }
+      return requestedKeys;
+   }
+
+   protected Response getSingleSuccessfulResponseOrFail(Map<Address, Response> responseMap, CompletableFuture<?> future) {
+      Iterator<Response> it = responseMap.values().iterator();
+      if (!it.hasNext()) {
+         future.completeExceptionally(new RpcException("Expected one response"));
+         return null;
+      } else {
+         Response response = it.next();
+         if (it.hasNext()) {
+            future.completeExceptionally(new IllegalStateException("Too many responses " + responseMap));
+            return null;
+         }
+         if (!response.isSuccessful()) {
+            // CHECKME: The command is sent with current topology and deferred until the node gets our topology;
+            // therefore if it returns unsuccessful response we can assume that there is a newer topology
+            future.completeExceptionally(new OutdatedTopologyException("Remote node has higher topology, response " + response));
+            return null;
+         }
+         return response;
       }
    }
 
@@ -716,48 +592,95 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private static class StreamMergingCompletableFuture extends CompletableFuture<Object> {
-      private final InvocationContext ctx;
-      private final AtomicInteger counter;
-      private final Object[] results;
+   // This class sis very similar to CountDownCompletableFuture but it expect external synchronization,
+   // That comes handy when we have to sync anyway on different item, for example the context
+   private static class CompletableFutureWithCounter extends CompletableFuture<Void> {
+      private int counter;
 
-      public StreamMergingCompletableFuture(InvocationContext ctx, int participants, int numKeys) {
+      public CompletableFutureWithCounter(int counter) {
+         this.counter = counter;
+      }
+   }
+
+   protected static class CountDownCompletableFuture extends CompletableFuture<Object> {
+      protected final InvocationContext ctx;
+      protected final AtomicInteger counter;
+
+      public CountDownCompletableFuture(InvocationContext ctx, int participants) {
+         if (trace) log.tracef("Creating shortcut countdown with %d participants", participants);
          this.ctx = ctx;
          this.counter = new AtomicInteger(participants);
-         this.results = new Object[numKeys];
       }
 
       public void countDown() {
          if (counter.decrementAndGet() == 0) {
-            complete(Arrays.stream(results));
+            complete(result());
          }
+      }
+
+      public void increment() {
+         int preValue = counter.getAndIncrement();
+         if (preValue == 0) {
+            throw new IllegalStateException();
+         }
+      }
+
+      protected Object result() {
+         return null;
       }
    }
 
-   /**
-    * @return Whether a remote get is needed to obtain the previous values of the affected entries.
-    */
-   protected abstract boolean writeNeedsRemoteValue(InvocationContext ctx, WriteCommand command, Object key);
+   protected static class MergingCompletableFuture<T> extends CountDownCompletableFuture {
+      private final Function<T[], Object> transform;
+      protected final T[] results;
 
-   protected boolean valueIsMissing(CacheEntry entry) {
-      return entry == null || (entry.isNull() && !entry.isRemoved() && !entry.skipLookup());
+      public MergingCompletableFuture(InvocationContext ctx, int participants, T[] results, Function<T[], Object> transform) {
+         super(ctx, participants);
+         // results can be null if the command has flag IGNORE_RETURN_VALUE
+         this.results = results;
+         this.transform = transform;
+      }
+
+      @Override
+      protected Object result() {
+         return transform == null || results == null ? null : transform.apply(results);
+      }
    }
 
-   private InvocationStage visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
-      if (!ctx.isOriginLocal())
-         return invokeNext(ctx, command);
-
+   private BasicInvocationStage visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       Object key = command.getKey();
       CacheEntry entry = ctx.lookupEntry(key);
-      if (valueIsMissing(entry)) {
-         if (readNeedsRemoteValue(ctx, command)) {
-            if (trace)
-               log.tracef("Doing a remote get for key %s", key);
-            CompletableFuture<?> getFuture = remoteGet(ctx, command, command.getKey(), false);
-            return invokeNextAsync(ctx, command, getFuture);
+
+      if (entry == null) {
+         if (ctx.isOriginLocal()) {
+            if (readNeedsRemoteValue(ctx, command)) {
+               return invokeNextAsync(ctx, command, remoteGet(ctx, command, command.getKey(), false));
+            } else {
+               return returnWith(null);
+            }
+         } else {
+            return handleMissingEntryOnRead(command);
          }
       }
       return invokeNext(ctx, command);
+   }
+
+   private BasicInvocationStage handleMissingEntryOnRead(TopologyAffectedCommand command) {
+      // If we have the entry in context it means that we are read owners, so we don't have to check the topology
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      int currentTopologyId = cacheTopology.getTopologyId();
+      int cmdTopology = command.getTopologyId();
+      if (cmdTopology < currentTopologyId) {
+         return returnWith(UnsuccessfulResponse.INSTANCE);
+      } else {
+         // If cmdTopology > currentTopologyId: the topology of this node is outdated
+         // TODO: This situation won't happen as soon as we'll implement 4-phase topology change in ISPN-5021
+         // (then, Tx.readCH and T(x+1).readCH will always have common subset of nodes so we'll be safe here
+         // to return UnsuccessfulResponse
+         // If cmdTopology == currentTopologyId: between STI and BDI this node had different topology, therefore
+         // the entry was not loaded into context. Retry again locally.
+         throw new OutdatedTopologyException(cmdTopology);
+      }
    }
 
    @Override
@@ -772,22 +695,59 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return visitGetCommand(ctx, command);
    }
 
-   protected abstract CompletableFuture<?> remoteGet(InvocationContext ctx, AbstractDataCommand command,
-                                                        Object key, boolean isWrite) throws Throwable;
-
-   protected CompletableFuture<?> remoteGetBeforeWrite(InvocationContext ctx, AbstractDataWriteCommand command,
-                                                          Object key, boolean isWrite) throws Throwable {
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (valueIsMissing(entry) && writeNeedsRemoteValue(ctx, command, key)) {
-         int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
-         int cmdTopology = command.getTopologyId();
-         if (currentTopologyId != cmdTopology && cmdTopology != -1) {
-            throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-               cmdTopology + ", got " + currentTopologyId);
-         }
-         return remoteGet(ctx, command, key, isWrite);
+   @Override
+   public BasicInvocationStage visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
+         throws Throwable {
+      Object key = command.getKey();
+      if (ctx.lookupEntry(key) != null) {
+         // the entry is owned locally (it is NullCacheEntry if it was not found), no need to go remote
+         return invokeNext(ctx, command);
       }
-      return null;
+      if (!ctx.isOriginLocal()) {
+         return handleMissingEntryOnRead(command);
+      }
+      if (readNeedsRemoteValue(ctx, command)) {
+         CacheTopology cacheTopology = checkTopologyId(command);
+         List<Address> owners = cacheTopology.getReadConsistentHash().locateOwners(key);
+         if (trace)
+            log.tracef("Doing a remote get for key %s in topology %d to %s", key, cacheTopology.getTopologyId(), owners);
+
+         // make sure that the command topology is set to the value according which we route it
+         command.setTopologyId(cacheTopology.getTopologyId());
+
+         CompletableFuture<Map<Address, Response>> rpc = rpcManager.invokeRemotelyAsync(owners, command,
+               staggeredOptions);
+         return returnWithAsync(rpc.thenApply(
+               (responseMap) -> {
+                  for (Response rsp : responseMap.values()) {
+                     if (rsp.isSuccessful()) {
+                        return ((SuccessfulResponse) rsp).getResponseValue();
+                     }
+                  }
+                  // On receiver side the command topology id is checked and if it's too new, the command is delayed.
+                  // We can assume that we miss successful response only because the owners already have new topology
+                  // in which they're not owners - we'll wait for this topology, then.
+                  throw new OutdatedTopologyException("We haven't found an owner");
+               }));
+      } else {
+         // This has LOCAL flags, just wrap NullCacheEntry and let the command run
+         entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), false);
+         return invokeNext(ctx, command);
+      }
+   }
+
+   protected CacheTopology checkTopologyId(TopologyAffectedCommand command) {
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      int currentTopologyId = cacheTopology.getTopologyId();
+      int cmdTopology = command.getTopologyId();
+      if (currentTopologyId != cmdTopology && cmdTopology != -1) {
+         throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+            cmdTopology + ", got " + currentTopologyId);
+      }
+      if (trace) {
+         log.tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
+      }
+      return cacheTopology;
    }
 
    /**

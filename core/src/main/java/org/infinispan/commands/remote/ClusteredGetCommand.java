@@ -10,7 +10,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
@@ -78,24 +77,23 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
    public CompletableFuture<Object> invokeAsync() throws Throwable {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
-      long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
+      // CACHE_MODE_LOCAL is not used as it can be used when we want to ignore the ownership with respect to reads
+      long flagBitSet = EnumUtil.bitSetOf(Flag.SKIP_REMOTE_LOOKUP);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, EnumUtil.mergeBitSets(flagBitSet, getFlagsBitSet()));
+      command.setTopologyId(topologyId);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
       return future.thenApply(rv -> {
-         CacheEntry cacheEntry = (CacheEntry) rv;
-         if (cacheEntry == null) {
-            if (trace) log.trace("Did not find anything, returning null");
-            return null;
-         }
+         if (trace) log.tracef("Return value for key=%s is %s", key, rv);
          //this might happen if the value was fetched from a cache loader
-         if (cacheEntry instanceof MVCCEntry) {
-            if (trace) log.trace("Handling an internal cache entry...");
-            MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
+         if (rv instanceof MVCCEntry) {
+            MVCCEntry mvccEntry = (MVCCEntry) rv;
             return entryFactory.createValue(mvccEntry);
-         } else {
-            InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
+         } else if (rv instanceof InternalCacheEntry) {
+            InternalCacheEntry internalCacheEntry = (InternalCacheEntry) rv;
             return internalCacheEntry.toInternalCacheValue();
+         } else { // null or Response
+            return rv;
          }
       });
    }
@@ -174,4 +172,5 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
    public boolean canBlock() {
       return false;
    }
+
 }

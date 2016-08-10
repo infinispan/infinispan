@@ -64,8 +64,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public boolean readsExistingValues() {
-      return true;
+   public LoadType loadType() {
+      return LoadType.PRIMARY;
    }
 
    @Override
@@ -78,22 +78,23 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       //noinspection unchecked
       MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
       // We need the null check as in non-tx caches we don't always wrap the entry on the origin
-      if (e != null && valueMatcher.matches(e, oldValue, newValue, valueEquivalence)) {
+      Object prevValue = e.getValue();
+      if (valueMatcher.matches(prevValue, oldValue, newValue, valueEquivalence)) {
          e.setChanged(true);
          Object old = e.setValue(newValue);
          Metadatas.updateMetadata(e, metadata);
          if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-            return returnValue(old, e.getMetadata(), true, ctx);
+            return returnValue(e, old, e.getMetadata(), true, ctx);
          } else {
             // Return the expected value when retrying
-            return returnValue(oldValue, e.getMetadata(), true, ctx);
+            return returnValue(e, oldValue, e.getMetadata(), true, ctx);
          }
       }
 
-      return returnValue(null, null, false, ctx);
+      return returnValue(null, null, null, false, ctx);
    }
 
-   private Object returnValue(Object beingReplaced, Metadata previousMetadata, boolean successful,
+   private Object returnValue(MVCCEntry e, Object beingReplaced, Metadata previousMetadata, boolean successful,
          InvocationContext ctx) {
       this.successful = successful;
 

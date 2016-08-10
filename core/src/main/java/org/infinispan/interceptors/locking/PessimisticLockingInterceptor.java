@@ -18,6 +18,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.Ownership;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BasicInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
@@ -382,7 +383,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private boolean isLockOwner(Collection<?> keys) {
       for (Object key : keys) {
-         if (LockUtil.getLockOwnership(key, cdl) != LockUtil.LockOwnership.PRIMARY) {
+         if (LockUtil.getLockOwnership(key, cdl) != Ownership.PRIMARY) {
             return false;
          }
       }
@@ -390,7 +391,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private boolean isLockOwner(Object key) {
-      return LockUtil.getLockOwnership(key, cdl) == LockUtil.LockOwnership.PRIMARY;
+      return LockUtil.getLockOwnership(key, cdl) == Ownership.PRIMARY;
    }
 
    private boolean isStateTransferInProgress() {
