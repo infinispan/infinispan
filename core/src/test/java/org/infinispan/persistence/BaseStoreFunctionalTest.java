@@ -128,19 +128,46 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assert cache.getCacheConfiguration().persistence().preload();
       assert cache.getCacheConfiguration().storeAsBinary().enabled();
 
-      cache.put("k1", new Pojo());
-      cache.put("k2", new Pojo(), 111111, TimeUnit.MILLISECONDS);
-      cache.put("k3", new Pojo(), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
-      cache.put("k4", new Pojo(), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
+      cache.put("k1", new Pojo(1));
+      cache.put("k2", new Pojo(2), 111111, TimeUnit.MILLISECONDS);
+      cache.put("k3", new Pojo(3), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
+      cache.put("k4", new Pojo(4), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
 
       cache.stop();
 
       cache.start();
 
       assertEquals(4, cache.entrySet().size());
+      assertEquals(new Pojo(1), cache.get("k1"));
+      assertEquals(new Pojo(2), cache.get("k2"));
+      assertEquals(new Pojo(3), cache.get("k3"));
+      assertEquals(new Pojo(4), cache.get("k4"));
    }
 
    public static class Pojo implements Serializable {
+
+      private final int i;
+
+      public Pojo(int i) {
+         this.i = i;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Pojo pojo = (Pojo) o;
+
+         return i == pojo.i;
+
+      }
+
+      @Override
+      public int hashCode() {
+         return i;
+      }
+
    }
 
    public void testRestoreAtomicMap(Method m) {

@@ -3,32 +3,32 @@ package org.infinispan.marshall.core.internal;
 /**
  * Basic encoding/decoding of primitives
  */
-public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, ByteArrayObjectInput> {
+final class BytesEncoding implements Encoding<BytesObjectOutput, BytesObjectInput> {
 
-   public ByteArrayEncoding() {
+   public BytesEncoding() {
    }
 
    @Override
-   public void encodeByte(int b, ByteArrayObjectOutput out) {
+   public void encodeByte(int b, BytesObjectOutput out) {
       int newcount = checkCapacity(1, out);
       out.bytes[out.pos] = (byte) b;
       out.pos = newcount;
    }
 
    @Override
-   public void encodeBoolean(boolean b, ByteArrayObjectOutput out) {
+   public void encodeBoolean(boolean b, BytesObjectOutput out) {
       encodeByte((byte) (b ? 1 : 0), out);
    }
 
    @Override
-   public void encodeBytes(byte[] b, int off, int len, ByteArrayObjectOutput out) {
+   public void encodeBytes(byte[] b, int off, int len, BytesObjectOutput out) {
       int newcount = checkCapacity(len, out);
       System.arraycopy(b, off, out.bytes, out.pos, len);
       out.pos = newcount;
    }
 
    @Override
-   public void encodeChar(int v, ByteArrayObjectOutput out) {
+   public void encodeChar(int v, BytesObjectOutput out) {
       int newcount = checkCapacity(2, out);
       final int s = out.pos;
       out.bytes[s] = (byte) (v >> 8);
@@ -37,7 +37,7 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public void encodeDouble(double v, ByteArrayObjectOutput out) {
+   public void encodeDouble(double v, BytesObjectOutput out) {
       final long bits = Double.doubleToLongBits(v);
       int newcount = checkCapacity(8, out);
       final int s = out.pos;
@@ -53,7 +53,7 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public void encodeFloat(float v, ByteArrayObjectOutput out) {
+   public void encodeFloat(float v, BytesObjectOutput out) {
       final int bits = Float.floatToIntBits(v);
       int newcount = checkCapacity(4, out);
       final int s = out.pos;
@@ -65,7 +65,7 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public void encodeInt(int v, ByteArrayObjectOutput out) {
+   public void encodeInt(int v, BytesObjectOutput out) {
       int newcount = checkCapacity(4, out);
       final int s = out.pos;
       out.bytes[s] = (byte) (v >> 24);
@@ -76,7 +76,7 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public void encodeLong(long v, ByteArrayObjectOutput out) {
+   public void encodeLong(long v, BytesObjectOutput out) {
       int newcount = checkCapacity(8, out);
       final int s = out.pos;
       out.bytes[s] = (byte) (v >> 56L);
@@ -91,7 +91,7 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public void encodeShort(int v, ByteArrayObjectOutput out) {
+   public void encodeShort(int v, BytesObjectOutput out) {
       int newcount = checkCapacity(2, out);
       final int s = out.pos;
       out.bytes[s] = (byte) (v >> 8);
@@ -100,20 +100,18 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public void encodeString(String s, ByteArrayObjectOutput out) {
+   public void encodeString(String s, BytesObjectOutput out) {
       int len;
-      if(s == null) {
-         encodeByte(0, out); // null
-      } else if ((len = s.length()) == 0){
-         encodeByte(1, out); // empty string
+      if ((len = s.length()) == 0){
+         encodeByte(0, out); // empty string
       } else if (isAscii(s, len)) {
-         encodeByte(2, out); // small ascii
+         encodeByte(1, out); // small ascii
          encodeByte(len, out);
          int newcount = checkCapacity(len, out);
          s.getBytes(0, len, out.bytes, out.pos);
          out.pos = newcount;
       } else {
-         encodeByte(3, out);  // large string
+         encodeByte(2, out);  // large string
          encodeStringUtf8(s, out);
       }
    }
@@ -133,7 +131,7 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public void encodeStringUtf8(String s, ByteArrayObjectOutput out) {
+   public void encodeStringUtf8(String s, BytesObjectOutput out) {
       int startPos = skipIntSize(out);
       int localPos = out.pos; /* avoid getfield opcode */
       byte[] localBuf = out.bytes; /* avoid getfield opcode */
@@ -189,14 +187,14 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
       writeIntDirect(localPos - 4 - startPos, startPos, out);
    }
 
-   private int skipIntSize(ByteArrayObjectOutput out) {
+   private int skipIntSize(BytesObjectOutput out) {
       checkCapacity(4, out);
       int count = out.pos;
       out.pos +=4;
       return count;
    }
 
-   private void writeIntDirect(int intValue, int index, ByteArrayObjectOutput out) {
+   private void writeIntDirect(int intValue, int index, BytesObjectOutput out) {
       byte[] buf = out.bytes; /* avoid getfield opcode */
       buf[index] =   (byte) ((intValue >>> 24) & 0xFF);
       buf[index+1] = (byte) ((intValue >>> 16) & 0xFF);
@@ -204,7 +202,7 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
       buf[index+3] = (byte) ((intValue >>>  0) & 0xFF);
    }
 
-   private int checkCapacity(int len, ByteArrayObjectOutput out) {
+   private int checkCapacity(int len, BytesObjectOutput out) {
       int newcount = out.pos + len;
       if (newcount > out.bytes.length) {
          byte newbuf[] = new byte[getNewBufferSize(out.bytes.length, newcount)];
@@ -231,40 +229,40 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public boolean decodeBoolean(ByteArrayObjectInput in) {
+   public boolean decodeBoolean(BytesObjectInput in) {
       return decodeByte(in) != 0;
    }
 
    @Override
-   public byte decodeByte(ByteArrayObjectInput in) {
+   public byte decodeByte(BytesObjectInput in) {
       return in.bytes[in.pos++];
    }
 
    @Override
-   public void decodeBytes(byte[] b, int off, int len, ByteArrayObjectInput in) {
+   public void decodeBytes(byte[] b, int off, int len, BytesObjectInput in) {
       System.arraycopy(in.bytes, in.pos, b, off, len);
       in.pos += len;
    }
 
    @Override
-   public char decodeChar(ByteArrayObjectInput in) {
+   public char decodeChar(BytesObjectInput in) {
       char v = (char) (in.bytes[in.pos] << 8 | (in.bytes[in.pos + 1] & 0xff));
       in.pos += 2;
       return v;
    }
 
    @Override
-   public double decodeDouble(ByteArrayObjectInput in) {
+   public double decodeDouble(BytesObjectInput in) {
       return Double.longBitsToDouble(decodeLong(in));
    }
 
    @Override
-   public float decodeFloat(ByteArrayObjectInput in) {
+   public float decodeFloat(BytesObjectInput in) {
       return Float.intBitsToFloat(decodeInt(in));
    }
 
    @Override
-   public int decodeInt(ByteArrayObjectInput in) {
+   public int decodeInt(BytesObjectInput in) {
       int v = in.bytes[in.pos] << 24
             | (in.bytes[in.pos + 1] & 0xff) << 16
             | (in.bytes[in.pos + 2] & 0xff) << 8
@@ -274,24 +272,41 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public long decodeLong(ByteArrayObjectInput in) {
+   public long decodeLong(BytesObjectInput in) {
       return (long) decodeInt(in) << 32L | (long) decodeInt(in) & 0xffffffffL;
    }
 
    @Override
-   public short decodeShort(ByteArrayObjectInput in) {
+   public short decodeShort(BytesObjectInput in) {
       short v = (short) (in.bytes[in.pos] << 8 | (in.bytes[in.pos + 1] & 0xff));
       in.pos += 2;
       return v;
    }
 
    @Override
-   public String decodeString(ByteArrayObjectInput in) {
-      return null;  // TODO: Customise this generated block
+   public String decodeString(BytesObjectInput in) {
+      byte mark = decodeByte(in);
+
+      switch(mark) {
+         case 0:
+            return ""; // empty string
+         case 1:
+            // small ascii
+            int size = decodeByte(in);
+            String str = new String(in.bytes, 0, in.pos, size);
+            in.pos += size;
+            return str;
+         case 2:
+            // large string
+            return decodeStringUtf8(in);
+         case 3:
+         default:
+            throw new RuntimeException("Unkwown marker(String). mark=" + mark);
+      }
    }
 
    @Override
-   public String decodeStringUtf8(ByteArrayObjectInput in) {
+   public String decodeStringUtf8(BytesObjectInput in) {
       int utflen = decodeInt(in);
 
       byte[] bytearr = in.bytes;
@@ -358,7 +373,7 @@ public final class ByteArrayEncoding implements Encoding<ByteArrayObjectOutput, 
    }
 
    @Override
-   public int decodeUnsignedShort(ByteArrayObjectInput in) {
+   public int decodeUnsignedShort(BytesObjectInput in) {
       int v = (in.bytes[in.pos] & 0xff) << 8 | (in.bytes[in.pos + 1] & 0xff);
       in.pos += 2;
       return v;
