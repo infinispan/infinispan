@@ -4,6 +4,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.jdbc.table.management.TableName;
@@ -35,19 +36,24 @@ import static org.testng.AssertJUnit.*;
 @Test(groups = "functional", testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreAltMapperTest")
 public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
 
-   private AdvancedLoadWriteStore cacheStore;
-   private TableManager tableManager;
-   private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
-   private static final Person MANIK = new Person("Manik", "Surtani", 18);
-   private StreamingMarshaller marshaller;
+   protected AdvancedLoadWriteStore cacheStore;
+   protected TableManager tableManager;
+   protected static final Person MIRCEA = new Person("Mircea", "Markus", 28);
+   protected static final Person MANIK = new Person("Manik", "Surtani", 18);
+   protected StreamingMarshaller marshaller;
 
-   @BeforeClass
-   public void createCacheStore() throws PersistenceException {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+   protected JdbcStringBasedStoreConfigurationBuilder createJdbcConfig(ConfigurationBuilder builder) {
       JdbcStringBasedStoreConfigurationBuilder storeBuilder = builder
             .persistence()
             .addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .key2StringMapper(PersonKey2StringMapper.class);
+      return storeBuilder;
+   }
+
+   @BeforeClass
+   public void createCacheStore() throws PersistenceException {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      JdbcStringBasedStoreConfigurationBuilder storeBuilder = createJdbcConfig(builder);
 
       UnitTestDatabaseManager.buildTableManipulation(storeBuilder.table(), false);
       UnitTestDatabaseManager.configureUniqueConnectionFactory(storeBuilder);
@@ -116,24 +122,23 @@ public class JdbcStringBasedStoreAltMapperTest extends AbstractInfinispanTest {
       cacheStore.write(marshalledEntry(second, marshaller));
       assertRowCount(2);
       Thread.sleep(1100);
-//      printTableContent();
       cacheStore.purge(new WithinThreadExecutor(), null);
       assertRowCount(1);
       assertEquals("val2", cacheStore.load(MANIK).getValue());
    }
 
-   private int rowCount() {
+   protected int rowCount() {
       ConnectionFactory connectionFactory = getConnection();
       TableName tableName = tableManager.getTableName();
       return UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
    }
 
-   private ConnectionFactory getConnection() {
+   protected ConnectionFactory getConnection() {
       JdbcStringBasedStore store = (JdbcStringBasedStore) cacheStore;
       return store.getConnectionFactory();
    }
 
-   private void assertRowCount(int size) {
+   protected void assertRowCount(int size) {
       assertEquals(size, rowCount());
    }
 }

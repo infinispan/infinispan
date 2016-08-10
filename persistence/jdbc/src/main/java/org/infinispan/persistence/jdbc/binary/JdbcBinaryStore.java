@@ -224,7 +224,7 @@ public class JdbcBinaryStore<K,V> extends AbstractJdbcStore<K,V> {
       int tasksScheduled = 0;
       int tasksCompleted = 0;
       try {
-         String sql = tableManager.getSelectExpiredRowsSql();
+         String sql = tableManager.getSelectExpiredBucketsSql();
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
          ps.setLong(1, ctx.getTimeService().wallClockTime());

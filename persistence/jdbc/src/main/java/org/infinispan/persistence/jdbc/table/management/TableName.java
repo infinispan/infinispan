@@ -26,6 +26,14 @@ public class TableName implements Serializable {
 
    }
 
+   public String getIdentifierQuote() {
+      return identifierQuote;
+   }
+
+   public void setIdentifierQuote(String identifierQuote) {
+      this.identifierQuote = identifierQuote;
+   }
+
    public String getSchema(){
       return schema;
    }
