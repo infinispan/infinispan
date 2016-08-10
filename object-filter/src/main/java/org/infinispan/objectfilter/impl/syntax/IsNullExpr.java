@@ -42,6 +42,6 @@ public class IsNullExpr implements PrimaryPredicateExpr {
 
    @Override
    public String toJpaString() {
-      return child.toJpaString() + " IS null"; // todo [anistor] NULL vs null, a bug in hql parser
+      return child.toJpaString() + " IS NULL";
    }
 }

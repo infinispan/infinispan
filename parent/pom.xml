@@ -119,7 +119,7 @@
       <version.h2.driver-within-wildfly>1.3.173</version.h2.driver-within-wildfly>
       <version.hibernate.core>5.0.4.Final</version.hibernate.core>
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
-      <version.hibernate.hql.parser>1.3.0.Alpha2</version.hibernate.hql.parser>
+      <version.hibernate.hql.parser>1.3.0.Final</version.hibernate.hql.parser>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.classmate>0.5.4</version.hibernate_dep.classmate>
