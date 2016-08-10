@@ -15,6 +15,7 @@ import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -38,7 +39,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    private static final Log log = LogFactory.getLog(GlobalMarshaller.class);
    private final boolean trace = log.isTraceEnabled();
 
-   final InternalMarshaller internal = new InternalMarshaller();
+   InternalMarshaller internal;
 
 //   private JBossMarshaller defaultMarshaller;
 //
@@ -51,22 +52,21 @@ public class GlobalMarshaller implements StreamingMarshaller {
 //      this.globalCfg = globalCfg;
 //   }
 
+   @Inject
+   public void inject(GlobalComponentRegistry gcr) {
+      internal = new InternalMarshaller(gcr);
+   }
+
    @Override
    @Start(priority = 8) // Should start after the externalizer table and before transport
    public void start() {
       internal.start();
-
-//      internal = new InternalMarshaller();
-//      defaultMarshaller = new JBossMarshaller(extTable, globalCfg);
-//      defaultMarshaller.start();
    }
 
    @Override
    @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready
    public void stop() {
       internal.stop();
-
-//      defaultMarshaller.stop();
    }
 
    @Override
@@ -78,6 +78,27 @@ public class GlobalMarshaller implements StreamingMarshaller {
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
       return internal.objectFromByteBuffer(buf);
    }
+
+   @Override
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, int estimatedSize) throws IOException {
+      return internal.startObjectOutput(os, isReentrant, estimatedSize);
+   }
+
+   @Override
+   public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
+      internal.objectToObjectStream(obj, out);
+   }
+
+   @Override
+   public void finishObjectOutput(ObjectOutput oo) {
+      internal.finishObjectOutput(oo);
+   }
+
+   @Override
+   public Object objectFromByteBuffer(byte[] bytes, int offset, int len) throws IOException, ClassNotFoundException {
+      return internal.objectFromByteBuffer(bytes, offset, len);
+   }
+
 
 //   @Override
 //   protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException {
@@ -110,37 +131,8 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    @Override
-   public Object objectFromByteBuffer(byte[] bytes, int offset, int len) throws IOException, ClassNotFoundException {
-      return null;
-//      return defaultMarshaller.objectFromByteBuffer(bytes, offset, len);
-   }
-
-   @Override
    public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
       return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, final int estimatedSize) throws IOException {
-      return null;
-//      return defaultMarshaller.startObjectOutput(os, isReentrant, estimatedSize);
-   }
-
-   @Override
-   public void finishObjectOutput(ObjectOutput oo) {
-//      defaultMarshaller.finishObjectOutput(oo);
-   }
-
-   @Override
-   public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-//      /* No need to write version here. Clients should either be calling either:
-//       * - startObjectOutput() -> objectToObjectStream() -> finishObjectOutput()
-//       * or
-//       * - objectToBuffer() // underneath it calls start/finish
-//       * So, there's only need to write version during the start.
-//       * First option is preferred when multiple objects are gonna be written.
-//       */
-//      defaultMarshaller.objectToObjectStream(obj, out);
    }
 
    @Override

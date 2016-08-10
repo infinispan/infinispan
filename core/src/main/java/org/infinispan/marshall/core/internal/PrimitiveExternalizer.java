@@ -1,56 +1,87 @@
 package org.infinispan.marshall.core.internal;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.AbstractSet;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
 
-   // 0x00-0x0F reserved
-   public static final int NULL = 0x00;
+   // TODO: Implement support for other primitive arrays
 
-   private static final int BOOLEAN_PRIM = 0x10;
-   private static final int BYTE_PRIM = 0x11;
-   private static final int CHAR_PRIM = 0x12;
-   private static final int DOUBLE_PRIM = 0x13;
-   private static final int FLOAT_PRIM = 0x14;
-   private static final int INT_PRIM = 0x15;
-   private static final int LONG_PRIM = 0x16;
-   private static final int SHORT_PRIM = 0x17;
+   // 0x03-0x0F reserved
+   static final int NULL                       = 0x00;
+   static final int BYTE_ARRAY                 = 0x01; // byte[].class
+   static final int STRING                     = 0x02; // String.class
 
-   // 0x19 unused
+//   static final int BOOLEAN_PRIM                = 0x10; // boolean.class
+//   static final int BYTE_PRIM                   = 0x11; // ..etc..
+//   static final int CHAR_PRIM                   = 0x12;
+//   static final int DOUBLE_PRIM                 = 0x13;
+//   static final int FLOAT_PRIM                  = 0x14;
+//   static final int INT_PRIM                    = 0x15;
+//   static final int LONG_PRIM                   = 0x16;
+//   static final int SHORT_PRIM                  = 0x17;
 
-   private static final int BOOLEAN_OBJ = 0x20;
-   private static final int BYTE_OBJ = 0x21;
-   private static final int CHAR_OBJ= 0x22;
-   private static final int DOUBLE_OBJ = 0x23;
-   private static final int FLOAT_OBJ = 0x24;
-   private static final int INT_OBJ = 0x25;
-   private static final int LONG_OBJ = 0x26;
-   private static final int SHORT_OBJ = 0x27;
+   static final int BOOLEAN_ARRAY               = 0x18; // boolean[].class
+   static final int CHAR_ARRAY                  = 0x19; // ..etc..
+   static final int DOUBLE_ARRAY                = 0x1A;
+   static final int FLOAT_ARRAY                 = 0x1B;
+   static final int INT_ARRAY                   = 0x1C;
+   static final int LONG_ARRAY                  = 0x1D;
+   static final int SHORT_ARRAY                 = 0x1E;
 
-   private static final int STRING = 0x30;
+   // 0x1F unused
 
-   private final IdentityIntMap<Class<?>> subIds = new IdentityIntMap<>(16);
-   private final Set<Class<?>> types = new PrimitiveTypes();
+   static final int BOOLEAN_OBJ                 = 0x20; // Boolean.class
+   static final int BYTE_OBJ                    = 0x21; // ..etc..
+   static final int CHAR_OBJ                    = 0x22;
+   static final int DOUBLE_OBJ                  = 0x23;
+   static final int FLOAT_OBJ                   = 0x24;
+   static final int INT_OBJ                     = 0x25;
+   static final int LONG_OBJ                    = 0x26;
+   static final int SHORT_OBJ                   = 0x27;
 
-   public PrimitiveExternalizer() {
-      subIds.put(boolean.class, BOOLEAN_PRIM); // for arrays
-      subIds.put(byte.class, BYTE_PRIM);
-      subIds.put(char.class, CHAR_PRIM);
-      subIds.put(double.class, DOUBLE_PRIM);
-      subIds.put(float.class, FLOAT_PRIM);
-      subIds.put(int.class, INT_PRIM);
-      subIds.put(long.class, LONG_PRIM);
-      subIds.put(short.class, SHORT_PRIM);
+   static final int ARRAY_EMPTY                 = 0x28; // zero elements
+   static final int ARRAY_SMALL                 = 0x29; // <=0x100 elements
+   static final int ARRAY_MEDIUM                = 0x2A; // <=0x10000 elements
+   static final int ARRAY_LARGE                 = 0x2B; // <0x80000000 elements
+
+   // 0x2C-0x2F unused
+
+   final IdentityIntMap<Class<?>> subIds = new IdentityIntMap<>(16);
+   final Set<Class<?>> types = new PrimitiveTypes();
+
+   // Assumes that whatever encoding passed can handle ObjectOutput/ObjectInput
+   // (that might change when adding support for NIO ByteBuffers)
+   final Encoding enc;
+
+   public PrimitiveExternalizer(Encoding enc) {
+      this.enc = enc;
+      subIds.put(String.class, STRING);
+      subIds.put(byte[].class, BYTE_ARRAY);
+
+//      subIds.put(boolean.class, BOOLEAN_PRIM); // for arrays
+//      subIds.put(byte.class, BYTE_PRIM);
+//      subIds.put(char.class, CHAR_PRIM);
+//      subIds.put(double.class, DOUBLE_PRIM);
+//      subIds.put(float.class, FLOAT_PRIM);
+//      subIds.put(int.class, INT_PRIM);
+//      subIds.put(long.class, LONG_PRIM);
+//      subIds.put(short.class, SHORT_PRIM);
+
+      subIds.put(boolean[].class, BOOLEAN_ARRAY);
+      subIds.put(char[].class, CHAR_ARRAY);
+      subIds.put(double[].class, DOUBLE_ARRAY);
+      subIds.put(float[].class, FLOAT_ARRAY);
+      subIds.put(int[].class, INT_ARRAY);
+      subIds.put(long[].class, LONG_ARRAY);
+      subIds.put(short[].class, SHORT_ARRAY);
 
       subIds.put(Boolean.class, BOOLEAN_OBJ);
       subIds.put(Byte.class, BYTE_OBJ);
@@ -61,7 +92,6 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
       subIds.put(Long.class, LONG_OBJ);
       subIds.put(Short.class, SHORT_OBJ);
 
-      subIds.put(String.class, STRING);
    }
 
    @Override
@@ -77,6 +107,12 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
          int subId = subIds.get(obj.getClass(), -1);
          out.writeByte(subId);
          switch (subId) {
+            case BYTE_ARRAY:
+               writeByteArray((byte[]) obj, out);
+               break;
+            case STRING:
+               writeString(out, (String) obj);
+               break;
             case BOOLEAN_OBJ:
                out.writeBoolean((boolean) obj);
                break;
@@ -101,13 +137,43 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
             case SHORT_OBJ:
                out.writeShort((int) obj);
                break;
-            case STRING:
-               out.writeUTF((String) obj);
-               break;
             default:
                throw new IOException("Unknown primitive type: " + obj);
          }
       }
+   }
+
+   private void writeByteArray(byte[] obj, ObjectOutput out) throws IOException {
+      final int len = obj.length;
+      if (len == 0) {
+         out.writeByte(ARRAY_EMPTY);
+//         out.writeByte(BYTE_PRIM);
+      } else if (len <= 256) {
+         out.writeByte(ARRAY_SMALL);
+         out.writeByte(len);
+//         out.writeByte(BYTE_PRIM);
+         out.write(obj, 0, len);
+      } else if (len <= 65536) {
+         out.writeByte(ARRAY_MEDIUM);
+         out.writeShort(len);
+//         out.writeByte(BYTE_PRIM);
+         out.write(obj, 0, len);
+      } else {
+         out.writeByte(ARRAY_LARGE);
+         out.writeInt(len);
+//         out.writeByte(BYTE_PRIM);
+         out.write(obj, 0, len);
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   private void writeString(ObjectOutput out, String obj) {
+      // Instead of out.writeUTF() to be able to write smaller String payloads
+      enc.encodeString(obj, out);
+   }
+
+   private void writeBooleanArray(boolean[] obj) {
+      // TODO: Customise this generated block
    }
 
    @Override
@@ -116,6 +182,10 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
       switch (subId) {
          case NULL:
             return null;
+         case STRING:
+            return readString(in);
+         case BYTE_ARRAY:
+            return readByteArray(in);
          case BOOLEAN_OBJ:
             return in.readBoolean();
          case BYTE_OBJ:
@@ -132,11 +202,39 @@ final class PrimitiveExternalizer implements AdvancedExternalizer<Object> {
             return in.readLong();
          case SHORT_OBJ:
             return in.readShort();
-         case STRING:
-            return in.readUTF();
          default:
             throw new IOException("Unknown primitive sub id: " + Integer.toHexString(subId));
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private String readString(ObjectInput in) {
+      return enc.decodeString(in); // Counterpart to Encoding.encodeString()
+   }
+
+   private Object readByteArray(ObjectInput in) throws IOException {
+      byte arrayType = in.readByte();
+      switch (arrayType) {
+         case ARRAY_EMPTY:
+            return new byte[]{};
+         case ARRAY_SMALL:
+            byte lenB = in.readByte();
+            byte[] bytesB = new byte[lenB];
+            in.readFully(bytesB);
+            return bytesB;
+         case ARRAY_MEDIUM:
+            short lenS = in.readShort();
+            byte[] bytesS = new byte[lenS];
+            in.readFully(bytesS);
+            return bytesS;
+         case ARRAY_LARGE:
+            int lenI = in.readInt();
+            byte[] bytesI = new byte[lenI];
+            in.readFully(bytesI);
+            return bytesI;
+      }
+
+      return null;  // TODO: Customise this generated block
    }
 
    @Override

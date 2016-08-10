@@ -1,9 +1,14 @@
 package org.infinispan.marshall.core.internal;
 
+import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.util.KeyValuePair;
@@ -26,7 +31,7 @@ final class InternalExternalizerTable {
    /**
     * Externalizer for primitives
     */
-   private final PrimitiveExternalizer primitives = new PrimitiveExternalizer();
+   private final PrimitiveExternalizer primitives;
 
    /**
     * Contains mapping of classes to their corresponding externalizer classes via ExternalizerAdapter instances.
@@ -44,9 +49,16 @@ final class InternalExternalizerTable {
     */
    private final Map<Integer, AdvancedExternalizer<?>> readers = new HashMap<>();
 
+   private final GlobalComponentRegistry gcr;
+
    private volatile boolean started;
 
-   public void start() {
+   InternalExternalizerTable(Encoding enc, GlobalComponentRegistry gcr) {
+      this.primitives = new PrimitiveExternalizer(enc);
+      this.gcr = gcr;
+   }
+
+   void start() {
       loadInternalMarshallables();
       // loadForeignMarshallables(gcr.getGlobalConfiguration());
       started = true;
@@ -56,7 +68,7 @@ final class InternalExternalizerTable {
       }
    }
 
-   public void stop() {
+   void stop() {
       started = false;
       writers.clear();
       readers.clear();
@@ -74,6 +86,8 @@ final class InternalExternalizerTable {
          if (ext != null) {
             out.writeByte(InternalIds.NON_PRIMITIVE);
             out.writeByte(ext.getId());
+         } else {
+            out.writeByte(InternalIds.EXTERNAL);
          }
       }
       return ext;
@@ -103,6 +117,8 @@ final class InternalExternalizerTable {
                AdvancedExternalizer<T> ext = (AdvancedExternalizer<T>) readers.get(subType);
                // TODO: Add null checks and see if not started...etc
                return ext;
+            case InternalIds.EXTERNAL:
+               return null;
             default:
                throw new CacheException("Unknown externalizer type: " + type);
          }
@@ -127,7 +143,7 @@ final class InternalExternalizerTable {
 //            }
 ////            else {
 //////               if (trace) {
-//////                  // TODO: Implement available() in ByteArrayObjectInput ?
+//////                  // TODO: Implement available() in BytesObjectInput ?
 //////                  log.tracef("Unknown type. Input stream has %s to read", input.available());
 //////                  log.tracef("Check contents of read externalizers: %s", readers);
 //////               }
@@ -148,11 +164,12 @@ final class InternalExternalizerTable {
    }
 
    private void loadInternalMarshallables() {
+      addInternalExternalizer(new AtomicHashMap.Externalizer());
       addInternalExternalizer(new EmbeddedMetadata.Externalizer());
       addInternalExternalizer(new InternalMetadataImpl.Externalizer());
       addInternalExternalizer(new KeyValuePair.Externalizer());
-      //addInternalExternalizer(new MarshalledEntryImpl.Externalizer(globalMarshaller));
-      //addInternalExternalizer(new MarshalledEntryImpl.Externalizer(null));
+      addInternalExternalizer(new MarshalledValue.Externalizer(gcr.getComponent(StreamingMarshaller.class)));
+      addInternalExternalizer(new MapExternalizer());
    }
 
    private void addInternalExternalizer(AdvancedExternalizer<?> ext) {

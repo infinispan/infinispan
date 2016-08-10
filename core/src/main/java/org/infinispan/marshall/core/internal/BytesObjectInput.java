@@ -5,14 +5,14 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import java.io.IOException;
 import java.io.ObjectInput;
 
-final class ByteArrayObjectInput implements ObjectInput {
+final class BytesObjectInput implements ObjectInput {
 
    final byte bytes[];
    final InternalMarshaller internal;
 
    int pos;
 
-   ByteArrayObjectInput(byte[] bytes, InternalMarshaller internal) {
+   BytesObjectInput(byte[] bytes, InternalMarshaller internal) {
       this.bytes = bytes;
       this.internal = internal;
    }
@@ -22,11 +22,14 @@ final class ByteArrayObjectInput implements ObjectInput {
       AdvancedExternalizer<Object> ext = internal.externalizers.findReadExternalizer(this);
       if (ext != null)
          return ext.readObject(this);
-
-      // TODO: How to deal with null values?
-
-      // TODO: Forward to external marshaller?
-      return null;
+      else {
+         try {
+            return internal.external.objectFromObjectStream(this);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+         }
+      }
    }
 
    @Override

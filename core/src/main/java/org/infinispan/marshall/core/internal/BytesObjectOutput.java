@@ -5,14 +5,14 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import java.io.IOException;
 import java.io.ObjectOutput;
 
-final class ByteArrayObjectOutput implements ObjectOutput {
+final class BytesObjectOutput implements ObjectOutput {
 
    final InternalMarshaller internal;
 
    byte bytes[];
    int pos;
 
-   public ByteArrayObjectOutput(int size, InternalMarshaller internal) {
+   public BytesObjectOutput(int size, InternalMarshaller internal) {
       this.bytes = new byte[size];
       this.internal = internal;
    }
@@ -23,7 +23,7 @@ final class ByteArrayObjectOutput implements ObjectOutput {
       if (ext != null) {
          ext.writeObject(this, obj);
       } else {
-         // TODO: Forward to external marshaller...
+         internal.external.objectToObjectStream(obj, this);
       }
    }
 

@@ -5,6 +5,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.factories.GlobalComponentRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,13 +18,20 @@ import java.io.OutputStream;
 public final class InternalMarshaller implements StreamingMarshaller {
 
    final MarshallableTypeHints marshallableTypeHints = new MarshallableTypeHints();
-   final InternalExternalizerTable externalizers = new InternalExternalizerTable();
 
-   final Encoding<ByteArrayObjectOutput, ByteArrayObjectInput> enc = new ByteArrayEncoding();
+   final Encoding<BytesObjectOutput, BytesObjectInput> enc = new BytesEncoding();
+   final InternalExternalizerTable externalizers;
 
    // TODO: Default should be JBoss Marshaller (needs ExternalizerTable & GlobalConfiguration)
    // ^ External marshaller is what global configuration serialization config can tweak
-   final StreamingMarshaller external = null;
+   final StreamingMarshaller external = new JavaSerializationMarshaller();
+
+   final GlobalComponentRegistry gcr;
+
+   public InternalMarshaller(GlobalComponentRegistry gcr) {
+      this.gcr = gcr;
+      this.externalizers = new InternalExternalizerTable(enc, gcr);
+   }
 
    @Override
    public void start() {
@@ -38,11 +46,11 @@ public final class InternalMarshaller implements StreamingMarshaller {
    @Override
    public byte[] objectToByteBuffer(Object obj) throws IOException, InterruptedException {
       int estimatedSize = getEstimatedSize(obj);
-      ByteArrayObjectOutput oo = new ByteArrayObjectOutput(estimatedSize, this);
-      AdvancedExternalizer<Object> ext = externalizers.findWriteExternalizer(obj, oo);
+      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this);
+      AdvancedExternalizer<Object> ext = externalizers.findWriteExternalizer(obj, out);
       if (ext != null) {
-         ext.writeObject(oo, obj);
-         return oo.toBytes();
+         ext.writeObject(out, obj);
+         return out.toBytes();
       }
 
       // TODO: Delegate to external marshaller
@@ -58,28 +66,43 @@ public final class InternalMarshaller implements StreamingMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
-      ObjectInput in = new ByteArrayObjectInput(buf, this);
+      ObjectInput in = new BytesObjectInput(buf, this);
       AdvancedExternalizer<Object> ext = externalizers.findReadExternalizer(in);
       if (ext != null)
          return ext.readObject(in);
-
-      // TODO: Delegate to external marshaller
-      return null;
+      else {
+         try {
+            return external.objectFromObjectStream(in);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+         }
+      }
    }
 
    @Override
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, int estimatedSize) throws IOException {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void finishObjectOutput(ObjectOutput oo) {
-      // TODO: Customise this generated block
+      BytesObjectOutput out = new BytesObjectOutput(estimatedSize, this);
+      return new StreamBytesObjectOutput(os, out);
    }
 
    @Override
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      // TODO: Customise this generated block
+      out.writeObject(obj);
+   }
+
+   @Override
+   public void finishObjectOutput(ObjectOutput oo) {
+      try {
+         oo.flush();
+      } catch (IOException e) {
+         // ignored
+      }
+   }
+
+   @Override
+   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
+      return objectFromByteBuffer(buf); // ignore offset and lengths
    }
 
    @Override
@@ -109,11 +132,6 @@ public final class InternalMarshaller implements StreamingMarshaller {
 
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
       return null;  // TODO: Customise this generated block
    }
 
