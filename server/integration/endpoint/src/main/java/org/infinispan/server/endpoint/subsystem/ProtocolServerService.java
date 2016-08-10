@@ -36,6 +36,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
 import org.infinispan.server.core.transport.Transport;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.NetworkUtils;
@@ -82,12 +83,18 @@ class ProtocolServerService implements Service<ProtocolServer> {
    // The login context used to obtain the server subject
    private LoginContext serverLoginContext = null;
    private String serverContextName;
+   private String defaultCacheName;
 
    ProtocolServerService(String serverName, Class<? extends ProtocolServer> serverClass, ProtocolServerConfigurationBuilder<?, ?> configurationBuilder) {
+      this(serverName, serverClass, configurationBuilder, null);
+   }
+
+   ProtocolServerService(String serverName, Class<? extends ProtocolServer> serverClass, ProtocolServerConfigurationBuilder<?, ?> configurationBuilder, String defaultCacheName) {
       this.configurationBuilder = configurationBuilder;
       this.serverClass = serverClass;
       String serverTypeName = serverClass.getSimpleName();
       this.serverName = serverName != null ? serverTypeName + " " + serverName : serverTypeName;
+      this.defaultCacheName = defaultCacheName;
    }
 
    @Override
@@ -96,10 +103,11 @@ class ProtocolServerService implements Service<ProtocolServer> {
 
       boolean done = false;
       try {
-         GlobalConfiguration embeddedCacheManagerConfiguration = cacheManagerConfiguration.getOptionalValue();
-         /*if (embeddedCacheManagerConfiguration != null) {
-            configurationBuilder.defaultCacheName(embeddedCacheManagerConfiguration.getDefaultCache());
-         }*/
+         if (defaultCacheName != null) {
+            configurationBuilder.defaultCacheName(defaultCacheName);
+         } else {
+            configurationBuilder.defaultCacheName(((DefaultCacheContainer) cacheManager.getValue()).getDefaultCacheName());
+         }
          SocketBinding socketBinding = getSocketBinding().getValue();
          InetSocketAddress socketAddress = socketBinding.getSocketAddress();
          configurationBuilder.host(socketAddress.getAddress().getHostAddress());

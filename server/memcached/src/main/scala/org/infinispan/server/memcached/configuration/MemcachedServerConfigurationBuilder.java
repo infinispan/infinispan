@@ -13,8 +13,8 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
       Builder<MemcachedServerConfiguration> {
 
    public MemcachedServerConfigurationBuilder() {
-      super(11211);
-      this.defaultCacheName("memcachedCache");
+      super(MemcachedServerConfiguration.DEFAULT_MEMCACHED_PORT);
+      this.defaultCacheName(MemcachedServerConfiguration.DEFAULT_MEMCACHED_CACHE);
    }
 
    @Override
