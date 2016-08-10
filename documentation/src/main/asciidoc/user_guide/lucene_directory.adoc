@@ -8,7 +8,9 @@ The implementation extends Lucene's _org.apache.lucene.store.Directory_ so it ca
 Two different _LockFactory_ implementations are provided to guarantee only one _IndexWriter_ at a time will make changes to the index, again implementing the same semantics as when opening an index on a local filesystem. As with other Lucene Directories, you can override the _LockFactory_ if you prefer to use an alternative implementation. 
 
 === Additional Links
-Javadoc: link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/lucene/impl/DirectoryLuceneV4.html[] Issue tracker: link:$$https://jira.jboss.org/browse/ISPN/component/12312732$$[] Source code: link:$$https://github.com/infinispan/infinispan$$[]
+* Javadoc: link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/lucene/impl/DirectoryLucene.html[]
+* Issue tracker: link:$$https://jira.jboss.org/browse/ISPN/component/12312732$$[]
+* Source code: link:$$https://github.com/infinispan/infinispan/tree/master/lucene/lucene-directory$$[]
 
 === Lucene compatibility
 Since Infinispan version 7 this Directory implementation is compatible exclusively with Apache Lucene versions 4.8.1, 4.9.0, 4.10.0, 4.10.1, 4.10.2: previous versions are compatible with a range of older Lucene versions, but backwards compatibility could no longer be maintained. If you need compatibility for an older version, either use an older version of Infinispan or you can get in touch with the developers if you are willing to help to create the backwards compatible versions.
