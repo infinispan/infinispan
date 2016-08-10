@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
@@ -30,6 +31,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    private static final int TREEMAP = 1;
    private static final int FASTCOPYHASHMAP = 2;
    private static final int EQUIVALENTHASHMAP = 3;
+   private static final int CONCURRENTHASHMAP = 4;
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(4);
 
    public MapExternalizer() {
@@ -38,6 +40,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
       numbers.put(TreeMap.class, TREEMAP);
       numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
       numbers.put(EquivalentHashMap.class, EQUIVALENTHASHMAP);
+      numbers.put(ConcurrentHashMap.class, CONCURRENTHASHMAP);
    }
 
    @Override
@@ -75,6 +78,8 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
             Equivalence<Object> keyEq = (Equivalence<Object>) input.readObject();
             Equivalence<Object> valueEq = (Equivalence<Object>) input.readObject();
             return MarshallUtil.unmarshallMap(input, size -> new EquivalentHashMap<>(keyEq, valueEq));
+         case CONCURRENTHASHMAP:
+            return MarshallUtil.unmarshallMap(input, ConcurrentHashMap::new);
          default:
             throw new IllegalStateException("Unknown Map type: " + magicNumber);
       }
@@ -89,6 +94,6 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    public Set<Class<? extends Map>> getTypeClasses() {
       return Util.<Class<? extends Map>>asSet(
             HashMap.class, TreeMap.class, FastCopyHashMap.class, EquivalentHashMap.class,
-            ReadOnlySegmentAwareMap.class);
+            ReadOnlySegmentAwareMap.class, ConcurrentHashMap.class);
    }
 }
