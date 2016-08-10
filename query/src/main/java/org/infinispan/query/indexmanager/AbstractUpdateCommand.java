@@ -27,6 +27,7 @@ import java.util.List;
 
 /**
  * Base class for index commands
+ *
  * @author gustavonalle
  * @since 7.0
  */
@@ -51,13 +52,21 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeUTF(indexName);
+      if (indexName == null) {
+         output.writeBoolean(false);
+      } else {
+         output.writeBoolean(true);
+         output.writeUTF(indexName);
+      }
       MarshallUtil.marshallByteArray(serializedModel, output);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      indexName = input.readUTF();
+      boolean hasIndexName = input.readBoolean();
+      if (hasIndexName) {
+         indexName = input.readUTF();
+      }
       serializedModel = MarshallUtil.unmarshallByteArray(input);
    }
 
@@ -77,9 +86,8 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
          SearchManager searchManager = Search.getSearchManager(cache);
          searchFactory = searchManager.unwrap(SearchIntegrator.class);
          queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
-      }
-      else {
-         throw new CacheException("Cache named '"+ name + "' does not exist on this CacheManager, or was not started" );
+      } else {
+         throw new CacheException("Cache named '" + name + "' does not exist on this CacheManager, or was not started");
       }
    }
 
