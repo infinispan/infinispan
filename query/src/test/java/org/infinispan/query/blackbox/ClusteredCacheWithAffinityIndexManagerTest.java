@@ -23,7 +23,7 @@ public class ClusteredCacheWithAffinityIndexManagerTest extends ClusteredCacheTe
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
-              .index(Index.ALL)
+              .index(Index.PRIMARY_OWNER)
               .addIndexedEntity(Person.class)
               .addProperty("default.indexmanager", AffinityIndexManager.class.getName())
               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

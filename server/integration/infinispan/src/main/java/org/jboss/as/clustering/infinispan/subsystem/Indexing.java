@@ -28,29 +28,18 @@ package org.jboss.as.clustering.infinispan.subsystem;
  * @author Paul Ferraro
  */
 public enum Indexing {
-    NONE(false, false),
-    LOCAL(true, true),
-    ALL(true, false),
-    ;
-    private final boolean enabled;
-    private final boolean localOnly;
+   NONE,
+   LOCAL,
+   ALL,
+   PRIMARY_OWNER;
 
-    private Indexing(boolean enabled, boolean localOnly) {
-        this.enabled = enabled;
-        this.localOnly = localOnly;
-    }
+   public boolean isEnabled() {
+      return this != NONE;
+   }
 
-    public boolean isEnabled() {
-        return this.enabled;
-    }
-
-    public boolean isLocalOnly() {
-        return this.localOnly;
-    }
-
-    @Override
-    public String toString() {
-        // remove conversion to lower case AS7-3835
-        return this.name();
-    }
+   @Override
+   public String toString() {
+      // remove conversion to lower case AS7-3835
+      return this.name();
+   }
 }

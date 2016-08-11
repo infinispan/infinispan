@@ -35,7 +35,7 @@ public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
       cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
-              .index(Index.ALL)
+              .index(Index.PRIMARY_OWNER)
               .addIndexedEntity(Entity.class)
               .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
               .addProperty("entity.indexmanager", AffinityIndexManager.class.getName());
