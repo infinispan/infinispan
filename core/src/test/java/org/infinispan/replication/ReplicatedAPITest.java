@@ -37,7 +37,7 @@ public class ReplicatedAPITest extends MultipleCacheManagersTest {
 
    @Override
    protected String parameters() {
-      return "{sync=" + isSync + "}";
+      return "[sync=" + isSync + "]";
    }
 
    protected void createCacheManagers() throws Throwable {
