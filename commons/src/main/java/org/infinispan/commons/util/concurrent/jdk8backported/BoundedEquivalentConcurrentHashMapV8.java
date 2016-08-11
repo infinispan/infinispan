@@ -555,8 +555,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       final EntrySizeCalculator<? super K, ? super V> sizeCalculator;
       final boolean countingMemory;
 
-      static final long NODE_ARRAY_BASE_OFFSET = getUnsafe().arrayBaseOffset(Node[].class);
-      static final long NODE_ARRAY_OFFSET = getUnsafe().arrayIndexScale(Node[].class);
+      static final long NODE_ARRAY_BASE_OFFSET = Unsafe.getUnsafe().arrayBaseOffset(Node[].class);
+      static final long NODE_ARRAY_OFFSET = Unsafe.getUnsafe().arrayIndexScale(Node[].class);
 
       public LRUEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize,
             EntrySizeCalculator<? super K, ? super V> sizeCalculator, boolean countingMemory) {
@@ -565,7 +565,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.sizeCalculator = sizeCalculator;
          this.countingMemory = countingMemory;
          if (countingMemory) {
-            sun.misc.Unsafe unsafe = getUnsafe();
+            sun.misc.Unsafe unsafe = Unsafe.getUnsafe();
             // We add the memory usage this eviction policy
             long evictionPolicySize = unsafe.ADDRESS_SIZE + unsafe.ARRAY_OBJECT_INDEX_SCALE;
             // we have 4 object references
@@ -2078,7 +2078,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       static {
           try {
-              UNSAFE = BoundedEquivalentConcurrentHashMapV8.getUnsafe();
+              UNSAFE = Unsafe.getUnsafe();
               Class<?> k = Node.class;
               evictionOffset = UNSAFE.objectFieldOffset
                   (k.getDeclaredField("eviction"));
@@ -4952,7 +4952,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       private static final long LOCKSTATE;
       static {
          try {
-            U = getUnsafe();
+            U = Unsafe.getUnsafe();
             Class<?> k = TreeBin.class;
             LOCKSTATE = U.objectFieldOffset
                   (k.getDeclaredField("lockState"));
@@ -8249,7 +8249,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
    static {
       try {
-         U = getUnsafe();
+         U = Unsafe.getUnsafe();
          Class<?> k = BoundedEquivalentConcurrentHashMapV8.class;
          SIZECTL = U.objectFieldOffset
                (k.getDeclaredField("sizeCtl"));
@@ -8270,37 +8270,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          ASHIFT = 31 - Integer.numberOfLeadingZeros(scale);
       } catch (Exception e) {
          throw new Error(e);
-      }
-   }
-
-   /**
-    * Returns a sun.misc.Unsafe.  Suitable for use in a 3rd party package.
-    * Replace with a simple call to Unsafe.getUnsafe when integrating
-    * into a jdk.
-    *
-    * @return a sun.misc.Unsafe
-    */
-   static sun.misc.Unsafe getUnsafe() {
-      try {
-         return sun.misc.Unsafe.getUnsafe();
-      } catch (SecurityException tryReflectionInstead) {}
-      try {
-         return java.security.AccessController.doPrivileged
-               (new java.security.PrivilegedExceptionAction<sun.misc.Unsafe>() {
-                  @Override
-                  public sun.misc.Unsafe run() throws Exception {
-                     Class<sun.misc.Unsafe> k = sun.misc.Unsafe.class;
-                     for (java.lang.reflect.Field f : k.getDeclaredFields()) {
-                        f.setAccessible(true);
-                        Object x = f.get(null);
-                        if (k.isInstance(x))
-                           return k.cast(x);
-                     }
-                     throw new NoSuchFieldError("the Unsafe");
-                  }});
-      } catch (java.security.PrivilegedActionException e) {
-         throw new RuntimeException("Could not initialize intrinsics",
-               e.getCause());
       }
    }
 }
