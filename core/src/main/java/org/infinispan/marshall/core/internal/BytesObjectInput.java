@@ -12,9 +12,18 @@ final class BytesObjectInput implements ObjectInput {
 
    int pos;
 
-   BytesObjectInput(byte[] bytes, InternalMarshaller internal) {
+   private BytesObjectInput(byte[] bytes, int offset, InternalMarshaller internal) {
       this.bytes = bytes;
+      this.pos = offset;
       this.internal = internal;
+   }
+
+   static BytesObjectInput from(byte[] bytes, InternalMarshaller internal) {
+      return from(bytes, 0, internal);
+   }
+
+   static BytesObjectInput from(byte[] bytes, int offset, InternalMarshaller internal) {
+      return new BytesObjectInput(bytes, offset, internal);
    }
 
    @Override
@@ -51,12 +60,17 @@ final class BytesObjectInput implements ObjectInput {
 
    @Override
    public long skip(long n) {
-      return -1;
+      long skip = bytes.length - pos;
+      if (skip < pos)
+         skip = n < 0 ? 0 : n;
+
+      pos += skip;
+      return skip;
    }
 
    @Override
    public int available() {
-      return -1;
+      return bytes.length - pos;
    }
 
    @Override
@@ -76,7 +90,7 @@ final class BytesObjectInput implements ObjectInput {
 
    @Override
    public int skipBytes(int n) {
-      return -1;
+      return (int) skip(n);
    }
 
    @Override

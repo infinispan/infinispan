@@ -180,4 +180,7 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
 
    int READ_ONLY_SNAPSHOT_VIEW = 169;
    int NO_VALUE_READ_ONLY_VIEW = 170;
+
+   int MIME_CACHE_ENTRY = 171;
+
 }

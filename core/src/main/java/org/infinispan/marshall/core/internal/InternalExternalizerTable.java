@@ -1,16 +1,39 @@
 package org.infinispan.marshall.core.internal;
 
 import org.infinispan.atomic.impl.AtomicHashMap;
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientCacheValue;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.marshall.exts.ArrayExternalizers;
+import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
+import org.infinispan.marshall.exts.EnumSetExternalizer;
+import org.infinispan.marshall.exts.ListExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
+import org.infinispan.marshall.exts.SetExternalizer;
+import org.infinispan.marshall.exts.SingletonListExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.remoting.MIMECacheEntry;
+import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -50,12 +73,14 @@ final class InternalExternalizerTable {
    private final Map<Integer, AdvancedExternalizer<?>> readers = new HashMap<>();
 
    private final GlobalComponentRegistry gcr;
+   private final RemoteCommandsFactory cmdFactory;
 
    private volatile boolean started;
 
-   InternalExternalizerTable(Encoding enc, GlobalComponentRegistry gcr) {
+   InternalExternalizerTable(Encoding enc, GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
       this.primitives = new PrimitiveExternalizer(enc);
       this.gcr = gcr;
+      this.cmdFactory = cmdFactory;
    }
 
    void start() {
@@ -75,7 +100,7 @@ final class InternalExternalizerTable {
       log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
    }
 
-   public <T> AdvancedExternalizer<T> findWriteExternalizer(Object obj, ObjectOutput out) throws IOException {
+   <T> AdvancedExternalizer<T> findWriteExternalizer(Object obj, ObjectOutput out) throws IOException {
       Class<?> clazz = checkStarted(obj);
       AdvancedExternalizer<T> ext;
       if (clazz == null || primitives.getTypeClasses().contains(clazz)) {
@@ -105,7 +130,7 @@ final class InternalExternalizerTable {
       return obj == null ? null : obj.getClass();
    }
 
-   public <T> AdvancedExternalizer<T> findReadExternalizer(ObjectInput in) {
+   <T> AdvancedExternalizer<T> findReadExternalizer(ObjectInput in) {
       try {
          // Check if primitive or non-primitive
          int type = in.readUnsignedByte();
@@ -163,13 +188,43 @@ final class InternalExternalizerTable {
       }
    }
 
+   boolean isMarshallable(Object o) {
+      Class<?> clazz = o.getClass();
+      return primitives.getTypeClasses().contains(clazz)
+            || writers.containsKey(clazz);
+   }
+
    private void loadInternalMarshallables() {
+      ReplicableCommandExternalizer ext = new ReplicableCommandExternalizer(cmdFactory, gcr);
+      addInternalExternalizer(ext);
+
+      addInternalExternalizer(new ArrayExternalizers.ListArray());
       addInternalExternalizer(new AtomicHashMap.Externalizer());
+      addInternalExternalizer(new CacheRpcCommandExternalizer(gcr, ext));
       addInternalExternalizer(new EmbeddedMetadata.Externalizer());
+      addInternalExternalizer(new EnumSetExternalizer());
+      addInternalExternalizer(new ExceptionResponse.Externalizer());
+      addInternalExternalizer(new Flag.Externalizer());
+      addInternalExternalizer(new GlobalTransaction.Externalizer());
+      addInternalExternalizer(new ImmortalCacheEntry.Externalizer());
+      addInternalExternalizer(new ImmortalCacheValue.Externalizer());
+      addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer());
       addInternalExternalizer(new InternalMetadataImpl.Externalizer());
+      addInternalExternalizer(new JGroupsAddress.Externalizer());
+      addInternalExternalizer(new ListExternalizer());
       addInternalExternalizer(new KeyValuePair.Externalizer());
-      addInternalExternalizer(new MarshalledValue.Externalizer(gcr.getComponent(StreamingMarshaller.class)));
       addInternalExternalizer(new MapExternalizer());
+      addInternalExternalizer(new MarshalledValue.Externalizer(gcr.getComponent(StreamingMarshaller.class)));
+      addInternalExternalizer(new MIMECacheEntry.Externalizer());
+      addInternalExternalizer(new MortalCacheEntry.Externalizer());
+      addInternalExternalizer(new MortalCacheValue.Externalizer());
+      addInternalExternalizer(new SetExternalizer());
+      addInternalExternalizer(new SingletonListExternalizer());
+      addInternalExternalizer(new TransientCacheEntry.Externalizer());
+      addInternalExternalizer(new TransientCacheValue.Externalizer());
+      addInternalExternalizer(new TransientMortalCacheEntry.Externalizer());
+      addInternalExternalizer(new TransientMortalCacheValue.Externalizer());
+      addInternalExternalizer(new UnsuccessfulResponse.Externalizer());
    }
 
    private void addInternalExternalizer(AdvancedExternalizer<?> ext) {

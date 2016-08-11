@@ -52,6 +52,12 @@ public final class MarshallableTypeHints {
       return marshallingType.sizePredictor;
    }
 
+   public BufferSizePredictor getBufferSizePredictor(Object obj) {
+      return obj == null
+            ? NullBufferSizePredictor.INSTANCE
+            : getBufferSizePredictor(obj.getClass());
+   }
+
    /**
     * Returns whether the hint on whether a particular type is marshallable or
     * not is available. This method can be used to avoid attempting to marshall
@@ -155,6 +161,21 @@ public final class MarshallableTypeHints {
          result = 31 * result + (sizePredictor != null ? sizePredictor.hashCode() : 0);
          return result;
       }
+   }
+
+   final static class NullBufferSizePredictor implements BufferSizePredictor {
+      static final BufferSizePredictor INSTANCE = new NullBufferSizePredictor();
+
+      @Override
+      public int nextSize(Object obj) {
+         return 1;
+      }
+
+      @Override
+      public void recordSize(int previousSize) {
+         // No-op
+      }
+
    }
 
 }
