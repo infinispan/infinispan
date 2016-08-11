@@ -1,6 +1,5 @@
 package org.infinispan.commons.util.concurrent.jdk8backported;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
 import org.testng.annotations.Test;
 
 /**
