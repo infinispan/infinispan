@@ -11,12 +11,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 
 /**
  * Java serialization marshaller for unknown types.
  * Unknown types are those types for which there are no externalizers.
  */
-final class JavaSerializationMarshaller implements StreamingMarshaller {
+final class InternalJavaSerialMarshaller implements StreamingMarshaller {
 
    @Override
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
@@ -25,8 +26,9 @@ final class JavaSerializationMarshaller implements StreamingMarshaller {
       // instances for which externalizer should have been created get through
       // this method
       String pkg = obj.getClass().getPackage().getName();
-      if ((pkg.startsWith("java.") || pkg.startsWith("org.infinispan.") || pkg.startsWith("org.jgroups."))
-            && !isWhiteList(obj.getClass())) {
+      if (obj instanceof Serializable
+            && (pkg.startsWith("java.") || pkg.startsWith("org.infinispan.") || pkg.startsWith("org.jgroups."))
+            && !isWhiteList(obj.getClass().getName())) {
          throw new RuntimeException("Check support for: " + obj.getClass());
       }
 
@@ -36,8 +38,18 @@ final class JavaSerializationMarshaller implements StreamingMarshaller {
       }
    }
 
-   private boolean isWhiteList(Class<?> clazz) {
-      return clazz.getName().equals("org.infinispan.persistence.BaseStoreFunctionalTest$Pojo");
+   private boolean isWhiteList(String className) {
+      return className.equals("org.infinispan.marshall.core.JBossMarshallingTest$ObjectThatContainsACustomReadObjectMethod")
+            || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Child1")
+            || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Child2")
+            || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Human")
+            || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$HumanComparator")
+            || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Pojo")
+            || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling")
+            || className.equals("org.infinispan.persistence.BaseStoreFunctionalTest$Pojo")
+            || className.equals("org.infinispan.test.data.Person")
+            || className.equals("org.infinispan.util.concurrent.TimeoutException")
+            ;
    }
 
    @Override

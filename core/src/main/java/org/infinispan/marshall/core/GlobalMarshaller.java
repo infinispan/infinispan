@@ -7,6 +7,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
@@ -53,8 +54,8 @@ public class GlobalMarshaller implements StreamingMarshaller {
 //   }
 
    @Inject
-   public void inject(GlobalComponentRegistry gcr) {
-      internal = new InternalMarshaller(gcr);
+   public void inject(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
+      this.internal = new InternalMarshaller(gcr, cmdFactory);
    }
 
    @Override
@@ -71,7 +72,12 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Override
    public byte[] objectToByteBuffer(Object obj) throws IOException, InterruptedException {
-      return internal.objectToByteBuffer(obj);
+      try {
+         return internal.objectToByteBuffer(obj);
+      } catch (java.io.NotSerializableException nse) {
+         if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
+         throw new NotSerializableException(nse.getMessage(), nse.getCause());
+      }
    }
 
    @Override
@@ -98,6 +104,22 @@ public class GlobalMarshaller implements StreamingMarshaller {
    public Object objectFromByteBuffer(byte[] bytes, int offset, int len) throws IOException, ClassNotFoundException {
       return internal.objectFromByteBuffer(bytes, offset, len);
    }
+
+   @Override
+   public Object objectFromInputStream(InputStream is) throws IOException, ClassNotFoundException {
+      return internal.objectFromInputStream(is);
+   }
+
+   @Override
+   public boolean isMarshallable(Object o) throws Exception {
+      return internal.isMarshallable(o);
+   }
+
+   @Override
+   public BufferSizePredictor getBufferSizePredictor(Object o) {
+      return internal.getBufferSizePredictor(o);
+   }
+
 
 
 //   @Override
@@ -172,22 +194,6 @@ public class GlobalMarshaller implements StreamingMarshaller {
 //         else
 //            throw ioe;
 //      }
-   }
-
-   @Override
-   public Object objectFromInputStream(InputStream is) throws IOException, ClassNotFoundException {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean isMarshallable(Object o) throws Exception {
-      return false;
-//      return defaultMarshaller.isMarshallable(o);
-   }
-
-   @Override
-   public BufferSizePredictor getBufferSizePredictor(Object o) {
-      return null;  // TODO: Customise this generated block
    }
 
 }
