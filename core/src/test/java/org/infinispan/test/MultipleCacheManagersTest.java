@@ -582,7 +582,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       if (none) {
          return null;
       }
-      StringBuilder sb = new StringBuilder().append('{');
+      StringBuilder sb = new StringBuilder().append('[');
       for (int i = 0; i < params.length; ++i) {
          if (params[i] != null) {
             if (names[i] != null) {
@@ -592,7 +592,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
             if (!last[i]) sb.append(", ");
          }
       }
-      return sb.append('}').toString();
+      return sb.append(']').toString();
    }
 
    protected String[] parameterNames() {

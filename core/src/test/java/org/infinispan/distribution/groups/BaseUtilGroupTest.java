@@ -30,8 +30,8 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
    @Override
    protected String parameters() {
       String parameters = super.parameters();
-      if (parameters == null) return "{" + factory + "}";
-      else return "{" + factory + ", " + parameters.substring(1);
+      if (parameters == null) return "[" + factory + "]";
+      else return "[" + factory + ", " + parameters.substring(1);
    }
 
    protected static GroupKey key(int index) {

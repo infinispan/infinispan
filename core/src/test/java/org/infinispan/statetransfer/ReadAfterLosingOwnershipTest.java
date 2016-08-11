@@ -49,7 +49,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
 
    @Override
    protected String parameters() {
-      return "{tx=" + transactional + ", l1=" + l1 + "}";
+      return "[tx=" + transactional + ", l1=" + l1 + "]";
    }
 
    public void testOwnershipLostWithPut() throws Exception {
