@@ -1380,6 +1380,7 @@
                 </dependencies>
                <configuration>
                   <configLocation>checkstyle.xml</configLocation>
+                  <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
                   <consoleOutput>true</consoleOutput>
                   <failsOnError>true</failsOnError>
                   <violationSeverity>error</violationSeverity>

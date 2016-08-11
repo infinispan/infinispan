@@ -17,11 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.LIRSEvictionPolicy;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.LIRSNode;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Node;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Recency;
 import org.infinispan.commons.util.concurrent.jdk8backported.StrippedConcurrentLinkedDeque.DequeNode;
 import org.testng.annotations.Test;
 
@@ -88,19 +83,19 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends BoundedEquival
       assertTrue(bchm.containsKey(keptKey));
    }
 
-   private void verifyQueueContents(BoundedEquivalentConcurrentHashMapV8<String, String> bchm, 
-         Iterator<DequeNode<LIRSNode<String, String>>> queueItr, 
+   private void verifyQueueContents(BoundedEquivalentConcurrentHashMapV8<String, String> bchm,
+         Iterator<DequeNode<LIRSNode<String, String>>> queueItr,
          String... contents) {
       // Check the Queue to make sure we have what we are supposed to
       for (String content : contents) {
          assertTrue(queueItr.hasNext());
          DequeNode<LIRSNode<String, String>> node = queueItr.next();
          // Queue elements should ALWAYS be HIR_RESIDENT
-         assertEquals(Recency.HIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_RESIDENT, node.item.state);
          assertEquals(content, node.item.key);
          assertEquals(content, bchm.innerPeek(content));
       }
-      
+
       assertFalse(queueItr.hasNext());
    }
 
@@ -133,28 +128,28 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends BoundedEquival
          Iterator<DequeNode<LIRSNode<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<LIRSNode<String, String>> node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_NONRESIDENT, node.item.state);
          assertEquals("D", node.item.key);
          assertEquals(BoundedEquivalentConcurrentHashMapV8.NULL_VALUE, map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("A", node.item.key);
          assertEquals("A", map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_RESIDENT, node.item.state);
          assertEquals("E", node.item.key);
          assertEquals("E", map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("B", node.item.key);
          assertEquals("B", map.innerPeek(node.item.key));
-         
+
          assertFalse(stackItr.hasNext());
       }
    }
@@ -183,22 +178,22 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends BoundedEquival
          Iterator<DequeNode<LIRSNode<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<LIRSNode<String, String>> node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_NONRESIDENT, node.item.state);
          assertEquals("D", node.item.key);
          assertEquals(BoundedEquivalentConcurrentHashMapV8.NULL_VALUE, map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("A", node.item.key);
          assertEquals("A", map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("E", node.item.key);
          assertEquals("E", map.innerPeek(node.item.key));
-         
+
          assertFalse(stackItr.hasNext());
       }
    }
@@ -215,12 +210,12 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends BoundedEquival
       assertEquals("E", map.get("E"));
 
       assertEquals(3, map.size());
-      
+
       //    Stack S     Queue Q
       //   B (HIR-res)    B
       //   E (LIR)
       //    A (LIR)
-      //   D (HIR-non)      
+      //   D (HIR-non)
       assertEquals("B", map.get("B"));
 
       assertEquals(3, map.size());
@@ -238,25 +233,25 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends BoundedEquival
          Iterator<DequeNode<LIRSNode<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<LIRSNode<String, String>> node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_NONRESIDENT, node.item.state);
          assertEquals("D", node.item.key);
          assertEquals(BoundedEquivalentConcurrentHashMapV8.NULL_VALUE, map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("A", node.item.key);
          assertEquals("A", map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("E", node.item.key);
          assertEquals("E", map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_RESIDENT, node.item.state);
          assertEquals("B", node.item.key);
          assertEquals("B", map.innerPeek(node.item.key));
 
@@ -287,19 +282,19 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends BoundedEquival
          Iterator<DequeNode<LIRSNode<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<LIRSNode<String, String>> node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("A", node.item.key);
          assertEquals("A", map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_NONRESIDENT, node.item.state);
          assertEquals("E", node.item.key);
          assertEquals(BoundedEquivalentConcurrentHashMapV8.NULL_VALUE, map.innerPeek(node.item.key));
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("D", node.item.key);
          assertEquals("D", map.innerPeek(node.item.key));
 
@@ -323,31 +318,31 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends BoundedEquival
       Iterator<DequeNode<LIRSNode<String, String>>> stackItr = policy.stack.new Itr();
       assertTrue(stackItr.hasNext());
       DequeNode<LIRSNode<String, String>> node = stackItr.next();
-      assertEquals(Recency.LIR_RESIDENT, node.item.state);
+      assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
       assertEquals("B", node.item.key);
       assertEquals("B", map.innerPeek(node.item.key));
-      
+
       assertTrue(stackItr.hasNext());
       node = stackItr.next();
-      assertEquals(Recency.HIR_NONRESIDENT, node.item.state);
+      assertEquals(LIRSEvictionPolicy.Recency.HIR_NONRESIDENT, node.item.state);
       assertEquals("D", node.item.key);
       assertEquals(BoundedEquivalentConcurrentHashMapV8.NULL_VALUE, map.innerPeek(node.item.key));
-      
+
       assertTrue(stackItr.hasNext());
       node = stackItr.next();
-      assertEquals(Recency.LIR_RESIDENT, node.item.state);
+      assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
       assertEquals("A", node.item.key);
       assertEquals("A", map.innerPeek(node.item.key));
-      
+
       assertTrue(stackItr.hasNext());
       node = stackItr.next();
-      assertEquals(Recency.HIR_NONRESIDENT, node.item.state);
+      assertEquals(LIRSEvictionPolicy.Recency.HIR_NONRESIDENT, node.item.state);
       assertEquals("E", node.item.key);
       assertEquals(BoundedEquivalentConcurrentHashMapV8.NULL_VALUE, map.innerPeek(node.item.key));
 
       assertTrue(stackItr.hasNext());
       node = stackItr.next();
-      assertEquals(Recency.HIR_RESIDENT, node.item.state);
+      assertEquals(LIRSEvictionPolicy.Recency.HIR_RESIDENT, node.item.state);
       assertEquals("C", node.item.key);
       assertEquals("C", map.innerPeek(node.item.key));
 
@@ -385,38 +380,38 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends BoundedEquival
       //   D (HIR-non)
       //    B (LIR)
       map.put("E", "E");
-      
+
       LIRSEvictionPolicy<String, String> policy = (LIRSEvictionPolicy<String, String>) map.evictionPolicy;
-      
+
       verifyQueueContents(map, policy.queue.new Itr(), "E");
-      
+
       // Now check the Stack
       {
          Iterator<DequeNode<LIRSNode<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<LIRSNode<String, String>> node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("B", node.item.key);
          assertEquals("B", map.innerPeek(node.item.key));
-         
+
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_NONRESIDENT, node.item.state);
          assertEquals("D", node.item.key);
          assertEquals(BoundedEquivalentConcurrentHashMapV8.NULL_VALUE, map.innerPeek(node.item.key));
-         
+
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.LIR_RESIDENT, node.item.state);
          assertEquals("A", node.item.key);
          assertEquals("A", map.innerPeek(node.item.key));
-         
+
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_RESIDENT, node.item.state);
+         assertEquals(LIRSEvictionPolicy.Recency.HIR_RESIDENT, node.item.state);
          assertEquals("E", node.item.key);
          assertEquals("E", map.innerPeek(node.item.key));
-         
+
          assertFalse(stackItr.hasNext());
       }
 
