@@ -23,7 +23,7 @@ public class AffinityIndexManagerMassIndexTest extends DistributedMassIndexingTe
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
       cacheCfg.indexing()
-              .index(Index.ALL)
+              .index(Index.PRIMARY_OWNER)
               .addIndexedEntity(Car.class)
               .addProperty("default.indexmanager", AffinityIndexManager.class.getName())
               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

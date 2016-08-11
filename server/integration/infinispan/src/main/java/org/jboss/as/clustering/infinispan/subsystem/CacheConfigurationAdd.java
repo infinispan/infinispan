@@ -367,7 +367,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 }
             }
             builder.indexing()
-                  .index(indexing.isEnabled() ? indexing.isLocalOnly() ? Index.LOCAL : Index.ALL : Index.NONE)
+                  .index(indexing.isEnabled() ? Index.valueOf(indexing.toString()) : Index.NONE)
                   .withProperties(indexingProperties)
                   .autoConfig(autoConfig)
             ;
