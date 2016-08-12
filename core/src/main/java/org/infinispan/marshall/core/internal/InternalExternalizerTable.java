@@ -4,6 +4,9 @@ import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeFunctionWith;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -17,7 +20,6 @@ import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.marshall.exts.ArrayExternalizers;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
@@ -27,6 +29,7 @@ import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
 import org.infinispan.marshall.exts.SingletonListExternalizer;
+import org.infinispan.marshall.exts.UuidExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.remoting.MIMECacheEntry;
@@ -100,17 +103,20 @@ final class InternalExternalizerTable {
       log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
    }
 
-   <T> AdvancedExternalizer<T> findWriteExternalizer(Object obj, ObjectOutput out) throws IOException {
+   <T> Externalizer<T> findWriteExternalizer(Object obj, ObjectOutput out) throws IOException {
       Class<?> clazz = checkStarted(obj);
-      AdvancedExternalizer<T> ext;
+      Externalizer<T> ext;
       if (clazz == null || primitives.getTypeClasses().contains(clazz)) {
          out.writeByte(InternalIds.PRIMITIVE);
-         ext = (AdvancedExternalizer<T>) primitives;
+         ext = (Externalizer<T>) primitives;
       } else {
-         ext = (AdvancedExternalizer<T>) writers.get(clazz);
+         ext = (Externalizer<T>) writers.get(clazz);
          if (ext != null) {
             out.writeByte(InternalIds.NON_PRIMITIVE);
-            out.writeByte(ext.getId());
+            out.writeByte(((AdvancedExternalizer<T>) ext).getId());
+         } else if ((ext = findAnnotatedExternalizer(clazz)) != null) {
+            out.writeByte(InternalIds.ANNOTATED);
+            out.writeObject(ext.getClass());
          } else {
             out.writeByte(InternalIds.EXTERNAL);
          }
@@ -130,18 +136,41 @@ final class InternalExternalizerTable {
       return obj == null ? null : obj.getClass();
    }
 
-   <T> AdvancedExternalizer<T> findReadExternalizer(ObjectInput in) {
+   <T> Externalizer<T> findAnnotatedExternalizer(Class<?> clazz) {
+      try {
+         SerializeWith serialAnn = clazz.getAnnotation(SerializeWith.class);
+         if (serialAnn != null) {
+            return (Externalizer<T>) serialAnn.value().newInstance();
+         } else {
+            SerializeFunctionWith funcSerialAnn = clazz.getAnnotation(SerializeFunctionWith.class);
+            if (funcSerialAnn != null)
+               return (Externalizer<T>) funcSerialAnn.value().newInstance();
+         }
+
+         return null;
+      } catch (Exception e) {
+         throw new IllegalArgumentException(String.format(
+               "Cannot instantiate externalizer for %s", clazz), e);
+      }
+   }
+
+
+   <T> Externalizer<T> findReadExternalizer(ObjectInput in) {
       try {
          // Check if primitive or non-primitive
          int type = in.readUnsignedByte();
          switch (type) {
             case InternalIds.PRIMITIVE:
-               return (AdvancedExternalizer<T>) primitives;
+               return (Externalizer<T>) primitives;
             case InternalIds.NON_PRIMITIVE:
                int subType = in.readUnsignedByte();
-               AdvancedExternalizer<T> ext = (AdvancedExternalizer<T>) readers.get(subType);
+               Externalizer<T> ext = (Externalizer<T>) readers.get(subType);
                // TODO: Add null checks and see if not started...etc
                return ext;
+            case InternalIds.ANNOTATED:
+               Class<? extends Externalizer<T>> clazz =
+                     (Class<? extends Externalizer<T>>) in.readObject();
+               return clazz.newInstance();
             case InternalIds.EXTERNAL:
                return null;
             default:
@@ -182,7 +211,7 @@ final class InternalExternalizerTable {
 //
 //         return ext;
       }
-      catch (IOException e) {
+      catch (Exception e) {
          // TODO: Update Log.java eventually (not doing yet to avoid need to rebase)
          throw new CacheException("Error reading from input to find externalizer", e);
       }
@@ -215,7 +244,7 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new KeyValuePair.Externalizer());
       addInternalExternalizer(new MapExternalizer());
       addInternalExternalizer(new MarshalledValue.Externalizer(gcr.getComponent(StreamingMarshaller.class)));
-      addInternalExternalizer(new MIMECacheEntry.Externalizer());
+      addInternalExternalizer(new MIMECacheEntry.Externalizer()); // new
       addInternalExternalizer(new MortalCacheEntry.Externalizer());
       addInternalExternalizer(new MortalCacheValue.Externalizer());
       addInternalExternalizer(new SetExternalizer());
@@ -225,6 +254,7 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new TransientMortalCacheEntry.Externalizer());
       addInternalExternalizer(new TransientMortalCacheValue.Externalizer());
       addInternalExternalizer(new UnsuccessfulResponse.Externalizer());
+      addInternalExternalizer(new UuidExternalizer()); // new
    }
 
    private void addInternalExternalizer(AdvancedExternalizer<?> ext) {

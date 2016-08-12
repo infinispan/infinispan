@@ -548,6 +548,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assertTrue(marshaller.isMarshallable(pojo));
    }
 
+   public void testSerializableWithAnnotation() throws Exception {
+      marshallAndAssertEquality(new PojoWithSerializeWith(20, "k2"));
+   }
+
 //   public void testIsMarshallableJBossExternalizeAnnotation() throws Exception {
 //      PojoWithJBossExternalize pojo = new PojoWithJBossExternalize(34, "k2");
 //      assertTrue(marshaller.isMarshallable(pojo));

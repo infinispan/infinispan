@@ -176,4 +176,6 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int PERSISTENT_UUID = 166;
 
    int MIME_CACHE_ENTRY = 167;
+
+   int UUID = 168;
 }

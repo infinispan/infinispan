@@ -1,6 +1,6 @@
 package org.infinispan.marshall.core.internal;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -28,7 +28,7 @@ final class BytesObjectInput implements ObjectInput {
 
    @Override
    public Object readObject() throws ClassNotFoundException, IOException {
-      AdvancedExternalizer<Object> ext = internal.externalizers.findReadExternalizer(this);
+      Externalizer<Object> ext = internal.externalizers.findReadExternalizer(this);
       if (ext != null)
          return ext.readObject(this);
       else {

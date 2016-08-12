@@ -1,6 +1,6 @@
 package org.infinispan.marshall.core.internal;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -19,7 +19,7 @@ final class BytesObjectOutput implements ObjectOutput {
 
    @Override
    public void writeObject(Object obj) throws IOException {
-      AdvancedExternalizer<Object> ext = internal.externalizers.findWriteExternalizer(obj, this);
+      Externalizer<Object> ext = internal.externalizers.findWriteExternalizer(obj, this);
       if (ext != null) {
          ext.writeObject(this, obj);
       } else {

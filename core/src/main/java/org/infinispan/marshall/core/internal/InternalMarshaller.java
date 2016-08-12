@@ -2,11 +2,13 @@ package org.infinispan.marshall.core.internal;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
+import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.MarshallableTypeHints;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -51,16 +53,21 @@ public final class InternalMarshaller implements StreamingMarshaller {
 
    @Override
    public byte[] objectToByteBuffer(Object obj) throws IOException, InterruptedException {
+      BytesObjectOutput out = writeObjectOutput(obj);
+      return out.toBytes(); // trim out unusued bytes
+   }
+
+   private BytesObjectOutput writeObjectOutput(Object obj) throws IOException {
       BufferSizePredictor sizePredictor = marshallableTypeHints.getBufferSizePredictor(obj);
       BytesObjectOutput out = new BytesObjectOutput(sizePredictor.nextSize(obj), this);
-      AdvancedExternalizer<Object> ext = externalizers.findWriteExternalizer(obj, out);
+      Externalizer<Object> ext = externalizers.findWriteExternalizer(obj, out);
       if (ext != null)
          ext.writeObject(out, obj);
       else
          external.objectToObjectStream(obj, out);
 
       sizePredictor.recordSize(out.bytes.length);
-      return out.toBytes();
+      return out;
    }
 
    @Override
@@ -70,7 +77,7 @@ public final class InternalMarshaller implements StreamingMarshaller {
    }
 
    private Object objectFromObjectInput(ObjectInput in) throws IOException, ClassNotFoundException {
-      AdvancedExternalizer<Object> ext = externalizers.findReadExternalizer(in);
+      Externalizer<Object> ext = externalizers.findReadExternalizer(in);
       if (ext != null)
          return ext.readObject(in);
       else {
@@ -165,12 +172,18 @@ public final class InternalMarshaller implements StreamingMarshaller {
       return o instanceof Serializable
             || externalizers.isMarshallable(o)
             || o.getClass().getAnnotation(SerializeWith.class) != null;
-            //|| o.getClass().getAnnotation(Externalize.class) != null;
    }
 
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
       return marshallableTypeHints.getBufferSizePredictor(o.getClass());
+   }
+
+   @Override
+   public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
+      BytesObjectOutput out = writeObjectOutput(o);
+      // No triming, just take position as length
+      return new ByteBufferImpl(out.bytes, 0, out.pos);
    }
 
    //////
@@ -187,11 +200,6 @@ public final class InternalMarshaller implements StreamingMarshaller {
 
    @Override
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
       return null;  // TODO: Customise this generated block
    }
 
