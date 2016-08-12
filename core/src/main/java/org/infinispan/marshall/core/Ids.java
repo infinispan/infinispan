@@ -182,5 +182,6 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int NO_VALUE_READ_ONLY_VIEW = 170;
 
    int MIME_CACHE_ENTRY = 171;
+   int UUID = 172;
 
 }

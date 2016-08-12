@@ -39,7 +39,9 @@ final class InternalJavaSerialMarshaller implements StreamingMarshaller {
    }
 
    private boolean isWhiteList(String className) {
-      return className.equals("org.infinispan.marshall.core.JBossMarshallingTest$ObjectThatContainsACustomReadObjectMethod")
+      return className.endsWith("Exception")
+            || className.equals("java.lang.Class")
+            || className.equals("org.infinispan.marshall.core.JBossMarshallingTest$ObjectThatContainsACustomReadObjectMethod")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Child1")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Child2")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Human")
@@ -47,8 +49,8 @@ final class InternalJavaSerialMarshaller implements StreamingMarshaller {
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Pojo")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling")
             || className.equals("org.infinispan.persistence.BaseStoreFunctionalTest$Pojo")
+            || className.equals("org.infinispan.test.data.Key")
             || className.equals("org.infinispan.test.data.Person")
-            || className.equals("org.infinispan.util.concurrent.TimeoutException")
             ;
    }
 

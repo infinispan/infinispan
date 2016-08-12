@@ -120,6 +120,11 @@ public class GlobalMarshaller implements StreamingMarshaller {
       return internal.getBufferSizePredictor(o);
    }
 
+   @Override
+   public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
+      return internal.objectToBuffer(o);
+   }
+
 
 
 //   @Override
@@ -150,11 +155,6 @@ public class GlobalMarshaller implements StreamingMarshaller {
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
       return new byte[0];  // TODO: Customise this generated block
-   }
-
-   @Override
-   public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
-      return null;  // TODO: Customise this generated block
    }
 
    @Override
