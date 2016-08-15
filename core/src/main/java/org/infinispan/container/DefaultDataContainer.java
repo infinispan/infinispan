@@ -257,6 +257,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          return null;
       });
       InternalCacheEntry<K, V> e = reference[0];
+      if (trace) {
+         log.tracef("Removed %s from container", e);
+      }
       return e == null || (e.canExpire() && e.isExpired(timeService.wallClockTime())) ? null : e;
    }
 
