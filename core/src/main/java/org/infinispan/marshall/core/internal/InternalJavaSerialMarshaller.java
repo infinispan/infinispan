@@ -114,6 +114,10 @@ final class InternalJavaSerialMarshaller implements StreamingMarshaller {
             || className.equals("org.infinispan.xsite.BackupSender$TakeSiteOfflineResponse") // prod
             || className.equals("org.infinispan.xsite.BackupSender$BringSiteOnlineResponse") // prod
             || className.equals("org.infinispan.xsite.XSiteAdminCommand$Status") // prod
+
+            || className.equals("org.infinispan.persistence.jdbc.TableNameUniquenessTest$Person")
+            || className.equals("org.infinispan.persistence.jdbc.binary.JdbcBinaryStoreTest$FixedHashKey")
+            || className.equals("org.infinispan.persistence.jdbc.stringbased.Person")
             ;
    }
 

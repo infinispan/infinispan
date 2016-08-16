@@ -9,7 +9,9 @@ import org.infinispan.atomic.impl.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -18,6 +20,7 @@ import org.infinispan.commons.marshall.MarshallableFunctionExternalizers;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -47,6 +50,7 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.MetaParams;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.marshall.exts.*;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -268,6 +272,8 @@ final class InternalExternalizerTable {
    }
 
    private void loadInternalMarshallables() {
+      StreamingMarshaller marshaller = gcr.getComponent(StreamingMarshaller.class);
+
       ReplicableCommandExternalizer ext = new ReplicableCommandExternalizer(cmdFactory, gcr);
       addInternalExternalizer(ext);
 
@@ -276,6 +282,7 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new AtomicHashMap.Externalizer());
       addInternalExternalizer(new AtomicHashMapDelta.Externalizer());
       addInternalExternalizer(new AvailabilityMode.Externalizer());
+      addInternalExternalizer(new ByteBufferImpl.Externalizer());
       addInternalExternalizer(new CacheEventConverterAsConverter.Externalizer());
       addInternalExternalizer(new CacheEventFilterAsKeyValueFilter.Externalizer());
       addInternalExternalizer(new CacheEventFilterConverterAsKeyValueFilterConverter.Externalizer());
@@ -299,6 +306,7 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new EmbeddedMetadata.Externalizer());
       addInternalExternalizer(new EntryViews.ReadWriteSnapshotViewExternalizer());
       addInternalExternalizer(new EnumSetExternalizer());
+      addInternalExternalizer(new EquivalenceExternalizer());
       addInternalExternalizer(new ExceptionResponse.Externalizer());
       addInternalExternalizer(new Flag.Externalizer());
       addInternalExternalizer(new GlobalTransaction.Externalizer());
@@ -323,7 +331,8 @@ final class InternalExternalizerTable {
       addInternalExternalizer(new MarshallableFunctionExternalizers.ConstantLambdaExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer());
       addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer());
-      addInternalExternalizer(new MarshalledValue.Externalizer(gcr.getComponent(StreamingMarshaller.class)));
+      addInternalExternalizer(new MarshalledEntryImpl.Externalizer(marshaller));
+      addInternalExternalizer(new MarshalledValue.Externalizer(marshaller));
       addInternalExternalizer(new MetadataImmortalCacheEntry.Externalizer());
       addInternalExternalizer(new MetadataImmortalCacheValue.Externalizer());
       addInternalExternalizer(new MetadataMortalCacheValue.Externalizer());

@@ -186,8 +186,6 @@ public final class InternalMarshaller implements StreamingMarshaller {
       return new ByteBufferImpl(out.bytes, 0, out.pos);
    }
 
-   //////
-
    @Override
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
       throw new RuntimeException("NYI");
