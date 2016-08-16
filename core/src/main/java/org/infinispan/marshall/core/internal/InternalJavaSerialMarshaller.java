@@ -40,17 +40,80 @@ final class InternalJavaSerialMarshaller implements StreamingMarshaller {
 
    private boolean isWhiteList(String className) {
       return className.endsWith("Exception")
+            || className.contains("$$Lambda$")
             || className.equals("java.lang.Class")
-            || className.equals("org.infinispan.marshall.core.JBossMarshallingTest$ObjectThatContainsACustomReadObjectMethod")
+            || className.equals("java.util.Date") // test
+            || className.equals("org.infinispan.api.lazy.LazyCacheAPITest$CustomPojo")
+            || className.equals("org.infinispan.atomic.TestDeltaAware")
+            || className.equals("org.infinispan.atomic.TestDeltaAware$TestDelta")
+            || className.equals("org.infinispan.configuration.override.XMLConfigurationOverridingTest$NonIndexedClass")
+            || className.equals("org.infinispan.context.MarshalledValueContextTest$Key")
+            || className.equals("org.infinispan.distribution.MagicKey")
+            || className.equals("org.infinispan.distribution.SingleOwnerTest$ExceptionExternalizable")
+            || className.equals("org.infinispan.distribution.ch.AffinityPartitionerTest$AffinityKey")
+            || className.equals("org.infinispan.distribution.groups.BaseUtilGroupTest$GroupKey")
+            || className.equals("org.infinispan.distribution.groups.StateTransferGetGroupKeysTest$CustomConsistentHashFactory")
+            || className.equals("org.infinispan.distribution.rehash.NonTxBackupOwnerBecomingPrimaryOwnerTest$CustomConsistentHashFactory")
+            || className.equals("org.infinispan.distribution.rehash.NonTxPrimaryOwnerBecomingNonOwnerTest$CustomConsistentHashFactory")
+            || className.equals("org.infinispan.distexec.BasicDistributedExecutorTest$ExceptionThrowingCallable")
+            || className.equals("org.infinispan.distexec.BasicDistributedExecutorTest$FailOnlyOnceDistributedCallable")
+            || className.equals("org.infinispan.distexec.BasicDistributedExecutorTest$SimpleCallable")
+            || className.equals("org.infinispan.distexec.DefaultExecutorService$RunnableAdapter")
+            || className.equals("org.infinispan.distexec.DistributedExecutionCompletionTest$SimpleCallable")
+            || className.equals("org.infinispan.distexec.DistributedExecutionCompletionTest$SimpleDistributedCallable")
+            || className.equals("org.infinispan.distexec.DistributedExecutorBadResponseFailoverTest$SimpleCallable")
+            || className.equals("org.infinispan.distexec.DistributedExecutorTest$LongRunningCallable")
+            || className.equals("org.infinispan.distexec.DistributedExecutorFailoverTest$SleepingSimpleCallable")
+            || className.equals("org.infinispan.distexec.LocalDistributedExecutorTest$ExceptionThrowingCallable")
+            || className.equals("org.infinispan.distexec.LocalDistributedExecutorTest$SimpleCallable")
+            || className.equals("org.infinispan.distexec.LocalDistributedExecutorTest$SimpleCallableWithField")
+            || className.equals("org.infinispan.distexec.LocalDistributedExecutorTest$SimpleDistributedCallable")
+            || className.equals("org.infinispan.distexec.LocalDistributedExecutorTest$SleepingSimpleCallable")
+            || className.equals("org.infinispan.eviction.impl.EvictionWithConcurrentOperationsTest$SameHashCodeKey")
+            || className.equals("org.infinispan.eviction.impl.ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTest$SameHashCodeKey")
+            || className.equals("org.infinispan.eviction.impl.MarshalledValuesManualEvictionTest$ManualEvictionPojo")
+            || className.equals("org.infinispan.jmx.RpcManagerMBeanTest$SlowToSerialize")
+            || className.equals("org.infinispan.marshall.CustomClass")
+            || className.equals("org.infinispan.marshall.InvalidatedMarshalledValueTest$InvalidatedPojo")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Child1")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Child2")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Human")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$HumanComparator")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$Pojo")
             || className.equals("org.infinispan.marshall.VersionAwareMarshallerTest$PojoWhichFailsOnUnmarshalling")
+            || className.equals("org.infinispan.marshall.core.JBossMarshallingTest$ObjectThatContainsACustomReadObjectMethod")
+            || className.equals("org.infinispan.marshall.core.MarshalledValueTest$Pojo")
+            || className.equals("org.infinispan.marshall.core.MarshalledValueTest$CustomReadObjectMethod")
+            || className.equals("org.infinispan.marshall.core.MarshalledValueTest$ObjectThatContainsACustomReadObjectMethod")
+            || className.equals("org.infinispan.notifications.cachelistener.cluster.AbstractClusterListenerUtilTest$FilterConverter")
+            || className.equals("org.infinispan.notifications.cachelistener.cluster.AbstractClusterListenerUtilTest$LifespanConverter")
+            || className.equals("org.infinispan.notifications.cachelistener.cluster.AbstractClusterListenerUtilTest$LifespanFilter")
+            || className.equals("org.infinispan.notifications.cachelistener.cluster.AbstractClusterListenerUtilTest$NewLifespanLargerFilter")
+            || className.equals("org.infinispan.notifications.cachelistener.cluster.AbstractClusterListenerUtilTest$StringAppender")
+            || className.equals("org.infinispan.notifications.cachelistener.cluster.AbstractClusterListenerUtilTest$StringTruncator")
+            || className.equals("org.infinispan.notifications.cachelistener.cluster.NoOpCacheEventFilterConverterWithDependencies")
             || className.equals("org.infinispan.persistence.BaseStoreFunctionalTest$Pojo")
+            || className.equals("org.infinispan.persistence.BaseStoreTest$Pojo")
+            || className.equals("org.infinispan.remoting.TransportSenderExceptionHandlingTest$FailureType")
+            || className.equals("org.infinispan.replication.ReplicationExceptionTest$ContainerData")
+            || className.equals("org.infinispan.statetransfer.BigObject")
+            || className.equals("org.infinispan.statetransfer.ReadAfterLosingOwnershipTest$SingleKeyConsistentHashFactory")
+            || className.equals("org.infinispan.statetransfer.RemoteGetDuringStateTransferTest$SingleKeyConsistentHashFactory")
+            || className.equals("org.infinispan.statetransfer.StateTransferCacheLoaderFunctionalTest$DelayedUnmarshal")
+            || className.equals("org.infinispan.statetransfer.StateTransferFunctionalTest$DelayTransfer")
+            || className.equals("org.infinispan.statetransfer.WriteSkewDuringStateTransferTest$ConsistentHashFactoryImpl")
+            || className.equals("org.infinispan.stats.impl.ClusterCacheStatsImpl$DistributedCacheStatsCallable") // prod
+            || className.equals("org.infinispan.stream.BaseSetupStreamIteratorTest$StringTruncator")
+            || className.equals("org.infinispan.stream.BaseStreamTest$ForEachDoubleInjected")
+            || className.equals("org.infinispan.stream.BaseStreamTest$ForEachInjected")
+            || className.equals("org.infinispan.stream.BaseStreamTest$ForEachIntInjected")
+            || className.equals("org.infinispan.stream.BaseStreamTest$ForEachLongInjected")
+            || className.equals("org.infinispan.stream.DistributedStreamIteratorWithStoreAsBinaryTest$MagicKeyStringFilter")
             || className.equals("org.infinispan.test.data.Key")
             || className.equals("org.infinispan.test.data.Person")
+            || className.equals("org.infinispan.xsite.BackupSender$TakeSiteOfflineResponse") // prod
+            || className.equals("org.infinispan.xsite.BackupSender$BringSiteOnlineResponse") // prod
+            || className.equals("org.infinispan.xsite.XSiteAdminCommand$Status") // prod
             ;
    }
 
@@ -64,72 +127,72 @@ final class InternalJavaSerialMarshaller implements StreamingMarshaller {
 
    @Override
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant, int estimatedSize) throws IOException {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public void finishObjectOutput(ObjectOutput oo) {
-      // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public void finishObjectInput(ObjectInput oi) {
-      // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public Object objectFromInputStream(InputStream is) throws IOException, ClassNotFoundException {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public void stop() {
-      // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public void start() {
-      // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
-      return new byte[0];  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public byte[] objectToByteBuffer(Object obj) throws IOException, InterruptedException {
-      return new byte[0];  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public boolean isMarshallable(Object o) throws Exception {
-      return false;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public BufferSizePredictor getBufferSizePredictor(Object o) {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    final static class DelegateOutputStream extends OutputStream {

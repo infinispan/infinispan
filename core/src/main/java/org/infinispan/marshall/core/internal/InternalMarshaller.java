@@ -66,7 +66,7 @@ public final class InternalMarshaller implements StreamingMarshaller {
       else
          external.objectToObjectStream(obj, out);
 
-      sizePredictor.recordSize(out.bytes.length);
+      sizePredictor.recordSize(out.pos);
       return out;
    }
 
@@ -190,22 +190,22 @@ public final class InternalMarshaller implements StreamingMarshaller {
 
    @Override
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public void finishObjectInput(ObjectInput oi) {
-      // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException {
-      return null;  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
-      return new byte[0];  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
 }

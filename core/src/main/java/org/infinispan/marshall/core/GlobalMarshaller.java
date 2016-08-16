@@ -40,6 +40,9 @@ public class GlobalMarshaller implements StreamingMarshaller {
    private static final Log log = LogFactory.getLog(GlobalMarshaller.class);
    private final boolean trace = log.isTraceEnabled();
 
+   GlobalComponentRegistry gcr;
+   RemoteCommandsFactory cmdFactory;
+
    InternalMarshaller internal;
 
 //   private JBossMarshaller defaultMarshaller;
@@ -55,12 +58,14 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Inject
    public void inject(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
-      this.internal = new InternalMarshaller(gcr, cmdFactory);
+      this.gcr = gcr;
+      this.cmdFactory = cmdFactory;
    }
 
    @Override
    @Start(priority = 8) // Should start after the externalizer table and before transport
    public void start() {
+      internal = new InternalMarshaller(gcr, cmdFactory);
       internal.start();
    }
 
@@ -122,7 +127,12 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Override
    public ByteBuffer objectToBuffer(Object o) throws IOException, InterruptedException {
-      return internal.objectToBuffer(o);
+      try {
+         return internal.objectToBuffer(o);
+      } catch (java.io.NotSerializableException nse) {
+         if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
+         throw new NotSerializableException(nse.getMessage(), nse.getCause());
+      }
    }
 
 

@@ -25,4 +25,6 @@ public interface Ids {
    int LAMBDA_WITH_METAS = 160;
 
    int IMMUTABLE_ENTRY = 167;
+
+   int IMMUTABLE_SET = 173;
 }
