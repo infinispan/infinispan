@@ -414,7 +414,7 @@ public class DefaultConsistentHash implements ConsistentHash {
    public void toScopedState(ScopedPersistentState state) {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
       state.setProperty(STATE_NUM_OWNERS, numOwners);
-      state.setProperty(STATE_NUM_SEGMENTS, getNumSegments());;
+      state.setProperty(STATE_NUM_SEGMENTS, getNumSegments());
       state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, members.size());
       for (int i = 0; i < members.size(); i++) {
          state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),

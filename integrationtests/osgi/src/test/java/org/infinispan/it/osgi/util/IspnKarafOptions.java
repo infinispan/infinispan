@@ -63,7 +63,7 @@ public class IspnKarafOptions {
       Option result = null;
       if (Boolean.parseBoolean(System.getProperty(PROP_VERBOSE_KARAF))) {
          result = logLevel(LogLevel.TRACE);
-      };
+      }
       return result;
    }
 

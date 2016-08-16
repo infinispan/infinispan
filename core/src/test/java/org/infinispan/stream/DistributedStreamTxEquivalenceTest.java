@@ -56,11 +56,12 @@ public class DistributedStreamTxEquivalenceTest extends BaseSetupStreamIteratorT
             Iterator<Address> iter = owners.iterator();
             // Skip primary owner
             iter.next();
-            boolean matches = false;
             while (iter.hasNext()) {
-               if ((matches = localAddress.equals(iter.next())));
+               if (localAddress.equals(iter.next())) {
+                  return true;
+               }
             }
-            return matches;
+            return false;
          }
       },
       NOT_OWNER {

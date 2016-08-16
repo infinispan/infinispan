@@ -37,7 +37,7 @@ public class Op {
 
    @Override
    public String toString() {
-      final StringBuffer sb = new StringBuffer("Op{");
+      final StringBuilder sb = new StringBuilder("Op{");
       sb.append("magic=").append(magic);
       sb.append(", version=").append(version);
       sb.append(", code=").append(code);

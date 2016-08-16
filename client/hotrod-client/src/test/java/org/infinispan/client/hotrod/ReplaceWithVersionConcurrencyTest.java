@@ -35,8 +35,8 @@ public class ReplaceWithVersionConcurrencyTest extends MultiHotRodServersTest {
             getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
 //            .transaction()
 //            .lockingMode(LockingMode.PESSIMISTIC)
-//            .transactionMode(TransactionMode.TRANSACTIONAL)
-      ;
+//            .transactionMode(TransactionMode.TRANSACTIONAL);
+
       createHotRodServers(2, builder);
    }
 

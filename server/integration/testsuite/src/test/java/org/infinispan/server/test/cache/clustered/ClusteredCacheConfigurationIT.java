@@ -60,7 +60,7 @@ public class ClusteredCacheConfigurationIT {
         RemoteCache<String, String> rc1 = rcm1.getCache("remoteTimeoutCache");
         try {
             // create a big object
-            StringBuffer sb = new StringBuffer(10000000);
+            StringBuilder sb = new StringBuilder(10000000);
             for (int i = 0; i < 1000000; i++) {
                 sb.append("0123456789");
             }

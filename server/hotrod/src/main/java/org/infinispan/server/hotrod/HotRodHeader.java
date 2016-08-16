@@ -43,15 +43,14 @@ public class HotRodHeader {
 
    @Override
    public String toString() {
-      final StringBuffer sb = new StringBuffer("HotRodHeader{");
-      sb.append("op=").append(op);
-      sb.append(", version=").append(version);
-      sb.append(", messageId=").append(messageId);
-      sb.append(", cacheName='").append(cacheName).append('\'');
-      sb.append(", flag=").append(flag);
-      sb.append(", clientIntel=").append(clientIntel);
-      sb.append(", topologyId=").append(topologyId);
-      sb.append('}');
-      return sb.toString();
+      return "HotRodHeader{" +
+            "op=" + op +
+            ", version=" + version +
+            ", messageId=" + messageId +
+            ", cacheName='" + cacheName + '\'' +
+            ", flag=" + flag +
+            ", clientIntel=" + clientIntel +
+            ", topologyId=" + topologyId +
+            '}';
    }
 }

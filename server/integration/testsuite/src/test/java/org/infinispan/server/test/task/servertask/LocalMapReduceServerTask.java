@@ -28,7 +28,7 @@ public class LocalMapReduceServerTask implements ServerTask {
 
     @Override
     public Object call() throws Exception {
-        Cache<String, String> cache = (Cache<String, String>) taskContext.getCache().get();;
+        Cache<String, String> cache = (Cache<String, String>) taskContext.getCache().get();
 
         return cache.entrySet().stream()
                 .map((Serializable & Function<Map.Entry<String, String>, String[]>) e -> e.getValue().split("\\s+"))

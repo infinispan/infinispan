@@ -365,7 +365,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
         Collection<SocketAddress> servers = ttf.getServers();
         // create a list of IP address:port to return
-        StringBuffer serverList = new StringBuffer();
+        StringBuilder serverList = new StringBuilder();
         int listSize = servers.size();
         int i = 0;
         for (Iterator iter = servers.iterator(); iter.hasNext(); i++) {

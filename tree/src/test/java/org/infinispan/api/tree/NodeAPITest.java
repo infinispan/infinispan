@@ -75,7 +75,7 @@ public class NodeAPITest extends SingleCacheManagerTest {
       assertEquals("value", nodeA.get("key"));
       
       nodeA.putIfAbsent("key1", "value1");
-      assertEquals("value1", nodeA.get("key1"));;
+      assertEquals("value1", nodeA.get("key1"));
       
       Object result = nodeA.putIfAbsent("key", "value3");
       assertEquals("value", result);

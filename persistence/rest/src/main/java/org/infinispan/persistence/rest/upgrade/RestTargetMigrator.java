@@ -76,8 +76,8 @@ public class RestTargetMigrator implements TargetMigrator {
          }
          es.shutdown();
          try {
-            while (!es.awaitTermination(500, TimeUnit.MILLISECONDS))
-               ;
+            while (!es.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+            }
          } catch (InterruptedException e) {
             throw new CacheException(e);
          }

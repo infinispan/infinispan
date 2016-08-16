@@ -71,7 +71,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
             .addProperty("hibernate.search.default.worker.execution", WORKER_MODE.toString())
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-      ;
+
       List<Cache<Integer, Transaction>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);

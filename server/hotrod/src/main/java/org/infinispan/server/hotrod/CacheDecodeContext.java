@@ -289,11 +289,7 @@ public class CacheDecodeContext {
 
       @Override
       public String toString() {
-         final StringBuffer sb = new StringBuffer("ExpirationParam{");
-         sb.append("duration=").append(duration);
-         sb.append(", unit=").append(unit);
-         sb.append('}');
-         return sb.toString();
+         return "ExpirationParam{duration=" + duration + ", unit=" + unit + '}';
       }
    }
 
@@ -312,13 +308,12 @@ public class CacheDecodeContext {
 
       @Override
       public String toString() {
-         final StringBuffer sb = new StringBuffer("RequestParameters{");
-         sb.append("valueLength=").append(valueLength);
-         sb.append(", lifespan=").append(lifespan);
-         sb.append(", maxIdle=").append(maxIdle);
-         sb.append(", streamVersion=").append(streamVersion);
-         sb.append('}');
-         return sb.toString();
+         return "RequestParameters{" +
+               "valueLength=" + valueLength +
+               ", lifespan=" + lifespan +
+               ", maxIdle=" + maxIdle +
+               ", streamVersion=" + streamVersion +
+               '}';
       }
    }
 

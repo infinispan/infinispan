@@ -31,7 +31,7 @@
         <!--<module name="CovariantEquals" />-->
         <!--<module name="ModifiedControlVariable" />-->
         <!--<module name="OneStatementPerLine" />-->
-        <!--<module name="EmptyStatement" />-->
+        <module name="EmptyStatement" />
         <!--<module name="MissingDeprecated" />-->
         <!--<module name="DefaultComesLast" />-->
         <!--<module name="TypecastParenPad" />-->
@@ -71,12 +71,12 @@
             <!--<property name="ignoreComments" value="true" />-->
         <!--</module>-->
 
-        <!--&lt;!&ndash; Nobody should be using StringBuffer anymore &ndash;&gt;-->
-        <!--<module name="RegexpSinglelineJava">-->
-            <!--<property name="format" value=" StringBuffer" />-->
-            <!--&lt;!&ndash; The last sentence of the message is a keyword to trigger exclusion: see ExcludeTestPackages &ndash;&gt;-->
-            <!--<property name="message" value="Nobody should be using StringBuffer anymore" />-->
-        <!--</module>-->
+        <!-- Nobody should be using StringBuffer anymore -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value=" StringBuffer" />
+            <!-- The last sentence of the message is a keyword to trigger exclusion: see ExcludeTestPackages -->
+            <property name="message" value="Nobody should be using StringBuffer anymore" />
+        </module>
         <!--<module name="IllegalInstantiation">-->
             <!--<property name="classes" value="java.lang.Boolean"/>-->
         <!--</module>-->

@@ -61,7 +61,8 @@ public class HotRodMigratorHelper {
    static void gracefulShutdown(ExecutorService executorService) {
       try {
          executorService.shutdown();
-         while (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) ;
+         while (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+         }
       } catch (InterruptedException e) {
          throw new CacheException(e);
       }

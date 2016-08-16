@@ -161,7 +161,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             @Override
             public boolean apply(int file, int offset, int size, byte[] serializedKey, byte[] serializedMetadata, byte[] serializedValue, long seqId, long expiration) throws IOException, ClassNotFoundException {
                long prevSeqId;
-               while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId));
+               while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
+               }
                Object key = marshaller.objectFromByteBuffer(serializedKey);
                if (trace) {
                   log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);

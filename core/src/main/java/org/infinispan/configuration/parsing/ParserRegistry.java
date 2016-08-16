@@ -138,8 +138,9 @@ public class ParserRegistry implements NamespaceMappingParser {
          reader.nextTag();
          reader.require(START_ELEMENT, null, null);
          parseElement(reader, holder);
-         for (; reader.next() != END_DOCUMENT;)
-            ;
+         while (reader.next() != END_DOCUMENT) {
+            // consume remaining parsing events
+         }
       } finally {
          try {
             reader.close();

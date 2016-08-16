@@ -65,11 +65,7 @@ public class ServerAddress implements Address {
 
    @Override
    public String toString() {
-      final StringBuffer sb = new StringBuffer("ServerAddress{");
-      sb.append("host='").append(host).append('\'');
-      sb.append(", port=").append(port);
-      sb.append('}');
-      return sb.toString();
+      return "ServerAddress{" + "host='" + host + '\'' + ", port=" + port + '}';
    }
 
    public String getHost() {

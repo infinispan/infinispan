@@ -46,15 +46,14 @@ class Events {
 
       @Override
       public String toString() {
-         final StringBuffer sb = new StringBuffer("KeyEvent{");
-         sb.append("version=").append(version);
-         sb.append(", messageId=").append(messageId);
-         sb.append(", op=").append(op);
-         sb.append(", listenerId=").append(Util.printArray(listenerId, false));
-         sb.append(", isRetried=").append(isRetried);
-         sb.append(", key=").append(Util.toStr(key));
-         sb.append('}');
-         return sb.toString();
+         return "KeyEvent{" +
+               "version=" + version +
+               ", messageId=" + messageId +
+               ", op=" + op +
+               ", listenerId=" + Util.printArray(listenerId, false) +
+               ", isRetried=" + isRetried +
+               ", key=" + Util.toStr(key) +
+               '}';
       }
 
       @Override
@@ -77,16 +76,15 @@ class Events {
 
       @Override
       public String toString() {
-         final StringBuffer sb = new StringBuffer("KeyWithVersionEvent{");
-         sb.append("version=").append(version);
-         sb.append(", messageId=").append(messageId);
-         sb.append(", op=").append(op);
-         sb.append(", listenerId=").append(Util.printArray(listenerId, false));
-         sb.append(", isRetried=").append(isRetried);
-         sb.append(", key=").append(Util.toStr(key));
-         sb.append(", dataVersion=").append(dataVersion);
-         sb.append('}');
-         return sb.toString();
+         return "KeyWithVersionEvent{" +
+               "version=" + version +
+               ", messageId=" + messageId +
+               ", op=" + op +
+               ", listenerId=" + Util.printArray(listenerId, false) +
+               ", isRetried=" + isRetried +
+               ", key=" + Util.toStr(key) +
+               ", dataVersion=" + dataVersion +
+               '}';
       }
 
       @Override
@@ -108,15 +106,14 @@ class Events {
 
       @Override
       public String toString() {
-         final StringBuffer sb = new StringBuffer("CustomEvent{");
-         sb.append("version=").append(version);
-         sb.append(", messageId=").append(messageId);
-         sb.append(", op=").append(op);
-         sb.append(", listenerId=").append(Util.printArray(listenerId, false));
-         sb.append(", isRetried=").append(isRetried);
-         sb.append(", event=").append(Util.toStr(eventData));
-         sb.append('}');
-         return sb.toString();
+         return "CustomEvent{" +
+               "version=" + version +
+               ", messageId=" + messageId +
+               ", op=" + op +
+               ", listenerId=" + Util.printArray(listenerId, false) +
+               ", isRetried=" + isRetried +
+               ", event=" + Util.toStr(eventData) +
+               '}';
       }
 
       @Override
@@ -137,15 +134,14 @@ class Events {
 
       @Override
       public String toString() {
-         final StringBuffer sb = new StringBuffer("CustomRawEvent{");
-         sb.append("version=").append(version);
-         sb.append(", messageId=").append(messageId);
-         sb.append(", op=").append(op);
-         sb.append(", listenerId=").append(Util.printArray(listenerId, false));
-         sb.append(", isRetried=").append(isRetried);
-         sb.append(", event=").append(Util.toStr(eventData));
-         sb.append('}');
-         return sb.toString();
+         return "CustomRawEvent{" +
+               "version=" + version +
+               ", messageId=" + messageId +
+               ", op=" + op +
+               ", listenerId=" + Util.printArray(listenerId, false) +
+               ", isRetried=" + isRetried +
+               ", event=" + Util.toStr(eventData) +
+               '}';
       }
 
       @Override
