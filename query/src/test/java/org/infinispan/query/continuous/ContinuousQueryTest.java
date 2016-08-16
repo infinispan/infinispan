@@ -1,6 +1,7 @@
 package org.infinispan.query.continuous;
 
-import static org.infinispan.query.dsl.Expression.*;
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.param;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
@@ -10,9 +11,9 @@ import org.hibernate.hql.ParsingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
+import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -189,6 +190,8 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       assertEquals(2, joined.size());
       assertEquals(0, left.size());
+
+      cq.removeContinuousQueryListener(listener);
    }
 
    public void testTwoSimilarCQ() {

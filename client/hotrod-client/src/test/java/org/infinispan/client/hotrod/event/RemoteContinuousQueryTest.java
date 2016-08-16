@@ -1,6 +1,21 @@
 package org.infinispan.client.hotrod.event;
 
 
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -25,28 +40,8 @@ import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.param;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-
 /**
- * Test remote continuous query in compat mode.
+ * Test remote continuous query.
  *
  * @author anistor@redhat.com
  * @since 8.0
@@ -413,6 +408,8 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 3);
       expectElementsInQueue(left, 0);
+
+      cq.removeContinuousQueryListener(listener);
    }
 
    private <T> void expectElementsInQueue(BlockingQueue<T> queue, int numElements) {
