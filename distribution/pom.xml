@@ -11,22 +11,6 @@
    <name>Infinispan Distribution</name>
    <packaging>pom</packaging>
 
-   <properties>
-      <analytics.code>
----&gt;
--&lt;!--
--&lt;script type='text/javascript'&gt;
--var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
--document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
--&lt;/script&gt;
--&lt;script type='text/javascript'&gt;
--try {
--var pageTracker = _gat._getTracker("UA-8601422-4");
--pageTracker._trackPageview();
--} catch(err) {}&lt;/script&gt;
-            </analytics.code>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
