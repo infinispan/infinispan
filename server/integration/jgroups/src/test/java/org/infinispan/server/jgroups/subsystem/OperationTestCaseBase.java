@@ -5,13 +5,6 @@ import java.io.IOException;
 import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.server.commons.controller.Operations;
-import org.infinispan.server.jgroups.subsystem.JGroupsExtension;
-import org.infinispan.server.jgroups.subsystem.JGroupsSchema;
-import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.PropertyResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.ProtocolResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.StackResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.TransportResourceDefinition;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.subsystem.test.AbstractSubsystemTest;

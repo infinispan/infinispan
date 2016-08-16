@@ -27,14 +27,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.infinispan.server.jgroups.subsystem.ChannelResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.JGroupsModel;
-import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.RelayResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.RemoteSiteResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.StackResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.ThreadPoolResourceDefinition;
-import org.infinispan.server.jgroups.subsystem.TransportResourceDefinition;
 import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.model.test.FailedOperationTransformationConfig;

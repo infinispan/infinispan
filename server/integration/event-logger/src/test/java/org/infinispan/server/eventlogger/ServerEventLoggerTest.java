@@ -1,6 +1,8 @@
 package org.infinispan.server.eventlogger;
 
-import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
