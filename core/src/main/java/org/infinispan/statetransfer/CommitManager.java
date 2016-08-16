@@ -1,5 +1,10 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.Iterator;
+import java.util.Map;
+
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
@@ -10,11 +15,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Iterator;
-import java.util.Map;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Keeps track of the keys updated by normal operation and state transfer. Since the command processing happens

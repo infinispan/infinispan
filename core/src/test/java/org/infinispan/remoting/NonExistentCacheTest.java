@@ -1,18 +1,16 @@
 package org.infinispan.remoting;
 
-import org.infinispan.commons.CacheException;
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.*;
 
 @Test (testName = "remoting.NonExistentCacheTest", groups = "functional")
 public class NonExistentCacheTest extends AbstractInfinispanTest {

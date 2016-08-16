@@ -1,5 +1,13 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -13,14 +21,6 @@ import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.FilterResultImpl;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.util.KeyValuePair;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A filter implementation that is both a KeyValueFilter and a converter. The implementation relies on the Matcher and a

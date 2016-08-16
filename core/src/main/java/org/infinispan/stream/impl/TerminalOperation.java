@@ -1,9 +1,9 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.factories.ComponentRegistry;
-
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import org.infinispan.factories.ComponentRegistry;
 
 /**
  * Interface describing an operation that is a terminal one that doesn't track keys.

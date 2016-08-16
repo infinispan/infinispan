@@ -1,14 +1,5 @@
 package org.infinispan.server.test.client.rest;
 
-import javax.servlet.http.HttpServletResponse;
-
-import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.List;
-
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
@@ -18,7 +9,17 @@ import static org.infinispan.server.test.client.rest.RESTHelper.get;
 import static org.infinispan.server.test.client.rest.RESTHelper.head;
 import static org.infinispan.server.test.client.rest.RESTHelper.post;
 import static org.infinispan.server.test.client.rest.RESTHelper.put;
-import static org.infinispan.server.test.util.ITestUtils.*;
+import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for the RESTLocal client.

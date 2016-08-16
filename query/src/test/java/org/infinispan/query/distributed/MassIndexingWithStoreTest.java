@@ -1,5 +1,8 @@
 package org.infinispan.query.distributed;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,9 +10,6 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.query.queries.faceting.Car;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Test for MassIndexer with a store

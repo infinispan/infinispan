@@ -1,5 +1,10 @@
 package org.infinispan.tx;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -11,11 +16,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CountDownLatch;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * Tests the following scenario:

@@ -1,5 +1,8 @@
 package org.infinispan.tree.impl;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
@@ -12,9 +15,6 @@ import org.infinispan.tree.NodeNotExistsException;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)

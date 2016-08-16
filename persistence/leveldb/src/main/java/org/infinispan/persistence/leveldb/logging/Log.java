@@ -1,13 +1,14 @@
 package org.infinispan.persistence.leveldb.logging;
 
+import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.INFO;
+import static org.jboss.logging.Logger.Level.WARN;
+
 import org.infinispan.persistence.spi.PersistenceException;
-import org.iq80.leveldb.DBException;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import static org.jboss.logging.Logger.Level.*;
 
 /**
  * Log abstraction for the LevelDB cache store. For this module, message ids ranging from 23001 to

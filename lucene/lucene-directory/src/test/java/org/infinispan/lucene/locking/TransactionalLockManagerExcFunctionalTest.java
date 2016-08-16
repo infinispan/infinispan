@@ -1,5 +1,7 @@
 package org.infinispan.lucene.locking;
 
+import java.io.IOException;
+
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -7,8 +9,6 @@ import org.infinispan.lucene.impl.DirectoryBuilderImpl;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 /**
  * Tests verifying that the instantiation of TransactionalLockFactory in case of NON_TRANSACTIONAL cache fails.

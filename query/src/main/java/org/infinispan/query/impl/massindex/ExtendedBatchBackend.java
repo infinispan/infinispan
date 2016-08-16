@@ -1,5 +1,10 @@
 package org.infinispan.query.impl.massindex;
 
+import static java.util.Arrays.stream;
+
+import java.util.Set;
+import java.util.function.BiConsumer;
+
 import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.PurgeAllLuceneWork;
@@ -10,11 +15,6 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
-
-import java.util.Set;
-import java.util.function.BiConsumer;
-
-import static java.util.Arrays.stream;
 
 /**
  * Decorates {@link org.hibernate.search.backend.impl.batch.DefaultBatchBackend} adding capacity of doing

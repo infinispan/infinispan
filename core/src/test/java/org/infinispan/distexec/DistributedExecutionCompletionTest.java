@@ -1,12 +1,5 @@
 package org.infinispan.distexec;
 
-import org.infinispan.Cache;
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
-
 import java.io.Serializable;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -15,6 +8,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.Cache;
+import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * Tests org.infinispan.distexec.DistributedExecutorService

@@ -1,14 +1,14 @@
 package org.infinispan.interceptors.impl;
 
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the

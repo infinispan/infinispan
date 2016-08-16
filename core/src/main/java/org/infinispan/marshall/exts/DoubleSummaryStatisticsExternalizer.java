@@ -1,16 +1,16 @@
 package org.infinispan.marshall.exts;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.NotSerializableException;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Field;
 import java.util.DoubleSummaryStatistics;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.NotSerializableException;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * Externalizer used for {@link DoubleSummaryStatistics}.  Note this assumes given fields have specific names to use

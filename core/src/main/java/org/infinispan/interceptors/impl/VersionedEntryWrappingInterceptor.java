@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -17,8 +19,6 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.

@@ -1,9 +1,9 @@
 package org.infinispan.xsite;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.distribution.MagicKey;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea Markus

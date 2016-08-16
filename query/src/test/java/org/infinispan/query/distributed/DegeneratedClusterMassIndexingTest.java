@@ -1,5 +1,7 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -11,8 +13,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author anistor@redhat.com

@@ -1,24 +1,5 @@
 package org.infinispan.affinity.impl;
 
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
-
-import org.infinispan.Cache;
-import org.infinispan.affinity.KeyAffinityService;
-import org.infinispan.affinity.KeyGenerator;
-import org.infinispan.affinity.ListenerRegistration;
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
-import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-import org.infinispan.util.concurrent.ReclosableLatch;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +12,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.infinispan.Cache;
+import org.infinispan.affinity.KeyAffinityService;
+import org.infinispan.affinity.KeyGenerator;
+import org.infinispan.affinity.ListenerRegistration;
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.ReclosableLatch;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Implementation of KeyAffinityService.

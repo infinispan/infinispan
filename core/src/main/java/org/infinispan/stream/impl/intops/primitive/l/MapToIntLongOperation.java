@@ -1,10 +1,10 @@
 package org.infinispan.stream.impl.intops.primitive.l;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.LongToIntFunction;
-import java.util.stream.LongStream;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs map to int operation on a {@link LongStream}

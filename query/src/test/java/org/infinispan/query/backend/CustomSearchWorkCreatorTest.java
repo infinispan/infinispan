@@ -1,5 +1,8 @@
 package org.infinispan.query.backend;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import org.hibernate.search.backend.spi.WorkType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -10,9 +13,6 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 /**
  * @author gustavonalle

@@ -7,11 +7,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import net.jcip.annotations.Immutable;
-
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * SingletonListExternalizer.

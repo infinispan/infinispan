@@ -1,5 +1,16 @@
 package org.infinispan.statetransfer;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -20,16 +31,6 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test that commands are properly retried during/after state transfer.

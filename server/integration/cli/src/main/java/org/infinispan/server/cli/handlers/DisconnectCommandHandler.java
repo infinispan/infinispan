@@ -1,7 +1,6 @@
 package org.infinispan.server.cli.handlers;
 
 import org.infinispan.server.cli.util.CliCommandBuffer;
-import org.infinispan.server.cli.util.InfinispanUtil;
 import org.jboss.as.cli.CommandContext;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHandlerProvider;

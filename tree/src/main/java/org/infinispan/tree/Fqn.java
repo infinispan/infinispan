@@ -1,13 +1,6 @@
 package org.infinispan.tree;
 
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.tree.impl.FqnComparator;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -16,6 +9,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.tree.impl.FqnComparator;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * A Fully Qualified Name (Fqn) is a list of names (typically Strings but can be any Object), which represent a path to

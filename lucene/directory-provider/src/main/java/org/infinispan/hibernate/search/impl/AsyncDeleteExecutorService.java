@@ -1,8 +1,8 @@
 package org.infinispan.hibernate.search.impl;
 
-import org.hibernate.search.engine.service.spi.Service;
-
 import java.util.concurrent.Executor;
+
+import org.hibernate.search.engine.service.spi.Service;
 
 /**
  * Defines the service contract for the Executor which we'll use in combination with the Infinispan Lucene Directory, as

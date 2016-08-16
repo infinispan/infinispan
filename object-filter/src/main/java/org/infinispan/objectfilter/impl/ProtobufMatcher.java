@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl;
 
+import java.util.List;
+
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.hql.ProtobufEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ProtobufPropertyHelper;
@@ -8,8 +10,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-
-import java.util.List;
 
 /**
  * @author anistor@redhat.com

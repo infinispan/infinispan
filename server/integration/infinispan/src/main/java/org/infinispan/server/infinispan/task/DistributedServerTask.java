@@ -1,16 +1,16 @@
 package org.infinispan.server.infinispan.task;
 
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.tasks.TaskContext;
-
-import java.io.Serializable;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com

@@ -1,17 +1,17 @@
 package org.infinispan.commons;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.testng.annotations.Test;
+import static org.jgroups.util.Util.assertFalse;
+import static org.jgroups.util.Util.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jgroups.util.Util.assertFalse;
-import static org.jgroups.util.Util.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.testng.annotations.Test;
 
 
 /**

@@ -1,5 +1,8 @@
 package org.infinispan.tx;
 
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -7,9 +10,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningCaches")
 public class TransactionsSpanningCaches extends SingleCacheManagerTest {

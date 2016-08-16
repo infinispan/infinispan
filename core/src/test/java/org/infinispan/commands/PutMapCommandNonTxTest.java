@@ -1,5 +1,14 @@
 package org.infinispan.commands;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Collections;
+import java.util.concurrent.Future;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -7,11 +16,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.concurrent.Future;
-
-import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "commands.PutMapCommandNonTxTest")
 @CleanupAfterMethod

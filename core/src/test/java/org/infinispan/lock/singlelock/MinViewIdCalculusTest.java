@@ -1,5 +1,8 @@
 package org.infinispan.lock.singlelock;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -11,9 +14,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.assertEquals;
 
 
 /**

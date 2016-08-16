@@ -1,7 +1,8 @@
 package org.infinispan.lucene.readlocks;
 
-import org.infinispan.Cache;
 import java.util.HashMap;
+
+import org.infinispan.Cache;
 
 /**
  * LocalLockMergingSegmentReadLocker decorates the {@link DistributedSegmentReadLocker} to minimize

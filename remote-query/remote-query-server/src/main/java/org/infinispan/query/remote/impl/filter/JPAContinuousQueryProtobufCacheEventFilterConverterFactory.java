@@ -1,15 +1,15 @@
 package org.infinispan.query.remote.impl.filter;
 
+import static org.infinispan.query.remote.impl.filter.JPAFilterConverterUtils.unmarshallJPQL;
+import static org.infinispan.query.remote.impl.filter.JPAFilterConverterUtils.unmarshallParams;
+
+import java.util.Map;
+
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.kohsuke.MetaInfServices;
-
-import java.util.Map;
-
-import static org.infinispan.query.remote.impl.filter.JPAFilterConverterUtils.unmarshallJPQL;
-import static org.infinispan.query.remote.impl.filter.JPAFilterConverterUtils.unmarshallParams;
 
 /**
  * @author anistor@redhat.com

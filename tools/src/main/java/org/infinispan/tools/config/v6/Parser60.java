@@ -1,5 +1,19 @@
 package org.infinispan.tools.config.v6;
 
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.configuration.cache.CacheMode.DIST_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.INVALIDATION_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.LOCAL;
+import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
+import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
+
+import java.util.Properties;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
@@ -11,13 +25,22 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.BackupForBuilder;
+import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.RecoveryConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.ScheduledExecutorFactoryConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
-import org.infinispan.configuration.global.ThreadPoolConfiguration;
-import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
@@ -44,14 +67,6 @@ import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.kohsuke.MetaInfServices;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import java.util.Properties;
-
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-import static org.infinispan.configuration.cache.CacheMode.*;
-import static org.infinispan.factories.KnownComponentNames.shortened;
 
 /**
  * This class implements the parser for 6.0 schema files

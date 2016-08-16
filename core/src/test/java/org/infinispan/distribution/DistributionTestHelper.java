@@ -1,5 +1,9 @@
 package org.infinispan.distribution;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -8,10 +12,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Test helper class

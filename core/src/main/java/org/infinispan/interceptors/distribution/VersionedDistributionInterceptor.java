@@ -1,5 +1,10 @@
 package org.infinispan.interceptors.distribution;
 
+import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromResponse;
+
+import java.util.Collection;
+import java.util.Map;
+
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -8,11 +13,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.Map;
-
-import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromResponse;
 
 /**
  * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are

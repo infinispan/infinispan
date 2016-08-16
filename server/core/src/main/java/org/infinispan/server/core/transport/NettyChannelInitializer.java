@@ -1,24 +1,24 @@
 package org.infinispan.server.core.transport;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOutboundHandler;
-import io.netty.channel.ChannelPipeline;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.IdentityCipherSuiteFilter;
-import io.netty.handler.ssl.JdkSslContext;
-import io.netty.handler.ssl.SniHandler;
-import io.netty.util.DomainMappingBuilder;
+import java.util.Arrays;
+
+import javax.net.ssl.SSLContext;
+
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 import org.infinispan.server.core.configuration.SslEngineConfiguration;
 
-import javax.net.ssl.SSLContext;
-import java.util.Arrays;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.JdkSslContext;
+import io.netty.handler.ssl.SniHandler;
+import io.netty.util.DomainMappingBuilder;
 
 /**
   * Pipeline factory for Netty based channels. For each pipeline created, a new decoder is created which means that

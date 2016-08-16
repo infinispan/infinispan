@@ -1,7 +1,7 @@
 package org.infinispan.rest.logging;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.util.logging.LogFactory;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -10,8 +10,10 @@ import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+
+import org.infinispan.util.logging.LogFactory;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Logging filter that can be used to output requests in a similar fashion to HTTPD log output

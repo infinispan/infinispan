@@ -1,12 +1,12 @@
 package org.infinispan.server.core.configuration;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collections;
-import java.util.Set;
 
 public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>> implements
       ProtocolServerConfigurationChildBuilder<T, S>, Builder<T> {

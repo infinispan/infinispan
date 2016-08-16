@@ -1,11 +1,11 @@
 package org.infinispan.server.endpoint.deployments;
 
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
-
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 public final class ConverterFactoryExtensionProcessor extends AbstractNamedFactoryExtensionProcessor<CacheEventConverterFactory> {
 

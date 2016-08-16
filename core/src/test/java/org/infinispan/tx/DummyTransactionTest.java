@@ -1,14 +1,9 @@
 package org.infinispan.tx;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.RollbackException;
@@ -19,10 +14,16 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-import java.util.Arrays;
-import java.util.Collection;
 
-import static org.testng.AssertJUnit.assertNull;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * Set of tests for the DummyTransaction.

@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import java.util.List;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,8 +15,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * Class that will put in different kinds of keys into the cache and run a query on it to see if

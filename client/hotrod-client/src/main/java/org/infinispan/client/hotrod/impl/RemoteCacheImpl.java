@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -54,8 +55,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
-
-import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
 /**
  * @author Mircea.Markus@jboss.com

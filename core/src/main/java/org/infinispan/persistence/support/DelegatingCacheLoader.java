@@ -1,8 +1,8 @@
 package org.infinispan.persistence.support;
 
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
 
 /**
  * @author Mircea Markus

@@ -1,5 +1,11 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import java.util.BitSet;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.stream.IntStream;
+
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
@@ -9,12 +15,6 @@ import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
-
-import java.util.BitSet;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.stream.IntStream;
 
 /**
  * @author gustavonalle

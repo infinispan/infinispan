@@ -1,10 +1,10 @@
 package org.infinispan.server.memcached;
 
+import static org.infinispan.server.core.ExternalizerIds.MEMCACHED_METADATA;
+
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
-
-import static org.infinispan.server.core.ExternalizerIds.MEMCACHED_METADATA;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific

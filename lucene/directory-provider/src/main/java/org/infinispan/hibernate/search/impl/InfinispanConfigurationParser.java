@@ -1,13 +1,13 @@
 package org.infinispan.hibernate.search.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * The Infinispan configuration is ClassLoader sensitive, this wrapper around the standard Parser is used to allow it to

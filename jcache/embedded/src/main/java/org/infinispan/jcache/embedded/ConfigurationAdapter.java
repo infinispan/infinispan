@@ -1,13 +1,13 @@
 package org.infinispan.jcache.embedded;
 
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-
 import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.configuration.Configuration;
 import javax.cache.configuration.Factory;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
+
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 
 /**
  * ConfigurationAdapter takes {@link javax.cache.configuration.Configuration} and creates

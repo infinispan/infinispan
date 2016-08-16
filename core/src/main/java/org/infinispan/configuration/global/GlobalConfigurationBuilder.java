@@ -7,10 +7,10 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.CacheConfigurationException;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 

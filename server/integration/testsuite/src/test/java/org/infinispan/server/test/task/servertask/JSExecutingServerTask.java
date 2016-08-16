@@ -1,18 +1,15 @@
 package org.infinispan.server.test.task.servertask;
 
-import org.infinispan.Cache;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.scripting.impl.ScriptingManagerImpl;
-import org.infinispan.tasks.ServerTask;
-import org.infinispan.tasks.TaskContext;
-import org.infinispan.test.TestingUtil;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Map;
+
+import org.infinispan.Cache;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.TaskContext;
 
 /**
  * Server Task executing JavaScript script.

@@ -1,9 +1,9 @@
 package org.infinispan.commons.hash;
 
+import java.util.Random;
+
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Random;
 
 /**
  * @author Dan Berindei

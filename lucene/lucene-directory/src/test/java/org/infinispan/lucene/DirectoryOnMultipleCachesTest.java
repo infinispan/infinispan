@@ -1,5 +1,14 @@
 package org.infinispan.lucene;
 
+import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
+import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
+import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.directory.DirectoryBuilder;
@@ -12,15 +21,6 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
-import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
-import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 
 
 /**

@@ -1,14 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.equivalence.EquivalentHashMap;
-import org.infinispan.commons.equivalence.EquivalentHashSet;
-import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentParallelHashMapV8;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +8,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentHashMap;
+import org.infinispan.commons.equivalence.EquivalentHashSet;
+import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentParallelHashMapV8;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
 /**
  * A factory for ConcurrentMaps.

@@ -1,5 +1,8 @@
 package org.infinispan.test.integration.security.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
@@ -30,9 +33,6 @@ import org.apache.directory.server.ldap.handlers.sasl.ntlm.NtlmMechanismHandler;
 import org.apache.directory.server.ldap.handlers.sasl.plain.PlainMechanismHandler;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>

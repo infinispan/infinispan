@@ -1,13 +1,13 @@
 package org.infinispan.container;
 
-import org.infinispan.context.InvocationContext;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metadata.Metadata;
 
 /**
  * A factory for {@link InternalCacheEntry} and {@link InternalCacheValue} instances.

@@ -1,5 +1,11 @@
 package org.infinispan.functional.impl;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Optional;
+import java.util.Set;
+
 import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
@@ -10,12 +16,6 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Metadata parameters backed internal metadata representation.

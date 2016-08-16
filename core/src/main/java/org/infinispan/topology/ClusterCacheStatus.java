@@ -1,5 +1,17 @@
 package org.infinispan.topology;
 
+import static org.infinispan.util.logging.LogFactory.CLUSTER;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -13,18 +25,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.infinispan.util.logging.LogFactory.CLUSTER;
 
 /**
 * Keeps track of a cache's status: members, current/pending consistent hashes, and rebalance status

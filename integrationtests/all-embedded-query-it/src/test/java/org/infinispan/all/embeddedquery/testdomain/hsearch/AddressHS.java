@@ -1,11 +1,11 @@
 package org.infinispan.all.embeddedquery.testdomain.hsearch;
 
+import java.io.Serializable;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.all.embeddedquery.testdomain.Address;
-
-import java.io.Serializable;
 
 /**
  * @author anistor@redhat.com

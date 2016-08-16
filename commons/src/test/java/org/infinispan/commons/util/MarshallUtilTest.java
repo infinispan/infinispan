@@ -1,9 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -12,6 +8,10 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
+
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Unit tests for {@link org.infinispan.commons.marshall.MarshallUtil}

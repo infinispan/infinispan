@@ -1,15 +1,15 @@
 package org.infinispan.stress;
 
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Test the performance of get operations in a replicated cache

@@ -1,5 +1,10 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.concurrent.CompletableFuture;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.EvictCommand;
@@ -10,10 +15,6 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Interceptor that captures batched calls and attaches contexts.

@@ -1,11 +1,11 @@
 package org.infinispan.jcache.annotation;
 
-import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;
-import org.infinispan.cdi.common.util.BeanManagerProvider;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.jcache.embedded.JCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
+import java.lang.annotation.Annotation;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import javax.cache.Cache;
 import javax.cache.Caching;
@@ -16,12 +16,13 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
-import java.lang.annotation.Annotation;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+
+import org.infinispan.cdi.common.util.BeanManagerProvider;
+import org.infinispan.cdi.embedded.InfinispanExtensionEmbedded;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.jcache.embedded.JCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Injected cache resolver for situations where caches and/or cache managers

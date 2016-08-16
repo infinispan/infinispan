@@ -1,14 +1,14 @@
 package org.infinispan.commands.read;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.infinispan.commands.AbstractLocalFlagAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Abstract class

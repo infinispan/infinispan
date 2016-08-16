@@ -1,11 +1,11 @@
 package org.infinispan.util;
 
-import org.infinispan.atomic.DeltaCompositeKey;
-import org.infinispan.context.impl.TxInvocationContext;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.context.impl.TxInvocationContext;
 
 /**
  * Utility methods to deal with the DeltaCompositeKey.

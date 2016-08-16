@@ -1,14 +1,15 @@
 package org.infinispan.cdi.embedded;
 
-import org.infinispan.Cache;
-import org.infinispan.cdi.common.util.CDIHelper;
-import org.infinispan.distexec.spi.DistributedTaskLifecycle;
+import java.util.concurrent.Callable;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
-import java.util.concurrent.Callable;
+
+import org.infinispan.Cache;
+import org.infinispan.cdi.common.util.CDIHelper;
+import org.infinispan.distexec.spi.DistributedTaskLifecycle;
 
 public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecycle {
    private final DistributedTaskLifecycle delegate;

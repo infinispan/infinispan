@@ -1,5 +1,12 @@
 package org.infinispan.functional.impl;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
+
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
@@ -10,13 +17,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Entry views implementation class holder.

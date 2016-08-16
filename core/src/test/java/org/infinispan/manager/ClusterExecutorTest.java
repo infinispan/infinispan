@@ -1,15 +1,9 @@
 package org.infinispan.manager;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.Exceptions;
-import org.infinispan.test.MultiCacheManagerCallable;
-import org.infinispan.test.TestException;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.withCacheManagers;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,10 +16,16 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.Exceptions;
+import org.infinispan.test.MultiCacheManagerCallable;
+import org.infinispan.test.TestException;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 /**
  * @author Will Burns

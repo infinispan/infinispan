@@ -2,9 +2,9 @@ package org.infinispan.server.core;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 
 /**

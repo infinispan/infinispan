@@ -1,5 +1,9 @@
 package org.infinispan.server.test.rollingupgrades;
 
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.post;
+
 import javax.management.ObjectName;
 import javax.servlet.http.HttpServletResponse;
 
@@ -17,10 +21,6 @@ import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.get;
-import static org.infinispan.server.test.client.rest.RESTHelper.post;
 
 /**
  * Tests for REST rolling upgrades.

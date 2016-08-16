@@ -1,10 +1,10 @@
 package org.infinispan.commons.api.functional;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.util.Experimental;
-
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.util.Experimental;
 
 /**
  * Holder class for functional listener definitions.

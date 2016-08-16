@@ -1,10 +1,10 @@
 package org.infinispan.objectfilter.impl.predicateindex.be;
 
+import java.util.List;
+
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.IntervalPredicate;
 import org.infinispan.objectfilter.impl.predicateindex.Predicate;
-
-import java.util.List;
 
 /**
  * A PredicateNode is a leaf node in a BETree that holds a Predicate instance. A PredicateNode instance is never reused

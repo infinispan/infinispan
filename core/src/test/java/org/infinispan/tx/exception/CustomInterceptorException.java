@@ -1,5 +1,10 @@
 package org.infinispan.tx.exception;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.CustomInterceptorConfigTest;
 import org.infinispan.configuration.cache.CacheMode;
@@ -8,11 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.transaction.Status;
-import javax.transaction.TransactionManager;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com

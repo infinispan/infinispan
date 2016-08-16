@@ -1,8 +1,8 @@
 package org.infinispan.remoting.rpc;
 
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
-
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 
 /**
  * It builds {@link RpcOptions} instances with the options to be used in remote invocations.

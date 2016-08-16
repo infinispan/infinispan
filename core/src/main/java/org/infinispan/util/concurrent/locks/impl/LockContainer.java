@@ -1,9 +1,9 @@
 package org.infinispan.util.concurrent.locks.impl;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * A container for locks

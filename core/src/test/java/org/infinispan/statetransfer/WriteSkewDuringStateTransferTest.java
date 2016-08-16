@@ -1,5 +1,18 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -18,21 +31,11 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.tx.dld.ControlledRpcManager;
-import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
+import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.distribution.DistributionTestHelper.hasOwners;
-import static org.testng.AssertJUnit.*;
 
 /**
  * Tests if the entry version is lost during the state transfer in which the primary owner changes.

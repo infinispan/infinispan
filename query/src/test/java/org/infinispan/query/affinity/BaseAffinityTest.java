@@ -1,5 +1,15 @@
 package org.infinispan.query.affinity;
 
+import static java.util.stream.IntStream.rangeClosed;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
+import static org.testng.Assert.assertTrue;
+
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -13,14 +23,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
-
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-
-import static java.util.stream.IntStream.rangeClosed;
-import static org.infinispan.hibernate.search.spi.InfinispanIntegration.*;
-import static org.testng.Assert.assertTrue;
 
 public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
 

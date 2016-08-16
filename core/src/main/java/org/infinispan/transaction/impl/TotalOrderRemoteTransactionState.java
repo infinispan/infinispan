@@ -1,15 +1,15 @@
 package org.infinispan.transaction.impl;
 
-import org.infinispan.transaction.totalorder.TotalOrderLatch;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+
+import org.infinispan.transaction.totalorder.TotalOrderLatch;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Represents a state for a Remote Transaction when the Total Order based protocol is used.

@@ -22,6 +22,11 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.controller.PathAddress.pathAddress;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
+import java.util.Map;
+
 import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -33,11 +38,6 @@ import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
-
-import java.util.Map;
-
-import static org.jboss.as.controller.PathAddress.pathAddress;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * CLI operation handler. This is registered in {@link org.infinispan.manager.CacheContainer} and it forwards the

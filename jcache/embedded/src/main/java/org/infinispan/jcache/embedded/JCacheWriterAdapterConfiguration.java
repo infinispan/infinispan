@@ -1,13 +1,12 @@
 package org.infinispan.jcache.embedded;
 
+import java.util.Properties;
+
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-
-import java.util.Properties;
 
 @BuiltBy(JCacheWriterAdapterConfigurationBuilder.class)
 @ConfigurationFor(JCacheWriterAdapter.class)

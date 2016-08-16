@@ -1,15 +1,15 @@
 package org.infinispan.hibernate.search.logging;
 
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
+
+import javax.naming.NamingException;
+
 import org.hibernate.search.exception.SearchException;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import javax.naming.NamingException;
-
-import static org.jboss.logging.Logger.Level.ERROR;
-import static org.jboss.logging.Logger.Level.WARN;
 
 /**
  * Hibernate Search Infinispan's log abstraction layer on top of JBoss Logging. For this module, message ids ranging

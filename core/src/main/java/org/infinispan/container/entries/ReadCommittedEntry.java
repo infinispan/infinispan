@@ -1,5 +1,16 @@
 package org.infinispan.container.entries;
 
+import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CHANGED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COPIED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CREATED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.VALID;
+
+import java.util.Arrays;
+
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
@@ -7,11 +18,6 @@ import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Arrays;
-
-import static org.infinispan.commons.util.Util.toStr;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or

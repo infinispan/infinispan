@@ -1,5 +1,7 @@
 package org.infinispan.lucene.impl;
 
+import java.util.concurrent.Executor;
+
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
@@ -11,8 +13,6 @@ import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.Executor;
 
 public class DirectoryBuilderImpl implements BuildContext {
 

@@ -1,11 +1,8 @@
 package org.infinispan.affinity.impl;
 
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterTest;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,9 +13,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterTest;
 
 /**
  * @author Mircea.Markus@jboss.com

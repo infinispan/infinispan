@@ -1,5 +1,7 @@
 package org.infinispan.cli.interpreter.statement;
 
+import static org.infinispan.cli.interpreter.logging.Messages.MSG;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,8 +15,6 @@ import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.cli.interpreter.logging.Messages.MSG;
 
 /**
  * Performs operation related to rolling upgrades

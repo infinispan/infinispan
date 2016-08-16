@@ -1,5 +1,7 @@
 package org.infinispan.server.test.asymmetric;
 
+import static org.junit.Assert.assertEquals;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -12,8 +14,6 @@ import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * A simple test for asymmetric cluster. There are two nodes in the cluster. The first one

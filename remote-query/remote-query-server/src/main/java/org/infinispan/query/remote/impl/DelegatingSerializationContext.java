@@ -1,5 +1,9 @@
 package org.infinispan.query.remote.impl;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -7,10 +11,6 @@ import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A wrapper around a real {@link SerializationContext} that intercepts calls to {@link

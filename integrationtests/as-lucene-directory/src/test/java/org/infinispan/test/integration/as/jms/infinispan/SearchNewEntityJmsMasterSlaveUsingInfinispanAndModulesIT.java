@@ -1,13 +1,13 @@
 package org.infinispan.test.integration.as.jms.infinispan;
 
 
+import static org.infinispan.test.integration.as.VersionTestHelper.manifestDependencies;
+
 import org.infinispan.Version;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.test.integration.as.VersionTestHelper.manifestDependencies;
 
 /**
  * Execute the tests in {@link SearchNewEntityJmsMasterSlaveAndInfinispan} using the modules in JBoss AS to add the

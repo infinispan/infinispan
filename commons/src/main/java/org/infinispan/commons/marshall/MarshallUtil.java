@@ -1,8 +1,5 @@
 package org.infinispan.commons.marshall;
 
-import net.jcip.annotations.Immutable;
-import org.infinispan.commons.util.Util;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -10,6 +7,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import org.infinispan.commons.util.Util;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * MarshallUtil.

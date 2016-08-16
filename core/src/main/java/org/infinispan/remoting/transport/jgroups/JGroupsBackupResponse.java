@@ -1,14 +1,9 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.remoting.CacheUnreachableException;
-import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.transport.BackupResponse;
-import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.XSiteBackup;
-import org.jgroups.UnreachableException;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.infinispan.commons.util.Util.formatString;
+import static org.infinispan.commons.util.Util.prettyPrintTime;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,9 +13,15 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static java.util.concurrent.TimeUnit.*;
-import static org.infinispan.commons.util.Util.formatString;
-import static org.infinispan.commons.util.Util.prettyPrintTime;
+import org.infinispan.remoting.CacheUnreachableException;
+import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.XSiteBackup;
+import org.jgroups.UnreachableException;
 
 /**
  * @author Mircea Markus

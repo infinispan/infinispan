@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -9,8 +11,6 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * The same as a regular cache loader interceptor, except that it contains additional logic to force loading from the

@@ -1,17 +1,17 @@
 package org.infinispan.commands.write;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.marshall.core.Ids;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * A policy for determining if a write command should be executed based on the current value in the cache.

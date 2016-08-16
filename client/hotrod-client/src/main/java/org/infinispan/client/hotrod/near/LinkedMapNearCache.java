@@ -1,13 +1,13 @@
 package org.infinispan.client.hotrod.near;
 
-import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 
 /**
  * {@link java.util.LinkedHashMap} based near cache implementation.

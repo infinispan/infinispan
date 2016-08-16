@@ -1,13 +1,14 @@
 package org.infinispan.server.test.task.servertask;
 
+import java.util.Map;
+import java.util.Optional;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-
-import javax.transaction.TransactionManager;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Task verifying that the marshaller is passed properly and the value is properly put into the cache.

@@ -4,6 +4,7 @@ import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import static org.testng.Assert.assertEquals;
 
 import java.util.concurrent.ExecutionException;
+
 import org.infinispan.context.Flag;
 import org.testng.annotations.Test;
 

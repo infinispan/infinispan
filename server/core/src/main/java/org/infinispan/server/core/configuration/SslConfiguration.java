@@ -1,7 +1,8 @@
 package org.infinispan.server.core.configuration;
 
-import javax.net.ssl.SSLContext;
 import java.util.Map;
+
+import javax.net.ssl.SSLContext;
 
 /**
  * SslConfiguration.

@@ -1,5 +1,8 @@
 package org.infinispan.interceptors.totalorder;
 
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -12,9 +15,6 @@ import org.infinispan.remoting.responses.KeysValidateFilter;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * This interceptor is used in total order in distributed mode when the write skew check is enabled. After sending the

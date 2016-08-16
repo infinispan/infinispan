@@ -1,5 +1,27 @@
 package org.infinispan.server.test.configs;
 
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
+import static org.infinispan.server.test.client.rest.RESTHelper.delete;
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.head;
+import static org.infinispan.server.test.client.rest.RESTHelper.post;
+import static org.infinispan.server.test.client.rest.RESTHelper.put;
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.eventually;
+import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.infinispan.server.test.util.ITestUtils.stopContainers;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.ObjectInputStream;
@@ -35,9 +57,9 @@ import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
-import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
@@ -48,15 +70,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.client.rest.RESTHelper.*;
-import static org.infinispan.server.test.util.ITestUtils.eventually;
-import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
-import static org.infinispan.server.test.util.ITestUtils.stopContainers;
-import static org.junit.Assert.*;
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
 
 /**
  * Tests for example configurations.

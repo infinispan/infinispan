@@ -1,12 +1,12 @@
 package org.infinispan.lock.singlelock.optimistic;
 
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea Markus

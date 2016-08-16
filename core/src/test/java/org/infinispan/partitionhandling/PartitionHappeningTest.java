@@ -1,14 +1,14 @@
 package org.infinispan.partitionhandling;
 
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.PartitionHappeningTest")
 public class PartitionHappeningTest extends BasePartitionHandlingTest {

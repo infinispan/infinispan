@@ -1,12 +1,12 @@
 package org.infinispan.query.remote.client;
 
+import java.io.IOException;
+
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

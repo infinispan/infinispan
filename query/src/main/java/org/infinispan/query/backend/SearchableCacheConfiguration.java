@@ -1,8 +1,17 @@
 package org.infinispan.query.backend;
 
+import static org.hibernate.search.cfg.Environment.INDEX_MANAGER_IMPL_NAME;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
+
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.search.cfg.Environment;
-import static org.hibernate.search.cfg.Environment.INDEX_MANAGER_IMPL_NAME;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.cfg.spi.SearchConfigurationBase;
@@ -22,14 +31,6 @@ import org.infinispan.query.affinity.AffinityIndexManager;
 import org.infinispan.query.affinity.AffinityShardIdentifierProvider;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
 
 /**
  * Class that implements {@link org.hibernate.search.cfg.spi.SearchConfiguration} so that within Infinispan-Query,

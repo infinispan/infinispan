@@ -1,19 +1,9 @@
 package org.infinispan.tx;
 
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 /**
  * @author William Burns

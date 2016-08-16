@@ -1,11 +1,11 @@
 package org.infinispan.distribution.ch;
 
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Factory for {@link ConsistentHash} instances.

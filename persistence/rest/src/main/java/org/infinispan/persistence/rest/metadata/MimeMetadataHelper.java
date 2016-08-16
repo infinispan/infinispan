@@ -1,12 +1,12 @@
 package org.infinispan.persistence.rest.metadata;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.rest.MimeMetadata;
 import org.infinispan.rest.MimeMetadataBuilder;
-
-import java.util.concurrent.TimeUnit;
 
 public class MimeMetadataHelper implements MetadataHelper {
 

@@ -1,7 +1,6 @@
 package org.infinispan.xsite;
 
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
@@ -10,7 +9,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.notification.SiteStatusListener;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Keeps state needed for knowing when a site needs to be taken offline.

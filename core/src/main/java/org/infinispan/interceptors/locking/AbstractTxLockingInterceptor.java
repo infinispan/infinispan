@@ -1,5 +1,13 @@
 package org.infinispan.interceptors.locking;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -15,14 +23,6 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.logging.Log;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Base class for transaction based locking interceptors.

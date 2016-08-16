@@ -1,11 +1,11 @@
 package org.infinispan.cdi.common.util.logging;
 
+import static org.jboss.logging.Logger.Level.INFO;
+
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
-
-import static org.jboss.logging.Logger.Level.INFO;
 
 /**
  * The JBoss Logging interface which defined the logging methods for the CDI integration. The id range for the CDI

@@ -1,5 +1,15 @@
 package org.infinispan.interceptors.distribution;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
@@ -29,16 +39,6 @@ import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.stream.impl.RemovableIterator;
 import org.infinispan.stream.impl.tx.TxClusterStreamManager;
 import org.infinispan.stream.impl.tx.TxDistributedCacheStream;
-
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Spliterator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 
 /**
  * Interceptor that handles bulk entrySet and keySet commands when using in a distributed/replicated environment.

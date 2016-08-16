@@ -1,7 +1,15 @@
 package org.infinispan.distribution.rehash;
 
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnOutboundRpc;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,14 +24,6 @@ import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.concurrent.StateSequencerUtil.*;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test that a joiner that became a backup owner for a key does not check the previous value when doing a conditional

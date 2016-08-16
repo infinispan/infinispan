@@ -1,18 +1,5 @@
 package org.infinispan.test.fwk;
 
-import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
-import org.jgroups.conf.ConfiguratorFactory;
-import org.jgroups.conf.ProtocolConfiguration;
-import org.jgroups.conf.ProtocolStackConfigurator;
-import org.jgroups.conf.XmlConfigurator;
-import org.jgroups.protocols.TCP_NIO;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import static org.infinispan.commons.util.Immutables.immutableMapCopy;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL;
@@ -25,6 +12,18 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP_NIO2
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_PING;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.UDP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
+import org.jgroups.conf.ConfiguratorFactory;
+import org.jgroups.conf.ProtocolConfiguration;
+import org.jgroups.conf.ProtocolStackConfigurator;
+import org.jgroups.conf.XmlConfigurator;
 
 /**
  * This class owns the logic of associating network resources(i.e. ports) with threads, in order to make sure that there

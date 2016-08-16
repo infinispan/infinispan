@@ -9,6 +9,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.security.auth.Subject;
 
 import org.infinispan.client.hotrod.configuration.Configuration;

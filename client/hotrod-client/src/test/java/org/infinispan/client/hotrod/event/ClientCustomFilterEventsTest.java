@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterCustomEventLogListener;
@@ -12,8 +14,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientCustomFilterEventsTest")
 public class ClientCustomFilterEventsTest extends SingleHotRodServerTest {

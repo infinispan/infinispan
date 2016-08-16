@@ -1,17 +1,17 @@
 package org.infinispan.remoting.transport;
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.util.concurrent.ReclosableLatch;
-import org.infinispan.xsite.XSiteReplicateCommand;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.util.concurrent.ReclosableLatch;
+import org.infinispan.xsite.XSiteReplicateCommand;
 
 /**
  * Controlled {@link org.infinispan.remoting.transport.Transport} that allows to configure commands to block before or

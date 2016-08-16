@@ -1,19 +1,18 @@
 package org.infinispan.distribution.rehash;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
-import org.infinispan.test.fwk.TransportFlags;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.fwk.TransportFlags;
+import org.testng.annotations.Test;
 
 /**
  * Tests rehashing with distributed caches with L1 enabled.

@@ -1,6 +1,9 @@
 package org.infinispan.query.indexmanager;
 
-import net.jcip.annotations.GuardedBy;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.hibernate.search.backend.BackendFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.Listener;
@@ -11,9 +14,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Manages the current state of being a "master" node or a node delegating index

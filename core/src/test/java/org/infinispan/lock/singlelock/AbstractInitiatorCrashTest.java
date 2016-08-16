@@ -1,11 +1,11 @@
 package org.infinispan.lock.singlelock;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author Mircea Markus

@@ -1,9 +1,9 @@
 package org.infinispan.commons.util;
 
+import java.lang.reflect.Method;
+
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-
-import java.lang.reflect.Method;
 
 /**
  * Proxies is a collection of useful dynamic profixes. Internal use only.

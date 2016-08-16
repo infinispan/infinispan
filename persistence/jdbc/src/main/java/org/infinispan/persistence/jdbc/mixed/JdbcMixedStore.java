@@ -1,9 +1,17 @@
 package org.infinispan.persistence.jdbc.mixed;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.jdbc.binary.JdbcBinaryStore;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
@@ -15,18 +23,11 @@ import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 
 /**
  * Cache store that combines functionality of {@link org.infinispan.persistence.jdbc.binary.JdbcBinaryStore} and {@link org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore}. It

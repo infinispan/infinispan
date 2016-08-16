@@ -1,5 +1,14 @@
 package org.infinispan.xsite.statetransfer;
 
+import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.context.Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
+
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
@@ -14,11 +23,6 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.TransactionManager;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.infinispan.context.Flag.*;
 
 /**
  * It contains the logic needed to consume the state sent from other site.

@@ -1,5 +1,8 @@
 package org.infinispan.tx.locking;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -9,9 +12,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * @author Martin Gencur

@@ -21,8 +21,8 @@
  */
 package org.infinispan.server.jgroups;
 
-import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.DatagramSocket;

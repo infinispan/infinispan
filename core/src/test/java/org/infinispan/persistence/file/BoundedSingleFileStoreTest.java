@@ -1,11 +1,13 @@
 package org.infinispan.persistence.file;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -15,8 +17,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests for single-file cache store when configured to be bounded.

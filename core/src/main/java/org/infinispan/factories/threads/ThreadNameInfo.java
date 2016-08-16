@@ -1,7 +1,7 @@
 package org.infinispan.factories.threads;
 
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Galder Zamarreño

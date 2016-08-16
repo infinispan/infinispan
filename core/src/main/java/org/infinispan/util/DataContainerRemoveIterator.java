@@ -1,13 +1,11 @@
 package org.infinispan.util;
 
+import java.util.Iterator;
+
 import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.function.Consumer;
 
 /**
  * This is an iterator that will iterate upon the data container.  A cache is also provided to be used

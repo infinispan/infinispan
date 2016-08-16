@@ -1,16 +1,16 @@
 package org.infinispan.stream.impl.termop;
 
-import org.infinispan.stream.impl.TerminalOperation;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
+
+import org.infinispan.stream.impl.TerminalOperation;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A terminal based operation that runs the provided function to evaluate the operation.  If a segment is lost during

@@ -1,11 +1,11 @@
 package org.infinispan.commons.marshall.jboss;
 
+import java.io.IOException;
+
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.reflect.SerializableClassRegistry;
 import org.jboss.marshalling.river.RiverMarshaller;
 import org.jboss.marshalling.river.RiverMarshallerFactory;
-
-import java.io.IOException;
 
 /**
  * {@link RiverMarshaller} extension that allows Infinispan code to directly

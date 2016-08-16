@@ -1,10 +1,10 @@
 package org.infinispan.cli;
 
+import java.util.List;
+
 import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.io.IOAdapter;
-
-import java.util.List;
 
 /**
  *

@@ -1,5 +1,7 @@
 package org.infinispan.query.distributed;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.query.Search;
@@ -7,8 +9,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.api.NotIndexedType;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Running mass indexer on big bunch of data.

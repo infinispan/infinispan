@@ -1,13 +1,13 @@
 package org.infinispan.remoting.responses;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
-
-import java.io.ObjectOutput;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.util.Set;
 
 /**
  * An unsure response - used with Dist - essentially asks the caller to check the next response from the next node since

@@ -6,8 +6,6 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
-import java.time.Instant;
-
 /**
  * Input/Output ChannelHandler to keep statistics
  *

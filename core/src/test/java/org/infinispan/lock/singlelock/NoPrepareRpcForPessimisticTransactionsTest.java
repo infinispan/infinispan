@@ -1,5 +1,13 @@
 package org.infinispan.lock.singlelock;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -8,14 +16,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea Markus

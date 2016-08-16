@@ -1,13 +1,13 @@
 package org.infinispan.server.test.task.servertask;
 
 
-import org.infinispan.Cache;
-import org.infinispan.tasks.ServerTask;
-import org.infinispan.tasks.TaskContext;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+
+import org.infinispan.Cache;
+import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.TaskContext;
 
 
 /**

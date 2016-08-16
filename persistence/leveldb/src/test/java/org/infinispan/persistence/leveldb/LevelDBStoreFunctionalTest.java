@@ -1,13 +1,13 @@
 package org.infinispan.persistence.leveldb;
 
+import java.io.File;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
+import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
-
-import java.io.File;
 
 public abstract class LevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
    protected String tmpDirectory = TestingUtil.tmpDirectory(this.getClass());

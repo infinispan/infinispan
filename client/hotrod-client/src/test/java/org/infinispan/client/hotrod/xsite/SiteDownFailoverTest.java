@@ -1,14 +1,14 @@
 package org.infinispan.client.hotrod.xsite;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.Optional;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.util.Optional;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "client.hotrod.xsite.SiteDownFailoverTest")
 public class SiteDownFailoverTest extends AbstractHotRodSiteFailoverTest {

@@ -1,15 +1,15 @@
 package org.infinispan.container.versioning;
 
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
 
 @Test(testName = "container.versioning.ReplWriteSkewTest", groups = "functional")
 @CleanupAfterMethod

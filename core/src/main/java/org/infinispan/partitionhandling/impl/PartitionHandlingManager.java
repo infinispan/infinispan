@@ -1,14 +1,14 @@
 package org.infinispan.partitionhandling.impl;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Dan Berindei

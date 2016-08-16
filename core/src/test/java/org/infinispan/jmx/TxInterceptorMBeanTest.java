@@ -1,5 +1,12 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -10,13 +17,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import javax.transaction.TransactionManager;
-
-import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 @Test(groups = "functional", testName = "jmx.TxInterceptorMBeanTest")
 public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {

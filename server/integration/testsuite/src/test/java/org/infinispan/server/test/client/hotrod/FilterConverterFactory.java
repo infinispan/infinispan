@@ -1,13 +1,13 @@
 package org.infinispan.server.test.client.hotrod;
 
+import java.io.Serializable;
+
+import org.infinispan.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.filter.NamedFactory;
-
-import java.io.Serializable;
 
 @NamedFactory(name = "filter-converter-factory")
 public class FilterConverterFactory implements CacheEventFilterConverterFactory {

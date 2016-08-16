@@ -1,5 +1,9 @@
 package org.infinispan.all.embeddedquery;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.query.facet.Facet;
@@ -11,10 +15,6 @@ import org.infinispan.query.SearchManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Copy of SimpleFacetingTest for testing uber-jars

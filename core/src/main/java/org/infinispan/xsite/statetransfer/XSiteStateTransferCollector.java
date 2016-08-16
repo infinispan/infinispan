@@ -1,12 +1,12 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * It collects the acknowledgements sent from local site member to signal the ending of the state sent.

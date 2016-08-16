@@ -1,10 +1,9 @@
 package org.infinispan.scripting;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.tasks.TaskContext;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.annotations.Test;
+import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,10 +12,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import org.infinispan.commons.CacheException;
+import org.infinispan.tasks.TaskContext;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "scripting.ScriptingTest")
 @CleanupAfterMethod

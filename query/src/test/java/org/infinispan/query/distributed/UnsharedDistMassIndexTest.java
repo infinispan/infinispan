@@ -1,5 +1,7 @@
 package org.infinispan.query.distributed;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.Cache;
@@ -7,8 +9,6 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test for MassIndexer on DIST caches with unshared infinispan indexes

@@ -1,17 +1,18 @@
 package org.infinispan.server.hotrod.logging;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufHolder;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.hotrod.CacheDecodeContext;
 import org.infinispan.server.hotrod.HotRodOperation;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufHolder;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 
 /**
  * Logging handler for hotrod to log what requests have come into the server

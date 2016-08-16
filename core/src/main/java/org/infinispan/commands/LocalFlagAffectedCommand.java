@@ -1,10 +1,10 @@
 package org.infinispan.commands;
 
-import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.context.Flag;
-
 import java.util.Arrays;
 import java.util.Set;
+
+import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.context.Flag;
 
 /**
  * Commands affected by Flags will be checked locally to control certain behaviors such whether or not to invoke

@@ -8,7 +8,6 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
-import org.infinispan.tree.impl.NodeKey.Type;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

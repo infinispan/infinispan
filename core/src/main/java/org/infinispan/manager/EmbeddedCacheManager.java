@@ -1,5 +1,8 @@
 package org.infinispan.manager;
 
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.configuration.cache.Configuration;
@@ -14,9 +17,6 @@ import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.stats.CacheContainerStats;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * EmbeddedCacheManager is an CacheManager that runs in the same JVM as the client.

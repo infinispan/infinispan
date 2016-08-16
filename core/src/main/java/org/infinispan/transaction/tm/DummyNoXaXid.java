@@ -1,7 +1,8 @@
 package org.infinispan.transaction.tm;
 
-import javax.transaction.xa.Xid;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.xa.Xid;
 
 /**
  * Xid to be used when no XAResource enlistment takes place. This is more efficient both creation and memory wise than

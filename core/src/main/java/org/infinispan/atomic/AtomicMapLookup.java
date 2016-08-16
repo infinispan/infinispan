@@ -1,16 +1,16 @@
 package org.infinispan.atomic;
 
+import static org.infinispan.commons.util.Immutables.immutableMapWrap;
+
+import java.util.Collections;
+import java.util.Map;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.atomic.impl.AtomicHashMapProxy;
 import org.infinispan.atomic.impl.FineGrainedAtomicHashMapProxy;
 import org.infinispan.context.Flag;
-
-import java.util.Collections;
-import java.util.Map;
-
-import static org.infinispan.commons.util.Immutables.immutableMapWrap;
 
 /**
  * A helper that locates or safely constructs and registers atomic maps with a given cache.  This should be the

@@ -1,30 +1,16 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.SimpleChannelInboundHandler;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.security.Security;
-import org.infinispan.server.core.transport.NettyTransport;
-import org.infinispan.server.hotrod.iteration.IterableIterationResult;
-import org.infinispan.server.hotrod.logging.JavaLog;
-import org.infinispan.server.hotrod.util.BulkUtil;
-import org.infinispan.tasks.TaskContext;
-import org.infinispan.tasks.TaskManager;
-import scala.None$;
-import scala.Option;
-import scala.Tuple2;
-import scala.Tuple4;
+import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
+
+import java.security.PrivilegedExceptionAction;
 
 import javax.security.auth.Subject;
-import java.security.PrivilegedExceptionAction;
-import java.util.BitSet;
-import java.util.Map;
 
-import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
+import org.infinispan.security.Security;
+import org.infinispan.server.core.transport.NettyTransport;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
 /**
  * Handler that performs actual cache operations.  Note this handler should be on a separate executor group than

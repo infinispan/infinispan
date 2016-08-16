@@ -1,11 +1,11 @@
 package org.infinispan.notifications.cachelistener.filter;
 
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
-
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 
 /**
  * A service provider for filter indexing services. This is supposed to perform the filtering operation in a more

@@ -1,7 +1,10 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-import com.mchange.v2.c3p0.DataSources;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
@@ -9,10 +12,8 @@ import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.Properties;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.mchange.v2.c3p0.DataSources;
 
 /**
  * @deprecated Support for the C3P0 connection pool will be removed in 10.0

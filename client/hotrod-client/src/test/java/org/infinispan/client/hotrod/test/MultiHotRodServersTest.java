@@ -1,5 +1,13 @@
 package org.infinispan.client.hotrod.test;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
+import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -10,14 +18,6 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
-import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
-import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 /**
  * Base test class for Hot Rod tests.

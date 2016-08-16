@@ -1,5 +1,16 @@
 package org.infinispan.server.endpoint;
 
+import static java.util.Arrays.stream;
+import static org.infinispan.server.endpoint.subsystem.ModelKeys.CACHE_NAMES;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADDRESS;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OUTCOME;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RESULT;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+
 import org.infinispan.server.endpoint.subsystem.EndpointExtension;
 import org.jboss.as.clustering.infinispan.subsystem.InfinispanSubsystemDependenciesInitialization;
 import org.jboss.as.controller.PathAddress;
@@ -8,13 +19,6 @@ import org.jboss.as.subsystem.test.KernelServices;
 import org.jboss.dmr.ModelNode;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-
-import static java.util.Arrays.stream;
-import static org.infinispan.server.endpoint.subsystem.ModelKeys.CACHE_NAMES;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author gustavonalle

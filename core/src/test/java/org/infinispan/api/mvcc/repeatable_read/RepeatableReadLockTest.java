@@ -1,12 +1,12 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.RepeatableReadLockTest")
 public class RepeatableReadLockTest extends LockTestBase {

@@ -1,16 +1,16 @@
 package org.infinispan.stream;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.entries.CacheEntry;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.container.entries.CacheEntry;
+import org.testng.annotations.Test;
 
 /**
  * Base class to test if evicted entries are not returned via stream

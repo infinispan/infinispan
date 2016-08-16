@@ -1,13 +1,13 @@
 package org.infinispan.persistence.jpa.impl;
 
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.spi.PersistenceProvider;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.spi.PersistenceProvider;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;

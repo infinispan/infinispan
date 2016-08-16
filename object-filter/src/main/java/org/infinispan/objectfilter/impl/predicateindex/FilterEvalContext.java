@@ -1,11 +1,11 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
+import java.util.Arrays;
+
 import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.predicateindex.be.BENode;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
-
-import java.util.Arrays;
 
 /**
  * @author anistor@redhat.com

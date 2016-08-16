@@ -1,8 +1,9 @@
 package org.infinispan.server.websocket;
 
-import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.Cache;
 import org.infinispan.server.websocket.json.JsonObject;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Websocket cache operation handler.

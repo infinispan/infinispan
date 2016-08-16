@@ -1,10 +1,10 @@
 package org.infinispan.factories;
 
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
-
-import javax.transaction.TransactionSynchronizationRegistry;
 
 /**
  * Factory for the TransactionSynchronizationRegistry

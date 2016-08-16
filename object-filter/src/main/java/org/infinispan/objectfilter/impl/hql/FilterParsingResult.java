@@ -1,11 +1,11 @@
 package org.infinispan.objectfilter.impl.hql;
 
+import java.util.Arrays;
+import java.util.Set;
+
 import org.infinispan.objectfilter.PropertyPath;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
-
-import java.util.Arrays;
-import java.util.Set;
 
 /**
  * @param <TypeMetadata> is either {@link java.lang.Class} or {@link org.infinispan.protostream.descriptors.Descriptor}

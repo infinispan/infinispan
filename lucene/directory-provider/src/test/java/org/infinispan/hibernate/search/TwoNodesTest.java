@@ -1,5 +1,13 @@
 package org.infinispan.hibernate.search;
 
+import static junit.framework.Assert.assertEquals;
+import static org.infinispan.hibernate.search.ClusterTestHelper.clusterSize;
+import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNode;
+import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
+
+import java.util.HashSet;
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.Transaction;
 import org.hibernate.search.FullTextSession;
@@ -10,14 +18,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.HashSet;
-import java.util.List;
-
-import static junit.framework.Assert.assertEquals;
-import static org.infinispan.hibernate.search.ClusterTestHelper.clusterSize;
-import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNode;
-import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
 
 /**
  * We start two different Hibernate Search instances, both using an InfinispanDirectoryProvider as the default

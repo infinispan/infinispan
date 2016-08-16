@@ -1,11 +1,11 @@
 package org.infinispan.spring.provider.sample;
 
+import java.util.Random;
+
 import org.infinispan.spring.provider.sample.entity.Book;
 import org.infinispan.spring.provider.sample.service.CachedBookServiceJsr107;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.testng.annotations.Test;
-
-import java.util.Random;
 
 /**
  * Abstract template for running a set of tests under different configurations, including JSR-107 annotations.

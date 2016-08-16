@@ -1,5 +1,10 @@
 package org.infinispan.tx.synchronisation;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -7,11 +12,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.tx.LocalModeTxTest;
 import org.testng.annotations.Test;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com

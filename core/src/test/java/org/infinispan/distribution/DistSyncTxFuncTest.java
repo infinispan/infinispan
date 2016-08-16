@@ -1,12 +1,12 @@
 package org.infinispan.distribution;
 
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
 
 @Test(groups = "unstable", testName = "distribution.DistSyncTxFuncTest", description = "See ISPN-4039, original group: functional")
 public class DistSyncTxFuncTest extends BaseDistFunctionalTest<Object, String> {

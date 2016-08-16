@@ -1,6 +1,9 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.ExpirationConfiguration.*;
+import static org.infinispan.configuration.cache.ExpirationConfiguration.LIFESPAN;
+import static org.infinispan.configuration.cache.ExpirationConfiguration.MAX_IDLE;
+import static org.infinispan.configuration.cache.ExpirationConfiguration.REAPER_ENABLED;
+import static org.infinispan.configuration.cache.ExpirationConfiguration.WAKEUP_INTERVAL;
 
 import java.util.concurrent.TimeUnit;
 

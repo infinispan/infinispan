@@ -1,5 +1,17 @@
 package org.infinispan.xsite;
 
+import static java.lang.String.format;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -14,18 +26,6 @@ import org.infinispan.util.NotifierLatch;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static java.lang.String.format;
-import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test for {@link GlobalXSiteAdminOperations}.

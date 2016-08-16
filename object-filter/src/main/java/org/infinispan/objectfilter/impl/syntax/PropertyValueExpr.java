@@ -1,8 +1,8 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import org.infinispan.objectfilter.impl.util.StringHelper;
-
 import java.util.Arrays;
+
+import org.infinispan.objectfilter.impl.util.StringHelper;
 
 /**
  * @author anistor@redhat.com

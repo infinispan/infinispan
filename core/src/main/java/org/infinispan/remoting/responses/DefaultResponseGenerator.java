@@ -1,7 +1,6 @@
 package org.infinispan.remoting.responses;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

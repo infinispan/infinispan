@@ -1,5 +1,13 @@
 package org.infinispan.server.test.expiration;
 
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.head;
+import static org.infinispan.server.test.client.rest.RESTHelper.post;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -18,14 +26,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.get;
-import static org.infinispan.server.test.client.rest.RESTHelper.head;
-import static org.infinispan.server.test.client.rest.RESTHelper.post;
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test for expiration configuration. Tested with REST (verifies JBPAPP-6928) and HotRod.

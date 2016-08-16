@@ -1,5 +1,12 @@
 package org.infinispan.hibernate.search.impl;
 
+import java.io.IOException;
+import java.util.Properties;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.engine.service.spi.Startable;
 import org.hibernate.search.engine.service.spi.Stoppable;
@@ -13,12 +20,6 @@ import org.infinispan.hibernate.search.util.impl.JNDIHelper;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.kohsuke.MetaInfServices;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import java.io.IOException;
-import java.util.Properties;
 
 /**
  * Provides access to Infinispan's CacheManager; one CacheManager is needed for all caches, it can be taken via JNDI or

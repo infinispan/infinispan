@@ -1,10 +1,5 @@
 package org.infinispan.manager;
 
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.function.SerializableRunnable;
-import org.infinispan.util.function.TriConsumer;
-
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -12,6 +7,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.function.SerializableFunction;
+import org.infinispan.util.function.SerializableRunnable;
+import org.infinispan.util.function.TriConsumer;
 
 /**
  * A cluster executor that can be used to invoke a given command across the cluster.  Note this executor is not

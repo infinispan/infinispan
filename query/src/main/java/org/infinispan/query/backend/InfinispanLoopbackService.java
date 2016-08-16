@@ -1,7 +1,7 @@
 package org.infinispan.query.backend;
 
-import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**

@@ -1,8 +1,8 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
+
+import org.infinispan.remoting.transport.Address;
 
 /**
  * It contains the logic to send state to another site.

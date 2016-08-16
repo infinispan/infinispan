@@ -1,12 +1,12 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.impl.BaseQuery;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.BaseQuery;
 
 /**
  * @author anistor@redhat.com

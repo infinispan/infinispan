@@ -1,16 +1,16 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
-import org.infinispan.remoting.transport.Address;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Base consistent hash factory that contains a single segments

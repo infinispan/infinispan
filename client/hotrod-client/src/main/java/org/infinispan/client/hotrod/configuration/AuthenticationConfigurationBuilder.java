@@ -14,7 +14,6 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TypedProperties;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.Util;
 

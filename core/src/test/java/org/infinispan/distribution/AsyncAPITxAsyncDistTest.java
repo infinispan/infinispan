@@ -1,10 +1,10 @@
 package org.infinispan.distribution;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
 
 @Test(groups = "functional", testName = "distribution.AsyncAPITxAsyncDistTest")
 public class AsyncAPITxAsyncDistTest extends AsyncAPITxSyncDistTest {

@@ -1,10 +1,10 @@
 package org.jboss.as.clustering.infinispan.cs.factory;
 
+import static org.junit.Assert.assertEquals;
+
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class DeployedCacheStoreMetadataTest {
 

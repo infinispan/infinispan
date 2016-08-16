@@ -1,5 +1,7 @@
 package org.infinispan.spring.support.remote;
 
+import java.util.concurrent.ConcurrentMap;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.logging.Log;
@@ -8,8 +10,6 @@ import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.StringUtils;
-
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * <p>

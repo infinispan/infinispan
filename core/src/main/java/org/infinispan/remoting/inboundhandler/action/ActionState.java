@@ -1,8 +1,8 @@
 package org.infinispan.remoting.inboundhandler.action;
 
-import org.infinispan.util.concurrent.locks.RemoteLockCommand;
-
 import java.util.List;
+
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
  * The state used by an {@link Action}.

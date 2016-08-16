@@ -1,14 +1,14 @@
 package org.infinispan.client.hotrod.stress;
 
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Simple PUTs/GETs test to verify performance regressions. Requires an external running server.

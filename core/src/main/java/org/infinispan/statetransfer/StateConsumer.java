@@ -1,11 +1,11 @@
 package org.infinispan.statetransfer;
 
+import java.util.Collection;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-
-import java.util.Collection;
 
 /**
  * Handles inbound state transfers.

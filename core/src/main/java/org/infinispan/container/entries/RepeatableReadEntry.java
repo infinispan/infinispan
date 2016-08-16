@@ -1,13 +1,13 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.metadata.Metadata;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COPIED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_LOOKUP;
+
 import org.infinispan.container.DataContainer;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COPIED;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.SKIP_LOOKUP;
 
 /**
  * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics

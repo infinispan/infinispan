@@ -1,7 +1,7 @@
 package org.infinispan.factories;
 
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.concurrent.jdk8backported.EntrySizeCalculator;
 import org.infinispan.configuration.cache.EvictionConfiguration;
 import org.infinispan.container.DataContainer;

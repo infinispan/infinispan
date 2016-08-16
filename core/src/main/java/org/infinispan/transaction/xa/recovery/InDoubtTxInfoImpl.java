@@ -1,17 +1,18 @@
 package org.infinispan.transaction.xa.recovery;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.remoting.transport.Address;
-
-import javax.transaction.xa.Xid;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.transaction.xa.Xid;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.remoting.transport.Address;
 
 /**
 * @author Mircea Markus

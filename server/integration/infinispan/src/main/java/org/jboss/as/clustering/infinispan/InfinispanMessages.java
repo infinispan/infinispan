@@ -22,6 +22,9 @@
 
 package org.jboss.as.clustering.infinispan;
 
+import java.net.UnknownHostException;
+import java.util.Properties;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.persistence.ConfigurationPersistenceException;
@@ -32,9 +35,6 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 import org.jboss.msc.inject.InjectionException;
 import org.jboss.msc.service.StartException;
-
-import java.net.UnknownHostException;
-import java.util.Properties;
 
 /**
  * InfinispanMessages

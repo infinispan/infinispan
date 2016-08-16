@@ -1,5 +1,18 @@
 package org.infinispan.all.remote.jcache;
 
+import static javax.cache.configuration.FactoryBuilder.factoryOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.net.URI;
+import java.util.Properties;
+
+import javax.cache.Cache;
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
+import javax.cache.configuration.MutableConfiguration;
+
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.jcache.remote.JCachingProvider;
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -7,18 +20,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.cache.Cache;
-import javax.cache.CacheManager;
-import javax.cache.Caching;
-import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
-import javax.cache.configuration.MutableConfiguration;
-import java.net.URI;
-import java.util.Properties;
-
-import static javax.cache.configuration.FactoryBuilder.factoryOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 
 /**

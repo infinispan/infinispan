@@ -1,13 +1,13 @@
 package org.infinispan.spring.support.remote;
 
+import static org.testng.AssertJUnit.assertNotNull;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * <p>

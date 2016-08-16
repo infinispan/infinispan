@@ -1,5 +1,13 @@
 package org.infinispan.query.remote.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
@@ -15,11 +23,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "query.remote.impl.ProtobufMetadataManagerInterceptorTest")
 public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManagersTest {

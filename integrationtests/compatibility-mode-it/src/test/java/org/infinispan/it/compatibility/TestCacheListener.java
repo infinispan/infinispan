@@ -1,5 +1,8 @@
 package org.infinispan.it.compatibility;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -11,9 +14,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Cache listener for testing purposes with dedicated counter and field for every event so it can assure

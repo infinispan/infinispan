@@ -1,9 +1,9 @@
 package org.infinispan.persistence.rest.configuration;
 
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
+import org.infinispan.persistence.keymappers.MarshallingTwoWayKey2StringMapper;
 import org.infinispan.persistence.rest.metadata.EmbeddedMetadataHelper;
 import org.infinispan.persistence.rest.metadata.MetadataHelper;
-import org.infinispan.persistence.keymappers.MarshallingTwoWayKey2StringMapper;
 
 /**
  * RestStoreConfigurationChildBuilder.

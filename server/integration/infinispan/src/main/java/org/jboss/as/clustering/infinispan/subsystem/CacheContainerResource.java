@@ -21,6 +21,8 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.time.format.DateTimeFormatter;
+
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
 import org.jboss.as.controller.AttributeDefinition;
@@ -44,8 +46,6 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
-
-import java.time.format.DateTimeFormatter;
 
 /**
  * Resource description for the addressable resource /subsystem=infinispan/cache-container=X

@@ -1,9 +1,11 @@
 package org.infinispan.executors;
 
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.Test;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertSame;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -11,12 +13,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertSame;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Test;
 
 /**
  * Basic tests for {@link SemaphoreCompletionService}

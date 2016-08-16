@@ -1,5 +1,19 @@
 package org.infinispan.query.nulls;
 
+import static org.infinispan.query.FetchOptions.FetchMode.EAGER;
+import static org.infinispan.query.FetchOptions.FetchMode.LAZY;
+import static org.infinispan.test.TestingUtil.withTx;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.Callable;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -17,16 +31,6 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.concurrent.Callable;
-
-import static org.infinispan.query.FetchOptions.FetchMode.EAGER;
-import static org.infinispan.query.FetchOptions.FetchMode.LAZY;
-import static org.infinispan.test.TestingUtil.withTx;
-import static org.testng.AssertJUnit.*;
 
 /**
  * @author Anna Manukyan

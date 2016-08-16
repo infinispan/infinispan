@@ -1,5 +1,9 @@
 package org.infinispan.expiration.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -8,10 +12,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "expiration.impl.ExpirationFunctionalTest")
 public class ExpirationFunctionalTest extends SingleCacheManagerTest {

@@ -1,5 +1,12 @@
 package org.infinispan.jmx;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import javax.management.MBeanServer;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
@@ -7,12 +14,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.management.MBeanServer;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 
 @Test(groups = "functional", testName = "jmx.CustomMBeanServerPropertiesTest")
 public class CustomMBeanServerPropertiesTest extends AbstractInfinispanTest {

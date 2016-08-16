@@ -1,12 +1,12 @@
 package org.infinispan.hibernate.search.sharedIndex;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+
+import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.Field;
 
 @Entity
 public abstract class Device {

@@ -1,6 +1,11 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.HashConfiguration.*;
+import static org.infinispan.configuration.cache.HashConfiguration.CAPACITY_FACTOR;
+import static org.infinispan.configuration.cache.HashConfiguration.CONSISTENT_HASH_FACTORY;
+import static org.infinispan.configuration.cache.HashConfiguration.HASH;
+import static org.infinispan.configuration.cache.HashConfiguration.KEY_PARTITIONER;
+import static org.infinispan.configuration.cache.HashConfiguration.NUM_OWNERS;
+import static org.infinispan.configuration.cache.HashConfiguration.NUM_SEGMENTS;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;

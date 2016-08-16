@@ -1,5 +1,8 @@
 package org.infinispan.server.test.query;
 
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 
 import javax.management.ObjectName;
@@ -17,9 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests manual indexing in server.

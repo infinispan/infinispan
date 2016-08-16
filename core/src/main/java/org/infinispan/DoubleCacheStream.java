@@ -1,16 +1,5 @@
 package org.infinispan;
 
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableDoubleBinaryOperator;
-import org.infinispan.util.function.SerializableDoubleConsumer;
-import org.infinispan.util.function.SerializableDoubleFunction;
-import org.infinispan.util.function.SerializableDoublePredicate;
-import org.infinispan.util.function.SerializableDoubleToIntFunction;
-import org.infinispan.util.function.SerializableDoubleToLongFunction;
-import org.infinispan.util.function.SerializableDoubleUnaryOperator;
-import org.infinispan.util.function.SerializableObjDoubleConsumer;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +14,17 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.function.ObjDoubleConsumer;
 import java.util.function.Supplier;
 import java.util.stream.DoubleStream;
+
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableDoubleBinaryOperator;
+import org.infinispan.util.function.SerializableDoubleConsumer;
+import org.infinispan.util.function.SerializableDoubleFunction;
+import org.infinispan.util.function.SerializableDoublePredicate;
+import org.infinispan.util.function.SerializableDoubleToIntFunction;
+import org.infinispan.util.function.SerializableDoubleToLongFunction;
+import org.infinispan.util.function.SerializableDoubleUnaryOperator;
+import org.infinispan.util.function.SerializableObjDoubleConsumer;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * A {@link DoubleStream} that has additional methods to allow for Serializable instances.  Please see

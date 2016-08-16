@@ -1,15 +1,15 @@
 package org.infinispan.server.websocket.handlers;
 
+import static org.infinispan.assertions.JsonPayloadAssertion.assertThat;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 import org.infinispan.server.websocket.json.JsonObject;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.websocket.MockChannel;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.assertions.JsonPayloadAssertion.assertThat;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * Tests Operation handlers.

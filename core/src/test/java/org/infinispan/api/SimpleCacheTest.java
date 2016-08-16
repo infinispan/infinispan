@@ -1,5 +1,8 @@
 package org.infinispan.api;
 
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.CacheConfigurationException;
@@ -13,9 +16,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

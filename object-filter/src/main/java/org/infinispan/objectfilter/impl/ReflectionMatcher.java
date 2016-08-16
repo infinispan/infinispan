@@ -1,14 +1,14 @@
 package org.infinispan.objectfilter.impl;
 
+import java.beans.IntrospectionException;
+import java.util.List;
+
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.hql.ReflectionEntityNamesResolver;
 import org.infinispan.objectfilter.impl.hql.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.ReflectionMatcherEvalContext;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
-
-import java.beans.IntrospectionException;
-import java.util.List;
 
 /**
  * @author anistor@redhat.com

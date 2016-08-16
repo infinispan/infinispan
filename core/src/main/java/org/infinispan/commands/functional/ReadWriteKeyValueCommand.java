@@ -1,5 +1,13 @@
 package org.infinispan.commands.functional;
 
+import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.functional.impl.EntryViews.snapshot;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.function.BiFunction;
+
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
@@ -14,14 +22,6 @@ import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.function.BiFunction;
-
-import static org.infinispan.commons.util.Util.toStr;
-import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K> {
    private static final Log log = LogFactory.getLog(ReadWriteKeyValueCommand.class);

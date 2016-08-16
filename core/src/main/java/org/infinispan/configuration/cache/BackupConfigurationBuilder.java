@@ -1,6 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.BackupConfiguration.*;
+import static org.infinispan.configuration.cache.BackupConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.BackupConfiguration.FAILURE_POLICY;
+import static org.infinispan.configuration.cache.BackupConfiguration.FAILURE_POLICY_CLASS;
+import static org.infinispan.configuration.cache.BackupConfiguration.REPLICATION_TIMEOUT;
+import static org.infinispan.configuration.cache.BackupConfiguration.SITE;
+import static org.infinispan.configuration.cache.BackupConfiguration.STRATEGY;
+import static org.infinispan.configuration.cache.BackupConfiguration.USE_TWO_PHASE_COMMIT;
 
 import java.lang.invoke.MethodHandles;
 

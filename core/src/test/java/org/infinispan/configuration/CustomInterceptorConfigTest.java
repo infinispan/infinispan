@@ -1,6 +1,11 @@
 package org.infinispan.configuration;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertNotNull;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
@@ -11,12 +16,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Collections;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
 
 @Test(testName = "config.CustomInterceptorConfigTest", groups = "functional")
 public class CustomInterceptorConfigTest extends AbstractInfinispanTest {

@@ -1,5 +1,17 @@
 package org.infinispan.stats.topK;
 
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.fail;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
@@ -10,17 +22,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-import java.lang.reflect.Method;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * @author Pedro Ruivo

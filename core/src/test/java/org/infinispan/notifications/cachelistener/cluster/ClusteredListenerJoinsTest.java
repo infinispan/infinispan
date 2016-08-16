@@ -1,5 +1,7 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.notifications.Listener;
@@ -7,8 +9,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "notifications.cachelistener.cluster.ClusteredListenerJoinsTest")
 public class ClusteredListenerJoinsTest extends MultipleCacheManagersTest {

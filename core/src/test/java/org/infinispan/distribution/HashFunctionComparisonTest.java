@@ -1,10 +1,10 @@
 package org.infinispan.distribution;
 
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.remoting.transport.Address;
-import org.testng.annotations.Test;
+import static org.infinispan.commons.util.Util.padString;
+import static org.infinispan.commons.util.Util.prettyPrintTime;
+import static org.infinispan.profiling.testinternals.Generator.generateAddress;
+import static org.infinispan.profiling.testinternals.Generator.getRandomByteArray;
+import static org.infinispan.profiling.testinternals.Generator.getRandomString;
 
 import java.nio.charset.Charset;
 import java.text.NumberFormat;
@@ -18,9 +18,11 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import static org.infinispan.commons.util.Util.padString;
-import static org.infinispan.commons.util.Util.prettyPrintTime;
-import static org.infinispan.profiling.testinternals.Generator.*;
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.remoting.transport.Address;
+import org.testng.annotations.Test;
 
 /**
  * This test benchmarks different hash functions.

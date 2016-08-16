@@ -1,16 +1,17 @@
 package org.infinispan.cdi.embedded.test.cachemanager.remote;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.Properties;
+
+import javax.inject.Inject;
+
 import org.infinispan.cdi.embedded.test.Deployments;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-import java.util.Properties;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Test the default remote cache manager injection.

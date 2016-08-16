@@ -1,5 +1,9 @@
 package org.infinispan.tx;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,12 +20,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Mircea.Markus@jboss.com

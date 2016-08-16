@@ -1,5 +1,8 @@
 package org.infinispan.container;
 
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
@@ -7,9 +10,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
-import org.infinispan.container.entries.MVCCEntry;
 
 /**
  * An entry factory that is capable of dealing with SimpleClusteredVersions.  This should <i>only</i> be used with

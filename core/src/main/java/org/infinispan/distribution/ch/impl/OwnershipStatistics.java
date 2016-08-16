@@ -1,12 +1,12 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * This class holds statistics about a consistent hash. It counts how many segments are owned or primary-owned by each

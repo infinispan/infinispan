@@ -1,13 +1,13 @@
 package org.infinispan.commons.io;
 
+import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
-
-import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
-import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
 
 /**
  * Variable length encoding for signed numbers, using the ZigZag technique

@@ -2,9 +2,9 @@ package org.infinispan.persistence.remote.configuration;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.commons.marshall.Marshaller;
 
 public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurationChildBuilder<S> {
 

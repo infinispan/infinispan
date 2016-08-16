@@ -1,9 +1,9 @@
 package org.infinispan.query.distributed;
 
-import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.testng.annotations.Test;

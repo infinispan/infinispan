@@ -2,13 +2,6 @@ package org.infinispan.distribution.group;
 
 import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
-import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.transport.Address;
-
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -16,6 +9,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.Util;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * @private

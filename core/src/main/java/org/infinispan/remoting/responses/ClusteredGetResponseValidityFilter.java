@@ -1,10 +1,10 @@
 package org.infinispan.remoting.responses;
 
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
 import java.util.HashSet;
+
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A filter that tests the validity of {@link org.infinispan.commands.remote.ClusteredGetCommand}s.

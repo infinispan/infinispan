@@ -1,10 +1,17 @@
 package org.infinispan.persistence.leveldb.configuration;
 
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.BLOCK_SIZE;
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.CACHE_SIZE;
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.CLEAR_THRESHOLD;
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.COMPRESSION_TYPE;
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.EXPIRED_LOCATION;
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.EXPIRY_QUEUE_SIZE;
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.IMPLEMENTATION_TYPE;
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.LOCATION;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-
-import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.*;
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>

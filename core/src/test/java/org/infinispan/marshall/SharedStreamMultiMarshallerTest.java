@@ -1,5 +1,12 @@
 package org.infinispan.marshall;
 
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -13,13 +20,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.stack.IpAddress;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
-import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test to verify whether the same stream can be used with different marshallers.

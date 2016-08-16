@@ -1,12 +1,12 @@
 package org.infinispan.objectfilter;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.hibernate.hql.ast.origin.hql.resolve.path.AggregationPropertyPath;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Represents the path of a field, including the aggregation function if any.

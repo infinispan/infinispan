@@ -1,25 +1,25 @@
 package org.infinispan.eviction.impl;
 
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.InternalEntryFactoryImpl;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledValue;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jgroups.util.Util;
-import org.testng.annotations.Test;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.interceptors.impl.MarshalledValueInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.MarshalledValue;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jgroups.util.Util;
+import org.testng.annotations.Test;
 
 @Test(groups = "unstable", testName = "eviction.MarshalledValuesEvictionTest",
       description = "See ISPN-4042. Is this test even valid?  Evictions don't go thru the " +

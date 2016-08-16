@@ -1,13 +1,13 @@
 package org.infinispan.expiration;
 
-import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.configuration.cache.ExpirationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.MarshalledEntry;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Central component that deals with expiration of cache entries.

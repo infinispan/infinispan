@@ -1,8 +1,21 @@
 package org.infinispan.tasks.impl;
 
+import static org.infinispan.tasks.logging.Messages.MESSAGES;
+
+import java.lang.invoke.MethodHandles;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -19,19 +32,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
-
-import javax.security.auth.Subject;
-import java.lang.invoke.MethodHandles;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
-
-import static org.infinispan.tasks.logging.Messages.MESSAGES;
 
 /**
  * TaskManagerImpl.

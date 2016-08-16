@@ -1,5 +1,12 @@
 package org.infinispan.metadata.impl;
 
+import static java.lang.Math.min;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -7,14 +14,6 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadata.Builder;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import static java.lang.Math.min;
 
 /**
  * @author Mircea Markus

@@ -1,5 +1,12 @@
 package org.infinispan.manager;
 
+import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
@@ -9,13 +16,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author gustavonalle

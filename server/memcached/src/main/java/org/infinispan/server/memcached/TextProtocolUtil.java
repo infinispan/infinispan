@@ -1,8 +1,5 @@
 package org.infinispan.server.memcached;
 
-import io.netty.buffer.ByteBuf;
-import org.infinispan.util.KeyValuePair;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,6 +9,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.infinispan.util.KeyValuePair;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * Memcached text protocol utilities.

@@ -1,10 +1,10 @@
 package org.infinispan.stats.simple;
 
+import java.lang.reflect.Method;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.stats.BaseNonTotalOrderClusteredExtendedStatisticsTest;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
 
 /**
  * @author Pedro Ruivo

@@ -1,7 +1,8 @@
 package org.infinispan.server.endpoint.deployments;
 
-import org.infinispan.filter.KeyValueFilterConverterFactory;
 import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
+import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;

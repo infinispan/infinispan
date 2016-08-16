@@ -1,15 +1,15 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.testng.annotations.Test;
 
 /**
  * @author gustavonalle

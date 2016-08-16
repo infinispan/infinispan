@@ -1,7 +1,20 @@
 package org.infinispan.jcache;
 
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.annotations.Test;
+import static org.infinispan.jcache.util.JCacheTestingUtil.getEntryCount;
+import static org.infinispan.jcache.util.JCacheTestingUtil.sleep;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.cache.Cache;
 import javax.cache.configuration.FactoryBuilder;
@@ -15,18 +28,9 @@ import javax.cache.event.CacheEntryUpdatedListener;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
-import static org.infinispan.jcache.util.JCacheTestingUtil.getEntryCount;
-import static org.infinispan.jcache.util.JCacheTestingUtil.sleep;
-import static org.testng.Assert.*;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.annotations.Test;
 
 /**
  * Base class for clustered JCache tests. Implementations must provide cache references.

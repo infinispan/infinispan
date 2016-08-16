@@ -1,5 +1,9 @@
 package org.infinispan.query.affinity;
 
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.lucene.document.Document;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.indexes.spi.IndexManager;
@@ -11,10 +15,6 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Handle index updates forwarded by the {@link AffinityIndexManager}, in exceptional cases where

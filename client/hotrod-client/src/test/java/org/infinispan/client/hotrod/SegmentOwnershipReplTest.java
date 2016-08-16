@@ -1,14 +1,14 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import org.infinispan.configuration.cache.CacheMode;
+import org.testng.annotations.Test;
 
 /**
  * @author gustavonalle

@@ -1,13 +1,13 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.commons.marshall.exts.NoStateExternalizer;
-import org.infinispan.distribution.ch.AffinityTaggedKey;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.exts.NoStateExternalizer;
+import org.infinispan.distribution.ch.AffinityTaggedKey;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * Key partitioner that maps keys to segments using information contained in {@link AffinityTaggedKey}.

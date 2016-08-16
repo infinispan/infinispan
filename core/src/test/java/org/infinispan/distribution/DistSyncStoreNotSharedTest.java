@@ -1,24 +1,28 @@
 package org.infinispan.distribution;
 
-import org.infinispan.Cache;
-import org.infinispan.container.DataContainer;
-import org.infinispan.context.Flag;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
-import static org.infinispan.test.TestingUtil.k;
-import static org.testng.AssertJUnit.*;
+import org.infinispan.Cache;
+import org.infinispan.container.DataContainer;
+import org.infinispan.context.Flag;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.testng.annotations.Test;
 
 /**
  * DistSyncSharedTest.

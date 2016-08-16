@@ -1,5 +1,12 @@
 package org.infinispan.stream;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
@@ -8,13 +15,6 @@ import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Base class for stream iterator tests that are ran on clustered caches

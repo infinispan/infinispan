@@ -1,18 +1,19 @@
 package org.infinispan.container.versioning;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.fail;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Transaction;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Transaction;
-
-import static org.testng.AssertJUnit.*;
 
 @Test(testName = "container.versioning.DistWriteSkewTest", groups = "functional")
 public class DistWriteSkewTest extends AbstractClusteredWriteSkewTest {

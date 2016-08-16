@@ -1,8 +1,8 @@
 package org.infinispan.server.infinispan.actions;
 
-import org.infinispan.AdvancedCache;
-
 import java.security.PrivilegedAction;
+
+import org.infinispan.AdvancedCache;
 
 /**
  * AbstractAdvancedCacheAction. A helper abstract for writing {@link java.security.PrivilegedAction}s which require an {@link org.infinispan.AdvancedCache}

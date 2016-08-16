@@ -1,17 +1,5 @@
 package org.infinispan.lock;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.concurrent.locks.LockPromise;
-import org.infinispan.util.concurrent.locks.impl.DefaultLockManager;
-import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
-import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,6 +12,18 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.LockPromise;
+import org.infinispan.util.concurrent.locks.impl.DefaultLockManager;
+import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
+import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * Unit tests for {@link LockManagerTest}.

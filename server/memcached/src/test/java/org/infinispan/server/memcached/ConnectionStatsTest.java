@@ -1,6 +1,7 @@
 package org.infinispan.server.memcached;
 
-import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -10,8 +11,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import org.infinispan.jmx.PerThreadMBeanServerLookup;
 
 /**
  * Connection statistic tests that are common to all

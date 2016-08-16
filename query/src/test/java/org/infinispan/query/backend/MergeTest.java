@@ -1,5 +1,15 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.helper.StaticTestingErrorHandler.assertAllGood;
+import static org.infinispan.test.TestingUtil.killCacheManagers;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -11,16 +21,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.query.helper.StaticTestingErrorHandler.assertAllGood;
-import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 /**
  * Test to simulate concurrent index writing and merges using Infinispan Directory under

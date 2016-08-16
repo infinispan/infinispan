@@ -1,5 +1,10 @@
 package org.infinispan.cdi.embedded.test.cachemanager.external;
 
+import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
+import static org.testng.Assert.assertEquals;
+
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.test.fwk.TestResourceTrackingListener;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -7,11 +12,6 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-
-import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.testng.Assert.assertEquals;
 
 
 /**

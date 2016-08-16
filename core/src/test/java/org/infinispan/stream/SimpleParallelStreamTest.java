@@ -1,8 +1,5 @@
 package org.infinispan.stream;
 
-import org.infinispan.CacheCollection;
-import org.infinispan.CacheStream;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 

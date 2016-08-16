@@ -1,5 +1,7 @@
 package org.infinispan.spring;
 
+import java.io.IOException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -9,8 +11,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.springframework.core.io.Resource;
-
-import java.io.IOException;
 
 /**
  * <p>

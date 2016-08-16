@@ -1,14 +1,14 @@
 package org.infinispan.persistence.jdbc.connectionfactory;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
-
-import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
  * Pooled connection factory that uses HikariCP by default. In order to utilise the legacy connection pool, C3P0, users

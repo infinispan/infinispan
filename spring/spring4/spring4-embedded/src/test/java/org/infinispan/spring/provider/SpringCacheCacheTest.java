@@ -1,5 +1,10 @@
 package org.infinispan.spring.provider;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertSame;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.support.embedded.InfinispanNamedEmbeddedCacheFactoryBean;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -8,8 +13,6 @@ import org.springframework.cache.Cache;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.*;
 
 /**
  * <p>

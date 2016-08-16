@@ -1,17 +1,17 @@
 package org.infinispan.query.config;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+
+import java.io.IOException;
+
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 
 /**
  * @author gustavonalle

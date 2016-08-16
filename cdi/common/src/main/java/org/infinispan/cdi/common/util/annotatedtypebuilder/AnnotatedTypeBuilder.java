@@ -1,15 +1,5 @@
 package org.infinispan.cdi.common.util.annotatedtypebuilder;
 
-import org.infinispan.cdi.common.util.logging.Log;
-import org.infinispan.cdi.common.util.Reflections;
-import org.infinispan.commons.logging.LogFactory;
-
-import javax.enterprise.inject.spi.Annotated;
-import javax.enterprise.inject.spi.AnnotatedConstructor;
-import javax.enterprise.inject.spi.AnnotatedField;
-import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.AnnotatedParameter;
-import javax.enterprise.inject.spi.AnnotatedType;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -18,6 +8,17 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.enterprise.inject.spi.Annotated;
+import javax.enterprise.inject.spi.AnnotatedConstructor;
+import javax.enterprise.inject.spi.AnnotatedField;
+import javax.enterprise.inject.spi.AnnotatedMethod;
+import javax.enterprise.inject.spi.AnnotatedParameter;
+import javax.enterprise.inject.spi.AnnotatedType;
+
+import org.infinispan.cdi.common.util.Reflections;
+import org.infinispan.cdi.common.util.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * <p> Class for constructing a new AnnotatedType. A new instance of builder

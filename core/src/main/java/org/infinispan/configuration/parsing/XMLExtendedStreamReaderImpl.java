@@ -2,6 +2,7 @@ package org.infinispan.configuration.parsing;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;

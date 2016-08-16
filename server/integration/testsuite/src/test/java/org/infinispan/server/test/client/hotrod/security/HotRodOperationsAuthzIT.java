@@ -1,6 +1,39 @@
 package org.infinispan.server.test.client.hotrod.security;
 
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.*;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testAddGetClientListener;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testClear;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testContainsKey;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistentAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetRemoteCacheManager;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetVersioned;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetWithMetadata;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutAll;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutAllAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutClear;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutClearAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutContainsKey;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGetAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGetBulk;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGetVersioned;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGetWithMetadata;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutIfAbsent;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutIfAbsentAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemove;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveClientListener;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveContains;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveContainsAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveWithVersion;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveWithVersionAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testReplaceWitFlag;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testReplaceWithVersionAsync;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testReplaceWithVersioned;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testStats;
 
 import java.security.PrivilegedActionException;
 

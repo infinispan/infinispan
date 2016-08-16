@@ -1,5 +1,15 @@
 package org.infinispan.container.entries;
 
+import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.CHANGED;
+import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.CREATED;
+import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.EVICTED;
+import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.REMOVED;
+import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.SKIP_LOOKUP;
+import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.VALID;
+
+import java.util.LinkedList;
+import java.util.List;
+
 import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
@@ -10,11 +20,6 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.LinkedList;
-import java.util.List;
-
-import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.*;
 
 /**
  * A wrapper around a cached entry that encapsulates DeltaAware and Delta semantics when writes are

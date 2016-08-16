@@ -1,8 +1,8 @@
 package org.infinispan.test;
 
-import org.infinispan.tree.TreeCache;
-
 import java.util.Collection;
+
+import org.infinispan.tree.TreeCache;
 
 public class TreeTestingUtil {
    public static void killTreeCaches(Collection<TreeCache> treeCaches) {

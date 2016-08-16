@@ -1,6 +1,10 @@
 package org.infinispan.all.embeddedquery;
 
-import org.apache.lucene.search.BooleanQuery;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.QueryBuilder;
 import org.hibernate.search.exception.SearchException;
@@ -11,11 +15,6 @@ import org.infinispan.query.Search;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Clone of QueryPhrasesTest for uber jars.

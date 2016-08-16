@@ -1,13 +1,13 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 
 /**

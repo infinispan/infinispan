@@ -1,14 +1,14 @@
 package org.infinispan.tx.totalorder.writeskew;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.versioning.ReplWriteSkewTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionProtocol;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.

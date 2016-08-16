@@ -1,11 +1,11 @@
 package org.infinispan.commons.marshall.jboss;
 
-import org.infinispan.commons.marshall.Externalizer;
-import org.jboss.marshalling.Creator;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.infinispan.commons.marshall.Externalizer;
+import org.jboss.marshalling.Creator;
 
 public class JBossExternalizerAdapter implements org.jboss.marshalling.Externalizer {
 

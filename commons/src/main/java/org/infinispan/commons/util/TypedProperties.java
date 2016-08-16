@@ -1,9 +1,9 @@
 package org.infinispan.commons.util;
 
+import java.util.Properties;
+
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-
-import java.util.Properties;
 
 /**
  * Type-aware properties.  Extends the JDK {@link Properties} class to provide accessors that convert values to certain

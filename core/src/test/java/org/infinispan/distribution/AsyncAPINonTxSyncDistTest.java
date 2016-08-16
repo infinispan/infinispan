@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -7,8 +9,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.replication.AsyncAPINonTxSyncReplTest;
 import org.infinispan.test.data.Key;
 import org.testng.annotations.Test;
-
-import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 
 @Test(groups = "functional", testName = "distribution.AsyncAPINonTxSyncDistTest")
 public class AsyncAPINonTxSyncDistTest extends AsyncAPINonTxSyncReplTest {

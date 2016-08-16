@@ -1,5 +1,17 @@
 package org.infinispan.commands.tx;
 
+import static org.infinispan.commons.util.InfinispanCollections.forEach;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -22,18 +34,6 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
 /**
  * Command corresponding to the 1st phase of 2PC.

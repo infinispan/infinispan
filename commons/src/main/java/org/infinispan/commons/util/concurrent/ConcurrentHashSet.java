@@ -1,12 +1,12 @@
 package org.infinispan.commons.util.concurrent;
 
-import org.infinispan.commons.util.CollectionFactory;
-
 import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
+
+import org.infinispan.commons.util.CollectionFactory;
 
 /**
  * A simple Set implementation backed by a {@link java.util.concurrent.ConcurrentHashMap} to deal with the fact that the

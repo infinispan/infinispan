@@ -1,13 +1,5 @@
 package org.infinispan.stream.impl.tx;
 
-import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.stream.impl.ClusterStreamManager;
-import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
-import org.infinispan.stream.impl.TerminalOperation;
-import org.infinispan.util.AbstractDelegatingMap;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +7,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.impl.ClusterStreamManager;
+import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
+import org.infinispan.stream.impl.TerminalOperation;
+import org.infinispan.util.AbstractDelegatingMap;
 
 /**
  * This is a delegating cluster stream manager that sends all calls to the underlying cluster stream manager.  However

@@ -1,7 +1,8 @@
 package org.infinispan.integrationtests.cdijcache.interceptor.service;
 
-import javax.cache.annotation.GeneratedCacheKey;
 import java.lang.reflect.Method;
+
+import javax.cache.annotation.GeneratedCacheKey;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI

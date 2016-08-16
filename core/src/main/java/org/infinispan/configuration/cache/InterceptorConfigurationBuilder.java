@@ -1,5 +1,15 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.AFTER;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.BEFORE;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.INDEX;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.INTERCEPTOR;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.INTERCEPTOR_CLASS;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.POSITION;
+
+import java.util.Properties;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -13,16 +23,6 @@ import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Properties;
-
-import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
-import static org.infinispan.configuration.cache.InterceptorConfiguration.AFTER;
-import static org.infinispan.configuration.cache.InterceptorConfiguration.BEFORE;
-import static org.infinispan.configuration.cache.InterceptorConfiguration.INDEX;
-import static org.infinispan.configuration.cache.InterceptorConfiguration.INTERCEPTOR;
-import static org.infinispan.configuration.cache.InterceptorConfiguration.INTERCEPTOR_CLASS;
-import static org.infinispan.configuration.cache.InterceptorConfiguration.POSITION;
 
 /**
  * This builder defines details of a specific custom interceptor.

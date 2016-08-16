@@ -1,13 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.filter.AbstractKeyValueFilterConverter;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,8 +10,14 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.filter.AbstractKeyValueFilterConverter;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.testng.annotations.Test;
 
 /**
  * @author gustavonalle

@@ -1,13 +1,13 @@
 package org.infinispan.objectfilter.impl.hql;
 
+import java.beans.IntrospectionException;
+import java.util.Arrays;
+import java.util.List;
+
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 import org.jboss.logging.Logger;
-
-import java.beans.IntrospectionException;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author anistor@redhat.com

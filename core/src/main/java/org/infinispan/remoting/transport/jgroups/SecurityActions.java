@@ -1,11 +1,11 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetSystemPropertyAsBooleanAction;
 import org.infinispan.security.actions.GetSystemPropertyAsIntegerAction;
-
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * Privileged actions for the package

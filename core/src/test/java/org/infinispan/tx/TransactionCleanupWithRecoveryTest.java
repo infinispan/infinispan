@@ -1,5 +1,7 @@
 package org.infinispan.tx;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,8 +15,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.tx.recovery.RecoveryDummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 @Test(groups = "functional", testName = "tx.TransactionCleanupWithRecoveryTest")
 public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTest {

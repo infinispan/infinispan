@@ -1,5 +1,28 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.infinispan.query.dsl.Expression.avg;
+import static org.infinispan.query.dsl.Expression.count;
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.min;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.infinispan.query.dsl.Expression.property;
+import static org.infinispan.query.dsl.Expression.sum;
+import static org.testng.Assert.assertNotEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 import org.hibernate.hql.ParsingException;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
@@ -21,29 +44,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import static org.infinispan.query.dsl.Expression.avg;
-import static org.infinispan.query.dsl.Expression.count;
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.min;
-import static org.infinispan.query.dsl.Expression.param;
-import static org.infinispan.query.dsl.Expression.property;
-import static org.infinispan.query.dsl.Expression.sum;
-import static org.testng.Assert.assertNotEquals;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model. Uses indexing,

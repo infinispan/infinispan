@@ -1,5 +1,9 @@
 package org.infinispan.objectfilter.impl.hql.predicate;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
+
 import org.hibernate.hql.ast.origin.hql.resolve.path.AggregationPropertyPath;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.SingleEntityHavingQueryBuilder;
@@ -14,10 +18,6 @@ import org.infinispan.objectfilter.impl.syntax.AggregationExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.jboss.logging.Logger;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
 
 /**
  * Builder for the creation of HAVING clause filters targeting a single entity, based on HQL/JPQL queries.

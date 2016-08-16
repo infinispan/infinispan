@@ -2,8 +2,6 @@ package org.infinispan.client.hotrod;
 
 import org.testng.annotations.Test;
 
-import java.util.Properties;
-
 /**
  * Tests consistent hash algorithm consistency between the client and server
  * using Hot Rod's 1.0 protocol.

@@ -1,12 +1,12 @@
 package org.infinispan.distribution;
 
+import java.util.Collection;
+import java.util.concurrent.Future;
+
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.Collection;
-import java.util.concurrent.Future;
 
 /**
  * Manages the L1 Cache, in particular recording anyone who is going to cache an

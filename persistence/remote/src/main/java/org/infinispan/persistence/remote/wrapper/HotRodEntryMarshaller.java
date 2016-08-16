@@ -1,12 +1,12 @@
 package org.infinispan.persistence.remote.wrapper;
 
+import java.io.IOException;
+import java.util.Arrays;
+
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.Marshaller;
-
-import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * HotRodEntryMarshaller.

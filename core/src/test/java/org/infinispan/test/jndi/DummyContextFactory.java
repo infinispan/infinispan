@@ -1,9 +1,10 @@
 package org.infinispan.test.jndi;
 
+import java.util.Hashtable;
+
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
-import java.util.Hashtable;
 
 public class DummyContextFactory implements InitialContextFactory {
    static Context instance = new DummyContext();

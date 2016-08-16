@@ -1,17 +1,17 @@
 package org.infinispan.client.hotrod.retry;
 
+import static java.util.stream.IntStream.range;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.TreeMap;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
-
-import java.util.TreeMap;
-
-import static java.util.stream.IntStream.range;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(testName = "client.hotrod.retry.PutAllRetryTest", groups = "functional")
 public class PutAllRetryTest extends MultiHotRodServersTest {

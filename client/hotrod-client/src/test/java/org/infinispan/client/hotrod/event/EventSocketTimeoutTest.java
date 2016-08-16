@@ -1,5 +1,11 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.net.SocketTimeoutException;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.SocketTimeoutErrorTest.TimeoutInducingInterceptor;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -13,12 +19,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import java.net.SocketTimeoutException;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "client.hotrod.event.EventSocketTimeoutTest")
 public class EventSocketTimeoutTest extends SingleHotRodServerTest {

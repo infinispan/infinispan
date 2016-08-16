@@ -1,14 +1,14 @@
 package org.infinispan.query.remote.impl.filter;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author gustavonalle

@@ -1,5 +1,8 @@
 package org.infinispan.server.infinispan.task;
 
+import java.lang.reflect.Constructor;
+import java.util.List;
+
 import org.infinispan.tasks.ServerTask;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
@@ -18,9 +21,6 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
-
-import java.lang.reflect.Constructor;
-import java.util.List;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com

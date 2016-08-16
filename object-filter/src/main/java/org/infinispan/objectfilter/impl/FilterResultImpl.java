@@ -1,8 +1,8 @@
 package org.infinispan.objectfilter.impl;
 
-import org.infinispan.objectfilter.ObjectFilter;
-
 import java.util.Arrays;
+
+import org.infinispan.objectfilter.ObjectFilter;
 
 /**
  * @author anistor@redhat.com

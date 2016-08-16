@@ -1,5 +1,18 @@
 package org.infinispan.query.jmx;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.List;
+import java.util.Set;
+
+import javax.management.Attribute;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
@@ -17,19 +30,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.management.Attribute;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
-import java.util.List;
-import java.util.Set;
-
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * // TODO: Document this

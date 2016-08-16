@@ -1,7 +1,5 @@
 package org.infinispan.tools.xsd;
 
-import gnu.getopt.Getopt;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +22,8 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import gnu.getopt.Getopt;
 
 public class XSDoc {
    private final Map<String, Document> xmls = new HashMap<String, Document>();

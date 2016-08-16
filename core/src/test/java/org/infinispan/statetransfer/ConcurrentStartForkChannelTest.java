@@ -1,5 +1,12 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ReflectionUtil;
@@ -25,13 +32,6 @@ import org.jgroups.fork.UnknownForkHandler;
 import org.jgroups.protocols.FORK;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 
 /**
  * Tests concurrent startup of caches using ForkChannels.

@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl.filter;
 
+import java.io.IOException;
+
 import org.infinispan.Cache;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
@@ -10,8 +12,6 @@ import org.infinispan.query.dsl.embedded.impl.JPAFilterIndexingServiceProvider;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.kohsuke.MetaInfServices;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

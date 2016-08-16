@@ -1,5 +1,10 @@
 package org.infinispan.objectfilter.test.perf;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Arrays;
+
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
@@ -10,11 +15,6 @@ import org.infinispan.objectfilter.test.model.PhoneNumber;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * @author anistor@redhat.com

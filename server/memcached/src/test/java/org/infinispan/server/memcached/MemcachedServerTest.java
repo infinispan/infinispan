@@ -1,5 +1,8 @@
 package org.infinispan.server.memcached;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.core.test.Stoppable;
@@ -7,9 +10,6 @@ import org.infinispan.server.memcached.configuration.MemcachedServerConfiguratio
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
 /**
  * Memcached server unit test.

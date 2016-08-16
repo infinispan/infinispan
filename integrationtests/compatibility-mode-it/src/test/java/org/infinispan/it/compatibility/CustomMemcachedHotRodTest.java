@@ -1,16 +1,6 @@
 package org.infinispan.it.compatibility;
 
-import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AbstractMarshaller;
-import org.infinispan.commons.marshall.StringMarshaller;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,7 +11,14 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.marshall.StringMarshaller;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * Tests compatibility of Memcached, using a different client to SpyMemcached,

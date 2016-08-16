@@ -1,5 +1,12 @@
 package org.infinispan.stream.impl.tx;
 
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.infinispan.CacheStream;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -12,13 +19,6 @@ import org.infinispan.stream.impl.DistributedCacheStream;
 import org.infinispan.stream.impl.DistributedDoubleCacheStream;
 import org.infinispan.stream.impl.DistributedIntCacheStream;
 import org.infinispan.stream.impl.DistributedLongCacheStream;
-
-import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A distributed cache stream that also utilizes transactional awareness.  Basically this adds functionality to

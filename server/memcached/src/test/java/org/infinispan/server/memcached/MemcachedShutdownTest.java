@@ -1,17 +1,18 @@
 package org.infinispan.server.memcached;
 
-import net.spy.memcached.internal.OperationFuture;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import org.testng.annotations.Test;
+
+import net.spy.memcached.internal.OperationFuture;
 
 /**
  * Tests that Infinispan Memcached server can shutdown even if client does not close connection.

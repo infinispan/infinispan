@@ -1,10 +1,10 @@
 package org.infinispan.server.core.test;
 
+import java.util.function.Consumer;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.test.TestingUtil;
-
-import java.util.function.Consumer;
 
 /**
  * Stoppable implements simple wrappers for objects which need to be stopped in certain way after being used

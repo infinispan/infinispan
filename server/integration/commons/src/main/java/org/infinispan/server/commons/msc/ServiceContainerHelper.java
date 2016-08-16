@@ -22,6 +22,10 @@
 
 package org.infinispan.server.commons.msc;
 
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Map;
+
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceController.Mode;
 import org.jboss.msc.service.ServiceController.State;
@@ -29,10 +33,6 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceRegistry;
 import org.jboss.msc.service.StabilityMonitor;
 import org.jboss.msc.service.StartException;
-
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.Map;
 
 /**
  * Helper methods for interacting with a modular service container.

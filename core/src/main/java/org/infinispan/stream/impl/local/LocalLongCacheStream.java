@@ -1,34 +1,5 @@
 package org.infinispan.stream.impl.local;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheStream;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.LongCacheStream;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.CacheAware;
-import org.infinispan.stream.impl.intops.primitive.l.BoxedLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.DistinctLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.FilterLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.FlatMapLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.LimitLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.MapLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.MapToDoubleLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.MapToIntLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.MapToObjLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.PeekLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.SkipLongOperation;
-import org.infinispan.stream.impl.intops.primitive.l.SortedLongOperation;
-import org.infinispan.util.function.SerializableLongBinaryOperator;
-import org.infinispan.util.function.SerializableLongConsumer;
-import org.infinispan.util.function.SerializableLongFunction;
-import org.infinispan.util.function.SerializableLongPredicate;
-import org.infinispan.util.function.SerializableLongToDoubleFunction;
-import org.infinispan.util.function.SerializableLongToIntFunction;
-import org.infinispan.util.function.SerializableLongUnaryOperator;
-import org.infinispan.util.function.SerializableObjLongConsumer;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.LongSummaryStatistics;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
@@ -47,6 +18,35 @@ import java.util.function.LongUnaryOperator;
 import java.util.function.ObjLongConsumer;
 import java.util.function.Supplier;
 import java.util.stream.LongStream;
+
+import org.infinispan.Cache;
+import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.LongCacheStream;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.CacheAware;
+import org.infinispan.stream.impl.intops.primitive.l.BoxedLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.DistinctLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.FilterLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.FlatMapLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.LimitLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.MapLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.MapToDoubleLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.MapToIntLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.MapToObjLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.PeekLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.SkipLongOperation;
+import org.infinispan.stream.impl.intops.primitive.l.SortedLongOperation;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableLongBinaryOperator;
+import org.infinispan.util.function.SerializableLongConsumer;
+import org.infinispan.util.function.SerializableLongFunction;
+import org.infinispan.util.function.SerializableLongPredicate;
+import org.infinispan.util.function.SerializableLongToDoubleFunction;
+import org.infinispan.util.function.SerializableLongToIntFunction;
+import org.infinispan.util.function.SerializableLongUnaryOperator;
+import org.infinispan.util.function.SerializableObjLongConsumer;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * LongStream that wraps a given stream to allow for additional functionality such as injection of values into

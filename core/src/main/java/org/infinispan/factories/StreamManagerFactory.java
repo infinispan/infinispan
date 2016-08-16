@@ -3,8 +3,8 @@ package org.infinispan.factories;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.stream.impl.ClusterStreamManager;
-import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.stream.impl.ClusterStreamManagerImpl;
+import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.stream.impl.LocalStreamManagerImpl;
 import org.infinispan.stream.impl.PartitionAwareClusterStreamManager;
 

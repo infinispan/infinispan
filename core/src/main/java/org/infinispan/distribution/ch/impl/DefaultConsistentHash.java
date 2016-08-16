@@ -1,6 +1,20 @@
 package org.infinispan.distribution.ch.impl;
 
-import net.jcip.annotations.Immutable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.UnaryOperator;
+
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.Immutables;
@@ -9,15 +23,9 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.topology.PersistentUUID;
-import org.infinispan.topology.PersistentUUIDManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
-import java.util.function.UnaryOperator;
+import net.jcip.annotations.Immutable;
 
 /**
  * Default {@link ConsistentHash} implementation. This object is immutable.

@@ -1,5 +1,13 @@
 package org.infinispan.server.test.cs.leveldb;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Map.Entry;
+
 import org.apache.commons.codec.binary.Hex;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -25,12 +33,6 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Map.Entry;
-
-import static org.junit.Assert.*;
 
 /**
  * Tests LevelDB cache store.

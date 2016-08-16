@@ -1,12 +1,12 @@
 package org.infinispan.io;
 
-import org.infinispan.Cache;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.WritableByteChannel;
+
+import org.infinispan.Cache;
 
 /**
  * @author Marko Luksa

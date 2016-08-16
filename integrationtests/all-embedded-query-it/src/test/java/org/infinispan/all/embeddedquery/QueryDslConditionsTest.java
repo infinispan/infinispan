@@ -1,5 +1,32 @@
 package org.infinispan.all.embeddedquery;
 
+import static org.infinispan.query.dsl.Expression.avg;
+import static org.infinispan.query.dsl.Expression.count;
+import static org.infinispan.query.dsl.Expression.max;
+import static org.infinispan.query.dsl.Expression.min;
+import static org.infinispan.query.dsl.Expression.param;
+import static org.infinispan.query.dsl.Expression.property;
+import static org.infinispan.query.dsl.Expression.sum;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
 import org.hibernate.hql.ParsingException;
 import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Account;
@@ -16,7 +43,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
@@ -26,33 +52,6 @@ import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-
-import static org.infinispan.query.dsl.Expression.avg;
-import static org.infinispan.query.dsl.Expression.count;
-import static org.infinispan.query.dsl.Expression.max;
-import static org.infinispan.query.dsl.Expression.min;
-import static org.infinispan.query.dsl.Expression.param;
-import static org.infinispan.query.dsl.Expression.property;
-import static org.infinispan.query.dsl.Expression.sum;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Clone of QueryDslConditionsTest modified for uber-jars.

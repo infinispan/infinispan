@@ -1,11 +1,11 @@
 package org.infinispan.distribution.rehash;
 
+import java.util.Arrays;
+
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
 
 @Test(groups = "functional", testName = "distribution.rehash.ConcurrentOverlappingLeaveTest")
 public class ConcurrentOverlappingLeaveTest extends RehashLeaveTestBase {

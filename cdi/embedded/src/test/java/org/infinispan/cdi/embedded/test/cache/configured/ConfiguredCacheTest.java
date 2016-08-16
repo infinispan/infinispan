@@ -1,5 +1,9 @@
 package org.infinispan.cdi.embedded.test.cache.configured;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
@@ -7,10 +11,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Tests that the simple form of configuration works.

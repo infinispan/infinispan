@@ -1,11 +1,12 @@
 package org.infinispan.client.hotrod.configuration;
 
 
-import org.infinispan.commons.util.SslContextFactory;
 import static org.testng.Assert.assertNotNull;
-import org.testng.annotations.Test;
 
 import javax.net.ssl.SSLContext;
+
+import org.infinispan.commons.util.SslContextFactory;
+import org.testng.annotations.Test;
 
 @Test(testName = "client.hotrod.configuration.SSLClassPathConfigurationTest", groups = "functional")
 public class SSLClassPathConfigurationTest {

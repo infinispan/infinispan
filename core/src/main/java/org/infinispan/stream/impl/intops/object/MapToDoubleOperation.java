@@ -1,10 +1,10 @@
 package org.infinispan.stream.impl.intops.object;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.function.ToDoubleFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs map to double operation on a regular {@link Stream}

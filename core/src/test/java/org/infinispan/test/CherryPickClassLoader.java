@@ -1,13 +1,13 @@
 package org.infinispan.test;
 
-import org.jboss.logging.Logger;
-
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.jboss.logging.Logger;
 
 /**
  * A classloader where the classes that are included, excluded or not found can

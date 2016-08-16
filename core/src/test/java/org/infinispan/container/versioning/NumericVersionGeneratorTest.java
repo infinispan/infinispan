@@ -1,12 +1,12 @@
 package org.infinispan.container.versioning;
 
-import org.infinispan.remoting.transport.Address;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.remoting.transport.Address;
+import org.testng.annotations.Test;
 
 /**
  * Test numeric version generator logic

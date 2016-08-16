@@ -1,14 +1,15 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
+import static org.infinispan.test.TestingUtil.marshalledEntry;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
-import static org.infinispan.test.TestingUtil.marshalledEntry;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 /**
  * @author Ryan Emerson

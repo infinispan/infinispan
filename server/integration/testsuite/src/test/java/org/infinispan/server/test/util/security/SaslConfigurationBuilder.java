@@ -1,14 +1,15 @@
 package org.infinispan.server.test.util.security;
 
+import java.io.File;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.SaslQop;
 import org.infinispan.client.hotrod.configuration.SaslStrength;
 import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.server.test.util.ITestUtils;
-
-import java.io.File;
-import javax.security.auth.Subject;
 
 /**
  * 

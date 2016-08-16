@@ -1,5 +1,9 @@
 package org.infinispan.server.endpoint.subsystem;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.infinispan.server.commons.msc.ServiceContainerHelper;
 import org.infinispan.server.core.CacheIgnoreAware;
 import org.infinispan.server.core.ProtocolServer;
@@ -14,10 +18,6 @@ import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
-
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author gustavonalle

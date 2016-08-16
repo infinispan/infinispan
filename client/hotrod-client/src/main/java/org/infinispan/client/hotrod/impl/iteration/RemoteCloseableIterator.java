@@ -1,6 +1,11 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import net.jcip.annotations.NotThreadSafe;
+import java.util.LinkedList;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.Set;
+
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -17,11 +22,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 
-import java.util.LinkedList;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-import java.util.Set;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * @author gustavonalle

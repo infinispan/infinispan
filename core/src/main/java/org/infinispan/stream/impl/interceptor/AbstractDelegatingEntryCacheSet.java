@@ -1,16 +1,16 @@
 package org.infinispan.stream.impl.interceptor;
 
+import java.util.stream.StreamSupport;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.util.AbstractDelegatingCacheSet;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
-
-import java.util.stream.StreamSupport;
+import org.infinispan.util.AbstractDelegatingCacheSet;
 
 /**
  * Abstract cache entry set that delegates to the underlying cache for stream usage

@@ -1,5 +1,13 @@
 package org.infinispan.distribution;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -10,7 +18,6 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.L1InternalCacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.group.Grouper;
 import org.infinispan.distribution.groups.KXGrouper;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -18,15 +25,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-
-import javax.transaction.TransactionManager;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 
 public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagersTest {

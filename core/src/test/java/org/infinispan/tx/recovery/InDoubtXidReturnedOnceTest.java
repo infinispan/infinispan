@@ -1,17 +1,18 @@
 package org.infinispan.tx.recovery;
 
+import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
+import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
+import static org.testng.AssertJUnit.assertEquals;
+
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
-
-import static org.infinispan.tx.recovery.RecoveryTestUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea Markus

@@ -10,6 +10,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.Executor;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.util.Util;
@@ -32,8 +34,6 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
 
 /**
  * {@link org.infinispan.persistence.spi.AdvancedCacheLoader} implementation that stores the entries in a database. In contrast to the

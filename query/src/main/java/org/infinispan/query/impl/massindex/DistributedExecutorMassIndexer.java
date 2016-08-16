@@ -1,5 +1,17 @@
 package org.infinispan.query.impl.massindex;
 
+import static org.infinispan.query.impl.massindex.MassIndexStrategyFactory.calculateStrategy;
+
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
@@ -12,18 +24,6 @@ import org.infinispan.query.impl.massindex.MassIndexStrategy.FlushExecutionMode;
 import org.infinispan.query.impl.massindex.MassIndexStrategy.IndexingExecutionMode;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-
-import static org.infinispan.query.impl.massindex.MassIndexStrategyFactory.calculateStrategy;
 
 /**
  * @author gustavonalle

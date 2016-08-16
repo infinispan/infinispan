@@ -1,5 +1,8 @@
 package org.infinispan.distribution;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -8,9 +11,6 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.test.ReplListener;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "distribution.UnicastInvalidationFuncTest")
 public class UnicastInvalidationFuncTest extends BaseDistFunctionalTest<Object, String> {

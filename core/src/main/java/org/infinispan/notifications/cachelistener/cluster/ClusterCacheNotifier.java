@@ -1,11 +1,11 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import java.util.Collection;
+import java.util.UUID;
+
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-
-import java.util.Collection;
-import java.util.UUID;
 
 /**
  * This interface describes methods required for a cluster listener to be able to be bootstrapped and properly notified

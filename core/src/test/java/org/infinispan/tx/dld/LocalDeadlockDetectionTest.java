@@ -1,5 +1,9 @@
 package org.infinispan.tx.dld;
 
+import static org.testng.Assert.assertEquals;
+
+import javax.transaction.RollbackException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.PerCacheExecutorThread;
@@ -9,13 +13,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
-import static org.testng.Assert.assertEquals;
-
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
 
 /**
  * Tests deadlock detection functionality for local caches.

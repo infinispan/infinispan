@@ -1,13 +1,7 @@
 package org.infinispan.it.compatibility;
 
-import org.infinispan.Cache;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,7 +12,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.testng.AssertJUnit.*;
+import org.infinispan.Cache;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * Test cache listeners bound to embedded cache and operation over HotRod cache.

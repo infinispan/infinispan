@@ -1,10 +1,10 @@
 package org.infinispan.server.hotrod.configuration;
 
+import java.util.Set;
+
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
-
-import java.util.Set;
 
 @BuiltBy(HotRodServerConfigurationBuilder.class)
 public class HotRodServerConfiguration extends ProtocolServerConfiguration {

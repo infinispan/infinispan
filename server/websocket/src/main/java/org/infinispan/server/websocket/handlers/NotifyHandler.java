@@ -1,6 +1,7 @@
 package org.infinispan.server.websocket.handlers;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.server.websocket.CacheListener;
@@ -9,7 +10,7 @@ import org.infinispan.server.websocket.ChannelUtils;
 import org.infinispan.server.websocket.OpHandler;
 import org.infinispan.server.websocket.json.JsonObject;
 
-import java.util.Map;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Handler for the "notify" and "unnotify" operations.

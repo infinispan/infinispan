@@ -1,7 +1,30 @@
 package org.infinispan.stats.wrappers;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.*;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMMIT_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_COMPLETE_NOTIFY_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_PREPARE_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.ASYNC_ROLLBACK_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.CLUSTERED_GET_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.COMMIT_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMMIT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_COMPLETE_NOTIFY;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_PREPARE;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_ASYNC_ROLLBACK;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMMIT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_COMPLETE_NOTIFY;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_PREPARE;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_NODES_ROLLBACK;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_COMMIT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_GET;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_PREPARE;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_SYNC_ROLLBACK;
+import static org.infinispan.stats.container.ExtendedStatistic.PREPARE_COMMAND_SIZE;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_COMMIT_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_GET_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_PREPARE_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.SYNC_ROLLBACK_TIME;
 
 import java.util.Collection;
 import java.util.Collections;

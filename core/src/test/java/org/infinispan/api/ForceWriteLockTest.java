@@ -1,5 +1,9 @@
 package org.infinispan.api;
 
+import static org.testng.AssertJUnit.assertTrue;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -11,10 +15,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Mircea.Markus@jboss.com

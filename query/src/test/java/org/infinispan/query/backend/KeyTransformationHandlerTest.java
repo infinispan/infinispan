@@ -1,5 +1,7 @@
 package org.infinispan.query.backend;
 
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
+
 import java.util.UUID;
 
 import org.infinispan.commons.CacheException;
@@ -14,8 +16,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 /**
  * This is the test class for {@link org.infinispan.query.backend.KeyTransformationHandler}

@@ -1,10 +1,10 @@
 package org.infinispan.remoting.inboundhandler;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * The default {@link Runnable} for the remote commands receives.

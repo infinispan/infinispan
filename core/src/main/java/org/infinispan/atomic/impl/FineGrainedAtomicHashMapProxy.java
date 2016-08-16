@@ -1,11 +1,5 @@
 package org.infinispan.atomic.impl;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.atomic.FineGrainedAtomicMap;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.DeltaAwareCacheEntry;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +7,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.atomic.AtomicMapLookup;
+import org.infinispan.atomic.FineGrainedAtomicMap;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.DeltaAwareCacheEntry;
 
 /**
  * A layer of indirection around an {@link FineGrainedAtomicMap} to provide consistency and isolation for concurrent readers

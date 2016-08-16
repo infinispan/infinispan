@@ -1,15 +1,15 @@
 package org.infinispan.metadata;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * Tests the InternalMetadataImpl to check if it will not create a chain of InternalMetadataImpl

@@ -1,17 +1,18 @@
 package org.infinispan.tx.locking;
 
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.tm.DummyTransactionManager;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertNull;
+
+import java.util.Collections;
+import java.util.Map;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
-import java.util.Collections;
-import java.util.Map;
 
-import static org.testng.Assert.assertNull;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

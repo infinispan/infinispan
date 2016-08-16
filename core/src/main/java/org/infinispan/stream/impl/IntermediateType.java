@@ -1,14 +1,14 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.CacheStream;
-import org.infinispan.BaseCacheStream;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.IntCacheStream;
-import org.infinispan.LongCacheStream;
-
 import java.util.Spliterator;
 import java.util.stream.BaseStream;
 import java.util.stream.StreamSupport;
+
+import org.infinispan.BaseCacheStream;
+import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.IntCacheStream;
+import org.infinispan.LongCacheStream;
 
 /**
  * The various intermediate types.  Note that the local intermediate operation can be a type other than the

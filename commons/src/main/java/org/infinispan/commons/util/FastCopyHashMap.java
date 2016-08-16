@@ -1,8 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.AbstractCollection;
@@ -13,6 +10,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * A HashMap that is optimized for fast shallow copies.

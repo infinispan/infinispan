@@ -1,10 +1,10 @@
 package org.infinispan.query.dsl.impl;
 
-import org.infinispan.query.dsl.Query;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.infinispan.query.dsl.Query;
 
 /**
  * @author anistor@redhat.com

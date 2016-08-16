@@ -1,5 +1,9 @@
 package org.infinispan.test.integration.as.cdi;
 
+import java.io.File;
+
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
@@ -13,9 +17,6 @@ import org.jboss.shrinkwrap.resolver.api.maven.PomEquippedResolveStage;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-import java.io.File;
 
 /**
  * Tests whether {@link DefaultEmbeddedCacheManagerProducer} sets custom Cache name to avoid JMX

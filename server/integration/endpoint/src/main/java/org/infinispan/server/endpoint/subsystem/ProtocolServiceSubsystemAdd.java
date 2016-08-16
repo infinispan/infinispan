@@ -18,12 +18,12 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.dmr.ModelNode;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public abstract class ProtocolServiceSubsystemAdd extends AbstractAddStepHandler {
    private static final int DEFAULT_WORKER_THREADS = 160;

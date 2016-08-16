@@ -1,17 +1,25 @@
 package org.infinispan.functional;
 
+import static org.infinispan.functional.FunctionalListenerAssertions.TestEvent;
+import static org.infinispan.functional.FunctionalListenerAssertions.assertNoEvents;
+import static org.infinispan.functional.FunctionalListenerAssertions.assertOrderedEvents;
+import static org.infinispan.functional.FunctionalListenerAssertions.assertUnorderedEvents;
+import static org.infinispan.functional.FunctionalListenerAssertions.create;
+import static org.infinispan.functional.FunctionalListenerAssertions.createModify;
+import static org.infinispan.functional.FunctionalListenerAssertions.write;
+import static org.infinispan.functional.FunctionalListenerAssertions.writeModify;
+import static org.infinispan.functional.FunctionalListenerAssertions.writeRemove;
+import static org.infinispan.functional.FunctionalTestUtils.rw;
+import static org.infinispan.functional.FunctionalTestUtils.wo;
+
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.infinispan.commons.api.functional.Listeners;
 import org.infinispan.functional.decorators.FunctionalListeners;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-
-import static org.infinispan.functional.FunctionalListenerAssertions.*;
-import static org.infinispan.functional.FunctionalTestUtils.rw;
-import static org.infinispan.functional.FunctionalTestUtils.wo;
 
 @Test(groups = "functional", testName = "functional.FunctionalMapEventsTest")
 public class FunctionalMapEventsTest extends FunctionalMapTest {

@@ -1,5 +1,15 @@
 package org.infinispan.interceptors.locking;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -25,16 +35,6 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.logging.Log;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Base class for various locking interceptors in this package.

@@ -1,5 +1,18 @@
 package org.infinispan.tools;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.List;
+
 import org.infinispan.Version;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
@@ -35,15 +48,6 @@ import org.infinispan.tools.config.ConfigurationConverter;
 import org.infinispan.tools.customs.CustomDataContainer;
 import org.infinispan.tools.customs.CustomTransport;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.List;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.*;
 
 @Test(testName = "tools.ConfigurationConverterTest", groups = "functional")
 public class ConfigurationConverterTest extends AbstractInfinispanTest {

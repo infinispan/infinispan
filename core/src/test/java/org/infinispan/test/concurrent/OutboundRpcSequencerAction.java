@@ -1,5 +1,8 @@
 package org.infinispan.test.concurrent;
 
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.ComponentRegistry;
@@ -8,9 +11,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.AbstractControlledRpcManager;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Replaces the {@link RpcManager} with a wrapper that can interact with a {@link StateSequencer} when a

@@ -1,5 +1,8 @@
 package org.infinispan.objectfilter.test;
 
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
@@ -10,9 +13,6 @@ import org.infinispan.query.dsl.impl.BaseQueryBuilder;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 import org.jboss.logging.Logger;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com

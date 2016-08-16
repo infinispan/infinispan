@@ -1,9 +1,18 @@
 package org.infinispan.factories;
 
+import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
+
+import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.Map;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.annotations.Inject;
@@ -11,9 +20,6 @@ import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -24,12 +30,6 @@ import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.Map;
-
-import static org.infinispan.factories.KnownComponentNames.MODULE_COMMAND_INITIALIZERS;
 
 /**
  * Named cache specific components

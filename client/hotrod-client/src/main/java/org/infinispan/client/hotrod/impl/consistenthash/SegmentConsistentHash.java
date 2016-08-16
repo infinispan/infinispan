@@ -1,8 +1,13 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
+import static java.util.Arrays.stream;
+
 import java.net.SocketAddress;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -10,12 +15,6 @@ import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.stream.IntStream;
-
-import static java.util.Arrays.stream;
 
 /**
  * @author Galder Zamarreño

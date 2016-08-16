@@ -2,12 +2,11 @@ package org.infinispan.eviction;
 
 import java.util.Map;
 
-import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Central component that deals with eviction of cache entries.

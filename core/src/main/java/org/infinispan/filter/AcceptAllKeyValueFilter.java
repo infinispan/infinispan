@@ -1,13 +1,13 @@
 package org.infinispan.filter;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.metadata.Metadata;
-
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.Metadata;
 
 /**
  * A key value filter that accepts all entries found.

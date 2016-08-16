@@ -1,5 +1,8 @@
 package org.infinispan.statetransfer;
 
+import java.util.Map;
+import java.util.Properties;
+
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
@@ -7,9 +10,6 @@ import org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.jgroups.Channel;
 import org.jgroups.JChannel;
-
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * JGroupsChannelLookup implementation that returns an existing channel.

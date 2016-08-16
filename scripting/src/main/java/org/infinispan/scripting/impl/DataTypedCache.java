@@ -1,16 +1,5 @@
 package org.infinispan.scripting.impl;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheCollection;
-import org.infinispan.CacheSet;
-import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.DistinctFunction;
-import org.infinispan.commons.util.Immutables;
-import org.infinispan.util.CacheCollectionMapper;
-import org.infinispan.util.CacheSetMapper;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -21,6 +10,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.infinispan.Cache;
+import org.infinispan.CacheCollection;
+import org.infinispan.CacheSet;
+import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.DistinctFunction;
+import org.infinispan.commons.util.Immutables;
+import org.infinispan.util.CacheCollectionMapper;
+import org.infinispan.util.CacheSetMapper;
 
 public final class DataTypedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 

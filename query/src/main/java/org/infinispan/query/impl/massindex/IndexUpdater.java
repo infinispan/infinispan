@@ -1,5 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.Collections;
+
 import org.hibernate.search.backend.UpdateLuceneWork;
 import org.hibernate.search.bridge.spi.ConversionContext;
 import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
@@ -14,8 +16,6 @@ import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collections;
 
 /**
  * Handle batch updates to an index.

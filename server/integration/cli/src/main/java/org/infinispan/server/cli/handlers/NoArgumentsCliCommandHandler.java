@@ -4,20 +4,10 @@ import org.infinispan.server.cli.CliInterpreterException;
 import org.infinispan.server.cli.util.CliCommandBuffer;
 import org.infinispan.server.cli.util.InfinispanUtil;
 import org.jboss.as.cli.CommandContext;
-import org.jboss.as.cli.CommandFormatException;
 import org.jboss.as.cli.CommandHandler;
 import org.jboss.as.cli.CommandHandlerProvider;
 import org.jboss.as.cli.CommandLineException;
-import org.jboss.as.cli.handlers.CommandHandlerWithArguments;
-import org.jboss.as.cli.impl.ArgumentWithoutValue;
-import org.jboss.as.cli.util.HelpFormatter;
-import org.jboss.as.protocol.StreamUtils;
 import org.jboss.dmr.ModelNode;
-import org.wildfly.security.manager.WildFlySecurityManager;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 /**
  * It represents the no-arg Infinispan CLI command. It should be used as a base class for other commands

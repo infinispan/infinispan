@@ -1,5 +1,14 @@
 package org.infinispan.test.integration.security.embedded;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.naming.Context;
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginException;
+
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -18,14 +27,6 @@ import org.jboss.as.test.integration.security.common.config.SecurityDomain;
 import org.jboss.as.test.integration.security.common.config.SecurityModule;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.runner.RunWith;
-
-import javax.naming.Context;
-import javax.security.auth.Subject;
-import javax.security.auth.login.LoginException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>

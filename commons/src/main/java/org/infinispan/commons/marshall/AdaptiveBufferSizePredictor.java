@@ -1,10 +1,10 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * The {@link BufferSizePredictor} that automatically increases and

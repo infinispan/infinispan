@@ -1,17 +1,15 @@
 package org.infinispan.scripting.utils;
 
-import org.infinispan.commons.api.BasicCache;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.test.TestingUtil;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.Buffer;
-import java.nio.CharBuffer;
 import java.util.stream.Collectors;
+
+import org.infinispan.commons.api.BasicCache;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.test.TestingUtil;
 
 /**
  * Utility class containing general methods for use.

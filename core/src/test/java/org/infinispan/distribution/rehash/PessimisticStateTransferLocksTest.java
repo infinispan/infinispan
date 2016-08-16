@@ -1,16 +1,23 @@
 package org.infinispan.distribution.rehash;
 
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnComponentMethod;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Collections;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.statetransfer.StateConsumer;
-import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.InvocationMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.topology.ClusterTopologyManager;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -19,15 +26,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnComponentMethod;
-import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
-import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests that state transfer properly replicates locks in a pessimistic cache, when the

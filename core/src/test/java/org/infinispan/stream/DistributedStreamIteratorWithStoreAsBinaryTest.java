@@ -1,5 +1,16 @@
 package org.infinispan.stream;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,17 +23,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * Test to verify distributed entry behavior when store as binary is used

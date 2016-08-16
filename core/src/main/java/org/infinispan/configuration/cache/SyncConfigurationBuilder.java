@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.SyncConfiguration.REPL_TIMEOUT;
-
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;

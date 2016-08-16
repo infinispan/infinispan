@@ -1,8 +1,8 @@
 package org.infinispan.server.infinispan.actions;
 
-import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
-
 import java.security.PrivilegedAction;
+
+import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 
 /**
  * AbstractDefaultEmbeddedCacheManagerAction. A helper abstract for writing {@link java.security.PrivilegedAction}s

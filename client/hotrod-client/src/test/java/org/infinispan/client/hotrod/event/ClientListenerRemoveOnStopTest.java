@@ -1,13 +1,13 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Set;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientListenerRemoveOnStopTest")
 public class ClientListenerRemoveOnStopTest extends SingleHotRodServerTest {

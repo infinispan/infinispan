@@ -1,5 +1,10 @@
 package org.infinispan.interceptors.compat;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.util.Collection;
+import java.util.Set;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.ServiceFinder;
@@ -8,11 +13,6 @@ import org.infinispan.compat.TypeConverter;
 import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * An interceptor that applies type conversion to the data stored in the cache.

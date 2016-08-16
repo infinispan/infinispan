@@ -3,8 +3,6 @@ package org.infinispan.commons.marshall;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
 
 /**
  * Class that extends {@link InputStream} and implements {@link ObjectInput}.

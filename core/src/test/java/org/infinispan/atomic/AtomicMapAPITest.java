@@ -1,15 +1,14 @@
 package org.infinispan.atomic;
 
-import org.infinispan.Cache;
-import org.infinispan.distribution.MagicKey;
-import org.testng.annotations.Test;
-
-import java.lang.reflect.Method;
-import java.util.Map;
-
 import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
 import static org.infinispan.atomic.AtomicMapLookup.getFineGrainedAtomicMap;
 import static org.testng.AssertJUnit.fail;
+
+import java.util.Map;
+
+import org.infinispan.Cache;
+import org.infinispan.distribution.MagicKey;
+import org.testng.annotations.Test;
 
 /**
  * @author Pedro Ruivo

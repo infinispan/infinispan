@@ -1,6 +1,9 @@
 package org.infinispan.query.queries.spatial;
 
 import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+
 import org.apache.lucene.search.Query;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -18,8 +21,6 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * Testing and verifying that Spatial queries work properly. The information on the coordinates was taken from the

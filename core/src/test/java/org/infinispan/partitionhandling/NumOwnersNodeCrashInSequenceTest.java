@@ -1,5 +1,14 @@
 package org.infinispan.partitionhandling;
 
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
+import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -26,14 +35,6 @@ import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static org.infinispan.test.concurrent.StateSequencerUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 /**
  * With a cluster made out of nodes {A,B,C,D}, tests that D crashes and before the state transfer finishes, another node

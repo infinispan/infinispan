@@ -1,9 +1,9 @@
 package org.infinispan.security.actions;
 
+import java.util.List;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.interceptors.AsyncInterceptor;
-
-import java.util.List;
 
 /**
  * GetCacheInterceptorChainAction.

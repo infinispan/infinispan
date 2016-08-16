@@ -1,14 +1,10 @@
 package org.infinispan.lock;
 
-import org.infinispan.test.AbstractCacheTest;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
-import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
-import org.infinispan.util.concurrent.locks.LockPromise;
-import org.infinispan.util.concurrent.locks.LockState;
-import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,16 +14,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
+import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
+import org.infinispan.util.concurrent.locks.LockPromise;
+import org.infinispan.util.concurrent.locks.LockState;
+import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
+import org.testng.annotations.Test;
 
 /**
  * Unit tests for the {@link InfinispanLock}.

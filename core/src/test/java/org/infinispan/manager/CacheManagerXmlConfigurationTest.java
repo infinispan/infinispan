@@ -1,6 +1,15 @@
 package org.infinispan.manager;
 
+import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertFalse;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
@@ -13,14 +22,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
-import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
-import static org.testng.Assert.*;
 
 /**
  * @author Manik Surtani

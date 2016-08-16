@@ -1,5 +1,11 @@
 package org.infinispan.query.clustered;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
@@ -8,12 +14,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.UUID;
 
 /**
  * DistributedIterator.

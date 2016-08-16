@@ -1,6 +1,5 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 
 /**

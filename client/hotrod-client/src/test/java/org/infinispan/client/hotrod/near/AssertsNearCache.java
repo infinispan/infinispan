@@ -1,5 +1,22 @@
 package org.infinispan.client.hotrod.near;
 
+import static org.infinispan.client.hotrod.near.MockNearCacheService.MockClearEvent;
+import static org.infinispan.client.hotrod.near.MockNearCacheService.MockEvent;
+import static org.infinispan.client.hotrod.near.MockNearCacheService.MockGetEvent;
+import static org.infinispan.client.hotrod.near.MockNearCacheService.MockPutEvent;
+import static org.infinispan.client.hotrod.near.MockNearCacheService.MockPutIfAbsentEvent;
+import static org.infinispan.client.hotrod.near.MockNearCacheService.MockRemoveEvent;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.entryVersion;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -7,15 +24,6 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
-
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.entryVersion;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.infinispan.client.hotrod.near.MockNearCacheService.*;
-import static org.testng.AssertJUnit.*;
 
 class AssertsNearCache<K, V> {
    final RemoteCache<K, V> remote;

@@ -1,5 +1,10 @@
 package org.infinispan.interceptors.locking;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -19,11 +24,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Locking interceptor to be used by optimistic transactional caches.

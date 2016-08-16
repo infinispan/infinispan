@@ -1,5 +1,11 @@
 package org.infinispan.query.remote.impl.filter;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.annotations.Inject;
@@ -13,12 +19,6 @@ import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com

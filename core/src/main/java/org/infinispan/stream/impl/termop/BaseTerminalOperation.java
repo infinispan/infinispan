@@ -1,13 +1,11 @@
 package org.infinispan.stream.impl.termop;
 
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
-import java.io.Serializable;
 import java.util.function.Supplier;
 import java.util.stream.BaseStream;
 import java.util.stream.Stream;
+
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Abstract instance that provides common code needed for all terminal operations.  Note this class doesn't extend

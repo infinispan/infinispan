@@ -1,5 +1,13 @@
 package org.infinispan.server.test.client.hotrod;
 
+import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
+import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.lang.reflect.Field;
 import java.net.Inet6Address;
 import java.net.InetSocketAddress;
@@ -27,16 +35,7 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
-import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.infinispan.server.test.util.ITestUtils.isDistributedMode;
-import static org.infinispan.server.test.util.ITestUtils.isLocalMode;
 
 /**
  * Tests for HotRod client and its RemoteCacheManager API. Subclasses must provide

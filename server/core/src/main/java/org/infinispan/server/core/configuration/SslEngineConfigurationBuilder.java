@@ -1,11 +1,11 @@
 package org.infinispan.server.core.configuration;
 
-import org.infinispan.server.core.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+
+import org.infinispan.server.core.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  *

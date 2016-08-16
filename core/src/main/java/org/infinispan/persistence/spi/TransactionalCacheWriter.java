@@ -1,8 +1,8 @@
 package org.infinispan.persistence.spi;
 
-import org.infinispan.persistence.support.BatchModification;
-
 import javax.transaction.Transaction;
+
+import org.infinispan.persistence.support.BatchModification;
 
 /**
  * Defines the functionality of a transactional store.  This interface allows the implementing store to participate in the

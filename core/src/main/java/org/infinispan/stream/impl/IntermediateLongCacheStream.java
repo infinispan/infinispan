@@ -1,23 +1,5 @@
 package org.infinispan.stream.impl;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheStream;
-import org.infinispan.BaseCacheStream;
-import org.infinispan.DoubleCacheStream;
-import org.infinispan.IntCacheStream;
-import org.infinispan.LongCacheStream;
-import org.infinispan.stream.impl.local.LocalLongCacheStream;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableLongBinaryOperator;
-import org.infinispan.util.function.SerializableLongConsumer;
-import org.infinispan.util.function.SerializableLongFunction;
-import org.infinispan.util.function.SerializableLongPredicate;
-import org.infinispan.util.function.SerializableLongToDoubleFunction;
-import org.infinispan.util.function.SerializableLongToIntFunction;
-import org.infinispan.util.function.SerializableLongUnaryOperator;
-import org.infinispan.util.function.SerializableObjLongConsumer;
-import org.infinispan.util.function.SerializableSupplier;
-
 import java.util.LongSummaryStatistics;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
@@ -36,6 +18,24 @@ import java.util.function.LongUnaryOperator;
 import java.util.function.ObjLongConsumer;
 import java.util.function.Supplier;
 import java.util.stream.LongStream;
+
+import org.infinispan.BaseCacheStream;
+import org.infinispan.Cache;
+import org.infinispan.CacheStream;
+import org.infinispan.DoubleCacheStream;
+import org.infinispan.IntCacheStream;
+import org.infinispan.LongCacheStream;
+import org.infinispan.stream.impl.local.LocalLongCacheStream;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableLongBinaryOperator;
+import org.infinispan.util.function.SerializableLongConsumer;
+import org.infinispan.util.function.SerializableLongFunction;
+import org.infinispan.util.function.SerializableLongPredicate;
+import org.infinispan.util.function.SerializableLongToDoubleFunction;
+import org.infinispan.util.function.SerializableLongToIntFunction;
+import org.infinispan.util.function.SerializableLongUnaryOperator;
+import org.infinispan.util.function.SerializableObjLongConsumer;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * An intermediate long cache stream used when an intermediate operation that requires both a remote and local portion

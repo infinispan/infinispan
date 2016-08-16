@@ -1,14 +1,14 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.manager.EmbeddedCacheManager;
+import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
+
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.extractGlobalMarshaller;
 
 /**
  * JdbcStringBasedStoreTest using production level marshaller.

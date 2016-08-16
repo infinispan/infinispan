@@ -1,9 +1,9 @@
 package org.infinispan.integrationtests.cdijcache.interceptor.service;
 
+import static org.infinispan.cdi.common.util.Contracts.assertNotNull;
+
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheRemove;
-
-import static org.infinispan.cdi.common.util.Contracts.assertNotNull;
 
 /**
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI

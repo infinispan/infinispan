@@ -1,5 +1,11 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.beans.IntrospectionException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
 import org.apache.lucene.document.DateTools;
 import org.hibernate.hql.ParsingException;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
@@ -26,12 +32,6 @@ import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.query.logging.Log;
 import org.jboss.logging.Logger;
-
-import java.beans.IntrospectionException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
 
 /**
  * Use the Hibernate Search metadata to resolve property paths. This relies on the Hibernate Search annotations.

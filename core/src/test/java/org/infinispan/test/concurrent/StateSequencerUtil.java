@@ -1,16 +1,16 @@
 package org.infinispan.test.concurrent;
 
-import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.manager.EmbeddedCacheManager;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+
+import org.infinispan.Cache;
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 
 /**

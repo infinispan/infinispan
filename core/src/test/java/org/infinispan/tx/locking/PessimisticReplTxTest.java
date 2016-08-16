@@ -1,5 +1,10 @@
 package org.infinispan.tx.locking;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -10,8 +15,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
 
 /**
  * @author Mircea Markus

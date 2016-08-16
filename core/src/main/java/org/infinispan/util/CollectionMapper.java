@@ -1,8 +1,5 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.util.IteratorMapper;
-import org.infinispan.commons.util.SpliteratorMapper;
-
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
@@ -10,6 +7,9 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.SpliteratorMapper;
 
 /**
  * A collection that maps another one to a new one of a possibly different type.  Note this collection is read only

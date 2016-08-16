@@ -1,5 +1,10 @@
 package org.infinispan.functional;
 
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
@@ -15,11 +20,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 @Test(groups = "functional", testName = "functional.FunctionalSimpleTutorialTest")
 public class FunctionalSimpleTutorialTest extends SingleCacheManagerTest {

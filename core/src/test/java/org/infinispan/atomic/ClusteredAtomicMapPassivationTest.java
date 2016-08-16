@@ -1,19 +1,19 @@
 package org.infinispan.atomic;
 
+import static org.infinispan.test.TestingUtil.withTx;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.concurrent.Callable;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-
-import java.util.concurrent.Callable;
-
-import static org.infinispan.test.TestingUtil.withTx;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test atomic map operations in a clustered environment where passivation

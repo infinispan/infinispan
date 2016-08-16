@@ -1,5 +1,11 @@
 package org.infinispan.commands.write;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.CommandInvocationId;
@@ -11,12 +17,6 @@ import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
 
 
 /**

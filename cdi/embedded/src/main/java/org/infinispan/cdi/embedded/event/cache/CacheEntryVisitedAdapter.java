@@ -1,14 +1,14 @@
 package org.infinispan.cdi.embedded.event.cache;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.util.TypeLiteral;
+
 import org.infinispan.Cache;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
-
-import javax.enterprise.event.Event;
-import javax.enterprise.util.TypeLiteral;
 
 /**
  * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited}.

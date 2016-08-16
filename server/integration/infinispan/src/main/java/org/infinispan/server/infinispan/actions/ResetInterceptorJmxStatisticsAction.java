@@ -1,10 +1,10 @@
 package org.infinispan.server.infinispan.actions;
 
+import static org.jboss.as.clustering.infinispan.subsystem.CacheMetricsHandler.getFirstInterceptorWhichExtends;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
-
-import static org.jboss.as.clustering.infinispan.subsystem.CacheMetricsHandler.getFirstInterceptorWhichExtends;
 
 /**
  * ResetInterceptorJmxStatisticsAction.

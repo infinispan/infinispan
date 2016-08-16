@@ -2,9 +2,9 @@ package org.infinispan.commons.util;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.ServiceConfigurationError;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
 import org.infinispan.commons.logging.Log;

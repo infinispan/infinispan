@@ -1,11 +1,5 @@
 package org.infinispan.functional.impl;
 
-import org.infinispan.commons.api.functional.Param;
-import org.infinispan.commons.api.functional.Param.FutureMode;
-import org.infinispan.commons.api.functional.Param.PersistenceMode;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.Experimental;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -14,6 +8,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
+
+import org.infinispan.commons.api.functional.Param;
+import org.infinispan.commons.api.functional.Param.FutureMode;
+import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Experimental;
 
 /**
  * Internal class that encapsulates collection of parameters used to tweak

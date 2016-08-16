@@ -1,5 +1,10 @@
 package org.infinispan.query.queries.phrases;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.List;
+
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.exception.SearchException;
@@ -15,11 +20,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests and verifies that the querying using keywords, phrases, etc works properly.

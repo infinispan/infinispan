@@ -1,5 +1,20 @@
 package org.infinispan.remoting;
 
+import static org.infinispan.test.TestingUtil.extractCommandsFactory;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -33,21 +48,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.extractCommandsFactory;
-import static org.infinispan.test.TestingUtil.extractGlobalComponent;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests the Asynchronous Invocation API and checks if the commands are correctly processed (or JGroups or Infinispan

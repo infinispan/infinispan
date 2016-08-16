@@ -1,5 +1,7 @@
 package org.infinispan.server.test.client.rest;
 
+import static org.infinispan.server.test.util.ITestUtils.isReplicatedMode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,14 +15,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.server.test.client.rest.RESTHelper.delete;
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.get;
-import static org.infinispan.server.test.client.rest.RESTHelper.head;
-import static org.infinispan.server.test.client.rest.RESTHelper.put;
-import static org.infinispan.server.test.util.ITestUtils.*;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test asynchronous REST operations through a custom REST client.

@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
-import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.User;
-
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 
 /**
  * @author anistor@redhat.com

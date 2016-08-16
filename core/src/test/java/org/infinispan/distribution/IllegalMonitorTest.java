@@ -1,11 +1,11 @@
 package org.infinispan.distribution;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**

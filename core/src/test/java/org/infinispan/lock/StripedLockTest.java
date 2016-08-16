@@ -1,12 +1,12 @@
 package org.infinispan.lock;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 /**
  * Tester class for {@link org.infinispan.util.concurrent.locks.StripedLock}.

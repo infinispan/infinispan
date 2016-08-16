@@ -1,5 +1,12 @@
 package org.infinispan.commands.functional;
 
+import static org.infinispan.functional.impl.EntryViews.snapshot;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.function.Function;
+
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -8,13 +15,6 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.function.Function;
-
-import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand implements LocalCommand {
 

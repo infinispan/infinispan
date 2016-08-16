@@ -1,5 +1,14 @@
 package org.infinispan.xsite.statetransfer.failures;
 
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -11,15 +20,6 @@ import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.distribution.DistributionTestHelper.addressOf;
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Helper methods for x-site state transfer during topology changes.

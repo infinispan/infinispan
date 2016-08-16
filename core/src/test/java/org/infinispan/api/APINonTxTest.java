@@ -1,13 +1,8 @@
 package org.infinispan.api;
 
-import org.infinispan.commons.util.ObjectDuplicator;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import static org.infinispan.test.TestingUtil.assertNoLocks;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,9 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.infinispan.test.TestingUtil.assertNoLocks;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.commons.util.ObjectDuplicator;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

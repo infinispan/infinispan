@@ -1,10 +1,10 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.metadata.Metadata;
+import java.util.Map;
+
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.metadata.MetadataAware;
-
-import java.util.Map;
+import org.infinispan.metadata.Metadata;
 
 /**
  * An entry that is stored in the data container

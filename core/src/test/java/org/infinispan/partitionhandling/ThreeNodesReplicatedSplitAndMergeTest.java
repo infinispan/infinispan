@@ -1,17 +1,17 @@
 package org.infinispan.partitionhandling;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.util.HashSet;
+import java.util.List;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import java.util.HashSet;
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "partitionhandling.ThreeNodesReplicatedSplitAndMergeTest")
 public class ThreeNodesReplicatedSplitAndMergeTest extends BasePartitionHandlingTest {

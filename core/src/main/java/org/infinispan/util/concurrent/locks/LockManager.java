@@ -1,10 +1,10 @@
 package org.infinispan.util.concurrent.locks;
 
-import org.infinispan.context.InvocationContext;
-import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
-
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.context.InvocationContext;
+import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
 
 /**
  * An interface to deal with all aspects of acquiring and releasing locks for cache entries.

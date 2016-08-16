@@ -1,9 +1,9 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.util.Arrays;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
-
-import java.util.Arrays;
 
 /**
  * @author anistor@redhat.com

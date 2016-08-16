@@ -1,12 +1,12 @@
 package org.infinispan.query.remote.impl;
 
+import java.util.function.BiFunction;
+
 import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
-
-import java.util.function.BiFunction;
 
 /**
  * Tests if a field is indexed by examining the Protobuf metadata.

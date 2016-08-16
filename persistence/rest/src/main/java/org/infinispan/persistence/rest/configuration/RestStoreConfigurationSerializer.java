@@ -1,10 +1,10 @@
 package org.infinispan.persistence.rest.configuration;
 
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.configuration.serializing.AbstractStoreSerializer;
 import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.configuration.serializing.XMLExtendedStreamWriter;
-
-import javax.xml.stream.XMLStreamException;
 
 /**
  * RestStoreConfigurationSerializer.

@@ -1,5 +1,12 @@
 package org.infinispan.persistence.manager;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.Executor;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
@@ -7,12 +14,6 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.BatchModification;
-
-import javax.transaction.Transaction;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.Executor;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

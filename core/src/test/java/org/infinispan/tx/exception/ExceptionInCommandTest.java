@@ -1,16 +1,16 @@
 package org.infinispan.tx.exception;
 
+import java.io.Serializable;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-
-import java.io.Serializable;
 
 /**
  * @author Mircea.Markus@jboss.com

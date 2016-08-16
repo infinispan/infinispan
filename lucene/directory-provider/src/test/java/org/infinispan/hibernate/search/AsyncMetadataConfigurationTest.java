@@ -1,5 +1,7 @@
 package org.infinispan.hibernate.search;
 
+import static org.junit.Assert.assertEquals;
+
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.test.util.HibernateManualConfiguration;
 import org.hibernate.search.testsupport.BytemanHelper;
@@ -8,8 +10,6 @@ import org.jboss.byteman.contrib.bmunit.BMRule;
 import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Verifies the {@link org.infinispan.hibernate.search.spi.InfinispanIntegration#WRITE_METADATA_ASYNC} setting is

@@ -1,11 +1,12 @@
 package org.infinispan.server.core.security.external;
 
+import java.security.Principal;
+import java.util.Map;
+
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-import java.security.Principal;
-import java.util.Map;
 
 public final class ExternalSaslServerFactory implements SaslServerFactory {
 

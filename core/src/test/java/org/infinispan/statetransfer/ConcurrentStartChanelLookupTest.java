@@ -1,5 +1,13 @@
 package org.infinispan.statetransfer;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
+import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.Future;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,14 +23,6 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.JChannel;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.Future;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
-import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests concurrent startup of cache managers when the channel is started externally

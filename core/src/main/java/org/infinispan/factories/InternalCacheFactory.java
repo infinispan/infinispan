@@ -6,7 +6,8 @@ import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.impl.ActivationManagerStub;
@@ -16,11 +17,11 @@ import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
-import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.stats.impl.StatsCollector;
-import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
+import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.xsite.XSiteAdminOperations;
 
 /**

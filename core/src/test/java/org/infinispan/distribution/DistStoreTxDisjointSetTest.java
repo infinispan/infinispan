@@ -1,5 +1,12 @@
 package org.infinispan.distribution;
 
+import static java.lang.String.format;
+import static org.infinispan.distribution.DistributionTestHelper.addressOf;
+import static org.infinispan.distribution.DistributionTestHelper.isOwner;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,13 +14,6 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.lang.String.format;
-import static org.infinispan.distribution.DistributionTestHelper.addressOf;
-import static org.infinispan.distribution.DistributionTestHelper.isOwner;
 
 /**
  * This tests the access pattern where a Tx touches multiple keys such that: K1: {A, B} K2: {A, C}

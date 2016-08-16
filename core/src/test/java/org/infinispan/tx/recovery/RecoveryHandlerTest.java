@@ -1,12 +1,12 @@
 package org.infinispan.tx.recovery;
 
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
 
 /**
  * @author Mircea Markus

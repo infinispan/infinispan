@@ -9,18 +9,30 @@
  */
 
 package org.infinispan.util.concurrent;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.executors.ExecutorAllCompletionService;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableMap;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.AbstractList;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -29,9 +41,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 
-
-import static java.util.Collections.singletonMap;
-import static java.util.Collections.unmodifiableMap;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.infinispan.commons.util.concurrent.ParallelIterableMap;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.executors.ExecutorAllCompletionService;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 
 /**

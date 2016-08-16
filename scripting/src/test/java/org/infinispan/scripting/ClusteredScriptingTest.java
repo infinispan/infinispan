@@ -1,5 +1,19 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.scripting.utils.ScriptingUtils.getScriptingManager;
+import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
+import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
+import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.withCacheManagers;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.Flag;
@@ -11,18 +25,6 @@ import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
-import static org.infinispan.scripting.utils.ScriptingUtils.*;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.infinispan.test.TestingUtil.withCacheManagers;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "scripting.ClusteredScriptingTest")
 public class ClusteredScriptingTest extends AbstractInfinispanTest {

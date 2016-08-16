@@ -1,5 +1,11 @@
 package org.infinispan.replication;
 
+import java.util.Collections;
+import java.util.concurrent.Future;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -13,11 +19,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.util.Collections;
-import java.util.concurrent.Future;
 
 @Test(groups = "functional", testName = "replication.AsyncAPITxSyncReplTest")
 public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {

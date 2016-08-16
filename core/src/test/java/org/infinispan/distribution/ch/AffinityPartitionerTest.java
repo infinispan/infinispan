@@ -1,16 +1,16 @@
 package org.infinispan.distribution.ch;
 
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.Serializable;
+import java.util.stream.IntStream;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.stream.IntStream;
-
-import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author gustavonalle

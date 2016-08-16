@@ -1,13 +1,11 @@
 package org.infinispan.affinity.impl;
 
-import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.impl.KeyAffinityServiceImpl;
-import org.infinispan.affinity.impl.RndKeyGenerator;
-import org.infinispan.remoting.transport.Address;
-import org.testng.annotations.Test;
-
 import java.util.Collections;
 import java.util.List;
+
+import org.infinispan.affinity.KeyAffinityServiceFactory;
+import org.infinispan.remoting.transport.Address;
+import org.testng.annotations.Test;
 
 /**
  * This class just overrides the methods in the base class as TestNG behaves funny with depending methods and inheritance.

@@ -1,5 +1,16 @@
 package org.infinispan.server.test.client.hotrod.osgi;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.ops4j.pax.exam.CoreOptions.maven;
+
+import java.io.File;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -37,14 +48,6 @@ import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.options.RawUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
-
-import java.io.File;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.*;
-import static org.ops4j.pax.exam.CoreOptions.maven;
 
 /**
  * Simple test for RemoteCache running in OSGi (Karaf). Both basic put/get operations and remote

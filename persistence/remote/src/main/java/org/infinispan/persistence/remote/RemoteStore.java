@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote;
 
-import net.jcip.annotations.ThreadSafe;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -17,24 +18,23 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.TaskContextImpl;
-import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
-import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
-import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
-import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
+import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
+import org.infinispan.persistence.remote.logging.Log;
+import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Cache store that delegates the call to a infinispan cluster. Communication between this cache store and the remote

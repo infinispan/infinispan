@@ -1,9 +1,10 @@
 package org.infinispan.commons.marshall;
 
-import net.jcip.annotations.ThreadSafe;
+import java.io.IOException;
+
 import org.infinispan.commons.io.ByteBuffer;
 
-import java.io.IOException;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A marshaller is a class that is able to marshall and unmarshall objects efficiently.

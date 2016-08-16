@@ -1,5 +1,11 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
@@ -13,12 +19,6 @@ import org.infinispan.notifications.cachelistener.event.TransactionalEvent;
 import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * This is an event designed for use with cluster listeners solely.  This is the event that is serialized across the

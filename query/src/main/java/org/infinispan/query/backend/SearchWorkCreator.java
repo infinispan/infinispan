@@ -1,10 +1,10 @@
 package org.infinispan.query.backend;
 
-import org.hibernate.search.backend.spi.Work;
-import org.hibernate.search.backend.spi.WorkType;
-
 import java.io.Serializable;
 import java.util.Collection;
+
+import org.hibernate.search.backend.spi.Work;
+import org.hibernate.search.backend.spi.WorkType;
 
 /**
  * Creates collections of Work instances that should be performed by Hibernate-Search.

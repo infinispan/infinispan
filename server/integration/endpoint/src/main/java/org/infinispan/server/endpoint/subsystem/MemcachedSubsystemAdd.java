@@ -18,8 +18,6 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import java.util.List;
-
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
@@ -30,7 +28,6 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
-import org.jboss.msc.service.ServiceController;
 
 /**
  * @author Tristan Tarrant

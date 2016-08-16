@@ -4,9 +4,9 @@ import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
-import org.infinispan.Cache;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.remoting.transport.Address;

@@ -1,5 +1,10 @@
 package org.infinispan.server.endpoint.subsystem;
 
+import static org.infinispan.server.endpoint.subsystem.ModelNodeUtils.contains;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
@@ -7,11 +12,6 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.registry.Resource.ResourceEntry;
 import org.jboss.dmr.ModelNode;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.infinispan.server.endpoint.subsystem.ModelNodeUtils.contains;
 
 /**
  * This handler inspects all endpoint resources to check if a one or more caches are being ignored.

@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.impl;
 
-import org.infinispan.client.hotrod.impl.protocol.CodecUtils;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.impl.protocol.CodecUtils;
 import org.testng.annotations.Test;
 
 @Test (testName = "client.hotrod.RemoteCacheImplTest", groups = "unit" )

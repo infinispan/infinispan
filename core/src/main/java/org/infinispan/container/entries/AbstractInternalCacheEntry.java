@@ -1,7 +1,7 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.metadata.Metadata;
 import org.infinispan.container.DataContainer;
+import org.infinispan.metadata.Metadata;
 
 /**
  * An abstract internal cache entry that is typically stored in the data container

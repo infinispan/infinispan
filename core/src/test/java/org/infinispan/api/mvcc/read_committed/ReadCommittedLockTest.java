@@ -1,10 +1,10 @@
 package org.infinispan.api.mvcc.read_committed;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 @Test(groups = "functional", testName = "api.mvcc.read_committed.ReadCommittedLockTest")
 public class ReadCommittedLockTest extends LockTestBase {

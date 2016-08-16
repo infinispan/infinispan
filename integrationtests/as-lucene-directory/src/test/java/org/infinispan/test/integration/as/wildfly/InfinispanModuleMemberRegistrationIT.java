@@ -1,5 +1,7 @@
 package org.infinispan.test.integration.as.wildfly;
 
+import static org.infinispan.test.integration.as.VersionTestHelper.addHibernateSearchManifestDependencies;
+
 import org.infinispan.test.integration.as.wildfly.controller.MemberRegistration;
 import org.infinispan.test.integration.as.wildfly.model.Member;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -14,8 +16,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.persistence20.PersistenceDescriptor;
 import org.junit.runner.RunWith;
-
-import static org.infinispan.test.integration.as.VersionTestHelper.addHibernateSearchManifestDependencies;
 
 /**
  * Test the Hibernate Search module combined with an Infinispan Directory usage.

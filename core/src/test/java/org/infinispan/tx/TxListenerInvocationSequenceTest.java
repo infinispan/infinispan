@@ -1,5 +1,11 @@
 package org.infinispan.tx;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.notifications.Listener;
@@ -11,12 +17,6 @@ import org.infinispan.notifications.cachelistener.event.TransactionCompletedEven
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.org

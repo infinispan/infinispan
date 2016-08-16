@@ -1,15 +1,12 @@
 package org.infinispan.server.hotrod;
 
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.server.hotrod.logging.JavaLog;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelPipeline;
 import io.netty.util.CharsetUtil;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.hotrod.logging.JavaLog;
-import scala.Tuple2;
-
-import java.security.PrivilegedActionException;
 
 /**
  * Static helper to provide common way of writing response to channel

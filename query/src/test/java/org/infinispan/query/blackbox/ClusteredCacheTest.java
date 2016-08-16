@@ -1,5 +1,15 @@
 package org.infinispan.query.blackbox;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
+
+import javax.transaction.TransactionManager;
+
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -25,15 +35,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Future;
-
-import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 
 /**
  * @author Navin Surtani

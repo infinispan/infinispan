@@ -1,5 +1,10 @@
 package org.infinispan.notifications;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -15,11 +20,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = {"functional", "smoke"}, testName = "notifications.ConcurrentNotificationTest")
 public class ConcurrentNotificationTest extends AbstractInfinispanTest {

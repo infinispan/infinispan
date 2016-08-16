@@ -1,15 +1,16 @@
 package org.infinispan.server.core;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import org.infinispan.commons.util.Util;
-import org.testng.annotations.Test;
-
 import static org.infinispan.server.core.transport.ExtendedByteBuf.readUnsignedInt;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.readUnsignedLong;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.writeUnsignedInt;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.writeUnsignedLong;
 import static org.testng.AssertJUnit.assertEquals;
+
+import org.infinispan.commons.util.Util;
+import org.testng.annotations.Test;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * Variable length number test.

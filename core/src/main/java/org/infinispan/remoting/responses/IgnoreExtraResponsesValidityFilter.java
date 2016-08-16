@@ -1,11 +1,11 @@
 package org.infinispan.remoting.responses;
 
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * A filter that only expects responses from an initial set of targets.

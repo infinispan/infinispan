@@ -1,8 +1,12 @@
 package org.infinispan.persistence.rest.configuration;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertSame;
+
 import org.infinispan.Cache;
-import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.rest.EmbeddedRestServer;
 import org.infinispan.rest.RestTestingUtil;
@@ -13,10 +17,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertSame;
 
 /**
  * Simple test to sample how the rest cache store is configured.

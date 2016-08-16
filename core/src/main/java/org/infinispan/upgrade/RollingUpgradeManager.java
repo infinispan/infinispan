@@ -1,5 +1,9 @@
 package org.infinispan.upgrade;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
@@ -13,10 +17,6 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This component handles the control hooks to handle migrating from one version of Infinispan to

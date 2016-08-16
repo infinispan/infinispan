@@ -1,12 +1,13 @@
 package org.infinispan.jcache.embedded;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.stats.Stats;
-
-import javax.cache.management.CacheStatisticsMXBean;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
+import javax.cache.management.CacheStatisticsMXBean;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.stats.Stats;
 
 /**
  * The reference implementation of {@link CacheStatisticsMXBean}.

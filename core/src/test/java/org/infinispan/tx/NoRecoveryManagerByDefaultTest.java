@@ -1,16 +1,14 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.existsObject;
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import static org.infinispan.test.TestingUtil.existsObject;
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 /**
  * Ensures that there is no recovery manager registered in JMX by default.

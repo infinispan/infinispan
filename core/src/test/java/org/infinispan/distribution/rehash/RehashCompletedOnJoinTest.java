@@ -1,15 +1,15 @@
 package org.infinispan.distribution.rehash;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @Test(groups = "functional", testName = "distribution.rehash.RehashCompletedOnJoinTest")
 public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest<Object, String> {

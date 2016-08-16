@@ -1,5 +1,9 @@
 package org.infinispan.distribution.rehash;
 
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -15,10 +19,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.util.Set;
-
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test with a distributed cache (numOwners=1), a shared cache store and 'preload' enabled

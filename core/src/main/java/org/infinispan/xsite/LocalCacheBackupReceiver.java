@@ -1,5 +1,8 @@
 package org.infinispan.xsite;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.remoting.LocalInvocation;
@@ -8,9 +11,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * {@link org.infinispan.xsite.BackupReceiver} implementation for local caches.

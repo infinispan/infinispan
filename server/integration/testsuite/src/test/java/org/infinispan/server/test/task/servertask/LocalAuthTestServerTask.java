@@ -1,10 +1,10 @@
 package org.infinispan.server.test.task.servertask;
 
+import java.util.Optional;
+
 import org.infinispan.Cache;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
-
-import java.util.Optional;
 
 /**
  * Server task which requires specific role.

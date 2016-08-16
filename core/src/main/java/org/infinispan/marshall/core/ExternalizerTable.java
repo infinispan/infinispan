@@ -1,5 +1,11 @@
 package org.infinispan.marshall.core;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
+
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.atomic.impl.AtomicHashMapDelta;
@@ -66,10 +72,22 @@ import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.filter.NullValueConverter;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.MetaParams;
-import org.infinispan.marshall.exts.*;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
+import org.infinispan.marshall.exts.ArrayExternalizers;
+import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
+import org.infinispan.marshall.exts.DoubleSummaryStatisticsExternalizer;
+import org.infinispan.marshall.exts.EnumSetExternalizer;
+import org.infinispan.marshall.exts.IntSummaryStatisticsExternalizer;
+import org.infinispan.marshall.exts.ListExternalizer;
+import org.infinispan.marshall.exts.LongSummaryStatisticsExternalizer;
+import org.infinispan.marshall.exts.MapExternalizer;
+import org.infinispan.marshall.exts.MetaParamExternalizers;
+import org.infinispan.marshall.exts.OptionalExternalizer;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
+import org.infinispan.marshall.exts.SetExternalizer;
+import org.infinispan.marshall.exts.SingletonListExternalizer;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
@@ -112,12 +130,6 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
 
 /**
  * The externalizer table maintains information necessary to be able to map a particular type with the corresponding

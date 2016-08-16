@@ -1,8 +1,13 @@
 package org.infinispan.atomic;
 
-import org.infinispan.Cache;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
+
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -12,10 +17,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "atomic.AtomicMapLocalTest")
 public class AtomicMapLocalTest extends AbstractInfinispanTest {

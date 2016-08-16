@@ -1,8 +1,8 @@
 package org.infinispan.persistence.jdbc.stringbased;
 
-import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
-
 import java.util.StringTokenizer;
+
+import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
 
 /**
  * @author Mircea.Markus@jboss.com

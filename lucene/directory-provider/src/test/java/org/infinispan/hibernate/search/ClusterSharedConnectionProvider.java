@@ -1,10 +1,10 @@
 package org.infinispan.hibernate.search;
 
-import org.h2.jdbcx.JdbcConnectionPool;
-import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
-
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import org.h2.jdbcx.JdbcConnectionPool;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.

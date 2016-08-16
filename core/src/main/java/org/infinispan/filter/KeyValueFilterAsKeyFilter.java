@@ -1,15 +1,15 @@
 package org.infinispan.filter;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * This is a KeyFilter that utilizes the given {@link org.infinispan.filter.KeyValueFilter} to determine if to

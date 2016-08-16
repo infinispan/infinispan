@@ -1,18 +1,19 @@
 package org.infinispan.jcache;
 
+import static org.infinispan.test.TestingUtil.replaceComponent;
+
+import java.lang.reflect.Method;
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import javax.cache.Cache;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
-
-import javax.cache.Cache;
-import java.lang.reflect.Method;
-import java.net.URI;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.replaceComponent;
 
 /**
  * @author Matej Cimbora

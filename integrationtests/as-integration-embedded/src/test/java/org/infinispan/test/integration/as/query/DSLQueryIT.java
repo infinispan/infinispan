@@ -1,5 +1,10 @@
 package org.infinispan.test.integration.as.query;
 
+import java.util.Date;
+import java.util.List;
+
+import javax.inject.Inject;
+
 import org.infinispan.Version;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -14,10 +19,6 @@ import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Test for DSL queries when using the wildfly modules

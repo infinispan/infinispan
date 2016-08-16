@@ -1,5 +1,9 @@
 package org.infinispan.all.embeddedquery.testdomain.hsearch;
 
+import java.io.Serializable;
+import java.util.List;
+import java.util.Set;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
@@ -10,10 +14,6 @@ import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
 import org.infinispan.all.embeddedquery.testdomain.Address;
 import org.infinispan.all.embeddedquery.testdomain.User;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com

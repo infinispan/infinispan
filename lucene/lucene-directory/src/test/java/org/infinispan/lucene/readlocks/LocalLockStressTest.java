@@ -13,8 +13,8 @@ import org.infinispan.lucene.FileMetadata;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
 import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * Stress test for {@link org.infinispan.lucene.readlocks.LocalLockMergingSegmentReadLocker}. See also ISPN-4497 for an

@@ -1,14 +1,15 @@
 package org.infinispan.xsite;
 
+import java.util.Map;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.remoting.transport.BackupResponse;
-
-import javax.transaction.Transaction;
-import java.util.Map;
 
 /**
  * Component responsible with sending backup data to remote sites. The send operation is executed async, it's up to the

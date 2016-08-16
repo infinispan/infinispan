@@ -1,5 +1,10 @@
 package org.infinispan.query.searchmanager;
 
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
@@ -13,11 +18,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 
 /**
  * The test covers the timeout functionality for ClusteredCacheQuery class. At the moment it is not implemented, so throws

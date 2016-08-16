@@ -1,7 +1,7 @@
 package org.infinispan.distribution.util;
 
-import java.util.Map.Entry;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.infinispan.distribution.ch.ConsistentHash;

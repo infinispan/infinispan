@@ -1,9 +1,12 @@
 package org.infinispan.persistence.dummy;
 
+import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.DEBUG;
+import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.FAIL_KEY;
+import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.SLOW;
+import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.STORE_NAME;
+
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-
-import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.*;
 
 public class DummyInMemoryStoreConfigurationBuilder extends
       AbstractStoreConfigurationBuilder<DummyInMemoryStoreConfiguration, DummyInMemoryStoreConfigurationBuilder> {

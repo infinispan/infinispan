@@ -1,7 +1,8 @@
 package org.infinispan.persistence.jpa.entity;
 
-import javax.persistence.Embeddable;
 import java.io.Serializable;
+
+import javax.persistence.Embeddable;
 
 /**
  * 

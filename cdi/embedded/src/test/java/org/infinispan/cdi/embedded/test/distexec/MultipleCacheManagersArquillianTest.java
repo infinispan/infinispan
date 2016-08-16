@@ -1,5 +1,10 @@
 package org.infinispan.cdi.embedded.test.distexec;
 
+import static org.testng.AssertJUnit.fail;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.jboss.arquillian.testng.Arquillian;
 import org.testng.ITestContext;
@@ -7,11 +12,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-
-import static org.testng.AssertJUnit.fail;
 
 public abstract class MultipleCacheManagersArquillianTest extends Arquillian {
 

@@ -1,5 +1,13 @@
 package org.infinispan.query.impl.massindex;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.CacheEntry;
@@ -13,14 +21,6 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * Base class for mass indexer tasks.

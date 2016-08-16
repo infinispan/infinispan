@@ -1,5 +1,14 @@
 package org.infinispan.remoting;
 
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.EOFException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.EmptyStackException;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -21,12 +30,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteString;
 import org.jgroups.blocks.RpcDispatcher;
 import org.testng.annotations.Test;
-
-import java.io.EOFException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.EmptyStackException;
-
-import static org.mockito.Mockito.*;
 
 @Test(groups = "functional", testName = "remoting.TransportSenderExceptionHandlingTest")
 public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersTest {

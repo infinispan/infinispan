@@ -1,13 +1,13 @@
 package org.infinispan.xsite;
 
-import org.infinispan.Cache;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import org.infinispan.Cache;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus

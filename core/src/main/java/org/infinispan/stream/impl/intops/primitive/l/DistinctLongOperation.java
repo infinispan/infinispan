@@ -1,8 +1,8 @@
 package org.infinispan.stream.impl.intops.primitive.l;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
-
 import java.util.stream.LongStream;
+
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Performs distinct operation on a {@link LongStream}

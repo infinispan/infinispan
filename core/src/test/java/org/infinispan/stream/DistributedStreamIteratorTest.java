@@ -1,26 +1,20 @@
 package org.infinispan.stream;
 
-import org.infinispan.Cache;
-import org.infinispan.CacheStream;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.filter.CacheFilters;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.stream.impl.ClusterStreamManager;
-import org.infinispan.stream.impl.StreamResponseCommand;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CheckPoint;
-import org.mockito.AdditionalAnswers;
-import org.mockito.stubbing.Answer;
-import org.testng.annotations.Test;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyCollectionOf;
+import static org.mockito.Matchers.anySetOf;
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.withSettings;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,13 +32,25 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Matchers.anySetOf;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.*;
-import static org.testng.AssertJUnit.*;
+import org.infinispan.Cache;
+import org.infinispan.CacheStream;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.MagicKey;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.impl.ClusterStreamManager;
+import org.infinispan.stream.impl.StreamResponseCommand;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
+import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer;
+import org.testng.annotations.Test;
 
 /**
  * Test to verify distributed stream iterator

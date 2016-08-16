@@ -1,5 +1,9 @@
 package org.infinispan.server.infinispan.task;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -9,10 +13,6 @@ import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.spi.TaskEngine;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com

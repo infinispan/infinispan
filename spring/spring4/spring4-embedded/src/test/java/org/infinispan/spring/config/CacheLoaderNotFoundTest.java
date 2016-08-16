@@ -1,5 +1,7 @@
 package org.infinispan.spring.config;
 
+import static org.testng.AssertJUnit.fail;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
@@ -8,8 +10,6 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.fail;
 
 /**
  * // TODO: Document this

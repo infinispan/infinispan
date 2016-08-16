@@ -1,9 +1,9 @@
 package org.infinispan.commands.tx;
 
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * An transaction boundary command that allows the retrieval of an attached 

@@ -1,11 +1,11 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.search.query.engine.spi.EntityInfo;
+import static java.util.Arrays.stream;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Arrays.stream;
+import org.hibernate.search.query.engine.spi.EntityInfo;
 
 /**
  * @author <a href="mailto:mluksa@redhat.com">Marko Luksa</a>

@@ -1,12 +1,13 @@
 package org.infinispan.context.impl;
 
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.impl.LocalTransaction;
+import java.util.Collection;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-import java.util.Collection;
+
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.impl.LocalTransaction;
 
 /**
  * Invocation context to be used for locally originated transactions.

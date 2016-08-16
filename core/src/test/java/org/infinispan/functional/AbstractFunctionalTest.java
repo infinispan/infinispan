@@ -7,8 +7,6 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.BeforeClass;
 
-import java.util.Random;
-
 abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
    static final String DIST = "dist";

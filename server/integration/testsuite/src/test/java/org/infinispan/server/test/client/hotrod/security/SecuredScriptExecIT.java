@@ -1,6 +1,11 @@
 package org.infinispan.server.test.client.hotrod.security;
 
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.*;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_PASSWD;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.EXECUTOR_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.EXECUTOR_PASSWORD;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.WRITER_LOGIN;
+import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.WRITER_PASSWD;
 import static org.infinispan.server.test.task.servertask.LocalAuthTestServerTask.CACHE_NAME;
 import static org.infinispan.test.TestingUtil.loadFileAsString;
 import static org.junit.Assert.assertEquals;

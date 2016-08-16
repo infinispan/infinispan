@@ -1,13 +1,13 @@
 package org.infinispan.tree;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * This is a tree-like facade around a {@link Cache} allowing for efficient tree-style access to cached data.

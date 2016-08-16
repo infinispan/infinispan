@@ -1,9 +1,9 @@
 package org.infinispan.query.affinity;
 
+import java.util.List;
+
 import org.apache.lucene.store.LockObtainFailedException;
 import org.hibernate.search.backend.LuceneWork;
-
-import java.util.List;
 
 /**
  * Callback for indexing backend exception handling.

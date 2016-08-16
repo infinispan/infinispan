@@ -1,19 +1,19 @@
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.container.DataContainer;
-import org.infinispan.metadata.impl.L1Metadata;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.statetransfer.StateTransferLock;
-import org.jboss.logging.Logger;
+import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
-import static org.infinispan.commons.util.Util.toStr;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.L1Metadata;
+import org.infinispan.statetransfer.StateTransferLock;
+import org.jboss.logging.Logger;
 
 /**
 * A write synchronizer that allows for a single thread to run the L1 update while others can block until it is

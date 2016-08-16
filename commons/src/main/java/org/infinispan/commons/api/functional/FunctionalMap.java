@@ -1,13 +1,5 @@
 package org.infinispan.commons.api.functional;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
-import org.infinispan.commons.api.functional.Listeners.WriteListeners;
-import org.infinispan.commons.marshall.MarshallableFunctions;
-import org.infinispan.commons.util.Experimental;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +8,14 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
+import org.infinispan.commons.api.functional.Listeners.WriteListeners;
+import org.infinispan.commons.marshall.MarshallableFunctions;
+import org.infinispan.commons.util.Experimental;
 
 /**
  * Top level functional map interface offering common functionality for the

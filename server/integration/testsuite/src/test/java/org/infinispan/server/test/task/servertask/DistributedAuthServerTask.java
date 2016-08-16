@@ -1,10 +1,10 @@
 package org.infinispan.server.test.task.servertask;
 
+import java.util.Optional;
+
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-
-import java.util.Optional;
 
 /**
  * Server task working in Dist mode for specified role.

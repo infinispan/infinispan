@@ -1,21 +1,26 @@
 package org.infinispan.demos.gridfs;
 
 
-import net.sf.webdav.*;
-import net.sf.webdav.exceptions.WebdavException;
-
-import java.util.Date;
-import java.util.ArrayList;
-import java.util.List;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.io.GridFile;
 import org.infinispan.io.GridFilesystem;
-import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.sf.webdav.ITransaction;
+import net.sf.webdav.IWebdavStore;
+import net.sf.webdav.StoredObject;
+import net.sf.webdav.exceptions.WebdavException;
 
 /**
  * @author Bela Ban

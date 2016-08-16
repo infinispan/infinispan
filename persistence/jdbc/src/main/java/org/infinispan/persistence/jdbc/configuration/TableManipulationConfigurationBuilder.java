@@ -1,5 +1,17 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.BATCH_SIZE;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.CREATE_ON_START;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.DATA_COLUMN_NAME;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.DATA_COLUMN_TYPE;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.DROP_ON_EXIT;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.FETCH_SIZE;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.ID_COLUMN_NAME;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.ID_COLUMN_TYPE;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TABLE_NAME_PREFIX;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TIMESTAMP_COLUMN_NAME;
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TIMESTAMP_COLUMN_TYPE;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -7,8 +19,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.logging.Log;
-
-import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.*;
 
 /**
  * TableManipulationConfigurationBuilder.

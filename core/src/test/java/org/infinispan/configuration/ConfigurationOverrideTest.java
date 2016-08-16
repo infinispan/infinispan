@@ -1,23 +1,20 @@
 package org.infinispan.configuration;
 
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.infinispan.eviction.EvictionStrategy.LIRS;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfigurationBuilder;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.infinispan.eviction.EvictionStrategy.*;
-import static org.infinispan.configuration.cache.CacheMode.*;
 
 @Test(groups = "functional", testName = "configuration.ConfigurationOverrideTest")
 public class ConfigurationOverrideTest extends AbstractInfinispanTest {

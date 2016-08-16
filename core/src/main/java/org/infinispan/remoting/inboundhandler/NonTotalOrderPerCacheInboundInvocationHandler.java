@@ -1,5 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
+import java.util.Collection;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -19,8 +21,6 @@ import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
 
 /**
  * A {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler} implementation for non-total order

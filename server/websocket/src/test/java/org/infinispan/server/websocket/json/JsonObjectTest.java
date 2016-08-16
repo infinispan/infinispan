@@ -1,14 +1,14 @@
 package org.infinispan.server.websocket.json;
 
-import org.infinispan.test.AbstractInfinispanTest;
-import org.testng.annotations.Test;
+import static org.infinispan.assertions.JsonPayloadAssertion.assertThat;
+import static org.testng.Assert.assertEquals;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.infinispan.assertions.JsonPayloadAssertion.assertThat;
-import static org.testng.Assert.assertEquals;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.Test;
 
 /**
  * Tests JsonObject class.

@@ -1,5 +1,15 @@
 package org.infinispan.replication;
 
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.Serializable;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
@@ -14,15 +24,6 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
-import java.io.Serializable;
-
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "functional", testName = "replication.ReplicationExceptionTest")
 public class ReplicationExceptionTest extends MultipleCacheManagersTest {

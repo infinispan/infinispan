@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers;
 
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
-import org.infinispan.protostream.MessageMarshaller;
-
 import java.io.IOException;
 import java.util.Date;
+
+import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
+import org.infinispan.protostream.MessageMarshaller;
 
 /**
  * @author anistor@redhat.com

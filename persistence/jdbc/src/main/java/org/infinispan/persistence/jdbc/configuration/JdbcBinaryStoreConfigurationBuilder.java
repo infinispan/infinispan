@@ -1,12 +1,15 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration.CONCURRENCY_LEVEL;
+import static org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration.LOCK_ACQUISITION_TIMEOUT;
+import static org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration.PROPERTIES;
+
 import java.util.Map;
 import java.util.Properties;
 
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
-import org.infinispan.commons.util.TypedProperties;
-import static org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration.*;
 
 public class JdbcBinaryStoreConfigurationBuilder extends
                                                       AbstractJdbcStoreConfigurationBuilder<JdbcBinaryStoreConfiguration, JdbcBinaryStoreConfigurationBuilder> {

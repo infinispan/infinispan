@@ -1,5 +1,18 @@
 package org.infinispan.eviction.impl;
 
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,19 +40,6 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
-
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests manual eviction with concurrent read and/or write operation. This test has passivation disabled and the

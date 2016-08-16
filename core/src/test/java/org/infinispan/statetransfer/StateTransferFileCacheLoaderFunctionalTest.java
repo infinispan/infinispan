@@ -1,5 +1,16 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.statetransfer.StateTransferTestingUtil.verifyInitialData;
+import static org.infinispan.statetransfer.StateTransferTestingUtil.verifyInitialDataOnLoader;
+import static org.infinispan.statetransfer.StateTransferTestingUtil.verifyNoData;
+import static org.infinispan.statetransfer.StateTransferTestingUtil.verifyNoDataOnLoader;
+import static org.infinispan.statetransfer.StateTransferTestingUtil.writeInitialData;
+
+import java.io.File;
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -16,13 +27,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-
-import static org.infinispan.statetransfer.StateTransferTestingUtil.*;
 
 /**
  * StateTransferFileCacheStoreFunctionalTest.

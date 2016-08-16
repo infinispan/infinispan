@@ -1,10 +1,10 @@
 package org.infinispan.util;
 
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * Encapsulates all the time related logic in this interface.

@@ -1,21 +1,21 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.container.versioning.VersionGenerator;
-import org.infinispan.metadata.Metadata;
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.versioned.Versioned;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * A version of RepeatableReadEntry that can perform write-skew checks during prepare.

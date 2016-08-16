@@ -1,15 +1,15 @@
 package org.infinispan.all.embeddedquery.testdomain;
 
+import java.io.Serializable;
+
 import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.Facet;
+import org.hibernate.search.annotations.FacetEncodingType;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
-import org.hibernate.search.annotations.Facet;
-import org.hibernate.search.annotations.FacetEncodingType;
 import org.hibernate.search.bridge.builtin.IntegerBridge;
-
-import java.io.Serializable;
 
 /**
  * @author Hardy Ferentschik

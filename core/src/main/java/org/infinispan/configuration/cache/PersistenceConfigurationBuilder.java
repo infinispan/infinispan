@@ -1,5 +1,12 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIVATION;
+
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationUtils;
@@ -7,13 +14,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIVATION;
 
 /**
  * Configuration for cache stores.

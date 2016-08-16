@@ -1,5 +1,11 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.query.backend.TransactionHelper.Operation;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -9,12 +15,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static org.infinispan.query.backend.TransactionHelper.Operation;
 
 /**
  * Wrapper around SearchIntegrator with guards to allow concurrent access

@@ -1,10 +1,10 @@
 package org.infinispan.transaction.synchronization;
 
+import javax.transaction.Synchronization;
+
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
-
-import javax.transaction.Synchronization;
 
 /**
  * {@link Synchronization} implementation for integrating with the TM.

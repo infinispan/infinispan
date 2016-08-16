@@ -1,5 +1,10 @@
 package org.infinispan.api.tree;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -10,13 +15,7 @@ import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.impl.TreeCacheImpl;
 import org.infinispan.tree.impl.TreeStructureSupport;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "api.tree.NodeReplicatedMoveTest")
 public class NodeReplicatedMoveTest extends MultipleCacheManagersTest {

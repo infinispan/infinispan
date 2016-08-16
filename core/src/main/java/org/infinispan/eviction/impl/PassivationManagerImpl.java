@@ -1,5 +1,12 @@
 package org.infinispan.eviction.impl;
 
+import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -12,19 +19,12 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.commons.util.Util.toStr;
-import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 
 public class PassivationManagerImpl implements PassivationManager {
 

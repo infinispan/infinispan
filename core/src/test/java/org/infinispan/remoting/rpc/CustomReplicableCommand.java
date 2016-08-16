@@ -1,14 +1,14 @@
 package org.infinispan.remoting.rpc;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.Visitor;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.lifecycle.ComponentStatus;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.Visitor;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.lifecycle.ComponentStatus;
 
 /**
  * @author anistor@redhat.com

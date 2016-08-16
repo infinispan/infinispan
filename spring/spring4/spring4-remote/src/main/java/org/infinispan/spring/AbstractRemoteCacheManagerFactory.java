@@ -1,15 +1,15 @@
 package org.infinispan.spring;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-import org.springframework.core.io.Resource;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Properties;
+
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+import org.springframework.core.io.Resource;
 
 /**
  * <p>

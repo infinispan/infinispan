@@ -1,16 +1,13 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
-import org.infinispan.remoting.transport.Address;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * ConsistentHashFactory implementation that allows the user to control who the owners are.

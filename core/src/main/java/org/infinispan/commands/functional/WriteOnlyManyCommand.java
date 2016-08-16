@@ -1,14 +1,5 @@
 package org.infinispan.commands.functional;
 
-import org.infinispan.commands.Visitor;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.Params;
-import org.infinispan.lifecycle.ComponentStatus;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,6 +8,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import org.infinispan.commands.Visitor;
+import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
+import org.infinispan.lifecycle.ComponentStatus;
 
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 

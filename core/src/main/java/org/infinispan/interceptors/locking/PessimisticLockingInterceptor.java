@@ -1,5 +1,11 @@
 package org.infinispan.interceptors.locking;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
@@ -21,12 +27,6 @@ import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Locking interceptor to be used by pessimistic caches.

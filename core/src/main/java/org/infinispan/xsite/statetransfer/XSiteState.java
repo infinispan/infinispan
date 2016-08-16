@@ -1,16 +1,16 @@
 package org.infinispan.xsite.statetransfer;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.metadata.Metadata;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.metadata.Metadata;
 
 /**
  * Represents the state of a single key to be sent to a backup site. It contains the only needed information, i.e., the

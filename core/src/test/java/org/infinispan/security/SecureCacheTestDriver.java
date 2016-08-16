@@ -1,5 +1,11 @@
 package org.infinispan.security;
 
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.container.versioning.EntryVersion;
@@ -14,11 +20,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.partitionhandling.AvailabilityMode;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 public class SecureCacheTestDriver {
 

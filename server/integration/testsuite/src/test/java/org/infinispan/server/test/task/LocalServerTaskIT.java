@@ -1,5 +1,15 @@
 package org.infinispan.server.test.task;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -9,11 +19,11 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.test.category.Task;
 import org.infinispan.server.test.task.servertask.Greeting;
+import org.infinispan.server.test.task.servertask.GreetingServerTask;
 import org.infinispan.server.test.task.servertask.JSExecutingServerTask;
 import org.infinispan.server.test.task.servertask.LocalExceptionalServerTask;
 import org.infinispan.server.test.task.servertask.LocalMapReduceServerTask;
 import org.infinispan.server.test.task.servertask.LocalTestServerTask;
-import org.infinispan.server.test.task.servertask.GreetingServerTask;
 import org.infinispan.server.test.util.ITestUtils;
 import org.infinispan.tasks.ServerTask;
 import org.jboss.arquillian.junit.Arquillian;
@@ -27,16 +37,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 @RunWith(Arquillian.class)
 @Category({Task.class})

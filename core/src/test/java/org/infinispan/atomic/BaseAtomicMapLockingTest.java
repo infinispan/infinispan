@@ -1,5 +1,15 @@
 package org.infinispan.atomic;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -17,15 +27,6 @@ import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 /**
  * @author Pedro Ruivo

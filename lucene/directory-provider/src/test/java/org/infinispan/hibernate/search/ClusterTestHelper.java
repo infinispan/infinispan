@@ -1,5 +1,9 @@
 package org.infinispan.hibernate.search;
 
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.hibernate.cfg.Environment;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
@@ -9,10 +13,6 @@ import org.infinispan.hibernate.search.impl.DefaultCacheManagerService;
 import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Helpers to setup several instances of Hibernate Search using clustering to connect the index, and sharing the same H2

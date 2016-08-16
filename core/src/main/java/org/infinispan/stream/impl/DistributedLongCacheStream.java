@@ -1,5 +1,29 @@
 package org.infinispan.stream.impl;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LongSummaryStatistics;
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
+import java.util.PrimitiveIterator;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.LongBinaryOperator;
+import java.util.function.LongConsumer;
+import java.util.function.LongFunction;
+import java.util.function.LongPredicate;
+import java.util.function.LongToDoubleFunction;
+import java.util.function.LongToIntFunction;
+import java.util.function.LongUnaryOperator;
+import java.util.function.ObjLongConsumer;
+import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
+
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
@@ -31,30 +55,6 @@ import org.infinispan.util.function.SerializableLongToIntFunction;
 import org.infinispan.util.function.SerializableLongUnaryOperator;
 import org.infinispan.util.function.SerializableObjLongConsumer;
 import org.infinispan.util.function.SerializableSupplier;
-
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LongSummaryStatistics;
-import java.util.OptionalDouble;
-import java.util.OptionalLong;
-import java.util.PrimitiveIterator;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.LongBinaryOperator;
-import java.util.function.LongConsumer;
-import java.util.function.LongFunction;
-import java.util.function.LongPredicate;
-import java.util.function.LongToDoubleFunction;
-import java.util.function.LongToIntFunction;
-import java.util.function.LongUnaryOperator;
-import java.util.function.ObjLongConsumer;
-import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 /**
  * Implementation of {@link LongStream} that utilizes a lazily evaluated distributed back end execution.  Note this

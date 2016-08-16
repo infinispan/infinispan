@@ -1,5 +1,8 @@
 package org.infinispan.test.fwk;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
@@ -11,9 +14,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * A {@link org.infinispan.interceptors.locking.ClusteringDependentLogic} delegator

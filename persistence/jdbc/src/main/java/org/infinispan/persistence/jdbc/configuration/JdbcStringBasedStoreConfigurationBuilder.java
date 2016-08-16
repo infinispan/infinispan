@@ -1,17 +1,17 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.KEY2STRING_MAPPER;
+import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.PROPERTIES;
+
 import java.util.Map;
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.TypedProperties;
-
-import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.*;
 
 /**
  *

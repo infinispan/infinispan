@@ -1,5 +1,12 @@
 package org.infinispan.xsite.statetransfer;
 
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -10,13 +17,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests the {@link org.infinispan.xsite.BackupReceiver} for the local caches.

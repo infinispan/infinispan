@@ -1,8 +1,8 @@
 package org.infinispan.cli;
 
-import org.infinispan.cli.commands.ProcessedCommand;
-
 import java.util.List;
+
+import org.infinispan.cli.commands.ProcessedCommand;
 
 public interface CommandBuffer {
    void reset();

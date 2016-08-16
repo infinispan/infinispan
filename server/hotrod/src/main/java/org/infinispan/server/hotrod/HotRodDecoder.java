@@ -1,17 +1,18 @@
 package org.infinispan.server.hotrod;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.function.Predicate;
+
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.ExtendedByteBufJava;
 import org.infinispan.server.core.transport.NettyTransport;
 
-import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.function.Predicate;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
 
 /**
  * Decoder that will decode hotrod messages and then send a {@link CacheDecodeContext} down the pipeline.

@@ -1,5 +1,9 @@
 package org.infinispan.stats;
 
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.concurrent.ConcurrentMap;
+
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.stats.container.ExtendedStatistic;
@@ -9,10 +13,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Manages all the statistics for a single cache. All the statistics should be added in this class.

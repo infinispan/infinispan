@@ -1,11 +1,11 @@
 package org.infinispan;
 
-import net.jcip.annotations.Immutable;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Properties;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Contains version information about this release of Infinispan.

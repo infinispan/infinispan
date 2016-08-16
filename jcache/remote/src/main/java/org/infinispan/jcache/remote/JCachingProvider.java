@@ -7,9 +7,9 @@ import javax.cache.CacheManager;
 import javax.cache.configuration.OptionalFeature;
 import javax.cache.spi.CachingProvider;
 
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.AbstractJCachingProvider;
 import org.infinispan.jcache.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**

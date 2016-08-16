@@ -1,5 +1,8 @@
 package org.infinispan.interceptors.totalorder;
 
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -17,9 +20,6 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Wrapping Interceptor for Total Order protocol when versions are needed

@@ -1,5 +1,9 @@
 package org.infinispan.remoting.inboundhandler;
 
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+
+import java.util.concurrent.ExecutorService;
+
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -22,10 +26,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverRepository;
 import org.infinispan.xsite.XSiteReplicateCommand;
-
-import java.util.concurrent.ExecutorService;
-
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 
 /**
  * {@link org.infinispan.remoting.inboundhandler.InboundInvocationHandler} implementation that handles all the {@link

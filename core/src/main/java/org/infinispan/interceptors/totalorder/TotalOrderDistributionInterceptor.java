@@ -1,5 +1,8 @@
 package org.infinispan.interceptors.totalorder;
 
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -9,9 +12,6 @@ import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * This interceptor handles distribution of entries across a cluster, as well as transparent lookup, when the total

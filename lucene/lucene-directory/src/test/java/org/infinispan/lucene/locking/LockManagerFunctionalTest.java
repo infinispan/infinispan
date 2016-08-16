@@ -1,5 +1,10 @@
 package org.infinispan.lucene.locking;
 
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.io.IOException;
+
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
@@ -13,11 +18,6 @@ import org.infinispan.lucene.impl.BaseLockFactory;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * LockManagerFunctionalTest.

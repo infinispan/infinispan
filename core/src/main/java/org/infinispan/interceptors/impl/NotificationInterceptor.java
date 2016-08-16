@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -9,8 +11,6 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * The interceptor in charge of firing off notifications to cache listeners

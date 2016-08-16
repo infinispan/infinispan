@@ -1,5 +1,14 @@
 package org.infinispan.scripting;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.InputStream;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
+import java.util.List;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,14 +29,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import javax.security.auth.Subject;
-import java.io.InputStream;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
-import java.util.List;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Verifying the script execution over task management with secured cache.

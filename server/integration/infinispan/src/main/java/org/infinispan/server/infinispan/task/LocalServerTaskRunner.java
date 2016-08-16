@@ -1,9 +1,9 @@
 package org.infinispan.server.infinispan.task;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.Cache;
 import org.infinispan.tasks.TaskContext;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com

@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
@@ -13,7 +14,6 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.Util;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

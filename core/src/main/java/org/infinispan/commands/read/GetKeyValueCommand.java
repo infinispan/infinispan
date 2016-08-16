@@ -1,5 +1,11 @@
 package org.infinispan.commands.read;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -7,12 +13,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and

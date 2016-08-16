@@ -1,14 +1,14 @@
 package org.infinispan.remoting.inboundhandler.action;
 
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.util.concurrent.locks.LockUtil;
+import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
-import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.util.concurrent.locks.LockUtil;
 
 /**
  * A base {@link Action} implementation for locking.

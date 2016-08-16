@@ -1,12 +1,12 @@
 package org.infinispan.interceptors.impl;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.AsyncInterceptor;
-
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
+
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.AsyncInterceptor;
 
 /**
  * Invoke a sequence of sub-commands, allowing the caller to define a single

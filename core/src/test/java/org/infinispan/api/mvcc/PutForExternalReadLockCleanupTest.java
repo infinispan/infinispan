@@ -1,5 +1,9 @@
 package org.infinispan.api.mvcc;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.function.Consumer;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -9,10 +13,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionProtocol;
 import org.testng.annotations.Test;
-
-import java.util.function.Consumer;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadLockCleanupTest")
 @CleanupAfterMethod

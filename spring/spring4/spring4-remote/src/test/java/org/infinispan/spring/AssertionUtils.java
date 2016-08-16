@@ -1,9 +1,9 @@
 package org.infinispan.spring;
 
-import java.util.Properties;
-
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Properties;
 
 public class AssertionUtils {
    public static void assertPropertiesSubset(String message, Properties expected, Properties actual) {

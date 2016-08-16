@@ -1,9 +1,9 @@
 package org.infinispan.transaction.tm;
 
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.xa.XAResource;
 
 /**
  * Simple transaction manager implementation that maintains transaction state in memory only.

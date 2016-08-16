@@ -1,13 +1,14 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import net.jcip.annotations.Immutable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import net.jcip.annotations.Immutable;
 
 /**
  * Implements "removeIfUnmodified" operation as defined by

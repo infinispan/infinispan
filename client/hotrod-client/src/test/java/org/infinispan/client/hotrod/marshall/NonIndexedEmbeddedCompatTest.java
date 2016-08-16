@@ -1,11 +1,11 @@
 package org.infinispan.client.hotrod.marshall;
 
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
  * Tests compatibility between remote query and embedded mode. Do not enable indexing for query.

@@ -1,9 +1,9 @@
 package org.infinispan.util;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.commons.util.Util;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test utility methods

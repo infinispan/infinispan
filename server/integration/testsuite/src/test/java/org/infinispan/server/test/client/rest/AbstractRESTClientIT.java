@@ -1,14 +1,24 @@
 package org.infinispan.server.test.client.rest;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
-import org.infinispan.server.test.util.ManagementClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
+import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
+import static org.infinispan.server.test.client.rest.RESTHelper.addDay;
+import static org.infinispan.server.test.client.rest.RESTHelper.delete;
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.get;
+import static org.infinispan.server.test.client.rest.RESTHelper.getWithoutClose;
+import static org.infinispan.server.test.client.rest.RESTHelper.head;
+import static org.infinispan.server.test.client.rest.RESTHelper.headWithoutClose;
+import static org.infinispan.server.test.client.rest.RESTHelper.post;
+import static org.infinispan.server.test.client.rest.RESTHelper.put;
+import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -18,9 +28,13 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Arrays;
 
-import static org.infinispan.server.test.client.rest.RESTHelper.*;
-import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
-import static org.junit.Assert.*;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests for the REST client. Subclasses must implement the addRestServer, which has to setup the RESTHelper

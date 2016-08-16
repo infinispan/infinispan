@@ -1,5 +1,11 @@
 package org.infinispan.xsite;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -7,12 +13,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.CacheContainer;
 import org.testng.annotations.Test;
-
-import javax.transaction.TransactionManager;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "xsite", testName = "xsite.RollbackNoPrepareOptimisticTest")
 public class RollbackNoPrepareOptimisticTest extends AbstractTwoSitesTest {

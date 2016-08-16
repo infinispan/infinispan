@@ -1,11 +1,11 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.util.Set;
+
 import org.infinispan.CacheStream;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
-
-import java.util.Set;
 
 /**
  * This interface describes methods needed for a segment listener that is used when iterating over the current

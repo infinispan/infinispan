@@ -1,9 +1,9 @@
 package org.infinispan.objectfilter.impl.syntax;
 
-import org.infinispan.objectfilter.impl.util.DateHelper;
-
 import java.util.Date;
 import java.util.Map;
+
+import org.infinispan.objectfilter.impl.util.DateHelper;
 
 /**
  * A constant comparable value, to be used as right or left side in a comparison expression.

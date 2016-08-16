@@ -1,15 +1,16 @@
 package org.infinispan.test.integration.as.cdi;
 
 
-import org.infinispan.Cache;
-import org.infinispan.eviction.EvictionStrategy;
+import java.util.Collection;
 
 import javax.cache.annotation.CacheKey;
 import javax.cache.annotation.CacheRemoveAll;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Collection;
+
+import org.infinispan.Cache;
+import org.infinispan.eviction.EvictionStrategy;
 
 /**
  * <p>The greeting cache manager.</p>

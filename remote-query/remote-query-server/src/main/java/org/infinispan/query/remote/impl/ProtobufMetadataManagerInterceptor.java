@@ -1,5 +1,11 @@
 package org.infinispan.query.remote.impl;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -24,12 +30,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
 
 
 /**

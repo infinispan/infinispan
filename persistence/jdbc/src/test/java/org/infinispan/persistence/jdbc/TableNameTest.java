@@ -1,10 +1,10 @@
 package org.infinispan.persistence.jdbc;
 
+import static org.testng.Assert.assertEquals;
+
 import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "persistence.jdbc.TableNameTest")
 public class TableNameTest {

@@ -1,11 +1,9 @@
 package org.infinispan.jcache.remote;
 
-import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+
+import java.net.URI;
+import java.util.Properties;
 
 import javax.cache.CacheException;
 import javax.cache.CacheManager;
@@ -13,10 +11,10 @@ import javax.cache.Caching;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.spi.CachingProvider;
 
-import java.net.URI;
-import java.util.Properties;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.*;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 public class JCacheCreateCachePredefinedTest extends SingleHotRodServerTest {
    static String CACHE_NAME_UNTOUCHED = "jcache-remote-predefined-untouched";

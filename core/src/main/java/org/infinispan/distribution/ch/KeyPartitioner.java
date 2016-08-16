@@ -1,13 +1,6 @@
 package org.infinispan.distribution.ch;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.HashConfiguration;
-import org.infinispan.remoting.transport.Address;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Map keys to segments.

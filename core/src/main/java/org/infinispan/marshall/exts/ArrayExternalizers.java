@@ -1,15 +1,15 @@
 package org.infinispan.marshall.exts;
 
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
 /**
  * Externalizers for diverse array types.

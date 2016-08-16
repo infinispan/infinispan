@@ -1,5 +1,10 @@
 package org.infinispan.query.indexmanager;
 
+import java.io.IOException;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
@@ -9,10 +14,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.lucene.impl.DirectoryExtensions;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import java.io.IOException;
 
 /**
  * Used to control and override the ownership of the Lucene index lock.

@@ -1,15 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +9,16 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
 
 /**
  * Tests {@link AsyncInterceptorChainImpl} concurrent updates

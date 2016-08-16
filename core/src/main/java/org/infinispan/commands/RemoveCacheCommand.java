@@ -1,5 +1,11 @@
 package org.infinispan.commands;
 
+import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAPH;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.configuration.ConfigurationManager;
@@ -12,12 +18,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.DependencyGraph;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
-import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAPH;
 
 /**
  * Command to stop a cache and remove all its contents from both

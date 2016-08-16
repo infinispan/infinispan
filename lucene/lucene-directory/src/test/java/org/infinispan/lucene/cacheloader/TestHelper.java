@@ -1,5 +1,8 @@
 package org.infinispan.lucene.cacheloader;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -16,9 +19,6 @@ import org.apache.lucene.store.FSDirectory;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.testng.AssertJUnit;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Helper class which will contain common using methods.

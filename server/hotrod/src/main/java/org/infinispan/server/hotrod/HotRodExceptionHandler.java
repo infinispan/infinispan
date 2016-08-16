@@ -1,11 +1,12 @@
 package org.infinispan.server.hotrod;
 
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.server.core.logging.Log;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.DecoderException;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.core.logging.Log;
 
 /**
  * Handler that will transform various exceptions into responses to send back to the client.

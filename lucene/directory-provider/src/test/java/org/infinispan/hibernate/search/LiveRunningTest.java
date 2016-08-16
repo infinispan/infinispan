@@ -1,5 +1,14 @@
 package org.infinispan.hibernate.search;
 
+import static junit.framework.Assert.assertEquals;
+import static org.infinispan.hibernate.search.ClusterTestHelper.clusterSize;
+import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNode;
+import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
+
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.hibernate.Transaction;
 import org.hibernate.search.FullTextQuery;
@@ -8,15 +17,6 @@ import org.hibernate.search.test.util.FullTextSessionBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-
-import static junit.framework.Assert.assertEquals;
-import static org.infinispan.hibernate.search.ClusterTestHelper.clusterSize;
-import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNode;
-import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
 
 /**
  * In this test we initially start a master node which will stay alive for the full test duration and constantly

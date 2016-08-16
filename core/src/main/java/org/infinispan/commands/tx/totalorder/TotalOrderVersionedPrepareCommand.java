@@ -1,12 +1,12 @@
 package org.infinispan.commands.tx.totalorder;
 
+import java.util.List;
+
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
-
-import java.util.List;
 
 /**
  * Command corresponding to the 1st phase of 2PC when Total Order based protocol is used. This command is used when

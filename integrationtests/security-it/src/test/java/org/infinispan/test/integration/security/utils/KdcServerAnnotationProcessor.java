@@ -19,6 +19,12 @@
 package org.infinispan.test.integration.security.utils;
 
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.directory.api.ldap.model.constants.SupportedSaslMechanisms;
 import org.apache.directory.api.util.Strings;
 import org.apache.directory.server.annotations.CreateChngPwdServer;
@@ -41,12 +47,6 @@ import org.apache.directory.server.ldap.handlers.sasl.ntlm.NtlmProvider;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
 import org.apache.directory.server.protocol.shared.transport.UdpTransport;
-
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 
 /**

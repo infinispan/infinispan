@@ -1,25 +1,25 @@
 package org.infinispan.persistence.jdbc.binary;
 
+import static org.infinispan.test.TestingUtil.metadata;
+import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+import java.io.Serializable;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
-
-import java.io.Serializable;
-
-import static org.infinispan.test.TestingUtil.metadata;
-import static org.mockito.Mockito.mock;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tester class for {@link JdbcBinaryStore}

@@ -1,5 +1,17 @@
 package org.infinispan.distribution;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.min;
+import static java.lang.Math.sqrt;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -8,11 +20,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.Math.*;
 
 /**
  * Tests the uniformity of the distribution hash algo.

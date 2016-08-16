@@ -1,5 +1,7 @@
 package org.infinispan.query.externalizers;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.util.BytesRef;
 import org.infinispan.Cache;
@@ -10,8 +12,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "functional", testName = "query.externalizers.TermExternalizerTest")
 public class TermExternalizerTest extends MultipleCacheManagersTest {

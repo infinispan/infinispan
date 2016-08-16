@@ -1,14 +1,14 @@
 package org.infinispan.notifications.cachelistener.annotation;
 
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.notifications.IncorrectListenerException;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import org.infinispan.notifications.IncorrectListenerException;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
+import org.infinispan.persistence.spi.CacheLoader;
 
 /**
  * This annotation should be used on methods that need to be notified when a cache entry is loaded from a {@link

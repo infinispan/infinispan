@@ -1,5 +1,10 @@
 package org.infinispan.api;
 
+import static org.infinispan.distribution.DistributionTestHelper.getFirstNonOwner;
+import static org.infinispan.distribution.DistributionTestHelper.getFirstOwner;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -8,11 +13,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
-
-import static org.infinispan.distribution.DistributionTestHelper.getFirstNonOwner;
-import static org.infinispan.distribution.DistributionTestHelper.getFirstOwner;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 @Test(groups = "functional", testName = "api.MetadataAPIDistTest")
 public class MetadataAPIDistTest extends MultipleCacheManagersTest {

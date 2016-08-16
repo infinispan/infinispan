@@ -1,5 +1,16 @@
 package org.infinispan.security;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.Serializable;
+import java.security.Policy;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+
+import javax.security.auth.Subject;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -10,16 +21,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import javax.security.auth.Subject;
-import java.io.Serializable;
-import java.security.Policy;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * ExecutionAuthorizationTest.

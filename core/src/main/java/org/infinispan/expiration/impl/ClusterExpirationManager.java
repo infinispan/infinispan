@@ -1,31 +1,24 @@
 package org.infinispan.expiration.impl;
 
-import net.jcip.annotations.ThreadSafe;
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.commons.util.Util.toStr;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Allows for cluster based expirations to occur.  This provides guarantees that when an entry is expired that it will

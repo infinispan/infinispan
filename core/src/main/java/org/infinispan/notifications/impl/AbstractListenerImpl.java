@@ -1,21 +1,5 @@
 package org.infinispan.notifications.impl;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.notifications.IncorrectListenerException;
-import org.infinispan.notifications.Listener;
-import org.infinispan.security.Security;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
-import org.infinispan.util.logging.Log;
-
-import javax.security.auth.Subject;
-import javax.transaction.Transaction;
-
 import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
@@ -31,6 +15,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+
+import javax.security.auth.Subject;
+import javax.transaction.Transaction;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.notifications.IncorrectListenerException;
+import org.infinispan.notifications.Listener;
+import org.infinispan.security.Security;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.logging.Log;
 
 /**
  * Functionality common to both {@link org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl} and

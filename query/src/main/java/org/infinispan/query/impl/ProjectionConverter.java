@@ -1,11 +1,11 @@
 package org.infinispan.query.impl;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.backend.KeyTransformationHandler;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Converts between Infinispan and HSearch projection fields.

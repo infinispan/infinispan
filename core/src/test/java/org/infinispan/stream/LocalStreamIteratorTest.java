@@ -1,10 +1,10 @@
 package org.infinispan.stream;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Test to verify stream behavior for a local cache.

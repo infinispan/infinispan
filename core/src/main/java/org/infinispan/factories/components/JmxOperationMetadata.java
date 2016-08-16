@@ -1,12 +1,12 @@
 package org.infinispan.factories.components;
 
-import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.jmx.annotations.Parameter;
-
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.jmx.annotations.Parameter;
 
 /**
  * Persistable and cacheable metadata for JMX operations

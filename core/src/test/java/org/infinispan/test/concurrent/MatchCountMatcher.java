@@ -1,11 +1,8 @@
 package org.infinispan.test.concurrent;
 
-import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.remoting.transport.Address;
-
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.commands.ReplicableCommand;
 
 /**
  * {@link org.infinispan.test.concurrent.CommandMatcher} implementation that can match a single invocation (e.g. the

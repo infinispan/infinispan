@@ -1,5 +1,8 @@
 package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
+import java.io.Serializable;
+import java.util.Date;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.DateBridge;
 import org.hibernate.search.annotations.EncodingType;
@@ -10,9 +13,6 @@ import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
-
-import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @author anistor@redhat.com

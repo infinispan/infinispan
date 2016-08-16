@@ -1,15 +1,15 @@
 package org.infinispan.objectfilter.impl;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.jboss.logging.Logger;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author anistor@redhat.com

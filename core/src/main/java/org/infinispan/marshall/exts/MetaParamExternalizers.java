@@ -1,5 +1,10 @@
 package org.infinispan.marshall.exts;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Set;
+
 import org.infinispan.commons.api.functional.EntryVersion;
 import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
 import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
@@ -7,11 +12,6 @@ import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
 public final class MetaParamExternalizers {
 

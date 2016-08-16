@@ -1,14 +1,18 @@
 package org.infinispan.cdi.embedded;
 
-import org.infinispan.distexec.DefaultExecutorService;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import javax.inject.Qualifier;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.inject.Qualifier;
+
+import org.infinispan.distexec.DefaultExecutorService;
 
 /**
  * Qualifier indicating the injected Cache should be the input Cache used to create

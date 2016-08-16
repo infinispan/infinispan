@@ -1,12 +1,12 @@
 package org.infinispan.tx.totalorder.simple.repl;
 
+import static org.testng.Assert.assertFalse;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.tx.totalorder.simple.BaseSimpleTotalOrderTest;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertFalse;
 
 /**
  * @author Pedro Ruivo

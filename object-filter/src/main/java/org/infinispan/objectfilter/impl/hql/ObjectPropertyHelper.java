@@ -1,5 +1,12 @@
 package org.infinispan.objectfilter.impl.hql;
 
+import java.text.ParseException;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.PropertyHelper;
 import org.infinispan.objectfilter.impl.logging.Log;
@@ -7,13 +14,6 @@ import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
 import org.infinispan.objectfilter.impl.util.DateHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
-
-import java.text.ParseException;
-import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A specialised {@link PropertyHelper} able to handle non-Class metadata.

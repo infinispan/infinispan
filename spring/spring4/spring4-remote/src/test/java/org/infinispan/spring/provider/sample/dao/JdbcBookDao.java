@@ -1,5 +1,11 @@
 package org.infinispan.spring.provider.sample.dao;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+
+import javax.sql.DataSource;
+
 import org.infinispan.spring.provider.sample.entity.Book;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -11,11 +17,6 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.stereotype.Repository;
-
-import javax.sql.DataSource;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
 
 /**
  * <p>

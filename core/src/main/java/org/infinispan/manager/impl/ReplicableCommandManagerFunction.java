@@ -1,14 +1,14 @@
 package org.infinispan.manager.impl;
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.manager.EmbeddedCacheManager;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.function.Function;
+
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Replicable Command that runs the given Function passing the {@link EmbeddedCacheManager} as an argument

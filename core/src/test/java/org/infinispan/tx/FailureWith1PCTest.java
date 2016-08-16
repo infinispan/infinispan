@@ -1,5 +1,7 @@
 package org.infinispan.tx;
 
+import static org.testng.Assert.assertNull;
+
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -8,8 +10,6 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertNull;
 
 /**
  * Test for https://issues.jboss.org/browse/ISPN-1093.

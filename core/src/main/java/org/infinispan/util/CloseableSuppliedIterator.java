@@ -1,10 +1,10 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.util.function.CloseableSupplier;
-
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.util.function.CloseableSupplier;
 
 public class CloseableSuppliedIterator<E> implements CloseableIterator<E> {
    private final CloseableSupplier<? extends E> supplier;

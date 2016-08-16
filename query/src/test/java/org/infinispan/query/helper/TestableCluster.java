@@ -1,5 +1,7 @@
 package org.infinispan.query.helper;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +11,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import static org.testng.AssertJUnit.assertTrue;
 
 public class TestableCluster<K, V> {
 

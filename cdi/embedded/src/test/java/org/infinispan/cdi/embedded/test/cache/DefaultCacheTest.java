@@ -1,5 +1,11 @@
 package org.infinispan.cdi.embedded.test.cache;
 
+import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
+import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
+import static org.testng.Assert.assertEquals;
+
+import javax.inject.Inject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
@@ -7,12 +13,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-
-import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
-import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
-import static org.testng.Assert.assertEquals;
 
 /**
  * Tests that the default cache is available and can be injected with no configuration.

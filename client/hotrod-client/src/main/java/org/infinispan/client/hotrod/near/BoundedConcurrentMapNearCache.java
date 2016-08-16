@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod.near;
 
+import java.util.concurrent.ConcurrentMap;
+
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.commons.util.CollectionFactory;
-
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Near cache based on {@link BoundedConcurrentMapNearCache}

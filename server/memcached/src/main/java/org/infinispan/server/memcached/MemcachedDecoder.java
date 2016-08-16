@@ -1,48 +1,5 @@
 package org.infinispan.server.memcached;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ReplayingDecoder;
-import io.netty.util.CharsetUtil;
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.Version;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.container.versioning.NumericVersionGenerator;
-import org.infinispan.container.versioning.VersionGenerator;
-import org.infinispan.context.Flag;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.server.core.transport.NettyTransport;
-import org.infinispan.server.memcached.logging.JavaLog;
-import org.infinispan.stats.Stats;
-import org.infinispan.util.KeyValuePair;
-
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.StreamCorruptedException;
-import java.math.BigInteger;
-import java.nio.channels.ClosedChannelException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-
 import static org.infinispan.server.core.transport.ExtendedByteBuf.buffer;
 import static org.infinispan.server.core.transport.ExtendedByteBuf.wrappedBuffer;
 import static org.infinispan.server.memcached.TextProtocolUtil.CLIENT_ERROR_BAD_FORMAT;
@@ -70,6 +27,50 @@ import static org.infinispan.server.memcached.TextProtocolUtil.readDiscardedLine
 import static org.infinispan.server.memcached.TextProtocolUtil.readElement;
 import static org.infinispan.server.memcached.TextProtocolUtil.readSplitLine;
 import static org.infinispan.server.memcached.TextProtocolUtil.skipLine;
+
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.StreamCorruptedException;
+import java.math.BigInteger;
+import java.nio.channels.ClosedChannelException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.Version;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.container.versioning.NumericVersionGenerator;
+import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.context.Flag;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.server.core.transport.NettyTransport;
+import org.infinispan.server.memcached.logging.JavaLog;
+import org.infinispan.stats.Stats;
+import org.infinispan.util.KeyValuePair;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ReplayingDecoder;
+import io.netty.util.CharsetUtil;
 
 /**
  * A Memcached protocol specific decoder

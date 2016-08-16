@@ -1,6 +1,9 @@
 package org.infinispan.lock.singlelock;
 
-import java.util.Arrays;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -30,10 +33,6 @@ import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 
 /**

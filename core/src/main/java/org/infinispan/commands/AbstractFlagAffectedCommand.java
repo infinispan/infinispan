@@ -1,11 +1,6 @@
 package org.infinispan.commands;
 
-import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
-
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Base class for those commands that can carry flags.

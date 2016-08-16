@@ -15,12 +15,12 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheManager;
 import org.infinispan.jcache.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 public class JCacheManager extends AbstractJCacheManager {
    private static final Log log = LogFactory.getLog(JCacheManager.class, Log.class);

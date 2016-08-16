@@ -2,12 +2,7 @@ package org.infinispan.tx.dld;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.test.PerCacheExecutorThread;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 /**

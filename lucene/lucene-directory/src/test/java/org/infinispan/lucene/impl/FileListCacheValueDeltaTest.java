@@ -1,11 +1,11 @@
 package org.infinispan.lucene.impl;
 
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "lucene.FileListCacheValueDeltaTest")
 public class FileListCacheValueDeltaTest {

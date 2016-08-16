@@ -1,5 +1,7 @@
 package org.infinispan.query.blackbox;
 
+import java.io.File;
+
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -9,8 +11,6 @@ import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.io.File;
 
 /**
  * Testing the tuned options with programmatic configuration.

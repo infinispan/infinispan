@@ -3,7 +3,6 @@ package org.infinispan.server.jgroups.subsystem;
 import org.infinispan.server.commons.service.InjectedValueDependency;
 import org.infinispan.server.commons.service.ValueDependency;
 import org.infinispan.server.jgroups.spi.SaslConfiguration;
-import org.infinispan.server.jgroups.spi.TransportConfiguration;
 import org.infinispan.server.jgroups.spi.service.ProtocolStackServiceName;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.msc.service.ServiceBuilder;

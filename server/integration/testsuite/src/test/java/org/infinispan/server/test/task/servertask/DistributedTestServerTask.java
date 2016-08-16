@@ -1,12 +1,11 @@
 package org.infinispan.server.test.task.servertask;
 
 
+import java.util.Map;
+
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Author: Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com

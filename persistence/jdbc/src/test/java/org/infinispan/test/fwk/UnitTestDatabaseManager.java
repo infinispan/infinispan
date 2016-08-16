@@ -9,13 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.JdbcUtil;
-import org.infinispan.persistence.jdbc.table.management.TableName;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurationBuilder;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
+import org.infinispan.persistence.jdbc.table.management.TableName;
 
 /**
  * Class that assures concurrent access to the in memory database.

@@ -1,8 +1,28 @@
 package org.infinispan.server.memcached;
 
-import net.spy.memcached.CASResponse;
-import net.spy.memcached.CASValue;
-import net.spy.memcached.internal.OperationFuture;
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.startMemcachedTextServer;
+import static org.infinispan.test.TestingUtil.generateRandomString;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.sleepThread;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.net.SocketAddress;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.commons.logging.LogFactory;
@@ -17,28 +37,9 @@ import org.infinispan.server.memcached.logging.JavaLog;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.math.BigInteger;
-import java.net.SocketAddress;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.infinispan.test.TestingUtil.generateRandomString;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.sleepThread;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
-import static org.infinispan.server.memcached.test.MemcachedTestingUtil.startMemcachedTextServer;
+import net.spy.memcached.CASResponse;
+import net.spy.memcached.CASValue;
+import net.spy.memcached.internal.OperationFuture;
 
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.

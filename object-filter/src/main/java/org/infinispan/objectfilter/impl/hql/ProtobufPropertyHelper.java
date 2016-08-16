@@ -1,5 +1,8 @@
 package org.infinispan.objectfilter.impl.hql;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.protostream.SerializationContext;
@@ -9,9 +12,6 @@ import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.jboss.logging.Logger;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author anistor@redhat.com

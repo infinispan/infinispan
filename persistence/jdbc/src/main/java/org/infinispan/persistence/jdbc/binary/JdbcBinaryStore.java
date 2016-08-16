@@ -22,6 +22,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
@@ -32,19 +34,17 @@ import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
+import org.infinispan.persistence.jdbc.common.AbstractJdbcStore;
 import org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration;
 import org.infinispan.persistence.jdbc.logging.Log;
-import org.infinispan.persistence.jdbc.common.AbstractJdbcStore;
 import org.infinispan.persistence.jdbc.table.management.TableManager;
 import org.infinispan.persistence.jdbc.table.management.TableManagerFactory;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.support.Bucket;
 import org.infinispan.persistence.support.BatchModification;
+import org.infinispan.persistence.support.Bucket;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.Transaction;
 
 /**
  * {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore} implementation that will store all the buckets as rows

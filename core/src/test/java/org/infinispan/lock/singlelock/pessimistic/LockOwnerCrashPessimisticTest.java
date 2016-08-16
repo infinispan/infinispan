@@ -1,12 +1,7 @@
 package org.infinispan.lock.singlelock.pessimistic;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.tm.DummyTransaction;
-import org.testng.annotations.Test;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -15,8 +10,13 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.tm.DummyTransaction;
+import org.testng.annotations.Test;
 
 
 /**

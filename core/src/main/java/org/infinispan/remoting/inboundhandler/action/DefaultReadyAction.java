@@ -1,10 +1,10 @@
 package org.infinispan.remoting.inboundhandler.action;
 
-import org.infinispan.commons.util.InfinispanCollections;
-
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.commons.util.InfinispanCollections;
 
 /**
  * A list of {@link Action} to be executed to check when it is ready.

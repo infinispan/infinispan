@@ -1,5 +1,7 @@
 package org.infinispan.interceptors.xsite;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -17,8 +19,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupSender;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Mircea Markus

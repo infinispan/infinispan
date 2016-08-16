@@ -1,5 +1,10 @@
 package org.infinispan.persistence.jdbc;
 
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -13,11 +18,6 @@ import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Tester class for {@link org.infinispan.persistence.jdbc.connectionfactory.PooledConnectionFactory}.

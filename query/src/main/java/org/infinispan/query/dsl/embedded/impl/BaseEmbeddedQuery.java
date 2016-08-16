@@ -1,11 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.impl.BaseQuery;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,6 +7,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.BaseQuery;
 
 /**
  * Base class for embedded-mode query implementations. Subclasses need to implement {@link #getIterator()} and {@link

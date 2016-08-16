@@ -1,5 +1,10 @@
 package org.infinispan.commands.functional;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.function.BiConsumer;
+
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
@@ -10,11 +15,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.function.BiConsumer;
 
 public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K> {
 

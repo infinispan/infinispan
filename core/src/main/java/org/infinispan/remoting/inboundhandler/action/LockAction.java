@@ -1,5 +1,9 @@
 package org.infinispan.remoting.inboundhandler.action;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.util.concurrent.locks.LockListener;
@@ -8,10 +12,6 @@ import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An {@link Action} implementation that acquire the locks.

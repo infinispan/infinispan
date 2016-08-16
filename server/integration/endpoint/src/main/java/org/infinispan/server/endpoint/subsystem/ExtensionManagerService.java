@@ -1,5 +1,12 @@
 package org.infinispan.server.endpoint.subsystem;
 
+import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
@@ -10,13 +17,6 @@ import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 public class ExtensionManagerService implements Service<ExtensionManagerService> {
 

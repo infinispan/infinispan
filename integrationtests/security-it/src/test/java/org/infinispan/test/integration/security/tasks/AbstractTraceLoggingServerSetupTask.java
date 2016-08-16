@@ -1,5 +1,11 @@
 package org.infinispan.test.integration.security.tasks;
 
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.jboss.as.arquillian.api.ServerSetupTask;
 import org.jboss.as.arquillian.container.ManagementClient;
 import org.jboss.as.controller.PathAddress;
@@ -7,12 +13,6 @@ import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.test.integration.security.common.CoreUtils;
 import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
 
 /**
  *

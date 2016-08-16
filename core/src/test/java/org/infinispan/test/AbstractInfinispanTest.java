@@ -1,21 +1,7 @@
 package org.infinispan.test;
 
-import org.infinispan.test.fwk.ChainMethodInterceptor;
-import org.infinispan.test.fwk.TestSelector;
-import org.infinispan.test.fwk.TestResourceTracker;
-import org.infinispan.util.DefaultTimeService;
-import org.infinispan.util.TimeService;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.IMethodInstance;
-import org.testng.IMethodInterceptor;
-import org.testng.ITestContext;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Listeners;
-
-import javax.transaction.TransactionManager;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -41,8 +27,22 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import javax.transaction.TransactionManager;
+
+import org.infinispan.test.fwk.ChainMethodInterceptor;
+import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.test.fwk.TestSelector;
+import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.IMethodInstance;
+import org.testng.IMethodInterceptor;
+import org.testng.ITestContext;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Listeners;
 
 
 /**

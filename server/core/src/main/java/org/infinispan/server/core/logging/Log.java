@@ -1,6 +1,12 @@
 package org.infinispan.server.core.logging;
 
-import io.netty.channel.Channel;
+import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.INFO;
+import static org.jboss.logging.Logger.Level.WARN;
+
+import java.net.SocketAddress;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.jboss.logging.annotations.Cause;
@@ -8,9 +14,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
-import java.net.SocketAddress;
-
-import static org.jboss.logging.Logger.Level.*;
+import io.netty.channel.Channel;
 
 /**
  * Log abstraction for the server core module. For this module, message ids

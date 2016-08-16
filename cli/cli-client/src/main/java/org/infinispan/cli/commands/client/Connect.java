@@ -8,7 +8,6 @@ import org.infinispan.cli.commands.Argument;
 import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.connection.ConnectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(org.infinispan.cli.commands.Command.class)

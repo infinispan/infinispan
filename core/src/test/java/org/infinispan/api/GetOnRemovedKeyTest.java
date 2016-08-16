@@ -1,12 +1,12 @@
 package org.infinispan.api;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
-
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 @Test (groups = "functional", testName = "api.GetOnRemovedKeyTest")
 @InCacheMode({ CacheMode.REPL_SYNC, CacheMode.DIST_SYNC })

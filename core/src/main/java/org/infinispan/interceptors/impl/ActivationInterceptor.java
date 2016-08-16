@@ -1,10 +1,10 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.InvocationContext;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Handle activation when passivation is enabled.

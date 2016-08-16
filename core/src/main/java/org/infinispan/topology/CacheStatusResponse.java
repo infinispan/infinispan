@@ -1,15 +1,15 @@
 package org.infinispan.topology;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.partitionhandling.AvailabilityMode;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.partitionhandling.AvailabilityMode;
 
 /**
 * @author Dan Berindei

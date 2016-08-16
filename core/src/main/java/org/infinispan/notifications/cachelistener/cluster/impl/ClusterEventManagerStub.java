@@ -1,13 +1,13 @@
 package org.infinispan.notifications.cachelistener.cluster.impl;
 
+import java.util.Collection;
+import java.util.UUID;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.remoting.transport.Address;
-
-import java.util.Collection;
-import java.util.UUID;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

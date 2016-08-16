@@ -1,9 +1,9 @@
 package org.infinispan.rest.configuration;
 
-import org.infinispan.commons.configuration.Builder;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.commons.configuration.Builder;
 
 /**
  * RestServerConfigurationBuilder.

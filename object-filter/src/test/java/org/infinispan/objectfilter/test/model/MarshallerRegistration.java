@@ -1,9 +1,9 @@
 package org.infinispan.objectfilter.test.model;
 
+import java.io.IOException;
+
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-
-import java.io.IOException;
 
 /**
  * @author anistor@redhat.com

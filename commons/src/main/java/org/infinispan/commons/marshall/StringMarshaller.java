@@ -1,10 +1,10 @@
 package org.infinispan.commons.marshall;
 
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
+
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ByteBufferImpl;
 
 public final class StringMarshaller extends AbstractMarshaller {
 

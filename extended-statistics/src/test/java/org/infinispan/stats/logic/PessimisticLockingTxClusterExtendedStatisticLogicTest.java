@@ -1,5 +1,40 @@
 package org.infinispan.stats.logic;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.infinispan.stats.CacheStatisticCollector.convertNanosToMicro;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_LOCAL;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_REMOTE;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME_SUCCESS_LOCAL_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS_SUCCESS_LOCAL_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_FAILED_DEADLOCK;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_FAILED_TIMEOUT;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_PER_LOCAL_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_LOCK_PER_REMOTE_TX;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_WAITED_FOR_LOCKS;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_WRITE_SKEW;
+import static org.infinispan.stats.container.ExtendedStatistic.WRITE_SKEW_PROBABILITY;
+import static org.infinispan.stats.container.ExtendedStatistic.values;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractField;
+import static org.infinispan.test.TestingUtil.extractLockManager;
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
+import java.util.EnumSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.impl.TxInterceptor;
@@ -20,25 +55,12 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
-import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import java.util.EnumSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.CacheStatisticCollector.convertNanosToMicro;
-import static org.infinispan.stats.container.ExtendedStatistic.*;
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.Assert.*;
 
 /**
  * @author Pedro Ruivo
