@@ -45,17 +45,6 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    InternalMarshaller internal;
 
-//   private JBossMarshaller defaultMarshaller;
-//
-//   private ExternalizerTable extTable;
-//   private GlobalConfiguration globalCfg;
-//
-//   @Inject
-//   public void inject(ExternalizerTable extTable, GlobalConfiguration globalCfg) {
-//      this.extTable = extTable;
-//      this.globalCfg = globalCfg;
-//   }
-
    @Inject
    public void inject(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
       this.gcr = gcr;
@@ -135,75 +124,24 @@ public class GlobalMarshaller implements StreamingMarshaller {
       }
    }
 
-
-
-//   @Override
-//   protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException {
-//      return internal.objectToBuffer(obj, estimatedSize);
-//
-////      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
-////      ObjectOutput out = startObjectOutput(baos, false, estimatedSize);
-////      try {
-////         defaultMarshaller.objectToObjectStream(obj, out);
-////      } catch (java.io.NotSerializableException nse) {
-////         if (log.isDebugEnabled()) log.debug("Object is not serializable", nse);
-////         throw new NotSerializableException(nse.getMessage(), nse.getCause());
-////      } catch (IOException ioe) {
-////         if (ioe.getCause() instanceof InterruptedException) {
-////            if (trace) log.trace("Interrupted exception while marshalling", ioe.getCause());
-////            throw (InterruptedException) ioe.getCause();
-////         } else {
-////            log.errorMarshallingObject(ioe, obj);
-////            throw ioe;
-////         }
-////      } finally {
-////         finishObjectOutput(out);
-////      }
-////      return new ByteBufferImpl(baos.getRawBuffer(), 0, baos.size());
-//   }
-
    @Override
    public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException, InterruptedException {
-      return new byte[0];  // TODO: Customise this generated block
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
-      return null;
-//      return defaultMarshaller.startObjectInput(is, isReentrant);
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public void finishObjectInput(ObjectInput oi) {
-//      defaultMarshaller.finishObjectInput(oi);
+      throw new RuntimeException("NYI");
    }
 
    @Override
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException, InterruptedException {
-      return null;
-
-//      /* No need to read version here. Clients should either be calling either:
-//       * - startObjectInput() -> objectFromObjectStream() -> finishObjectInput()
-//       * or
-//       * - objectFromByteBuffer() // underneath it calls start/finish
-//       * So, there's only need to read version during the start.
-//       * First option is preferred when multiple objects are gonna be written.
-//       */
-//      try {
-//         return defaultMarshaller.objectFromObjectStream(in);
-//      } catch (EOFException e) {
-//         IOException ee = new EOFException(
-//               "The stream ended unexpectedly.  Please check whether the source of " +
-//                     "the stream encountered any issues generating the stream.");
-//         ee.initCause(e);
-//         throw ee;
-//      } catch (IOException ioe) {
-//         if (trace) log.trace("Log exception reported", ioe);
-//         if (ioe.getCause() instanceof InterruptedException)
-//            throw (InterruptedException) ioe.getCause();
-//         else
-//            throw ioe;
-//      }
+      throw new RuntimeException("NYI");
    }
 
 }

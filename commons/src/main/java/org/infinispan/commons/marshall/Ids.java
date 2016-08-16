@@ -27,4 +27,6 @@ public interface Ids {
    int IMMUTABLE_ENTRY = 167;
 
    int IMMUTABLE_SET = 173;
+
+   int EQUIVALENCE = 174;
 }
