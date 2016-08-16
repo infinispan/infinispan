@@ -128,8 +128,6 @@ final class InternalExternalizerTable {
    private final GlobalComponentRegistry gcr;
    private final RemoteCommandsFactory cmdFactory;
 
-   private volatile boolean started;
-
    InternalExternalizerTable(Encoding enc, GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
       this.primitives = new PrimitiveExternalizer(enc);
       this.gcr = gcr;
@@ -139,7 +137,6 @@ final class InternalExternalizerTable {
    void start() {
       loadInternalMarshallables();
       loadForeignMarshallables(gcr.getGlobalConfiguration());
-      started = true;
       if (trace) {
          log.tracef("Constant object table was started and contains these externalizer readers: %s", readers);
          log.tracef("The externalizer writers collection contains: %s", writers);
@@ -147,14 +144,13 @@ final class InternalExternalizerTable {
    }
 
    void stop() {
-      started = false;
       writers.clear();
       readers.clear();
       log.trace("Externalizer reader and writer maps have been cleared and constant object table was stopped");
    }
 
    <T> Externalizer<T> findWriteExternalizer(Object obj, ObjectOutput out) throws IOException {
-      Class<?> clazz = checkStarted(obj);
+      Class<?> clazz = obj == null ? null : obj.getClass();
       Externalizer<T> ext;
       if (clazz == null || primitives.getTypeClasses().contains(clazz)) {
          out.writeByte(InternalIds.PRIMITIVE);
@@ -177,18 +173,6 @@ final class InternalExternalizerTable {
          }
       }
       return ext;
-   }
-
-   private Class<?> checkStarted(Object obj) {
-      if (!started) {
-         // TODO: Update Log.java eventually (not doing yet to avoid need to rebase)
-         // throw log.externalizerTableStopped(clazz.getName());
-         String className = obj == null ? "null" : obj.getClass().getName();
-         throw new CacheException("Cache manager is shutting down, so type write externalizer for type="
-               + className + " cannot be resolved");
-      }
-
-      return obj == null ? null : obj.getClass();
    }
 
    <T> Externalizer<T> findAnnotatedExternalizer(Class<?> clazz) {
