@@ -202,6 +202,8 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
       assertEquals(2, joined.size());
       assertEquals(0, updated.size());
       assertEquals(0, left.size());
+
+      cq.removeContinuousQueryListener(listener);
    }
 
    public void testTwoSimilarCQ() {

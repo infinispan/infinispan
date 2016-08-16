@@ -415,6 +415,8 @@ public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 3);
       expectElementsInQueue(left, 0);
+
+      cq.removeContinuousQueryListener(listener);
    }
 
    private <T> void expectElementsInQueue(BlockingQueue<T> queue, int numElements) {
